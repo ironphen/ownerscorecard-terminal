@@ -1,46 +1,95 @@
 ---
----
 import BaseLayout from "../layouts/BaseLayout.astro";
-import reports from "../data/reports.json";
-// ... keep the rest of your existing logic
----
-
 import reports from "../data/reports.json";
 
 const latestByTicker = new Map();
+
 for (const r of reports) {
-  const t = r.ticker.toUpperCase();
+  if (!r?.ticker) continue;
+  const t = String(r.ticker).toUpperCase();
   const existing = latestByTicker.get(t);
-  if (!existing || r.date > existing.date) latestByTicker.set(t, { ...r, ticker: t });
+  if (!existing || String(r.date) > String(existing.date)) {
+    latestByTicker.set(t, { ...r, ticker: t });
+  }
 }
+
 const companies = Array.from(latestByTicker.values()).sort((a, b) =>
   a.ticker.localeCompare(b.ticker)
 );
+
 const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
-const grouped = Object.fromEntries(letters.map(l => [l, []]));
-for (const c of companies) grouped[c.ticker[0]].push(c);
+const grouped = Object.fromEntries(letters.map((l) => [l, []]));
+for (const c of companies) {
+  const first = c.ticker?.[0];
+  if (grouped[first]) grouped[first].push(c);
+}
 ---
 
 <BaseLayout title="Owner Scorecard">
-  <!-- Add this search box right under your jump bar (or above it) -->
   <p>
-    <input id="q" type="search" placeholder="Search ticker or name..."
-      style="width:100%;padding:10px;border:1px solid #111;font-family:inherit;" />
+    <input
+      id="q"
+      type="search"
+      placeholder="Search ticker or name..."
+      style="width:100%;padding:10px;border:1px solid #111;font-family:inherit;"
+    />
   </p>
 
-  <!-- KEEP your existing jump bar + A–Z sections -->
-  <!-- IMPORTANT: add data-search to each li so filtering is easy -->
-  <!-- Example: -->
-   li data-search={`${c.ticker} ${c.name}`.toLowerCase()}>
+  <div class="jump">
+    {letters.map((l) => (
+      <a href={`#${l}`}>{l}</a>
+    ))}
+  </div>
+
+  {letters.map((l) => (
+    <section id={l} data-letter={l}>
+      <h2>{l}</h2>
+      <ul class="list">
+        {grouped[l].map((c) => (
+          <li data-search={`${c.ticker} ${c.name}`.toLowerCase()}>
+            <div class="left">
+              <span class="ticker">
+                <a href={`/c/${c.ticker}`}>{c.ticker}</a>
+              </span>
+              <span>{c.name}</span>
+            </div>
+            <span class="date">{c.date}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  ))}
+
+  <style>
+    .jump a { margin-right: 8px; }
+    h2 { border-bottom: 1px solid #ddd; padding-bottom: 4px; margin-top: 28px; }
+    .list { list-style: none; padding-left: 0; margin: 0; }
+    li { padding: 6px 0; display: flex; gap: 10px; justify-content: space-between; }
+    .left { display: flex; gap: 10px; }
+    .ticker { font-weight: 700; width: 64px; }
+    .date { color: #666; font-size: 14px; }
+    a { color: inherit; }
+  </style>
 
   <script is:inline>
     const q = document.getElementById("q");
     const items = Array.from(document.querySelectorAll('li[data-search]'));
-    q?.addEventListener("input", () => {
-      const term = q.value.trim().toLowerCase();
+    const sections = Array.from(document.querySelectorAll("section[data-letter]"));
+
+    function refresh() {
+      const term = (q.value || "").trim().toLowerCase();
+
       for (const li of items) {
         li.style.display = !term || li.dataset.search.includes(term) ? "" : "none";
       }
-    });
+
+      // Hide letter sections that have no visible rows
+      for (const s of sections) {
+        const visible = Array.from(s.querySelectorAll("li")).some(li => li.style.display !== "none");
+        s.style.display = visible ? "" : "none";
+      }
+    }
+
+    q?.addEventListener("input", refresh);
   </script>
 </BaseLayout>

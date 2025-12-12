@@ -1,25 +1,59 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import reports from "../../data/reports.json";
----
-
-import reports from "../../data/reports.json";
 
 export async function getStaticPaths() {
-  const tickers = Array.from(new Set(reports.map(r => r.ticker.toUpperCase())));
-  return tickers.map(ticker => ({ params: { ticker } }));
+  const tickers = Array.from(
+    new Set(reports.map((r) => String(r.ticker || "").toUpperCase()).filter(Boolean))
+  );
+  return tickers.map((ticker) => ({ params: { ticker } }));
 }
 
-const { ticker } = Astro.params;
+const ticker = String(Astro.params.ticker || "").toUpperCase();
 
 const all = reports
-  .filter(r => r.ticker.toUpperCase() === ticker)
-  .sort((a, b) => b.date.localeCompare(a.date));
+  .filter((r) => String(r.ticker || "").toUpperCase() === ticker)
+  .sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")));
 
 const latest = all[0];
 ---
 
 <BaseLayout title={`${ticker} — Owner Scorecard`}>
   <p><a href="/">← Directory</a></p>
-  <!-- keep the rest of your existing company page content -->
+
+  {latest ? (
+    <>
+      <h1>{ticker} — {latest.name}</h1>
+
+      <p class="btnRow">
+        <a class="btn" href={latest.pdfUrl} target="_blank" rel="noopener">View PDF</a>
+        <a class="btn" href={latest.pdfUrl} download>Download PDF</a>
+      </p>
+
+      <img src={latest.previewUrl} alt={`${ticker} preview`} loading="lazy" />
+
+      {all.length > 1 && (
+        <>
+          <h2>History</h2>
+          <ul>
+            {all.map((r) => (
+              <li>
+                {r.date} — <a href={r.pdfUrl} target="_blank" rel="noopener">View</a> /{" "}
+                <a href={r.pdfUrl} download>Download</a>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+    </>
+  ) : (
+    <p>No reports found for {ticker}.</p>
+  )}
+
+  <style>
+    .btnRow { display: flex; gap: 10px; flex-wrap: wrap; }
+    .btn { display: inline-block; padding: 10px 14px; border: 1px solid #111; text-decoration: none; }
+    .btn:hover { background: #f2f2f2; }
+    img { max-width: 100%; border: 1px solid #ddd; margin-top: 16px; }
+  </style>
 </BaseLayout>
