@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 const BASE_URL = "https://files.ownerscorecard.com"; // <-- change if needed
-const PREVIEW_EXT = "jpg"; // or "webp"
+const PREVIEW_EXT = "png"; // or "webp"
 const PDF_EXT = "pdf";
 
 const args = process.argv.slice(2);

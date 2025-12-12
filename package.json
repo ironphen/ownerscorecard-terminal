@@ -6,7 +6,8 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "add:report": "node scripts/addReport.mjs"
   },
   "dependencies": {
     "astro": "^5.16.5"
