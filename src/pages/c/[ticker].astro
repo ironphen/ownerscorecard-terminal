@@ -25,10 +25,13 @@ const latest = all[0];
     <>
       <h1>{ticker} — {latest.name}</h1>
 
-      <p class="btnRow">
-        <a class="btn" href={latest.pdfUrl} target="_blank" rel="noopener">View PDF</a>
-        <a class="btn" href={latest.pdfUrl} download>Download PDF</a>
-      </p>
+<p class="btnRow">
+  <a class="btn" href={latest.pdfUrl} target="_blank" rel="noopener">View PDF</a>
+  <a class="btn" href={latest.pdfUrl} download>Download PDF</a>
+  {latest.xlsxUrl && (
+    <a class="btn" href={latest.xlsxUrl} download>Download Excel</a>
+  )}
+</p>
 
       <img src={latest.previewUrl} alt={`${ticker} preview`} loading="lazy" />
 
