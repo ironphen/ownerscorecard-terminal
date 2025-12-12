@@ -12,6 +12,7 @@ const { title = "Owner Scorecard" } = Astro.props;
       header { margin-bottom: 18px; }
       .brand { font-size: 34px; font-weight: 700; letter-spacing: 0.2px; margin: 0; }
       .brand a { text-decoration: none; color: inherit; }
+      .by {font-size: 16px; font-weight: 400; margin-left: 10px; color: #444; }
       .quote { margin: 6px 0 10px; color: #444; font-style: italic; }
       nav { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 8px; }
       nav a { color: inherit; }
@@ -35,8 +36,11 @@ const { title = "Owner Scorecard" } = Astro.props;
 
   <body>
     <header>
-      <h1 class="brand"><a href="/">Owner Scorecard</a></h1>
-      <div class="quote">“Start with the A’s.” — Warren Buffet</div>
+    <h1 class="brand">
+      <a href="/">Owner Scorecard</a>
+      <span class="by">by R.G. Research</span>
+    </h1>
+      <div class="quote">“Start with the A’s.” — Warren E. Buffett</div>
 
       <nav>
         <a href="/">Directory</a>
@@ -55,7 +59,7 @@ const { title = "Owner Scorecard" } = Astro.props;
         <div class="rule"></div>
         <div class="promoInner">
           <div class="promoTitle">
-            <a href="https://dynastynexus.com" target="_blank" rel="noopener">DYNASTY NEXUS</a>
+            <a href="https://dynastynexus.com" target="_blank" rel="noopener">PIGSKIN PORTFOLIO GAME</a>
           </div>
           <div class="promoUrl">
             <a href="https://dynastynexus.com" target="_blank" rel="noopener">dynastynexus.com</a>
