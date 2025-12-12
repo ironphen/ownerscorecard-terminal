@@ -23,22 +23,29 @@ for (const c of companies) {
   const first = c.ticker?.[0];
   if (grouped[first]) grouped[first].push(c);
 }
+const lastUpdated = (reports || []).reduce((max, r) => {
+  const d = String(r?.date || "");
+  return d > max ? d : max;
+}, "0000-00-00");
+
 ---
 
 <BaseLayout title="Owner Scorecard">
-  <p>
+  <div class="stickyBar">
+    <div class="updated">Updated: {lastUpdated}</div>
+
     <input
       id="q"
       type="search"
       placeholder="Search ticker or name..."
-      style="width:100%;padding:10px;border:1px solid #111;font-family:inherit;"
+      class="search"
     />
-  </p>
 
-  <div class="jump">
-    {letters.map((l) => (
-      <a href={`#${l}`}>{l}</a>
-    ))}
+    <div class="jump">
+      {letters.map((l) => (
+        <a href={`#${l}`}>{l}</a>
+      ))}
+    </div>
   </div>
 
   {letters.map((l) => (
@@ -61,10 +68,34 @@ for (const c of companies) {
   ))}
 
   <style>
+    .stickyBar{
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: #fff;
+      padding: 10px 0 8px;
+      border-bottom: 1px solid #eee;
+    }
+
+    .updated{
+      font-size: 12px;
+      color: #555;
+      margin-bottom: 8px;
+    }
+
+    .search{
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #111;
+      font-family: inherit;
+    }
+
+    .jump { margin-top: 10px; }
     .jump a { margin-right: 8px; }
+
     h2 { border-bottom: 1px solid #ddd; padding-bottom: 4px; margin-top: 28px; }
     .list { list-style: none; padding-left: 0; margin: 0; }
-    li { padding: 6px 0; display: flex; gap: 10px; justify-content: space-between; }
+    li { padding: 8px 0; display: flex; gap: 10px; justify-content: space-between; }
     .left { display: flex; gap: 10px; }
     .ticker { font-weight: 700; width: 64px; }
     .date { color: #666; font-size: 14px; }
