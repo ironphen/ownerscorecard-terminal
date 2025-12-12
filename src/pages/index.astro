@@ -1,16 +1,59 @@
 ---
+import reports from "../data/reports.json";
 
+const latestByTicker = new Map();
+for (const r of reports) {
+  const t = r.ticker.toUpperCase();
+  const existing = latestByTicker.get(t);
+  if (!existing || r.date > existing.date) latestByTicker.set(t, { ...r, ticker: t });
+}
+const companies = Array.from(latestByTicker.values()).sort((a, b) =>
+  a.ticker.localeCompare(b.ticker)
+);
+const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+const grouped = Object.fromEntries(letters.map(l => [l, []]));
+for (const c of companies) grouped[c.ticker[0]].push(c);
 ---
 
 <html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
-	</head>
-	<body>
-		<h1>Astro</h1>
-	</body>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Owner Scorecard</title>
+    <style>
+      body{font-family:Georgia,serif;max-width:900px;margin:24px auto;padding:0 16px}
+      .jump a{margin-right:8px}
+      h2{border-bottom:1px solid #ddd;padding-bottom:4px;margin-top:28px}
+      ul{list-style:none;padding-left:0}
+      li{padding:6px 0;display:flex;gap:10px;justify-content:space-between}
+      .left{display:flex;gap:10px}
+      .ticker{font-weight:700;width:64px}
+      .date{color:#666;font-size:14px}
+      a{color:inherit;text-decoration:none}
+      a:hover{text-decoration:underline}
+    </style>
+  </head>
+  <body>
+    <h1>Owner Scorecard</h1>
+    <div class="jump">
+      {letters.map((l) => <a href={`#${l}`}>{l}</a>)}
+    </div>
+
+    {letters.map((l) => (
+      <section id={l}>
+        <h2>{l}</h2>
+        <ul>
+          {grouped[l].map((c) => (
+            <li>
+              <div class="left">
+                <span class="ticker"><a href={`/c/${c.ticker}`}>{c.ticker}</a></span>
+                <span>{c.name}</span>
+              </div>
+              <span class="date">{c.date}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
+    ))}
+  </body>
 </html>

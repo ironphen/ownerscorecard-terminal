@@ -1,0 +1,47 @@
+---
+import reports from "../../data/reports.json";
+
+export async function getStaticPaths() {
+  const tickers = Array.from(new Set(reports.map(r => r.ticker.toUpperCase())));
+  return tickers.map(ticker => ({ params: { ticker } }));
+}
+
+const { ticker } = Astro.params;
+
+const all = reports
+  .filter(r => r.ticker.toUpperCase() === ticker)
+  .sort((a, b) => b.date.localeCompare(a.date));
+
+const latest = all[0];
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{ticker} — Owner Scorecard</title>
+    <style>
+      body{font-family:Georgia,serif;max-width:900px;margin:24px auto;padding:0 16px}
+      .btn{display:inline-block;padding:10px 14px;border:1px solid #111;margin-right:10px}
+      .btn:hover{background:#f2f2f2}
+      img{max-width:100%;border:1px solid #ddd;margin-top:16px}
+      a{color:inherit}
+    </style>
+  </head>
+  <body>
+    <p><a href="/">← Directory</a></p>
+
+    {latest ? (
+      <>
+        <h1>{ticker} — {latest.name}</h1>
+        <p>
+          <a class="btn" href={latest.pdfUrl} target="_blank" rel="noopener">View PDF</a>
+          <a class="btn" href={latest.pdfUrl} download>Download PDF</a>
+        </p>
+        <img src={latest.previewUrl} alt={`${ticker} preview`} />
+      </>
+    ) : (
+      <p>No reports found.</p>
+    )}
+  </body>
+</html>
