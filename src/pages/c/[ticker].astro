@@ -4,14 +4,14 @@ import reports from "../../data/reports.json";
 
 export async function getStaticPaths() {
   const tickers = Array.from(
-    new Set(reports.map((r) => String(r.ticker || "").toUpperCase()).filter(Boolean))
+    new Set((reports || []).map((r) => String(r.ticker || "").toUpperCase()).filter(Boolean))
   );
   return tickers.map((ticker) => ({ params: { ticker } }));
 }
 
 const ticker = String(Astro.params.ticker || "").toUpperCase();
 
-const all = reports
+const all = (reports || [])
   .filter((r) => String(r.ticker || "").toUpperCase() === ticker)
   .sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")));
 
@@ -19,44 +19,83 @@ const latest = all[0];
 ---
 
 <BaseLayout title={`${ticker} — Owner Scorecard`}>
-  <p><a href="/">← Directory</a></p>
+  <p class="back"><a href="/">← RGR 25</a></p>
 
   {latest ? (
     <>
-      <h1>{ticker} — {latest.name}</h1>
+      <header class="hero">
+        <h1>
+          {ticker}{latest.name ? ` — ${latest.name}` : ""}
+        </h1>
+        <div class="meta">Last updated: {latest.date}</div>
+      </header>
 
-<p class="btnRow">
-  <a class="btn" href={latest.pdfUrl} target="_blank" rel="noopener">View PDF</a>
-  <a class="btn" href={latest.pdfUrl} download>Download PDF</a>
-  {latest.xlsxUrl && (
-    <a class="btn" href={latest.xlsxUrl} download>Download Excel</a>
-  )}
-</p>
+      <div class="btnRow">
+        <a class="btn" href={latest.pdfUrl} target="_blank" rel="noopener">View PDF</a>
+        <a class="btn" href={latest.pdfUrl} download>Download PDF</a>
+        {latest.xlsxUrl ? (
+          <a class="btn" href={latest.xlsxUrl} download>Download Excel</a>
+        ) : null}
+      </div>
 
-      <img src={latest.previewUrl} alt={`${ticker} preview`} loading="lazy" />
+      {latest.previewUrl ? (
+        <img
+          src={latest.previewUrl}
+          alt={`${ticker} preview`}
+          loading="lazy"
+        />
+      ) : null}
 
-      {all.length > 1 && (
+      {all.length > 1 ? (
         <>
           <h2>History</h2>
-          <ul>
+          <ul class="history">
             {all.map((r) => (
               <li>
-                {r.date} — <a href={r.pdfUrl} target="_blank" rel="noopener">View</a> /{" "}
-                <a href={r.pdfUrl} download>Download</a>
+                <span class="hDate">{r.date}</span>
+                <span class="hLinks">
+                  <a href={r.pdfUrl} target="_blank" rel="noopener">View</a>
+                  {" "} / {" "}
+                  <a href={r.pdfUrl} download>Download</a>
+                  {r.xlsxUrl ? (
+                    <>
+                      {" "} / {" "}
+                      <a href={r.xlsxUrl} download>Excel</a>
+                    </>
+                  ) : null}
+                </span>
               </li>
             ))}
           </ul>
         </>
-      )}
+      ) : null}
     </>
   ) : (
     <p>No reports found for {ticker}.</p>
   )}
 
   <style>
-    .btnRow { display: flex; gap: 10px; flex-wrap: wrap; }
+    .back { margin: 0 0 10px; }
+    .hero h1 { margin: 0; }
+    .meta { color: #555; font-size: 14px; margin-top: 4px; }
+
+    .btnRow { display: flex; gap: 10px; flex-wrap: wrap; margin: 12px 0 8px; }
     .btn { display: inline-block; padding: 10px 14px; border: 1px solid #111; text-decoration: none; }
     .btn:hover { background: #f2f2f2; }
-    img { max-width: 100%; border: 1px solid #ddd; margin-top: 16px; }
+
+    img { max-width: 100%; border: 1px solid #ddd; margin-top: 14px; }
+
+    h2 { border-bottom: 1px solid #ddd; padding-bottom: 4px; margin-top: 24px; }
+
+    .history { list-style: none; padding-left: 0; margin: 0; }
+    .history li {
+      padding: 10px 0;
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .hDate { color: #666; flex: 0 0 auto; }
+    .hLinks { flex: 1 1 auto; text-align: right; }
   </style>
 </BaseLayout>

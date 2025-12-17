@@ -3,67 +3,68 @@ const { title = "Owner Scorecard" } = Astro.props;
 ---
 
 <html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>{title}</title>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
 
-  <link rel="icon" href="/favicon.ico" sizes="any" />
-  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
-  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 
-  <style>
-    html { scroll-behavior: smooth; }
+    <style>
+      html { scroll-behavior: smooth; }
 
-    body {
-      font-family: Garamond, Georgia, serif;
-      line-height: 1.35;
-      color: #111;
-      max-width: 900px;
-      margin: 24px auto;
-      padding: 0 16px;
-    }
+      body {
+        font-family: Garamond, Georgia, serif;
+        line-height: 1.35;
+        color: #111;
+        max-width: 900px;
+        margin: 24px auto;
+        padding: 0 16px;
+      }
 
-    a { color: inherit; text-decoration: none; }
-    a:hover { text-decoration: underline; }
-    a:visited { color: #555; }
+      a { color: inherit; text-decoration: none; }
+      a:hover { text-decoration: underline; }
+      a:visited { color: #555; }
 
-    header { margin-bottom: 18px; }
-    .brand { font-size: 34px; font-weight: 700; letter-spacing: 0.2px; margin: 0; }
-    .brand a { color: inherit; }
-    .by { font-size: 16px; font-weight: 400; margin-left: 10px; color: #444; }
-    .quote { margin: 6px 0 10px; color: #444; font-style: italic; }
-    nav { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 8px; }
-    main { margin-top: 10px; }
+      header { margin-bottom: 18px; }
+      .brand { font-size: 34px; font-weight: 700; letter-spacing: 0.2px; margin: 0; }
+      .brand a { color: inherit; }
+      .by { font-size: 16px; font-weight: 400; margin-left: 10px; color: #444; }
+      .quote { margin: 6px 0 10px; color: #444; font-style: normal; }
+      nav { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 8px; }
+      main { margin-top: 10px; }
 
-    footer { border-top: 1px solid #ddd; margin-top: 26px; padding-top: 14px; color: #333; }
-    footer .about { margin: 0 0 10px; }
+      footer { border-top: 1px solid #ddd; margin-top: 26px; padding-top: 14px; color: #333; }
+      footer .about { margin: 0 0 10px; }
 
-    .promo { margin: 18px 0; text-align: center; }
-    .rule { border-top: 1px solid #ddd; margin: 10px 0; }
-    .promoTitle { font-weight: 700; letter-spacing: 0.6px; }
-    .promoUrl { font-size: 12px; color: #444; }
+      .promo { margin: 18px 0; text-align: center; }
+      .rule { border-top: 1px solid #ddd; margin: 10px 0; }
+      .promoTitle { font-weight: 700; letter-spacing: 0.6px; }
+      .promoUrl { font-size: 12px; color: #444; }
 
-    footer small { display: block; color: #555; line-height: 1.35; }
+      footer small { display: block; color: #555; line-height: 1.35; }
 
-    @media (max-width: 520px) {
-      body { margin: 18px auto; padding: 0 12px; }
-      .brand { font-size: 30px; }
-      .by { display: block; margin-left: 0; margin-top: 2px; }
-    }
-  </style>
-</head>
+      @media (max-width: 520px) {
+        body { margin: 18px auto; padding: 0 12px; }
+        .brand { font-size: 30px; }
+        .by { display: block; margin-left: 0; margin-top: 2px; }
+      }
+    </style>
+  </head>
 
   <body>
     <header>
-    <h1 class="brand">
-      <a href="/">Owner Scorecard</a>
-      <span class="by">by R.G. Research</span>
-    </h1>
-      <div class="quote">“Start with the A’s.” — Warren E. Buffett</div>
+      <h1 class="brand">
+        <a href="/">Owner Scorecard</a>
+        <span class="by">by R.G. Research</span>
+      </h1>
+
+      <div class="quote">index of 25 investment grade common stocks</div>
 
       <nav>
-        <a href="/">Directory</a>
+        <a href="/">RGR 25</a>
         <a href="https://newsletter.ownerscorecard.com" target="_blank" rel="noopener">Newsletter</a>
       </nav>
     </header>
@@ -73,7 +74,9 @@ const { title = "Owner Scorecard" } = Astro.props;
     </main>
 
     <footer>
-      <p class="about">An enormously efficient way to garner information about various businesses &amp; their competitors.</p>
+      <p class="about">
+        An enormously efficient way to garner information about various businesses &amp; their competitors.
+      </p>
 
       <div class="promo">
         <div class="rule"></div>
