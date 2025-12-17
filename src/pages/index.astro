@@ -19,6 +19,7 @@ const companies = Array.from(latestByTicker.values()).sort((a, b) =>
 
 const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 const grouped = Object.fromEntries(letters.map((l) => [l, []]));
+const activeLetters = letters.filter((l) => grouped[l].length > 0);
 for (const c of companies) {
   const first = c.ticker?.[0];
   if (grouped[first]) grouped[first].push(c);
@@ -42,13 +43,13 @@ const lastUpdated = (reports || []).reduce((max, r) => {
     />
 
     <div class="jump">
-      {letters.map((l) => (
-        <a href={`#${l}`}>{l}</a>
-      ))}
+    {activeLetters.map((l) => (
+    <a href={`#${l}`}>{l}</a>
+    ))}
     </div>
   </div>
 
-  {letters.map((l) => (
+{activeLetters.map((l) => (
     <section id={l} data-letter={l}>
       <h2>{l}</h2>
       <ul class="list">
