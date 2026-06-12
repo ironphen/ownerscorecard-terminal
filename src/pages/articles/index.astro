@@ -1,0 +1,62 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { getCollection } from "astro:content";
+
+// Drafts show in dev so they can be previewed; never in the built site
+const articles = (
+  await getCollection("articles", ({ data }) =>
+    import.meta.env.PROD ? !data.draft : true
+  )
+).sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+
+const fmtDate = (d) =>
+  d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric", timeZone: "UTC" });
+---
+
+<BaseLayout title="Articles — Owner Scorecard">
+  <header class="hero">
+    <h1>Articles</h1>
+  </header>
+
+  {articles.length ? (
+    <ul class="list">
+      {articles.map((a) => (
+        <li>
+          <div class="top">
+            <a class="title" href={`/articles/${a.id}`}>{a.data.title}</a>
+            <span class="meta">
+              <span class="section">{a.data.section}</span>
+              {a.data.draft ? <span class="draft">draft</span> : null}
+              {fmtDate(a.data.date)}
+            </span>
+          </div>
+          <p class="desc">{a.data.description}</p>
+        </li>
+      ))}
+    </ul>
+  ) : (
+    <p class="empty">Nothing published yet. The first pieces are being written.</p>
+  )}
+
+  <style>
+    .hero h1 { margin: 0 0 10px; }
+
+    .list { list-style: none; padding-left: 0; margin: 0; }
+    li { padding: 14px 0; border-bottom: 1px solid #f0f0f0; }
+
+    .top { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; flex-wrap: wrap; }
+    .title { font-weight: 700; font-size: 18px; }
+    .meta { color: #666; font-size: 13px; flex: 0 0 auto; }
+    .section {
+      border: 1px solid #ccc;
+      padding: 1px 6px;
+      margin-right: 8px;
+      font-size: 11px;
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+    }
+    .draft { color: #8b1a1a; margin-right: 8px; font-size: 11px; text-transform: uppercase; }
+    .desc { margin: 6px 0 0; color: #333; }
+    .empty { color: #555; }
+  </style>
+</BaseLayout>

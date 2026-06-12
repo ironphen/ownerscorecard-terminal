@@ -7,9 +7,20 @@
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "add:report": "node scripts/addReport.mjs"
+    "add:report": "node scripts/addReport.mjs",
+    "import:fidelity": "node scripts/importFidelity.mjs",
+    "fetch:benchmark": "node scripts/fetchBenchmark.mjs"
   },
   "dependencies": {
-    "astro": "^5.16.5"
+    "@astrojs/mdx": "^6.0.3",
+    "@astrojs/react": "^5.0.7",
+    "@astrojs/rss": "^4.0.18",
+    "@astrojs/sitemap": "^3.7.3",
+    "astro": "^6.4.6",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7"
+  },
+  "devDependencies": {
+    "xlsx": "^0.18.5"
   }
 }

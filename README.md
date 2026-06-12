@@ -1,43 +1,63 @@
-# Astro Starter Kit: Minimal
+# Owner Scorecard
+
+Research notes on common stocks and a public record of one investor's results —
+in the spirit of the personal sites value investors ran before they were famous.
+Built as a publication: articles, company dossiers, and an auditable track record.
+
+The founding doctrine — mission, voice, standing rules, beats, and the essay
+slate — lives in [`EDITORIAL.md`](EDITORIAL.md).
+
+## Pages
+
+| Route | What it is |
+| :--- | :--- |
+| `/` | Research index — one-page-per-ticker PDF reports |
+| `/articles` | Articles (MDX content collection, sections: markets / companies / principles / letters) |
+| `/c/[ticker]` | Company dossier — reports + articles for one ticker |
+| `/rss.xml` | Feed of published articles |
+
+## Stack
+
+[Astro 6](https://astro.build) static site. Articles are MDX files in
+`src/content/articles/` (typed frontmatter, validated at build). Interactive
+graphics are React islands in `src/components/` — plain articles ship zero
+JavaScript. Performance/ledger data is plain JSON in `src/data/`, so the content
+and the record are portable to any future stack.
+
+## Workflows
+
+**Write an article** — add `src/content/articles/my-piece.mdx` with frontmatter
+(`title`, `description`, `date`, `section`, `tickers`, `draft`). Drafts render in
+dev only. See the live reference: `src/content/articles/how-articles-work.mdx`.
+
+**Analyze your own results (local only)** — the personal record is deliberately
+not part of the site (see `EDITORIAL.md`, Track record policy). The import
+scripts remain for private analysis; their outputs are gitignored and never
+committed:
 
 ```sh
-npm create astro@latest -- --template minimal
+npm run import:fidelity -- ~/Downloads/Portfolio_Positions_MonDDYYYY.xlsx
 ```
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+**Add a research report** — upload PDF/preview/xlsx to R2, then:
 
-## 🚀 Project Structure
-
-Inside of your Astro project, you'll see the following folders and files:
-
-```text
-/
-├── public/
-├── src/
-│   └── pages/
-│       └── index.astro
-└── package.json
+```sh
+npm run add:report -- PEP "PepsiCo" 2025-12-09 --xlsx
 ```
 
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
+See `PUBLISHING.md` for details.
 
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
+## Commands
 
-Any static assets, like images, can be placed in the `public/` directory.
+| Command | Action |
+| :--- | :--- |
+| `npm install` | Install dependencies |
+| `npm run dev` | Dev server at `localhost:4321` (drafts visible) |
+| `npm run build` | Build production site to `./dist/` |
+| `npm run preview` | Preview the production build |
 
-## 🧞 Commands
+## Data hygiene
 
-All commands are run from the root of the project, from a terminal:
-
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
-
-## 👀 Want to learn more?
-
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+Personal account data never enters this repo: the import scripts write to
+gitignored paths, and the site carries no personal record by policy. The track
+record is published calls — timestamped and graded in the open.
