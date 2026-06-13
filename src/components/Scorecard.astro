@@ -1,0 +1,77 @@
+---
+import { buildScorecard, TONE_COLOR } from "../lib/fundamentals.mjs";
+
+const { company, sample = false } = Astro.props;
+const { checks } = buildScorecard(company);
+---
+
+<section class="scorecard">
+  <div class="head">
+    <h2>Owner’s Scorecard</h2>
+    <div class="src">
+      FY{company.fy} {company.form}
+      {company.sourceUrl ? (
+        <> · <a href={company.sourceUrl} target="_blank" rel="noopener">source on SEC EDGAR →</a></>
+      ) : null}
+    </div>
+  </div>
+
+  <p class="manifesto">
+    No overall score — on purpose. A handful of vital signs, each computed from the
+    company’s own filing and shown with its arithmetic. The single grade other tools
+    sell you is exactly the number you won’t find here.
+  </p>
+
+  {sample ? (
+    <div class="sample">
+      <strong>Sample data.</strong> Illustrative placeholders until the EDGAR pipeline runs.
+      The “source” link is already real.
+    </div>
+  ) : null}
+
+  <ul class="checks">
+    {checks.map((c) => (
+      <li>
+        <div class="row">
+          <span class="title">
+            {c.href ? <a href={c.href}>{c.title}</a> : c.title}
+          </span>
+          <span class="value" style={`color:${TONE_COLOR[c.tone]}`}>{c.value}</span>
+        </div>
+        <div class="label" style={`color:${TONE_COLOR[c.tone]}`}>{c.label}</div>
+        {c.formula ? <div class="formula">{c.formula}</div> : null}
+        <p class="note">{c.note}</p>
+      </li>
+    ))}
+  </ul>
+
+  <p class="foot">
+    Solvent is not the same as cheap; growing is not the same as good. These are vital
+    signs, not a verdict — the judgment is yours, and the filing is one click away.
+  </p>
+</section>
+
+<style>
+  .scorecard { border: 1px solid #111; padding: 16px 18px; margin: 18px 0; }
+  .head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  .head h2 { margin: 0; border: 0; padding: 0; }
+  .src { font-size: 12px; color: #666; }
+  .manifesto { font-size: 13px; color: #555; margin: 6px 0 0; }
+
+  .sample { background: #fff7e6; border: 1px solid #e0c98a; padding: 6px 10px; font-size: 12px; color: #7a5b00; margin-top: 12px; }
+
+  .checks { list-style: none; padding: 0; margin: 14px 0 0; }
+  .checks li { padding: 12px 0; border-top: 1px solid #eee; }
+  .checks li:first-child { border-top: 0; }
+
+  .row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+  .title { font-weight: 700; }
+  .title a { color: inherit; }
+  .value { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; flex: 0 0 auto; }
+
+  .label { font-weight: 700; font-size: 13px; margin-top: 2px; }
+  .formula { font-size: 12px; color: #555; font-variant-numeric: tabular-nums; margin-top: 4px; }
+  .note { font-size: 13px; color: #333; margin: 6px 0 0; }
+
+  .foot { font-size: 12px; color: #666; border-top: 1px solid #111; margin-top: 14px; padding-top: 10px; }
+</style>
