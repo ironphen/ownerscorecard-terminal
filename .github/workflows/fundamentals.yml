@@ -1,0 +1,39 @@
+# Refreshes src/data/fundamentals.json from SEC EDGAR.
+#
+# Manual-trigger only for now (workflow_dispatch) — it does nothing until you
+# run it from the Actions tab. When you're ready for it to refresh on its own,
+# uncomment the schedule block. Set an Actions variable SEC_USER_AGENT with a
+# descriptive contact string (SEC requests one); falls back to a default.
+name: Fundamentals
+
+on:
+  workflow_dispatch:
+  # schedule:
+  #   - cron: "0 7 * * 1" # Mondays 07:00 UTC
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - run: npm run fetch:fundamentals
+        env:
+          SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT }}
+      - name: Commit if changed
+        run: |
+          if ! git diff --quiet -- src/data/fundamentals.json; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add src/data/fundamentals.json
+            git commit -m "Refresh fundamentals from EDGAR"
+            git push
+          else
+            echo "No change."
+          fi

@@ -1,12 +1,18 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import reports from "../../data/reports.json";
+import { getCollection } from "astro:content";
 
 export async function getStaticPaths() {
-  const tickers = Array.from(
-    new Set((reports || []).map((r) => String(r.ticker || "").toUpperCase()).filter(Boolean))
+  const articles = await getCollection("articles", ({ data }) =>
+    import.meta.env.PROD ? !data.draft : true
   );
-  return tickers.map((ticker) => ({ params: { ticker } }));
+  const tickers = new Set([
+    ...(reports || []).map((r) => String(r.ticker || "").toUpperCase()),
+    ...articles.flatMap((a) => a.data.tickers.map((t) => t.toUpperCase())),
+  ]);
+  tickers.delete("");
+  return Array.from(tickers).map((ticker) => ({ params: { ticker } }));
 }
 
 const ticker = String(Astro.params.ticker || "").toUpperCase();
@@ -14,22 +20,29 @@ const ticker = String(Astro.params.ticker || "").toUpperCase();
 const all = (reports || [])
   .filter((r) => String(r.ticker || "").toUpperCase() === ticker)
   .sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")));
-
 const latest = all[0];
+
+const related = (
+  await getCollection("articles", ({ data }) =>
+    (import.meta.env.PROD ? !data.draft : true) &&
+    data.tickers.some((t) => t.toUpperCase() === ticker)
+  )
+).sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+
+const fmtDate = (d) =>
+  d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric", timeZone: "UTC" });
 ---
 
 <BaseLayout title={`${ticker} — Owner Scorecard`}>
   <p class="back"><a href="/">← Index</a></p>
 
+  <header class="hero">
+    <h1>{ticker}{latest?.name ? ` — ${latest.name}` : ""}</h1>
+    {latest ? <div class="meta">Report last updated: {latest.date}</div> : null}
+  </header>
+
   {latest ? (
     <>
-      <header class="hero">
-        <h1>
-          {ticker}{latest.name ? ` — ${latest.name}` : ""}
-        </h1>
-        <div class="meta">Last updated: {latest.date}</div>
-      </header>
-
       <div class="btnRow">
         <a class="btn" href={latest.pdfUrl} target="_blank" rel="noopener">View PDF</a>
         <a class="btn" href={latest.pdfUrl} download>Download PDF</a>
@@ -39,16 +52,12 @@ const latest = all[0];
       </div>
 
       {latest.previewUrl ? (
-        <img
-          src={latest.previewUrl}
-          alt={`${ticker} preview`}
-          loading="lazy"
-        />
+        <img src={latest.previewUrl} alt={`${ticker} preview`} loading="lazy" />
       ) : null}
 
       {all.length > 1 ? (
         <>
-          <h2>History</h2>
+          <h2>Report history</h2>
           <ul class="history">
             {all.map((r) => (
               <li>
@@ -70,9 +79,25 @@ const latest = all[0];
         </>
       ) : null}
     </>
-  ) : (
-    <p>No reports found for {ticker}.</p>
-  )}
+  ) : null}
+
+  {related.length ? (
+    <>
+      <h2>Writing</h2>
+      <ul class="history">
+        {related.map((a) => (
+          <li>
+            <span class="hDate">{fmtDate(a.data.date)}</span>
+            <span class="hLinks">
+              <a href={`/articles/${a.id}`}>{a.data.title}</a>
+            </span>
+          </li>
+        ))}
+      </ul>
+    </>
+  ) : null}
+
+  {!latest && !related.length ? <p>Nothing here for {ticker} yet.</p> : null}
 
   <style>
     .back { margin: 0 0 10px; }

@@ -1,0 +1,45 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+
+// Tools are the "ability to check" half of the publication: each one applies a
+// mechanism to a real company, from primary-source filing data. Add entries
+// here as tools ship.
+const tools = [
+  {
+    href: "/tools/coverage",
+    title: "Can it pay its interest?",
+    blurb:
+      "Interest coverage from the latest 10-K: does a year of operating profit cover the interest bill, or is the company in the zombie zone?",
+    status: "live",
+  },
+];
+---
+
+<BaseLayout title="Tools — Owner Scorecard">
+  <header class="hero">
+    <h1>Tools</h1>
+    <p class="lede">
+      Not opinions — instruments. Each one applies a single idea to a real company,
+      using figures pulled straight from SEC filings, and shows its work so you can
+      check it yourself.
+    </p>
+  </header>
+
+  <ul class="list">
+    {tools.map((t) => (
+      <li>
+        <a class="title" href={t.href}>{t.title}</a>
+        <p class="blurb">{t.blurb}</p>
+      </li>
+    ))}
+  </ul>
+
+  <style>
+    .hero h1 { margin: 0 0 6px; }
+    .lede { color: #333; margin: 0 0 8px; }
+    .list { list-style: none; padding-left: 0; margin: 14px 0 0; }
+    li { padding: 14px 0; border-bottom: 1px solid #f0f0f0; }
+    .title { font-weight: 700; font-size: 18px; }
+    .blurb { margin: 6px 0 0; color: #333; }
+  </style>
+</BaseLayout>

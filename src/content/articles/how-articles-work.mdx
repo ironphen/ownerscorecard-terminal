@@ -1,0 +1,40 @@
+---
+title: "How articles work on this site"
+description: "A working reference for publishing here: frontmatter, sections, ticker links, and interactive components. Kept as a draft."
+date: 2026-06-11
+section: letters
+tickers: []
+draft: true
+---
+
+import CompoundingExplorer from "../../components/CompoundingExplorer.jsx";
+
+This is a draft (`draft: true`), so it never appears on the live site — it exists as a
+reference for how publishing works. Drafts are visible when running `npm run dev`.
+
+## The workflow
+
+1. Create a file in `src/content/articles/`, e.g. `more-ideas-than-money.mdx`.
+   The filename becomes the URL: `/articles/more-ideas-than-money`.
+2. Fill in the frontmatter (the block at the top of this file is a live example):
+   - `section` — one of `markets`, `companies`, `principles`, `letters`
+     (rename these in `src/content.config.ts` anytime)
+   - `tickers` — e.g. `["KO", "PG"]`; the article then appears on those
+     companies' pages automatically
+   - `draft: true` until it's ready
+3. Write in plain Markdown. Commit, push, done — the build validates the
+   frontmatter and fails loudly if something's missing.
+
+## Interactive graphics
+
+Because articles are MDX, a React component drops straight into the prose and only
+loads its JavaScript when scrolled into view. This one is `<CompoundingExplorer />`:
+
+<CompoundingExplorer client:visible />
+
+Components like this live in `src/components/`. Plain articles ship zero JavaScript.
+
+## Linking to site data
+
+Reference a company page like any link: [PG](/c/PG) — that page pulls together
+research reports and any article tagged with the ticker.
