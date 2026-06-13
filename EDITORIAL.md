@@ -142,6 +142,38 @@ the voice gets written by R.G., not assembled from notes):
 | `the-belch-at-the-dinner-table` | companies | Even the great comp critics went quiet where they had board seats; and the question was always too narrow. |
 | `the-melting-arr` | markets | Beat kickoff: ARR-as-bond underwriting meets seat compression; how to read a BDC filing. |
 
+## Product architecture
+
+Decided June 2026. The product is **the ability to check**, not commentary —
+shipped as three formats: the **library** (mechanism explainers), the **tools**
+(apply a mechanism to a real company), and the **graded record** (published
+calls, timestamped and scored).
+
+- **Stack:** Astro static + MDX on Cloudflare. Tools are React islands. Static
+  by default; specific tools can graduate to runtime (Cloudflare adapter)
+  without re-platforming. The Next.js tripwire still stands: accounts or a
+  native paywall as a *committed* feature triggers a re-evaluation, not before.
+- **Data backbone:** SEC EDGAR XBRL — free, no key, primary-source. "We read the
+  filings" becomes literally true when the tools are EDGAR-fed. Build-time
+  pipeline (`scripts/fetchFundamentals.mjs` → `src/data/fundamentals.json`) over
+  a curated universe, refreshed in CI. EDGAR has no prices, so the *first* tools
+  are accounting-mechanism checks (coverage, accruals, capex-vs-D&A) that need
+  filing data only — fully free and clean. Price-dependent tools come later.
+- **The unit is "teach + tool":** every explainer ships with its checker
+  embedded; the tool also stands alone at a shareable `/tools/*` URL. Tools
+  travel where op-eds don't. Prototype shipped: `/tools/coverage` +
+  `can-it-pay-its-interest`.
+- **v1 scope:** library + one live tool (interest coverage). Not zero, not ten.
+- **Cost is ~$0** (static host + EDGAR + Actions free tier) — which means no
+  pressure to monetize prematurely, which protects the editorial standards.
+- **Repo is private for now.** Consequence: the git-as-tamper-evident-timestamp
+  mechanism for published calls is **not yet available** — when the graded
+  record launches it needs an alternative (a signed/published feed, or revisit
+  going public). Open the repo later and the Hindenburg "open-source the method"
+  posture comes with it.
+- **Not building:** accounts, database (git + static JSON is the database),
+  comments, CMS, custom paywall. The newsletter stays external/managed.
+
 ## Process
 
 See `PUBLISHING.md` for workflows (articles, reports, monthly record import).

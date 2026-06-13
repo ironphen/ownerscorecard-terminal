@@ -13,6 +13,8 @@ slate — lives in [`EDITORIAL.md`](EDITORIAL.md).
 | :--- | :--- |
 | `/` | Research index — one-page-per-ticker PDF reports |
 | `/articles` | Articles (MDX content collection, sections: markets / companies / principles / letters) |
+| `/tools` | Tools — apply a mechanism to a real company, from primary-source filings |
+| `/tools/coverage` | "Can it pay its interest?" — interest-coverage checker (EDGAR-fed) |
 | `/c/[ticker]` | Company dossier — reports + articles for one ticker |
 | `/rss.xml` | Feed of published articles |
 
@@ -38,6 +40,20 @@ committed:
 ```sh
 npm run import:fidelity -- ~/Downloads/Portfolio_Positions_MonDDYYYY.xlsx
 ```
+
+**Refresh the tool data (from SEC EDGAR)** — the fundamentals tools read
+`src/data/fundamentals.json`, built from `src/data/universe.json` by pulling
+latest-annual figures straight from EDGAR XBRL (free, no key; needs network
+access to `data.sec.gov`):
+
+```sh
+npm run fetch:fundamentals
+```
+
+A committed sample dataset (clearly flagged `"sample": true`) lets the tools
+render before the pipeline has run. CI can refresh it automatically — see
+`.github/workflows/fundamentals.yml` (manual-trigger until you enable the
+schedule). Expand coverage by adding tickers to `src/data/universe.json`.
 
 **Add a research report** — upload PDF/preview/xlsx to R2, then:
 

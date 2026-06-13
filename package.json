@@ -9,7 +9,8 @@
     "astro": "astro",
     "add:report": "node scripts/addReport.mjs",
     "import:fidelity": "node scripts/importFidelity.mjs",
-    "fetch:benchmark": "node scripts/fetchBenchmark.mjs"
+    "fetch:benchmark": "node scripts/fetchBenchmark.mjs",
+    "fetch:fundamentals": "node scripts/fetchFundamentals.mjs"
   },
   "dependencies": {
     "@astrojs/mdx": "^6.0.3",
