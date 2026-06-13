@@ -248,6 +248,52 @@ export function cashConversionCycle(c) {
   };
 }
 
+// Raw metric values from a single year's lines — reused for the time series.
+// Return null when not honestly computable.
+export function roicValue(L) {
+  if (!L) return null;
+  const oi = L.operatingIncome, eq = L.stockholdersEquity, debt = L.totalDebt;
+  if (oi == null || eq == null || debt == null) return null;
+  const invested = debt + eq - (L.cashAndEquivalents || 0);
+  if (invested <= 0) return null;
+  let t = 0.21;
+  const tax = L.incomeTaxExpense, ni = L.netIncome;
+  if (tax != null && ni != null && ni + tax > 0) t = Math.min(Math.max(tax / (ni + tax), 0), 0.5);
+  return (oi * (1 - t)) / invested;
+}
+
+export function operatingMargin(L) {
+  return L && L.operatingIncome != null && L.revenue ? L.operatingIncome / L.revenue : null;
+}
+
+export function ownerEarningsMargin(L) {
+  if (!L || L.cashFromOps == null || L.capex == null || !L.revenue) return null;
+  return (L.cashFromOps - Math.abs(L.capex)) / L.revenue;
+}
+
+// Durability: the same business-quality metrics across ~10 years of filings.
+// A moat is high ROIC that doesn't fade — you can only see it over a cycle.
+export function durability(company) {
+  const hist = company?.history;
+  if (!Array.isArray(hist) || hist.length < 3) return null;
+  const years = hist.map((h) => h.fy);
+  const roic = hist.map((h) => roicValue(h.lines));
+  const roicVals = roic.filter((v) => v != null);
+  const above = roicVals.filter((v) => v >= 0.15).length;
+  return {
+    years,
+    metrics: [
+      {
+        label: "Return on invested capital",
+        values: roic,
+        consistency: roicVals.length ? `≥15% in ${above} of ${roicVals.length} years` : null,
+      },
+      { label: "Operating margin", values: hist.map((h) => operatingMargin(h.lines)), consistency: null },
+      { label: "Owner Earnings margin", values: hist.map((h) => ownerEarningsMargin(h.lines)), consistency: null },
+    ],
+  };
+}
+
 // Assemble the panel, grouped into the two questions Graham and Buffett asked.
 export function buildScorecard(company) {
   const cov = coverage(company);

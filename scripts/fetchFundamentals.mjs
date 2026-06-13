@@ -99,6 +99,48 @@ function pickInstant(facts, tags) {
   return null;
 }
 
+// Collect every annual (duration) value per concept, keyed by fiscal year.
+function collectAnnual(facts, tags) {
+  for (const tag of tags) {
+    const units = facts?.facts?.["us-gaap"]?.[tag]?.units?.USD;
+    if (!units) continue;
+    const best = {};
+    for (const u of units) {
+      if (!u.form || !u.form.startsWith("10-K") || !u.start || !u.end) continue;
+      const dur = days(u.start, u.end);
+      if (dur < 350 || dur > 380) continue;
+      const fy = u.fy ?? new Date(u.end).getUTCFullYear();
+      if (!best[fy] || new Date(u.end) > new Date(best[fy].end)) best[fy] = { val: u.val, end: u.end };
+    }
+    if (Object.keys(best).length) {
+      const m = {};
+      for (const fy in best) m[fy] = best[fy].val;
+      return m;
+    }
+  }
+  return {};
+}
+
+// Collect every instant (balance-sheet) value per concept, keyed by fiscal year.
+function collectInstant(facts, tags) {
+  for (const tag of tags) {
+    const units = facts?.facts?.["us-gaap"]?.[tag]?.units?.USD;
+    if (!units) continue;
+    const best = {};
+    for (const u of units) {
+      if (!u.form || !u.form.startsWith("10-K") || !u.end || u.start) continue;
+      const fy = u.fy ?? new Date(u.end).getUTCFullYear();
+      if (!best[fy] || new Date(u.end) > new Date(best[fy].end)) best[fy] = { val: u.val, end: u.end };
+    }
+    if (Object.keys(best).length) {
+      const m = {};
+      for (const fy in best) m[fy] = best[fy].val;
+      return m;
+    }
+  }
+  return {};
+}
+
 async function main() {
   process.stdout.write("Resolving tickers → CIK from SEC… ");
   const map = await getJSON("https://www.sec.gov/files/company_tickers.json");
@@ -138,6 +180,40 @@ async function main() {
       ? `https://www.sec.gov/Archives/edgar/data/${Number(cik)}/${accnNoDash}/${anchor.accn}-index.htm`
       : `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${cik}&type=10-K&count=10`;
 
+    // Up to ~10 years of history for the durability strips.
+    const ha = {
+      revenue: collectAnnual(facts, CONCEPTS.revenue),
+      operatingIncome: collectAnnual(facts, CONCEPTS.operatingIncome),
+      incomeTaxExpense: collectAnnual(facts, CONCEPTS.incomeTaxExpense),
+      netIncome: collectAnnual(facts, CONCEPTS.netIncome),
+      cashFromOps: collectAnnual(facts, CONCEPTS.cashFromOps),
+      capex: collectAnnual(facts, CONCEPTS.capex),
+    };
+    const hi = {
+      equity: collectInstant(facts, CONCEPTS.stockholdersEquity),
+      cash: collectInstant(facts, CONCEPTS.cashAndEquivalents),
+      ltd: collectInstant(facts, CONCEPTS.longTermDebt),
+      cur: collectInstant(facts, CONCEPTS.currentDebt),
+    };
+    const history = Object.keys(ha.revenue)
+      .map(Number)
+      .sort((a, b) => a - b)
+      .slice(-10)
+      .map((fy) => ({
+        fy,
+        lines: {
+          revenue: ha.revenue[fy] ?? null,
+          operatingIncome: ha.operatingIncome[fy] ?? null,
+          incomeTaxExpense: ha.incomeTaxExpense[fy] ?? null,
+          netIncome: ha.netIncome[fy] ?? null,
+          totalDebt: hi.ltd[fy] != null || hi.cur[fy] != null ? (hi.ltd[fy] || 0) + (hi.cur[fy] || 0) : null,
+          stockholdersEquity: hi.equity[fy] ?? null,
+          cashAndEquivalents: hi.cash[fy] ?? null,
+          cashFromOps: ha.cashFromOps[fy] ?? null,
+          capex: ha.capex[fy] ?? null,
+        },
+      }));
+
     companies.push({
       ticker: ticker.toUpperCase(),
       name,
@@ -166,6 +242,7 @@ async function main() {
         inventory: inst(CONCEPTS.inventory),
         accountsPayable: inst(CONCEPTS.accountsPayable),
       },
+      history,
     });
     console.log(`  ✓ ${ticker} (CIK ${cik}, FY${anchor?.fy ?? "?"})`);
   }

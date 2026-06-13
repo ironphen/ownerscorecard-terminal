@@ -1,8 +1,25 @@
 ---
-import { buildScorecard, TONE_COLOR } from "../lib/fundamentals.mjs";
+import { buildScorecard, durability, TONE_COLOR } from "../lib/fundamentals.mjs";
 
 const { company, sample = false } = Astro.props;
 const { sections } = buildScorecard(company);
+const dur = durability(company);
+
+const fmtPct = (v) => (v == null ? "—" : `${(v * 100).toFixed(0)}%`);
+
+// Inline sparkline path over a self-scaled series (nulls become gaps).
+function spark(values, w = 132, h = 30) {
+  const pts = values.map((v, i) => ({ v, i })).filter((p) => p.v != null);
+  if (pts.length < 2) return null;
+  const vs = pts.map((p) => p.v);
+  const min = Math.min(...vs), max = Math.max(...vs), span = max - min || 1;
+  const x = (i) => (w * i) / (values.length - 1);
+  const y = (v) => h - 3 - (h - 6) * ((v - min) / span);
+  const d = pts.map((p, k) => `${k ? "L" : "M"}${x(p.i).toFixed(1)},${y(p.v).toFixed(1)}`).join("");
+  const last = pts[pts.length - 1];
+  const zeroY = min < 0 && max > 0 ? y(0) : null;
+  return { d, w, h, lastX: x(last.i), lastY: y(last.v), zeroY };
+}
 ---
 
 <section class="scorecard">
@@ -49,6 +66,35 @@ const { sections } = buildScorecard(company);
     </div>
   ))}
 
+  {dur ? (
+    <div class="section">
+      <h3 class="secHead">Durability — {dur.years[0]}–{dur.years[dur.years.length - 1]}</h3>
+      <p class="durNote">A moat is high return that doesn’t fade. Here are the quality metrics across a full cycle — judge the consistency, not the latest dot.</p>
+      <ul class="strips">
+        {dur.metrics.map((m) => {
+          const sp = spark(m.values);
+          const last = [...m.values].reverse().find((v) => v != null);
+          return (
+            <li>
+              <div class="stripLabel">
+                <span class="sl">{m.label}</span>
+                {m.consistency ? <span class="consist">{m.consistency}</span> : null}
+              </div>
+              {sp ? (
+                <svg class="sparkSvg" viewBox={`0 0 ${sp.w} ${sp.h}`} preserveAspectRatio="none" role="img" aria-label={`${m.label} trend`}>
+                  {sp.zeroY != null ? <line x1="0" y1={sp.zeroY} x2={sp.w} y2={sp.zeroY} class="zero" /> : null}
+                  <path d={sp.d} class="sparkLine" />
+                  <circle cx={sp.lastX} cy={sp.lastY} r="2.4" class="sparkDot" />
+                </svg>
+              ) : <span class="noHist">history pending</span>}
+              <span class="stripVal">{fmtPct(last)}</span>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  ) : null}
+
   <p class="foot">
     Solvent is not the same as cheap; growing is not the same as good. These are vital
     signs, not a verdict — the judgment is yours, and the filing is one click away.
@@ -81,6 +127,19 @@ const { sections } = buildScorecard(company);
   .label { font-weight: 700; font-size: 13px; margin-top: 2px; }
   .formula { font-size: 12px; color: #555; font-variant-numeric: tabular-nums; margin-top: 4px; }
   .note { font-size: 13px; color: #333; margin: 6px 0 0; }
+
+  .durNote { font-size: 13px; color: #555; margin: 8px 0 4px; }
+  .strips { list-style: none; padding: 0; margin: 0; }
+  .strips li { display: flex; align-items: center; gap: 14px; padding: 10px 0; border-bottom: 1px solid #eee; }
+  .stripLabel { flex: 1 1 auto; min-width: 0; }
+  .sl { font-weight: 700; display: block; }
+  .consist { font-size: 12px; color: #1a7a3c; }
+  .sparkSvg { width: 132px; height: 30px; flex: 0 0 auto; overflow: visible; }
+  .sparkLine { fill: none; stroke: #111; stroke-width: 1.4; vector-effect: non-scaling-stroke; }
+  .sparkDot { fill: #111; }
+  .zero { stroke: #ddd; stroke-width: 1; vector-effect: non-scaling-stroke; }
+  .noHist { font-size: 12px; color: #999; flex: 0 0 auto; width: 132px; text-align: center; }
+  .stripVal { font-weight: 700; font-variant-numeric: tabular-nums; width: 48px; text-align: right; flex: 0 0 auto; }
 
   .foot { font-size: 12px; color: #666; border-top: 1px solid #111; margin-top: 14px; padding-top: 10px; }
 </style>
