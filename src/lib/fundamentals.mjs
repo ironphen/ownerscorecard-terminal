@@ -300,7 +300,6 @@ export function buildScorecard(company) {
   const covV = coverageVerdict(cov);
   const coverageCheck = {
     title: "Can it pay its interest?",
-    href: "/tools/coverage",
     value: cov?.ratio != null ? `${cov.ratio.toFixed(1)}×` : "—",
     formula: cov && !cov.noBurden ? `Operating income ${fmtUSD(cov.oi)} ÷ interest expense ${fmtUSD(cov.interest)}` : "Little or no interest expense reported",
     tone: covV.tone,
