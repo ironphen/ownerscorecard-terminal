@@ -1,175 +1,134 @@
 {
-  "asOf": null,
-  "source": "SAMPLE DATA \u2014 illustrative placeholders, not live figures",
-  "sample": true,
-  "note": "Run `npm run fetch:fundamentals` (needs network access to data.sec.gov) to overwrite this with real values pulled straight from SEC EDGAR XBRL filings. Figures below are rounded, directionally-plausible placeholders so the tool renders before the pipeline has run; EDGAR links resolve to each company's real filings. Values are raw USD.",
+  "asOf": "2026-06-13",
+  "source": "SEC EDGAR XBRL (companyfacts)",
+  "sample": false,
+  "note": "Latest annual (10-K) figures pulled from EDGAR. Values are raw USD.",
   "companies": [
     {
       "ticker": "AAPL",
       "name": "Apple Inc.",
+      "cik": "0000320193",
       "fy": 2025,
       "periodEnd": "2025-09-27",
       "form": "10-K",
-      "sourceUrl": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&ticker=AAPL&type=10-K&dateb=&owner=include&count=10",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/0000320193-25-000079-index.htm",
       "lines": {
-        "operatingIncome": 123000000000,
-        "interestExpense": 3000000000,
-        "revenue": 391000000000,
-        "netIncome": 94000000000,
-        "totalDebt": 105000000000,
-        "cashFromOps": 110000000000,
-        "depreciation": 11500000000,
-        "capex": 9500000000,
-        "incomeTaxExpense": 16000000000,
-        "stockholdersEquity": 57000000000,
-        "cashAndEquivalents": 65000000000,
-        "stockBasedComp": 11000000000,
-        "dividendsPaid": 15000000000,
-        "buybacks": 90000000000,
-        "receivables": 60000000000,
-        "inventory": 7000000000,
-        "accountsPayable": 65000000000,
-        "costOfRevenue": 210000000000
+        "operatingIncome": 133050000000,
+        "interestExpense": 3933000000,
+        "revenue": 416161000000,
+        "netIncome": 112010000000,
+        "totalDebt": 90678000000,
+        "cashFromOps": 111482000000,
+        "depreciation": 11698000000,
+        "capex": 12715000000,
+        "incomeTaxExpense": 20719000000,
+        "costOfRevenue": 220960000000,
+        "stockBasedComp": 12863000000,
+        "dividendsPaid": 12563000000,
+        "buybacks": 90711000000,
+        "stockholdersEquity": 73733000000,
+        "cashAndEquivalents": 35934000000,
+        "receivables": 39777000000,
+        "inventory": 5718000000,
+        "accountsPayable": 69860000000
       },
       "history": [
         {
-          "fy": 2016,
-          "lines": {
-            "revenue": 192151561781,
-            "operatingIncome": 59382276174,
-            "incomeTaxExpense": 8124791177,
-            "netIncome": 45012852834,
-            "totalDebt": 52714615873,
-            "stockholdersEquity": 28131213937,
-            "cashAndEquivalents": 31078964085,
-            "cashFromOps": 55068303281,
-            "capex": 4532566235
-          }
-        },
-        {
-          "fy": 2017,
-          "lines": {
-            "revenue": 209843431197,
-            "operatingIncome": 63594629909,
-            "incomeTaxExpense": 8290502114,
-            "netIncome": 50401943768,
-            "totalDebt": 58582407217,
-            "stockholdersEquity": 29636812276,
-            "cashAndEquivalents": 34145562550,
-            "cashFromOps": 60186907549,
-            "capex": 5362343453
-          }
-        },
-        {
-          "fy": 2018,
-          "lines": {
-            "revenue": 229903807799,
-            "operatingIncome": 71027801424,
-            "incomeTaxExpense": 9780470772,
-            "netIncome": 52361189436,
-            "totalDebt": 63462701983,
-            "stockholdersEquity": 32559215054,
-            "cashAndEquivalents": 36577646369,
-            "cashFromOps": 61730783340,
-            "capex": 5436997190
-          }
-        },
-        {
           "fy": 2019,
           "lines": {
-            "revenue": 254185561395,
-            "operatingIncome": 75036146689,
-            "incomeTaxExpense": 10164989142,
-            "netIncome": 60058811987,
-            "totalDebt": 65323493297,
-            "stockholdersEquity": 36091165272,
-            "cashAndEquivalents": 39170164542,
-            "cashFromOps": 66265873327,
-            "capex": 5810580362
+            "revenue": 260174000000,
+            "operatingIncome": 63930000000,
+            "incomeTaxExpense": 10481000000,
+            "netIncome": 55256000000,
+            "totalDebt": 102067000000,
+            "stockholdersEquity": 90488000000,
+            "cashAndEquivalents": 48844000000,
+            "cashFromOps": 69391000000,
+            "capex": 10495000000
           }
         },
         {
           "fy": 2020,
           "lines": {
-            "revenue": 270908618188,
-            "operatingIncome": 83105595876,
-            "incomeTaxExpense": 10686949852,
-            "netIncome": 64522201007,
-            "totalDebt": 71126685457,
-            "stockholdersEquity": 38016473492,
-            "cashAndEquivalents": 45540181044,
-            "cashFromOps": 76353906621,
-            "capex": 6300084938
+            "revenue": 274515000000,
+            "operatingIncome": 66288000000,
+            "incomeTaxExpense": 9680000000,
+            "netIncome": 57411000000,
+            "totalDebt": 107440000000,
+            "stockholdersEquity": 65339000000,
+            "cashAndEquivalents": 38016000000,
+            "cashFromOps": 80674000000,
+            "capex": 7309000000
           }
         },
         {
           "fy": 2021,
           "lines": {
-            "revenue": 289535585111,
-            "operatingIncome": 90636470139,
-            "incomeTaxExpense": 12201657258,
-            "netIncome": 70678108054,
-            "totalDebt": 75541477772,
-            "stockholdersEquity": 43908475840,
-            "cashAndEquivalents": 45952175576,
-            "cashFromOps": 80191279935,
-            "capex": 7162339548
+            "revenue": 365817000000,
+            "operatingIncome": 108949000000,
+            "incomeTaxExpense": 14527000000,
+            "netIncome": 94680000000,
+            "totalDebt": 118719000000,
+            "stockholdersEquity": 63090000000,
+            "cashAndEquivalents": 34940000000,
+            "cashFromOps": 104038000000,
+            "capex": 11085000000
           }
         },
         {
           "fy": 2022,
           "lines": {
-            "revenue": 299586409676,
-            "operatingIncome": 97533599851,
-            "incomeTaxExpense": 12116048439,
-            "netIncome": 75875461257,
-            "totalDebt": 85557646585,
-            "stockholdersEquity": 45578868709,
-            "cashAndEquivalents": 53536527220,
-            "cashFromOps": 85695160990,
-            "capex": 7688686460
+            "revenue": 394328000000,
+            "operatingIncome": 119437000000,
+            "incomeTaxExpense": 19300000000,
+            "netIncome": 99803000000,
+            "totalDebt": 110087000000,
+            "stockholdersEquity": 50672000000,
+            "cashAndEquivalents": 23646000000,
+            "cashFromOps": 122151000000,
+            "capex": 10708000000
           }
         },
         {
           "fy": 2023,
           "lines": {
-            "revenue": 338382940839,
-            "operatingIncome": 106295191197,
-            "incomeTaxExpense": 13657346133,
-            "netIncome": 83329644322,
-            "totalDebt": 94023620969,
-            "stockholdersEquity": 48741735702,
-            "cashAndEquivalents": 56641794698,
-            "cashFromOps": 90164063532,
-            "capex": 8308828378
+            "revenue": 383285000000,
+            "operatingIncome": 114301000000,
+            "incomeTaxExpense": 16741000000,
+            "netIncome": 96995000000,
+            "totalDebt": 105103000000,
+            "stockholdersEquity": 62146000000,
+            "cashAndEquivalents": 29965000000,
+            "cashFromOps": 110543000000,
+            "capex": 10959000000
           }
         },
         {
           "fy": 2024,
           "lines": {
-            "revenue": 367363646493,
-            "operatingIncome": 119504703755,
-            "incomeTaxExpense": 15291740425,
-            "netIncome": 85162220372,
-            "totalDebt": 96111861246,
-            "stockholdersEquity": 53667889334,
-            "cashAndEquivalents": 57311721326,
-            "cashFromOps": 101461711249,
-            "capex": 8504301815
+            "revenue": 391035000000,
+            "operatingIncome": 123216000000,
+            "incomeTaxExpense": 29749000000,
+            "netIncome": 93736000000,
+            "totalDebt": 96662000000,
+            "stockholdersEquity": 56950000000,
+            "cashAndEquivalents": 29943000000,
+            "cashFromOps": 118254000000,
+            "capex": 9447000000
           }
         },
         {
           "fy": 2025,
           "lines": {
-            "revenue": 391000000000,
-            "operatingIncome": 123000000000,
-            "incomeTaxExpense": 16000000000,
-            "netIncome": 94000000000,
-            "totalDebt": 105000000000,
-            "stockholdersEquity": 57000000000,
-            "cashAndEquivalents": 65000000000,
-            "cashFromOps": 110000000000,
-            "capex": 9500000000
+            "revenue": 416161000000,
+            "operatingIncome": 133050000000,
+            "incomeTaxExpense": 20719000000,
+            "netIncome": 112010000000,
+            "totalDebt": 90678000000,
+            "stockholdersEquity": 73733000000,
+            "cashAndEquivalents": 35934000000,
+            "cashFromOps": 111482000000,
+            "capex": 12715000000
           }
         }
       ]
@@ -177,169 +136,142 @@
     {
       "ticker": "MSFT",
       "name": "Microsoft Corp.",
+      "cik": "0000789019",
       "fy": 2025,
       "periodEnd": "2025-06-30",
       "form": "10-K",
-      "sourceUrl": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&ticker=MSFT&type=10-K&dateb=&owner=include&count=10",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/789019/000095017025100235/0000950170-25-100235-index.htm",
       "lines": {
-        "operatingIncome": 109000000000,
-        "interestExpense": 2900000000,
-        "revenue": 245000000000,
-        "netIncome": 88000000000,
-        "totalDebt": 97000000000,
-        "cashFromOps": 119000000000,
-        "depreciation": 22000000000,
-        "capex": 44000000000,
-        "incomeTaxExpense": 20000000000,
-        "stockholdersEquity": 268000000000,
-        "cashAndEquivalents": 75000000000,
-        "stockBasedComp": 10000000000,
-        "dividendsPaid": 22000000000,
-        "buybacks": 18000000000,
-        "receivables": 48000000000,
-        "inventory": 3000000000,
-        "accountsPayable": 21000000000,
-        "costOfRevenue": 74000000000
+        "operatingIncome": 128528000000,
+        "interestExpense": 2935000000,
+        "revenue": 281724000000,
+        "netIncome": 101832000000,
+        "totalDebt": 43151000000,
+        "cashFromOps": 136162000000,
+        "depreciation": null,
+        "capex": 64551000000,
+        "incomeTaxExpense": 21795000000,
+        "costOfRevenue": 87831000000,
+        "stockBasedComp": 11974000000,
+        "dividendsPaid": 24082000000,
+        "buybacks": 18420000000,
+        "stockholdersEquity": 343479000000,
+        "cashAndEquivalents": 30242000000,
+        "receivables": 69905000000,
+        "inventory": 938000000,
+        "accountsPayable": 27724000000
       },
       "history": [
         {
-          "fy": 2016,
-          "lines": {
-            "revenue": 117868084831,
-            "operatingIncome": 52122242119,
-            "incomeTaxExpense": 10273345893,
-            "netIncome": 42390194002,
-            "totalDebt": 47299472250,
-            "stockholdersEquity": 132604721595,
-            "cashAndEquivalents": 38912198477,
-            "cashFromOps": 57032843215,
-            "capex": 21899111173
-          }
-        },
-        {
-          "fy": 2017,
-          "lines": {
-            "revenue": 133020292395,
-            "operatingIncome": 61147029250,
-            "incomeTaxExpense": 11150371614,
-            "netIncome": 49274177290,
-            "totalDebt": 51244873415,
-            "stockholdersEquity": 143565621861,
-            "cashAndEquivalents": 39947904750,
-            "cashFromOps": 66762049675,
-            "capex": 24859941797
-          }
-        },
-        {
           "fy": 2018,
           "lines": {
-            "revenue": 137964881522,
-            "operatingIncome": 61541183167,
-            "incomeTaxExpense": 11357006718,
-            "netIncome": 49977911444,
-            "totalDebt": 56513459547,
-            "stockholdersEquity": 157769098516,
-            "cashAndEquivalents": 42723516628,
-            "cashFromOps": 65992013266,
-            "capex": 25465484064
+            "revenue": 110360000000,
+            "operatingIncome": 35058000000,
+            "incomeTaxExpense": 19903000000,
+            "netIncome": 16571000000,
+            "totalDebt": 76240000000,
+            "stockholdersEquity": 82718000000,
+            "cashAndEquivalents": 11946000000,
+            "cashFromOps": 43884000000,
+            "capex": 11632000000
           }
         },
         {
           "fy": 2019,
           "lines": {
-            "revenue": 152372944120,
-            "operatingIncome": 69144177174,
-            "incomeTaxExpense": 13174449639,
-            "netIncome": 56511308354,
-            "totalDebt": 61221147444,
-            "stockholdersEquity": 170871430562,
-            "cashAndEquivalents": 48095491568,
-            "cashFromOps": 71645570028,
-            "capex": 28835267282
+            "revenue": 125843000000,
+            "operatingIncome": 42959000000,
+            "incomeTaxExpense": 4448000000,
+            "netIncome": 39240000000,
+            "totalDebt": 72178000000,
+            "stockholdersEquity": 102330000000,
+            "cashAndEquivalents": 11356000000,
+            "cashFromOps": 52185000000,
+            "capex": 13925000000
           }
         },
         {
           "fy": 2020,
           "lines": {
-            "revenue": 171411175284,
-            "operatingIncome": 76961840921,
-            "incomeTaxExpense": 14017118823,
-            "netIncome": 59246764392,
-            "totalDebt": 65349663012,
-            "stockholdersEquity": 175164960212,
-            "cashAndEquivalents": 51729203942,
-            "cashFromOps": 77444071800,
-            "capex": 28650054521
+            "revenue": 143015000000,
+            "operatingIncome": 52959000000,
+            "incomeTaxExpense": 8755000000,
+            "netIncome": 44281000000,
+            "totalDebt": 63327000000,
+            "stockholdersEquity": 118304000000,
+            "cashAndEquivalents": 13576000000,
+            "cashFromOps": 60675000000,
+            "capex": 15441000000
           }
         },
         {
           "fy": 2021,
           "lines": {
-            "revenue": 174837653988,
-            "operatingIncome": 77412686059,
-            "incomeTaxExpense": 14465466375,
-            "netIncome": 61788568512,
-            "totalDebt": 67734664186,
-            "stockholdersEquity": 190118338178,
-            "cashAndEquivalents": 52930222058,
-            "cashFromOps": 86275568214,
-            "capex": 30806721064
+            "revenue": 168088000000,
+            "operatingIncome": 69916000000,
+            "incomeTaxExpense": 9831000000,
+            "netIncome": 61271000000,
+            "totalDebt": 58146000000,
+            "stockholdersEquity": 141988000000,
+            "cashAndEquivalents": 14224000000,
+            "cashFromOps": 76740000000,
+            "capex": 20622000000
           }
         },
         {
           "fy": 2022,
           "lines": {
-            "revenue": 201769248245,
-            "operatingIncome": 87514727149,
-            "incomeTaxExpense": 15318660909,
-            "netIncome": 68126578343,
-            "totalDebt": 75826600522,
-            "stockholdersEquity": 209857157969,
-            "cashAndEquivalents": 57291918098,
-            "cashFromOps": 97762305531,
-            "capex": 36650958295
+            "revenue": 198270000000,
+            "operatingIncome": 83383000000,
+            "incomeTaxExpense": 10978000000,
+            "netIncome": 72738000000,
+            "totalDebt": 49781000000,
+            "stockholdersEquity": 166542000000,
+            "cashAndEquivalents": 13931000000,
+            "cashFromOps": 89035000000,
+            "capex": 23886000000
           }
         },
         {
           "fy": 2023,
           "lines": {
-            "revenue": 209333626328,
-            "operatingIncome": 93298866388,
-            "incomeTaxExpense": 16436702095,
-            "netIncome": 72444488192,
-            "totalDebt": 81853195843,
-            "stockholdersEquity": 224361698129,
-            "cashAndEquivalents": 66414965137,
-            "cashFromOps": 98569203931,
-            "capex": 35923886465
+            "revenue": 211915000000,
+            "operatingIncome": 88523000000,
+            "incomeTaxExpense": 16950000000,
+            "netIncome": 72361000000,
+            "totalDebt": 47237000000,
+            "stockholdersEquity": 206223000000,
+            "cashAndEquivalents": 34704000000,
+            "cashFromOps": 87582000000,
+            "capex": 28107000000
           }
         },
         {
           "fy": 2024,
           "lines": {
-            "revenue": 237082543088,
-            "operatingIncome": 101211116302,
-            "incomeTaxExpense": 17864078776,
-            "netIncome": 81833256803,
-            "totalDebt": 85566955710,
-            "stockholdersEquity": 248845678720,
-            "cashAndEquivalents": 72767369741,
-            "cashFromOps": 114188488760,
-            "capex": 41540060980
+            "revenue": 245122000000,
+            "operatingIncome": 109433000000,
+            "incomeTaxExpense": 19651000000,
+            "netIncome": 88136000000,
+            "totalDebt": 44937000000,
+            "stockholdersEquity": 268477000000,
+            "cashAndEquivalents": 18315000000,
+            "cashFromOps": 118548000000,
+            "capex": 44477000000
           }
         },
         {
           "fy": 2025,
           "lines": {
-            "revenue": 245000000000,
-            "operatingIncome": 109000000000,
-            "incomeTaxExpense": 20000000000,
-            "netIncome": 88000000000,
-            "totalDebt": 97000000000,
-            "stockholdersEquity": 268000000000,
-            "cashAndEquivalents": 75000000000,
-            "cashFromOps": 119000000000,
-            "capex": 44000000000
+            "revenue": 281724000000,
+            "operatingIncome": 128528000000,
+            "incomeTaxExpense": 21795000000,
+            "netIncome": 101832000000,
+            "totalDebt": 43151000000,
+            "stockholdersEquity": 343479000000,
+            "cashAndEquivalents": 30242000000,
+            "cashFromOps": 136162000000,
+            "capex": 64551000000
           }
         }
       ]
@@ -347,169 +279,142 @@
     {
       "ticker": "KO",
       "name": "Coca-Cola Co.",
+      "cik": "0000021344",
       "fy": 2025,
       "periodEnd": "2025-12-31",
       "form": "10-K",
-      "sourceUrl": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&ticker=KO&type=10-K&dateb=&owner=include&count=10",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/21344/000162828026010047/0001628280-26-010047-index.htm",
       "lines": {
-        "operatingIncome": 11300000000,
-        "interestExpense": 1600000000,
-        "revenue": 46000000000,
-        "netIncome": 10700000000,
-        "totalDebt": 42000000000,
-        "cashFromOps": 11500000000,
-        "depreciation": 1100000000,
-        "capex": 1500000000,
-        "incomeTaxExpense": 2900000000,
-        "stockholdersEquity": 25000000000,
-        "cashAndEquivalents": 12000000000,
-        "stockBasedComp": 350000000,
-        "dividendsPaid": 8000000000,
-        "buybacks": 1700000000,
-        "receivables": 4000000000,
-        "inventory": 4500000000,
-        "accountsPayable": 16000000000,
-        "costOfRevenue": 18000000000
+        "operatingIncome": 13762000000,
+        "interestExpense": 1654000000,
+        "revenue": 47941000000,
+        "netIncome": 13107000000,
+        "totalDebt": 37507000000,
+        "cashFromOps": 7408000000,
+        "depreciation": 1050000000,
+        "capex": 2112000000,
+        "incomeTaxExpense": 2861000000,
+        "costOfRevenue": 18397000000,
+        "stockBasedComp": 279000000,
+        "dividendsPaid": 8779000000,
+        "buybacks": 746000000,
+        "stockholdersEquity": 32169000000,
+        "cashAndEquivalents": 10270000000,
+        "receivables": 3038000000,
+        "inventory": 4425000000,
+        "accountsPayable": null
       },
       "history": [
         {
-          "fy": 2016,
-          "lines": {
-            "revenue": 22461743859,
-            "operatingIncome": 5577461209,
-            "incomeTaxExpense": 1402419060,
-            "netIncome": 5498223172,
-            "totalDebt": 21078934735,
-            "stockholdersEquity": 12855216481,
-            "cashAndEquivalents": 5900735713,
-            "cashFromOps": 5593532787,
-            "capex": 773748428
-          }
-        },
-        {
-          "fy": 2017,
-          "lines": {
-            "revenue": 26057524787,
-            "operatingIncome": 6320319630,
-            "incomeTaxExpense": 1614735538,
-            "netIncome": 5964901425,
-            "totalDebt": 23235596051,
-            "stockholdersEquity": 13137636735,
-            "cashAndEquivalents": 6494662199,
-            "cashFromOps": 6123351849,
-            "capex": 772231721
-          }
-        },
-        {
           "fy": 2018,
           "lines": {
-            "revenue": 25573514943,
-            "operatingIncome": 6448002371,
-            "incomeTaxExpense": 1651371507,
-            "netIncome": 6363545362,
-            "totalDebt": 25625359683,
-            "stockholdersEquity": 14510279524,
-            "cashAndEquivalents": 7307881951,
-            "cashFromOps": 7037619893,
-            "capex": 915058868
+            "revenue": 31856000000,
+            "operatingIncome": 8700000000,
+            "incomeTaxExpense": 1623000000,
+            "netIncome": 6434000000,
+            "totalDebt": 30361000000,
+            "stockholdersEquity": 16981000000,
+            "cashAndEquivalents": 8926000000,
+            "cashFromOps": 7320000000,
+            "capex": 1347000000
           }
         },
         {
           "fy": 2019,
           "lines": {
-            "revenue": 28595412010,
-            "operatingIncome": 6921860330,
-            "incomeTaxExpense": 1777573214,
-            "netIncome": 6538309584,
-            "totalDebt": 25684685634,
-            "stockholdersEquity": 15949697861,
-            "cashAndEquivalents": 7864750110,
-            "cashFromOps": 7493662658,
-            "capex": 943314157
+            "revenue": 37266000000,
+            "operatingIncome": 10086000000,
+            "incomeTaxExpense": 1801000000,
+            "netIncome": 8920000000,
+            "totalDebt": 31769000000,
+            "stockholdersEquity": 18981000000,
+            "cashAndEquivalents": 6480000000,
+            "cashFromOps": 10471000000,
+            "capex": 2054000000
           }
         },
         {
           "fy": 2020,
           "lines": {
-            "revenue": 31785752777,
-            "operatingIncome": 7921033849,
-            "incomeTaxExpense": 1891739364,
-            "netIncome": 7399182536,
-            "totalDebt": 29755821500,
-            "stockholdersEquity": 17494906424,
-            "cashAndEquivalents": 8371288037,
-            "cashFromOps": 7809513639,
-            "capex": 988055888
+            "revenue": 33014000000,
+            "operatingIncome": 8997000000,
+            "incomeTaxExpense": 1981000000,
+            "netIncome": 7747000000,
+            "totalDebt": 40610000000,
+            "stockholdersEquity": 19299000000,
+            "cashAndEquivalents": 6795000000,
+            "cashFromOps": 9844000000,
+            "capex": 1177000000
           }
         },
         {
           "fy": 2021,
           "lines": {
-            "revenue": 34788979826,
-            "operatingIncome": 8166728847,
-            "incomeTaxExpense": 2195709721,
-            "netIncome": 8235769366,
-            "totalDebt": 30549694192,
-            "stockholdersEquity": 18194537238,
-            "cashAndEquivalents": 9214449199,
-            "cashFromOps": 8642862097,
-            "capex": 1066161205
+            "revenue": 38655000000,
+            "operatingIncome": 10308000000,
+            "incomeTaxExpense": 2621000000,
+            "netIncome": 9771000000,
+            "totalDebt": 39454000000,
+            "stockholdersEquity": 22999000000,
+            "cashAndEquivalents": 9684000000,
+            "cashFromOps": 12625000000,
+            "capex": 1367000000
           }
         },
         {
           "fy": 2022,
           "lines": {
-            "revenue": 35154365831,
-            "operatingIncome": 8657375885,
-            "incomeTaxExpense": 2395315046,
-            "netIncome": 8754347915,
-            "totalDebt": 32161265509,
-            "stockholdersEquity": 20493792388,
-            "cashAndEquivalents": 9983525704,
-            "cashFromOps": 9272642109,
-            "capex": 1172935661
+            "revenue": 43004000000,
+            "operatingIncome": 10909000000,
+            "incomeTaxExpense": 2115000000,
+            "netIncome": 9542000000,
+            "totalDebt": 36776000000,
+            "stockholdersEquity": 24105000000,
+            "cashAndEquivalents": 9519000000,
+            "cashFromOps": 11018000000,
+            "capex": 1484000000
           }
         },
         {
           "fy": 2023,
           "lines": {
-            "revenue": 39629489200,
-            "operatingIncome": 9330428457,
-            "incomeTaxExpense": 2365509647,
-            "netIncome": 9605497676,
-            "totalDebt": 36547182453,
-            "stockholdersEquity": 21490442916,
-            "cashAndEquivalents": 10734181898,
-            "cashFromOps": 9794136533,
-            "capex": 1333814677
+            "revenue": 45754000000,
+            "operatingIncome": 11311000000,
+            "incomeTaxExpense": 2249000000,
+            "netIncome": 10714000000,
+            "totalDebt": 37507000000,
+            "stockholdersEquity": 25941000000,
+            "cashAndEquivalents": 9366000000,
+            "cashFromOps": 11599000000,
+            "capex": 1852000000
           }
         },
         {
           "fy": 2024,
           "lines": {
-            "revenue": 43981772369,
-            "operatingIncome": 10160627631,
-            "incomeTaxExpense": 2618548236,
-            "netIncome": 9702291036,
-            "totalDebt": 37879875416,
-            "stockholdersEquity": 23348234186,
-            "cashAndEquivalents": 10843738661,
-            "cashFromOps": 10561911515,
-            "capex": 1337649122
+            "revenue": 47061000000,
+            "operatingIncome": 9992000000,
+            "incomeTaxExpense": 2437000000,
+            "netIncome": 10631000000,
+            "totalDebt": null,
+            "stockholdersEquity": 24856000000,
+            "cashAndEquivalents": 10828000000,
+            "cashFromOps": 6805000000,
+            "capex": 2064000000
           }
         },
         {
           "fy": 2025,
           "lines": {
-            "revenue": 46000000000,
-            "operatingIncome": 11300000000,
-            "incomeTaxExpense": 2900000000,
-            "netIncome": 10700000000,
-            "totalDebt": 42000000000,
-            "stockholdersEquity": 25000000000,
-            "cashAndEquivalents": 12000000000,
-            "cashFromOps": 11500000000,
-            "capex": 1500000000
+            "revenue": 47941000000,
+            "operatingIncome": 13762000000,
+            "incomeTaxExpense": 2861000000,
+            "netIncome": 13107000000,
+            "totalDebt": null,
+            "stockholdersEquity": 32169000000,
+            "cashAndEquivalents": 10270000000,
+            "cashFromOps": 7408000000,
+            "capex": 2112000000
           }
         }
       ]
@@ -517,169 +422,142 @@
     {
       "ticker": "PG",
       "name": "Procter & Gamble Co.",
+      "cik": "0000080424",
       "fy": 2025,
       "periodEnd": "2025-06-30",
       "form": "10-K",
-      "sourceUrl": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&ticker=PG&type=10-K&dateb=&owner=include&count=10",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/80424/000008042425000076/0000080424-25-000076-index.htm",
       "lines": {
-        "operatingIncome": 18500000000,
-        "interestExpense": 1100000000,
-        "revenue": 84000000000,
-        "netIncome": 15000000000,
-        "totalDebt": 34000000000,
-        "cashFromOps": 19000000000,
-        "depreciation": 3000000000,
-        "capex": 3500000000,
-        "incomeTaxExpense": 3500000000,
-        "stockholdersEquity": 52000000000,
-        "cashAndEquivalents": 9000000000,
-        "stockBasedComp": 600000000,
-        "dividendsPaid": 9000000000,
-        "buybacks": 6000000000,
-        "receivables": 6000000000,
-        "inventory": 7000000000,
-        "accountsPayable": 14000000000,
-        "costOfRevenue": 42000000000
+        "operatingIncome": 20451000000,
+        "interestExpense": 756000000,
+        "revenue": 84284000000,
+        "netIncome": 15974000000,
+        "totalDebt": 30372000000,
+        "cashFromOps": 17817000000,
+        "depreciation": 2847000000,
+        "capex": 3773000000,
+        "incomeTaxExpense": 4102000000,
+        "costOfRevenue": 41164000000,
+        "stockBasedComp": 476000000,
+        "dividendsPaid": 9872000000,
+        "buybacks": 6500000000,
+        "stockholdersEquity": null,
+        "cashAndEquivalents": 4239000000,
+        "receivables": 6185000000,
+        "inventory": 7551000000,
+        "accountsPayable": 15227000000
       },
       "history": [
         {
-          "fy": 2016,
+          "fy": 2014,
           "lines": {
-            "revenue": 43743842354,
-            "operatingIncome": 9119288769,
-            "incomeTaxExpense": 1743545912,
-            "netIncome": 7566277213,
-            "totalDebt": 17696111632,
-            "stockholdersEquity": 25806477038,
-            "cashAndEquivalents": 4690308791,
-            "cashFromOps": 9506297650,
-            "capex": 1756443527
-          }
-        },
-        {
-          "fy": 2017,
-          "lines": {
-            "revenue": 45489265263,
-            "operatingIncome": 9513921113,
-            "incomeTaxExpense": 1879619069,
-            "netIncome": 7847222845,
-            "totalDebt": 17457908601,
-            "stockholdersEquity": 28934470919,
-            "cashAndEquivalents": 4703101172,
-            "cashFromOps": 10237899012,
-            "capex": 1933523817
-          }
-        },
-        {
-          "fy": 2018,
-          "lines": {
-            "revenue": 49289998273,
-            "operatingIncome": 10606727487,
-            "incomeTaxExpense": 2045963588,
-            "netIncome": 8800880631,
-            "totalDebt": 20402632320,
-            "stockholdersEquity": 29146377420,
-            "cashAndEquivalents": 5283077551,
-            "cashFromOps": 10807490329,
-            "capex": 1996658022
+            "revenue": 29400000000,
+            "operatingIncome": 15288000000,
+            "incomeTaxExpense": 3178000000,
+            "netIncome": 11643000000,
+            "totalDebt": 24118000000,
+            "stockholdersEquity": null,
+            "cashAndEquivalents": 8558000000,
+            "cashFromOps": 13958000000,
+            "capex": 3848000000
           }
         },
         {
           "fy": 2019,
           "lines": {
-            "revenue": 54375442328,
-            "operatingIncome": 11667131175,
-            "incomeTaxExpense": 2219208689,
-            "netIncome": 9698304076,
-            "totalDebt": 22309554583,
-            "stockholdersEquity": 32582852277,
-            "cashAndEquivalents": 5735347131,
-            "cashFromOps": 11979871798,
-            "capex": 2208276021
+            "revenue": 67684000000,
+            "operatingIncome": 5487000000,
+            "incomeTaxExpense": 2103000000,
+            "netIncome": 3897000000,
+            "totalDebt": 23783000000,
+            "stockholdersEquity": null,
+            "cashAndEquivalents": 4239000000,
+            "cashFromOps": 15242000000,
+            "capex": 3347000000
           }
         },
         {
           "fy": 2020,
           "lines": {
-            "revenue": 58270812199,
-            "operatingIncome": 12530788737,
-            "incomeTaxExpense": 2389969918,
-            "netIncome": 10186325786,
-            "totalDebt": 24161454745,
-            "stockholdersEquity": 36095364830,
-            "cashAndEquivalents": 6355886123,
-            "cashFromOps": 13502868033,
-            "capex": 2324775084
+            "revenue": 70950000000,
+            "operatingIncome": 15706000000,
+            "incomeTaxExpense": 2731000000,
+            "netIncome": 13027000000,
+            "totalDebt": 26045000000,
+            "stockholdersEquity": null,
+            "cashAndEquivalents": null,
+            "cashFromOps": 17403000000,
+            "capex": 3073000000
           }
         },
         {
           "fy": 2021,
           "lines": {
-            "revenue": 62109960800,
-            "operatingIncome": 14200809107,
-            "incomeTaxExpense": 2660072982,
-            "netIncome": 10625372259,
-            "totalDebt": 24045409854,
-            "stockholdersEquity": 38000318694,
-            "cashAndEquivalents": 6332496435,
-            "cashFromOps": 13603354518,
-            "capex": 2462785342
+            "revenue": 76118000000,
+            "operatingIncome": 17986000000,
+            "incomeTaxExpense": 3263000000,
+            "netIncome": 14306000000,
+            "totalDebt": 26719000000,
+            "stockholdersEquity": null,
+            "cashAndEquivalents": null,
+            "cashFromOps": 18371000000,
+            "capex": 2787000000
           }
         },
         {
           "fy": 2022,
           "lines": {
-            "revenue": 67811980850,
-            "operatingIncome": 15102881954,
-            "incomeTaxExpense": 2888723178,
-            "netIncome": 11496016499,
-            "totalDebt": 27573610160,
-            "stockholdersEquity": 41940803834,
-            "cashAndEquivalents": 6889416865,
-            "cashFromOps": 15660232167,
-            "capex": 2908316086
+            "revenue": 80187000000,
+            "operatingIncome": 17813000000,
+            "incomeTaxExpense": 3202000000,
+            "netIncome": 14742000000,
+            "totalDebt": 26495000000,
+            "stockholdersEquity": null,
+            "cashAndEquivalents": null,
+            "cashFromOps": 16723000000,
+            "capex": 3156000000
           }
         },
         {
           "fy": 2023,
           "lines": {
-            "revenue": 69997031703,
-            "operatingIncome": 16578474484,
-            "incomeTaxExpense": 2970155955,
-            "netIncome": 12843699556,
-            "totalDebt": 30577471662,
-            "stockholdersEquity": 46063710804,
-            "cashAndEquivalents": 7454834923,
-            "cashFromOps": 16177890479,
-            "capex": 3005368459
+            "revenue": 82006000000,
+            "operatingIncome": 18134000000,
+            "incomeTaxExpense": 3615000000,
+            "netIncome": 14653000000,
+            "totalDebt": 28329000000,
+            "stockholdersEquity": null,
+            "cashAndEquivalents": null,
+            "cashFromOps": 16848000000,
+            "capex": 3062000000
           }
         },
         {
           "fy": 2024,
           "lines": {
-            "revenue": 76526458900,
-            "operatingIncome": 16608451511,
-            "incomeTaxExpense": 3181929582,
-            "netIncome": 14197431715,
-            "totalDebt": 29968742551,
-            "stockholdersEquity": 48408390082,
-            "cashAndEquivalents": 8283715085,
-            "cashFromOps": 16744773855,
-            "capex": 3186133575
+            "revenue": 84039000000,
+            "operatingIncome": 18545000000,
+            "incomeTaxExpense": 3787000000,
+            "netIncome": 14879000000,
+            "totalDebt": 29107000000,
+            "stockholdersEquity": null,
+            "cashAndEquivalents": null,
+            "cashFromOps": 19846000000,
+            "capex": 3322000000
           }
         },
         {
           "fy": 2025,
           "lines": {
-            "revenue": 84000000000,
-            "operatingIncome": 18500000000,
-            "incomeTaxExpense": 3500000000,
-            "netIncome": 15000000000,
-            "totalDebt": 34000000000,
-            "stockholdersEquity": 52000000000,
-            "cashAndEquivalents": 9000000000,
-            "cashFromOps": 19000000000,
-            "capex": 3500000000
+            "revenue": 84284000000,
+            "operatingIncome": 20451000000,
+            "incomeTaxExpense": 4102000000,
+            "netIncome": 15974000000,
+            "totalDebt": 30372000000,
+            "stockholdersEquity": null,
+            "cashAndEquivalents": null,
+            "cashFromOps": 17817000000,
+            "capex": 3773000000
           }
         }
       ]
@@ -687,169 +565,142 @@
     {
       "ticker": "WMT",
       "name": "Walmart Inc.",
-      "fy": 2025,
-      "periodEnd": "2025-01-31",
+      "cik": "0000104169",
+      "fy": 2026,
+      "periodEnd": "2026-01-31",
       "form": "10-K",
-      "sourceUrl": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&ticker=WMT&type=10-K&dateb=&owner=include&count=10",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/104169/000010416926000055/0000104169-26-000055-index.htm",
       "lines": {
-        "operatingIncome": 27000000000,
-        "interestExpense": 2700000000,
-        "revenue": 681000000000,
-        "netIncome": 19000000000,
-        "totalDebt": 60000000000,
-        "cashFromOps": 36000000000,
-        "depreciation": 12000000000,
-        "capex": 24000000000,
-        "incomeTaxExpense": 5600000000,
-        "stockholdersEquity": 91000000000,
-        "cashAndEquivalents": 9000000000,
-        "stockBasedComp": 1000000000,
-        "dividendsPaid": 5000000000,
-        "buybacks": 4000000000,
-        "receivables": 9000000000,
-        "inventory": 57000000000,
-        "accountsPayable": 58000000000,
-        "costOfRevenue": 520000000000
+        "operatingIncome": 29825000000,
+        "interestExpense": null,
+        "revenue": 706413000000,
+        "netIncome": 21893000000,
+        "totalDebt": 38166000000,
+        "cashFromOps": 41565000000,
+        "depreciation": 10678000000,
+        "capex": 26642000000,
+        "incomeTaxExpense": 7199000000,
+        "costOfRevenue": 535395000000,
+        "stockBasedComp": null,
+        "dividendsPaid": 7507000000,
+        "buybacks": 8088000000,
+        "stockholdersEquity": 99617000000,
+        "cashAndEquivalents": 10727000000,
+        "receivables": null,
+        "inventory": 58851000000,
+        "accountsPayable": 63061000000
       },
       "history": [
         {
-          "fy": 2016,
-          "lines": {
-            "revenue": 344891364624,
-            "operatingIncome": 13523284439,
-            "incomeTaxExpense": 2679334891,
-            "netIncome": 9965788920,
-            "totalDebt": 30880457954,
-            "stockholdersEquity": 47669941296,
-            "cashAndEquivalents": 4324302964,
-            "cashFromOps": 17586768387,
-            "capex": 11453205933
-          }
-        },
-        {
-          "fy": 2017,
-          "lines": {
-            "revenue": 378188070571,
-            "operatingIncome": 14252403638,
-            "incomeTaxExpense": 2913427575,
-            "netIncome": 10185301877,
-            "totalDebt": 33749777571,
-            "stockholdersEquity": 50732711690,
-            "cashAndEquivalents": 4745045526,
-            "cashFromOps": 18767711726,
-            "capex": 13509970004
-          }
-        },
-        {
-          "fy": 2018,
-          "lines": {
-            "revenue": 400162097662,
-            "operatingIncome": 16069983141,
-            "incomeTaxExpense": 3133401093,
-            "netIncome": 10595777353,
-            "totalDebt": 35668320575,
-            "stockholdersEquity": 52701077185,
-            "cashAndEquivalents": 5026870515,
-            "cashFromOps": 21926436471,
-            "capex": 14192035472
-          }
-        },
-        {
           "fy": 2019,
           "lines": {
-            "revenue": 442089771662,
-            "operatingIncome": 16306335320,
-            "incomeTaxExpense": 3654661212,
-            "netIncome": 11454330411,
-            "totalDebt": 39181836214,
-            "stockholdersEquity": 57080348287,
-            "cashAndEquivalents": 5580301144,
-            "cashFromOps": 22806488392,
-            "capex": 15769368702
+            "revenue": 510329000000,
+            "operatingIncome": 21957000000,
+            "incomeTaxExpense": 4281000000,
+            "netIncome": 6670000000,
+            "totalDebt": 45396000000,
+            "stockholdersEquity": 72496000000,
+            "cashAndEquivalents": 7722000000,
+            "cashFromOps": 27753000000,
+            "capex": 10344000000
           }
         },
         {
           "fy": 2020,
           "lines": {
-            "revenue": 452717986712,
-            "operatingIncome": 17694419218,
-            "incomeTaxExpense": 3821523936,
-            "netIncome": 12592850442,
-            "totalDebt": 39240187199,
-            "stockholdersEquity": 59836321188,
-            "cashAndEquivalents": 5849845165,
-            "cashFromOps": 23770297626,
-            "capex": 16026905183
+            "revenue": 519926000000,
+            "operatingIncome": 20568000000,
+            "incomeTaxExpense": 4915000000,
+            "netIncome": 14881000000,
+            "totalDebt": 49076000000,
+            "stockholdersEquity": 74669000000,
+            "cashAndEquivalents": 9465000000,
+            "cashFromOps": 25255000000,
+            "capex": 10705000000
           }
         },
         {
           "fy": 2021,
           "lines": {
-            "revenue": 490794771018,
-            "operatingIncome": 20360801229,
-            "incomeTaxExpense": 4029711544,
-            "netIncome": 13965690938,
-            "totalDebt": 42681271964,
-            "stockholdersEquity": 65864341377,
-            "cashAndEquivalents": 6296520625,
-            "cashFromOps": 25800735290,
-            "capex": 16785752294
+            "revenue": 555233000000,
+            "operatingIncome": 22548000000,
+            "incomeTaxExpense": 6858000000,
+            "netIncome": 13510000000,
+            "totalDebt": 44309000000,
+            "stockholdersEquity": 80925000000,
+            "cashAndEquivalents": 17741000000,
+            "cashFromOps": 36074000000,
+            "capex": 10264000000
           }
         },
         {
           "fy": 2022,
           "lines": {
-            "revenue": 553200075979,
-            "operatingIncome": 21542886506,
-            "incomeTaxExpense": 4307409660,
-            "netIncome": 15044744523,
-            "totalDebt": 49700135458,
-            "stockholdersEquity": 69394560217,
-            "cashAndEquivalents": 7372342350,
-            "cashFromOps": 28384138048,
-            "capex": 19042450795
+            "revenue": 567762000000,
+            "operatingIncome": 25942000000,
+            "incomeTaxExpense": 4756000000,
+            "netIncome": 13673000000,
+            "totalDebt": 37667000000,
+            "stockholdersEquity": 83253000000,
+            "cashAndEquivalents": 14760000000,
+            "cashFromOps": 24181000000,
+            "capex": 13106000000
           }
         },
         {
           "fy": 2023,
           "lines": {
-            "revenue": 603384095387,
-            "operatingIncome": 22900662212,
-            "incomeTaxExpense": 4804307384,
-            "netIncome": 16595258314,
-            "totalDebt": 53922019241,
-            "stockholdersEquity": 76790648226,
-            "cashAndEquivalents": 7972443320,
-            "cashFromOps": 31502238894,
-            "capex": 20855919648
+            "revenue": 605881000000,
+            "operatingIncome": 20428000000,
+            "incomeTaxExpense": 5724000000,
+            "netIncome": 11680000000,
+            "totalDebt": 38840000000,
+            "stockholdersEquity": 76693000000,
+            "cashAndEquivalents": 8625000000,
+            "cashFromOps": 28841000000,
+            "capex": 16857000000
           }
         },
         {
           "fy": 2024,
           "lines": {
-            "revenue": 624546216632,
-            "operatingIncome": 24618880450,
-            "incomeTaxExpense": 4954127389,
-            "netIncome": 16941347504,
-            "totalDebt": 53170682309,
-            "stockholdersEquity": 86288973800,
-            "cashAndEquivalents": 8129661564,
-            "cashFromOps": 32210821734,
-            "capex": 21298855273
+            "revenue": 642637000000,
+            "operatingIncome": 27012000000,
+            "incomeTaxExpense": 5578000000,
+            "netIncome": 15511000000,
+            "totalDebt": 39579000000,
+            "stockholdersEquity": 83861000000,
+            "cashAndEquivalents": 9867000000,
+            "cashFromOps": 35726000000,
+            "capex": 20606000000
           }
         },
         {
           "fy": 2025,
           "lines": {
-            "revenue": 681000000000,
-            "operatingIncome": 27000000000,
-            "incomeTaxExpense": 5600000000,
-            "netIncome": 19000000000,
-            "totalDebt": 60000000000,
-            "stockholdersEquity": 91000000000,
-            "cashAndEquivalents": 9000000000,
-            "cashFromOps": 36000000000,
-            "capex": 24000000000
+            "revenue": 674538000000,
+            "operatingIncome": 29348000000,
+            "incomeTaxExpense": 6152000000,
+            "netIncome": 19436000000,
+            "totalDebt": 35999000000,
+            "stockholdersEquity": 91013000000,
+            "cashAndEquivalents": 9037000000,
+            "cashFromOps": 36443000000,
+            "capex": 23783000000
+          }
+        },
+        {
+          "fy": 2026,
+          "lines": {
+            "revenue": 706413000000,
+            "operatingIncome": 29825000000,
+            "incomeTaxExpense": 7199000000,
+            "netIncome": 21893000000,
+            "totalDebt": 38166000000,
+            "stockholdersEquity": 99617000000,
+            "cashAndEquivalents": 10727000000,
+            "cashFromOps": 41565000000,
+            "capex": 26642000000
           }
         }
       ]
@@ -857,169 +708,170 @@
     {
       "ticker": "VZ",
       "name": "Verizon Communications",
+      "cik": "0000732712",
       "fy": 2025,
       "periodEnd": "2025-12-31",
       "form": "10-K",
-      "sourceUrl": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&ticker=VZ&type=10-K&dateb=&owner=include&count=10",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/732712/000073271226000007/0000732712-26-000007-index.htm",
       "lines": {
-        "operatingIncome": 23000000000,
-        "interestExpense": 6600000000,
-        "revenue": 134000000000,
-        "netIncome": 12000000000,
-        "totalDebt": 150000000000,
-        "cashFromOps": 37000000000,
-        "depreciation": 17000000000,
-        "capex": 17000000000,
-        "incomeTaxExpense": 3500000000,
-        "stockholdersEquity": 95000000000,
-        "cashAndEquivalents": 4000000000,
-        "stockBasedComp": 600000000,
-        "dividendsPaid": 11000000000,
+        "operatingIncome": 29259000000,
+        "interestExpense": 5524000000,
+        "revenue": 138191000000,
+        "netIncome": 17174000000,
+        "totalDebt": 108276000000,
+        "cashFromOps": 37137000000,
+        "depreciation": 18349000000,
+        "capex": 16658000000,
+        "incomeTaxExpense": 5064000000,
+        "costOfRevenue": 49931000000,
+        "stockBasedComp": 400000000,
+        "dividendsPaid": 11481000000,
         "buybacks": 0,
-        "receivables": 26000000000,
-        "inventory": 3000000000,
-        "accountsPayable": 23000000000,
-        "costOfRevenue": 52000000000
+        "stockholdersEquity": null,
+        "cashAndEquivalents": 19048000000,
+        "receivables": 23846000000,
+        "inventory": 2441000000,
+        "accountsPayable": 12154000000
       },
       "history": [
         {
           "fy": 2016,
           "lines": {
-            "revenue": 69321002302,
-            "operatingIncome": 11932056917,
-            "incomeTaxExpense": 1780731323,
-            "netIncome": 5872082425,
-            "totalDebt": 73102979367,
-            "stockholdersEquity": 46540190262,
-            "cashAndEquivalents": 1992882419,
-            "cashFromOps": 17875332249,
-            "capex": 8458160429
+            "revenue": 125980000000,
+            "operatingIncome": 27059000000,
+            "incomeTaxExpense": 7378000000,
+            "netIncome": 13127000000,
+            "totalDebt": null,
+            "stockholdersEquity": null,
+            "cashAndEquivalents": 2880000000,
+            "cashFromOps": 22715000000,
+            "capex": 17059000000
           }
         },
         {
           "fy": 2017,
           "lines": {
-            "revenue": 70682004308,
-            "operatingIncome": 13000008803,
-            "incomeTaxExpense": 1980311321,
-            "netIncome": 6513745349,
-            "totalDebt": 78969318561,
-            "stockholdersEquity": 53715604059,
-            "cashAndEquivalents": 2119917404,
-            "cashFromOps": 19703260712,
-            "capex": 8726324237
+            "revenue": 126034000000,
+            "operatingIncome": 27414000000,
+            "incomeTaxExpense": -9956000000,
+            "netIncome": 30101000000,
+            "totalDebt": null,
+            "stockholdersEquity": null,
+            "cashAndEquivalents": 2079000000,
+            "cashFromOps": 25305000000,
+            "capex": 17247000000
           }
         },
         {
           "fy": 2018,
           "lines": {
-            "revenue": 77262178475,
-            "operatingIncome": 13386250131,
-            "incomeTaxExpense": 2042780853,
-            "netIncome": 6792514424,
-            "totalDebt": 87565007292,
-            "stockholdersEquity": 52687449754,
-            "cashAndEquivalents": 2278919458,
-            "cashFromOps": 20703457302,
-            "capex": 9819658466
+            "revenue": 130863000000,
+            "operatingIncome": 22278000000,
+            "incomeTaxExpense": 3584000000,
+            "netIncome": 15528000000,
+            "totalDebt": null,
+            "stockholdersEquity": null,
+            "cashAndEquivalents": 2745000000,
+            "cashFromOps": 34339000000,
+            "capex": 16658000000
           }
         },
         {
           "fy": 2019,
           "lines": {
-            "revenue": 80572440668,
-            "operatingIncome": 13801809142,
-            "incomeTaxExpense": 2162417998,
-            "netIncome": 7359985168,
-            "totalDebt": 95334423826,
-            "stockholdersEquity": 60040861038,
-            "cashAndEquivalents": 2583831746,
-            "cashFromOps": 23683609375,
-            "capex": 10944274916
+            "revenue": 131868000000,
+            "operatingIncome": 30378000000,
+            "incomeTaxExpense": 2945000000,
+            "netIncome": 19265000000,
+            "totalDebt": null,
+            "stockholdersEquity": null,
+            "cashAndEquivalents": 2594000000,
+            "cashFromOps": 35746000000,
+            "capex": null
           }
         },
         {
           "fy": 2020,
           "lines": {
-            "revenue": 94655385336,
-            "operatingIncome": 15480469095,
-            "incomeTaxExpense": 2340625772,
-            "netIncome": 8562876529,
-            "totalDebt": 98508937195,
-            "stockholdersEquity": 66104691920,
-            "cashAndEquivalents": 2761321889,
-            "cashFromOps": 24032764639,
-            "capex": 11957841479
+            "revenue": 128292000000,
+            "operatingIncome": 28798000000,
+            "incomeTaxExpense": 5619000000,
+            "netIncome": 17801000000,
+            "totalDebt": 5889000000,
+            "stockholdersEquity": null,
+            "cashAndEquivalents": 22171000000,
+            "cashFromOps": 41768000000,
+            "capex": null
           }
         },
         {
           "fy": 2021,
           "lines": {
-            "revenue": 102354397325,
-            "operatingIncome": 17120950313,
-            "incomeTaxExpense": 2632765387,
-            "netIncome": 9095746502,
-            "totalDebt": 106277682805,
-            "stockholdersEquity": 69993727992,
-            "cashAndEquivalents": 2941404552,
-            "cashFromOps": 28107004334,
-            "capex": 12876217628
+            "revenue": 133613000000,
+            "operatingIncome": 32448000000,
+            "incomeTaxExpense": 6802000000,
+            "netIncome": 22065000000,
+            "totalDebt": 7443000000,
+            "stockholdersEquity": null,
+            "cashAndEquivalents": 2921000000,
+            "cashFromOps": 39539000000,
+            "capex": null
           }
         },
         {
           "fy": 2022,
           "lines": {
-            "revenue": 109845649028,
-            "operatingIncome": 18411622251,
-            "incomeTaxExpense": 2887557162,
-            "netIncome": 9700212781,
-            "totalDebt": 121376863942,
-            "stockholdersEquity": 73377436148,
-            "cashAndEquivalents": 3026457008,
-            "cashFromOps": 28294121857,
-            "capex": 13307170774
+            "revenue": 136835000000,
+            "operatingIncome": 30467000000,
+            "incomeTaxExpense": 6523000000,
+            "netIncome": 21256000000,
+            "totalDebt": 9963000000,
+            "stockholdersEquity": null,
+            "cashAndEquivalents": 2605000000,
+            "cashFromOps": 37141000000,
+            "capex": null
           }
         },
         {
           "fy": 2023,
           "lines": {
-            "revenue": 110344547936,
-            "operatingIncome": 20380991735,
-            "incomeTaxExpense": 3018248059,
-            "netIncome": 10419513486,
-            "totalDebt": 130224105696,
-            "stockholdersEquity": 82918646839,
-            "cashAndEquivalents": 3425683921,
-            "cashFromOps": 30145973088,
-            "capex": 15008646981
+            "revenue": 133974000000,
+            "operatingIncome": 22877000000,
+            "incomeTaxExpense": 4892000000,
+            "netIncome": 11614000000,
+            "totalDebt": 12973000000,
+            "stockholdersEquity": null,
+            "cashAndEquivalents": 2065000000,
+            "cashFromOps": 37475000000,
+            "capex": null
           }
         },
         {
           "fy": 2024,
           "lines": {
-            "revenue": 127154403668,
-            "operatingIncome": 21302623537,
-            "incomeTaxExpense": 3252148088,
-            "netIncome": 11288110544,
-            "totalDebt": 132861810503,
-            "stockholdersEquity": 90045823260,
-            "cashAndEquivalents": 3611923530,
-            "cashFromOps": 32801356481,
-            "capex": 15371712016
+            "revenue": 134788000000,
+            "operatingIncome": 28686000000,
+            "incomeTaxExpense": 5030000000,
+            "netIncome": 17506000000,
+            "totalDebt": 22633000000,
+            "stockholdersEquity": null,
+            "cashAndEquivalents": 4194000000,
+            "cashFromOps": 36912000000,
+            "capex": null
           }
         },
         {
           "fy": 2025,
           "lines": {
-            "revenue": 134000000000,
-            "operatingIncome": 23000000000,
-            "incomeTaxExpense": 3500000000,
-            "netIncome": 12000000000,
-            "totalDebt": 150000000000,
-            "stockholdersEquity": 95000000000,
-            "cashAndEquivalents": 4000000000,
-            "cashFromOps": 37000000000,
-            "capex": 17000000000
+            "revenue": 138191000000,
+            "operatingIncome": 29259000000,
+            "incomeTaxExpense": 5064000000,
+            "netIncome": 17174000000,
+            "totalDebt": 18618000000,
+            "stockholdersEquity": null,
+            "cashAndEquivalents": 19048000000,
+            "cashFromOps": 37137000000,
+            "capex": null
           }
         }
       ]
@@ -1027,169 +879,170 @@
     {
       "ticker": "T",
       "name": "AT&T Inc.",
+      "cik": "0000732717",
       "fy": 2025,
       "periodEnd": "2025-12-31",
       "form": "10-K",
-      "sourceUrl": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&ticker=T&type=10-K&dateb=&owner=include&count=10",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/732717/000073271726000120/0000732717-26-000120-index.htm",
       "lines": {
-        "operatingIncome": 23000000000,
-        "interestExpense": 6700000000,
-        "revenue": 122000000000,
-        "netIncome": 10000000000,
-        "totalDebt": 137000000000,
-        "cashFromOps": 38000000000,
-        "depreciation": 18000000000,
-        "capex": 21000000000,
-        "incomeTaxExpense": 2500000000,
-        "stockholdersEquity": 105000000000,
-        "cashAndEquivalents": 3000000000,
-        "stockBasedComp": 500000000,
-        "dividendsPaid": 8000000000,
-        "buybacks": 0,
-        "receivables": 11000000000,
-        "inventory": 4000000000,
-        "accountsPayable": 23000000000,
-        "costOfRevenue": 50000000000
+        "operatingIncome": 24162000000,
+        "interestExpense": 6704000000,
+        "revenue": 125648000000,
+        "netIncome": 21953000000,
+        "totalDebt": 64753000000,
+        "cashFromOps": 40284000000,
+        "depreciation": 20886000000,
+        "capex": 20647000000,
+        "incomeTaxExpense": 3621000000,
+        "costOfRevenue": 60611000000,
+        "stockBasedComp": null,
+        "dividendsPaid": 8180000000,
+        "buybacks": 4500000000,
+        "stockholdersEquity": null,
+        "cashAndEquivalents": 18234000000,
+        "receivables": 8843000000,
+        "inventory": 3592000000,
+        "accountsPayable": 29910000000
       },
       "history": [
         {
           "fy": 2016,
           "lines": {
-            "revenue": 62430014304,
-            "operatingIncome": 11166557601,
-            "incomeTaxExpense": 1280615919,
-            "netIncome": 5240475661,
-            "totalDebt": 68492636992,
-            "stockholdersEquity": 51909277049,
-            "cashAndEquivalents": 1497596858,
-            "cashFromOps": 19358658011,
-            "capex": 10785686501
+            "revenue": 163786000000,
+            "operatingIncome": 24347000000,
+            "incomeTaxExpense": 6479000000,
+            "netIncome": null,
+            "totalDebt": null,
+            "stockholdersEquity": null,
+            "cashAndEquivalents": 5788000000,
+            "cashFromOps": 39344000000,
+            "capex": 21516000000
           }
         },
         {
           "fy": 2017,
           "lines": {
-            "revenue": 66683812446,
-            "operatingIncome": 12603584248,
-            "incomeTaxExpense": 1293602504,
-            "netIncome": 5212203582,
-            "totalDebt": 72195580966,
-            "stockholdersEquity": 58107961394,
-            "cashAndEquivalents": 1589106453,
-            "cashFromOps": 20669333851,
-            "capex": 10792511375
+            "revenue": 160546000000,
+            "operatingIncome": 20949000000,
+            "incomeTaxExpense": -14708000000,
+            "netIncome": 29450000000,
+            "totalDebt": null,
+            "stockholdersEquity": null,
+            "cashAndEquivalents": 50498000000,
+            "cashFromOps": 39151000000,
+            "capex": 20647000000
           }
         },
         {
           "fy": 2018,
           "lines": {
-            "revenue": 68058357264,
-            "operatingIncome": 13109965689,
-            "incomeTaxExpense": 1483816305,
-            "netIncome": 5947042155,
-            "totalDebt": 81342759254,
-            "stockholdersEquity": 59985142524,
-            "cashAndEquivalents": 1753365711,
-            "cashFromOps": 22094283254,
-            "capex": 12212052662
+            "revenue": 170756000000,
+            "operatingIncome": 26096000000,
+            "incomeTaxExpense": 4920000000,
+            "netIncome": 19370000000,
+            "totalDebt": null,
+            "stockholdersEquity": null,
+            "cashAndEquivalents": 5204000000,
+            "cashFromOps": 43602000000,
+            "capex": null
           }
         },
         {
           "fy": 2019,
           "lines": {
-            "revenue": 73947717994,
-            "operatingIncome": 15064472583,
-            "incomeTaxExpense": 1528043193,
-            "netIncome": 6602996586,
-            "totalDebt": 90099563906,
-            "stockholdersEquity": 62975243434,
-            "cashAndEquivalents": 1882752278,
-            "cashFromOps": 24712487098,
-            "capex": 13853036129
+            "revenue": 181193000000,
+            "operatingIncome": 27955000000,
+            "incomeTaxExpense": 3493000000,
+            "netIncome": 13903000000,
+            "totalDebt": null,
+            "stockholdersEquity": null,
+            "cashAndEquivalents": 12130000000,
+            "cashFromOps": 48668000000,
+            "capex": null
           }
         },
         {
           "fy": 2020,
           "lines": {
-            "revenue": 82611435626,
-            "operatingIncome": 15291283143,
-            "incomeTaxExpense": 1652088014,
-            "netIncome": 7109091184,
-            "totalDebt": 90542549773,
-            "stockholdersEquity": 72043447296,
-            "cashAndEquivalents": 1968602009,
-            "cashFromOps": 25924400622,
-            "capex": 14939314816
+            "revenue": 171760000000,
+            "operatingIncome": 6405000000,
+            "incomeTaxExpense": 965000000,
+            "netIncome": -5176000000,
+            "totalDebt": null,
+            "stockholdersEquity": null,
+            "cashAndEquivalents": 9740000000,
+            "cashFromOps": 43130000000,
+            "capex": null
           }
         },
         {
           "fy": 2021,
           "lines": {
-            "revenue": 86379077923,
-            "operatingIncome": 17447035457,
-            "incomeTaxExpense": 1839181472,
-            "netIncome": 7634653764,
-            "totalDebt": 102746675307,
-            "stockholdersEquity": 75105003301,
-            "cashAndEquivalents": 2292787226,
-            "cashFromOps": 27892423687,
-            "capex": 14702179021
+            "revenue": 168864000000,
+            "operatingIncome": 23347000000,
+            "incomeTaxExpense": 5468000000,
+            "netIncome": 20081000000,
+            "totalDebt": null,
+            "stockholdersEquity": null,
+            "cashAndEquivalents": 21169000000,
+            "cashFromOps": 41957000000,
+            "capex": null
           }
         },
         {
           "fy": 2022,
           "lines": {
-            "revenue": 92039929567,
-            "operatingIncome": 18242980183,
-            "incomeTaxExpense": 1974808587,
-            "netIncome": 7781104761,
-            "totalDebt": 104847527782,
-            "stockholdersEquity": 82051755907,
-            "cashAndEquivalents": 2337695770,
-            "cashFromOps": 31191953342,
-            "capex": 15839856175
+            "revenue": 120741000000,
+            "operatingIncome": -4587000000,
+            "incomeTaxExpense": 3780000000,
+            "netIncome": -8524000000,
+            "totalDebt": null,
+            "stockholdersEquity": null,
+            "cashAndEquivalents": 3701000000,
+            "cashFromOps": null,
+            "capex": null
           }
         },
         {
           "fy": 2023,
           "lines": {
-            "revenue": 107217897207,
-            "operatingIncome": 20387478419,
-            "incomeTaxExpense": 2061908725,
-            "netIncome": 8938956499,
-            "totalDebt": 119957495586,
-            "stockholdersEquity": 93635501468,
-            "cashAndEquivalents": 2517961152,
-            "cashFromOps": 32162588818,
-            "capex": 17811290040
+            "revenue": 122428000000,
+            "operatingIncome": 23461000000,
+            "incomeTaxExpense": 4225000000,
+            "netIncome": 14400000000,
+            "totalDebt": null,
+            "stockholdersEquity": null,
+            "cashAndEquivalents": 6722000000,
+            "cashFromOps": null,
+            "capex": null
           }
         },
         {
           "fy": 2024,
           "lines": {
-            "revenue": 118597470899,
-            "operatingIncome": 21486209544,
-            "incomeTaxExpense": 2282571603,
-            "netIncome": 9192641436,
-            "totalDebt": 123999654593,
-            "stockholdersEquity": 92830384274,
-            "cashAndEquivalents": 2667141627,
-            "cashFromOps": 36362748871,
-            "capex": 19027600647
+            "revenue": 122336000000,
+            "operatingIncome": 19049000000,
+            "incomeTaxExpense": 4445000000,
+            "netIncome": 10948000000,
+            "totalDebt": null,
+            "stockholdersEquity": null,
+            "cashAndEquivalents": 3298000000,
+            "cashFromOps": null,
+            "capex": null
           }
         },
         {
           "fy": 2025,
           "lines": {
-            "revenue": 122000000000,
-            "operatingIncome": 23000000000,
-            "incomeTaxExpense": 2500000000,
-            "netIncome": 10000000000,
-            "totalDebt": 137000000000,
-            "stockholdersEquity": 105000000000,
-            "cashAndEquivalents": 3000000000,
-            "cashFromOps": 38000000000,
-            "capex": 21000000000
+            "revenue": 125648000000,
+            "operatingIncome": 24162000000,
+            "incomeTaxExpense": 3621000000,
+            "netIncome": 21953000000,
+            "totalDebt": null,
+            "stockholdersEquity": null,
+            "cashAndEquivalents": 18234000000,
+            "cashFromOps": 40284000000,
+            "capex": null
           }
         }
       ]
@@ -1197,169 +1050,128 @@
     {
       "ticker": "CCL",
       "name": "Carnival Corp.",
+      "cik": "0000815097",
       "fy": 2025,
       "periodEnd": "2025-11-30",
       "form": "10-K",
-      "sourceUrl": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&ticker=CCL&type=10-K&dateb=&owner=include&count=10",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/815097/000081509726000007/0000815097-26-000007-index.htm",
       "lines": {
-        "operatingIncome": 3300000000,
-        "interestExpense": 2000000000,
-        "revenue": 25000000000,
-        "netIncome": 1900000000,
-        "totalDebt": 29000000000,
-        "cashFromOps": 5500000000,
-        "depreciation": 2500000000,
-        "capex": 3000000000,
-        "incomeTaxExpense": 50000000,
-        "stockholdersEquity": 9000000000,
-        "cashAndEquivalents": 2000000000,
-        "stockBasedComp": 200000000,
+        "operatingIncome": 4483000000,
+        "interestExpense": 2066000000,
+        "revenue": 26622000000,
+        "netIncome": 2760000000,
+        "totalDebt": 26640000000,
+        "cashFromOps": 6218000000,
+        "depreciation": 2790000000,
+        "capex": 3611000000,
+        "incomeTaxExpense": 12000000,
+        "costOfRevenue": 15638000000,
+        "stockBasedComp": 98000000,
         "dividendsPaid": 0,
         "buybacks": 0,
-        "receivables": 1500000000,
-        "inventory": 600000000,
-        "accountsPayable": 2500000000,
-        "costOfRevenue": 18000000000
+        "stockholdersEquity": 12284000000,
+        "cashAndEquivalents": 1928000000,
+        "receivables": null,
+        "inventory": 505000000,
+        "accountsPayable": 1245000000
       },
       "history": [
         {
-          "fy": 2016,
-          "lines": {
-            "revenue": 13050982658,
-            "operatingIncome": 1609439574,
-            "incomeTaxExpense": 24426477,
-            "netIncome": 951515040,
-            "totalDebt": 14057277235,
-            "stockholdersEquity": 4445219504,
-            "cashAndEquivalents": 1046137175,
-            "cashFromOps": 2857095240,
-            "capex": 1547564542
-          }
-        },
-        {
-          "fy": 2017,
-          "lines": {
-            "revenue": 13683519437,
-            "operatingIncome": 1856596139,
-            "incomeTaxExpense": 28203925,
-            "netIncome": 1031564204,
-            "totalDebt": 16011819529,
-            "stockholdersEquity": 4643356288,
-            "cashAndEquivalents": 1105644331,
-            "cashFromOps": 2956877143,
-            "capex": 1661759253
-          }
-        },
-        {
-          "fy": 2018,
-          "lines": {
-            "revenue": 14798032236,
-            "operatingIncome": 1884352325,
-            "incomeTaxExpense": 27858682,
-            "netIncome": 1155945609,
-            "totalDebt": 16290586694,
-            "stockholdersEquity": 5236806271,
-            "cashAndEquivalents": 1148736546,
-            "cashFromOps": 3144298178,
-            "capex": 1792313137
-          }
-        },
-        {
           "fy": 2019,
           "lines": {
-            "revenue": 16504609132,
-            "operatingIncome": 2029685490,
-            "incomeTaxExpense": 31999999,
-            "netIncome": 1173475976,
-            "totalDebt": 18379674128,
-            "stockholdersEquity": 5611617046,
-            "cashAndEquivalents": 1218411859,
-            "cashFromOps": 3348665519,
-            "capex": 1835281921
+            "revenue": 20825000000,
+            "operatingIncome": 3276000000,
+            "incomeTaxExpense": 71000000,
+            "netIncome": 2990000000,
+            "totalDebt": 11271000000,
+            "stockholdersEquity": 25365000000,
+            "cashAndEquivalents": 518000000,
+            "cashFromOps": 5475000000,
+            "capex": 5429000000
           }
         },
         {
           "fy": 2020,
           "lines": {
-            "revenue": 17705303660,
-            "operatingIncome": 2245267794,
-            "incomeTaxExpense": 33076429,
-            "netIncome": 1345641804,
-            "totalDebt": 20716801312,
-            "stockholdersEquity": 6094598300,
-            "cashAndEquivalents": 1312109421,
-            "cashFromOps": 3628069175,
-            "capex": 1958183743
+            "revenue": 5595000000,
+            "operatingIncome": -8865000000,
+            "incomeTaxExpense": -17000000,
+            "netIncome": -10236000000,
+            "totalDebt": 23872000000,
+            "stockholdersEquity": 20555000000,
+            "cashAndEquivalents": 9513000000,
+            "cashFromOps": -6301000000,
+            "capex": 3620000000
           }
         },
         {
           "fy": 2021,
           "lines": {
-            "revenue": 18085327267,
-            "operatingIncome": 2326414418,
-            "incomeTaxExpense": 35792744,
-            "netIncome": 1362809984,
-            "totalDebt": 21464261976,
-            "stockholdersEquity": 6871445920,
-            "cashAndEquivalents": 1506760865,
-            "cashFromOps": 4007404744,
-            "capex": 2186100115
+            "revenue": 1908000000,
+            "operatingIncome": -7089000000,
+            "incomeTaxExpense": -21000000,
+            "netIncome": -9501000000,
+            "totalDebt": 30436000000,
+            "stockholdersEquity": 12144000000,
+            "cashAndEquivalents": 8939000000,
+            "cashFromOps": -4109000000,
+            "capex": 3607000000
           }
         },
         {
           "fy": 2022,
           "lines": {
-            "revenue": 19893769653,
-            "operatingIncome": 2587389593,
-            "incomeTaxExpense": 39049414,
-            "netIncome": 1442227516,
-            "totalDebt": 22508952369,
-            "stockholdersEquity": 7478627445,
-            "cashAndEquivalents": 1528265794,
-            "cashFromOps": 4367559935,
-            "capex": 2412367328
+            "revenue": 12168000000,
+            "operatingIncome": -4379000000,
+            "incomeTaxExpense": 14000000,
+            "netIncome": -6093000000,
+            "totalDebt": 34346000000,
+            "stockholdersEquity": 7065000000,
+            "cashAndEquivalents": 4029000000,
+            "cashFromOps": -1670000000,
+            "capex": 4940000000
           }
         },
         {
           "fy": 2023,
           "lines": {
-            "revenue": 22211208310,
-            "operatingIncome": 2748857884,
-            "incomeTaxExpense": 41885378,
-            "netIncome": 1587968273,
-            "totalDebt": 24613593704,
-            "stockholdersEquity": 7674273451,
-            "cashAndEquivalents": 1792514330,
-            "cashFromOps": 4879780540,
-            "capex": 2667924636
+            "revenue": 21593000000,
+            "operatingIncome": 1956000000,
+            "incomeTaxExpense": 13000000,
+            "netIncome": -74000000,
+            "totalDebt": 30572000000,
+            "stockholdersEquity": 6882000000,
+            "cashAndEquivalents": 2415000000,
+            "cashFromOps": 4281000000,
+            "capex": 3284000000
           }
         },
         {
           "fy": 2024,
           "lines": {
-            "revenue": 22041228033,
-            "operatingIncome": 2912629956,
-            "incomeTaxExpense": 47266258,
-            "netIncome": 1828872536,
-            "totalDebt": 26780072227,
-            "stockholdersEquity": 8405980409,
-            "cashAndEquivalents": 1759292350,
-            "cashFromOps": 5037348706,
-            "capex": 2896340909
+            "revenue": 25021000000,
+            "operatingIncome": 3574000000,
+            "incomeTaxExpense": -1000000,
+            "netIncome": 1916000000,
+            "totalDebt": 27474000000,
+            "stockholdersEquity": 9251000000,
+            "cashAndEquivalents": 1210000000,
+            "cashFromOps": 5923000000,
+            "capex": 4626000000
           }
         },
         {
           "fy": 2025,
           "lines": {
-            "revenue": 25000000000,
-            "operatingIncome": 3300000000,
-            "incomeTaxExpense": 50000000,
-            "netIncome": 1900000000,
-            "totalDebt": 29000000000,
-            "stockholdersEquity": 9000000000,
-            "cashAndEquivalents": 2000000000,
-            "cashFromOps": 5500000000,
-            "capex": 3000000000
+            "revenue": 26622000000,
+            "operatingIncome": 4483000000,
+            "incomeTaxExpense": 12000000,
+            "netIncome": 2760000000,
+            "totalDebt": 26640000000,
+            "stockholdersEquity": 12284000000,
+            "cashAndEquivalents": 1928000000,
+            "cashFromOps": 6218000000,
+            "capex": 3611000000
           }
         }
       ]
@@ -1367,169 +1179,142 @@
     {
       "ticker": "AAL",
       "name": "American Airlines Group",
+      "cik": "0000006201",
       "fy": 2025,
       "periodEnd": "2025-12-31",
       "form": "10-K",
-      "sourceUrl": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&ticker=AAL&type=10-K&dateb=&owner=include&count=10",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/6201/000000620126000014/0000006201-26-000014-index.htm",
       "lines": {
-        "operatingIncome": 3200000000,
-        "interestExpense": 2700000000,
-        "revenue": 54000000000,
-        "netIncome": 800000000,
-        "totalDebt": 38000000000,
-        "cashFromOps": 4000000000,
-        "depreciation": 2000000000,
-        "capex": 2500000000,
-        "incomeTaxExpense": 250000000,
-        "stockholdersEquity": -5000000000,
-        "cashAndEquivalents": 7000000000,
-        "stockBasedComp": 150000000,
-        "dividendsPaid": 0,
-        "buybacks": 0,
-        "receivables": 2000000000,
-        "inventory": 1800000000,
-        "accountsPayable": 3000000000,
-        "costOfRevenue": 45000000000
+        "operatingIncome": 1467000000,
+        "interestExpense": 2145000000,
+        "revenue": 54633000000,
+        "netIncome": 111000000,
+        "totalDebt": 10376000000,
+        "cashFromOps": 3099000000,
+        "depreciation": 2200000000,
+        "capex": 3779000000,
+        "incomeTaxExpense": 79000000,
+        "costOfRevenue": null,
+        "stockBasedComp": 57000000,
+        "dividendsPaid": 278000000,
+        "buybacks": 21000000,
+        "stockholdersEquity": -3727000000,
+        "cashAndEquivalents": 1140000000,
+        "receivables": 2075000000,
+        "inventory": null,
+        "accountsPayable": 2840000000
       },
       "history": [
         {
-          "fy": 2016,
-          "lines": {
-            "revenue": 27892972812,
-            "operatingIncome": 1657699042,
-            "incomeTaxExpense": 130968195,
-            "netIncome": 390132775,
-            "totalDebt": 18266278277,
-            "stockholdersEquity": -2414796408,
-            "cashAndEquivalents": 3509574630,
-            "cashFromOps": 2037429013,
-            "capex": 1305836217
-          }
-        },
-        {
-          "fy": 2017,
-          "lines": {
-            "revenue": 29821421820,
-            "operatingIncome": 1754334864,
-            "incomeTaxExpense": 138643809,
-            "netIncome": 430370631,
-            "totalDebt": 20635950110,
-            "stockholdersEquity": -2576960008,
-            "cashAndEquivalents": 3888644203,
-            "cashFromOps": 2103283371,
-            "capex": 1407389654
-          }
-        },
-        {
           "fy": 2018,
           "lines": {
-            "revenue": 31966947948,
-            "operatingIncome": 1830532092,
-            "incomeTaxExpense": 140445655,
-            "netIncome": 455206248,
-            "totalDebt": 22474828296,
-            "stockholdersEquity": -2975387297,
-            "cashAndEquivalents": 3926010969,
-            "cashFromOps": 2233683367,
-            "capex": 1462290630
+            "revenue": 44541000000,
+            "operatingIncome": 2656000000,
+            "incomeTaxExpense": 472000000,
+            "netIncome": 1412000000,
+            "totalDebt": 3213000000,
+            "stockholdersEquity": -169000000,
+            "cashAndEquivalents": null,
+            "cashFromOps": 3533000000,
+            "capex": 3745000000
           }
         },
         {
           "fy": 2019,
           "lines": {
-            "revenue": 34311230872,
-            "operatingIncome": 1993974052,
-            "incomeTaxExpense": 153187667,
-            "netIncome": 509230542,
-            "totalDebt": 22774175440,
-            "stockholdersEquity": -3088310511,
-            "cashAndEquivalents": 4393847287,
-            "cashFromOps": 2636362520,
-            "capex": 1598200861
+            "revenue": 45768000000,
+            "operatingIncome": 3065000000,
+            "incomeTaxExpense": 570000000,
+            "netIncome": 1686000000,
+            "totalDebt": 2749000000,
+            "stockholdersEquity": -118000000,
+            "cashAndEquivalents": null,
+            "cashFromOps": 3815000000,
+            "capex": 4268000000
           }
         },
         {
           "fy": 2020,
           "lines": {
-            "revenue": 38161919480,
-            "operatingIncome": 2172487820,
-            "incomeTaxExpense": 165632990,
-            "netIncome": 530694733,
-            "totalDebt": 27053409447,
-            "stockholdersEquity": -3472557907,
-            "cashAndEquivalents": 4672325118,
-            "cashFromOps": 2592147400,
-            "capex": 1701170488
+            "revenue": 17337000000,
+            "operatingIncome": -10421000000,
+            "incomeTaxExpense": -2568000000,
+            "netIncome": -8885000000,
+            "totalDebt": 2697000000,
+            "stockholdersEquity": -6867000000,
+            "cashAndEquivalents": null,
+            "cashFromOps": -6543000000,
+            "capex": 1958000000
           }
         },
         {
           "fy": 2021,
           "lines": {
-            "revenue": 40384084862,
-            "operatingIncome": 2333282498,
-            "incomeTaxExpense": 179296863,
-            "netIncome": 597864759,
-            "totalDebt": 29118656829,
-            "stockholdersEquity": -3574739068,
-            "cashAndEquivalents": 4905492358,
-            "cashFromOps": 2892504639,
-            "capex": 1822976360
+            "revenue": 29882000000,
+            "operatingIncome": -1059000000,
+            "incomeTaxExpense": -555000000,
+            "netIncome": -1993000000,
+            "totalDebt": 2315000000,
+            "stockholdersEquity": -7340000000,
+            "cashAndEquivalents": null,
+            "cashFromOps": 704000000,
+            "capex": 208000000
           }
         },
         {
           "fy": 2022,
           "lines": {
-            "revenue": 43649548538,
-            "operatingIncome": 2463567454,
-            "incomeTaxExpense": 204353539,
-            "netIncome": 650252072,
-            "totalDebt": 30180341119,
-            "stockholdersEquity": -3852157710,
-            "cashAndEquivalents": 5817917989,
-            "cashFromOps": 3115542519,
-            "capex": 2048088074
+            "revenue": 48971000000,
+            "operatingIncome": 1607000000,
+            "incomeTaxExpense": 59000000,
+            "netIncome": 127000000,
+            "totalDebt": 3059000000,
+            "stockholdersEquity": -5799000000,
+            "cashAndEquivalents": null,
+            "cashFromOps": 2173000000,
+            "capex": 2546000000
           }
         },
         {
           "fy": 2023,
           "lines": {
-            "revenue": 45050040800,
-            "operatingIncome": 2667062500,
-            "incomeTaxExpense": 219917497,
-            "netIncome": 671806094,
-            "totalDebt": 34051202126,
-            "stockholdersEquity": -4284878571,
-            "cashAndEquivalents": 5813716777,
-            "cashFromOps": 3334473299,
-            "capex": 2125563504
+            "revenue": 52788000000,
+            "operatingIncome": 3034000000,
+            "incomeTaxExpense": 299000000,
+            "netIncome": 822000000,
+            "totalDebt": 3501000000,
+            "stockholdersEquity": -5202000000,
+            "cashAndEquivalents": null,
+            "cashFromOps": 3803000000,
+            "capex": 2596000000
           }
         },
         {
           "fy": 2024,
           "lines": {
-            "revenue": 50826471264,
-            "operatingIncome": 3095929275,
-            "incomeTaxExpense": 223295904,
-            "netIncome": 732848887,
-            "totalDebt": 34175191190,
-            "stockholdersEquity": -4849129493,
-            "cashAndEquivalents": 6249386810,
-            "cashFromOps": 3537718719,
-            "capex": 2212994272
+            "revenue": 54211000000,
+            "operatingIncome": 2614000000,
+            "incomeTaxExpense": 308000000,
+            "netIncome": 846000000,
+            "totalDebt": 5196000000,
+            "stockholdersEquity": -3977000000,
+            "cashAndEquivalents": null,
+            "cashFromOps": 3983000000,
+            "capex": 2683000000
           }
         },
         {
           "fy": 2025,
           "lines": {
-            "revenue": 54000000000,
-            "operatingIncome": 3200000000,
-            "incomeTaxExpense": 250000000,
-            "netIncome": 800000000,
-            "totalDebt": 38000000000,
-            "stockholdersEquity": -5000000000,
-            "cashAndEquivalents": 7000000000,
-            "cashFromOps": 4000000000,
-            "capex": 2500000000
+            "revenue": 54633000000,
+            "operatingIncome": 1467000000,
+            "incomeTaxExpense": 79000000,
+            "netIncome": 111000000,
+            "totalDebt": 3641000000,
+            "stockholdersEquity": -3727000000,
+            "cashAndEquivalents": null,
+            "cashFromOps": 3099000000,
+            "capex": 3779000000
           }
         }
       ]
@@ -1537,169 +1322,128 @@
     {
       "ticker": "LUMN",
       "name": "Lumen Technologies",
+      "cik": "0000018926",
       "fy": 2025,
       "periodEnd": "2025-12-31",
       "form": "10-K",
-      "sourceUrl": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&ticker=LUMN&type=10-K&dateb=&owner=include&count=10",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/18926/000001892626000014/0000018926-26-000014-index.htm",
       "lines": {
-        "operatingIncome": 1200000000,
-        "interestExpense": 1400000000,
-        "revenue": 13000000000,
-        "netIncome": -100000000,
-        "totalDebt": 18000000000,
-        "cashFromOps": 1000000000,
-        "depreciation": 3000000000,
-        "capex": 3000000000,
-        "incomeTaxExpense": 0,
-        "stockholdersEquity": 2000000000,
-        "cashAndEquivalents": 1500000000,
-        "stockBasedComp": 100000000,
-        "dividendsPaid": 0,
+        "operatingIncome": -812000000,
+        "interestExpense": 1284000000,
+        "revenue": 11331000000,
+        "netIncome": -1739000000,
+        "totalDebt": 7339170000,
+        "cashFromOps": 4738000000,
+        "depreciation": 2749000000,
+        "capex": 3048000000,
+        "incomeTaxExpense": -977000000,
+        "costOfRevenue": 6638000000,
+        "stockBasedComp": 48000000,
+        "dividendsPaid": 1000000,
         "buybacks": 0,
-        "receivables": 1500000000,
-        "inventory": 0,
-        "accountsPayable": 1800000000,
-        "costOfRevenue": 6000000000
+        "stockholdersEquity": -1117000000,
+        "cashAndEquivalents": 1003000000,
+        "receivables": 1314000000,
+        "inventory": 32717000,
+        "accountsPayable": 1508000000
       },
       "history": [
         {
-          "fy": 2016,
-          "lines": {
-            "revenue": 6433861148,
-            "operatingIncome": 624200701,
-            "incomeTaxExpense": 0,
-            "netIncome": -51189095,
-            "totalDebt": 9452481197,
-            "stockholdersEquity": 1043678975,
-            "cashAndEquivalents": 737560281,
-            "cashFromOps": 484516747,
-            "capex": 1566161690
-          }
-        },
-        {
-          "fy": 2017,
-          "lines": {
-            "revenue": 7196490122,
-            "operatingIncome": 617974268,
-            "incomeTaxExpense": 0,
-            "netIncome": -53371107,
-            "totalDebt": 9602193760,
-            "stockholdersEquity": 1062352047,
-            "cashAndEquivalents": 783600123,
-            "cashFromOps": 513410537,
-            "capex": 1585117533
-          }
-        },
-        {
-          "fy": 2018,
-          "lines": {
-            "revenue": 7472707180,
-            "operatingIncome": 732083098,
-            "incomeTaxExpense": 0,
-            "netIncome": -61058017,
-            "totalDebt": 10195516949,
-            "stockholdersEquity": 1150249696,
-            "cashAndEquivalents": 903380860,
-            "cashFromOps": 602279252,
-            "capex": 1738646636
-          }
-        },
-        {
           "fy": 2019,
           "lines": {
-            "revenue": 7822947512,
-            "operatingIncome": 754196894,
-            "incomeTaxExpense": 0,
-            "netIncome": -65660565,
-            "totalDebt": 10994851253,
-            "stockholdersEquity": 1243230005,
-            "cashAndEquivalents": 982780414,
-            "cashFromOps": 600569429,
-            "capex": 1873645887
+            "revenue": 20448000000,
+            "operatingIncome": -2726000000,
+            "incomeTaxExpense": 503000000,
+            "netIncome": -5269000000,
+            "totalDebt": null,
+            "stockholdersEquity": 13470000000,
+            "cashAndEquivalents": 1690000000,
+            "cashFromOps": 6680000000,
+            "capex": null
           }
         },
         {
           "fy": 2020,
           "lines": {
-            "revenue": 9123470855,
-            "operatingIncome": 838478608,
-            "incomeTaxExpense": 0,
-            "netIncome": -64892617,
-            "totalDebt": 11714636213,
-            "stockholdersEquity": 1418345826,
-            "cashAndEquivalents": 996069167,
-            "cashFromOps": 697413121,
-            "capex": 2123123886
+            "revenue": 18797000000,
+            "operatingIncome": 962000000,
+            "incomeTaxExpense": 450000000,
+            "netIncome": -1232000000,
+            "totalDebt": null,
+            "stockholdersEquity": 11162000000,
+            "cashAndEquivalents": 406000000,
+            "cashFromOps": 6524000000,
+            "capex": null
           }
         },
         {
           "fy": 2021,
           "lines": {
-            "revenue": 9401612780,
-            "operatingIncome": 861953161,
-            "incomeTaxExpense": 0,
-            "netIncome": -74362812,
-            "totalDebt": 12915878753,
-            "stockholdersEquity": 1501906454,
-            "cashAndEquivalents": 1082311278,
-            "cashFromOps": 718538012,
-            "capex": 2095666756
+            "revenue": 17795000000,
+            "operatingIncome": 4285000000,
+            "incomeTaxExpense": 668000000,
+            "netIncome": 2033000000,
+            "totalDebt": null,
+            "stockholdersEquity": 11840000000,
+            "cashAndEquivalents": 354000000,
+            "cashFromOps": 6501000000,
+            "capex": null
           }
         },
         {
           "fy": 2022,
           "lines": {
-            "revenue": 10583647758,
-            "operatingIncome": 992270576,
-            "incomeTaxExpense": 0,
-            "netIncome": -82901887,
-            "totalDebt": 13609191679,
-            "stockholdersEquity": 1545411373,
-            "cashAndEquivalents": 1187794003,
-            "cashFromOps": 830092724,
-            "capex": 2489595379
+            "revenue": 16108000000,
+            "operatingIncome": 95000000,
+            "incomeTaxExpense": 557000000,
+            "netIncome": -1548000000,
+            "totalDebt": null,
+            "stockholdersEquity": 10437000000,
+            "cashAndEquivalents": 1251000000,
+            "cashFromOps": 4735000000,
+            "capex": null
           }
         },
         {
           "fy": 2023,
           "lines": {
-            "revenue": 11018920804,
-            "operatingIncome": 1003194117,
-            "incomeTaxExpense": 0,
-            "netIncome": -85677931,
-            "totalDebt": 16092746018,
-            "stockholdersEquity": 1660311940,
-            "cashAndEquivalents": 1324918766,
-            "cashFromOps": 877785324,
-            "capex": 2655029643
+            "revenue": 13521000000,
+            "operatingIncome": -9584000000,
+            "incomeTaxExpense": 61000000,
+            "netIncome": -10298000000,
+            "totalDebt": null,
+            "stockholdersEquity": 417000000,
+            "cashAndEquivalents": 2234000000,
+            "cashFromOps": 2160000000,
+            "capex": null
           }
         },
         {
           "fy": 2024,
           "lines": {
-            "revenue": 12365418698,
-            "operatingIncome": 1123028248,
-            "incomeTaxExpense": 0,
-            "netIncome": -90921748,
-            "totalDebt": 16436430735,
-            "stockholdersEquity": 1904120115,
-            "cashAndEquivalents": 1330418732,
-            "cashFromOps": 897899240,
-            "capex": 2848023797
+            "revenue": 12129000000,
+            "operatingIncome": 460000000,
+            "incomeTaxExpense": -175000000,
+            "netIncome": -55000000,
+            "totalDebt": null,
+            "stockholdersEquity": 464000000,
+            "cashAndEquivalents": 1889000000,
+            "cashFromOps": 4333000000,
+            "capex": null
           }
         },
         {
           "fy": 2025,
           "lines": {
-            "revenue": 13000000000,
-            "operatingIncome": 1200000000,
-            "incomeTaxExpense": 0,
-            "netIncome": -100000000,
-            "totalDebt": 18000000000,
-            "stockholdersEquity": 2000000000,
-            "cashAndEquivalents": 1500000000,
-            "cashFromOps": 1000000000,
-            "capex": 3000000000
+            "revenue": 11331000000,
+            "operatingIncome": -812000000,
+            "incomeTaxExpense": -977000000,
+            "netIncome": -1739000000,
+            "totalDebt": null,
+            "stockholdersEquity": -1117000000,
+            "cashAndEquivalents": 1003000000,
+            "cashFromOps": 4738000000,
+            "capex": null
           }
         }
       ]
@@ -1707,169 +1451,86 @@
     {
       "ticker": "WDFC",
       "name": "WD-40 Co.",
+      "cik": "0000105132",
       "fy": 2025,
       "periodEnd": "2025-08-31",
       "form": "10-K",
-      "sourceUrl": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&ticker=WDFC&type=10-K&dateb=&owner=include&count=10",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/105132/000010513225000067/0000105132-25-000067-index.htm",
       "lines": {
-        "operatingIncome": 100000000,
-        "interestExpense": 8000000,
-        "revenue": 600000000,
-        "netIncome": 70000000,
-        "totalDebt": 120000000,
-        "cashFromOps": 80000000,
-        "depreciation": 10000000,
-        "capex": 15000000,
-        "incomeTaxExpense": 25000000,
-        "stockholdersEquity": 120000000,
-        "cashAndEquivalents": 50000000,
-        "stockBasedComp": 8000000,
-        "dividendsPaid": 40000000,
-        "buybacks": 10000000,
-        "receivables": 110000000,
-        "inventory": 60000000,
-        "accountsPayable": 50000000,
-        "costOfRevenue": 280000000
+        "operatingIncome": 103793000,
+        "interestExpense": 5614000,
+        "revenue": 619985000,
+        "netIncome": 90994000,
+        "totalDebt": 86195000,
+        "cashFromOps": 87925000,
+        "depreciation": 8191000,
+        "capex": 4528000,
+        "incomeTaxExpense": 10632000,
+        "costOfRevenue": 278642000,
+        "stockBasedComp": 7306000,
+        "dividendsPaid": 50260000,
+        "buybacks": 12314000,
+        "stockholdersEquity": 268152000,
+        "cashAndEquivalents": 58130000,
+        "receivables": 120589000,
+        "inventory": 79871000,
+        "accountsPayable": 37955000
       },
       "history": [
         {
-          "fy": 2016,
-          "lines": {
-            "revenue": 292564831,
-            "operatingIncome": 47847478,
-            "incomeTaxExpense": 11923264,
-            "netIncome": 35201601,
-            "totalDebt": 58983906,
-            "stockholdersEquity": 62912845,
-            "cashAndEquivalents": 25971612,
-            "cashFromOps": 41972184,
-            "capex": 7327315
-          }
-        },
-        {
-          "fy": 2017,
-          "lines": {
-            "revenue": 310678897,
-            "operatingIncome": 51846485,
-            "incomeTaxExpense": 13504663,
-            "netIncome": 38612152,
-            "totalDebt": 64488416,
-            "stockholdersEquity": 63109001,
-            "cashAndEquivalents": 26788802,
-            "cashFromOps": 43741499,
-            "capex": 8245131
-          }
-        },
-        {
-          "fy": 2018,
-          "lines": {
-            "revenue": 358775771,
-            "operatingIncome": 60373676,
-            "incomeTaxExpense": 14827111,
-            "netIncome": 39297001,
-            "totalDebt": 72405588,
-            "stockholdersEquity": 68574934,
-            "cashAndEquivalents": 29369651,
-            "cashFromOps": 46086270,
-            "capex": 8960721
-          }
-        },
-        {
-          "fy": 2019,
-          "lines": {
-            "revenue": 366728100,
-            "operatingIncome": 61425338,
-            "incomeTaxExpense": 15353044,
-            "netIncome": 42582613,
-            "totalDebt": 78525446,
-            "stockholdersEquity": 76212317,
-            "cashAndEquivalents": 30961299,
-            "cashFromOps": 49889620,
-            "capex": 9918034
-          }
-        },
-        {
-          "fy": 2020,
-          "lines": {
-            "revenue": 408649015,
-            "operatingIncome": 66230144,
-            "incomeTaxExpense": 17539383,
-            "netIncome": 48371284,
-            "totalDebt": 85679618,
-            "stockholdersEquity": 78422233,
-            "cashAndEquivalents": 33943280,
-            "cashFromOps": 56184063,
-            "capex": 10556413
-          }
-        },
-        {
-          "fy": 2021,
-          "lines": {
-            "revenue": 459292616,
-            "operatingIncome": 70124508,
-            "incomeTaxExpense": 17996613,
-            "netIncome": 49492880,
-            "totalDebt": 85465507,
-            "stockholdersEquity": 92375305,
-            "cashAndEquivalents": 37057242,
-            "cashFromOps": 61331913,
-            "capex": 10884583
-          }
-        },
-        {
           "fy": 2022,
           "lines": {
-            "revenue": 493737965,
-            "operatingIncome": 78979273,
-            "incomeTaxExpense": 19369404,
-            "netIncome": 57111811,
-            "totalDebt": 99505621,
-            "stockholdersEquity": 91504535,
-            "cashAndEquivalents": 40073235,
-            "cashFromOps": 64268328,
-            "capex": 11571270
+            "revenue": 518820000,
+            "operatingIncome": 87330000,
+            "incomeTaxExpense": 16779000,
+            "netIncome": 67329000,
+            "totalDebt": 107139000,
+            "stockholdersEquity": 188624000,
+            "cashAndEquivalents": 37843000,
+            "cashFromOps": 2604000,
+            "capex": 8303000
           }
         },
         {
           "fy": 2023,
           "lines": {
-            "revenue": 507649617,
-            "operatingIncome": 82659203,
-            "incomeTaxExpense": 20798989,
-            "netIncome": 58542863,
-            "totalDebt": 103903533,
-            "stockholdersEquity": 104440770,
-            "cashAndEquivalents": 41595687,
-            "cashFromOps": 65235801,
-            "capex": 12637923
+            "revenue": 537255000,
+            "operatingIncome": 89724000,
+            "incomeTaxExpense": 19170000,
+            "netIncome": 65993000,
+            "totalDebt": 109743000,
+            "stockholdersEquity": 210178000,
+            "cashAndEquivalents": 48143000,
+            "cashFromOps": 98391000,
+            "capex": 6871000
           }
         },
         {
           "fy": 2024,
           "lines": {
-            "revenue": 565462208,
-            "operatingIncome": 89677269,
-            "incomeTaxExpense": 22713416,
-            "netIncome": 62892458,
-            "totalDebt": 114392013,
-            "stockholdersEquity": 111644943,
-            "cashAndEquivalents": 44274403,
-            "cashFromOps": 71121391,
-            "capex": 13743468
+            "revenue": 590557000,
+            "operatingIncome": 96351000,
+            "incomeTaxExpense": 21864000,
+            "netIncome": 69644000,
+            "totalDebt": 85977000,
+            "stockholdersEquity": 230526000,
+            "cashAndEquivalents": 46699000,
+            "cashFromOps": 92034000,
+            "capex": 4206000
           }
         },
         {
           "fy": 2025,
           "lines": {
-            "revenue": 600000000,
-            "operatingIncome": 100000000,
-            "incomeTaxExpense": 25000000,
-            "netIncome": 70000000,
-            "totalDebt": 120000000,
-            "stockholdersEquity": 120000000,
-            "cashAndEquivalents": 50000000,
-            "cashFromOps": 80000000,
-            "capex": 15000000
+            "revenue": 619985000,
+            "operatingIncome": 103793000,
+            "incomeTaxExpense": 10632000,
+            "netIncome": 90994000,
+            "totalDebt": 86195000,
+            "stockholdersEquity": 268152000,
+            "cashAndEquivalents": 58130000,
+            "cashFromOps": 87925000,
+            "capex": 4528000
           }
         }
       ]
@@ -1877,169 +1538,142 @@
     {
       "ticker": "MNST",
       "name": "Monster Beverage Corp.",
+      "cik": "0000865752",
       "fy": 2025,
       "periodEnd": "2025-12-31",
       "form": "10-K",
-      "sourceUrl": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&ticker=MNST&type=10-K&dateb=&owner=include&count=10",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/865752/000110465926020831/0001104659-26-020831-index.htm",
       "lines": {
-        "operatingIncome": 2000000000,
-        "interestExpense": 0,
-        "revenue": 7500000000,
-        "netIncome": 1600000000,
-        "totalDebt": 0,
-        "cashFromOps": 1700000000,
-        "depreciation": 60000000,
-        "capex": 200000000,
-        "incomeTaxExpense": 450000000,
-        "stockholdersEquity": 5500000000,
-        "cashAndEquivalents": 1500000000,
-        "stockBasedComp": 80000000,
-        "dividendsPaid": 0,
-        "buybacks": 600000000,
-        "receivables": 1000000000,
-        "inventory": 700000000,
-        "accountsPayable": 500000000,
-        "costOfRevenue": 3000000000
+        "operatingIncome": 2419354000,
+        "interestExpense": null,
+        "revenue": 8294343000,
+        "netIncome": null,
+        "totalDebt": 373951000,
+        "cashFromOps": 2098177000,
+        "depreciation": 114441000,
+        "capex": 132275000,
+        "incomeTaxExpense": 577097000,
+        "costOfRevenue": 3662148000,
+        "stockBasedComp": 125687000,
+        "dividendsPaid": null,
+        "buybacks": 103646000,
+        "stockholdersEquity": 8254108000,
+        "cashAndEquivalents": 2088117000,
+        "receivables": 1618072000,
+        "inventory": 799623000,
+        "accountsPayable": 565974000
       },
       "history": [
         {
-          "fy": 2016,
-          "lines": {
-            "revenue": 3770678219,
-            "operatingIncome": 1014423059,
-            "incomeTaxExpense": 215908388,
-            "netIncome": 773480096,
-            "totalDebt": 0,
-            "stockholdersEquity": 2726548920,
-            "cashAndEquivalents": 734112948,
-            "cashFromOps": 834060741,
-            "capex": 104583938
-          }
-        },
-        {
-          "fy": 2017,
-          "lines": {
-            "revenue": 3975985358,
-            "operatingIncome": 1087725513,
-            "incomeTaxExpense": 239648786,
-            "netIncome": 857207502,
-            "totalDebt": 0,
-            "stockholdersEquity": 3119048554,
-            "cashAndEquivalents": 799364124,
-            "cashFromOps": 890646369,
-            "capex": 110517746
-          }
-        },
-        {
           "fy": 2018,
           "lines": {
-            "revenue": 4246497445,
-            "operatingIncome": 1109317539,
-            "incomeTaxExpense": 273116319,
-            "netIncome": 926466498,
-            "totalDebt": 0,
-            "stockholdersEquity": 3179100579,
-            "cashAndEquivalents": 908742933,
-            "cashFromOps": 988055830,
-            "capex": 112760039
+            "revenue": 3807183000,
+            "operatingIncome": 1283619000,
+            "incomeTaxExpense": 300268000,
+            "netIncome": null,
+            "totalDebt": null,
+            "stockholdersEquity": 3610901000,
+            "cashAndEquivalents": 637513000,
+            "cashFromOps": 1161881000,
+            "capex": 61941000
           }
         },
         {
           "fy": 2019,
           "lines": {
-            "revenue": 4496969721,
-            "operatingIncome": 1266836032,
-            "incomeTaxExpense": 287565307,
-            "netIncome": 1049589812,
-            "totalDebt": 0,
-            "stockholdersEquity": 3508284775,
-            "cashAndEquivalents": 933045877,
-            "cashFromOps": 1071766488,
-            "capex": 121570898
+            "revenue": 4200819000,
+            "operatingIncome": 1402939000,
+            "incomeTaxExpense": 308127000,
+            "netIncome": null,
+            "totalDebt": null,
+            "stockholdersEquity": 4171281000,
+            "cashAndEquivalents": 797957000,
+            "cashFromOps": 1113762000,
+            "capex": 101661000
           }
         },
         {
           "fy": 2020,
           "lines": {
-            "revenue": 4993759645,
-            "operatingIncome": 1364046469,
-            "incomeTaxExpense": 319293899,
-            "netIncome": 1046333273,
-            "totalDebt": 0,
-            "stockholdersEquity": 3857305647,
-            "cashAndEquivalents": 1068536997,
-            "cashFromOps": 1121974129,
-            "capex": 131034730
+            "revenue": 4598638000,
+            "operatingIncome": 1633153000,
+            "incomeTaxExpense": 216563000,
+            "netIncome": null,
+            "totalDebt": null,
+            "stockholdersEquity": 5160860000,
+            "cashAndEquivalents": 1180413000,
+            "cashFromOps": 1364163000,
+            "capex": 48722000
           }
         },
         {
           "fy": 2021,
           "lines": {
-            "revenue": 5756979301,
-            "operatingIncome": 1539967893,
-            "incomeTaxExpense": 330192420,
-            "netIncome": 1123522478,
-            "totalDebt": 0,
-            "stockholdersEquity": 3997343977,
-            "cashAndEquivalents": 1147111938,
-            "cashFromOps": 1264588214,
-            "capex": 151777134
+            "revenue": 5541352000,
+            "operatingIncome": 1797467000,
+            "incomeTaxExpense": 423944000,
+            "netIncome": null,
+            "totalDebt": null,
+            "stockholdersEquity": 6566951000,
+            "cashAndEquivalents": 1326462000,
+            "cashFromOps": 1155741000,
+            "capex": 43868000
           }
         },
         {
           "fy": 2022,
           "lines": {
-            "revenue": 5751478998,
-            "operatingIncome": 1633043993,
-            "incomeTaxExpense": 347296349,
-            "netIncome": 1257999867,
-            "totalDebt": 0,
-            "stockholdersEquity": 4509803222,
-            "cashAndEquivalents": 1152997536,
-            "cashFromOps": 1311476964,
-            "capex": 157174744
+            "revenue": 6311050000,
+            "operatingIncome": 1584721000,
+            "incomeTaxExpense": 380340000,
+            "netIncome": null,
+            "totalDebt": null,
+            "stockholdersEquity": 7025041000,
+            "cashAndEquivalents": 1307141000,
+            "cashFromOps": 887699000,
+            "capex": 188726000
           }
         },
         {
           "fy": 2023,
           "lines": {
-            "revenue": 6441546115,
-            "operatingIncome": 1694714742,
-            "incomeTaxExpense": 371259904,
-            "netIncome": 1337045116,
-            "totalDebt": 0,
-            "stockholdersEquity": 4902702557,
-            "cashAndEquivalents": 1226993188,
-            "cashFromOps": 1466562376,
-            "capex": 175882395
+            "revenue": 7140027000,
+            "operatingIncome": 1953355000,
+            "incomeTaxExpense": 437494000,
+            "netIncome": null,
+            "totalDebt": null,
+            "stockholdersEquity": 8228744000,
+            "cashAndEquivalents": 2297675000,
+            "cashFromOps": 1717753000,
+            "capex": 221428000
           }
         },
         {
           "fy": 2024,
           "lines": {
-            "revenue": 6623700487,
-            "operatingIncome": 1914482270,
-            "incomeTaxExpense": 400738792,
-            "netIncome": 1496225151,
-            "totalDebt": 0,
-            "stockholdersEquity": 5157290121,
-            "cashAndEquivalents": 1361974187,
-            "cashFromOps": 1561492794,
-            "capex": 186715271
+            "revenue": 7492709000,
+            "operatingIncome": 1930294000,
+            "incomeTaxExpense": 480411000,
+            "netIncome": null,
+            "totalDebt": 373951000,
+            "stockholdersEquity": 5957718000,
+            "cashAndEquivalents": 1533287000,
+            "cashFromOps": 1928533000,
+            "capex": 264074000
           }
         },
         {
           "fy": 2025,
           "lines": {
-            "revenue": 7500000000,
-            "operatingIncome": 2000000000,
-            "incomeTaxExpense": 450000000,
-            "netIncome": 1600000000,
-            "totalDebt": 0,
-            "stockholdersEquity": 5500000000,
-            "cashAndEquivalents": 1500000000,
-            "cashFromOps": 1700000000,
-            "capex": 200000000
+            "revenue": 8294343000,
+            "operatingIncome": 2419354000,
+            "incomeTaxExpense": 577097000,
+            "netIncome": null,
+            "totalDebt": 373951000,
+            "stockholdersEquity": 8254108000,
+            "cashAndEquivalents": 2088117000,
+            "cashFromOps": 2098177000,
+            "capex": 132275000
           }
         }
       ]
