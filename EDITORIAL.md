@@ -127,7 +127,7 @@ evidentiary standards, pointed long, taught in public.**
 ## Essay slate
 
 Draft stubs live in `src/content/articles/` (all `draft: true`; outlines only —
-the voice gets written by R.G., not assembled from notes):
+the voice gets written by the author, not assembled from notes):
 
 | Stub | Section | One-line thesis |
 | :--- | :--- | :--- |
