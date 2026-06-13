@@ -161,8 +161,9 @@ calls, timestamped and scored).
   filing data only — fully free and clean. Price-dependent tools come later.
 - **The unit is "teach + tool":** every explainer ships with its checker
   embedded; the tool also stands alone at a shareable `/tools/*` URL. Tools
-  travel where op-eds don't. Prototype shipped: `/tools/coverage` +
-  `can-it-pay-its-interest`.
+  travel where op-eds don't. (The first standalone tool, an interest-coverage
+  checker, was folded into the Scorecard once every company carried coverage as a
+  line — the Scorecard is the surface; standalone tools are for ideas it can't hold.)
 - **v1 scope:** library + one live tool (interest coverage). Not zero, not ten.
 - **Cost is ~$0** (static host + EDGAR + Actions free tier) — which means no
   pressure to monetize prematurely, which protects the editorial standards.

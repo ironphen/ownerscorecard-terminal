@@ -14,8 +14,7 @@ slate — lives in [`EDITORIAL.md`](EDITORIAL.md).
 | `/` | Company directory — search a ticker → its Owner's Scorecard |
 | `/c/[ticker]` | Owner's Scorecard for one company + any writing on it |
 | `/articles` | Articles (MDX content collection, sections: markets / companies / principles / letters) |
-| `/tools` | Tools — apply a mechanism to a real company, from primary-source filings |
-| `/tools/coverage` | "Can it pay its interest?" — interest-coverage checker (EDGAR-fed) |
+| `/tools` | Tools — standalone instruments (first one in development) |
 | `/rss.xml` | Feed of published articles |
 
 ## Stack
