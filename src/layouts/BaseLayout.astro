@@ -1,5 +1,6 @@
 ---
 const { title = "Owner Scorecard" } = Astro.props;
+const today = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
 ---
 
 <html lang="en">
@@ -12,55 +13,135 @@ const { title = "Owner Scorecard" } = Astro.props;
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 
-    <style>
-      html { scroll-behavior: smooth; }
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500&family=Inter:wght@400;500;600;700&display=swap"
+    />
 
-      body {
-        font-family: Garamond, Georgia, serif;
-        line-height: 1.35;
-        color: #111;
-        max-width: 900px;
-        margin: 24px auto;
-        padding: 0 16px;
+    <style is:global>
+      :root {
+        --serif: "Fraunces", Georgia, "Times New Roman", serif;
+        --sans: "Inter", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+
+        --paper: #fcfcfa;
+        --ink: #18191d;
+        --muted: #5b616c;
+        --faint: #8b909a;
+        --rule: #e4e3dd;
+        --rule-strong: #16181d;
+
+        --accent: #1b3b6f;       /* ink blue — links, brand marks */
+        --accent-tint: #eef2f8;
+        --good: #1a7a3c;
+        --bad: #8b1a1a;
+        --warn: #9a6a00;
+        --info: #1b3b6f;
       }
 
-      a { color: inherit; text-decoration: none; }
-      a:hover { text-decoration: underline; }
-      a:visited { color: #555; }
+      * { box-sizing: border-box; }
 
-      header { margin-bottom: 18px; }
-      .brand { font-size: 34px; font-weight: 700; letter-spacing: 0.2px; margin: 0; }
-      .brand a { color: inherit; }
-      .by { font-size: 16px; font-weight: 400; margin-left: 10px; color: #444; }
-      .quote { margin: 6px 0 10px; color: #444; font-style: normal; }
-      nav { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 8px; }
-      main { margin-top: 10px; }
+      html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
 
-      footer { border-top: 1px solid #ddd; margin-top: 26px; padding-top: 14px; color: #333; }
-      footer small { display: block; color: #555; line-height: 1.35; }
+      body {
+        font-family: var(--sans);
+        font-size: 17px;
+        line-height: 1.6;
+        color: var(--ink);
+        background: var(--paper);
+        max-width: 880px;
+        margin: 0 auto;
+        padding: 0 20px 64px;
+        font-feature-settings: "kern" 1;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      h1, h2, h3, h4 {
+        font-family: var(--serif);
+        font-weight: 600;
+        line-height: 1.15;
+        letter-spacing: -0.01em;
+        color: var(--ink);
+        text-wrap: balance;
+      }
+      h1 { font-size: clamp(30px, 5vw, 42px); }
+      h2 { font-size: clamp(22px, 3.4vw, 27px); }
+      h3 { font-size: 20px; }
+
+      p { margin: 0 0 14px; }
+
+      a { color: var(--accent); text-decoration: none; }
+      a:hover { text-decoration: underline; text-underline-offset: 2px; }
+
+      ::selection { background: var(--accent-tint); }
+
+      .tnum { font-variant-numeric: tabular-nums; }
+
+      /* ---- masthead ---- */
+      .masthead { margin: 26px 0 22px; }
+      .mastRule { border: 0; border-top: 1px solid var(--rule-strong); margin: 0; }
+      .mastRuleThin { border: 0; border-top: 1px solid var(--rule); margin: 0; }
+
+      .mastBar {
+        display: flex; align-items: baseline; justify-content: space-between;
+        gap: 16px; flex-wrap: wrap; padding: 14px 0 12px;
+      }
+      .brand {
+        font-family: var(--serif);
+        font-weight: 600;
+        font-size: clamp(28px, 6vw, 38px);
+        letter-spacing: -0.02em;
+        color: var(--ink);
+        line-height: 1;
+      }
+      .brand:hover { text-decoration: none; }
+      .dateline {
+        font-size: 11.5px; letter-spacing: 0.08em; text-transform: uppercase;
+        color: var(--muted); font-weight: 500;
+      }
+
+      .nav {
+        display: flex; gap: 22px; flex-wrap: wrap;
+        padding: 9px 0;
+        font-size: 14px; letter-spacing: 0.02em;
+      }
+      .nav a {
+        color: var(--ink); font-weight: 500; text-transform: uppercase;
+        font-size: 12.5px; letter-spacing: 0.07em;
+      }
+      .nav a:hover { color: var(--accent); text-decoration: none; }
+
+      main { margin-top: 22px; }
+
+      /* ---- footer ---- */
+      footer { border-top: 1px solid var(--rule-strong); margin-top: 48px; padding-top: 16px; }
+      footer .colophon {
+        font-family: var(--serif); font-size: 14px; color: var(--muted); margin: 0 0 10px;
+      }
+      footer small { display: block; color: var(--faint); font-size: 12px; line-height: 1.5; }
 
       @media (max-width: 520px) {
-        body { margin: 18px auto; padding: 0 12px; }
-        .brand { font-size: 30px; }
-        .by { display: block; margin-left: 0; margin-top: 2px; }
+        body { font-size: 16px; padding: 0 14px 48px; }
+        .nav { gap: 16px; }
       }
     </style>
   </head>
 
   <body>
-    <header>
-      <h1 class="brand">
-        <a href="/">Owner Scorecard</a>
-        <span class="by">by R.G. Research</span>
-      </h1>
-
-      <div class="quote">An independent research publication</div>
-
-      <nav>
-        <a href="/">Research</a>
+    <header class="masthead">
+      <hr class="mastRule" />
+      <div class="mastBar">
+        <a class="brand" href="/">Owner Scorecard</a>
+        <div class="dateline">An independent research publication · {today}</div>
+      </div>
+      <hr class="mastRuleThin" />
+      <nav class="nav">
+        <a href="/">Companies</a>
         <a href="/articles">Articles</a>
         <a href="/tools">Tools</a>
       </nav>
+      <hr class="mastRule" />
     </header>
 
     <main>
@@ -68,12 +149,13 @@ const { title = "Owner Scorecard" } = Astro.props;
     </main>
 
     <footer>
+      <p class="colophon">Owner Scorecard — by R.G. Research</p>
       <small>
         R.G. Research is an independent publisher of financial research and is not registered as an investment adviser or broker-dealer.
-        This report is for informational and educational purposes only and does not constitute investment, tax, or legal advice, or a recommendation to buy or sell any security.
-        The information herein is based on sources believed to be reliable, but R.G. Research does not guarantee its accuracy or completeness and assumes no liability for any errors or omissions.
-        Any positions or results mentioned are the author's own, are presented for educational purposes, and may change at any time without notice.
-        Past performance is not indicative of future results; you should conduct your own research and consult a qualified financial professional before making any investment decisions.
+        This material is for informational and educational purposes only and does not constitute investment, tax, or legal advice, or a recommendation to buy or sell any security.
+        Figures are drawn from public SEC filings and believed reliable, but accuracy and completeness are not guaranteed.
+        Any positions or results mentioned are the author's own and may change at any time without notice.
+        Past performance is not indicative of future results; do your own research and consult a qualified professional before investing.
       </small>
     </footer>
   </body>

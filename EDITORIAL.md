@@ -223,6 +223,11 @@ Two standing constraints (the founder's, June 2026):
   serve, GitHub Actions covers the refresh on its free tier. Scale is free too —
   static pages on a CDN serve any traffic, and the build handles thousands of
   companies. No premium data vendor unless something truly requires it.
+  **Qualitative / MD&A analysis is free classic NLP only** — Loughran-McDonald
+  financial sentiment, readability/obfuscation, year-over-year language drift, and
+  red-flag keyword detection over filing text — **never paid generative tools.**
+  (An LLM tier is permanently off by default; if ever used it is on-demand for a
+  single company, never the universe, and only as a deliberate one-off spend.)
 - **Automation** — no manual data entry, ever. The pipeline self-refreshes weekly
   via CI (`fundamentals.yml`, now scheduled) and commits the result, which triggers
   a redeploy. The committed sample dataset is temporary scaffolding the automation

@@ -102,44 +102,46 @@ function spark(values, w = 132, h = 30) {
 </section>
 
 <style>
-  .scorecard { border: 1px solid #111; padding: 16px 18px; margin: 18px 0; }
+  .scorecard { border: 1px solid var(--rule-strong); padding: 20px 22px; margin: 20px 0; background: #fff; }
   .head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
-  .head h2 { margin: 0; border: 0; padding: 0; }
-  .src { font-size: 12px; color: #666; }
-  .manifesto { font-size: 13px; color: #555; margin: 6px 0 0; }
+  .head h2 { margin: 0; }
+  .src { font-size: 12px; color: var(--muted); }
+  .src a { color: var(--accent); }
+  .manifesto { font-family: var(--serif); font-style: italic; font-size: 15px; color: var(--muted); margin: 8px 0 0; }
 
   .sample { background: #fff7e6; border: 1px solid #e0c98a; padding: 6px 10px; font-size: 12px; color: #7a5b00; margin-top: 12px; }
 
-  .section { margin-top: 16px; }
+  .section { margin-top: 18px; }
   .secHead {
-    margin: 0; font-size: 12px; letter-spacing: 0.6px; text-transform: uppercase;
-    color: #111; border-bottom: 1px solid #111; padding-bottom: 4px;
+    font-family: var(--sans); font-weight: 600;
+    margin: 0; font-size: 11.5px; letter-spacing: 0.09em; text-transform: uppercase;
+    color: var(--ink); border-bottom: 1px solid var(--rule-strong); padding-bottom: 5px;
   }
 
   .checks { list-style: none; padding: 0; margin: 0; }
-  .checks li { padding: 12px 0; border-bottom: 1px solid #eee; }
+  .checks li { padding: 13px 0; border-bottom: 1px solid var(--rule); }
 
   .row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
-  .title { font-weight: 700; }
+  .title { font-weight: 600; font-size: 16px; }
   .title a { color: inherit; }
-  .value { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; flex: 0 0 auto; }
+  .value { font-size: 23px; font-weight: 700; font-variant-numeric: tabular-nums; flex: 0 0 auto; letter-spacing: -0.01em; }
 
-  .label { font-weight: 700; font-size: 13px; margin-top: 2px; }
-  .formula { font-size: 12px; color: #555; font-variant-numeric: tabular-nums; margin-top: 4px; }
-  .note { font-size: 13px; color: #333; margin: 6px 0 0; }
+  .label { font-weight: 600; font-size: 13px; margin-top: 2px; }
+  .formula { font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; margin-top: 4px; }
+  .note { font-size: 13.5px; color: #3a3e46; margin: 6px 0 0; line-height: 1.5; }
 
-  .durNote { font-size: 13px; color: #555; margin: 8px 0 4px; }
+  .durNote { font-family: var(--serif); font-style: italic; font-size: 13.5px; color: var(--muted); margin: 9px 0 4px; }
   .strips { list-style: none; padding: 0; margin: 0; }
-  .strips li { display: flex; align-items: center; gap: 14px; padding: 10px 0; border-bottom: 1px solid #eee; }
+  .strips li { display: flex; align-items: center; gap: 14px; padding: 11px 0; border-bottom: 1px solid var(--rule); }
   .stripLabel { flex: 1 1 auto; min-width: 0; }
-  .sl { font-weight: 700; display: block; }
-  .consist { font-size: 12px; color: #1a7a3c; }
+  .sl { font-weight: 600; display: block; }
+  .consist { font-size: 12px; color: var(--good); }
   .sparkSvg { width: 132px; height: 30px; flex: 0 0 auto; overflow: visible; }
-  .sparkLine { fill: none; stroke: #111; stroke-width: 1.4; vector-effect: non-scaling-stroke; }
-  .sparkDot { fill: #111; }
-  .zero { stroke: #ddd; stroke-width: 1; vector-effect: non-scaling-stroke; }
-  .noHist { font-size: 12px; color: #999; flex: 0 0 auto; width: 132px; text-align: center; }
+  .sparkLine { fill: none; stroke: var(--ink); stroke-width: 1.4; vector-effect: non-scaling-stroke; }
+  .sparkDot { fill: var(--accent); }
+  .zero { stroke: var(--rule); stroke-width: 1; vector-effect: non-scaling-stroke; }
+  .noHist { font-size: 12px; color: var(--faint); flex: 0 0 auto; width: 132px; text-align: center; }
   .stripVal { font-weight: 700; font-variant-numeric: tabular-nums; width: 48px; text-align: right; flex: 0 0 auto; }
 
-  .foot { font-size: 12px; color: #666; border-top: 1px solid #111; margin-top: 14px; padding-top: 10px; }
+  .foot { font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--muted); border-top: 1px solid var(--rule-strong); margin-top: 16px; padding-top: 11px; }
 </style>
