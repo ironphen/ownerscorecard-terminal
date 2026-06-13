@@ -2,7 +2,7 @@
 import { buildScorecard, TONE_COLOR } from "../lib/fundamentals.mjs";
 
 const { company, sample = false } = Astro.props;
-const { checks } = buildScorecard(company);
+const { sections } = buildScorecard(company);
 ---
 
 <section class="scorecard">
@@ -17,9 +17,10 @@ const { checks } = buildScorecard(company);
   </div>
 
   <p class="manifesto">
-    No overall score — on purpose. A handful of vital signs, each computed from the
-    company’s own filing and shown with its arithmetic. The single grade other tools
-    sell you is exactly the number you won’t find here.
+    No overall score — on purpose. Vital signs grouped by the two questions a value
+    investor actually asks, each computed from the company’s own filing and shown
+    with its arithmetic. The single grade other tools sell you is the number you
+    won’t find here.
   </p>
 
   {sample ? (
@@ -29,21 +30,24 @@ const { checks } = buildScorecard(company);
     </div>
   ) : null}
 
-  <ul class="checks">
-    {checks.map((c) => (
-      <li>
-        <div class="row">
-          <span class="title">
-            {c.href ? <a href={c.href}>{c.title}</a> : c.title}
-          </span>
-          <span class="value" style={`color:${TONE_COLOR[c.tone]}`}>{c.value}</span>
-        </div>
-        <div class="label" style={`color:${TONE_COLOR[c.tone]}`}>{c.label}</div>
-        {c.formula ? <div class="formula">{c.formula}</div> : null}
-        <p class="note">{c.note}</p>
-      </li>
-    ))}
-  </ul>
+  {sections.map((sec) => (
+    <div class="section">
+      <h3 class="secHead">{sec.heading}</h3>
+      <ul class="checks">
+        {sec.checks.map((c) => (
+          <li>
+            <div class="row">
+              <span class="title">{c.href ? <a href={c.href}>{c.title}</a> : c.title}</span>
+              <span class="value" style={`color:${TONE_COLOR[c.tone]}`}>{c.value}</span>
+            </div>
+            <div class="label" style={`color:${TONE_COLOR[c.tone]}`}>{c.label}</div>
+            {c.formula ? <div class="formula">{c.formula}</div> : null}
+            <p class="note">{c.note}</p>
+          </li>
+        ))}
+      </ul>
+    </div>
+  ))}
 
   <p class="foot">
     Solvent is not the same as cheap; growing is not the same as good. These are vital
@@ -60,9 +64,14 @@ const { checks } = buildScorecard(company);
 
   .sample { background: #fff7e6; border: 1px solid #e0c98a; padding: 6px 10px; font-size: 12px; color: #7a5b00; margin-top: 12px; }
 
-  .checks { list-style: none; padding: 0; margin: 14px 0 0; }
-  .checks li { padding: 12px 0; border-top: 1px solid #eee; }
-  .checks li:first-child { border-top: 0; }
+  .section { margin-top: 16px; }
+  .secHead {
+    margin: 0; font-size: 12px; letter-spacing: 0.6px; text-transform: uppercase;
+    color: #111; border-bottom: 1px solid #111; padding-bottom: 4px;
+  }
+
+  .checks { list-style: none; padding: 0; margin: 0; }
+  .checks li { padding: 12px 0; border-bottom: 1px solid #eee; }
 
   .row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
   .title { font-weight: 700; }

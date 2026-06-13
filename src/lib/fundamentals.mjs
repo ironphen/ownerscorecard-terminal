@@ -145,12 +145,114 @@ export function capexVsDepreciation(c) {
   };
 }
 
-// Assemble the panel. Uniform shape per check; missing inputs become honest gaps.
+// Return on invested capital — Buffett's north star.
+export function roic(c) {
+  const L = c?.lines || {};
+  const oi = L.operatingIncome, eq = L.stockholdersEquity, debt = L.totalDebt;
+  if (oi == null || eq == null || debt == null) return null;
+  const invested = debt + eq - (L.cashAndEquivalents || 0);
+  if (invested <= 0)
+    return {
+      value: "—",
+      formula: `Invested capital ${fmtUSD(invested)} = debt ${fmtUSD(debt)} + equity ${fmtUSD(eq)} − cash`,
+      tone: "none",
+      label: "Not meaningful here",
+      note: "Invested capital is near zero or negative — usually years of buybacks pulling equity down. ROIC explodes or flips sign and stops meaning anything. Judge this one on Owner Earnings instead.",
+    };
+  // Effective tax rate from the filing (pretax ≈ net income + tax); fallback 21%.
+  let t = 0.21;
+  const tax = L.incomeTaxExpense, ni = L.netIncome;
+  if (tax != null && ni != null && ni + tax > 0) t = Math.min(Math.max(tax / (ni + tax), 0), 0.5);
+  const nopat = oi * (1 - t);
+  const r = nopat / invested;
+  const tone = r < 0.08 ? "warn" : r < 0.15 ? "ok" : "good";
+  const label = r < 0.08 ? "Below average" : r < 0.15 ? "Solid" : r < 0.25 ? "High" : "Exceptional";
+  return {
+    value: `${(r * 100).toFixed(0)}%`,
+    formula: `NOPAT ${fmtUSD(nopat)} ÷ invested capital ${fmtUSD(invested)} (debt + equity − cash)`,
+    tone,
+    label,
+    note: "The rate the business earns on the money tied up in it — Buffett's north star, because over time a stock tracks the ROIC beneath it. Above ~15% sustained hints at a moat; below ~8% the company may destroy value as it grows. Asset-light businesses (R&D expensed, little capital) read artificially high — pair this with Owner Earnings.",
+  };
+}
+
+// Owner Earnings (owner earnings): operating cash minus capex — what an owner can take out.
+export function ownerCash(c) {
+  const L = c?.lines || {};
+  const cfo = L.cashFromOps, capex = L.capex;
+  if (cfo == null || capex == null) return null;
+  const oc = cfo - Math.abs(capex);
+  const rev = L.revenue, sbc = L.stockBasedComp;
+  const margin = rev ? oc / rev : null;
+  const ocSbc = sbc != null ? oc - sbc : null;
+  const tone = oc <= 0 ? "bad" : margin == null ? "ok" : margin < 0.05 ? "warn" : margin < 0.15 ? "ok" : "good";
+  const label = oc <= 0 ? "Consumes cash" : margin == null ? "Positive" : margin < 0.05 ? "Thin" : margin < 0.15 ? "Solid" : "Cash machine";
+  return {
+    value: margin != null ? `${(margin * 100).toFixed(0)}%` : fmtUSD(oc),
+    formula: `Owner Earnings ${fmtUSD(oc)} = operating cash ${fmtUSD(cfo)} − capex ${fmtUSD(Math.abs(capex))}`,
+    tone,
+    label,
+    note:
+      `What an owner could take out without starving the business.${margin != null ? ` That's ${(margin * 100).toFixed(0)}% of revenue.` : ""}` +
+      `${ocSbc != null ? ` Treating stock comp as the real expense it is (less ${fmtUSD(sbc)} of SBC) leaves ${fmtUSD(ocSbc)}.` : ""}` +
+      " Honest caveat: capex here blends maintenance and growth, so steady-state Owner Earnings may run higher (see capex vs. depreciation).",
+  };
+}
+
+// Capital allocation: of the Owner Earnings, how much was returned — and was it real?
+export function capitalAllocation(c) {
+  const L = c?.lines || {};
+  const cfo = L.cashFromOps, capex = L.capex, div = L.dividendsPaid, bb = L.buybacks;
+  if (cfo == null || capex == null || (div == null && bb == null)) return null;
+  const oc = cfo - Math.abs(capex);
+  if (oc <= 0)
+    return { value: "—", formula: "", tone: "warn", label: "No surplus to allocate", note: "The business didn't generate positive Owner Earnings this year, so any distributions came from the balance sheet or borrowing — not from operations." };
+  const dividends = Math.abs(div || 0), buybacks = Math.abs(bb || 0), sbc = L.stockBasedComp;
+  const returned = dividends + buybacks;
+  const payout = returned / oc;
+  const label = payout >= 0.9 ? "Returns most of it" : payout >= 0.4 ? "Returns about half" : "Reinvests most of it";
+  let note = `Of ${fmtUSD(oc)} Owner Earnings, ${fmtUSD(returned)} (${(payout * 100).toFixed(0)}%) went back to shareholders — ${fmtUSD(dividends)} dividends, ${fmtUSD(buybacks)} buybacks.`;
+  if (buybacks > 0 && sbc != null)
+    note += buybacks - sbc <= 0
+      ? ` But the buybacks barely exceed stock issued to employees (${fmtUSD(sbc)} SBC) — net of dilution, little was truly returned.`
+      : ` Net of ${fmtUSD(sbc)} stock comp, the real buyback was about ${fmtUSD(buybacks - sbc)}.`;
+  note += " Returning most of it signals a mature cash machine; reinvesting most could mean a long runway — or empire-building. The split doesn't say which; the return earned on it (see ROIC) does.";
+  return { value: `${(payout * 100).toFixed(0)}%`, formula: `Dividends + buybacks ${fmtUSD(returned)} ÷ Owner Earnings ${fmtUSD(oc)}`, tone: "info", label, note };
+}
+
+// Cash-conversion cycle: DSO + DIO − DPO (days). A liquidity check that doubles
+// as a moat detector — a negative cycle means others fund the business.
+export function cashConversionCycle(c) {
+  const L = c?.lines || {};
+  const rev = L.revenue, cogs = L.costOfRevenue, recv = L.receivables, ap = L.accountsPayable;
+  if (rev == null || cogs == null || recv == null || ap == null || cogs <= 0 || rev <= 0) return null;
+  const inv = L.inventory;
+  const hasInv = inv != null && inv > 0;
+  const dso = (recv / rev) * 365;
+  const dio = hasInv ? (inv / cogs) * 365 : 0;
+  const dpo = (ap / cogs) * 365;
+  const ccc = dso + dio - dpo;
+  const tone = ccc < 0 ? "good" : ccc < 60 ? "ok" : "warn";
+  const label = ccc < 0 ? "Negative — funded by others" : ccc < 60 ? "Tight" : "Capital-hungry";
+  return {
+    value: `${Math.round(ccc)}d`,
+    formula: `DSO ${Math.round(dso)} + DIO ${Math.round(dio)} − DPO ${Math.round(dpo)} days`,
+    tone,
+    label,
+    note:
+      "Days cash is tied up between paying suppliers and collecting from customers." +
+      (ccc < 0
+        ? " A negative cycle is a quiet moat: suppliers and customers fund the operation (Buffett's “float”) — the company grows on other people's money."
+        : " Lower is better; a long cycle means growth itself eats cash.") +
+      (!hasInv ? " (Little or no inventory — a services / asset-light model, so the inventory leg is ~0.)" : ""),
+  };
+}
+
+// Assemble the panel, grouped into the two questions Graham and Buffett asked.
 export function buildScorecard(company) {
   const cov = coverage(company);
   const covV = coverageVerdict(cov);
   const coverageCheck = {
-    key: "coverage",
     title: "Can it pay its interest?",
     href: "/tools/coverage",
     value: cov?.ratio != null ? `${cov.ratio.toFixed(1)}×` : "—",
@@ -160,15 +262,36 @@ export function buildScorecard(company) {
     note: covV.note,
   };
 
-  const more = [
-    { key: "quality", title: "Are earnings backed by cash?", result: earningsQuality(company) },
-    { key: "leverage", title: "How heavy is the debt?", result: leverage(company) },
-    { key: "capex", title: "Investing or harvesting?", result: capexVsDepreciation(company) },
-  ].map((r) =>
-    r.result
-      ? { key: r.key, title: r.title, ...r.result }
-      : { key: r.key, title: r.title, value: "—", formula: "", tone: "none", label: "Not enough data", note: "The filing data didn't include the inputs for this check." }
-  );
+  const wrap = (title, result) =>
+    result
+      ? { title, ...result }
+      : { title, value: "—", formula: "", tone: "none", label: "Not enough data", note: "The filing data didn't include the inputs for this check." };
 
-  return { checks: [coverageCheck, ...more] };
+  return {
+    sections: [
+      {
+        heading: "Will it survive?",
+        checks: [
+          coverageCheck,
+          wrap("How heavy is the debt?", leverage(company)),
+          wrap("How long is cash tied up?", cashConversionCycle(company)),
+        ],
+      },
+      {
+        heading: "Is it a good business?",
+        checks: [
+          wrap("Return on invested capital", roic(company)),
+          wrap("Owner Earnings (free cash) margin", ownerCash(company)),
+          wrap("Are earnings backed by cash?", earningsQuality(company)),
+        ],
+      },
+      {
+        heading: "How is the cash used?",
+        checks: [
+          wrap("Where do the earnings go?", capitalAllocation(company)),
+          wrap("Investing or harvesting?", capexVsDepreciation(company)),
+        ],
+      },
+    ],
+  };
 }

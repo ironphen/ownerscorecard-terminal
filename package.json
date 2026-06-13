@@ -7,7 +7,6 @@
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "add:report": "node scripts/addReport.mjs",
     "import:fidelity": "node scripts/importFidelity.mjs",
     "fetch:fundamentals": "node scripts/fetchFundamentals.mjs"
   },

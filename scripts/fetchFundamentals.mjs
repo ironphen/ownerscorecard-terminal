@@ -55,6 +55,20 @@ const CONCEPTS = {
   capex: ["PaymentsToAcquirePropertyPlantAndEquipment", "PaymentsToAcquireProductiveAssets"],
   longTermDebt: ["LongTermDebtNoncurrent", "LongTermDebt"],
   currentDebt: ["LongTermDebtCurrent", "DebtCurrent"],
+  incomeTaxExpense: ["IncomeTaxExpenseBenefit"],
+  costOfRevenue: ["CostOfGoodsAndServicesSold", "CostOfRevenue", "CostOfGoodsSold"],
+  stockBasedComp: ["ShareBasedCompensation"],
+  dividendsPaid: ["PaymentsOfDividendsCommonStock", "PaymentsOfDividends"],
+  buybacks: ["PaymentsForRepurchaseOfCommonStock"],
+  stockholdersEquity: ["StockholdersEquity"],
+  cashAndEquivalents: [
+    "CashAndCashEquivalentsAtCarryingValue",
+    "CashCashEquivalentsAndShortTermInvestmentsAtCarryingValue",
+    "CashCashEquivalentsAndShortTermInvestments",
+  ],
+  receivables: ["AccountsReceivableNetCurrent"],
+  inventory: ["InventoryNet"],
+  accountsPayable: ["AccountsPayableCurrent"],
 };
 
 const days = (a, b) => Math.abs((new Date(b) - new Date(a)) / 86400000);
@@ -118,6 +132,7 @@ async function main() {
       ltd || cur ? (ltd?.val || 0) + (cur?.val || 0) : null;
 
     const pick = (tags) => pickAnnual(facts, tags)?.val ?? null;
+    const inst = (tags) => pickInstant(facts, tags)?.val ?? null;
     const accnNoDash = anchor?.accn ? anchor.accn.replace(/-/g, "") : null;
     const sourceUrl = accnNoDash
       ? `https://www.sec.gov/Archives/edgar/data/${Number(cik)}/${accnNoDash}/${anchor.accn}-index.htm`
@@ -140,6 +155,16 @@ async function main() {
         cashFromOps: pick(CONCEPTS.cashFromOps),
         depreciation: pick(CONCEPTS.depreciation),
         capex: pick(CONCEPTS.capex),
+        incomeTaxExpense: pick(CONCEPTS.incomeTaxExpense),
+        costOfRevenue: pick(CONCEPTS.costOfRevenue),
+        stockBasedComp: pick(CONCEPTS.stockBasedComp),
+        dividendsPaid: pick(CONCEPTS.dividendsPaid),
+        buybacks: pick(CONCEPTS.buybacks),
+        stockholdersEquity: inst(CONCEPTS.stockholdersEquity),
+        cashAndEquivalents: inst(CONCEPTS.cashAndEquivalents),
+        receivables: inst(CONCEPTS.receivables),
+        inventory: inst(CONCEPTS.inventory),
+        accountsPayable: inst(CONCEPTS.accountsPayable),
       },
     });
     console.log(`  ✓ ${ticker} (CIK ${cik}, FY${anchor?.fy ?? "?"})`);
