@@ -1,18 +1,5 @@
 # Publishing workflows
 
-## Research report
-
-1. Export PDF + preview image + excel
-2. Upload to R2 under the naming convention (`TICKER_YYYY-MM-DD.pdf` etc.)
-3. Register and push:
-
-```sh
-npm run add:report -- PEP "PepsiCo" 2025-12-09 --xlsx
-git add src/data/reports.json
-git commit -m "Add PEP"
-git push
-```
-
 ## Article
 
 1. Create `src/content/articles/my-piece.mdx` (frontmatter reference:

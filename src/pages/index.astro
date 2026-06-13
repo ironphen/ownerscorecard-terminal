@@ -1,153 +1,92 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
-import reports from "../data/reports.json";
+import fundamentals from "../data/fundamentals.json";
+import { getCollection } from "astro:content";
 
-const latestByTicker = new Map();
+const companies = [...(fundamentals.companies || [])].sort((a, b) =>
+  String(a.ticker).localeCompare(String(b.ticker))
+);
 
-// Keep only the most recent report per ticker
-for (const r of reports || []) {
-  if (!r?.ticker) continue;
-  const t = String(r.ticker).toUpperCase();
-  const existing = latestByTicker.get(t);
-  if (!existing || String(r.date || "") > String(existing.date || "")) {
-    latestByTicker.set(t, { ...r, ticker: t });
-  }
-}
+const articles = (
+  await getCollection("articles", ({ data }) =>
+    import.meta.env.PROD ? !data.draft : true
+  )
+)
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
+  .slice(0, 4);
 
-// Sort by last updated (newest first)
-const companies = Array.from(latestByTicker.values()).sort((a, b) => {
-  const bd = String(b.date || "");
-  const ad = String(a.date || "");
-  if (bd !== ad) return bd.localeCompare(ad);
-  return String(a.ticker || "").localeCompare(String(b.ticker || ""));
-});
-
-// Site-wide last updated stamp
-const lastUpdated = (reports || []).reduce((max, r) => {
-  const d = String(r?.date || "");
-  return d > max ? d : max;
-}, "0000-00-00");
+const fmtDate = (d) =>
+  d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric", timeZone: "UTC" });
 ---
 
 <BaseLayout title="Owner Scorecard">
+  <p class="intro">
+    The vital signs of a business — pulled from its own SEC filings, shown with the
+    arithmetic, with no rating and no estimate. Pick a company for its Owner’s
+    Scorecard, or read why the numbers matter.
+  </p>
+
   <div class="stickyBar">
     <div class="metaRow">
-      <div class="updated">Updated: {lastUpdated}</div>
-      <div class="count">{companies.length} issues</div>
+      <div class="count">{companies.length} companies</div>
+      <div class="count">{fundamentals.sample ? "sample data" : `as of ${fundamentals.asOf}`}</div>
     </div>
-
-    <input
-      id="q"
-      type="search"
-      placeholder="Search ticker or name..."
-      class="search"
-      autocomplete="off"
-    />
+    <input id="q" type="search" placeholder="Search ticker or name…" class="search" autocomplete="off" />
   </div>
 
   <ul class="list" id="list">
     {companies.map((c) => (
       <li data-search={`${c.ticker} ${c.name || ""}`.toLowerCase()}>
-        <div class="left">
-          <span class="ticker">
-            <a href={`/c/${c.ticker}`}>{c.ticker}</a>
-          </span>
-          <span class="name">{c.name}</span>
-        </div>
-        <span class="date">{c.date}</span>
+        <span class="ticker"><a href={`/c/${c.ticker}`}>{c.ticker}</a></span>
+        <span class="name"><a href={`/c/${c.ticker}`}>{c.name}</a></span>
       </li>
     ))}
   </ul>
 
+  {articles.length ? (
+    <section class="reading">
+      <h2>Reading</h2>
+      <ul class="alist">
+        {articles.map((a) => (
+          <li>
+            <a href={`/articles/${a.id}`}>{a.data.title}</a>
+            <span class="adate">{fmtDate(a.data.date)}</span>
+          </li>
+        ))}
+      </ul>
+      <p class="more"><a href="/articles">All articles →</a></p>
+    </section>
+  ) : null}
+
   <style>
-    .stickyBar {
-      position: sticky;
-      top: 0;
-      z-index: 20;
-      background: #fff;
-      padding: 10px 0 10px;
-      border-bottom: 1px solid #eee;
-    }
+    .intro { color: #333; margin: 0 0 14px; }
 
-    .metaRow {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      gap: 10px;
-      margin-bottom: 8px;
-    }
+    .stickyBar { position: sticky; top: 0; z-index: 20; background: #fff; padding: 10px 0; border-bottom: 1px solid #eee; }
+    .metaRow { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 8px; }
+    .count { font-size: 12px; color: #555; }
+    .search { width: 100%; padding: 10px; border: 1px solid #111; font-family: inherit; }
 
-    .updated {
-      font-size: 12px;
-      color: #555;
-    }
-
-    .count {
-      font-size: 12px;
-      color: #555;
-    }
-
-    .search {
-      width: 100%;
-      padding: 10px;
-      border: 1px solid #111;
-      font-family: inherit;
-    }
-
-    .list {
-      list-style: none;
-      padding-left: 0;
-      margin: 14px 0 0;
-    }
-
-    li {
-      padding: 10px 0;
-      display: flex;
-      gap: 12px;
-      justify-content: space-between;
-      border-bottom: 1px solid #f0f0f0;
-    }
-
-    .left {
-      display: flex;
-      gap: 10px;
-      min-width: 0;
-    }
-
-    .ticker {
-      font-weight: 700;
-      width: 64px;
-      flex: 0 0 auto;
-    }
-
-    .name {
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      min-width: 0;
-    }
-
-    .date {
-      color: #666;
-      font-size: 14px;
-      flex: 0 0 auto;
-      margin-left: 12px;
-    }
-
+    .list { list-style: none; padding-left: 0; margin: 14px 0 0; }
+    .list li { padding: 10px 0; display: flex; gap: 12px; border-bottom: 1px solid #f0f0f0; }
+    .ticker { font-weight: 700; width: 72px; flex: 0 0 auto; }
+    .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
     a { color: inherit; }
+
+    .reading { margin-top: 28px; }
+    .reading h2 { border-bottom: 1px solid #ddd; padding-bottom: 4px; }
+    .alist { list-style: none; padding-left: 0; margin: 0; }
+    .alist li { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid #f0f0f0; }
+    .adate { color: #666; font-size: 13px; flex: 0 0 auto; }
+    .more { margin: 10px 0 0; font-size: 14px; }
   </style>
 
   <script is:inline>
     const q = document.getElementById("q");
     const items = Array.from(document.querySelectorAll('li[data-search]'));
-
     function refresh() {
       const term = (q.value || "").trim().toLowerCase();
-      for (const li of items) {
-        li.style.display = !term || li.dataset.search.includes(term) ? "" : "none";
-      }
+      for (const li of items) li.style.display = !term || li.dataset.search.includes(term) ? "" : "none";
     }
-
     q?.addEventListener("input", refresh);
   </script>
 </BaseLayout>

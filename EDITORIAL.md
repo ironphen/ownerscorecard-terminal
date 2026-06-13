@@ -121,8 +121,8 @@ evidentiary standards, pointed long, taught in public.**
    has only ever asked whether the CEO is overpaid relative to shareholders —
    never relative to the payroll. Teach readers to compute it from any proxy
    and 10-K.
-4. **Dossiers.** Every company page accumulates reports, closed positions, and
-   writing. The library is the moat.
+4. **Dossiers.** Every company page is an Owner's Scorecard plus any writing on
+   the company. The library is the moat.
 
 ## Essay slate
 
@@ -202,10 +202,18 @@ Honest about novelty: the *surface* (ticker → panel of checks) is common; the
 too-hard verdict) is the moat.
 
 Build sequence: more checks reuse the existing pipeline (coverage, earnings
-quality, leverage, capex-vs-D&A all ship from data already pulled). Open: reframe
-the homepage from report-index to a ticker → Scorecard front door, and decide the
-fate of the existing PDF reports (keep as a section / fold into dossiers) — not to
-be done without confirming, since the reports are the author's own work.
+quality, leverage, capex-vs-D&A all ship from data already pulled). Done June 2026:
+homepage is the company directory / Scorecard front door; the old PDF reports are
+retired (the Scorecard and essays supersede them).
+
+The metric set is anchored on a value investor's own ValueLine-style template —
+which, tellingly, strips out ValueLine's ratings and estimates. That independently
+confirms the doctrine: realized history and primary-source facts, never a rating
+or a forecast. The next metrics to add are return on invested capital and Owner
+Cash (owner earnings: cash from operations − capex, with stock-based comp treated
+as the real expense it is), plus capital-allocation lines (buybacks vs. owner cash,
+payout, retained-to-equity) and the cash-conversion cycle. Valuation ratios (P/E,
+yields) wait on a price source; the business-quality half is fully free from EDGAR.
 
 ## Process
 
