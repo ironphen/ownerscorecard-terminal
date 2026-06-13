@@ -207,13 +207,28 @@ homepage is the company directory / Scorecard front door; the old PDF reports ar
 retired (the Scorecard and essays supersede them).
 
 The metric set is anchored on a value investor's own ValueLine-style template —
-which, tellingly, strips out ValueLine's ratings and estimates. That independently
-confirms the doctrine: realized history and primary-source facts, never a rating
-or a forecast. The next metrics to add are return on invested capital and Owner
-Cash (owner earnings: cash from operations − capex, with stock-based comp treated
-as the real expense it is), plus capital-allocation lines (buybacks vs. owner cash,
-payout, retained-to-equity) and the cash-conversion cycle. Valuation ratios (P/E,
-yields) wait on a price source; the business-quality half is fully free from EDGAR.
+which, tellingly, strips out ValueLine's ratings and estimates, independently
+confirming the doctrine: realized history and primary-source facts, never a rating
+or a forecast. Shipped June 2026, grouped into Graham/Buffett sections: interest
+coverage, leverage, and the cash-conversion cycle (*will it survive?*); return on
+invested capital, Owner Earnings (free cash = operating cash − capex, with stock
+comp treated as the real expense it is), and earnings quality (*is it a good
+business?*); capital allocation and capex-vs-depreciation (*how is the cash
+used?*). Valuation ratios (P/E, yields) wait on a price source; the
+business-quality half is fully free from EDGAR.
+
+Two standing constraints (the founder's, June 2026):
+
+- **Cost** — the whole stack stays ~$0: EDGAR is free, the static site is free to
+  serve, GitHub Actions covers the refresh on its free tier. Scale is free too —
+  static pages on a CDN serve any traffic, and the build handles thousands of
+  companies. No premium data vendor unless something truly requires it.
+- **Automation** — no manual data entry, ever. The pipeline self-refreshes weekly
+  via CI (`fundamentals.yml`, now scheduled) and commits the result, which triggers
+  a redeploy. The committed sample dataset is temporary scaffolding the automation
+  overwrites. The *only* hand-maintained input is the curated ticker universe — one
+  line per company — which is intentional curation (the product is curated, not
+  comprehensive), not upkeep.
 
 ## Process
 
