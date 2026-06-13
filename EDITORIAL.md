@@ -174,6 +174,39 @@ calls, timestamped and scored).
 - **Not building:** accounts, database (git + static JSON is the database),
   comments, CMS, custom paywall. The newsletter stays external/managed.
 
+### The hero product: the Owner's Scorecard (decided June 2026)
+
+A "nutrition label" for a business. Type a ticker → a standardized panel of vital
+signs (solvency, earnings quality, leverage, reinvestment…), each computed from
+the company's own filing, each showing its arithmetic, each linked to EDGAR, each
+stating what it does and does *not* mean. The tools, library, and graded record
+orbit this surface; the company page (`/c/[ticker]`) is where they converge.
+
+**It refuses to roll up into a single score — on purpose.** The one grade every
+competitor sells (snowflake, star, "fair value") is the trick; the number you
+won't find here is the differentiation.
+
+Differentiation vs. the countless financial tools — three things their business
+models structurally forbid them from copying:
+
+1. **Refusal to give a verdict.** "We'll make you literate enough to need us less,
+   and we'll tell you when the honest answer is *too hard, do nothing*." Un-copyable
+   by anyone whose revenue scales with engagement or transactions.
+2. **Primary-source integrity.** Every number one click from its filing — a premium,
+   trust-bearing stance as AI floods finance with confident, unsourced analysis.
+3. **Pedagogy as product.** Teach the mechanism so the reader can compute it without
+   us. Teaching reduces dependence, which kills a funnel — so competitors won't.
+
+Honest about novelty: the *surface* (ticker → panel of checks) is common; the
+*soul* (sourced, shows the math, teaches, refuses the rollup, publishes the
+too-hard verdict) is the moat.
+
+Build sequence: more checks reuse the existing pipeline (coverage, earnings
+quality, leverage, capex-vs-D&A all ship from data already pulled). Open: reframe
+the homepage from report-index to a ticker → Scorecard front door, and decide the
+fate of the existing PDF reports (keep as a section / fold into dossiers) — not to
+be done without confirming, since the reports are the author's own work.
+
 ## Process
 
 See `PUBLISHING.md` for workflows (articles, reports, monthly record import).

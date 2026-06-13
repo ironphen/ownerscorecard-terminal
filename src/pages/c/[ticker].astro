@@ -1,6 +1,8 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import reports from "../../data/reports.json";
+import fundamentals from "../../data/fundamentals.json";
+import Scorecard from "../../components/Scorecard.astro";
 import { getCollection } from "astro:content";
 
 export async function getStaticPaths() {
@@ -9,6 +11,7 @@ export async function getStaticPaths() {
   );
   const tickers = new Set([
     ...(reports || []).map((r) => String(r.ticker || "").toUpperCase()),
+    ...(fundamentals.companies || []).map((c) => String(c.ticker || "").toUpperCase()),
     ...articles.flatMap((a) => a.data.tickers.map((t) => t.toUpperCase())),
   ]);
   tickers.delete("");
@@ -22,12 +25,17 @@ const all = (reports || [])
   .sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")));
 const latest = all[0];
 
+const fund =
+  (fundamentals.companies || []).find((c) => String(c.ticker || "").toUpperCase() === ticker) || null;
+
 const related = (
   await getCollection("articles", ({ data }) =>
     (import.meta.env.PROD ? !data.draft : true) &&
     data.tickers.some((t) => t.toUpperCase() === ticker)
   )
 ).sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+
+const name = latest?.name || fund?.name || "";
 
 const fmtDate = (d) =>
   d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric", timeZone: "UTC" });
@@ -37,12 +45,19 @@ const fmtDate = (d) =>
   <p class="back"><a href="/">← Index</a></p>
 
   <header class="hero">
-    <h1>{ticker}{latest?.name ? ` — ${latest.name}` : ""}</h1>
-    {latest ? <div class="meta">Report last updated: {latest.date}</div> : null}
+    <h1>{ticker}{name ? ` — ${name}` : ""}</h1>
+    {latest ? (
+      <div class="meta">Report last updated: {latest.date}</div>
+    ) : fund ? (
+      <div class="meta">Latest filing: FY{fund.fy} {fund.form}</div>
+    ) : null}
   </header>
+
+  {fund ? <Scorecard company={fund} sample={fundamentals.sample} /> : null}
 
   {latest ? (
     <>
+      <h2>Research report</h2>
       <div class="btnRow">
         <a class="btn" href={latest.pdfUrl} target="_blank" rel="noopener">View PDF</a>
         <a class="btn" href={latest.pdfUrl} download>Download PDF</a>
@@ -57,7 +72,7 @@ const fmtDate = (d) =>
 
       {all.length > 1 ? (
         <>
-          <h2>Report history</h2>
+          <h3>Report history</h3>
           <ul class="history">
             {all.map((r) => (
               <li>
@@ -97,20 +112,21 @@ const fmtDate = (d) =>
     </>
   ) : null}
 
-  {!latest && !related.length ? <p>Nothing here for {ticker} yet.</p> : null}
+  {!fund && !latest && !related.length ? <p>Nothing here for {ticker} yet.</p> : null}
 
   <style>
     .back { margin: 0 0 10px; }
     .hero h1 { margin: 0; }
     .meta { color: #555; font-size: 14px; margin-top: 4px; }
 
+    h2 { border-bottom: 1px solid #ddd; padding-bottom: 4px; margin-top: 24px; }
+    h3 { margin-top: 18px; }
+
     .btnRow { display: flex; gap: 10px; flex-wrap: wrap; margin: 12px 0 8px; }
     .btn { display: inline-block; padding: 10px 14px; border: 1px solid #111; text-decoration: none; }
     .btn:hover { background: #f2f2f2; }
 
     img { max-width: 100%; border: 1px solid #ddd; margin-top: 14px; }
-
-    h2 { border-bottom: 1px solid #ddd; padding-bottom: 4px; margin-top: 24px; }
 
     .history { list-style: none; padding-left: 0; margin: 0; }
     .history li {
