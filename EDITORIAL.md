@@ -236,6 +236,36 @@ Two standing constraints (the founder's, June 2026):
   line per company — which is intentional curation (the product is curated, not
   comprehensive), not upkeep.
 
+## The moat (decided June 2026)
+
+The logic is not the moat — and we don't pretend otherwise. It runs on public
+EDGAR data and textbook formulas; the "show your work" doctrine publishes the
+method on purpose. Anyone can rebuild the pipeline. So we never contort the
+product to hide commodity code.
+
+The durable moats are elsewhere and they compound: **trust / brand / authority**
+(the real moat of every research franchise); the **timestamped, publicly-graded
+track record** (un-fakeable, time-based); the **compounding corpus** (essays,
+dossiers, company histories a copycat must rebuild from year zero); **voice**
+(it's a person); **audience / distribution**; and the **proprietary judgment** we
+accumulate (curation, archetype corrections, MD&A language baselines). Build
+those, not walls around the formulas. Open-sourcing the method is a brand move,
+not a leak.
+
+## Future features (parked)
+
+- **Narrative company histories** — a hand-written history per company (Buffett's
+  fascination with company stories / old Moody's manuals). Editorial, not
+  generated (keeps it free and on the no-LLM rule) — and exactly the compounding,
+  un-stealable corpus that *is* the moat.
+- **Ten-year financials table** — the curated ValueLine-style grid, archetype-aware.
+- **Valuation layer** — P/E, P/B, owner-earnings yield vs. own history (needs a
+  free price feed, e.g. Stooq).
+- **Free MD&A NLP layer** — Loughran-McDonald sentiment, readability, language
+  drift, red-flag keywords; what to look for is set by the archetype.
+- **Phase 2 archetypes** — banks, insurers, REITs (different statements); plus
+  serial-acquirer overlay.
+
 ## Process
 
 See `PUBLISHING.md` for workflows (articles, reports, monthly record import).

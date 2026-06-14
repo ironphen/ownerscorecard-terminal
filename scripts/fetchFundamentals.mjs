@@ -166,6 +166,17 @@ async function main() {
       continue;
     }
 
+    // Industry code (drives the archetype classifier). Non-fatal if it fails.
+    let sic = null, sicDescription = null;
+    try {
+      await sleep(THROTTLE_MS);
+      const sub = await getJSON(`https://data.sec.gov/submissions/CIK${cik}.json`);
+      sic = sub?.sic || null;
+      sicDescription = sub?.sicDescription || null;
+    } catch {
+      /* leave null */
+    }
+
     const oi = pickAnnual(facts, CONCEPTS.operatingIncome);
     const anchor = oi || pickAnnual(facts, CONCEPTS.revenue); // for fy / period / filing link
     const ltd = pickInstant(facts, CONCEPTS.longTermDebt);
@@ -218,6 +229,8 @@ async function main() {
       ticker: ticker.toUpperCase(),
       name,
       cik,
+      sic,
+      sicDescription,
       fy: anchor?.fy ?? null,
       periodEnd: anchor?.end ?? null,
       form: anchor?.form ?? "10-K",
