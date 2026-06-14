@@ -1,7 +1,10 @@
 ---
 import { fmtUSD, roicValue, operatingMargin, ownerEarningsMargin } from "../lib/fundamentals.mjs";
+import { returnOnEquity, returnOnTangibleEquity, efficiencyRatio, equityToAssets } from "../lib/financials.mjs";
+import { classify } from "../lib/archetype.mjs";
 
 const { company } = Astro.props;
+const isFin = ["financial", "reit"].includes(classify(company).sector.key);
 const L = company.lines || {};
 const rev = L.revenue;
 const hist = company.history || [];
@@ -26,12 +29,22 @@ const curLabel = company.ttm?.lines ? "TTM" : `FY${company.fy}`;
 const grossM = (l) => (l && l.revenue && l.costOfRevenue != null ? 1 - l.costOfRevenue / l.revenue : null);
 const hist5 = hist.slice(-5).map((h) => h.lines);
 const avgOf = (fn) => { const xs = hist5.map(fn).filter((v) => v != null); return xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null; };
-const vitals = [
-  { label: "Gross margin", value: grossM(cur), avg: avgOf(grossM), dp: 0 },
-  { label: "Operating margin", value: operatingMargin(cur), avg: avgOf(operatingMargin), dp: 1 },
-  { label: "ROIC", value: roicValue(cur), avg: avgOf(roicValue), dp: 0 },
-  { label: "Owner-earnings margin", value: ownerEarningsMargin(cur), avg: avgOf(ownerEarningsMargin), dp: 0 },
-].filter((v) => v.value != null);
+// Vital signs differ by archetype: a bank's "is it a good business" lives in return
+// on equity and the efficiency of the operation, not in margins or ROIC.
+const vitals = (isFin
+  ? [
+      { label: "Return on equity", value: returnOnEquity(cur), avg: avgOf(returnOnEquity), dp: 0 },
+      { label: "Return on tangible equity", value: returnOnTangibleEquity(cur), avg: avgOf(returnOnTangibleEquity), dp: 0 },
+      { label: "Efficiency ratio", value: efficiencyRatio(cur), avg: avgOf(efficiencyRatio), dp: 0 },
+      { label: "Equity / assets", value: equityToAssets(cur), avg: avgOf(equityToAssets), dp: 1 },
+    ]
+  : [
+      { label: "Gross margin", value: grossM(cur), avg: avgOf(grossM), dp: 0 },
+      { label: "Operating margin", value: operatingMargin(cur), avg: avgOf(operatingMargin), dp: 1 },
+      { label: "ROIC", value: roicValue(cur), avg: avgOf(roicValue), dp: 0 },
+      { label: "Owner-earnings margin", value: ownerEarningsMargin(cur), avg: avgOf(ownerEarningsMargin), dp: 0 },
+    ]
+).filter((v) => v.value != null);
 
 const pct = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${(Math.abs(v) * 100).toFixed(dp)}%`);
 
