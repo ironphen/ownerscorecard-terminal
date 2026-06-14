@@ -2,6 +2,7 @@
 import { classify } from "../lib/archetype.mjs";
 import { fmtUSD, roicValue, liquidAssets } from "../lib/fundamentals.mjs";
 import { returnOnEquity, returnOnTangibleEquity, efficiencyRatio, tangibleEquity } from "../lib/financials.mjs";
+import { ffo, ffoPerShare, ffoPayout, debtToAssets } from "../lib/reits.mjs";
 
 const { company } = Astro.props;
 const hist = (company.history || []).filter((h) => h?.lines?.revenue != null);
@@ -51,6 +52,11 @@ const ROW = {
   efficiency: { label: "Efficiency ratio", short: "Effic.", get: (L) => { const r = efficiencyRatio(L); return r == null ? "—" : `${(r * 100).toFixed(0)}%`; } },
   deposits: { label: "Deposits", short: "Deposits", get: (L) => money(L.deposits) },
   tbvps: { label: "Tangible book / share", short: "TBVPS", get: (L) => perShare(tangibleEquity(L), L.sharesDiluted) },
+  // --- REITs: read on funds from operations, not GAAP earnings ---
+  ffo: { label: "Funds from operations", short: "FFO", get: (L) => money(ffo(L)) },
+  ffoPS: { label: "FFO / share", short: "FFO/sh", get: (L) => { const f = ffoPerShare(L); return f == null ? "—" : `$${f.toFixed(2)}`; } },
+  payout: { label: "Dividend payout (FFO)", short: "Payout", get: (L) => { const p = ffoPayout(L); return p == null ? "—" : `${(p * 100).toFixed(0)}%`; } },
+  debtAssets: { label: "Debt / assets", short: "Debt/assets", get: (L) => { const d = debtToAssets(L); return d == null ? "—" : `${(d * 100).toFixed(0)}%`; } },
 };
 
 const SETS = {
@@ -59,6 +65,7 @@ const SETS = {
   capital: [ROW.revenue, ROW.opMargin, ROW.netIncome, ROW.eps, ROW.ownerEarnings, ROW.roic, ROW.capex, ROW.capexToRev, ROW.capexToDep, ROW.totalDebt, ROW.cash, ROW.netDebt],
   retail: [ROW.revenue, ROW.grossMargin, ROW.opMargin, ROW.netIncome, ROW.eps, ROW.ownerEarnings, ROW.oeMargin, ROW.roic, ROW.cash, ROW.netDebt],
   financial: [ROW.revenue, ROW.nii, ROW.netIncome, ROW.eps, ROW.roe, ROW.rotce, ROW.efficiency, ROW.deposits, ROW.bvps, ROW.tbvps, ROW.dps],
+  reit: [ROW.revenue, ROW.netIncome, ROW.ffo, ROW.ffoPS, ROW.payout, ROW.debtAssets, ROW.totalDebt, ROW.dps, ROW.bvps],
   general: [ROW.revenue, ROW.opMargin, ROW.netIncome, ROW.eps, ROW.ownerEarnings, ROW.oeMargin, ROW.roic, ROW.totalDebt, ROW.cash, ROW.netDebt],
 };
 
