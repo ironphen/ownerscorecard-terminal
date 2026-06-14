@@ -1,0 +1,78 @@
+---
+import { capitalHistory } from "../lib/capital.mjs";
+import { fmtUSD } from "../lib/fundamentals.mjs";
+
+const { company } = Astro.props;
+const cap = capitalHistory(company);
+const pct = (v) => `${Math.round(v * 100)}%`;
+
+const segs = cap
+  ? [
+      { label: "Reinvested", amt: cap.capex, pctCfo: cap.pReinvest, color: "#2c3038" },
+      { label: "Dividends", amt: cap.div, pctCfo: cap.pDiv, color: "var(--accent)" },
+      { label: "Buybacks", amt: cap.bb, pctCfo: cap.pBB, color: "#2e7d6b" },
+      { label: cap.overspent ? "Funded by debt / cash" : "Retained (debt / cash)", amt: Math.max(0, cap.retained), pctCfo: cap.pRetained, color: "#cfcec8", muted: true },
+    ].filter((s) => s.amt > 0)
+  : [];
+const totalUse = segs.reduce((a, s) => a + s.amt, 0) || 1;
+segs.forEach((s) => (s.w = (s.amt / totalUse) * 100));
+---
+
+{cap ? (
+  <section class="cap">
+    <div class="head">
+      <h2>How the cash was used — {cap.span}</h2>
+    </div>
+
+    <p class="lede">
+      Over the record, the business generated <b>{fmtUSD(cap.cfo)}</b> of operating cash — and how management
+      split it is, as Buffett insists, the job that matters most. Here it reads as <b>{cap.character}</b>.
+    </p>
+
+    <div class="bar" role="img" aria-label="Allocation of operating cash">
+      {segs.map((s) => <span class="seg" style={`width:${s.w}%;background:${s.color}`} title={`${s.label} ${fmtUSD(s.amt)}`}></span>)}
+    </div>
+    <ul class="legend">
+      {segs.map((s) => (
+        <li>
+          <span class="sw" style={`background:${s.color}`}></span>
+          <span class="ll">{s.label}</span>
+          <span class="lv">{fmtUSD(s.amt)} · {pct(s.pctCfo)}</span>
+        </li>
+      ))}
+    </ul>
+
+    <p class="reads">
+      It reinvested <b>{fmtUSD(cap.capex)}</b> ({pct(cap.pReinvest)}) back into the business and returned
+      <b> {fmtUSD(cap.returned)}</b> ({pct(cap.pReturn)}) to owners — {fmtUSD(cap.div)} in dividends, {fmtUSD(cap.bb)} in buybacks.
+      {cap.debtChange != null ? ` Total debt ${cap.debtChange >= 0 ? "rose" : "fell"} ${fmtUSD(Math.abs(cap.debtChange))} across the span.` : ""}
+      {cap.overspent ? " It returned and reinvested more than it generated — the gap was covered by debt or existing cash." : ""}
+    </p>
+
+    <p class="foot">
+      Buybacks are gross of stock issued to employees; net of that, the real return to owners is lower (see Management &amp; pay).
+      And the mix alone doesn't grade management — what matters is the return earned on the dollars reinvested (see incremental ROIC in the durability report).
+    </p>
+  </section>
+) : null}
+
+<style>
+  .cap { margin: 24px 0; }
+  .head { border-bottom: 1px solid var(--rule-strong); padding-bottom: 6px; }
+  .head h2 { margin: 0; }
+  .lede { font-family: var(--serif); font-size: clamp(15px, 2.3vw, 17px); line-height: 1.5; margin: 12px 0 0; max-width: 70ch; }
+  .lede b { font-weight: 600; }
+
+  .bar { display: flex; width: 100%; height: 26px; margin: 16px 0 0; border: 1px solid var(--rule-strong); overflow: hidden; }
+  .seg { display: block; height: 100%; }
+
+  .legend { list-style: none; padding: 0; margin: 12px 0 0; display: flex; flex-wrap: wrap; gap: 8px 22px; }
+  .legend li { display: flex; align-items: baseline; gap: 7px; font-size: 13px; }
+  .sw { width: 11px; height: 11px; flex: 0 0 auto; border: 1px solid rgba(0,0,0,0.15); transform: translateY(1px); }
+  .ll { color: var(--ink); }
+  .lv { color: var(--muted); font-variant-numeric: tabular-nums; }
+
+  .reads { font-size: 14px; color: #3a3e46; line-height: 1.55; margin: 14px 0 0; max-width: 72ch; }
+  .reads b { font-weight: 600; }
+  .foot { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--rule); margin-top: 14px; padding-top: 10px; max-width: 72ch; }
+</style>
