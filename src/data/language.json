@@ -2555,6 +2555,222 @@
         ]
       },
       "comp": null
+    },
+    "JPM": {
+      "fy": "2025",
+      "priorFy": null,
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/19617/000162828026008131/jpm-20251231.htm",
+      "business": null,
+      "ownerFlags": [
+        {
+          "lens": "Pricing power & competition",
+          "why": "Whether the company sets its price or takes it. Durable pricing power is the surest mark of a moat; price competition is the surest mark there isn't one.",
+          "section": "Business",
+          "quote": "Competition JPMorganChase and its subsidiaries and affiliates operate in highly competitive environments."
+        },
+        {
+          "lens": "Debt terms & refinancing",
+          "why": "The fine print behind the debt. Covenants and near-term maturities decide who is really in control when a year goes badly.",
+          "section": "Risk Factors",
+          "quote": "Such developments could impair asset valuations, reduce market-wide liquidity, disrupt borrowers' ability to refinance, and increase default rates, especially if non-bank lenders have weaker underwriting standards, loans are less liquid, or transparency is limited."
+        },
+        {
+          "lens": "Litigation & contingencies",
+          "why": "Claims an owner inherits. Most disclosure is boilerplate; this fires only on an actual matter, a named suit, a settlement, a contingency, a number.",
+          "section": "Risk Factors",
+          "quote": "JPMorganChase is named as a defendant or is otherwise involved in many civil and governmental legal proceedings, including class actions, derivative actions and other litigation or disputes with third parties, as well as investigations and enforcement actions by U.S. and non-U.S. governmental author"
+        },
+        {
+          "lens": "Cyclicality & demand",
+          "why": "How the business behaves when the economy turns. A cyclical earns its keep across the whole cycle, not at the peak.",
+          "section": "Risk Factors",
+          "quote": "An economic downturn or sustained changes in consumer behavior that result in shifts in consumer and business spending could also have a negative impact on certain of JPMorganChase's wholesale clients, and thereby diminish JPMorganChase's earnings from its wholesale operations."
+        },
+        {
+          "lens": "Regulation & policy",
+          "why": "Rules that can rewrite the economics, tariffs, antitrust, data, export controls.",
+          "section": "Business",
+          "quote": "Under these standards, a bank's risk governance framework must ensure that the bank's risk profile is easily distinguished and separate from that of its parent BHC for risk management purposes."
+        }
+      ],
+      "mdna": {
+        "words": 50,
+        "fog": 23.5,
+        "hedgeDensity": 0,
+        "wordsPrior": null,
+        "fogPrior": null,
+        "hedgePrior": null
+      },
+      "risk": {
+        "words": 15484,
+        "wordsPrior": null
+      },
+      "mdnaChange": null,
+      "riskChange": null,
+      "comp": null
+    },
+    "BAC": {
+      "fy": "2025",
+      "priorFy": null,
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/70858/000007085826000157/bac-20251231.htm",
+      "business": null,
+      "ownerFlags": [
+        {
+          "lens": "Customer concentration",
+          "why": "Who the revenue leans on. When one buyer is a large slice of sales, that buyer holds the pricing power, and its troubles become the company's.",
+          "section": "MD&A",
+          "quote": "During 2025, 13 percent of these customers with an outstanding balance did not pay any principal on their HELOCs."
+        },
+        {
+          "lens": "Pricing power & competition",
+          "why": "Whether the company sets its price or takes it. Durable pricing power is the surest mark of a moat; price competition is the surest mark there isn't one.",
+          "section": "Business",
+          "quote": "Increased competition may reduce our market share, net interest margin and fee-based revenue and negatively affect our results of operations, including through pricing pressure, increased investment to improve the quality and delivery of our technology and/or affecting our clients' willingness to do"
+        },
+        {
+          "lens": "Concentrated dependence",
+          "why": "What the whole business leans on, a product, a platform, a partner. Concentration cuts both ways, and the filing is where management has to admit it.",
+          "section": "MD&A",
+          "quote": "The accuracy of a VaR model depends on the availability and quality of historical data for each of the risk factors in the portfolio."
+        },
+        {
+          "lens": "Debt terms & refinancing",
+          "why": "The fine print behind the debt. Covenants and near-term maturities decide who is really in control when a year goes badly.",
+          "section": "MD&A",
+          "quote": "Short-term Borrowings Short-term borrowings provide an additional funding source and primarily consist of Federal Home Loan Bank (FHLB) short-term borrowings, commercial paper, notes payable and various other borrowings that generally have maturities of one year or less."
+        },
+        {
+          "lens": "Litigation & contingencies",
+          "why": "Claims an owner inherits. Most disclosure is boilerplate; this fires only on an actual matter, a named suit, a settlement, a contingency, a number.",
+          "section": "Risk Factors",
+          "quote": "Unemployment Insurance Prepaid Cards Beginning in January 2021, BANA was named as a defendant in putative class action and mass action lawsuits related to its administration of prepaid debit cards to distribute unemployment and other state benefits, including for the State of California, which was t"
+        },
+        {
+          "lens": "Cyclicality & demand",
+          "why": "How the business behaves when the economy turns. A cyclical earns its keep across the whole cycle, not at the peak.",
+          "section": "Business",
+          "quote": "If our SCB, G-SIB surcharge or countercyclical capital buffer requirements increase, our dividends and common stock repurchases could decrease."
+        },
+        {
+          "lens": "Regulation & policy",
+          "why": "Rules that can rewrite the economics, tariffs, antitrust, data, export controls.",
+          "section": "MD&A",
+          "quote": "Substantially all of our senior and subordinated debt obligations contain no provisions that could trigger a requirement for an early repayment, require additional collateral support, result in changes to terms, accelerate maturity or create additional financial obligations upon an adverse change in"
+        }
+      ],
+      "mdna": {
+        "words": 59645,
+        "fog": 25,
+        "hedgeDensity": 0.0302,
+        "wordsPrior": null,
+        "fogPrior": null,
+        "hedgePrior": null
+      },
+      "risk": {
+        "words": 88878,
+        "wordsPrior": null
+      },
+      "mdnaChange": null,
+      "riskChange": null,
+      "comp": {
+        "payRatio": 272,
+        "fy": "2026",
+        "sourceUrl": "https://www.sec.gov/Archives/edgar/data/70858/000119312526118929/d43888ddef14a.htm"
+      }
+    },
+    "WFC": {
+      "fy": "2025",
+      "priorFy": "2024",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/72971/000007297126000133/wfc-20251231_d2.htm",
+      "business": "We are a leading financial services company that provides a diversified set of banking, investment and mortgage products and services, as well as consumer and commercial finance, to individuals, businesses and institutions, primarily in the U.S., as well as in countries outside the U.S.",
+      "ownerFlags": [
+        {
+          "lens": "Pricing power & competition",
+          "why": "Whether the company sets its price or takes it. Durable pricing power is the surest mark of a moat; price competition is the surest mark there isn't one.",
+          "section": "Business",
+          "quote": "Expectations for other roles, including customer-facing, operations, contact center, and non-U.S. based employees, vary by business need. 2 Competition The financial services industry is highly competitive."
+        },
+        {
+          "lens": "Regulation & policy",
+          "why": "Rules that can rewrite the economics, tariffs, antitrust, data, export controls.",
+          "section": "Business",
+          "quote": "The Dodd-Frank Act grants broad authority to federal banking regulators to establish enhanced supervisory and regulatory requirements for systemically important firms."
+        }
+      ],
+      "mdna": {
+        "words": 39,
+        "fog": 27.9,
+        "hedgeDensity": 0,
+        "wordsPrior": 39,
+        "fogPrior": 27.9,
+        "hedgePrior": 0
+      },
+      "risk": {
+        "words": 40,
+        "wordsPrior": 40
+      },
+      "mdnaChange": {
+        "notableCount": 0,
+        "notable": []
+      },
+      "riskChange": {
+        "notableCount": 0,
+        "notable": []
+      },
+      "comp": null
+    },
+    "USB": {
+      "fy": "2025",
+      "priorFy": "2024",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/36104/000003610426000011/usb-20251231.htm",
+      "business": "Bancorp is a financial services holding company headquartered in Minneapolis, Minnesota, serving millions of local, national and global customers.",
+      "ownerFlags": [
+        {
+          "lens": "Pricing power & competition",
+          "why": "Whether the company sets its price or takes it. Durable pricing power is the surest mark of a moat; price competition is the surest mark there isn't one.",
+          "section": "Business",
+          "quote": "The financial services industry is highly competitive and constantly evolving."
+        },
+        {
+          "lens": "Litigation & contingencies",
+          "why": "Claims an owner inherits. Most disclosure is boilerplate; this fires only on an actual matter, a named suit, a settlement, a contingency, a number.",
+          "section": "Business",
+          "quote": "Violations of applicable consumer protection laws can result in significant potential liability from litigation brought by customers, including actual damages, restitution and attorneys' fees, and may also result in significant reputational harm."
+        },
+        {
+          "lens": "Cyclicality & demand",
+          "why": "How the business behaves when the economy turns. A cyclical earns its keep across the whole cycle, not at the peak.",
+          "section": "Business",
+          "quote": "The Company is also subject to the SCB, which is based on the results of the Federal Reserve's supervisory stress tests and the Company's planned common stock dividends, and, if deployed by the Federal Reserve, up to a 2.5 percent common equity tier 1 countercyclical capital buffer."
+        },
+        {
+          "lens": "Regulation & policy",
+          "why": "Rules that can rewrite the economics, tariffs, antitrust, data, export controls.",
+          "section": "Business",
+          "quote": "As a BHC with over $100 billion in total consolidated assets, the Company is subject to the enhanced prudential standards of the Dodd-Frank Wall Street Reform and Consumer Protection Act (the \"Dodd-Frank Act\"), as applied to \"Category III\" institutions under the federal banking regulators' rules tha"
+        }
+      ],
+      "mdna": {
+        "words": 44,
+        "fog": 29.4,
+        "hedgeDensity": 0,
+        "wordsPrior": 44,
+        "fogPrior": 29.4,
+        "hedgePrior": 0
+      },
+      "risk": {
+        "words": 35,
+        "wordsPrior": 35
+      },
+      "mdnaChange": {
+        "notableCount": 0,
+        "notable": []
+      },
+      "riskChange": {
+        "notableCount": 0,
+        "notable": []
+      },
+      "comp": null
     }
   }
 }

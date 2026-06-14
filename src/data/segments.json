@@ -1505,6 +1505,145 @@
           }
         ]
       }
+    },
+    "JPM": {
+      "fy": 2025,
+      "periodEnd": "2025-12-31",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/19617/000162828026008131/0001628280-26-008131-index.htm",
+      "revenueTotal": 182447000000,
+      "operatingIncomeTotal": null,
+      "byGeography": {
+        "reconcile": 1,
+        "items": [
+          {
+            "label": "North America",
+            "qname": "srt:NorthAmericaMember",
+            "revenue": 139689000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "EMEA",
+            "qname": "us-gaap:EMEAMember",
+            "revenue": 24478000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Asia Pacific",
+            "qname": "srt:AsiaPacificMember",
+            "revenue": 14065000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Latin America",
+            "qname": "srt:LatinAmericaMember",
+            "revenue": 4215000000,
+            "operatingIncome": null
+          }
+        ]
+      }
+    },
+    "BAC": {
+      "fy": 2025,
+      "periodEnd": "2025-12-31",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/70858/000007085826000157/0000070858-26-000157-index.htm",
+      "revenueTotal": 113097000000,
+      "operatingIncomeTotal": null,
+      "byGeography": {
+        "reconcile": 1,
+        "items": [
+          {
+            "label": "United States",
+            "qname": "country:US",
+            "revenue": 97687000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "EMEA",
+            "qname": "us-gaap:EMEAMember",
+            "revenue": 7561000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Asia",
+            "qname": "srt:AsiaMember",
+            "revenue": 6004000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Latin America",
+            "qname": "srt:LatinAmericaMember",
+            "revenue": 1845000000,
+            "operatingIncome": null
+          }
+        ]
+      }
+    },
+    "WFC": {
+      "fy": 2019,
+      "periodEnd": "2019-12-31",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/72971/000007297120000217/0000072971-20-000217-index.htm",
+      "revenueTotal": 85063000000,
+      "operatingIncomeTotal": null,
+      "bySegment": {
+        "reconcile": 1.062,
+        "hasOperatingIncome": false,
+        "items": [
+          {
+            "label": "Community Banking",
+            "qname": "wfc:CommunityBankingMember",
+            "revenue": 45316000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Wholesale Banking",
+            "qname": "wfc:WholesaleBankingMember",
+            "revenue": 27677000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Wealth And Investment Management",
+            "qname": "wfc:WealthAndInvestmentManagementMember",
+            "revenue": 17341000000,
+            "operatingIncome": null
+          }
+        ]
+      }
+    },
+    "C": {
+      "fy": 2025,
+      "periodEnd": "2025-12-31",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/831001/000083100126000011/0000831001-26-000011-index.htm",
+      "revenueTotal": 85225000000,
+      "operatingIncomeTotal": null,
+      "byGeography": {
+        "reconcile": 1.089,
+        "items": [
+          {
+            "label": "North America",
+            "qname": "srt:NorthAmericaMember",
+            "revenue": 44012000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "International",
+            "qname": "c:InternationalMember",
+            "revenue": 42295000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "United Kingdom",
+            "qname": "country:GB",
+            "revenue": 7600000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Corporate/Other",
+            "qname": "c:CorporateAndOtherGeographicalMember",
+            "revenue": -1082000000,
+            "operatingIncome": null
+          }
+        ]
+      }
     }
   }
 }
