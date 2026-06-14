@@ -1,28 +1,25 @@
 ---
-// The business in brief: a high-level, qualitative read of what the company is and
-// what moves its needle, assembled entirely from figures the pipeline already
-// computes. No model writes a word here, every line is arithmetic that also appears
-// elsewhere on the page, and the company's own account of the business is one click
-// away in the 10-K. This is the lens Graham and Buffett would bring before any ratio.
+// The business in brief: the qualitative thesis. What the company sells (from its
+// own segment mix), the situation, what moves its needle, and whether the numbers
+// say it is any good, with the verdict handed to the filing on purpose. No model
+// writes a word; every claim is arithmetic shown in full in the sections below. The
+// company's own description and the industry sit in the page header above this.
 import language from "../data/language.json";
 import segmentsData from "../data/segments.json";
 import { classify } from "../lib/archetype.mjs";
-import { roicValue, ownerEarningsMargin, cashPosition, coverage, cashConversionCycle } from "../lib/fundamentals.mjs";
-import { capitalHistory } from "../lib/capital.mjs";
+import { roicValue, ownerEarningsMargin, cashConversionCycle } from "../lib/fundamentals.mjs";
 
 const { company } = Astro.props;
 const cls = classify(company);
-const cur = company.ttm?.lines || company.lines || {};
 const L = language?.companies?.[company.ticker] || null;
 const sourceUrl = L?.sourceUrl || null;
-const bizLine = L?.business || null; // the company's own one-sentence account, verbatim from Item 1
 
 const pc = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${(Math.abs(v) * 100).toFixed(dp)}%`);
 const median = (xs) => { const s = [...xs].sort((a, b) => a - b); return s.length ? s[Math.floor((s.length - 1) / 2)] : null; };
 
 // What moves the needle, one lever per business model. Written once and reused, so
 // it teaches the lens rather than describing this one company; honest because it is
-// tied to the economic shape the classifier already read from the filings.
+// tied to the economic shape the classifier read from the filings.
 const LEVER = {
   assetLight: "Engagement and pricing power, not factories. What decides it: whether the gross margin holds as the business scales, how much of the profit is paid out to employees as stock, and whether revenue keeps compounding.",
   consumer: "Volume against price, and shelf position. What decides it: whether it can raise prices without losing the customer, and whether the brand still commands its margin.",
@@ -48,10 +45,17 @@ if (seg?.bySegment?.hasOperatingIncome) {
     leverExtra = ` In practice most of the profit now comes from ${cleanSeg(topOI.label)}, even though ${cleanSeg(topRev.label)} is the bigger seller, so that is the part to watch (see the mix below).`;
 }
 
-// What it is, qualitatively: lead with what the company actually sells, drawn from
-// the product or reportable-segment mix, then the economic shape from the classifier.
-// This connects the segment data into a description rather than just a label.
-const ucfirst = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
+// What it is: what the company actually sells, drawn from the product or reportable-
+// segment mix. Where no breakdown is disclosed, a short economic characterization.
+const MODEL_PHRASE = {
+  assetLight: "An asset-light business, earning high margins on intellectual property and people rather than physical plant.",
+  consumer: "A consumer-brand business, where the durable asset is the brand and its hold on the shelf.",
+  capital: "A capital-intensive business, run on heavy physical assets that have to be kept working.",
+  retail: "A retailer, earning thin margins on high volume where inventory turns and scale decide the outcome.",
+  financial: "A balance-sheet business, read on book value, net interest margin and credit losses rather than an earnings multiple.",
+  reit: "A property business, read on funds from operations and net asset value rather than reported earnings.",
+  general: "A diversified business; the segment detail in the filing tells the real story.",
+};
 const mix = seg?.byProduct || seg?.bySegment || null;
 const mixKind = seg?.byProduct ? "line" : "segment";
 let composition = "";
@@ -67,7 +71,7 @@ if (mix && seg.revenueTotal) {
     ? `Revenue is ${joinList(items)}.`
     : `Revenue is led by ${fmtItem(items[0])} and ${fmtItem(items[1])}, with ${items.length - 2} more ${mixKind}s behind.`;
 }
-const whatItIs = composition ? `${composition} ${ucfirst(cls.sector.reason)}.` : `${ucfirst(cls.sector.reason)}.`;
+const whatItIs = composition || MODEL_PHRASE[cls.sector.key] || MODEL_PHRASE.general;
 
 // Is it a good business? Read return on capital across the whole record, but treat
 // the ratio with the skepticism modern accounting demands: buybacks and expensed
@@ -78,7 +82,6 @@ const roicSeries = H.map((h) => roicValue(h.lines)).filter((v) => v != null);
 const roicMed = median(roicSeries);
 const roicAbove = roicSeries.filter((v) => v >= 0.15).length;
 
-// Is the ROIC figure trustworthy, or mechanically inflated by a small capital base?
 const annual = company.lines || {};
 const invested = annual.totalDebt != null && annual.stockholdersEquity != null
   ? annual.totalDebt + annual.stockholdersEquity - (annual.cashAndEquivalents || 0) : null;
@@ -87,8 +90,6 @@ const roicInflated = cls.sector.key === "assetLight"
   || (investedIntensity != null && investedIntensity < 0.3)
   || (roicMed != null && roicMed > 0.3);
 
-// Corroborants we now have the data for: owner-earnings durability, and a negative
-// cash-conversion cycle (others fund the business), which no return ratio reveals.
 const oeSeries = H.map((h) => ownerEarningsMargin(h.lines)).filter((v) => v != null);
 const oeMed = median(oeSeries);
 const oeStable = oeSeries.length >= 3 && oeSeries.filter((v) => v > 0).length >= oeSeries.length - 1;
@@ -127,26 +128,6 @@ if (roicSeries.length >= 3 && roicMed != null) {
   moat = { text: [s1, s2, s3].filter(Boolean).join(" ") };
 }
 
-// What owners actually keep: owner earnings as a share of revenue, this period.
-const oem = ownerEarningsMargin(cur);
-let owners = null;
-if (oem != null)
-  owners = oem < 0
-    ? { value: pc(oem, 1), text: "owner earnings. The business spends more on the capex it needs to stand still than its operations bring in, so for now it consumes cash. The price tool shows what the future must deliver to justify the shares." }
-    : { value: pc(oem, 1), text: "of revenue reaches owners as free cash, after the capex the business needs just to stand still. This is the figure to judge it on, not accounting profit." };
-
-// What management does with the cash, characterised over the whole span.
-const cap = capitalHistory(company);
-
-// Can it be killed? Net cash or net debt, with interest coverage as the qualifier.
-const cash = cashPosition(company);
-const cov = coverage(company);
-let covPhrase = "";
-if (cov && cov.ratio != null && cov.ratio >= 1) covPhrase = ` Operating profit covers the interest about ${cov.ratio.toFixed(1)} times over.`;
-else if (cov && cov.ratio != null) covPhrase = ` A full year of operating profit does not cover the interest bill (${cov.ratio.toFixed(1)}×), the first thing to weigh here.`;
-else if (cov && cov.noBurden) covPhrase = " There is little or no interest burden to carry.";
-else if (cov) covPhrase = " A year of operating profit does not cover the interest bill, the first thing to weigh here.";
-
 const overlays = cls.overlays || [];
 ---
 
@@ -156,18 +137,14 @@ const overlays = cls.overlays || [];
     {sourceUrl ? <a class="src" href={sourceUrl} target="_blank" rel="noopener">read the 10-K →</a> : null}
   </div>
   <p class="intro">
-    What this business is and what moves its needle, read straight from the numbers in its
-    filings. No verdict and no score, the company's own account of the business is one click
-    away in the 10-K.
+    What this business is and what moves its needle, read from the numbers in its filings.
+    The quantitative detail is in the sections below; the verdict is left to you.
   </p>
 
   <dl class="reads">
     <div class="r">
       <dt>What it is</dt>
-      <dd>
-        {bizLine ? <span class="said">“{bizLine}”</span> : null}
-        <span class="tag">{cls.sector.label}</span> {whatItIs}
-      </dd>
+      <dd>{whatItIs}</dd>
     </div>
     {overlays.length ? (
       <div class="r">
@@ -185,29 +162,11 @@ const overlays = cls.overlays || [];
         <dd>{moat.text}</dd>
       </div>
     ) : null}
-    {owners ? (
-      <div class="r">
-        <dt>What owners keep</dt>
-        <dd><span class="fig">{owners.value}</span> {owners.text}</dd>
-      </div>
-    ) : null}
-    {cap ? (
-      <div class="r">
-        <dt>What is done with the cash</dt>
-        <dd>Over {cap.span}, {cap.character}.</dd>
-      </div>
-    ) : null}
-    {cash ? (
-      <div class="r">
-        <dt>Can it be killed?</dt>
-        <dd><span class="fig">{cash.value}</span> {cash.label}.{covPhrase}</dd>
-      </div>
-    ) : null}
   </dl>
 
   <p class="foot">
     Every line here is arithmetic from the company's own filings, not a model's opinion, and
-    each figure appears in full below. For the business in management's own words, read the 10-K.
+    each figure appears in full in the sections below.
   </p>
 </section>
 
@@ -222,10 +181,7 @@ const overlays = cls.overlays || [];
   .r { display: grid; grid-template-columns: 190px 1fr; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--rule); }
   .r dt { font-family: var(--sans); font-weight: 700; font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
   .r dd { margin: 0; font-size: 14.5px; line-height: 1.55; color: #2c2f36; max-width: 72ch; }
-  .said { display: block; font-family: var(--serif); font-style: italic; font-size: 14.5px; line-height: 1.5; color: #3a3e46; margin: 0 0 7px; }
   .ov b { color: var(--ink); }
-  .tag { font-size: 11px; letter-spacing: 0.02em; color: var(--ink); border: 1px solid var(--rule-strong); padding: 1px 6px; margin-right: 6px; white-space: nowrap; }
-  .fig { font-weight: 700; font-variant-numeric: tabular-nums; color: var(--ink); margin-right: 4px; }
   .foot { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--rule-strong); margin-top: 14px; padding-top: 10px; max-width: 72ch; }
 
   @media (max-width: 560px) {

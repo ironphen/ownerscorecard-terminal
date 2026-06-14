@@ -6,11 +6,13 @@ import { fmtUSD, roicValue } from "../lib/fundamentals.mjs";
 const { company } = Astro.props;
 const all = fundamentals.companies || [];
 
-// Peers: same 3-digit SIC (a tight industry group); broaden to the sector
-// archetype if that's too thin. Free, just the data we already pull.
+// Peers: same 3-digit SIC (a tight industry group); broaden to the 2-digit group,
+// then to the economic model, if that is too thin. Free, just the data we pull.
 function findPeers(co) {
-  const sic3 = String(co.sic || "").slice(0, 3);
-  let p = sic3 ? all.filter((c) => c.ticker !== co.ticker && String(c.sic || "").slice(0, 3) === sic3) : [];
+  const sic = String(co.sic || "");
+  const inSic = (n) => (sic.slice(0, n) ? all.filter((c) => c.ticker !== co.ticker && String(c.sic || "").slice(0, n) === sic.slice(0, n)) : []);
+  let p = inSic(3);
+  if (p.length < 2) p = inSic(2);
   if (p.length < 2) {
     const arch = classify(co).sector.key;
     p = all.filter((c) => c.ticker !== co.ticker && classify(c).sector.key === arch);
@@ -45,8 +47,8 @@ for (const k of ["grossMargin", "opMargin", "roic", "oeMargin"]) {
 
 {group.length >= 2 ? (
   <section class="peers">
-    <h3 class="secHead">Peers, {classify(company).sector.label}</h3>
-    <p class="pNote">The same business model, side by side on owner economics, compare, don't rank by a single number. <span class="bestKey">●</span> marks best in the group.</p>
+    <h3 class="secHead">Peers, {classify(company).industry.label}</h3>
+    <p class="pNote">The same industry, side by side on owner economics, compare, don't rank by a single number. <span class="bestKey">●</span> marks best in the group.</p>
     <div class="wrap">
       <table>
         <thead>
