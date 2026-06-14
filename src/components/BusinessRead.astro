@@ -35,7 +35,7 @@ const lever = LEVER[cls.sector.key] || LEVER.general;
 
 // Segment reality check: when the profit engine is not the biggest seller, say so,
 // so an archetype label (Amazon read as "retail") does not mislead about the needle.
-const cleanSeg = (s) => String(s || "").replace(/\s+Segments?$/i, "").trim();
+const cleanSeg = (s) => String(s || "").replace(/\s+Segments?$/i, "").replace(/ And /g, " and ").trim();
 let leverExtra = "";
 const seg = segmentsData?.companies?.[company.ticker];
 if (seg?.bySegment?.hasOperatingIncome) {
@@ -46,6 +46,27 @@ if (seg?.bySegment?.hasOperatingIncome) {
   if (oiSum > 0 && topRev && topOI && topOI.label !== topRev.label)
     leverExtra = ` In practice most of the profit now comes from ${cleanSeg(topOI.label)}, even though ${cleanSeg(topRev.label)} is the bigger seller, so that is the part to watch (see the mix below).`;
 }
+
+// What it is, qualitatively: lead with what the company actually sells, drawn from
+// the product or reportable-segment mix, then the economic shape from the classifier.
+// This connects the segment data into a description rather than just a label.
+const ucfirst = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
+const mix = seg?.byProduct || seg?.bySegment || null;
+const mixKind = seg?.byProduct ? "line" : "segment";
+let composition = "";
+if (mix && seg.revenueTotal) {
+  const items = [...mix.items].sort((a, b) => b.revenue - a.revenue);
+  const sh = (it) => Math.round((100 * it.revenue) / seg.revenueTotal);
+  const fmtItem = (it) => `${cleanSeg(it.label)} (${sh(it)}%)`;
+  const joinList = (arr) =>
+    arr.length === 1 ? fmtItem(arr[0])
+      : arr.length === 2 ? `${fmtItem(arr[0])} and ${fmtItem(arr[1])}`
+        : `${arr.slice(0, -1).map(fmtItem).join(", ")} and ${fmtItem(arr[arr.length - 1])}`;
+  composition = items.length <= 3
+    ? `Revenue is ${joinList(items)}.`
+    : `Revenue is led by ${fmtItem(items[0])} and ${fmtItem(items[1])}, with ${items.length - 2} more ${mixKind}s behind.`;
+}
+const whatItIs = composition ? `${composition} ${ucfirst(cls.sector.reason)}.` : `${ucfirst(cls.sector.reason)}.`;
 
 // Is it a good business? Read return on capital across the whole record, but treat
 // the ratio with the skepticism modern accounting demands: buybacks and expensed
@@ -142,7 +163,7 @@ const overlays = cls.overlays || [];
   <dl class="reads">
     <div class="r">
       <dt>What it is</dt>
-      <dd><span class="tag">{cls.sector.label}</span> {cls.sector.reason}.</dd>
+      <dd><span class="tag">{cls.sector.label}</span> {whatItIs}</dd>
     </div>
     {overlays.length ? (
       <div class="r">
