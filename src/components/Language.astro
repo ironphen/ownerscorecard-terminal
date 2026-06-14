@@ -11,9 +11,8 @@ const lenΔ = L ? pctChange(L.mdna.words, L.mdna.wordsPrior) : null;
 const fogΔ = L && L.mdna.fogPrior != null ? L.mdna.fog - L.mdna.fogPrior : null;
 const hedgeΔ = L && L.mdna.hedgePrior != null ? L.mdna.hedgeDensity - L.mdna.hedgePrior : null;
 const notable = L ? [...(L.mdnaChange?.notable || []), ...(L.riskChange?.notable || [])].slice(0, 5) : [];
-const newCount = L ? (L.mdnaChange?.addedCount || 0) + (L.riskChange?.addedCount || 0) : 0;
 
-const show = L && (notable.length || L.newRedFlags?.length || lenΔ != null);
+const show = L && (notable.length || lenΔ != null);
 ---
 
 {show ? (
@@ -25,15 +24,10 @@ const show = L && (notable.length || L.newRedFlags?.length || lenΔ != null);
 
     <p class="intro">A 10-K is mostly boilerplate; the signal is in what's <em>new</em>. These sentences appear this year and weren't there last — read them, don't take a score.</p>
 
-    {L.newRedFlags?.length ? (
-      <p class="redflag">⚑ New language this year: <strong>{L.newRedFlags.join(", ")}</strong></p>
-    ) : null}
-
     <div class="stats">
       {lenΔ != null ? <span class="stat">MD&A length <b class={lenΔ > 0.1 ? "warn" : ""}>{pctΔ(lenΔ)}</b></span> : null}
       {fogΔ != null ? <span class="stat">Readability <b class={fogΔ > 0.5 ? "warn" : ""}>{fogΔ >= 0 ? "harder" : "easier"}</b></span> : null}
       {hedgeΔ != null ? <span class="stat">Hedging <b class={hedgeΔ > 0 ? "warn" : ""}>{hedgeΔ >= 0 ? "up" : "down"}</b></span> : null}
-      {newCount ? <span class="stat"><b>{newCount}</b> new sentences</span> : null}
     </div>
 
     {notable.length ? (
