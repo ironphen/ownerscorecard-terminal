@@ -1,7 +1,7 @@
 {
-  "asOf": null,
+  "asOf": "2026-06-14",
   "source": "Stooq — monthly close",
-  "note": "Run `npm run fetch:prices` (needs network access to stooq.com) to populate. The valuation section renders once prices are present.",
-  "sample": true,
+  "note": "Price-only closes; not adjusted for dividends. Used to derive valuation multiples against earnings already pulled from EDGAR.",
+  "sample": false,
   "prices": {}
 }
