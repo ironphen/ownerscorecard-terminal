@@ -97,6 +97,9 @@ const CONCEPTS = {
   premiumsEarned: ["PremiumsEarnedNet", "PremiumsEarnedNetPropertyAndCasualty"],
   claimsIncurred: ["PolicyholderBenefitsAndClaimsIncurredNet", "IncurredClaimsPropertyCasualtyAndLiability", "PolicyholderBenefitsAndClaimsIncurredHomeAndAutomobile"],
   underwritingExpense: ["OtherUnderwritingExpense", "DeferredPolicyAcquisitionCostAmortizationExpense"],
+  // The full combined-ratio numerator in one tag (losses + loss-adjustment + all
+  // underwriting expenses), which our component pick of a single expense line misses.
+  lossesAndExpenses: ["BenefitsLossesAndExpenses", "PolicyholderBenefitsAndClaimsIncurredNetAndOtherUnderwritingExpense"],
   investmentIncome: ["NetInvestmentIncome"],
   lossReserves: ["LiabilityForClaimsAndClaimsAdjustmentExpense", "LiabilityForFuturePolicyBenefits"],
 };
@@ -287,6 +290,7 @@ async function main() {
       premiumsEarned: collectAnnual(facts, CONCEPTS.premiumsEarned),
       claimsIncurred: collectAnnual(facts, CONCEPTS.claimsIncurred),
       underwritingExpense: collectAnnual(facts, CONCEPTS.underwritingExpense),
+      lossesAndExpenses: collectAnnual(facts, CONCEPTS.lossesAndExpenses),
       investmentIncome: collectAnnual(facts, CONCEPTS.investmentIncome),
     };
     const hi = {
@@ -343,6 +347,7 @@ async function main() {
           premiumsEarned: ha.premiumsEarned[fy] ?? null,
           claimsIncurred: ha.claimsIncurred[fy] ?? null,
           underwritingExpense: ha.underwritingExpense[fy] ?? null,
+          lossesAndExpenses: ha.lossesAndExpenses[fy] ?? null,
           investmentIncome: ha.investmentIncome[fy] ?? null,
           lossReserves: hi.lossReserves[fy] ?? null,
         },
@@ -387,6 +392,7 @@ async function main() {
             premiumsEarned: tf(CONCEPTS.premiumsEarned),
             claimsIncurred: tf(CONCEPTS.claimsIncurred),
             underwritingExpense: tf(CONCEPTS.underwritingExpense),
+            lossesAndExpenses: tf(CONCEPTS.lossesAndExpenses),
             investmentIncome: tf(CONCEPTS.investmentIncome),
             lossReserves: latestObservation(facts, CONCEPTS.lossReserves, "USD", true)?.val ?? null,
           },
@@ -440,6 +446,7 @@ async function main() {
         premiumsEarned: pick(CONCEPTS.premiumsEarned),
         claimsIncurred: pick(CONCEPTS.claimsIncurred),
         underwritingExpense: pick(CONCEPTS.underwritingExpense),
+        lossesAndExpenses: pick(CONCEPTS.lossesAndExpenses),
         investmentIncome: pick(CONCEPTS.investmentIncome),
         lossReserves: inst(CONCEPTS.lossReserves),
       },
