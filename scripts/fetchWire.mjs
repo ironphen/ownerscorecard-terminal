@@ -1,10 +1,10 @@
 #!/usr/bin/env node
-// fetchWire.mjs — the Filing Wire.
+// fetchWire.mjs, the Filing Wire.
 //
 // The site's "alive daily" without a price feed or an LLM: every new filing across
 // the catalog, straight from EDGAR, with 8-K item codes turned into plain language
-// (so an auditor change or a restatement announces itself). Lightweight — just the
-// submissions feeds — so it can run on its own daily schedule. Writes wire.json.
+// (so an auditor change or a restatement announces itself). Lightweight, just the
+// submissions feeds, so it can run on its own daily schedule. Writes wire.json.
 //   npm run fetch:wire
 
 import fs from "node:fs";
@@ -91,7 +91,7 @@ async function whatChanged(cik, r, i) {
     const cur = sentences(getMDNA(htmlToText(await fetchText(docURL(cik, r, i))), r.form[i]));
     await sleep(150);
     const prior = sentences(getMDNA(htmlToText(await fetchText(docURL(cik, r, pj))), r.form[i]));
-    if (cur.length < 20) return null; // MD&A didn't parse cleanly — skip rather than emit noise
+    if (cur.length < 20) return null; // MD&A didn't parse cleanly, skip rather than emit noise
     const d = diff(cur, prior);
     return d.notable.length ? d.notable.slice(0, 3) : null;
   } catch (e) { return null; }
@@ -136,7 +136,7 @@ async function main() {
     }
   }
   items.sort((a, b) => b.date.localeCompare(a.date) || a.ticker.localeCompare(b.ticker));
-  const out = { asOf: new Date().toISOString().slice(0, 10), source: "SEC EDGAR — recent filings", items: items.slice(0, 90) };
+  const out = { asOf: new Date().toISOString().slice(0, 10), source: "SEC EDGAR, recent filings", items: items.slice(0, 90) };
   fs.writeFileSync(wirePath, JSON.stringify(out, null, 2) + "\n");
   console.log(`✅ Wire: ${out.items.length} filings, ${items.filter((x) => x.whatChanged).length} with what-changed`);
 }

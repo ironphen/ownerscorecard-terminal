@@ -1,6 +1,6 @@
 ---
 // The weld: each thing the company's own 10-K flags as worth worrying about, set
-// against the figure from the same filings that bears on it — and crucially, that
+// against the figure from the same filings that bears on it, and crucially, that
 // figure is ANCHORED to a period you can find in the record table below (a number
 // you can't locate is worse than none). The company's words on the left, the
 // arithmetic that tests them on the right.
@@ -21,7 +21,7 @@ const curOEM = ownerEarningsMargin(cur);
 const cov = coverage(company);
 const cash = cashPosition(company);
 
-// Operating-margin trajectory — the anchored series behind pricing-power and cyclicality.
+// Operating-margin trajectory, the anchored series behind pricing-power and cyclicality.
 const omSeries = H.map((h) => operatingMargin(h.lines));
 const curOM = operatingMargin(cur);
 let omPeak = null, omWorst = null;
@@ -67,7 +67,7 @@ function bearing(lens) {
         const atHigh = curOM >= omPeak.v - 0.01;
         return {
           label: "Operating margin",
-          value: atHigh ? `${pc(curOM, 1)} (${curLabel}) — near a ${H.length}-yr high` : `${pc(curOM, 1)} now (${curLabel}), off a ${pc(omPeak.v, 1)} peak (FY${omPeak.fy})`,
+          value: atHigh ? `${pc(curOM, 1)} (${curLabel}), near a ${H.length}-yr high` : `${pc(curOM, 1)} now (${curLabel}), off a ${pc(omPeak.v, 1)} peak (FY${omPeak.fy})`,
           series: omSeries,
         };
       }
@@ -91,7 +91,7 @@ function bearing(lens) {
     case "Cyclicality & demand":
       return omWorst ? { label: "Worst year on record", value: `${pc(omWorst.v, 1)} operating margin (FY${omWorst.fy})` } : null;
     default:
-      return null; // litigation, regulation — read, don't compute
+      return null; // litigation, regulation, read, don't compute
   }
 }
 
@@ -104,11 +104,11 @@ const items = flags.map((f) => {
 {items.length ? (
   <section class="oread">
     <div class="head">
-      <h2>What the filing flags{L.fy ? ` — FY${L.fy}` : ""}</h2>
+      <h2>What the filing flags{L.fy ? `, FY${L.fy}` : ""}</h2>
       {L.sourceUrl ? <a class="src" href={L.sourceUrl} target="_blank" rel="noopener">read the 10-K →</a> : null}
     </div>
     <p class="intro">
-      A 10-K names what an owner should worry about — in the company's own words. Here are the ones
+      A 10-K names what an owner should worry about, in the company's own words. Here are the ones
       Graham and Buffett would stop on, each set against the figure from the same filings that bears on
       it, anchored to a period you can find in the record below. We point; the judgment is yours.
     </p>
@@ -135,7 +135,7 @@ const items = flags.map((f) => {
               <span class="fv">{it.fig.value}</span>
             </div>
           ) : (
-            <div class="weld judgment">A judgment, not a number — weigh it against the filing yourself.</div>
+            <div class="weld judgment">A judgment, not a number, weigh it against the filing yourself.</div>
           )}
         </li>
       ))}

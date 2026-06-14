@@ -1,7 +1,7 @@
-// Durability & moat report card — turns ~10 years of filings into the judgments
+// Durability & moat report card, turns ~10 years of filings into the judgments
 // Graham (stability) and Buffett (a moat that doesn't fade, capital reinvested at
 // high returns) actually rendered. Every line is computed from the record; no
-// opinion is added. The centerpiece is incremental ROIC — the return earned on
+// opinion is added. The centerpiece is incremental ROIC, the return earned on
 // the capital the business plowed back, which separates a compounding moat from
 // one that's merely being milked.
 
@@ -36,25 +36,25 @@ export function moatReport(company) {
   const facts = [];
   const add = (label, value, tone, note) => facts.push({ label, value, tone, note });
 
-  // 1 — Stability: did it ever lose money?
+  // 1, Stability: did it ever lose money?
   const ni = L.map((x) => x.netIncome).filter((x) => x != null);
   const profitable = ni.filter((x) => x > 0).length;
   add("Profitable years", `${profitable} of ${ni.length}`,
     profitable === ni.length ? "good" : profitable >= ni.length - 1 ? "ok" : "warn",
     profitable === ni.length
-      ? "Never lost money over the record — the earnings stability Graham insisted on."
-      : `Lost money in ${ni.length - profitable} year(s) — look at what happened there before trusting the average.`);
+      ? "Never lost money over the record, the earnings stability Graham insisted on."
+      : `Lost money in ${ni.length - profitable} year(s), look at what happened there before trusting the average.`);
 
-  // 2 — Moat: does the return on capital persist?
+  // 2, Moat: does the return on capital persist?
   const roics = L.map((x) => { const iv = invested(x), np = nopat(x); return iv && np != null ? np / iv : null; }).filter((r) => r != null);
   if (roics.length >= 3) {
     const above = roics.filter((r) => r >= 0.15).length;
     add("Return on capital ≥ 15%", `${above} of ${roics.length} yrs`,
       above >= roics.length - 1 ? "good" : above >= roics.length * 0.5 ? "ok" : "warn",
-      "A moat shows up as a high return on invested capital that holds year after year — not one good vintage.");
+      "A moat shows up as a high return on invested capital that holds year after year, not one good vintage.");
   }
 
-  // 3 — Pricing power: where did the operating margin go? Anchored to the first
+  // 3, Pricing power: where did the operating margin go? Anchored to the first
   // and last years on record (both findable in the table), not hidden averages.
   const om = L.map((x) => (x.operatingIncome != null && x.revenue ? x.operatingIncome / x.revenue : null));
   const fI = om.findIndex((v) => v != null);
@@ -63,30 +63,30 @@ export function moatReport(company) {
     const d = om[lI] - om[fI];
     const dir = d > 0.02 ? "good" : d < -0.02 ? "warn" : "ok";
     add("Operating margin", `${pct(om[fI])} (FY${years[fI]}) → ${pct(om[lI])} (FY${years[lI]})`, dir,
-      d > 0.02 ? "Margins widened over the record — pricing power intact or improving."
-        : d < -0.02 ? "Margins slipped over the record — competition or costs are biting in."
+      d > 0.02 ? "Margins widened over the record, pricing power intact or improving."
+        : d < -0.02 ? "Margins slipped over the record, competition or costs are biting in."
         : "Margins held roughly steady across the record.");
   }
 
-  // 4 — The centerpiece: incremental ROIC (what reinvested capital earned).
+  // 4, The centerpiece: incremental ROIC (what reinvested capital earned).
   const npE = avgFirst(L.map(nopat), 3), npL = avgLast(L.map(nopat), 3);
   const ivE = avgFirst(L.map(invested), 3), ivL = avgLast(L.map(invested), 3);
   if (npE != null && npL != null && ivE != null && ivL != null) {
     const dNop = npL - npE, dInv = ivL - ivE;
     if (dInv > ivE * 0.1) {
       const inc = dNop / dInv;
-      add("Reinvestment — incremental ROIC", pct(inc),
+      add("Reinvestment, incremental ROIC", pct(inc),
         inc >= 0.15 ? "good" : inc >= 0.08 ? "ok" : "warn",
-        inc >= 0.15 ? "Every extra dollar the company reinvested earned a high return — it is still compounding, not coasting on an old moat."
-          : inc >= 0 ? "Reinvested capital earned only a modest return — growth is getting expensive."
-          : "Reinvested capital earned a negative return — the business spent money to shrink its own economics.");
+        inc >= 0.15 ? "Every extra dollar the company reinvested earned a high return, it is still compounding, not coasting on an old moat."
+          : inc >= 0 ? "Reinvested capital earned only a modest return, growth is getting expensive."
+          : "Reinvested capital earned a negative return, the business spent money to shrink its own economics.");
     } else {
-      add("Reinvestment — incremental ROIC", "returns capital", "info",
+      add("Reinvestment, incremental ROIC", "returns capital", "info",
         "The capital base barely grew: this business returns cash through dividends and buybacks rather than reinvesting. Judge it on the cash returned, not on compounding.");
     }
   }
 
-  // 5 — How fast did owner earnings compound?
+  // 5, How fast did owner earnings compound?
   const oe = L.map((x) => (x.cashFromOps != null && x.capex != null ? x.cashFromOps - Math.abs(x.capex) : null));
   const oeE = avgFirst(oe, 2), oeL = avgLast(oe, 2);
   const g = oeE != null && oeL != null ? cagr(oeE, oeL, span) : null;
@@ -94,34 +94,34 @@ export function moatReport(company) {
     g >= 0.1 ? "good" : g >= 0 ? "ok" : "warn",
     `Free cash to owners ${g >= 0 ? "grew" : "shrank"} about ${pct(Math.abs(g))} a year over the record.`);
 
-  // 6 — Resilience: the worst year.
+  // 6, Resilience: the worst year.
   let wi = -1, wv = Infinity;
   om.forEach((v, i) => { if (v != null && v < wv) { wv = v; wi = i; } });
   if (wi >= 0) add("Worst year", `${years[wi]} · ${pct(wv, 1)} op. margin`,
     wv > 0 ? "good" : "warn",
-    wv > 0 ? "Stayed profitable even in its hardest year — the resilience that survives recessions."
-      : `Operations went underwater in ${years[wi]} — understand why before trusting the good years.`);
+    wv > 0 ? "Stayed profitable even in its hardest year, the resilience that survives recessions."
+      : `Operations went underwater in ${years[wi]}, understand why before trusting the good years.`);
 
-  // 7 — Per-share: is the slice growing or shrinking? (guard against unadjusted splits)
+  // 7, Per-share: is the slice growing or shrinking? (guard against unadjusted splits)
   const sh = L.map((x) => x.sharesDiluted);
   const shF = sh.find((x) => x != null), shL = [...sh].reverse().find((x) => x != null);
   if (shF && shL && Math.max(shF, shL) / Math.min(shF, shL) <= 1.8 && span > 0) {
     const sg = Math.pow(shL / shF, 1 / span) - 1;
     add("Share count", `${sg >= 0 ? "+" : "−"}${pct(Math.abs(sg), 1)}/yr`,
       sg < -0.005 ? "good" : sg > 0.01 ? "warn" : "ok",
-      sg < -0.005 ? "The share count is shrinking — buybacks are quietly growing your slice of the business."
-        : sg > 0.01 ? "The share count is rising — dilution works against you on a per-share basis."
-        : "Roughly flat share count — little dilution, little buyback.");
+      sg < -0.005 ? "The share count is shrinking, buybacks are quietly growing your slice of the business."
+        : sg > 0.01 ? "The share count is rising, dilution works against you on a per-share basis."
+        : "Roughly flat share count, little dilution, little buyback.");
   }
 
-  // 8 — Dividend continuity.
+  // 8, Dividend continuity.
   const divs = L.map((x) => (x.dividendsPaid != null ? Math.abs(x.dividendsPaid) : null));
   const paidYrs = divs.filter((d) => d != null && d > 0).length;
   if (paidYrs > 0) {
     const dF = divs.find((d) => d), dL = [...divs].reverse().find((d) => d);
     const grew = dF && dL && dL > dF * 1.05;
     add("Dividend record", grew ? "rising" : "paid", grew ? "good" : "ok",
-      grew ? "Paid and raised the dividend across the record — the continuity Graham prized."
+      grew ? "Paid and raised the dividend across the record, the continuity Graham prized."
         : `Paid a dividend in ${paidYrs} of the years on record.`);
   }
 

@@ -7,7 +7,7 @@ import { classify } from "../lib/archetype.mjs";
 import { grahamTests } from "../lib/graham.mjs";
 
 // ---- the catalog rows: every company reduced to the few sourced facts that
-// decide quality and survival. No rank, no score — the reader sorts by what they
+// decide quality and survival. No rank, no score, the reader sorts by what they
 // value, which is the judgment we refuse to make for them. ----
 const SHORT = { assetLight: "Asset-light", consumer: "Consumer", capital: "Capital-int.", retail: "Retail", financial: "Financial", reit: "REIT", general: "General" };
 const OV = { unprofitable: "loss", distress: "distress", buildout: "build-out", cyclical: "cyclical" };
@@ -53,9 +53,9 @@ const articles = (
 const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric", timeZone: "UTC" });
 ---
 
-<BaseLayout title="Owner Scorecard — read a company the way an owner would">
+<BaseLayout title="Owner Scorecard, read a company the way an owner would">
   <p class="lede">
-    A company, read the way an owner would read it — from its own SEC filings, with the
+    A company, read the way an owner would read it, from its own SEC filings, with the
     arithmetic shown, no rating and no estimate. The catalog reduces each one to the few
     facts that decide whether it survives and whether it's any good; the writing works
     through what they mean.
@@ -85,7 +85,7 @@ const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "
       <span id="count" class="count">{rows.length} companies</span>
     </div>
     <p class="method">
-      Every figure is the latest annual number from the company's own 10-K — click a
+      Every figure is the latest annual number from the company's own 10-K, click a
       column to rank by it, filter by business model, or search. We don't score them.
       Pick a company for its full Owner's Scorecard.
     </p>
@@ -144,7 +144,7 @@ const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "
         </tbody>
       </table>
     </div>
-    <p class="legend">Owner-earnings margin = (operating cash − capex) ÷ revenue. Net cash nets debt against cash and marketable securities; parentheses are net debt. Graham = how many of his defensive-investor tests the filings clear (of those computable) — a floor of safety, not a buy signal; sort by it to screen.</p>
+    <p class="legend">Owner-earnings margin = (operating cash − capex) ÷ revenue. Net cash nets debt against cash and marketable securities; parentheses are net debt. Graham = how many of his defensive-investor tests the filings clear (of those computable), a floor of safety, not a buy signal; sort by it to screen.</p>
   </section>
 
   <style>

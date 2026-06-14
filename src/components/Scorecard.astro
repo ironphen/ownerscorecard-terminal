@@ -46,8 +46,8 @@ const report = moatReport(company);
 
   {report ? (
     <div class="section">
-      <h3 class="secHead">Durability &amp; moat — {report.years[0]}–{report.years[report.years.length - 1]}</h3>
-      <p class="durNote">A moat is a high return that doesn’t fade, reinvested at high returns. Here is what the record says — judgments, not another chart of the numbers.</p>
+      <h3 class="secHead">Durability &amp; moat, {report.years[0]}–{report.years[report.years.length - 1]}</h3>
+      <p class="durNote">A moat is a high return that doesn’t fade, reinvested at high returns. Here is what the record says, judgments, not another chart of the numbers.</p>
       <ul class="report">
         {report.facts.map((ft) => (
           <li>
@@ -64,7 +64,7 @@ const report = moatReport(company);
 
   <p class="foot">
     Solvent is not the same as cheap; growing is not the same as good. These are vital
-    signs, not a verdict — the judgment is yours, and the filing is one click away.
+    signs, not a verdict, the judgment is yours, and the filing is one click away.
   </p>
 </section>
 

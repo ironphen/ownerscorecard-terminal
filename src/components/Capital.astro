@@ -21,11 +21,11 @@ segs.forEach((s) => (s.w = (s.amt / totalUse) * 100));
 {cap ? (
   <section class="cap">
     <div class="head">
-      <h2>How the cash was used — {cap.span}</h2>
+      <h2>How the cash was used, {cap.span}</h2>
     </div>
 
     <p class="lede">
-      Over the record, the business generated <b>{fmtUSD(cap.cfo)}</b> of operating cash — and how management
+      Over the record, the business generated <b>{fmtUSD(cap.cfo)}</b> of operating cash, and how management
       split it is, as Buffett insists, the job that matters most. Here it reads as <b>{cap.character}</b>.
     </p>
 
@@ -44,14 +44,14 @@ segs.forEach((s) => (s.w = (s.amt / totalUse) * 100));
 
     <p class="reads">
       It reinvested <b>{fmtUSD(cap.capex)}</b> ({pct(cap.pReinvest)}) back into the business and returned
-      <b> {fmtUSD(cap.returned)}</b> ({pct(cap.pReturn)}) to owners — {fmtUSD(cap.div)} in dividends, {fmtUSD(cap.bb)} in buybacks.
+      <b> {fmtUSD(cap.returned)}</b> ({pct(cap.pReturn)}) to owners, {fmtUSD(cap.div)} in dividends, {fmtUSD(cap.bb)} in buybacks.
       {cap.debtChange != null ? ` Total debt ${cap.debtChange >= 0 ? "rose" : "fell"} ${fmtUSD(Math.abs(cap.debtChange))} across the span.` : ""}
-      {cap.overspent ? " It returned and reinvested more than it generated — the gap was covered by debt or existing cash." : ""}
+      {cap.overspent ? " It returned and reinvested more than it generated, the gap was covered by debt or existing cash." : ""}
     </p>
 
     <p class="foot">
       Buybacks are gross of stock issued to employees; net of that, the real return to owners is lower (see Management &amp; pay).
-      And the mix alone doesn't grade management — what matters is the return earned on the dollars reinvested (see incremental ROIC in the durability report).
+      And the mix alone doesn't grade management, what matters is the return earned on the dollars reinvested (see incremental ROIC in the durability report).
     </p>
   </section>
 ) : null}

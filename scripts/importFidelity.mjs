@@ -2,8 +2,8 @@
 // Converts a Fidelity "Portfolio_Positions_MonDDYYYY.xlsx" export (closed
 // positions + Historical_returns sheets) into the site's data files:
 //
-//   src/data/performance.json  — monthly time-weighted returns per account
-//   src/data/ledger.json       — realized (closed) positions
+//   src/data/performance.json , monthly time-weighted returns per account
+//   src/data/ledger.json      , realized (closed) positions
 //
 // Usage:
 //   npm run import:fidelity -- path/to/Portfolio_Positions_Jun062026.xlsx
@@ -133,7 +133,7 @@ for (const row of posRows.slice(headerIdx + 1)) {
   });
 }
 
-if (!positions.length) die("Parsed 0 positions — is this the right export?");
+if (!positions.length) die("Parsed 0 positions, is this the right export?");
 positions.sort((a, b) => b.gain - a.gain);
 
 // -------------------------------------------------------- returns sheet

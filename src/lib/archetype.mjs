@@ -1,6 +1,6 @@
-// Archetype engine — reads a company's economic model (sector) and situation
+// Archetype engine, reads a company's economic model (sector) and situation
 // (state overlays) from primary-source data. Free: SIC code + financial shape,
-// no generative tools. The classification is transparent by design — every call
+// no generative tools. The classification is transparent by design, every call
 // carries the reason it was made, so the page can show its work.
 
 const ratio = (n, d) => (n != null && d ? n / d : null);
@@ -14,7 +14,7 @@ const SECTORS = {
   consumer: "Consumer & brand",
   capital: "Capital-intensive",
   retail: "Retail & distribution",
-  financial: "Bank / financial",       // phase 2 — different statements
+  financial: "Bank / financial",       // phase 2, different statements
   reit: "REIT / real estate",          // phase 2
   general: "General",
 };
@@ -56,17 +56,17 @@ function sectorFromShape(s) {
 function sectorReason(key, s) {
   switch (key) {
     case "assetLight":
-      return `little inventory and a ${pct(s.grossMargin)} gross margin — the value is in IP and people, not factories`;
+      return `little inventory and a ${pct(s.grossMargin)} gross margin, the value is in IP and people, not factories`;
     case "retail":
-      return `inventory near ${pct(s.invToRev)} of sales on a ${pct(s.grossMargin)} gross margin — a thin-margin, inventory-driven model`;
+      return `inventory near ${pct(s.invToRev)} of sales on a ${pct(s.grossMargin)} gross margin, a thin-margin, inventory-driven model`;
     case "capital":
-      return `capital spending runs ${pct(s.capexToRev)} of sales — the model is built on heavy physical assets`;
+      return `capital spending runs ${pct(s.capexToRev)} of sales, the model is built on heavy physical assets`;
     case "consumer":
-      return `a branded-goods profile${s.grossMargin != null ? ` at a ${pct(s.grossMargin)} gross margin` : ""} — the asset is the brand and shelf position`;
+      return `a branded-goods profile${s.grossMargin != null ? ` at a ${pct(s.grossMargin)} gross margin` : ""}, the asset is the brand and shelf position`;
     case "financial":
-      return "a lender's balance sheet — judged on book value, net interest margin and loan losses (fuller treatment coming)";
+      return "a lender's balance sheet, judged on book value, net interest margin and loan losses (fuller treatment coming)";
     case "reit":
-      return "a property model where GAAP depreciation distorts earnings — judged on FFO and net asset value (fuller treatment coming)";
+      return "a property model where GAAP depreciation distorts earnings, judged on FFO and net asset value (fuller treatment coming)";
     default:
       return "not enough shape in the filings to read the model with confidence";
   }
@@ -81,15 +81,14 @@ function overlays(company, s) {
 
   if ((L.netIncome != null && L.netIncome < 0) || (L.operatingIncome != null && L.operatingIncome < 0)) {
     out.push({ key: "unprofitable", label: "Unprofitable growth",
-      reason: "no operating profit yet — judge it on revenue growth, gross-margin trajectory, cash burn and runway, never on an earnings multiple" });
+      reason: "no operating profit yet, judge it on revenue growth, gross-margin trajectory, cash burn and runway, never on an earnings multiple" });
   }
 
   const cov = L.operatingIncome != null && L.interestExpense ? L.operatingIncome / L.interestExpense : null;
-  // Real distress = can't cover interest, or operations themselves burn cash —
-  // not merely negative free cash flow, which heavy capex (a build-out) also causes.
+  // Real distress = can't cover interest, or operations themselves burn cash,  // not merely negative free cash flow, which heavy capex (a build-out) also causes.
   if ((cov != null && cov < 1.5) || (L.cashFromOps != null && L.cashFromOps < 0 && L.totalDebt > 0)) {
     out.push({ key: "distress", label: "Distress / turnaround",
-      reason: "thin interest coverage or cash-burning operations against real debt — the first questions are liquidity and the maturity wall, not growth" });
+      reason: "thin interest coverage or cash-burning operations against real debt, the first questions are liquidity and the maturity wall, not growth" });
   }
 
   // Capital build-out (the Chanos lens): capex elevated AND surging vs its own past.
@@ -99,7 +98,7 @@ function overlays(company, s) {
     const earlyAvg = avg(hist.slice(0, half).map((h) => ratio(Math.abs(h.lines.capex), h.lines.revenue)).filter((x) => x != null));
     if (earlyAvg != null && capexToRev > earlyAvg * 1.4) {
       out.push({ key: "buildout", label: "Capital build-out",
-        reason: `capital spending has surged to ${pct(capexToRev)} of sales — today's earnings are charged less depreciation than tomorrow's will be` });
+        reason: `capital spending has surged to ${pct(capexToRev)} of sales, today's earnings are charged less depreciation than tomorrow's will be` });
     }
   }
 
@@ -112,7 +111,7 @@ function overlays(company, s) {
     const range = Math.max(...margins) - Math.min(...margins);
     if (median > 0 && troughs >= 2 && range > 0.1) {
       out.push({ key: "cyclical", label: "Cyclical",
-        reason: "margins collapse repeatedly across the cycle — a single year misleads; look at normalized, through-cycle earnings and the balance sheet at the trough" });
+        reason: "margins collapse repeatedly across the cycle, a single year misleads; look at normalized, through-cycle earnings and the balance sheet at the trough" });
     }
   }
 

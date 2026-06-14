@@ -1,4 +1,4 @@
-// Capital allocation over the record — Buffett's "most important job of management."
+// Capital allocation over the record, Buffett's "most important job of management."
 // Where did the cash the business generated actually go, across the whole span:
 // back into the business (capex), out to owners (dividends, buybacks), or to the
 // balance sheet (debt paydown, cash). Pure arithmetic on figures the pipeline
@@ -33,11 +33,11 @@ export function capitalHistory(company) {
   const p = (x) => x / cfo;
   // The dominant use, for a one-line character.
   let character;
-  if (p(returned) >= 0.6) character = "a mature cash machine — most of what it earns goes straight back to owners";
-  else if (p(capex) >= 0.5) character = "a reinvestor — most operating cash is plowed back into the business";
-  else if (debtChange != null && debtChange < -0.2 * cfo) character = "a deleverager — a meaningful share of cash went to paying down debt";
-  else if (cashChange != null && cashChange > 0.25 * cfo) character = "a hoarder — a large share of cash simply built the balance sheet";
-  else character = "a balanced allocator — splitting cash between the business, owners, and the balance sheet";
+  if (p(returned) >= 0.6) character = "a mature cash machine, most of what it earns goes straight back to owners";
+  else if (p(capex) >= 0.5) character = "a reinvestor, most operating cash is plowed back into the business";
+  else if (debtChange != null && debtChange < -0.2 * cfo) character = "a deleverager, a meaningful share of cash went to paying down debt";
+  else if (cashChange != null && cashChange > 0.25 * cfo) character = "a hoarder, a large share of cash simply built the balance sheet";
+  else character = "a balanced allocator, splitting cash between the business, owners, and the balance sheet";
 
   return {
     span: `${years[0]}–${years[years.length - 1]}`,

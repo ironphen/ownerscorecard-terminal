@@ -1,8 +1,8 @@
 ---
-// "What the price implies" — a reader-supplied-price reverse-DCF. We pull no price
+// "What the price implies", a reader-supplied-price reverse-DCF. We pull no price
 // feed and store nothing: you bring the quote (off any broker), we do the math in
 // your browser. That sidesteps every market-data licence and keeps the page honest
-// — the only number we'd ever "redistribute" is the one you typed in. Never a price
+//, the only number we'd ever "redistribute" is the one you typed in. Never a price
 // target: it shows the owner-earnings growth a price implies, set against the record.
 import { classify } from "../lib/archetype.mjs";
 import { moatReport } from "../lib/durability.mjs";
@@ -28,7 +28,7 @@ const bvps = L.stockholdersEquity != null && shares ? L.stockholdersEquity / sha
 
 // Negative-owner-earnings mode: a reverse-DCF can't grow a negative base, so we flip
 // the question to the future profitability the price demands. Inputs: revenue and its
-// recent growth — the only honest base when there are no earnings yet.
+// recent growth, the only honest base when there are no earnings yet.
 const rev = L.revenue;
 const revH = (company.history || []).map((h) => h.lines.revenue).filter((v) => v != null);
 let gRevRaw = null;
@@ -55,11 +55,11 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
   </div>
 
   {offModel ? (
-    <p class="note">A {sector.label.toLowerCase()} isn't read on an owner-earnings DCF — its economics live on the balance sheet (book value, net interest margin, loan losses / FFO). We don't force this lens where it doesn't belong.</p>
+    <p class="note">A {sector.label.toLowerCase()} isn't read on an owner-earnings DCF, its economics live on the balance sheet (book value, net interest margin, loan losses / FFO). We don't force this lens where it doesn't belong.</p>
   ) : !runnable ? (
     negMode ? (
       <div id="valBoxNeg" data-rev={rev} data-shares={shares} data-name={name} data-oem={oeMarginNow ?? ""}>
-        <p class="intro">Owner earnings are <b>negative</b> today — so the usual reverse-DCF has nothing to grow. But that's exactly when a price makes its boldest promise. So we flip the question: type a price, and see the future profitability you'd have to believe to justify it.</p>
+        <p class="intro">Owner earnings are <b>negative</b> today, so the usual reverse-DCF has nothing to grow. But that's exactly when a price makes its boldest promise. So we flip the question: type a price, and see the future profitability you'd have to believe to justify it.</p>
         <div class="priceRow">
           <label for="pxn">Today&rsquo;s price</label>
           <span class="dollar">$</span>
@@ -72,20 +72,20 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
           <div class="cmp"><span class="cl">Owner-earnings margin today</span><span class="cv neg">{pctS(oeMarginNow)}</span></div>
         </div>
         <div class="dials">
-          <span class="dialsLbl">The assumptions — turn the dials</span>
+          <span class="dialsLbl">The assumptions, turn the dials</span>
           <label>Discount rate <output id="rOutN">9%</output><input id="rN" type="range" min="4" max="15" step="0.5" value="9" /></label>
           <label>Years to get there <output id="nOutN">10</output><input id="nN" type="range" min="5" max="15" step="1" value="10" /></label>
           <label>Revenue growth <output id="grOutN">{gRevPct}%</output><input id="grN" type="range" min="0" max="45" step="5" value={gRevPct} /></label>
         </div>
-        <p class="foot">It flips the reverse-DCF: the company must reach owner earnings that, valued at a mature multiple and discounted back at your rate, equal today's market cap — shown as the margin it must earn on revenue grown at your rate, from negative today. For a deep cyclical at a trough, normalized through-cycle earnings are the better lens; this is for the genuinely unprofitable.</p>
+        <p class="foot">It flips the reverse-DCF: the company must reach owner earnings that, valued at a mature multiple and discounted back at your rate, equal today's market cap, shown as the margin it must earn on revenue grown at your rate, from negative today. For a deep cyclical at a trough, normalized through-cycle earnings are the better lens; this is for the genuinely unprofitable.</p>
       </div>
     ) : (
-      <p class="note">A reverse-DCF needs positive owner earnings, or at least revenue, to anchor to — there's no clean base here. Judge this one on assets or normalized earnings, not a growth model.</p>
+      <p class="note">A reverse-DCF needs positive owner earnings, or at least revenue, to anchor to, there's no clean base here. Judge this one on assets or normalized earnings, not a growth model.</p>
     )
   ) : (
     <div id="valBox" data-oe={ownerEarnings} data-shares={shares} data-name={name} data-eps3={eps3 ?? ""} data-bvps={bvps ?? ""}>
       <p class="intro">
-        A price is the one input we don't pull — <b>you bring it</b>. Type today's close (read it off any
+        A price is the one input we don't pull, <b>you bring it</b>. Type today's close (read it off any
         broker or quote site) and see the owner-earnings growth you'd have to believe to justify it, set
         beside what {name} has actually delivered. Nothing is stored; the number stays in your browser.
       </p>
@@ -111,21 +111,21 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
             <div class="cmp"><span class="cl">P/B</span><span class="cv" id="pb">—</span></div>
             <div class="cmp"><span class="cl">Graham’s price gate</span><span class="cv" id="ggate">—</span></div>
           </div>
-          <p class="gatenote">Graham capped the multiple at 15×; Buffett and Munger let that rule go — a wonderful business can deserve 50× if the thesis holds. Read it as the bargain-hunter's floor, not a ceiling on good sense.</p>
+          <p class="gatenote">Graham capped the multiple at 15×; Buffett and Munger let that rule go, a wonderful business can deserve 50× if the thesis holds. Read it as the bargain-hunter's floor, not a ceiling on good sense.</p>
         </>
       ) : null}
 
       <div class="dials">
-        <span class="dialsLbl">The assumptions — turn the dials</span>
+        <span class="dialsLbl">The assumptions, turn the dials</span>
         <label>Discount rate <output id="rOut">9%</output><input id="r" type="range" min="4" max="15" step="0.5" value="9" /></label>
         <label>Years of high growth <output id="nOut">10</output><input id="n" type="range" min="5" max="15" step="1" value="10" /></label>
         <label>Terminal growth <output id="gOut">2.5%</output><input id="g" type="range" min="0" max="4" step="0.25" value="2.5" /></label>
-        <p class="dialsNote">The discount rate is your interest rate — what a dollar years from now is worth today, anchored to the long-term Treasury yield (~4–5% today, plus whatever premium you want for risk). Drag it toward the risk-free rate and watch how much growth the price suddenly “needs”: interest rates are gravity on valuations.</p>
+        <p class="dialsNote">The discount rate is your interest rate, what a dollar years from now is worth today, anchored to the long-term Treasury yield (~4–5% today, plus whatever premium you want for risk). Drag it toward the risk-free rate and watch how much growth the price suddenly “needs”: interest rates are gravity on valuations.</p>
       </div>
 
       <p class="foot">
         Owner earnings {fmtUSD(ownerEarnings)} on {(shares / 1e6).toFixed(0)}M diluted shares; net {netDebt >= 0 ? `debt ${fmtUSD(netDebt)}` : `cash ${fmtUSD(-netDebt)}`}.
-        This is a lens, not a price target — it says what you'd have to <em>believe</em>, not what the company
+        This is a lens, not a price target, it says what you'd have to <em>believe</em>, not what the company
         is <em>worth</em>, and it runs on one year of (noisy) owner earnings at assumptions you can see and change.
       </p>
     </div>
@@ -224,8 +224,8 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
       impG.textContent = res.cap ? "100%+/yr" : pcs(res.g) + "/yr";
       const P = "$" + price.toFixed(2);
       if (res.cap) lede.innerHTML = `At <b>${P}</b>, even <b class="hot">100%+/yr</b> growth for a decade can't justify the price on owner earnings alone.`;
-      else if (res.g < 0) lede.innerHTML = `At <b>${P}</b>, the market is pricing owner earnings to <b>shrink ${pcs(res.g)}/yr</b> for ${N} years — priced for decline.`;
-      else lede.innerHTML = `At <b>${P}</b>, the market is pricing <b>${esc(NAME)}</b> to grow owner earnings about <b class="hot">${pcs(res.g)}</b>/yr for ${N} years, then ${(gT * 100).toFixed(1)}% forever — discounted at ${(rr * 100).toFixed(0)}%.`;
+      else if (res.g < 0) lede.innerHTML = `At <b>${P}</b>, the market is pricing owner earnings to <b>shrink ${pcs(res.g)}/yr</b> for ${N} years, priced for decline.`;
+      else lede.innerHTML = `At <b>${P}</b>, the market is pricing <b>${esc(NAME)}</b> to grow owner earnings about <b class="hot">${pcs(res.g)}</b>/yr for ${N} years, then ${(gT * 100).toFixed(1)}% forever, discounted at ${(rr * 100).toFixed(0)}%.`;
       setURL(px.value);
     }
     [px, r, n, g].forEach((el) => el.addEventListener("input", update));
@@ -263,11 +263,11 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
       reqM.textContent = margin > 3 ? ">300%" : pcs(margin);
       const P = "$" + price.toFixed(2);
       let verdict;
-      if (margin > 1) verdict = ` — <b class="bad">impossible</b>: more owner profit than it would have revenue.`;
-      else if (margin > 0.45) verdict = ` — an <b class="bad">extraordinary</b> margin almost no business on earth sustains, from a loss today.`;
-      else if (margin > 0.3) verdict = ` — a <b>top-tier</b> margin (the most profitable software), from a loss today.`;
+      if (margin > 1) verdict = `, <b class="bad">impossible</b>: more owner profit than it would have revenue.`;
+      else if (margin > 0.45) verdict = `, an <b class="bad">extraordinary</b> margin almost no business on earth sustains, from a loss today.`;
+      else if (margin > 0.3) verdict = `, a <b>top-tier</b> margin (the most profitable software), from a loss today.`;
       else verdict = `, from a loss today.`;
-      lede.innerHTML = `At <b>${P}</b>, to earn you ${r.value}% a year, ${esc(NAME)} must be worth ${usd(valN)} in ${N} years. At ~${M.toFixed(0)}× owner earnings, that is <b class="hot">${usd(requiredOE)}</b> a year — and growing revenue ${g > 0 ? "at " + gr.value + "%/yr" : "flat"} to ${usd(revN)}, an owner-earnings margin of <b class="hot">${margin > 3 ? ">300%" : pcs(margin)}</b>${verdict}`;
+      lede.innerHTML = `At <b>${P}</b>, to earn you ${r.value}% a year, ${esc(NAME)} must be worth ${usd(valN)} in ${N} years. At ~${M.toFixed(0)}× owner earnings, that is <b class="hot">${usd(requiredOE)}</b> a year, and growing revenue ${g > 0 ? "at " + gr.value + "%/yr" : "flat"} to ${usd(revN)}, an owner-earnings margin of <b class="hot">${margin > 3 ? ">300%" : pcs(margin)}</b>${verdict}`;
     }
     [px, r, n, gr].forEach((el) => el.addEventListener("input", update));
     update();

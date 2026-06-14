@@ -1,5 +1,5 @@
 ---
-// "Management & pay" — Buffett's two questions about compensation, sourced. Stock
+// "Management & pay", Buffett's two questions about compensation, sourced. Stock
 // comp (a real expense an owner bears) comes from the financials; the CEO-to-median
 // pay ratio is pulled from the proxy when cleanly disclosed.
 import language from "../data/language.json";
@@ -12,7 +12,7 @@ const rev = L.revenue, oi = L.operatingIncome;
 const comp = language?.companies?.[company.ticker]?.comp || null;
 
 // Against revenue (scale) and operating profit (materiality). Not owner earnings:
-// CFO adds SBC back, so it's baked into that denominator — a muddled comparison.
+// CFO adds SBC back, so it's baked into that denominator, a muddled comparison.
 const pctOf = (n, d, dp = 0) => (n != null && d && d > 0 ? `${((n / d) * 100).toFixed(dp)}%` : null);
 const sbcRev = sbc != null ? pctOf(sbc, rev) : null;
 const sbcOI = sbc != null ? pctOf(sbc, oi) : null;
@@ -27,8 +27,8 @@ const show = (sbc != null && rev) || comp?.payRatio != null;
       {comp?.sourceUrl ? <a class="src" href={comp.sourceUrl} target="_blank" rel="noopener">read the proxy →</a> : null}
     </div>
     <p class="intro">
-      Two questions Buffett actually asks about pay: is stock compensation — a real expense, whatever the
-      income statement pretends — quietly large, and is the top wildly out of line with the floor. He's no
+      Two questions Buffett actually asks about pay: is stock compensation, a real expense, whatever the
+      income statement pretends, quietly large, and is the top wildly out of line with the floor. He's no
       populist about it; he just wants pay that's rational and earned, and comp committees that aren't lapdogs.
     </p>
 
@@ -36,13 +36,13 @@ const show = (sbc != null && rev) || comp?.payRatio != null;
       {comp?.payRatio != null ? (
         <li>
           <div class="r"><span class="k">CEO pay ratio</span><span class="v">{comp.payRatio.toLocaleString()}:1</span></div>
-          <p class="n">What the chief earns for every dollar the median employee makes{comp.fy ? `, per the ${comp.fy} proxy` : ""}. A high ratio isn't proof of anything — some businesses are genuinely top-heavy in scarce skill — but a runaway figure is where Buffett starts asking whether the board is doing its job or just keeping the chair company.</p>
+          <p class="n">What the chief earns for every dollar the median employee makes{comp.fy ? `, per the ${comp.fy} proxy` : ""}. A high ratio isn't proof of anything, some businesses are genuinely top-heavy in scarce skill, but a runaway figure is where Buffett starts asking whether the board is doing its job or just keeping the chair company.</p>
         </li>
       ) : null}
       {sbc != null && rev ? (
         <li>
           <div class="r"><span class="k">Stock-based compensation</span><span class="v">{fmtUSD(sbc)}</span></div>
-          <p class="n">The slice of the business handed to employees in shares this year — {sbcRev} of revenue{sbcOI ? `, equal to ${sbcOI} of operating profit` : ""}. Buffett's oldest accounting fight: this is compensation, compensation is an expense, real whether or not the headline earnings admit it. And note the trap — the cash-flow statement adds SBC back, so the operating cash, and the owner earnings drawn from it, are flattered by exactly this amount; counted as the cost it is, what an owner keeps is lower.</p>
+          <p class="n">The slice of the business handed to employees in shares this year, {sbcRev} of revenue{sbcOI ? `, equal to ${sbcOI} of operating profit` : ""}. Buffett's oldest accounting fight: this is compensation, compensation is an expense, real whether or not the headline earnings admit it. And note the trap, the cash-flow statement adds SBC back, so the operating cash, and the owner earnings drawn from it, are flattered by exactly this amount; counted as the cost it is, what an owner keeps is lower.</p>
         </li>
       ) : null}
     </ul>

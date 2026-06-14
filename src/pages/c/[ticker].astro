@@ -43,11 +43,11 @@ const fmtDate = (d) =>
   d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric", timeZone: "UTC" });
 ---
 
-<BaseLayout title={`${ticker} — Owner Scorecard`}>
+<BaseLayout title={`${ticker}, Owner Scorecard`}>
   <p class="back"><a href="/">← All companies</a></p>
 
   <header class="hero" id="top">
-    <h1>{ticker}{name ? ` — ${name}` : ""}</h1>
+    <h1>{ticker}{name ? `, ${name}` : ""}</h1>
     {fund ? <div class="meta">Latest filing: FY{fund.fy} {fund.form}</div> : null}
   </header>
 
@@ -102,7 +102,7 @@ const fmtDate = (d) =>
     .hero h1 { margin: 0; }
     .meta { color: #555; font-size: 14px; margin-top: 4px; }
 
-    /* Sticky company bar — ticker always in view, plus section jump-nav. */
+    /* Sticky company bar, ticker always in view, plus section jump-nav. */
     .cbar {
       position: sticky; top: 0; z-index: 40; background: var(--paper);
       display: flex; align-items: center; gap: 12px;

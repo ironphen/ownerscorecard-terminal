@@ -18,11 +18,11 @@ const show = L && (notable.length || lenΔ != null);
 {show ? (
   <section class="language">
     <div class="head">
-      <h2>What changed{L.priorFy ? ` — FY${L.fy} vs FY${L.priorFy}` : ""}</h2>
+      <h2>What changed{L.priorFy ? `, FY${L.fy} vs FY${L.priorFy}` : ""}</h2>
       {L.sourceUrl ? <a class="src" href={L.sourceUrl} target="_blank" rel="noopener">read the 10-K →</a> : null}
     </div>
 
-    <p class="intro">Most of a 10-K is boilerplate carried over verbatim; the signal is in what's <em>new</em>. These lines appear this year and weren't there last — figure updates filtered out, so only the language shift remains.</p>
+    <p class="intro">Most of a 10-K is boilerplate carried over verbatim; the signal is in what's <em>new</em>. These lines appear this year and weren't there last, figure updates filtered out, so only the language shift remains.</p>
 
     <div class="stats">
       {lenΔ != null ? <span class="stat">MD&amp;A length <b class={lenΔ > 0.1 ? "warn" : ""}>{pctΔ(lenΔ)}</b></span> : null}
@@ -35,10 +35,10 @@ const show = L && (notable.length || lenΔ != null);
         {notable.map((q) => <li>“{q}{q.length >= 300 ? "…" : ""}”</li>)}
       </ul>
     ) : (
-      <p class="muted">No materially new language flagged this year — the filing reads largely as it did last year.</p>
+      <p class="muted">No materially new language flagged this year, the filing reads largely as it did last year.</p>
     )}
 
-    <p class="foot">Classic text analysis over the filing itself — no model wrote a word of this, and every quote is the company's own.</p>
+    <p class="foot">Classic text analysis over the filing itself, no model wrote a word of this, and every quote is the company's own.</p>
   </section>
 ) : null}
 

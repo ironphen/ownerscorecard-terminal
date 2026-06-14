@@ -3,7 +3,7 @@
 //
 // Reads src/data/universe.json (tickers + names), resolves each ticker to a CIK
 // via SEC's official ticker map, pulls the latest annual (10-K) figures from the
-// EDGAR XBRL "companyfacts" API, and writes src/data/fundamentals.json — the
+// EDGAR XBRL "companyfacts" API, and writes src/data/fundamentals.json, the
 // static dataset every fundamentals tool reads.
 //
 //   npm run fetch:fundamentals
@@ -66,7 +66,7 @@ const CONCEPTS = {
     "CashCashEquivalentsAndShortTermInvestmentsAtCarryingValue",
     "CashCashEquivalentsAndShortTermInvestments",
   ],
-  // Liquid securities held alongside cash — netted against debt for a truer
+  // Liquid securities held alongside cash, netted against debt for a truer
   // leverage read (a company like Apple parks most of its war chest here, not in
   // "cash"). Marketable-securities tags only, so strategic/illiquid stakes stay out.
   shortTermInvestments: ["ShortTermInvestments", "MarketableSecuritiesCurrent", "AvailableForSaleSecuritiesCurrent", "OtherShortTermInvestments"],
@@ -89,7 +89,7 @@ const days = (a, b) => Math.abs((new Date(b) - new Date(a)) / 86400000);
 // EDGAR concepts get renamed and companies switch tags, so one tag can go stale
 // mid-decade. Merge across the candidate tags in priority order: a higher-priority
 // tag wins a year; lower-priority tags fill the years it lacks (so a stale tag is
-// supplemented, not frozen). Within a tag, the latest filing wins — picking up
+// supplemented, not frozen). Within a tag, the latest filing wins, picking up
 // restatements and split adjustments. Keyed by PERIOD-end year, not filing fy.
 
 function annualByYear(facts, tags, unit = "USD") {
@@ -181,7 +181,7 @@ function ttmFlow(facts, tags, unit = "USD") {
   return fy ? { val: fy.val, asOf: fy.end, isFY: true } : null;
 }
 
-// Latest period value across 10-K and 10-Q — for the freshest share count (flow)
+// Latest period value across 10-K and 10-Q, for the freshest share count (flow)
 // and balance-sheet items (instant).
 function latestObservation(facts, tags, unit = "USD", instant = false) {
   let best = null;
@@ -300,7 +300,7 @@ async function main() {
         },
       }));
 
-    // Trailing twelve months — the freshest 12-month picture; folds in any
+    // Trailing twelve months, the freshest 12-month picture; folds in any
     // quarter filed since the last 10-K. Flows are TTM-summed; balance sheet and
     // share count are taken at the latest quarter.
     const tf = (tags, unit = "USD") => ttmFlow(facts, tags, unit)?.val ?? null;
@@ -372,7 +372,7 @@ async function main() {
   }
 
   if (!companies.length) {
-    console.error("\n❌ No companies resolved — aborting so the sample file is preserved.\n");
+    console.error("\n❌ No companies resolved, aborting so the sample file is preserved.\n");
     process.exit(1);
   }
 

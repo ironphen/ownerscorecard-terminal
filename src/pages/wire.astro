@@ -17,15 +17,15 @@ for (const it of items) {
 }
 ---
 
-<BaseLayout title="The Filing Wire — Owner Scorecard">
+<BaseLayout title="The Filing Wire, Owner Scorecard">
   <header class="hd">
     <h1>The Filing Wire</h1>
     {wire?.asOf ? <span class="asof">updated {wire.asOf}</span> : null}
   </header>
   <p class="lede">
-    Not what the market did — what companies actually <em>disclosed</em>. Every new filing across the
+    Not what the market did, what companies actually <em>disclosed</em>. Every new filing across the
     catalog, straight from EDGAR, newest first, with the 8-K codes translated into plain English. The grave
-    ones — an auditor change, a restatement, a default — announce themselves. This is the only ticker an owner needs.
+    ones, an auditor change, a restatement, a default, announce themselves. This is the only ticker an owner needs.
   </p>
 
   {items.length ? (
@@ -43,7 +43,7 @@ for (const it of items) {
               </div>
               {it.whatChanged && it.whatChanged.length ? (
                 <ul class="changed">
-                  <li class="lead">New language vs. a year ago —</li>
+                  <li class="lead">New language vs. a year ago, </li>
                   {it.whatChanged.map((s) => <li class="q">“{s}{s.length >= 290 ? "…" : ""}”</li>)}
                 </ul>
               ) : null}
@@ -53,7 +53,7 @@ for (const it of items) {
       </section>
     ))
   ) : (
-    <p class="empty">The wire refreshes daily from EDGAR. Nothing loaded yet — once the daily job runs, the latest filings appear here.</p>
+    <p class="empty">The wire refreshes daily from EDGAR. Nothing loaded yet, once the daily job runs, the latest filings appear here.</p>
   )}
 
   <style>

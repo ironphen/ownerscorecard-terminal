@@ -17,11 +17,11 @@ if (revSeries.length >= 4) {
   if (first > 0) cagr = Math.pow(rev / first, 1 / span) - 1;
 }
 
-// One vital-signs strip — the universal "is it a good business?" numbers, latest
+// One vital-signs strip, the universal "is it a good business?" numbers, latest
 // year. (No second strip: the business-model specifics live in the record table
 // and in what the filing flags below, so they aren't duplicated up here.)
 // Vital signs from the freshest twelve months (TTM), each with its 5-year average
-// for context — is the business running above or below its own recent norm?
+// for context, is the business running above or below its own recent norm?
 const cur = company.ttm?.lines || L;
 const curLabel = company.ttm?.lines ? "TTM" : `FY${company.fy}`;
 const grossM = (l) => (l && l.revenue && l.costOfRevenue != null ? 1 - l.costOfRevenue / l.revenue : null);
@@ -85,7 +85,7 @@ const sp = spark(revSeries);
   ) : null}
 
   <p class="reads">
-    Read as a <strong>{sector.label}</strong> business — {sector.reason}.
+    Read as a <strong>{sector.label}</strong> business, {sector.reason}.
   </p>
 
   {overlays.length ? (
