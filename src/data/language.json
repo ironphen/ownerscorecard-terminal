@@ -1,7 +1,1576 @@
 {
-  "asOf": null,
+  "asOf": "2026-06-14",
   "source": "SEC EDGAR — 10-K documents",
-  "note": "Run `npm run fetch:filings` (needs network access to sec.gov) to populate. The 'what changed' section renders once present.",
-  "sample": true,
-  "companies": {}
+  "sample": false,
+  "companies": {
+    "AAPL": {
+      "fy": "2025",
+      "priorFy": "2024",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm",
+      "mdna": {
+        "words": 2385,
+        "fog": 21.7,
+        "hedgeDensity": 0.0134,
+        "wordsPrior": 2030,
+        "fogPrior": 20.8,
+        "hedgePrior": 0.0128
+      },
+      "risk": {
+        "words": 9729,
+        "wordsPrior": 9866
+      },
+      "redFlags": [
+        "impairment",
+        "impair",
+        "investigation",
+        "decline in demand"
+      ],
+      "newRedFlags": [],
+      "mdnaChange": {
+        "addedCount": 42,
+        "droppedCount": 36,
+        "notable": [
+          "Apple Inc. | 2025 Form 10-K | 23 Gross Margin Products and Services gross margin and gross margin percentage for 2025, 2024 and 2023 were as follows (dollars in millions): 2025 2024 2023 Gross margin: Products $ 112,887 $ 109,633 $ 108,803 Services 82,314 71,050 60,345 Total gross margin $ 195,201 $ 180,683 $ 169,148 G",
+          "The Company's effective tax rate for 2025 was lower compared to 2024 due to a $10.7 billion year-over-year decrease in the provision for income taxes related to the State Aid Decision (refer to Note 7, \"Income Taxes\" in the Notes to Consolidated Financial Statements in Part II, Item 8 of this Form 10-K) and the impact ",
+          "Tariffs and other measures that are applied to the Company's products or their components can have a material adverse impact on the Company's business, results of operations and financial condition, including impacting the Company's supply chain, the availability of rare earths and other raw materials and components, p",
+          "Trade and other international disputes can have an adverse impact on the overall macroeconomic environment and result in shifts and reductions in consumer spending and negative consumer sentiment for the Company's products and services, all of which can further adversely affect the Company's business and results of ope"
+        ]
+      },
+      "riskChange": {
+        "addedCount": 177,
+        "droppedCount": 177,
+        "notable": [
+          "The Company's net sales and gross margins are subject to volatility and downward pressure due to a variety of factors, including: continued industry-wide global product pricing pressures and product pricing actions that the Company may take in response to such pressures; increased competition; the Company's ability to ",
+          "The Company's global operations are subject to complex and changing laws and regulations worldwide on subjects including antitrust; privacy, data security and data localization; online safety; age verification; consumer protection; advertising, sales, billing and e-commerce; financial services and technology; product l",
+          "Success also relies on the Company's ability to manage the risks associated with new technologies and production ramp-up issues, the effective integration of third-party services and technologies into the Company's products and services, the availability, delivery and performance of application software or other third-",
+          "Efforts by the Company to advance its business and values, or achieve its goals and further its initiatives, or to align with stakeholders' expectations, or comply with evolving, varied and at times conflicting federal, state and international laws, executive orders, regulations and standards, or any failure or perceiv"
+        ]
+      }
+    },
+    "MSFT": {
+      "fy": "2025",
+      "priorFy": "2024",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/789019/000095017025100235/msft-20250630.htm",
+      "mdna": {
+        "words": 6704,
+        "fog": 20.5,
+        "hedgeDensity": 0.0115,
+        "wordsPrior": 7166,
+        "fogPrior": 20.6,
+        "hedgePrior": 0.013
+      },
+      "risk": {
+        "words": 12,
+        "wordsPrior": 12
+      },
+      "redFlags": [
+        "impairment",
+        "impair"
+      ],
+      "newRedFlags": [],
+      "mdnaChange": {
+        "addedCount": 110,
+        "droppedCount": 124,
+        "notable": [
+          "OTHER INCOME (EXPENSE), NET The components of other income (expense), net were as follows: (In millions) Year Ended June 30, 2025 2024 Interest and dividends income $ 2,647 $ 3,157 Interest expense (2,385 ) (2,935 ) Net recognized losses on investments (349 ) (118 ) Net losses on derivatives (260 ) (187 ) Net gains (lo",
+          "Cash used in investing decreased $24.4 billion to $72.6 billion for fiscal year 2025, primarily due to a $63.2 billion decrease in cash used for acquisitions of companies, net of cash acquired and divestitures, and purchases of intangible and other assets, offset in part by a $22.3 billion increase in cash used in net ",
+          "Changes in these estimates and assumptions could materially affect the determination of fair value and goodwill impairment for each reporting unit. 46 PART II Item 7 Research and Development Costs Costs incurred internally in researching and developing a software product to be marketed or sold to external users are cha",
+          "Further, global, regional, and local economic developments and changes in global trade policies such as restrictions on international trade, including tariffs and other controls on imports or exports, could result in increased supply chain challenges, cost volatility, and consumer and economic uncertainty which may adv"
+        ]
+      },
+      "riskChange": {
+        "addedCount": 0,
+        "droppedCount": 0,
+        "notable": []
+      }
+    },
+    "GOOGL": {
+      "fy": "2025",
+      "priorFy": "2024",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1652044/000165204426000018/goog-20251231.htm",
+      "mdna": {
+        "words": 2512,
+        "fog": 25.3,
+        "hedgeDensity": 0.0143,
+        "wordsPrior": 2705,
+        "fogPrior": 22.7,
+        "hedgePrior": 0.0181
+      },
+      "risk": {
+        "words": 27821,
+        "wordsPrior": 27767
+      },
+      "redFlags": [
+        "material weakness",
+        "restate",
+        "impairment",
+        "impair",
+        "covenant",
+        "default",
+        "investigation",
+        "loss of a"
+      ],
+      "newRedFlags": [],
+      "mdnaChange": {
+        "addedCount": 41,
+        "droppedCount": 57,
+        "notable": [
+          "Other cost of revenues primarily includes: content acquisition costs, which are payments to content providers from whom we license video and other content for distribution, primarily related to YouTube (we pay fees to these content providers based on revenues generated, subscriber counts, or a flat fee); depreciation e",
+          "Google Advertising Google advertising revenues are comprised of the following: Google Search & other, which includes revenues generated on Google search properties (including revenues from traffic generated by search distribution partners who use Google.com as their default search in browsers, toolbars, etc.), and othe",
+          "In addition to the long-term trends and their financial effect on our business discussed above, fluctuations in our revenues have been and may continue to be affected by a combination of factors, including: changes in foreign currency exchange rates; changes in pricing, such as those resulting from changes in fee struc",
+          "Trends in Our Business and Financial Effect The following long-term trends have contributed to the results of our consolidated operations, and we anticipate that they will continue to affect our future results: As we continue to grow our business and meet the evolving behaviors and needs of our users and customers, our"
+        ]
+      },
+      "riskChange": {
+        "addedCount": 417,
+        "droppedCount": 416,
+        "notable": [
+          "CONSOLIDATED STATEMENTS OF CASH FLOWS (in millions) Year Ended December 31, 2023 2024 2025 Operating activities Net income $ 73,795 $ 100,118 $ 132,170 Adjustments: Depreciation of property and equipment 11,946 15,311 21,136 Stock-based compensation expense 22,460 22,785 24,953 Deferred income taxes ( 7,763 ) ( 5,257 )",
+          "As of December 31, 2024 Adjusted Cost Gross Unrealized Gains Gross Unrealized Losses Fair Value Time deposits $ 2,217 $ 0 $ 0 $ 2,217 Government bonds 27,551 83 ( 214 ) 27,420 Corporate debt securities 18,300 79 ( 222 ) 18,157 Mortgage-backed and asset-backed securities 14,437 63 ( 385 ) 14,115 Total investments with f",
+          "The gains (losses) on derivatives and non-derivative financial instruments in cash flow hedging and net investment hedging relationships recognized in other comprehensive income are summarized below (in millions): Year Ended December 31, 2023 2024 2025 Cash flow hedging relationship: Foreign exchange and other contract",
+          "CONSOLIDATED STATEMENTS OF STOCKHOLDERS' EQUITY (in millions) Class A, Class B, Class C Stock and Additional Paid-In Capital Accumulated Other Comprehensive Income (Loss) Retained Earnings Total Stockholders' Equity Shares Amount Balance as of December 31, 2022 12,849 $ 68,184 $ ( 7,603 ) $ 195,563 $ 256,144 Stock issu"
+        ]
+      }
+    },
+    "META": {
+      "fy": "2025",
+      "priorFy": "2024",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1326801/000162828026003942/meta-20251231.htm",
+      "mdna": {
+        "words": 8527,
+        "fog": 23.2,
+        "hedgeDensity": 0.0182,
+        "wordsPrior": 8652,
+        "fogPrior": 23.2,
+        "hedgePrior": 0.0177
+      },
+      "risk": {
+        "words": 29822,
+        "wordsPrior": 28790
+      },
+      "redFlags": [
+        "impairment",
+        "impair",
+        "covenant",
+        "default",
+        "investigation",
+        "loss of a"
+      ],
+      "newRedFlags": [],
+      "mdnaChange": {
+        "addedCount": 96,
+        "droppedCount": 98,
+        "notable": [
+          "See Note 15 — Segment and Geographical Information in the notes to the consolidated financial statements included in Part II, Item 8, \"Financial Statements and Supplementary Data\" of this Annual Report on Form 10-K for additional information. 75 Table of Contents Interest and other income, net Year Ended December 31, 2",
+          "Our effective tax rate in the future will depend upon the proportion between the following items and income before provision for income taxes: the effects of changes in tax law, changes in valuation allowance due to the effects of CAMT, U.S. tax benefits from foreign-derived intangible income, tax effects from share-ba",
+          "In particular, legislative and regulatory developments such as the General Data Protection Regulation, including its evolving interpretation through decisions of the Court of Justice of the European Union, ePrivacy Directive, European Digital Services Act, Digital Markets Act, and U.S. state privacy laws have impacted ",
+          "Our actual and forecasted income (loss) before provision is subject to change due to economic, political and other conditions and significant judgment is required in determining our ability to recognize our net deferred tax assets. 69 Table of Contents As a result of certain U.S. income tax provisions of the One Big Be"
+        ]
+      },
+      "riskChange": {
+        "addedCount": 184,
+        "droppedCount": 160,
+        "notable": [
+          "Our financial results in any given quarter can be influenced by numerous factors, many of which we are unable to predict or are outside of our control, including: our ability to maintain and grow our user base and user engagement, particularly for our products that deliver ad impressions; 23 Table of Contents our abili",
+          "DPF or regulators, courts, or legislative bodies determining that the legal bases we rely upon to transfer user data from the European Union to the United States are invalid; limitations on our ability to deliver ads to users under the age of 18 and, in some cases, to continue to offer certain products or services to c",
+          "DPF or regulators, courts, or legislative bodies determining that the legal bases we rely upon to transfer user data from the European Union to the United States are invalid; there is decreased engagement with our products, decreased efficiency of our advertising products, or failure to accept our terms of service, as ",
+          "These risks are discussed more fully below and include, but are not limited to, risks related to: Risks Related to Our Product Offerings our ability to add and retain users and maintain levels of user engagement with our products; the loss of, or reduction in spending by, our marketers; reduced availability of data sig"
+        ]
+      }
+    },
+    "AMZN": {
+      "fy": "2025",
+      "priorFy": "2024",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1018724/000101872426000004/amzn-20251231.htm",
+      "mdna": {
+        "words": 6436,
+        "fog": 22.5,
+        "hedgeDensity": 0.0172,
+        "wordsPrior": 6720,
+        "fogPrior": 22.8,
+        "hedgePrior": 0.0165
+      },
+      "risk": {
+        "words": 8795,
+        "wordsPrior": 8622
+      },
+      "redFlags": [
+        "impairment",
+        "impair",
+        "investigation",
+        "loss of a"
+      ],
+      "newRedFlags": [],
+      "mdnaChange": {
+        "addedCount": 70,
+        "droppedCount": 72,
+        "notable": [
+          "Actual results and outcomes could differ materially for a variety of reasons, including, among others, fluctuations in foreign exchange rates and energy prices, changes in global economic conditions, tariff and trade policies, resource and supply volatility, including for memory chips, and customer demand and spending,",
+          "Operating Expenses Information about operating expenses is as follows (in millions): Year Ended December 31, 2024 2025 Operating Expenses: Cost of sales $ 326,288 $ 356,414 Fulfillment 98,505 109,074 Technology and infrastructure 88,544 108,521 Sales and marketing 43,907 47,129 General and administrative 11,359 11,172 ",
+          "Income Taxes Our effective tax rate is subject to significant variation due to several factors, including variability in our pre-tax and taxable income and loss and the mix of jurisdictions to which they relate, intercompany transactions, the applicability of special tax regimes, changes in how we do business, acquisit",
+          "While AWS payment processing and related transaction costs are included in \"Fulfillment,\" AWS costs are primarily classified as \"Technology and infrastructure.\" Fulfillment costs as a percentage of net sales may vary due to several factors, such as payment processing and related transaction costs, our level of producti"
+        ]
+      },
+      "riskChange": {
+        "addedCount": 38,
+        "droppedCount": 37,
+        "notable": [
+          "Our sales and operating results will also fluctuate for many other reasons, including due to factors described elsewhere in this section and the following: our ability to retain and increase sales to existing customers, attract new customers, and satisfy our customers' demands; our ability to retain and expand our netw",
+          "In addition to risks described elsewhere in this section, our international sales and operations are subject to a number of risks, including: local economic and political conditions; government regulation (such as regulation of our product and service offerings and of competition); restrictive governmental actions (suc",
+          "The trading price of our common stock fluctuates significantly in response to, among other risks, the risks described elsewhere in this Item 1A, as well as: changes in interest rates; conditions or trends in the internet, other technologies including artificial intelligence, and the industry segments we operate in; qua",
+          "These regulations and laws cover taxation, privacy, data use, data protection, data security, data localization, network security, consumer protection, pricing, content, copyrights, distribution, transportation, communications, electronic device certification, electronic waste, energy consumption, environmental and cli"
+        ]
+      }
+    },
+    "NVDA": {
+      "fy": "2026",
+      "priorFy": "2025",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1045810/000104581026000021/nvda-20260125.htm",
+      "mdna": {
+        "words": 4827,
+        "fog": 20.8,
+        "hedgeDensity": 0.0172,
+        "wordsPrior": 5413,
+        "fogPrior": 21.1,
+        "hedgePrior": 0.0164
+      },
+      "risk": {
+        "words": 20820,
+        "wordsPrior": 21594
+      },
+      "redFlags": [
+        "material weakness",
+        "restate",
+        "impairment",
+        "impair",
+        "covenant",
+        "default",
+        "investigation"
+      ],
+      "newRedFlags": [
+        "default"
+      ],
+      "mdnaChange": {
+        "addedCount": 112,
+        "droppedCount": 120,
+        "notable": [
+          "We assess impairment quarterly based on qualitative and quantitative factors, including the investee's operating performance and market trends. 38 Table of Contents Revenue Recognition Revenue Allowances For products sold with a right of return, we record a reduction to revenue by establishing a sales return allowance ",
+          "Cost of revenue consists of the cost of semiconductors, including wafer fabrication, assembly, testing and packaging, board and device costs, manufacturing support costs, including labor and overhead associated with such purchases, final test yield fallout, inventory and warranty provisions, memory and component costs,",
+          "Our ability to increase manufacturing capabilities will depend on the local region's manufacturing ecosystem's capacity to ramp production supply to the required volume and on a timely basis. 36 Table of Contents We have made, and expect to continue making, investments that support our technology roadmap and the broade",
+          "Gross margins decreased to 71.1% in fiscal year 2026 from 75.0% in fiscal year 2025 as our business model transitioned from offering Hopper HGX systems to Blackwell full-scale datacenter solutions and a $4.5 billion charge associated with H20 excess inventory and purchase obligations in the first quarter of fiscal year"
+        ]
+      },
+      "riskChange": {
+        "addedCount": 292,
+        "droppedCount": 299,
+        "notable": [
+          "Evaluating management's assumptions related to future demand and market conditions involved evaluating whether the assumptions used by management were reasonable considering (i) current and past results, including historical product life cycle, (ii) the consistency with external market and industry data, and (iii) chan",
+          "Exhibit Description Schedule/Form Exhibit Filing Date 3.1 Restated Certificate of Incorporation 10-K 3.1 3/18/2022 3.2 Amendment to Restated Certificate of Incorporation of NVIDIA Corporation 8-K 3.1 6/6/2022 3.3 Amendment to Restated Certificate of Incorporation of NVIDIA Corporation 8-K 3.1 6/7/2024 3.4 Bylaws of NVI",
+          "Consolidated Statements of Income include stock-based compensation expense as follows: Year Ended Jan 25, 2026 Jan 26, 2025 Jan 28, 2024 (In millions) Cost of revenue $ 261 $ 178 $ 141 Research and development 4,676 3,423 2,532 Sales, general and administrative 1,449 1,136 876 Total $ 6,386 $ 4,737 $ 3,549 The followin",
+          "The amount of cash paid for income taxes (net of refunds) for the fiscal year ended January 25, 2026 is as follows: Year Ended Jan 25, 2026 (In millions) Federal $ 16,755 State California 1,049 Other 1,041 Foreign Israel 1,287 Other 156 Total income taxes paid, net of refunds $ 20,288 74 Table of Contents NVIDIA Corpor"
+        ]
+      }
+    },
+    "AVGO": {
+      "fy": "2025",
+      "priorFy": "2024",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1730168/000173016825000121/avgo-20251102.htm",
+      "mdna": {
+        "words": 6920,
+        "fog": 22.1,
+        "hedgeDensity": 0.0205,
+        "wordsPrior": 6699,
+        "fogPrior": 21.4,
+        "hedgePrior": 0.0224
+      },
+      "risk": {
+        "words": 26832,
+        "wordsPrior": 12769
+      },
+      "redFlags": [
+        "going concern",
+        "material weakness",
+        "restate",
+        "impairment",
+        "impair",
+        "covenant",
+        "default",
+        "investigation"
+      ],
+      "newRedFlags": [
+        "going concern",
+        "material weakness",
+        "restate",
+        "covenant",
+        "default"
+      ],
+      "mdnaChange": {
+        "addedCount": 95,
+        "droppedCount": 97,
+        "notable": [
+          "The demand for our solutions has been affected in the past, and is likely to continue to be affected in the future, by various factors, including the following: gain or loss of significant customers; general economic and market conditions in the industries and markets in which we compete; anticipated or actual demand f",
+          "Restructuring and other charges consist primarily of non-recurring charges related to compensation costs associated with employee exit programs, IP litigation, alignment of our global manufacturing operations, rationalization of product development program costs, facility and lease abandonments, asset impairment, and o",
+          "Amortization of Acquisition-Related Intangible Assets in Operating Expenses Amortization of acquisition-related intangible assets recognized in operating expenses decreased $1,213 million, or 37%, in fiscal year 2025, compared to the prior fiscal year primarily due to full amortization of customer-related intangible as",
+          "The $22,490 million decrease in cash used in investing activities during fiscal year 2025 compared to fiscal year 2024 was primarily due to $25,416 million cash paid in connection with the acquisition of VMware, net of cash acquired in fiscal year 2024, offset in part by $3,185 million lower proceeds from sales of busi"
+        ]
+      },
+      "riskChange": {
+        "addedCount": 836,
+        "droppedCount": 393,
+        "notable": [
+          "CONSOLIDATED STATEMENTS OF CASH FLOWS Fiscal Year Ended November 2, 2025 November 3, 2024 October 29, 2023 (In millions) Cash flows from operating activities: Net income $ 23,126 $ 5,895 $ 14,082 Adjustments to reconcile net income to net cash provided by operating activities: Amortization of intangible and right-of-us",
+          "Goodwill and Intangible Assets Goodwill Semiconductor Solutions Infrastructure Software Total (In millions) Balance as of October 29, 2023 $ 26,001 $ 17,652 $ 43,653 Acquisition of VMware — 54,206 54,206 Acquisition of Seagate's SoC operations 14 — 14 Balance as of November 3, 2024 26,015 71,858 97,873 Sales of busines",
+          "CONSOLIDATED STATEMENTS OF STOCKHOLDERS' EQUITY Common Stock Additional Paid-in Capital Retained Earnings Accumulated Other Comprehensive Income (Loss) Total Stockholders' Equity Shares Par Value (In millions) Balance as of October 30, 2022 4,179 $ 4 $ 21,155 $ 1,604 $ ( 54 ) $ 22,709 Net income — — — 14,082 — 14,082 O",
+          "CONSOLIDATED STATEMENTS OF OPERATIONS Fiscal Year Ended November 2, 2025 November 3, 2024 October 29, 2023 (In millions, except per share data) Net revenue: Products $ 44,847 $ 34,960 $ 28,949 Subscriptions and services 19,040 16,614 6,870 Total net revenue 63,887 51,574 35,819 Cost of revenue: Cost of products sold 12"
+        ]
+      }
+    },
+    "AMD": {
+      "fy": "2025",
+      "priorFy": "2024",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/2488/000000248826000018/amd-20251227.htm",
+      "mdna": {
+        "words": 5364,
+        "fog": 22.6,
+        "hedgeDensity": 0.0168,
+        "wordsPrior": 4706,
+        "fogPrior": 21.3,
+        "hedgePrior": 0.0159
+      },
+      "risk": {
+        "words": 19831,
+        "wordsPrior": 18958
+      },
+      "redFlags": [
+        "impairment",
+        "impair",
+        "covenant",
+        "default",
+        "investigation",
+        "decline in demand",
+        "loss of a"
+      ],
+      "newRedFlags": [],
+      "mdnaChange": {
+        "addedCount": 103,
+        "droppedCount": 95,
+        "notable": [
+          "Historically, our net revenue has been generally higher in the second half of the year than in the first half of the year, although market conditions and product transitions could impact these trends. 51 Table of Conten t s The following table provides a summary of net revenue, cost of sales and operating expenses, and",
+          "FINANCIAL CONDITION Liquidity and Capital Resources As of December 27, 2025, our cash, cash equivalents and short-term investments were $10.6 billion compared to $5.1 billion as of December 28, 2024. 54 Table of Conten t s Our operating, investing and financing cash flow activities for 2025 and 2024 were as follows: De",
+          "Overall, our estimates of adjustments to contract price due to variable consideration under our contracts with OEM and distributor customers, based on our assumptions and include adjustments, if any, for known events, have been materially consistent with actual results; however, these estimates are subject to managemen",
+          "We determine the net amount of consideration to which we are entitled by estimating the most likely amount of consideration we expect to receive from the customer after adjustments to the contract price for rights of return and rebates to our original equipment manufacturer (OEM) and original design manufacturer (ODM) "
+        ]
+      },
+      "riskChange": {
+        "addedCount": 249,
+        "droppedCount": 209,
+        "notable": [
+          "We cannot be certain that our acquisitions can be successfully integrated with our business in a timely manner or at all, for a variety of reasons, including, but not limited to: difficulty in integrating the technology, systems, products, policies, processes or operations and integrating and retaining the employees in",
+          "The political, legal and economic risks associated with our worldwide operations include, without limitation: expropriation; changes in a specific country's or region's political or economic conditions; changes in tax laws, trade protection measures and import or export licensing requirements and restrictions; impositi",
+          "Cyberattacks that breach our security measures, or those of our third-party service providers, customers or business partners, could result in any or all of the following, which individually or collectively could materially adversely affect our financial condition and competitive position; unauthorized access to, misus",
+          "The trading price of our stock may fluctuate widely due to various factors including: actual or anticipated fluctuations in our financial conditions and operating results; failure to meet expectations related to future growth; changes in financial estimates by us or financial estimates and ratings by securities analyst"
+        ]
+      }
+    },
+    "ORCL": {
+      "fy": "2025",
+      "priorFy": "2024",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1341439/000095017025087926/orcl-20250531.htm",
+      "mdna": {
+        "words": 30931,
+        "fog": 24.7,
+        "hedgeDensity": 0.0232,
+        "wordsPrior": 31319,
+        "fogPrior": 25,
+        "hedgePrior": 0.0247
+      },
+      "risk": {
+        "words": 22767,
+        "wordsPrior": 23097
+      },
+      "redFlags": [
+        "material weakness",
+        "restate",
+        "impairment",
+        "impair",
+        "covenant",
+        "default",
+        "investigation",
+        "loss of a"
+      ],
+      "newRedFlags": [],
+      "mdnaChange": {
+        "addedCount": 388,
+        "droppedCount": 389,
+        "notable": [
+          "However, our strategic acquisition program carries several risks, including but not limited to: business disruption and management distraction due to acquisition, transition or integration activities; challenges in managing acquired technologies or lines of business, entering new markets where we have no, or limited, d",
+          "Our OCA offerings represent an industry leading business innovation platform leveraging OCI and include a broad suite of modular, next-generation cloud software applications spanning all core business functions, including, among others: Oracle Fusion Cloud ERP, which is designed to be a complete and integrated ERP solu",
+          "In addition, our business may be adversely affected if: we do not continue to develop and release new or enhanced products and services within the anticipated time frames; infrastructure costs to deliver new or enhanced products and services take longer or result in greater costs than anticipated; supply chain costs, e",
+          "We face a variety of other risks and challenges in managing an organization operating globally, including those related to: general economic conditions in each country or region; political unrest, terrorism and war, including but not limited to the current Russia-Ukraine war and its potential economic and geopolitical "
+        ]
+      },
+      "riskChange": {
+        "addedCount": 221,
+        "droppedCount": 259,
+        "notable": [
+          "See notes to consolidated financial statements. 65 Table of Contents ORACLE CORPORATION CONSOLIDATED STATEMENTS OF COMPREHENSIVE INCOME For the Years Ended May 31, 2025, 2024 and 2023 Year Ended May 31, (in millions) 2025 2024 2023 Net income $ 12,443 $ 10,467 $ 8,503 Other comprehensive income, net of tax: Net foreign",
+          "Also, projections of any evaluation of effectiveness to future periods are subject to the risk that controls may become inadequate because of changes in conditions, or that the degree of compliance with the policies or procedures may deteriorate. /s/ Ernst & Young LLP San Jose, California June 18, 2025 63 Table of Cont",
+          "The following is a geographical breakdown of income before income taxes: Year Ended May 31, (in millions) 2025 2024 2023 Domestic $ 4,376 $ 3,023 $ 1,492 Foreign 9,784 8,718 7,634 Income before income taxes $ 14,160 $ 11,741 $ 9,126 95 Table of Contents The provision for income taxes consisted of the following: Year En",
+          "Exhibit Filing Date Filed By 23.01 Consent of Independent Registered Public Accounting Firm 31.01 Rule 13a-14(a)/15d-14(a) Certification of Principal Executive and Financial Officer 32.01 Section 1350 Certification of Principal Executive and Financial Officer 97 Oracle Corporation Compensation Clawback Policy 10-K 001-"
+        ]
+      }
+    },
+    "CRM": {
+      "fy": "2026",
+      "priorFy": "2025",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1108524/000110852426000060/crm-20260131.htm",
+      "mdna": {
+        "words": 7453,
+        "fog": 22.7,
+        "hedgeDensity": 0.0201,
+        "wordsPrior": 7094,
+        "fogPrior": 22.4,
+        "hedgePrior": 0.0209
+      },
+      "risk": {
+        "words": 16550,
+        "wordsPrior": 17624
+      },
+      "redFlags": [
+        "impairment",
+        "impair",
+        "covenant",
+        "default",
+        "investigation"
+      ],
+      "newRedFlags": [],
+      "mdnaChange": {
+        "addedCount": 103,
+        "droppedCount": 90,
+        "notable": [
+          "Results of Operations The following tables set forth selected data for each of the periods indicated (in millions): 4 Fiscal Year Ended January 31, 2026 % of Total Revenues 2025 % of Total Revenues 2024 % of Total Revenues Revenues: Subscription and support $ 39,388 95 % $ 35,679 94 % $ 32,537 93 % Professional service",
+          "Net cash provided by operating activities could continue to be affected by various risks and uncertainties, including, but not limited to, the risks detailed in Part II, Item 1A, \"Risk Factors.\" We believe our existing cash, cash equivalents, marketable securities, cash provided by operating activities, unbilled amount",
+          "Cost of Revenues Fiscal Year Ended January 31, Variance Dollars (in millions) 2026 As a % of Total Revenues 2025 As a % of Total Revenues Subscription and support $ 6,796 16 % $ 6,198 16 % $ 598 Professional services and other 2,474 6 2,445 7 29 Total cost of revenues $ 9,270 22 % $ 8,643 23 % $ 627 For fiscal 2026, th",
+          "Cost of revenues as a percentage of total revenues during fiscal 2026 decreased by one percent from the same period a year ago due to our total revenues growth outpacing our cost of revenues growth, which was partially offset by the scaling of our service delivery expenses. 44 Table of Contents We intend to continue to"
+        ]
+      },
+      "riskChange": {
+        "addedCount": 242,
+        "droppedCount": 244,
+        "notable": [
+          "We continue to evaluate such opportunities and expect to make such acquisitions and other transactions and arrangements in the future, which may involve numerous risks and could create unforeseen operating difficulties and expenditures, including: potential failure to achieve the expected benefits on a timely basis or ",
+          "The risks and challenges associated with sales to customers outside the United States or those that can affect international operations generally, include: regional economic and political conditions, natural disasters, acts of war, terrorism and actual or threatened public health emergencies, or other geopolitical even",
+          "Our current competitors include: vendors of packaged business software, as well as companies offering enterprise applications delivered through on-premises offerings from enterprise software application vendors and cloud computing application service providers, either individually or with others; AI-native companies an",
+          "Our services and underlying infrastructure have in the past and may in the future be breached or compromised, including, for example, as a result of the following: attempts to fraudulently induce our employees, customers, partners, or third-party vendors to disclose sensitive information to gain unauthorized access to "
+        ]
+      }
+    },
+    "ADBE": {
+      "fy": "2025",
+      "priorFy": "2024",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/796343/000079634326000003/adbe-20251128.htm",
+      "mdna": {
+        "words": 6284,
+        "fog": 22.8,
+        "hedgeDensity": 0.0143,
+        "wordsPrior": 6607,
+        "fogPrior": 23.1,
+        "hedgePrior": 0.0136
+      },
+      "risk": {
+        "words": 10160,
+        "wordsPrior": 9736
+      },
+      "redFlags": [
+        "impairment",
+        "impair",
+        "covenant",
+        "default",
+        "investigation",
+        "loss of a"
+      ],
+      "newRedFlags": [],
+      "mdnaChange": {
+        "addedCount": 119,
+        "droppedCount": 120,
+        "notable": [
+          "The increase in subscription revenue for the Digital Experience segment was driven by strength in GenStudio solutions, and Adobe Experience Platform and related apps. 36 Table of Contents Digital Media and Digital Experience subscription revenue by customer group for fiscal 2025, 2024 and 2023 were as follows: (dollars",
+          "By combining the creativity of our Digital Media business with the science of our Digital Experience business, such as with our Adobe GenStudio solutions, we help our customers to more efficiently and effectively make, manage, measure and monetize their content across every channel with an end-to-end workflow. 33 Table",
+          "Provision for Income Taxes (dollars in millions) 2025 2024 2023 % Change 2025-2024 Provision for income taxes $ 1,604 $ 1,371 $ 1,371 17 % % Effective tax rate 18 % % 20 % % 20 % % Our effective tax rate for fiscal 2025 decreased by approximately two percentage points compared to fiscal 2024, primarily due to the impac",
+          "General and administrative expenses increased due to the following: Components of % Change 2025-2024 Compensation costs 5 % % Software licenses 2 Professional and consulting fees 2 Lease-related asset impairments and other charges (7) Various individually insignificant items 1 Total change 3 % % General and administrat"
+        ]
+      },
+      "riskChange": {
+        "addedCount": 145,
+        "droppedCount": 135,
+        "notable": [
+          "These risks and uncertainties include: inability to achieve the expected financial and strategic benefits on a timely basis or at all; difficulty in effectively integrating operations, technologies, products, services, solutions, culture or personnel; disruption of our ongoing business and distraction of our management",
+          "As a multinational corporation, we are subject to a number of risks, including from global adverse economic and geopolitical conditions, that are uncertain and beyond our control and that make forecasting financial results and decisions about future investments difficult, such as: inflation and actions taken by central",
+          "All factors described in this Part I, Item 1A of this report, some of which are beyond our control, may affect our stock price, including: shortfalls or declines in our results or shortfalls, changes to estimates, recommendations or expectations in guidance we provide or provided by financial analysts about our revenue",
+          "We have experienced, and may in the future experience, reputational harm, reduced customer demand and customer attrition from, among other things, the introduction of new products, features, services, or terms that do not meet customer expectations; our position on or approach to new and evolving technologies, includin"
+        ]
+      }
+    },
+    "KO": {
+      "fy": "2025",
+      "priorFy": "2024",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/21344/000162828026010047/ko-20251231.htm",
+      "mdna": {
+        "words": 450,
+        "fog": 25.4,
+        "hedgeDensity": 0,
+        "wordsPrior": 25434,
+        "fogPrior": 24.1,
+        "hedgePrior": 0.0257
+      },
+      "risk": {
+        "words": 53366,
+        "wordsPrior": 54128
+      },
+      "redFlags": [
+        "material weakness",
+        "restate",
+        "impairment",
+        "impair",
+        "covenant",
+        "default"
+      ],
+      "newRedFlags": [],
+      "mdnaChange": {
+        "addedCount": 6,
+        "droppedCount": 756,
+        "notable": [
+          "For information about geographic and customer data, refer to Note 20 of Notes to Consolidated Financial Statements set forth in Part II, \""
+        ]
+      },
+      "riskChange": {
+        "addedCount": 452,
+        "droppedCount": 467,
+        "notable": [
+          "Refer to Notes to Consolidated Financial Statements. 61 THE COCA-COLA COMPANY AND SUBSIDIARIES CONSOLIDATED STATEMENTS OF COMPREHENSIVE INCOME (In millions) Year Ended December 31, 2025 2024 2023 Consolidated Net Income $ 13,137 $ 10,649 $ 10,703 Other Comprehensive Income: Net foreign currency translation adjustments ",
+          "Refer to Note 1. 2 Refer to Note 5 for additional information related to the net gains or losses on derivative instruments. 3 Refer to Note 4 for additional information related to the net unrealized gains or losses on available-for-sale debt securities. 4 Refer to Note 14 for additional information related to the Compa",
+          "Long — incorporated herein by reference to Exhibit 10.12 to the Company's Quarterly Report on Form 10-Q for the quarter ended March 31, 2017.* 133 10.33 Letter, dated April 27, 2017, from the Company to Mark Randazza — incorporated herein by reference to Exhibit 10.3 of the Company's Current Report on Form 8-K filed on",
+          "The following table provides information related to our property, plant and equipment — net (in millions): December 31, 2025 2024 United States $ 4,825 $ 4,364 International 4,788 5,939 Property, plant and equipment — net 1 $ 9,613 $ 10,303 1 Property, plant and equipment — net in India represented 17 % and 13 % of con"
+        ]
+      }
+    },
+    "PEP": {
+      "fy": "2025",
+      "priorFy": "2024",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/77476/000007747626000007/pep-20251227.htm",
+      "mdna": {
+        "words": 50065,
+        "fog": 24.9,
+        "hedgeDensity": 0.0186,
+        "wordsPrior": 52194,
+        "fogPrior": 24.8,
+        "hedgePrior": 0.0178
+      },
+      "risk": {
+        "words": 39746,
+        "wordsPrior": 41345
+      },
+      "redFlags": [
+        "material weakness",
+        "restate",
+        "impairment",
+        "impair",
+        "covenant",
+        "default",
+        "investigation",
+        "loss of a"
+      ],
+      "newRedFlags": [],
+      "mdnaChange": {
+        "addedCount": 563,
+        "droppedCount": 638,
+        "notable": [
+          "See Note 7 to our consolidated financial statements for our past and expected contributions and estimated future benefit payments. 56 Table of Contents Consolidated Statement of Income PepsiCo, Inc. and Subsidiaries Fiscal years ended December 27, 2025, December 28, 2024 and December 30, 2023 (in millions except per sh",
+          "Net revenue, significant expenses and operating profit of each segment are as follows: 2025 PFNA PBNA IB Franchise EMEA LatAm Foods Asia Pacific Foods Total Net revenue $ 27,528 $ 28,197 $ 4,997 $ 18,025 $ 10,549 $ 4,629 $ 93,925 Segment cost of sales (a) 10,564 12,910 1,529 10,437 4,480 2,850 Segment selling, general ",
+          "International 2025 2024 2025 2024 2025 2024 Change in projected benefit obligation Obligation at beginning of year $ 11,324 $ 12,035 $ 2,786 $ 2,986 $ 616 $ 677 Service cost 312 347 47 46 31 31 Interest cost 586 585 152 144 30 32 Plan amendments 10 12 1 1 — — Participant contributions — — 2 2 — — Experience loss/(gain)",
+          "All outstanding amounts related to suppliers participating in such financing arrangements are recorded within accounts payable and other current liabilities in our consolidated balance sheet. 104 Table of Contents A summary of our outstanding obligations confirmed as valid under the supplier finance program is as follo"
+        ]
+      },
+      "riskChange": {
+        "addedCount": 430,
+        "droppedCount": 496,
+        "notable": [
+          "See Note 7 to our consolidated financial statements for our past and expected contributions and estimated future benefit payments. 56 Table of Contents Consolidated Statement of Income PepsiCo, Inc. and Subsidiaries Fiscal years ended December 27, 2025, December 28, 2024 and December 30, 2023 (in millions except per sh",
+          "Net revenue, significant expenses and operating profit of each segment are as follows: 2025 PFNA PBNA IB Franchise EMEA LatAm Foods Asia Pacific Foods Total Net revenue $ 27,528 $ 28,197 $ 4,997 $ 18,025 $ 10,549 $ 4,629 $ 93,925 Segment cost of sales (a) 10,564 12,910 1,529 10,437 4,480 2,850 Segment selling, general ",
+          "International 2025 2024 2025 2024 2025 2024 Change in projected benefit obligation Obligation at beginning of year $ 11,324 $ 12,035 $ 2,786 $ 2,986 $ 616 $ 677 Service cost 312 347 47 46 31 31 Interest cost 586 585 152 144 30 32 Plan amendments 10 12 1 1 — — Participant contributions — — 2 2 — — Experience loss/(gain)",
+          "All outstanding amounts related to suppliers participating in such financing arrangements are recorded within accounts payable and other current liabilities in our consolidated balance sheet. 104 Table of Contents A summary of our outstanding obligations confirmed as valid under the supplier finance program is as follo"
+        ]
+      }
+    },
+    "KDP": {
+      "fy": "2025",
+      "priorFy": "2024",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1418135/000141813526000016/kdp-20251231.htm",
+      "mdna": {
+        "words": 5991,
+        "fog": 22.6,
+        "hedgeDensity": 0.0232,
+        "wordsPrior": 6641,
+        "fogPrior": 22.6,
+        "hedgePrior": 0.0211
+      },
+      "risk": {
+        "words": 15269,
+        "wordsPrior": 9639
+      },
+      "redFlags": [
+        "impairment",
+        "impair",
+        "covenant",
+        "default",
+        "investigation",
+        "loss of a"
+      ],
+      "newRedFlags": [],
+      "mdnaChange": {
+        "addedCount": 90,
+        "droppedCount": 108,
+        "notable": [
+          "Customer and consumer demand for our products may also be impacted by the risk factors discussed under \"Risk Factors\" in Part 1, Item 1A in this Annual Report on Form 10-K, as well as subsequent filings with the SEC, that could have a material effect on production, delivery, and consumption of our products, which could",
+          "For the Year Ended December 31, 2025 Compared to the Year Ended December 31, 2024: Consolidated Operations The following table sets forth our consolidated results of operations for the years ended December 31, 2025 and 2024: For the Year Ended December 31, Dollar Percentage (in millions, except per share amounts) 2025 ",
+          "Sensitivity Analysis - Long-Term Growth Rate For goodwill, holding all other assumptions in the analysis constant, including the discrete period revenue and profit performance assumptions as well as the discount rates, the effect of a 0.50% decrease in the long-term growth rate used to determine the fair value of the r",
+          "For the indefinite lived priority brand assets quantitatively assessed, holding all other assumptions in the analysis constant, including the revenue and profit performance assumption, the effect of a 0.50% increase in the discount rate used to determine the fair value of those assets as of October 1, 2025, would impac"
+        ]
+      },
+      "riskChange": {
+        "addedCount": 233,
+        "droppedCount": 64,
+        "notable": [
+          "Our corporate image and reputation has in the past been, and could in the future be, adversely impacted by a variety of factors, including: any failure by us or our business partners to achieve goals or maintain high standards relating to ethical and business practices, including with respect to human rights, child lab",
+          "The raw materials and other supplies, including agricultural commodities (such as coffee, apples, and corn), fuel and packaging materials, transportation, and other supply chain inputs that we use for the manufacturing, production, and distribution of our products are subject to price volatility and fluctuations in ava",
+          "In addition, adverse public opinion, third-party studies, or other allegations, whether or not valid, regarding the perceived or potential negative health effects of processing or ingredients in our beverage products, such as concerns about the caloric intake associated with soft drinks or the use of synthetic colors, ",
+          "As water becomes scarcer, the quality of the water deteriorates, including due to the effects of climate change, or requirements on water purification or filtration increase, we may experience increased production costs; manufacturing constraints; supply chain disruption; higher compliance costs; increased capital expe"
+        ]
+      }
+    },
+    "MNST": {
+      "fy": "2025",
+      "priorFy": "2024",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/865752/000110465926020831/mnst-20251231x10k.htm",
+      "mdna": {
+        "words": 7464,
+        "fog": 23.2,
+        "hedgeDensity": 0.0177,
+        "wordsPrior": 7652,
+        "fogPrior": 23.2,
+        "hedgePrior": 0.0163
+      },
+      "risk": {
+        "words": 28916,
+        "wordsPrior": 33249
+      },
+      "redFlags": [
+        "material weakness",
+        "restate",
+        "impairment",
+        "impair",
+        "covenant",
+        "investigation"
+      ],
+      "newRedFlags": [
+        "investigation"
+      ],
+      "mdnaChange": {
+        "addedCount": 79,
+        "droppedCount": 84,
+        "notable": [
+          "MD&A includes the following sections: Pricing Actions a discussion of certain pricing actions implemented during 2025 and 2024; Our Business a general description of our business, the value drivers of our business, and opportunities and risks facing our Company, stock repurchases, acquisitions and divestitures; Results",
+          "In addition, gross billings may not be realized in the form of cash receipts as promotional payments and allowances may be deducted from payments received from certain customers. 49 Table of Contents The following table reconciles the non-GAAP financial measure of gross billings with the most directly comparable GAAP f",
+          "The following represents case sales for our craft beers, FMBs and hard seltzers, in 192-ounce equivalents, for the years ended December 31: (In thousands, except average net sales per case) 2025 2024 2023 Alcohol Brands segment net sales $ 134,720 $ 172,313 $ 184,855 Case sales 9,651 12,477 13,131 Average net sales per",
+          "For the year ended December 31, 2025, cash provided by operating activities was primarily attributable to net income earned of $1.91 billion and adjustments for certain non-cash expenses, consisting of $129.8 million of depreciation and amortization and non-cash lease expense, $125.7 million of stock-based compensation"
+        ]
+      },
+      "riskChange": {
+        "addedCount": 257,
+        "droppedCount": 317,
+        "notable": [
+          "Irvine, California February 26, 2026 71 Table of Contents MONSTER BEVERAGE CORPORATION AND SUBSIDIARIES CONSOLIDATED BALANCE SHEETS AS OF DECEMBER 31, 2025 AND 2024 (In Thousands, Except Par Value) December 31, December 31, 2025 2024 ASSETS CURRENT ASSETS: Cash and cash equivalents $ 2,088,117 $ 1,533,287 Short-term in",
+          "Year Ended December 31, 2025 Monster Energy Strategic Alcohol Drinks Brands Brands Other Total Net sales 1 $ 7,665,871 $ 468,716 $ 134,720 $ 25,036 $ 8,294,343 Cost of sales 3,394,604 146,913 102,303 18,328 — Gross profit 4,271,267 321,803 32,417 6,708 4,632,195 Distribution expense 314,933 6,257 9,897 — — Selling and ",
+          "Without limiting the foregoing, the words \"believes,\" \"thinks,\" \"anticipates,\" \"plans,\" \"expects,\" \"estimates\" and similar expressions are intended to identify forward-looking statements. 56 Table of Contents Management cautions that these statements are qualified by their terms and/or important factors, many of which ",
+          "Promotional and other allowances (variable consideration) recorded as a reduction to net sales for the Company's energy drink products, primarily include consideration given to the Company's non-alcohol bottlers/distributors or customers including, but not limited to, the following: discounts granted off list prices to"
+        ]
+      }
+    },
+    "STZ": {
+      "fy": "2026",
+      "priorFy": "2025",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/16918/000001691826000011/stz-20260228.htm",
+      "mdna": {
+        "words": 9259,
+        "fog": 21.4,
+        "hedgeDensity": 0.014,
+        "wordsPrior": 9916,
+        "fogPrior": 21.8,
+        "hedgePrior": 0.0143
+      },
+      "risk": {
+        "words": 12369,
+        "wordsPrior": 12190
+      },
+      "redFlags": [
+        "restate",
+        "impairment",
+        "impair",
+        "covenant",
+        "default",
+        "investigation",
+        "loss of a"
+      ],
+      "newRedFlags": [],
+      "mdnaChange": {
+        "addedCount": 163,
+        "droppedCount": 176,
+        "notable": [
+          "MD&A Table of Contents Cash Flows Fiscal 2026 Fiscal 2025 Dollar Change (in millions) Net cash provided by (used in): Operating activities $ 2,669.0 $ 3,152.2 $ (483.2) Investing activities 16.5 (974.8) 991.3 Financing activities (2,656.0) (2,261.8) (394.2) Effect of exchange rate changes on cash and cash equivalents 4",
+          "As more fully described herein and in the related Notes, the Comparable Adjustments that impacted comparability in our segment results for each period are as follows: Fiscal 2026 Fiscal 2025 (in millions) Cost of product sold Net gain (loss) on undesignated commodity derivative contracts $ 23.6 $ (0.3) Settlements of u",
+          "Financing activities The increase in net cash provided by (used in) financing activities consists of: Fiscal 2026 Fiscal 2025 Dollar Change (in millions) Net proceeds from (payments of) debt, current and long-term, and related activities $ (950.5) $ (391.8) $ (558.7) Dividends paid (715.7) (731.8) 16.1 Purchases of tre",
+          "Business Segments Net sales Fiscal 2026 Fiscal 2025 Dollar Change Percent Change (in millions) Beer $ 8,315.2 $ 8,539.8 $ (224.6) (3 %) Wine and Spirits: Wine 700.4 1,450.1 (749.7) (52 %) Spirits 123.4 218.8 (95.4) (44 %) Total Wine and Spirits 823.8 1,668.9 (845.1) (51 %) Consolidated net sales $ 9,139.0 $ 10,208.7 $ "
+        ]
+      },
+      "riskChange": {
+        "addedCount": 130,
+        "droppedCount": 132,
+        "notable": [
+          "Further, a limited or general decline in consumption in one or more of our product categories has occurred before and could occur again in the future due to a variety of factors, including: reduced consumer discretionary income, subdued overall consumer spending, and value-seeking behavior among consumers as well as el",
+          "Competition We operate in a highly competitive and constantly evolving industry, and our sales and/or profitability have been and could continue to be negatively affected by numerous factors, including: our inability to maintain or increase prices or develop successful new products and the impact of price reductions on",
+          "RISK FACTORS Table of Contents allegations that we, or persons currently or formerly employed by or associated with us, have allegedly or actually violated applicable laws or regulations, including those related to safety, employment, discrimination, harassment, whistleblowing, privacy and data protection, corporate ci",
+          "Choice-of-forum provision in our Amended and Restated By-laws regarding certain stockholder litigation Our Amended and Restated By-laws provide that, unless we consent in writing to the selection of an alternative forum, (i) the Court of Chancery of Delaware (or if such court lacks subject matter jurisdiction, the fede"
+        ]
+      }
+    },
+    "PG": {
+      "fy": "2025",
+      "priorFy": "2024",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/80424/000008042425000076/pg-20250630.htm",
+      "mdna": {
+        "words": 12971,
+        "fog": 20.3,
+        "hedgeDensity": 0.0167,
+        "wordsPrior": 12927,
+        "fogPrior": 20.4,
+        "hedgePrior": 0.0172
+      },
+      "risk": {
+        "words": 5446,
+        "wordsPrior": 5516
+      },
+      "redFlags": [
+        "impairment",
+        "impair",
+        "default",
+        "investigation",
+        "loss of a"
+      ],
+      "newRedFlags": [],
+      "mdnaChange": {
+        "addedCount": 193,
+        "droppedCount": 188,
+        "notable": [
+          "We undertake no obligation to update or revise publicly any forward-looking statements, whether because of new information, future events or otherwise, except to the extent required by law. 14 The Procter & Gamble Company Risks and uncertainties to which our forward-looking statements are subject include, without limit",
+          "CHANGE VERSUS YEAR AGO Diluted net earnings per common share 8 % Core EPS 4 % THE PROCTER & GAMBLE COMPANY AND SUBSIDIARIES Reconciliation of Non-GAAP Measures Fiscal Year Ended June 30, 2024 Amounts in millions except per share amounts As Reported (GAAP) Incremental Restructuring Intangible Impairment Core (Non-GAAP) ",
+          "These are 1) leveraging environmental sustainability as an additional driver of superior performing products and packaging innovations, 2) increasing digital acumen to drive consumer and customer preference, reduce cost and enable rapid and efficient decision making, 3) developing next-level supply chain capabilities t",
+          "The following table provides a numerical reconciliation of adjusted free cash flow productivity ($ millions): Adjusted Free Cash Flow Net Earnings Adjustments to Net Earnings (1) Net Earnings as Adjusted Adjusted Free Cash Flow Productivity 2025 $ 14,606 $ 16,065 $ 752 $ 16,817 87 % 2024 $ 16,946 $ 14,974 $ 1,242 $ 16,"
+        ]
+      },
+      "riskChange": {
+        "addedCount": 40,
+        "droppedCount": 47,
+        "notable": [
+          "If the IT/OT systems, networks or service providers we rely upon fail to function properly or cause operational outages or aberrations, or if we or one of our third-party providers suffer significant unavailability of key operations, or inadvertent disclosure of, lack of integrity of, or loss of our sensitive The Proct",
+          "The loss or disruption of such manufacturing and supply arrangements, including for issues such as labor disputes or controversies, loss or impairment of key manufacturing sites, discontinuity or disruptions in our internal information and data systems or those of our suppliers, cybersecurity incidents including but no",
+          "Our business is subject to a wide variety of laws, regulations, policies and related interpretations across the countries in which we do business, including those laws and regulations involving intellectual property, product liability, product composition or formulation, manufacturing processes, packaging content or co",
+          "Our results of operations or cash flows could also be negatively impacted if the Company or one of our brands suffers substantial harm to its reputation due to a significant product recall, product-related 6 The Procter & Gamble Company litigation, defects or impurities in our products, product misuse, changing consume"
+        ]
+      }
+    },
+    "CL": {
+      "fy": "2025",
+      "priorFy": "2024",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/21665/000002166526000006/cl-20251231.htm",
+      "mdna": {
+        "words": 12672,
+        "fog": 22.8,
+        "hedgeDensity": 0.0169,
+        "wordsPrior": 13271,
+        "fogPrior": 22.2,
+        "hedgePrior": 0.0157
+      },
+      "risk": {
+        "words": 8664,
+        "wordsPrior": 8446
+      },
+      "redFlags": [
+        "restate",
+        "impairment",
+        "impair",
+        "covenant",
+        "default",
+        "delist",
+        "investigation",
+        "loss of a"
+      ],
+      "newRedFlags": [],
+      "mdnaChange": {
+        "addedCount": 221,
+        "droppedCount": 250,
+        "notable": [
+          "Actual events or results may differ materially because of factors that affect international businesses and global macroeconomic and geopolitical conditions, as well as matters specific to the Company and the markets it serves, including the uncertain macroeconomic and political environment in different countries, inclu",
+          "Excluding the items described above in both periods, as applicable, Net income attributable to Colgate-Palmolive Company increased 1% to $2,996 in 2025 from $2,962 in 2024, and Earnings per common share on a diluted basis increased 3% to $3.69 in 2025 from $3.60 in 2024. 2025 Income Before Income Taxes Provision For In",
+          "Total charges incurred for the Strategic Growth and Productivity Program relate to initiatives undertaken by the following reportable operating segments: Twelve months ended December 31, 2025 North America 30 % Latin America — % Europe 4 % Asia Pacific — % Africa/Eurasia — % Pet Nutrition 1 % Corporate 65 % Total 100 %",
+          "Excluding the items described above in both periods, as applicable, Operating profit margin was 21.3% in 2025, a decrease of 40 bps from 21.7% in 2024, primarily due to a decrease in Gross profit (50 bps), partially offset by a decrease in Selling, general and administrative expenses (10 bps), both as a percentage of N"
+        ]
+      },
+      "riskChange": {
+        "addedCount": 121,
+        "droppedCount": 116,
+        "notable": [
+          "While geographic diversity helps to reduce our exposure to risks in any one country or part of the world, it also means that we face risks associated with significant international operations, including: changing macroeconomic conditions in our markets, including as a result of inflationary pressure, economic slowdown ",
+          "Our operations and those of our suppliers, contract manufacturers or logistics providers have been and may continue to be disrupted by a number of factors, including: geopolitical events and tensions, wars and military conflicts, such as in Ukraine, the Middle East and Venezuela; widespread health emergencies, such as ",
+          "Our uses of these systems include, but are not limited to: communicating within our company and with other parties, including our customers, suppliers and consumers; ordering and managing materials from suppliers; converting materials to finished products; receiving and processing orders from, shipping products to and ",
+          "Acquisitions and their pursuit have involved, and can involve, numerous potential risks, including: realizing the full extent of the expected benefits or synergies as a result of a transaction, within the anticipated time frame, or at all; 10 successfully integrating the operations, technologies, services, products and"
+        ]
+      }
+    },
+    "KMB": {
+      "fy": "2025",
+      "priorFy": "2024",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/55785/000162828026007567/kmb-20251231.htm",
+      "mdna": {
+        "words": 8992,
+        "fog": 22.4,
+        "hedgeDensity": 0.0208,
+        "wordsPrior": 8369,
+        "fogPrior": 21.5,
+        "hedgePrior": 0.0191
+      },
+      "risk": {
+        "words": 8363,
+        "wordsPrior": 5297
+      },
+      "redFlags": [
+        "restate",
+        "impairment",
+        "impair",
+        "covenant",
+        "default",
+        "delist"
+      ],
+      "newRedFlags": [
+        "restate",
+        "covenant"
+      ],
+      "mdnaChange": {
+        "addedCount": 136,
+        "droppedCount": 137,
+        "notable": [
+          "In addition, many factors outside our control, including risks and uncertainties around the pending mergers (including the risk that the anticipated benefits and synergies of the mergers may not be realized when expected or at all, the terms and scope of the expected financing in connection with the mergers may prove t",
+          "The following table provides a reconciliation of Adjusted Gross Profit from continuing operations: Year Ended December 31 2025 2024 Gross Profit $ 5,923 $ 6,289 2024 Transformation Initiative 213 144 Adjusted Gross Profit $ 6,136 $ 6,433 The following table provides a reconciliation of Adjusted Operating Profit from co",
+          "Forward Looking Statements Certain matters contained in this report concerning our plans and expectations regarding the pending Kenvue Acquisition, as defined in Item 8, Note 4 to the Consolidated Financial Statements (referred to below and within Item 1A, \"Risk Factors\" as the \"pending mergers\" or the \"mergers\") and t",
+          "Segments are described in greater detail in Item 8, Note 16 to the Consolidated Financial Statements. 25 KIMBERLY-CLARK CORPORATION - 2025 Annual Report 2024 Transformation Initiative The 2024 Transformation Initiative is designed to sharpen our strategic focus through a new operating model and strategy that leverages "
+        ]
+      },
+      "riskChange": {
+        "addedCount": 93,
+        "droppedCount": 28,
+        "notable": [
+          "Our business, results of operations, financial condition or stock price could be adversely affected, potentially in a material way, by the failure to complete the mergers, or by a delay in the closing of the mergers, and we or Kenvue may suffer consequences that could adversely affect their business, results of operati",
+          "The combined company's substantially increased indebtedness will reduce its flexibility to respond to changing business and economic conditions, and could have adverse effects on its financial condition, cash flows or results of operations, including by: Imposing additional cash requirements on the combined company in ",
+          "Specifically, the following challenges, among others, must be addressed in integrating the operations of K-C and Kenvue in order to realize the anticipated benefits of the mergers: Combining the companies' operations and corporate functions and the resulting difficulties associated with managing a larger, more complex,",
+          "These systems include, but are not limited to, programs and processes relating to internal communications and communicating with customers, consumers, vendors, investors and other parties; ordering and managing materials from suppliers; converting materials to finished products; receiving and processing purchase orders"
+        ]
+      }
+    },
+    "WDFC": {
+      "fy": "2025",
+      "priorFy": "2024",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/105132/000010513225000067/wdfc-20250831.htm",
+      "mdna": {
+        "words": 6519,
+        "fog": 21.6,
+        "hedgeDensity": 0.0118,
+        "wordsPrior": 7369,
+        "fogPrior": 20.9,
+        "hedgePrior": 0.0117
+      },
+      "risk": {
+        "words": 9566,
+        "wordsPrior": 9341
+      },
+      "redFlags": [
+        "impairment",
+        "impair",
+        "covenant",
+        "investigation"
+      ],
+      "newRedFlags": [],
+      "mdnaChange": {
+        "addedCount": 110,
+        "droppedCount": 144,
+        "notable": [
+          "During the fiscal year ended August 31, 2025, we returned approximately $62.6 million to our stockholders through share repurchases and dividends. 21 Table of Contents Results of Operations Fiscal Year Ended August 31, 2025 Compared to Fiscal Year Ended August 31, 2024 Operating Items The following table summarizes ope",
+          "Asia-Pacific Sales The following table summarizes net sales by product line for the Asia-Pacific segment, which includes Australia, China and other countries in the Asia region (in thousands, except percentages): Fiscal Year Ended August 31, 2025 2024 Change from Prior Year Dollars Percent WD-40 Multi-Use Product $ 71,",
+          "EIMEA Sales T he following table summarizes net sales by pr oduct line for the EIMEA segme nt, which includes Europe, India, the Middle East and Africa (in thousands, except percentages): Fiscal Year Ended August 31, 2025 2024 Change from Prior Year Dollars Percent WD-40 Multi-Use Product $ 181,604 $ 168,450 $ 13,154 8",
+          "Homecare and cleaning product sales decreased $1.1 million, or 7%, primarily due to changes in distribution as well as reduced demand in the U.S. as a result of a lower level of advertising and promotional activities associated with these brands, as we focus on increasing sales of maintenance products in support of our"
+        ]
+      },
+      "riskChange": {
+        "addedCount": 78,
+        "droppedCount": 69,
+        "notable": [
+          "As a result, we face substantial risks associated with our reliance on third-party manufacturers, suppliers, and/or logistics providers, including but not limited to the following areas: changes to the terms of doing business with these providers or the production capacity they allocate to our products; disagreements o",
+          "Although we have concluded that our current products do not contain such \"conflict minerals\" in our annual evaluations to date, if we were to conclude that these materials exist within our products in the future, we may have difficulty verifying the origin of such materials for purposes of disclosures required by the S",
+          "Fluctuations in gasoline and diesel fuel prices, driven in part by crude oil price volatility, fluctuations in costs of cans including those related to the impact of tariffs, increased regulations imposed on the freight industry, and higher demand for transportation services as e-commerce grows have impacted the cost o",
+          "If we encounter difficulties in executing and completing the implementation of these new critical information systems at our other offices, or if the implementation takes longer than intended, we may experience interruptions in our ability to manage our daily operations and report financial results timely and we may 12"
+        ]
+      }
+    },
+    "WMT": {
+      "fy": "2026",
+      "priorFy": "2025",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/104169/000010416926000055/wmt-20260131.htm",
+      "mdna": {
+        "words": 7207,
+        "fog": 21.8,
+        "hedgeDensity": 0.0092,
+        "wordsPrior": 7361,
+        "fogPrior": 21.7,
+        "hedgePrior": 0.0087
+      },
+      "risk": {
+        "words": 25546,
+        "wordsPrior": 25940
+      },
+      "redFlags": [
+        "material weakness",
+        "restate",
+        "impairment",
+        "impair",
+        "covenant",
+        "subpoena",
+        "investigation"
+      ],
+      "newRedFlags": [],
+      "mdnaChange": {
+        "addedCount": 108,
+        "droppedCount": 117,
+        "notable": [
+          "Free cash flow for fiscal 2025 decreased when compared to fiscal 2024 due to an increase of $3.2 billion in capital expenditures to support our omnichannel growth strategy, partially offset by the increase in net cash provided by operating activities described above. 37 Results of Operations Consolidated Results of Ope",
+          "We define our financial priorities as follows: Growth - serve customers through a seamless omnichannel experience; Margin - improve our operating income margin through productivity initiatives as well as category and business mix; and Returns - improve our Return on Investment through margin improvement and disciplined",
+          "Recent Developments, Macroeconomic Conditions and Potential Impacts We expect continued uncertainty in our business and the global economy due to the following factors: tariffs and trade restrictions; inflationary trends; fluctuations in global currencies; swings in macroeconomic conditions and their effect on consumer",
+          "Other gains and losses resulted in a net gain of $2.1 billion and a net loss of $0.8 billion in fiscal 2026 and 2025, respectively, primarily driven by changes in the fair value of our equity and other investments due to fluctuations in their underlying stock prices. 38 Our effective income tax rate was 24.4%, 23.4%, a"
+        ]
+      },
+      "riskChange": {
+        "addedCount": 254,
+        "droppedCount": 276,
+        "notable": [
+          "( 27 ) ( 479 ) 126 Total deferred tax expense (benefit) 2,277 ( 663 ) ( 171 ) Total provision for income taxes $ 7,199 $ 6,152 $ 5,578 A summary of the cash paid for income taxes is as follows: Fiscal Year Ended January 31, (Amounts in millions) 2026 Cash taxes paid in total $ 5,364 U.S. federal 1,743 U.S. state and lo",
+          "Officer Deferred Compensation Plan, as amended and restated effective February 1, 2023 is incorporated by reference to Exhibit 10.10 to the Annual Report on Form 10-K of the Company for the fiscal year ended January 31, 2023 filed on March 17, 2023 (C) 10.14 Post Termination Agreement and Covenant Not to Compete by and",
+          "Consolidated Statements of Shareholders' Equity Accumulated Total Capital in Other Walmart Nonredeemable Total (Amounts in millions) Common Stock Excess of Retained Comprehensive Shareholders' Noncontrolling Shareholders' Shares Amount Par Value Earnings Loss Equity Interest Equity Balances as of February 1, 2023 8,080",
+          "Consolidated Statements of Cash Flows Fiscal Years Ended January 31, (Amounts in millions) 2026 2025 2024 Cash flows from operating activities: Consolidated net income $ 22,270 $ 20,157 $ 16,270 Adjustments to reconcile consolidated net income to net cash provided by operating activities: Depreciation and amortization "
+        ]
+      }
+    },
+    "TGT": {
+      "fy": "2026",
+      "priorFy": "2025",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/27419/000002741926000016/tgt-20260131.htm",
+      "mdna": {
+        "words": 5335,
+        "fog": 20.7,
+        "hedgeDensity": 0.0231,
+        "wordsPrior": 5390,
+        "fogPrior": 20.4,
+        "hedgePrior": 0.0208
+      },
+      "risk": {
+        "words": 8045,
+        "wordsPrior": 6965
+      },
+      "redFlags": [
+        "impairment",
+        "impair",
+        "covenant",
+        "investigation"
+      ],
+      "newRedFlags": [],
+      "mdnaChange": {
+        "addedCount": 78,
+        "droppedCount": 83,
+        "notable": [
+          "The principal forward-looking statements in this report include statements regarding: our future financial and operational performance, our strategy for growth, changes in the consumer landscape, evolution in tariffs and global trade policy, the impacts of business transformation efforts, the adequacy of and costs asso",
+          "Refer to Part II , Item 7A , Quantitative and Qualitative Disclosures About Market Risk , for further disclosure of the market risks associated TARGET CORPORATION 2025 Form 10-K 38 MANAGEMENT'S DISCUSSION AND ANALYSIS Table of Contents ANALYSIS OF FINANCIAL CONDITION & NEW ACCOUNTING PRONOUNCEMENTS Index to Financial S",
+          "Management's Discussion and Analysis of Financial Condition and Results of Operations Executive Overview In 2025, we operated in a dynamic and uncertain environment characterized by cautious consumers who remained value-focused and selective in discretionary spending along with unprecedented tariff volatility.",
+          "As of January 31, 2026, our credit ratings were as follows: Credit Ratings Moody's S&P Fitch Long-term debt A2 A A Commercial paper P-1 A-1 F1 If our credit ratings were lowered, our ability to access the debt markets, our cost of funds, and other terms for new debt issuances could be adversely impacted."
+        ]
+      },
+      "riskChange": {
+        "addedCount": 96,
+        "droppedCount": 62,
+        "notable": [
+          "There have been, and may continue to be, changes in the legal or regulatory environment (including as a result of executive orders) affecting many areas related to our business, including merchandise costs and availability, customs and trade policy (including the impacts of our first sale declaration program), workforc",
+          "TARGET CORPORATION 2025 Form 10-K 15 RISK FACTORS Table of Contents Index to Financial Statements Political or economic uncertainty or instability, trade policies, disputes, or sanctions, currency fluctuations, the outbreak of pandemics or other illnesses, labor shortages, labor unrest or strikes, transport capacity an",
+          "Our establishment and continuation of any goals or initiatives regarding environmental, political, social, and governance matters, any modification or termination of such goals or initiatives, or any failure or perceived failure by us to achieve them, could result in negative reactions from our shareholders, guests, te",
+          "We rely on third parties to support our business operations, including portions of our technology infrastructure (including certain generative artificial intelligence services), digital platforms, replenishment and fulfillment operations, store and supply chain infrastructure, delivery services (including by independen"
+        ]
+      }
+    },
+    "HD": {
+      "fy": "2026",
+      "priorFy": "2025",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/354950/000162828026019436/hd-20260201.htm",
+      "mdna": {
+        "words": 23802,
+        "fog": 22.9,
+        "hedgeDensity": 0.0251,
+        "wordsPrior": 23093,
+        "fogPrior": 22.7,
+        "hedgePrior": 0.0256
+      },
+      "risk": {
+        "words": 17125,
+        "wordsPrior": 16334
+      },
+      "redFlags": [
+        "restate",
+        "impairment",
+        "impair",
+        "covenant",
+        "default",
+        "investigation"
+      ],
+      "newRedFlags": [],
+      "mdnaChange": {
+        "addedCount": 402,
+        "droppedCount": 387,
+        "notable": [
+          "Changes in, expanded regulatory investigations or enforcement of, litigation regarding, or adoption of new federal, state, local or international laws, regulations and/or executive orders governing minimum wage or living wage requirements; the classification of exempt and non-exempt employees; the distinction between e",
+          "Such disruptions may result, and on occasion have resulted, from damage or destruction to our distribution or fulfillment centers or those of our supply chain service providers; weather-related events; cybersecurity incidents or attacks; information technology outages or other interruptions; natural disasters; internat",
+          "Other factors beyond our control including unemployment and foreclosure rates; inventory loss due to theft (including as a result of organized retail crime); inflation or deflation; interest rate fluctuations, including central banks' actions to control inflation; tariff and trade policy; fuel and other energy costs; r",
+          "Our ability to access products from our suppliers can be, and on occasion has been, adversely affected by economic or political instability; civil unrest; geopolitical tensions or conflicts, or military conflicts or acts of war, as well as any related sanctions or other government or private responses; acts of terroris"
+        ]
+      },
+      "riskChange": {
+        "addedCount": 280,
+        "droppedCount": 264,
+        "notable": [
+          "Changes in, expanded regulatory investigations or enforcement of, litigation regarding, or adoption of new federal, state, local or international laws, regulations and/or executive orders governing minimum wage or living wage requirements; the classification of exempt and non-exempt employees; the distinction between e",
+          "Such disruptions may result, and on occasion have resulted, from damage or destruction to our distribution or fulfillment centers or those of our supply chain service providers; weather-related events; cybersecurity incidents or attacks; information technology outages or other interruptions; natural disasters; internat",
+          "Other factors beyond our control including unemployment and foreclosure rates; inventory loss due to theft (including as a result of organized retail crime); inflation or deflation; interest rate fluctuations, including central banks' actions to control inflation; tariff and trade policy; fuel and other energy costs; r",
+          "Our ability to access products from our suppliers can be, and on occasion has been, adversely affected by economic or political instability; civil unrest; geopolitical tensions or conflicts, or military conflicts or acts of war, as well as any related sanctions or other government or private responses; acts of terroris"
+        ]
+      }
+    },
+    "LOW": {
+      "fy": "2026",
+      "priorFy": "2025",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/60667/000006066726000029/low-20260130.htm",
+      "mdna": {
+        "words": 22478,
+        "fog": 23.6,
+        "hedgeDensity": 0.012,
+        "wordsPrior": 20526,
+        "fogPrior": 23.3,
+        "hedgePrior": 0.0112
+      },
+      "risk": {
+        "words": 12,
+        "wordsPrior": 12
+      },
+      "redFlags": [
+        "material weakness",
+        "restate",
+        "impairment",
+        "impair",
+        "covenant"
+      ],
+      "newRedFlags": [],
+      "mdnaChange": {
+        "addedCount": 249,
+        "droppedCount": 203,
+        "notable": [
+          "NOTE 3: Revenue Net sales consists primarily of revenue, net of sales tax, associated with contracts with customers for the sale of goods and services in amounts that reflect consideration the Company is entitled to in exchange for those goods and services. 49 Table of Contents The following table presents the Company'",
+          "NOTE 6: Goodwill and Intangible Assets Goodwill The changes in the carrying amount of goodwill by reportable segment for 2025, 2024, and 2023 were as follows: (In millions) Retail Home Improvement Other Consolidated Goodwill, balance at February 2, 2024 $ 311 $ — $ 311 Acquisitions — — — Goodwill, balance at January 31",
+          "Consolidated Statements of Cash Flows (In millions) Fiscal Years Ended January 30, 2026 January 31, 2025 February 2, 2024 Cash flows from operating activities: Net earnings $ 6,654 $ 6,957 $ 7,726 Adjustments to reconcile net earnings to net cash provided by operating activities: Depreciation and amortization 2,194 1,9",
+          "The following table presents the Company's operating income results for its Retail Home Improvement reportable segment, including significant segment expenses: Years Ended January 30, 2026 January 31, 2025 February 2, 2024 (In millions, except percentage data) Amount % Sales Amount % Sales Amount % Sales Net Sales $ 84"
+        ]
+      },
+      "riskChange": {
+        "addedCount": 0,
+        "droppedCount": 0,
+        "notable": []
+      }
+    },
+    "VZ": {
+      "fy": "2025",
+      "priorFy": "2024",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/732712/000073271226000007/vz-20251231.htm",
+      "mdna": {
+        "words": 15479,
+        "fog": 22.6,
+        "hedgeDensity": 0.0151,
+        "wordsPrior": 16076,
+        "fogPrior": 22.5,
+        "hedgePrior": 0.0161
+      },
+      "risk": {
+        "words": 48161,
+        "wordsPrior": 48713
+      },
+      "redFlags": [
+        "material weakness",
+        "restate",
+        "impairment",
+        "impair",
+        "covenant",
+        "default"
+      ],
+      "newRedFlags": [],
+      "mdnaChange": {
+        "addedCount": 197,
+        "droppedCount": 215,
+        "notable": [
+          "As of the date this report is being filed, our wireline services are provided in 31 U.S. states and Washington D.C. over our 100% fiber-optic network through our fiber product portfolio, as well as over a traditional copper-based network. 28 Table of Contents Operating Revenues and Selected Operating Statistics (dollar",
+          "The Business segment is organized in three customer groups: Enterprise and Public Sector, Business Markets and Other, and Wholesale. 31 Table of Contents Operating Revenues and Selected Operating Statistics (dollars in millions) Increase/(Decrease) Years Ended December 31, 2025 2024 2023 2025 vs 2024 2024 vs. 2023 Ente",
+          "Consolidated Operating Revenues (dollars in millions) Years Ended December 31, 2025 2024 Increase/(Decrease) Consumer $ 106,807 $ 102,904 $ 3,903 3.8 % Business 29,069 29,531 (462) (1.6) Corporate and other 2,642 2,609 33 1.3 Eliminations (327) (256) (71) 27.7 Consolidated Operating Revenues $ 138,191 $ 134,788 $ 3,403",
+          "Operating Expenses (dollars in millions) Years Ended December 31, 2025 2024 Increase Cost of services $ 18,433 $ 18,072 $ 361 2.0 % Cost of wireless equipment 23,930 21,259 2,671 12.6 Selling, general and administrative expense 20,643 20,537 106 0.5 Depreciation and amortization expense 14,173 13,552 621 4.6 Total Oper"
+        ]
+      },
+      "riskChange": {
+        "addedCount": 445,
+        "droppedCount": 443,
+        "notable": [
+          "New York, New York February 17, 2026 51 Table of Contents Consolidated Statements of Income Verizon Communications Inc. and Subsidiaries (dollars in millions, except per share amounts) Years Ended December 31, 2025 2024 2023 Operating Revenues Service revenues and other $ 112,721 $ 111,571 $ 109,652 Wireless equipment ",
+          "As of the date this report is being filed, our wireline services are provided in 31 U.S. states and Washington D.C. over our 100% fiber-optic network through our fiber product portfolio, as well as over a traditional copper-based network. 28 Table of Contents Operating Revenues and Selected Operating Statistics (dollar",
+          "Taxes The components of income before provision for income taxes are as follows: (dollars in millions) Years Ended December 31, 2025 2024 2023 Domestic $ 20,150 $ 21,253 $ 15,668 Foreign 2,522 1,726 1,319 Total $ 22,672 $ 22,979 $ 16,987 The components of the provision for income taxes are as follows: (dollars in milli",
+          "Reconciliation to Consolidated Financial Information The reconciliation of segment operating revenues and operating income to consolidated operating revenues and operating income below includes the effects of special items that the CODM does not consider in assessing segment performance, primarily because of their natu"
+        ]
+      }
+    },
+    "T": {
+      "fy": "2025",
+      "priorFy": "2024",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/732717/000073271726000120/t-20251231.htm",
+      "mdna": {
+        "words": 8569,
+        "fog": 20.3,
+        "hedgeDensity": 0.0142,
+        "wordsPrior": 8432,
+        "fogPrior": 20.5,
+        "hedgePrior": 0.0144
+      },
+      "risk": {
+        "words": 6215,
+        "wordsPrior": 6439
+      },
+      "redFlags": [
+        "restate",
+        "impairment",
+        "impair",
+        "covenant",
+        "investigation",
+        "decline in demand"
+      ],
+      "newRedFlags": [
+        "restate"
+      ],
+      "mdnaChange": {
+        "addedCount": 165,
+        "droppedCount": 164,
+        "notable": [
+          "EBITDA and EBITDA margin, as we have defined them, may not be comparable to similarly titled measures reported by other companies. 2025 2024 2023 Communications Segment Operating income $ 27,927 $ 27,095 $ 27,801 Add: Depreciation and amortization 19,959 19,433 17,363 EBITDA $ 47,886 $ 46,528 $ 45,164 Operating income ",
+          "Dollars in millions except per share amounts LATIN AMERICA SEGMENT Percent Change 2025 2024 2023 2025 vs. 2024 2024 vs. 2023 Segment Operating revenues Service $ 2,715 $ 2,668 $ 2,569 1.8 % 3.9 % Equipment 1,664 1,564 1,363 6.4 14.7 Total Segment Operating Revenues 4,379 4,232 3,932 3.5 7.6 Segment Operating expenses O",
+          "Dollars in millions except per share amounts Communications Business Unit Discussion Mobility Results Percent Change 2025 2024 2023 2025 vs. 2024 2024 vs. 2023 Operating revenues Service $ 67,384 $ 65,373 $ 63,175 3.1 % 3.5 % Equipment 22,098 19,882 20,807 11.1 (4.4) Total Operating Revenues 89,482 85,255 83,982 5.0 1.",
+          "Percent Change 2025 2024 2023 2025 vs. 2024 2024 vs. 2023 Operating revenues Service $ 101,158 $ 100,135 $ 99,649 1.0 % 0.5 % Equipment 24,490 22,201 22,779 10.3 (2.5) Total Operating Revenues 125,648 122,336 122,428 2.7 (0.1) Operating expenses Operations and support 79,762 77,632 78,997 2.7 (1.7) Asset impairments an"
+        ]
+      },
+      "riskChange": {
+        "addedCount": 58,
+        "droppedCount": 64,
+        "notable": [
+          "The final outcome of FCC and other federal, state or foreign government agency proceedings (including judicial review of such proceedings) and legislative and regulatory efforts involving issues important to our business, including, without limitation, results of pending governmental investigations; the transition from",
+          "The impact from major equipment, software or other failures or errors that disrupt our networks or cyber incidents; the effect of security breaches related to the network or customer information; our inability to obtain handsets, equipment/software or have handsets, equipment/software serviced in a timely and cost-effe",
+          "If we do not successfully manage and timely execute these initiatives and investments, which may include acquisitions, joint ventures, particularly those aimed at enhancing our fiber serviceable locations, and other strategic transactions, or if they are inadequate or ineffective, we may fail to meet our financial goal",
+          "Cyberattacks have caused, and may in the future cause, equipment or network failures, copying or loss of information, including sensitive personal information of customers or employees or proprietary information, as well as disruptions to our or our customers', suppliers' or vendors' operations, which have and in the f"
+        ]
+      }
+    },
+    "TMUS": {
+      "fy": "2025",
+      "priorFy": "2024",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1283699/000128369926000010/tmus-20251231.htm",
+      "mdna": {
+        "words": 29559,
+        "fog": 24.1,
+        "hedgeDensity": 0.0224,
+        "wordsPrior": 27216,
+        "fogPrior": 23.9,
+        "hedgePrior": 0.0233
+      },
+      "risk": {
+        "words": 10474,
+        "wordsPrior": 9618
+      },
+      "redFlags": [
+        "material weakness",
+        "restate",
+        "impairment",
+        "impair",
+        "covenant",
+        "default",
+        "investigation",
+        "loss of a"
+      ],
+      "newRedFlags": [],
+      "mdnaChange": {
+        "addedCount": 453,
+        "droppedCount": 386,
+        "notable": [
+          "We continue to monitor the impact of these trends on the payment performance of our customers. 35 Table of Contents Results of Operations Set forth below is a summary of our consolidated financial results: Year Ended December 31, 2025 Versus 2024 2024 Versus 2023 (in millions) 2025 2024 2023 $ Change % Change $ Change ",
+          "Any such transactions involve risks and could present financial, managerial, and operational challenges, including: diversion of management attention from running our existing business; increased costs to integrate the networks, spectrum, technology, personnel, customer base, distributors and business partners and busi",
+          "The following table illustrates the calculation of Adjusted EBITDA and Core Adjusted EBITDA and reconciles Adjusted EBITDA and Core Adjusted EBITDA to Net income, which we consider to be the most directly comparable GAAP financial measure: Year Ended December 31, 2025 Versus 2024 2024 Versus 2023 (in millions, except p",
+          "Cost of equipment sales , exclusive of depreciation and amortization, increased $2.4 billion, or 13%, primarily from: An increase in device cost of equipment sales, primarily from: Higher average cost per device sold, primarily driven by an increase in the high-end phone mix; and A higher number of devices sold, primar"
+        ]
+      },
+      "riskChange": {
+        "addedCount": 135,
+        "droppedCount": 105,
+        "notable": [
+          "Any such transactions involve risks and could present financial, managerial, and operational challenges, including: diversion of management attention from running our existing business; increased costs to integrate the networks, spectrum, technology, personnel, customer base, distributors and business partners and busi",
+          "Examples of these risks include: physical damage, power surges or outages, equipment failure, or other service disruptions with respect to both our wireless and fiber networks, including those resulting from severe weather, storms, earthquakes, floods, hurricanes, wildfires, and other natural disasters, which may occur",
+          "If we cannot acquire needed spectrum from the government or other sources, if competitors acquire spectrum that enables them to provide services competitive with ours, or if we cannot deploy services over acquired spectrum on a timely basis, without burdensome conditions, at reasonable cost, and while maintaining netwo",
+          "Our business, financial condition, and operating results are affected by changes in general economic and political conditions, including interest rates, consumer credit conditions, consumer debt levels, consumer confidence, unemployment rates, economic growth, tariffs and trade restrictions, fluctuations in global curr"
+        ]
+      }
+    },
+    "LUMN": {
+      "fy": "2025",
+      "priorFy": "2024",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/18926/000001892626000014/lumn-20251231.htm",
+      "mdna": {
+        "words": 8759,
+        "fog": 20.8,
+        "hedgeDensity": 0.0253,
+        "wordsPrior": 12041,
+        "fogPrior": 22.5,
+        "hedgePrior": 0.0198
+      },
+      "risk": {
+        "words": 8389,
+        "wordsPrior": 10301
+      },
+      "redFlags": [
+        "impairment",
+        "impair",
+        "covenant",
+        "default",
+        "investigation"
+      ],
+      "newRedFlags": [],
+      "mdnaChange": {
+        "addedCount": 314,
+        "droppedCount": 358,
+        "notable": [
+          "This was primarily as a result of: a decrease of $209 million from the sale of the EMEA business and select CDN contracts in 2023; a decrease of $166 million in overall network expense; and a decrease of $138 million in employee-related costs. 47 Table of Contents Business Segment Adjusted EBITDA As a percentage of rev",
+          "Results in this section include results of our EMEA business prior to its sale on November 1, 2023: Years Ended December 31, 2025 2024 2023 (Dollars in millions) Operating revenue: Business $ 9,895 10,366 11,586 Mass Markets 2,507 2,742 2,971 Total operating revenue $ 12,402 13,108 14,557 For additional information on ",
+          "Net (Loss) Gain on Early Retirement of Debt For a discussion of the debt transactions that resulted in the net (loss) gain on debt that we recognized in 2025 and 2024, see Note 7 — Long-Term Debt and Credit Facilities in Item 8. 44 Table of Contents Other Income, Net Other income, net reflects certain items not directl",
+          "Operating Revenue The following table summarizes our consolidated operating revenue by segment and sales channels within the Business segment as described in Note 4 — Revenue Recognition in Item 8: Years Ended December 31, 2025 vs 2024 % Change 2024 vs 2023 % Change 2025 2024 2023 (Dollars in millions) Business Segment"
+        ]
+      },
+      "riskChange": {
+        "addedCount": 293,
+        "droppedCount": 303,
+        "notable": [
+          "We carry significant levels of debt and related debt service obligations, which could adversely affect us in several ways, including: requiring us to allocate a large portion of operating cash flow to interest and principal payments, reducing funds available for other purposes, including acquisitions, capital expenditu",
+          "We face other financial risks, including among others the risk that: future intangible asset impairments could result in significant non-cash charges, reducing earnings and stockholders' (deficit) equity and adversely affecting our financial condition; persistent or rising inflation could adversely affect our business,",
+          "Consequently, we may: face disputes with purchasers regarding the scope or adequacy of transition services or the terms of our commercial agreements; incur greater costs or fewer benefits than anticipated under post-closing agreements, including tax or other expenses; experience increased vendor costs due to reduced ec",
+          "Our costs of maintaining these plans, and the future funding requirements, are affected by several factors, including: investment returns on funds held by our applicable plan trusts; changes in prevailing interest rates and discount rates or other factors used to calculate the funding status of our plans; increases in "
+        ]
+      }
+    },
+    "AAL": {
+      "fy": "2025",
+      "priorFy": "2024",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/6201/000000620126000014/aal-20251231.htm",
+      "mdna": {
+        "words": 22411,
+        "fog": 23.3,
+        "hedgeDensity": 0.0278,
+        "wordsPrior": 19684,
+        "fogPrior": 22.9,
+        "hedgePrior": 0.0261
+      },
+      "risk": {
+        "words": 63500,
+        "wordsPrior": 65381
+      },
+      "redFlags": [
+        "material weakness",
+        "restate",
+        "impairment",
+        "impair",
+        "covenant",
+        "default",
+        "investigation",
+        "decline in demand",
+        "loss of a"
+      ],
+      "newRedFlags": [],
+      "mdnaChange": {
+        "addedCount": 353,
+        "droppedCount": 282,
+        "notable": [
+          "The following table shows our domestic airline employee groups that are represented by unions: Union Class or Craft Employees (1) Contract Amendable Date Mainline: Allied Pilots Association (APA) Pilots 14,970 2027 Association of Professional Flight Attendants (APFA) Flight Attendants 26,400 2029 Airline Customer Servi",
+          "For example, they may: make it more difficult for us to satisfy our obligations under our indebtedness; 22 Table of Contents limit our ability to obtain additional funding for working capital, capital expenditures, acquisitions, investments and general corporate purposes, and adversely affect the terms on which such fu",
+          "National Airspace System (the ATC system), including due to a government shutdown; increases in costs of safety, security and environmental measures or costs of complying with new or more onerous consumer protection laws or regulations; increases in costs related to meeting our stated climate goals or obligations, incl",
+          "Our business, results of operations and financial condition have been and will continue to be affected by many changing economic, geopolitical, commercial, regulatory and other conditions beyond our control, including, among others: actual or potential changes in international, national, regional and local economic, bu"
+        ]
+      },
+      "riskChange": {
+        "addedCount": 537,
+        "droppedCount": 548,
+        "notable": [
+          "CONSOLIDATED STATEMENTS OF CASH FLOWS (In millions) Year Ended December 31, 2025 2024 2023 Cash flows from operating activities: Net income $ 564 $ 1,262 $ 1,188 Adjustments to reconcile net income to net cash provided by operating activities: Depreciation and amortization 2,177 2,198 2,198 Debt extinguishment costs 20",
+          "CONSOLIDATED STATEMENTS OF CASH FLOWS (In millions) Year Ended December 31, 2025 2024 2023 Cash flows from operating activities: Net income $ 111 $ 846 $ 822 Adjustments to reconcile net income to net cash provided by operating activities: Depreciation and amortization 2,219 2,245 2,254 Debt extinguishment costs 20 9 2",
+          "CONSOLIDATED BALANCE SHEETS (In millions, except share and par value amounts) December 31, 2025 2024 ASSETS Current assets Cash $ 954 $ 804 Short-term investments 4,882 6,180 Restricted cash and short-term investments 735 732 Accounts receivable, net 2,075 2,006 Aircraft fuel, spare parts and supplies, net 2,792 2,638 ",
+          "CONSOLIDATED BALANCE SHEETS (In millions, except share and par value amounts) December 31, 2025 2024 ASSETS Current assets Cash $ 936 $ 795 Short-term investments 4,880 6,177 Restricted cash and short-term investments 735 732 Accounts receivable, net 2,041 1,977 Receivables from related parties, net 9,896 8,187 Aircraf"
+        ]
+      }
+    },
+    "DAL": {
+      "fy": "2025",
+      "priorFy": "2024",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/27904/000002790426000013/dal-20251231.htm",
+      "mdna": {
+        "words": 8416,
+        "fog": 19.1,
+        "hedgeDensity": 0.0159,
+        "wordsPrior": 17627,
+        "fogPrior": 20.1,
+        "hedgePrior": 0.0251
+      },
+      "risk": {
+        "words": 16300,
+        "wordsPrior": 16598
+      },
+      "redFlags": [
+        "impairment",
+        "impair",
+        "covenant",
+        "default",
+        "investigation"
+      ],
+      "newRedFlags": [],
+      "mdnaChange": {
+        "addedCount": 136,
+        "droppedCount": 460,
+        "notable": [
+          "MD&A - Results of Operations Operating Expense Year Ended December 31, Increase (Decrease) % Increase (Decrease) (in millions) 2025 2024 Salaries and related costs $ 17,520 $ 16,161 $ 1,359 8 % Aircraft fuel and related taxes 9,819 10,566 (747) (7) % Ancillary businesses and refinery 5,987 5,416 571 11 % Contracted ser",
+          "MD&A - Results of Operations Results of Operations Operating Revenue Year Ended December 31, Increase (Decrease) % Increase (Decrease) (in millions) (1) 2025 2024 Ticket - Main cabin $ 23,391 $ 24,497 $ (1,106) (5) % Ticket - Premium products 22,097 20,599 1,498 7 % Loyalty travel awards 4,237 3,841 396 10 % Travel-rel",
+          "Fuel expense and average price per gallon Average Price Per Gallon Year Ended December 31, Increase (Decrease) Year Ended December 31, Increase (Decrease) (in millions, except per gallon data) 2025 2024 2025 2024 Fuel purchase cost (1) $ 9,993 $ 10,583 $ (590) $ 2.34 $ 2.57 $ (0.23) Fuel hedge impact (17) 21 (38) — 0.0",
+          "The following discussion and analysis of our financial condition and results of operations should be read in conjunction with our audited Consolidated Financial Statements and the related notes and other financial information as well as the material risk factors included elsewhere in this Annual Report on Form 10-K. 20"
+        ]
+      },
+      "riskChange": {
+        "addedCount": 212,
+        "droppedCount": 217,
+        "notable": [
+          "An interruption or disruption at an airport or facility where we have significant operations, whether resulting from air traffic control delays, interruptions in other government services or staffing shortages (including as a result of prolonged government shutdowns), failure of computer systems or technology infrastru",
+          "Our ability to execute on such a plan and achieve our goals is subject to substantial risks and uncertainties, as it is dependent on the actions of governments and third parties and will require, among other things, significant capital investment, including from third parties, research and development from manufacturer",
+          "Business Each of our joint venture or cooperation arrangements provides for joint commercial cooperation with the relevant partner within the geographic scope of the arrangement, including the sharing of revenues and/or profits and losses generated by the parties on the joint venture routes, as well as joint marketing ",
+          "To the extent that the operations of a third-party on which we rely are significantly disrupted or if these third parties experience significant performance issues (including failing to satisfy any applicable performance standards) or fail to meet any applicable compliance requirements, our revenue may be reduced, our "
+        ]
+      }
+    },
+    "UAL": {
+      "fy": "2025",
+      "priorFy": "2024",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/100517/000010051726000023/ual-20251231.htm",
+      "mdna": {
+        "words": 33412,
+        "fog": 24.4,
+        "hedgeDensity": 0.0251,
+        "wordsPrior": 33075,
+        "fogPrior": 24,
+        "hedgePrior": 0.0252
+      },
+      "risk": {
+        "words": 27121,
+        "wordsPrior": 33586
+      },
+      "redFlags": [
+        "material weakness",
+        "restate",
+        "impairment",
+        "impair",
+        "covenant",
+        "default",
+        "subpoena",
+        "investigation"
+      ],
+      "newRedFlags": [],
+      "mdnaChange": {
+        "addedCount": 363,
+        "droppedCount": 367,
+        "notable": [
+          "Our actual results could differ materially from these forward-looking statements due to numerous factors including, without limitation, the following: execution risks associated with our strategic operating plan; changes in our fleet and network strategy or other factors outside our control resulting in less economic a",
+          "The Company's reputation or brand image could be diminished or eroded by a variety of factors, including any actual or perceived failure to maintain satisfactory practices for all of our operations and activities or to reassure the traveling public of the safety of air travel at any of our major hub locations; any fail",
+          "The table below illustrates the year-over-year percentage change in the Company's operating revenues for the years ended December 31 (in millions, except percentage changes): 2025 2024 Increase (Decrease) % Change Passenger revenue $ 53,438 $ 51,829 $ 1,609 3.1 Cargo 1,779 1,743 36 2.1 Other operating revenue 3,853 3,4",
+          "Other key highlights of its United Next plan include: increasing our employee headcount by more than 38,000 employees since 2020; surpassing 530 new and retrofit aircraft featuring United's signature interior with bigger bins, seatback screens at every seat and Bluetooth connectivity; expanding the Company's leading gl"
+        ]
+      },
+      "riskChange": {
+        "addedCount": 203,
+        "droppedCount": 319,
+        "notable": [
+          "The following tables set forth the reconciliation of the beginning and ending balances of the benefit obligation and plan assets, the funded status and the amounts recognized in these financial statements for the defined benefit and other postretirement plans (in millions): Pension Benefits Year Ended December 31, 2025",
+          "STATEMENTS OF CONSOLIDATED CASH FLOWS (In millions) Year Ended December 31, 2025 2024 2023 Operating Activities: Net income $ 3,353 $ 3,149 $ 2,618 Adjustments to reconcile net income to net cash provided by (used in) operating activities - Deferred income tax 925 935 756 Depreciation and amortization 2,939 2,928 2,671",
+          "STATEMENTS OF CONSOLIDATED CASH FLOWS (In millions) Year Ended December 31, 2025 2024 2023 Operating Activities: Net income $ 3,355 $ 3,151 $ 2,620 Adjustments to reconcile net income to net cash provided by (used in) operating activities - Deferred income tax 925 937 757 Depreciation and amortization 2,939 2,928 2,671",
+          "California, Colorado and Illinois make up more than 50% of the state income tax expense category in 2024 and 2023 76 Table of Contents The components of the income tax provision consisted of the following for the years ended December 31 (in millions): 2025 2024 2023 Current: US Federal $ ( 4 ) $ 50 $ — US State and Loc"
+        ]
+      }
+    },
+    "LUV": {
+      "fy": "2025",
+      "priorFy": "2024",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/92380/000009238026000004/luv-20251231.htm",
+      "mdna": {
+        "words": 10203,
+        "fog": 22,
+        "hedgeDensity": 0.0143,
+        "wordsPrior": 15053,
+        "fogPrior": 22.7,
+        "hedgePrior": 0.0169
+      },
+      "risk": {
+        "words": 13340,
+        "wordsPrior": 14200
+      },
+      "redFlags": [
+        "restate",
+        "impairment",
+        "impair",
+        "investigation"
+      ],
+      "newRedFlags": [
+        "impairment"
+      ],
+      "mdnaChange": {
+        "addedCount": 181,
+        "droppedCount": 325,
+        "notable": [
+          "The tax rate decrease was partially offset by a reduction in federal tax credits generated in 2025. 2024 Compared with 2023 The Company's comparison of 2024 results to 2023 results is included in the Company's Annual Report on Form 10-K for the fiscal year ended December 31, 2024, under Part II Item 7, Management's Dis",
+          "The following table presents the Company's Operating expenses per ASM for 2025 and 2024, followed by explanations of these changes on a dollar basis. 67 Table of Contents Year ended December 31, Per ASM Percent (in cents, except for percentages) 2025 2024 change change Salaries, wages, and benefits 7.21 6.91 0.30 4.3 %",
+          "Year ended December 31, Increase (Decrease) Percent change (in millions) 2025 2024 Passenger $ 25,535 $ 24,980 $ 555 2.2 Freight 171 175 (4) (2.3) Other 2,357 2,328 29 1.2 Total operating revenues $ 28,063 $ 27,483 $ 580 2.1 Salaries, wages, and benefits $ 12,963 $ 12,240 $ 723 5.9 Fuel and oil 5,240 5,812 (572) (9.8) ",
+          "(in millions, except per share amounts) Year ended December 31, GAAP 2025 2024 Change Operating income $ 428 $ 321 33.3 Net income $ 441 $ 465 (5.2) Net income per share, diluted $ 0.79 $ 0.76 3.9 Non-GAAP Operating income $ 539 $ 457 17.9 Net income $ 512 $ 597 (14.2) Net income per share, diluted $ 0.93 $ 0.96 (3.1) "
+        ]
+      },
+      "riskChange": {
+        "addedCount": 161,
+        "droppedCount": 160,
+        "notable": [
+          "The Company's strategic plans and results of operations could be negatively affected by changes in law and future actions taken by domestic and foreign governmental agencies having jurisdiction over the Company's operations, including, but not limited to: increases in airport rates and charges; limitations on airport g",
+          "In addition to the unpredictable economic conditions and fuel costs previously discussed, the Company, like the airline industry in general, is affected by conditions that are largely unforeseeable and outside of its control, including, among others: adverse weather and natural disasters and the associated effects on t",
+          "The timely and effective execution of the Company's strategies is dependent upon, among other factors, (i) the Company's ability to balance its network schedule and capacity with the availability and location of its crew resources; (ii) the Company's ability to effectively balance its investment of incremental operatin",
+          "Significant interruptions or disruptions in service at one or more of the Company's core stations (such as Denver or Chicago-Midway), resulting from air traffic control systems, weather incidents, performance by third-party service providers, interruption of the Company's technology, the availability and location of th"
+        ]
+      }
+    },
+    "CCL": {
+      "fy": "2025",
+      "priorFy": "2024",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/815097/000081509726000007/ccl-20251130.htm",
+      "mdna": {
+        "words": 4591,
+        "fog": 22.6,
+        "hedgeDensity": 0.0166,
+        "wordsPrior": 5121,
+        "fogPrior": 22,
+        "hedgePrior": 0.0178
+      },
+      "risk": {
+        "words": 4449,
+        "wordsPrior": 4478
+      },
+      "redFlags": [
+        "impairment",
+        "impair",
+        "covenant",
+        "default",
+        "investigation",
+        "decline in demand"
+      ],
+      "newRedFlags": [],
+      "mdnaChange": {
+        "addedCount": 87,
+        "droppedCount": 102,
+        "notable": [
+          "Substantially all costs associated with our shoreside personnel are included in selling and administrative expenses Fuel, which include fuel delivery costs and emission allowance costs Food, which include both our guest and crew food costs Other operating expenses, which include port costs that do not vary with guest h",
+          "Management's Discussion and Analysis of Financial Condition and Results of Operations . 2025 Executive Overview 2025 was another strong year that exceeded expectations, setting new records across our business and achieving more milestones, including: Record revenues of $26.6 billion All-time high operating income of $4",
+          "This decrease was caused by: $101 million - lower fuel prices including the impact of the cost of emission allowances $79 million - lower fuel consumption per ALBD These decreases were partially offset by: $122 million - 1.2% capacity increase in ALBDs $40 million - higher onboard and other cost of sales driven by high",
+          "A discussion of our critical accounting estimates, the underlying judgments and uncertainties used to make them and the likelihood that materially different estimates would be reported under different conditions or using different assumptions is as follows: Ship Accounting We make several critical accounting estimates "
+        ]
+      },
+      "riskChange": {
+        "addedCount": 77,
+        "droppedCount": 76,
+        "notable": [
+          "Breach or circumvention of our systems or the systems of third parties, including by ransomware or malware, through vulnerabilities in licensed software or hardware, AI impersonation, targeted and coordinated attacks of our systems, or as a result of other attacks, have led to and may continue to lead to disruptions in",
+          "Sustainability, environmental and emissions-related regulatory activity and developments that require us to reduce our emissions, which includes EU and UK regulations and the IMO Strategy, have impacted us and may in the future have a material impact on our business and financial results by requiring us to make capital",
+          "Changes in and non-compliance with laws and regulations under which we operate, such as those relating to health, environment, safety and security, data privacy and protection, anti-money laundering, anti-corruption, economic sanctions, trade protection measures, labor and employment, and tax may be costly and lead to ",
+          "Cybersecurity incidents and data privacy breaches, as well as disruptions and other damages to our principal and other offices, information technology operations and system networks and failure to keep pace with developments in technology may adversely impact our business operations, the satisfaction of our guests and "
+        ]
+      }
+    },
+    "RCL": {
+      "fy": "2025",
+      "priorFy": "2024",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/884887/000088488726000007/rcl-20251231.htm",
+      "mdna": {
+        "words": 10980,
+        "fog": 22.4,
+        "hedgeDensity": 0.0449,
+        "wordsPrior": 10580,
+        "fogPrior": 22.3,
+        "hedgePrior": 0.0453
+      },
+      "risk": {
+        "words": 17176,
+        "wordsPrior": 16705
+      },
+      "redFlags": [
+        "impairment",
+        "impair",
+        "covenant",
+        "default",
+        "investigation"
+      ],
+      "newRedFlags": [],
+      "mdnaChange": {
+        "addedCount": 64,
+        "droppedCount": 53,
+        "notable": [
+          "These technologies and systems require significant investment and must be refined, updated, upgraded and/or replaced with more advanced capabilities in order to continue to meet our customers' demands and expectations, to operate in an interconnected business world, as well as to conduct our business operations effecti",
+          "Development activities may be delayed or adversely affected by construction challenges, supply chain disruptions, weather events, labor availability, environmental or site-specific conditions, and delays in obtaining or maintaining permits, any of which could adversely affect our ability to complete our projects as pla",
+          "Risk Factors - \" We are exposed to cybersecurity attacks and data breaches and the risks and costs associated with protecting our systems and maintaining data integrity and security .\" Governance Our cybersecurity program is led by our Chief Information Officer (CIO) and the Chief Information Security Officer (CISO ).",
+          "To the extent the OECD \"International Shipping Income\" exclusion tax laws (and associated guidance) change, or we do not continue to meet the applicable qualifications, we may be required to pay higher Global Minimum Tax in the United Kingdom (or other jurisdictions), adversely impacting our results of operations."
+        ]
+      },
+      "riskChange": {
+        "addedCount": 136,
+        "droppedCount": 127,
+        "notable": [
+          "Risk Factors for further discussion on shipyard operations. 11 Ship Shipyard Expected Delivery Dates Approximate Berths Filter Royal Caribbean Show Oasis-class: Show Unnamed Chantiers de l'Atlantique 2nd Quarter 2028 5,700 Show Icon-class: Show Legend of the Seas Meyer Turku Oy 2nd Quarter 2026 5,600 Show Unnamed Meyer",
+          "Internal Revenue Code, or other jurisdictions, may have adverse effects on our results of operations .\" Website Access to Reports We make available, free of charge, access to our Annual Reports, all quarterly and current reports and all amendments to those reports, as soon as reasonably practicable after such reports a",
+          "These technologies and systems require significant investment and must be refined, updated, upgraded and/or replaced with more advanced capabilities in order to continue to meet our customers' demands and expectations, to operate in an interconnected business world, as well as to conduct our business operations effecti",
+          "The impact of CII is still uncertain as the IMO continues to conduct its review of the CII framework in 2026 with a final determination expected in 2028, which could result in requirements that could lead to changes to our itinerary flexibility for some of our ships depending on the final operational measures needed to"
+        ]
+      }
+    }
+  }
 }
