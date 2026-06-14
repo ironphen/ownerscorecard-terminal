@@ -1,9 +1,8 @@
-# Refreshes src/data/fundamentals.json from SEC EDGAR.
-#
-# Manual-trigger only for now (workflow_dispatch) — it does nothing until you
-# run it from the Actions tab. When you're ready for it to refresh on its own,
-# uncomment the schedule block. Set an Actions variable SEC_USER_AGENT with a
-# descriptive contact string (SEC requests one); falls back to a default.
+# Refreshes the deep data (fundamentals.json + language.json) from SEC EDGAR and
+# commits any change, which redeploys the site. Runs on its own every Monday — no
+# manual upkeep — and can be kicked by hand from the Actions tab. The lighter
+# Filing Wire (wire.yml) refreshes daily; this heavier quarterly-grade data weekly.
+# Set an Actions variable SEC_USER_AGENT with a contact string (SEC requests one).
 name: Fundamentals
 
 on:
