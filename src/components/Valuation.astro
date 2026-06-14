@@ -7,11 +7,13 @@
 import { classify } from "../lib/archetype.mjs";
 import { moatReport } from "../lib/durability.mjs";
 import { fmtUSD, liquidAssets } from "../lib/fundamentals.mjs";
+import { tangibleEquity } from "../lib/financials.mjs";
 
 const { company } = Astro.props;
 const { sector, overlays } = classify(company);
 const offModel = sector.key === "financial" || sector.key === "reit";
 const cyclical = overlays.some((o) => o.key === "cyclical");
+const median = (xs) => { const s = [...xs].sort((a, b) => a - b); return s.length ? s[Math.floor((s.length - 1) / 2)] : null; };
 
 const L = company.ttm?.lines || company.lines || {};
 const shares = L.sharesDiluted;
@@ -25,6 +27,19 @@ const runnable = ownerEarnings != null && ownerEarnings > 0 && shares != null &&
 const niH = (company.history || []).filter((h) => h?.lines?.netIncome != null).slice(-3).map((h) => h.lines.netIncome);
 const eps3 = niH.length >= 2 && shares ? niH.reduce((a, b) => a + b, 0) / niH.length / shares : null;
 const bvps = L.stockholdersEquity != null && shares ? L.stockholdersEquity / shares : null;
+
+// Bank valuation: a lender is worth a multiple of tangible book set by the return it
+// earns on that book. Normalize the return over the record, since one year is noisy.
+const isBank = sector.key === "financial";
+const tEq = tangibleEquity(L);
+const tbvps = tEq != null && shares ? tEq / shares : null;
+const bvpsB = L.stockholdersEquity != null && shares ? L.stockholdersEquity / shares : null;
+const epsB = L.netIncome != null && shares ? L.netIncome / shares : null;
+const rotceH = (company.history || [])
+  .map((h) => { const t = tangibleEquity(h.lines); return h.lines.netIncome != null && t && t > 0 ? h.lines.netIncome / t : null; })
+  .filter((v) => v != null);
+const rotceMed = rotceH.length >= 3 ? median(rotceH) : null;
+const bankRunnable = isBank && tbvps != null && tbvps > 0 && rotceMed != null;
 
 // Negative-owner-earnings mode: a reverse-DCF can't grow a negative base, so we flip
 // the question to the future profitability the price demands. Inputs: revenue and its
@@ -51,11 +66,40 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
 <section class="val">
   <div class="head">
     <h2>What the price implies</h2>
-    <span class="tag">reverse-DCF</span>
+    <span class="tag">{bankRunnable ? "price / tangible book" : "reverse-DCF"}</span>
   </div>
 
   {offModel ? (
-    <p class="note">A {sector.label.toLowerCase()} isn't read on an owner-earnings DCF, its economics live on the balance sheet (book value, net interest margin, loan losses / FFO). We don't force this lens where it doesn't belong.</p>
+    bankRunnable ? (
+      <div id="valBoxBank" data-tbvps={tbvps} data-bvps={bvpsB} data-rotce={rotceMed} data-eps={epsB ?? ""} data-name={name}>
+        <p class="intro">A bank is worth a multiple of its <b>tangible book value</b>, and the multiple it deserves is set by the return it earns on that book. Type today&rsquo;s price; we show what you would be paying against what {name}&rsquo;s record justifies. Nothing is stored; the number stays in your browser.</p>
+        <div class="priceRow">
+          <label for="pxb">Today&rsquo;s price</label>
+          <span class="dollar">$</span>
+          <input id="pxb" type="number" inputmode="decimal" step="0.01" min="0" placeholder="e.g. 250.00" />
+        </div>
+        <p class="lede" id="ledeB">Enter a price above to run it.</p>
+        <div class="compare">
+          <div class="cmp"><span class="cl">Price / tangible book</span><span class="cv hot" id="ptbv">—</span></div>
+          <div class="cmp"><span class="cl">Justified by the return</span><span class="cv" id="justptbv">—</span></div>
+          <div class="cmp"><span class="cl">Normalized return on tangible equity</span><span class="cv">{pctS(rotceMed)}</span></div>
+        </div>
+        <div class="compare gate">
+          <div class="cmp"><span class="cl">Price / book</span><span class="cv" id="pbBank">—</span></div>
+          <div class="cmp"><span class="cl">Earnings yield</span><span class="cv" id="eyBank">—</span></div>
+          <div class="cmp"><span class="cl">P/E</span><span class="cv" id="peBank">—</span></div>
+        </div>
+        <div class="dials">
+          <span class="dialsLbl">The assumptions, turn the dials</span>
+          <label>Cost of equity <output id="coeOut">10%</output><input id="coeB" type="range" min="8" max="14" step="0.5" value="10" /></label>
+          <label>Long-term growth <output id="gOutB">3%</output><input id="gB" type="range" min="0" max="6" step="0.5" value="3" /></label>
+          <p class="dialsNote">The justified multiple is (return on tangible equity − growth) ÷ (cost of equity − growth). A bank earning exactly its cost of equity is worth about one times tangible book; every point of durable excess return above that is worth paying up for. Raise the cost of equity and the justified multiple falls: that is interest-rate gravity on a bank.</p>
+        </div>
+        <p class="foot">Tangible book {fmtUSD(tEq)} on {(shares / 1e6).toFixed(0)}M shares, a {pctS(rotceMed)} normalized return on it. This is a lens, not a target. It assumes the bank keeps earning that return; a credit cycle, a rate shock or a bad acquisition changes it, which is what the record and the 10-K are for.</p>
+      </div>
+    ) : (
+      <p class="note">A {sector.label.toLowerCase()} isn't read on an owner-earnings DCF, its economics live on the balance sheet (book value, net interest margin, loan losses / FFO). We don't force this lens where it doesn't belong.</p>
+    )
   ) : !runnable ? (
     negMode ? (
       <div id="valBoxNeg" data-rev={rev} data-shares={shares} data-name={name} data-oem={oeMarginNow ?? ""}>
@@ -270,6 +314,49 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
       lede.innerHTML = `At <b>${P}</b>, to earn you ${r.value}% a year, ${esc(NAME)} must be worth ${usd(valN)} in ${N} years. At ~${M.toFixed(0)}× owner earnings, that is <b class="hot">${usd(requiredOE)}</b> a year, and growing revenue ${g > 0 ? "at " + gr.value + "%/yr" : "flat"} to ${usd(revN)}, an owner-earnings margin of <b class="hot">${margin > 3 ? ">300%" : pcs(margin)}</b>${verdict}`;
     }
     [px, r, n, gr].forEach((el) => el.addEventListener("input", update));
+    update();
+  })();
+</script>
+
+<script is:inline>
+  (function () {
+    const box = document.getElementById("valBoxBank");
+    if (!box) return;
+    const TBVPS = parseFloat(box.dataset.tbvps), BVPS = parseFloat(box.dataset.bvps), ROTCE = parseFloat(box.dataset.rotce);
+    const EPS = parseFloat(box.dataset.eps), NAME = box.dataset.name || "this bank";
+    const px = document.getElementById("pxb");
+    const coe = document.getElementById("coeB"), gB = document.getElementById("gB");
+    const coeOut = document.getElementById("coeOut"), gOutB = document.getElementById("gOutB");
+    const lede = document.getElementById("ledeB"), ptbv = document.getElementById("ptbv"), just = document.getElementById("justptbv");
+    const pbB = document.getElementById("pbBank"), eyB = document.getElementById("eyBank"), peB = document.getElementById("peBank");
+    const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+
+    function setURL(v) { try { const u = new URL(location.href); v ? u.searchParams.set("px", v) : u.searchParams.delete("px"); history.replaceState(null, "", u); } catch (e) {} }
+
+    function update() {
+      const c = parseFloat(coe.value) / 100, g = parseFloat(gB.value) / 100;
+      coeOut.textContent = coe.value + "%"; gOutB.textContent = gB.value + "%";
+      const price = parseFloat(px.value);
+      if (!(price > 0)) { lede.textContent = "Enter a price above to run it."; [ptbv, just, pbB, eyB, peB].forEach((e) => (e.textContent = "—")); setURL(""); return; }
+      const ptb = price / TBVPS;
+      const justified = c > g ? Math.max(0, (ROTCE - g) / (c - g)) : null;
+      ptbv.textContent = ptb.toFixed(2) + "×";
+      just.textContent = justified != null ? justified.toFixed(2) + "×" : "—";
+      pbB.textContent = (price / BVPS).toFixed(2) + "×";
+      if (EPS > 0) { eyB.textContent = ((EPS / price) * 100).toFixed(1) + "%"; peB.textContent = (price / EPS).toFixed(1) + "×"; }
+      else { eyB.textContent = "n/m"; peB.textContent = "n/m"; }
+      const P = "$" + price.toFixed(2), R = (ROTCE * 100).toFixed(0);
+      if (justified == null) { lede.textContent = "Set the cost of equity above the growth rate."; setURL(px.value); return; }
+      const ratio = ptb / justified;
+      let verdict;
+      if (ratio <= 0.85) verdict = `a <b class="hot">discount</b> to what its ${R}% return on tangible equity would justify (about ${justified.toFixed(2)}×). The market is doubting the return holds; the record is where you check whether that doubt is earned.`;
+      else if (ratio <= 1.15) verdict = `roughly <b>in line</b> with what its ${R}% return on tangible equity justifies (about ${justified.toFixed(2)}×).`;
+      else verdict = `a <b class="bad">premium</b> to what its ${R}% return justifies (about ${justified.toFixed(2)}×). You are paying for the return to rise, or to outlast the credit cycle.`;
+      lede.innerHTML = `At <b>${P}</b>, you pay <b class="hot">${ptb.toFixed(2)}×</b> tangible book for ${esc(NAME)}, ${verdict}`;
+      setURL(px.value);
+    }
+    [px, coe, gB].forEach((el) => el.addEventListener("input", update));
+    try { const q = new URL(location.href).searchParams.get("px"); if (q) px.value = q; } catch (e) {}
     update();
   })();
 </script>

@@ -2,6 +2,7 @@
 import fundamentals from "../data/fundamentals.json";
 import { classify } from "../lib/archetype.mjs";
 import { fmtUSD, roicValue } from "../lib/fundamentals.mjs";
+import { returnOnEquity, returnOnTangibleEquity, efficiencyRatio, netInterestMargin } from "../lib/financials.mjs";
 
 const { company } = Astro.props;
 const all = fundamentals.companies || [];
@@ -24,6 +25,8 @@ function findPeers(co) {
 const group = [company, ...findPeers(company)].sort((a, b) => (b.lines?.revenue || 0) - (a.lines?.revenue || 0));
 
 const pr = (v, dp = 0) => (v == null ? "—" : `${(v * 100).toFixed(dp)}%`);
+const isFin = ["financial", "reit"].includes(classify(company).sector.key);
+
 const metricsOf = (c) => {
   const L = c.lines || {};
   return {
@@ -32,29 +35,48 @@ const metricsOf = (c) => {
     opMargin: L.operatingIncome != null && L.revenue ? L.operatingIncome / L.revenue : null,
     roic: roicValue(L),
     oeMargin: L.cashFromOps != null && L.capex != null && L.revenue ? (L.cashFromOps - Math.abs(L.capex)) / L.revenue : null,
+    roe: returnOnEquity(L),
+    rotce: returnOnTangibleEquity(L),
+    efficiency: efficiencyRatio(L),
+    nim: netInterestMargin(L),
   };
 };
 
-// "Best in group" per column (higher is better for all of these).
+// The comparison columns are archetype-aware: a bank is compared on the bank lens,
+// not on margins and ROIC. "Best" respects each column's direction (efficiency low).
+const COLS = isFin
+  ? [
+      { key: "roe", label: "ROE", dp: 0, better: "high" },
+      { key: "rotce", label: "ROTCE", dp: 0, better: "high" },
+      { key: "efficiency", label: "Efficiency", dp: 0, better: "low" },
+      { key: "nim", label: "Net int. margin", dp: 1, better: "high" },
+    ]
+  : [
+      { key: "grossMargin", label: "Gross margin", dp: 0, better: "high" },
+      { key: "opMargin", label: "Op. margin", dp: 1, better: "high" },
+      { key: "roic", label: "ROIC", dp: 0, better: "high" },
+      { key: "oeMargin", label: "Owner earn. margin", dp: 0, better: "high" },
+    ];
+
 const rows = group.map((c) => ({ c, m: metricsOf(c) }));
 const best = {};
-for (const k of ["grossMargin", "opMargin", "roic", "oeMargin"]) {
-  let bt = null, bv = -Infinity;
-  for (const r of rows) if (r.m[k] != null && r.m[k] > bv) { bv = r.m[k]; bt = r.c.ticker; }
-  best[k] = bt;
+for (const col of COLS) {
+  let bt = null, bv = col.better === "low" ? Infinity : -Infinity;
+  for (const r of rows) { const v = r.m[col.key]; if (v == null) continue; if (col.better === "low" ? v < bv : v > bv) { bv = v; bt = r.c.ticker; } }
+  best[col.key] = bt;
 }
 ---
 
 {group.length >= 2 ? (
   <section class="peers">
     <h3 class="secHead">Peers, {classify(company).industry.label}</h3>
-    <p class="pNote">The same industry, side by side on owner economics, compare, don't rank by a single number. <span class="bestKey">●</span> marks best in the group.</p>
+    <p class="pNote">The same industry, side by side on {isFin ? "the bank lens" : "owner economics"}, compare, don't rank by a single number. <span class="bestKey">●</span> marks best in the group.</p>
     <div class="wrap">
       <table>
         <thead>
           <tr>
-            <th class="tl">Company</th><th>Revenue</th><th>Gross margin</th>
-            <th>Op. margin</th><th>ROIC</th><th>Owner earn. margin</th>
+            <th class="tl">Company</th><th>Revenue</th>
+            {COLS.map((col) => <th>{col.label}</th>)}
           </tr>
         </thead>
         <tbody>
@@ -62,10 +84,7 @@ for (const k of ["grossMargin", "opMargin", "roic", "oeMargin"]) {
             <tr class={c.ticker === company.ticker ? "me" : ""}>
               <th class="tl"><a href={`/c/${c.ticker}`}>{c.ticker}</a><span class="nm">{c.name}</span></th>
               <td>{m.revenue != null ? fmtUSD(m.revenue) : "—"}</td>
-              <td class={best.grossMargin === c.ticker ? "win" : ""}>{pr(m.grossMargin)}</td>
-              <td class={best.opMargin === c.ticker ? "win" : ""}>{pr(m.opMargin, 1)}</td>
-              <td class={best.roic === c.ticker ? "win" : ""}>{pr(m.roic)}</td>
-              <td class={best.oeMargin === c.ticker ? "win" : ""}>{pr(m.oeMargin)}</td>
+              {COLS.map((col) => <td class={best[col.key] === c.ticker ? "win" : ""}>{pr(m[col.key], col.dp)}</td>)}
             </tr>
           ))}
         </tbody>
