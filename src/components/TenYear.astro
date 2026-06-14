@@ -10,22 +10,23 @@ const money = (v) => (v == null ? "—" : fmtUSD(v));
 const marginStr = (n, d, dp = 1) => (n != null && d ? `${(n / d) * 100 < 0 ? "−" : ""}${(Math.abs((n / d) * 100)).toFixed(dp)}%` : "—");
 const perShare = (n, sh) => (n != null && sh ? `$${(n / sh).toFixed(2)}` : "—");
 
-// Row catalog — each reads one fiscal year's `lines`.
+// Row catalog — each reads one fiscal year's `lines`. `short` is the mobile label.
 const ROW = {
-  revenue: { label: "Revenue", get: (L) => money(L.revenue) },
-  grossMargin: { label: "Gross margin", get: (L) => marginStr(L.revenue != null && L.costOfRevenue != null ? L.revenue - L.costOfRevenue : null, L.revenue, 0) },
-  opMargin: { label: "Operating margin", get: (L) => marginStr(L.operatingIncome, L.revenue) },
-  netIncome: { label: "Net income", get: (L) => money(L.netIncome) },
-  eps: { label: "EPS (diluted)", get: (L) => perShare(L.netIncome, L.sharesDiluted) },
-  ownerEarnings: { label: "Owner earnings", get: (L) => (L.cashFromOps != null && L.capex != null ? money(L.cashFromOps - Math.abs(L.capex)) : "—") },
-  oeMargin: { label: "Owner earnings margin", get: (L) => marginStr(L.cashFromOps != null && L.capex != null ? L.cashFromOps - Math.abs(L.capex) : null, L.revenue) },
-  roic: { label: "ROIC", get: (L) => { const r = roicValue(L); return r == null ? "—" : `${(r * 100).toFixed(0)}%`; } },
-  capex: { label: "Capex", get: (L) => (L.capex != null ? money(Math.abs(L.capex)) : "—") },
-  capexToRev: { label: "Capex / revenue", get: (L) => marginStr(L.capex != null ? Math.abs(L.capex) : null, L.revenue) },
-  capexToDep: { label: "Capex vs depreciation", get: (L) => (L.capex != null && L.depreciation ? `${(Math.abs(L.capex) / L.depreciation).toFixed(2)}×` : "—") },
-  totalDebt: { label: "Total debt", get: (L) => money(L.totalDebt) },
+  revenue: { label: "Revenue", short: "Revenue", get: (L) => money(L.revenue) },
+  grossMargin: { label: "Gross margin", short: "Gross mgn", get: (L) => marginStr(L.revenue != null && L.costOfRevenue != null ? L.revenue - L.costOfRevenue : null, L.revenue, 0) },
+  opMargin: { label: "Operating margin", short: "Op. mgn", get: (L) => marginStr(L.operatingIncome, L.revenue) },
+  netIncome: { label: "Net income", short: "Net inc.", get: (L) => money(L.netIncome) },
+  eps: { label: "EPS (diluted)", short: "EPS", get: (L) => perShare(L.netIncome, L.sharesDiluted) },
+  ownerEarnings: { label: "Owner earnings", short: "Owner earn.", get: (L) => (L.cashFromOps != null && L.capex != null ? money(L.cashFromOps - Math.abs(L.capex)) : "—") },
+  oeMargin: { label: "Owner earnings margin", short: "OE mgn", get: (L) => marginStr(L.cashFromOps != null && L.capex != null ? L.cashFromOps - Math.abs(L.capex) : null, L.revenue) },
+  roic: { label: "ROIC", short: "ROIC", get: (L) => { const r = roicValue(L); return r == null ? "—" : `${(r * 100).toFixed(0)}%`; } },
+  capex: { label: "Capex", short: "Capex", get: (L) => (L.capex != null ? money(Math.abs(L.capex)) : "—") },
+  capexToRev: { label: "Capex / revenue", short: "Capex/rev", get: (L) => marginStr(L.capex != null ? Math.abs(L.capex) : null, L.revenue) },
+  capexToDep: { label: "Capex vs depreciation", short: "Capex/dep", get: (L) => (L.capex != null && L.depreciation ? `${(Math.abs(L.capex) / L.depreciation).toFixed(2)}×` : "—") },
+  totalDebt: { label: "Total debt", short: "Debt", get: (L) => money(L.totalDebt) },
   cash: {
     label: "Cash & investments",
+    short: "Cash+inv",
     get: (L) => {
       const v = liquidAssets(L);
       return v == null ? "—" : money(v);
@@ -33,14 +34,15 @@ const ROW = {
   },
   netDebt: {
     label: "Net debt / (cash)",
+    short: "Net debt",
     kind: "netdebt",
     get: (L) => {
       if (L.totalDebt == null && L.cashAndEquivalents == null) return "—";
       return money((L.totalDebt || 0) - (liquidAssets(L) || 0));
     },
   },
-  dps: { label: "Dividends / share", get: (L) => perShare(L.dividendsPaid != null ? Math.abs(L.dividendsPaid) : null, L.sharesDiluted) },
-  bvps: { label: "Book value / share", get: (L) => perShare(L.stockholdersEquity, L.sharesDiluted) },
+  dps: { label: "Dividends / share", short: "Div/sh", get: (L) => perShare(L.dividendsPaid != null ? Math.abs(L.dividendsPaid) : null, L.sharesDiluted) },
+  bvps: { label: "Book value / share", short: "BVPS", get: (L) => perShare(L.stockholdersEquity, L.sharesDiluted) },
 };
 
 const SETS = {
@@ -88,8 +90,11 @@ const lastI = cols.length - 1;
 const chosen = SETS[sector.key] || SETS.general;
 // Drop any row the data can't fill across the whole record.
 const rows = chosen
-  .map((r) => ({ label: r.label, kind: r.kind || "plain", cells: cols.map((c) => r.get(c.lines)) }))
+  .map((r) => ({ label: r.label, short: r.short || r.label, kind: r.kind || "plain", cells: cols.map((c) => r.get(c.lines)) }))
   .filter((r) => r.cells.some((c) => c !== "—"));
+
+// Abbreviated year for narrow screens: 2017 → ’17, TTM stays.
+const yShort = (lbl) => (lbl.length === 4 && /^\d{4}$/.test(lbl) ? "’" + lbl.slice(2) : lbl);
 
 // A parenthesised/minus cell is a loss in most rows (red) — but in the net-debt
 // row it means net cash, which is a good thing (green).
@@ -113,7 +118,8 @@ const cellClass = (kind, c) => {
             <th class="rowlabel"></th>
             {cols.map((c, i) => (
               <th class={`${i === lastI ? "last" : ""} ${c.ttm ? "ttm" : ""}`}>
-                {c.label}{c.sub ? <span class="sub">{c.sub}</span> : null}
+                <span class="yf">{c.label}</span><span class="ys">{c.ttm ? c.label : yShort(c.label)}</span>
+                {c.sub ? <span class="sub">{c.sub}</span> : null}
               </th>
             ))}
           </tr>
@@ -121,7 +127,7 @@ const cellClass = (kind, c) => {
         <tbody>
           {rows.map((r) => (
             <tr>
-              <th class="rowlabel">{r.label}</th>
+              <th class="rowlabel"><span class="lf">{r.label}</span><span class="ls">{r.short}</span></th>
               {r.cells.map((c, i) => (
                 <td class={`${i === lastI ? "last" : ""} ${cols[i].ttm ? "ttm" : ""} ${cellClass(r.kind, c)}`}>{c}</td>
               ))}
@@ -151,4 +157,15 @@ const cellClass = (kind, c) => {
   td.neg { color: var(--bad); }
   td.pos { color: var(--good, #1a7a3c); }
   tbody tr:hover td, tbody tr:hover th.rowlabel { background: #faf9f6; }
+
+  /* Short labels are hidden until the screen is narrow, where they buy column room. */
+  .ls, .ys { display: none; }
+  @media (max-width: 560px) {
+    table { font-size: 11.5px; }
+    thead th { padding: 7px 7px 5px; font-size: 10.5px; }
+    td { padding: 6px 7px; }
+    tbody th.rowlabel { padding: 6px 9px 6px 0; font-size: 11.5px; }
+    .lf, .yf { display: none; }
+    .ls, .ys { display: inline; }
+  }
 </style>
