@@ -302,11 +302,12 @@ const FLAG_THEMES = [
   {
     lens: "Litigation & contingencies",
     why: "Claims an owner inherits. Most disclosure is boilerplate; this fires only on an actual matter — a named suit, a settlement, a contingency, a number.",
-    // Require a real, specific matter, not the generic "litigation could adversely
-    // affect us" that every 10-K carries.
+    // Require an actual legal/regulatory/tax matter (a named suit, a settlement of
+    // a lawsuit, a fine, a court ruling, a defendant, a specific allegation) — never
+    // an operational $-line with an incidental "settle"/"penalty"/"contingency".
     test: (s) =>
-      /(class action|patent (infringement|dispute|suit|litigation)|antitrust|securities (class action|fraud)|product liability|consent decree|qui tam|whistleblower|infringe\w+|misappropriat\w+|investigation by (the )?(SEC|DOJ|FTC|EU|European|State|Federal|Attorney|Department of)|jury (verdict|award|found)|loss contingenc\w+|settle\w+ (of |a |the )?(lawsuit|litigation|claim|matter|case|legal)|\$\s?[\d,.]+\s?(million|billion)[\s\S]{0,70}(settle|judgment|verdict|damages|award|fine|penalt|litigation|lawsuit|contingenc)|alleg\w+ (that|violations|fraud|breach))/i.test(s),
-    bonus: (s) => (/(class action|antitrust|securities fraud|patent|\$\s?[\d,.]+\s?(million|billion)|consent decree|qui tam)/i.test(s) ? 2 : 0),
+      /(class action|securities (class action|fraud)|antitrust (suit|claim|lawsuit|investigation|matter|case|action|complaint|litigation|fine|probe)|monopoliz|anticompetitive|patent (infringement|dispute|suit|litigation)|product liability|qui tam|whistleblower|consent decree|(named (as )?a defendant|is a defendant|are defendants|sued (us|the company|the))|(lawsuit|complaint|class action|legal proceeding)s? (filed|brought|pending|alleging|seeking|that allege)|settle\w+ (of |a |an |the |this |that |certain |previously )*(lawsuit|litigation|class action|legal (matter|proceeding|claim|action)|patent|antitrust|opioid)|jury (verdict|award\w*|found)|(court|circuit|appeals?|tribunal|judge)[\sa-zA-Z']{0,30}(ruled|awarded|affirmed|reversed|judgment|denial|dismiss|enjoin)|investigation by (the )?(SEC|DOJ|FTC|EU|European Commission|attorney general|Department of Justice|state)|(fine|penalty)[\s\S]{0,25}(EC|European Commission|antitrust|competition authorit)|appeal\w+ the (EC|EU|European|decision)|infring\w+ (our|its|the|on|upon)|alleg\w+ (that|monopoli|fraud|infring|breach|violations? of|discriminat)|(IRS|tax authorit\w+)[\s\S]{0,55}(propos\w+|seeking|asserted|deficiency|adjustment|disput|notice)|(charge|liability|accru\w+|reserve|provision|net gains?)[\s\S]{0,50}(litigation|legal (matter|proceeding|settlement|claim)|class action|antitrust|opioid|interchange))/i.test(s),
+    bonus: (s) => (/(class action|antitrust|securities fraud|patent|consent decree|qui tam|monopoli|\$\s?[\d,.]+\s?(million|billion))/i.test(s) ? 2 : 0),
   },
   {
     lens: "Dilution",
