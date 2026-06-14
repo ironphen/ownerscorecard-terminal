@@ -1,64 +1,104 @@
 ---
-// The weld: each thing the company's own 10-K flags as worth worrying about,
-// set against the single number from the same filings that bears on it. This is
-// where the archetype's numbers and the NLP's reading of the prose finally meet —
-// the company's words on the left, the arithmetic that tests them on the right.
+// The weld: each thing the company's own 10-K flags as worth worrying about, set
+// against the figure from the same filings that bears on it — and crucially, that
+// figure is ANCHORED to a period you can find in the record table below (a number
+// you can't locate is worse than none). The company's words on the left, the
+// arithmetic that tests them on the right.
 import language from "../data/language.json";
-import { fmtUSD, ownerEarningsMargin, coverage, cashPosition } from "../lib/fundamentals.mjs";
-import { moatReport } from "../lib/durability.mjs";
+import { fmtUSD, ownerEarningsMargin, operatingMargin, coverage, cashPosition } from "../lib/fundamentals.mjs";
 
 const { company } = Astro.props;
 const L = language?.companies?.[company.ticker] || null;
 const flags = L?.ownerFlags || [];
 
-const lines = company.lines || {};
-const rev = lines.revenue;
-const gm = rev && lines.costOfRevenue != null ? 1 - lines.costOfRevenue / rev : null;
-const oem = ownerEarningsMargin(lines);
-const report = moatReport(company);
+const H = (company.history || []).filter((h) => h?.lines?.revenue != null);
+const cur = company.ttm?.lines || company.lines || {};
+const curLabel = company.ttm?.lines ? "TTM" : company.fy ? `FY${company.fy}` : "latest";
+const rev = cur.revenue ?? company.lines?.revenue ?? null;
+const grossMargin = (l) => (l && l.revenue && l.costOfRevenue != null ? 1 - l.costOfRevenue / l.revenue : null);
+const curGM = grossMargin(cur);
+const curOEM = ownerEarningsMargin(cur);
 const cov = coverage(company);
 const cash = cashPosition(company);
-const factBy = (label) => report?.facts.find((f) => f.label === label) || null;
 
-const pct = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${(Math.abs(v) * 100).toFixed(dp)}%`);
+// Operating-margin trajectory — the anchored series behind pricing-power and cyclicality.
+const omSeries = H.map((h) => operatingMargin(h.lines));
+const curOM = operatingMargin(cur);
+let omPeak = null, omWorst = null;
+H.forEach((h) => {
+  const m = operatingMargin(h.lines);
+  if (m == null) return;
+  if (!omPeak || m > omPeak.v) omPeak = { v: m, fy: h.fy };
+  if (!omWorst || m < omWorst.v) omWorst = { v: m, fy: h.fy };
+});
 
-// Map a flag's lens to the figure that bears on it. null = a judgment, not arithmetic.
+// Diluted-share trajectory (split-guarded) for dilution.
+const shVals = H.map((h) => h.lines.sharesDiluted);
+const fyF = H.find((h) => h.lines.sharesDiluted != null)?.fy ?? null;
+const shF = shVals.find((x) => x != null) ?? null;
+const shL = cur.sharesDiluted ?? [...shVals].reverse().find((x) => x != null) ?? null;
+let shCagr = null;
+if (shF && shL && Math.max(shF, shL) / Math.min(shF, shL) <= 1.8 && fyF) {
+  const endYr = company.ttm?.asOf ? new Date(company.ttm.asOf + "T00:00:00Z").getUTCFullYear() : H[H.length - 1]?.fy ?? fyF;
+  if (endYr - fyF > 0) shCagr = Math.pow(shL / shF, 1 / (endYr - fyF)) - 1;
+}
+
+const pc = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${(Math.abs(v) * 100).toFixed(dp)}%`);
+
+function spark(values, w = 108, h = 22) {
+  const vs = values.filter((v) => v != null);
+  if (vs.length < 3) return null;
+  const min = Math.min(...vs), max = Math.max(...vs), span = max - min || 1;
+  const x = (i) => (w * i) / (values.length - 1);
+  const y = (v) => h - 2 - (h - 4) * ((v - min) / span);
+  let d = "", started = false;
+  values.forEach((v, i) => { if (v == null) return; d += `${started ? "L" : "M"}${x(i).toFixed(1)},${y(v).toFixed(1)}`; started = true; });
+  const zeroY = min < 0 && max > 0 ? y(0) : null;
+  return { d, w, h, zeroY };
+}
+
+// Anchor every figure to a period found in the table. null = a judgment, not arithmetic.
 function bearing(lens) {
   switch (lens) {
     case "Customer concentration":
-      return rev != null ? { label: "Revenue riding on it", value: fmtUSD(rev) } : null;
+      return rev != null ? { label: `Revenue exposed (${curLabel})`, value: fmtUSD(rev) } : null;
     case "Pricing power & competition": {
-      const m = factBy("Operating margin");
-      if (m) return { label: "Operating margin, then → now", value: m.value };
-      return gm != null ? { label: "Gross margin", value: pct(gm) } : null;
+      if (curOM != null && omPeak) {
+        const atHigh = curOM >= omPeak.v - 0.01;
+        return {
+          label: "Operating margin",
+          value: atHigh ? `${pc(curOM, 1)} (${curLabel}) — near a ${H.length}-yr high` : `${pc(curOM, 1)} now (${curLabel}), off a ${pc(omPeak.v, 1)} peak (FY${omPeak.fy})`,
+          series: omSeries,
+        };
+      }
+      return curGM != null ? { label: `Gross margin (${curLabel})`, value: pc(curGM) } : null;
     }
     case "Supplier & input dependence":
-      return gm != null ? { label: "Gross-margin buffer", value: pct(gm) } : null;
+      return curGM != null ? { label: `Gross-margin cushion (${curLabel})`, value: pc(curGM) } : null;
     case "Concentrated dependence":
-      return oem != null ? { label: "Owner-earnings margin at stake", value: pct(oem) } : rev != null ? { label: "Revenue", value: fmtUSD(rev) } : null;
+      return curOEM != null ? { label: `Owner-earnings margin at stake (${curLabel})`, value: pc(curOEM) } : rev != null ? { label: `Revenue (${curLabel})`, value: fmtUSD(rev) } : null;
     case "Debt terms & refinancing":
     case "Going-concern doubt": {
-      const parts = [];
-      if (cash) parts.push(`${cash.value} ${cash.label.toLowerCase()}`);
-      if (cov && cov.ratio != null && cov.ratio >= 0) parts.push(`interest covered ${cov.ratio.toFixed(1)}×`);
-      else if (cov && cov.noBurden) parts.push("no real interest burden");
-      else if (cov) parts.push("operations don't cover interest");
-      return parts.length ? { label: "Balance sheet", value: parts.join(" · ") } : null;
+      if (!cash) return null;
+      let cp = "";
+      if (cov && cov.ratio != null && cov.ratio >= 0) cp = ` · interest covered ${cov.ratio.toFixed(1)}×`;
+      else if (cov && cov.noBurden) cp = " · no real interest burden";
+      else if (cov) cp = " · operating profit doesn't cover interest";
+      return { label: `Balance sheet (${curLabel})`, value: `${cash.value} ${cash.label.toLowerCase()}${cp}` };
     }
-    case "Dilution": {
-      const s = factBy("Share count");
-      return s ? { label: "Share count", value: s.value } : null;
-    }
-    case "Cyclicality & demand": {
-      const w = factBy("Worst year");
-      return w ? { label: "Worst year on record", value: w.value } : null;
-    }
+    case "Dilution":
+      return shCagr != null ? { label: "Diluted share count", value: `${shCagr >= 0 ? "+" : "−"}${pc(Math.abs(shCagr), 1)}/yr (FY${fyF}→${curLabel})` } : null;
+    case "Cyclicality & demand":
+      return omWorst ? { label: "Worst year on record", value: `${pc(omWorst.v, 1)} operating margin (FY${omWorst.fy})` } : null;
     default:
       return null; // litigation, regulation — read, don't compute
   }
 }
 
-const items = flags.map((f) => ({ ...f, fig: bearing(f.lens) }));
+const items = flags.map((f) => {
+  const fig = bearing(f.lens);
+  return { ...f, fig, sp: fig?.series ? spark(fig.series) : null };
+});
 ---
 
 {items.length ? (
@@ -68,9 +108,9 @@ const items = flags.map((f) => ({ ...f, fig: bearing(f.lens) }));
       {L.sourceUrl ? <a class="src" href={L.sourceUrl} target="_blank" rel="noopener">read the 10-K →</a> : null}
     </div>
     <p class="intro">
-      A 10-K names what an owner should worry about — in the company's own words. Here are
-      the ones Graham and Buffett would stop on, each set against the figure from the same
-      filings that bears on it. We point; the judgment is yours.
+      A 10-K names what an owner should worry about — in the company's own words. Here are the ones
+      Graham and Buffett would stop on, each set against the figure from the same filings that bears on
+      it, anchored to a period you can find in the record below. We point; the judgment is yours.
     </p>
 
     <ul class="items">
@@ -84,8 +124,14 @@ const items = flags.map((f) => ({ ...f, fig: bearing(f.lens) }));
           <blockquote>“{it.quote}{it.quote.length >= 300 ? "…" : ""}”</blockquote>
           {it.fig ? (
             <div class="weld">
-              <span class="arrow">The numbers ↓</span>
+              <span class="eyebrow">From the record</span>
               <span class="fl">{it.fig.label}</span>
+              {it.sp ? (
+                <svg class="wspark" viewBox={`0 0 ${it.sp.w} ${it.sp.h}`} preserveAspectRatio="none" aria-hidden="true">
+                  {it.sp.zeroY != null ? <line x1="0" x2={it.sp.w} y1={it.sp.zeroY} y2={it.sp.zeroY} class="zero" /> : null}
+                  <path d={it.sp.d} />
+                </svg>
+              ) : null}
               <span class="fv">{it.fig.value}</span>
             </div>
           ) : (
@@ -102,7 +148,7 @@ const items = flags.map((f) => ({ ...f, fig: bearing(f.lens) }));
   .head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; border-bottom: 1px solid var(--rule-strong); padding-bottom: 6px; }
   .head h2 { margin: 0; }
   .src { font-size: 12px; color: var(--accent); flex: 0 0 auto; }
-  .intro { font-family: var(--serif); font-style: italic; font-size: 13.5px; color: var(--muted); margin: 9px 0 0; max-width: 66ch; }
+  .intro { font-family: var(--serif); font-style: italic; font-size: 13.5px; color: var(--muted); margin: 9px 0 0; max-width: 68ch; }
 
   .items { list-style: none; padding: 0; margin: 12px 0 0; }
   .items li { padding: 14px 0; border-bottom: 1px solid var(--rule); }
@@ -115,9 +161,12 @@ const items = flags.map((f) => ({ ...f, fig: bearing(f.lens) }));
     border-left: 2px solid var(--accent); padding: 3px 0 3px 14px; margin: 8px 0 0;
   }
 
-  .weld { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin: 10px 0 0; padding: 7px 12px; background: var(--accent-tint); }
-  .arrow { font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); font-weight: 600; flex: 0 0 auto; }
+  .weld { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 10px 0 0; padding: 8px 12px; background: var(--accent-tint); }
+  .eyebrow { font-size: 10px; letter-spacing: 0.07em; text-transform: uppercase; color: var(--accent); font-weight: 700; flex: 0 0 auto; }
   .weld .fl { font-size: 13px; color: var(--muted); }
-  .weld .fv { font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--ink); margin-left: auto; }
+  .wspark { width: 92px; height: 20px; overflow: visible; opacity: 0.9; }
+  .wspark path { fill: none; stroke: var(--ink); stroke-width: 1.3; vector-effect: non-scaling-stroke; }
+  .wspark .zero { stroke: var(--faint); stroke-width: 0.75; stroke-dasharray: 2 2; vector-effect: non-scaling-stroke; }
+  .weld .fv { font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--ink); margin-left: auto; text-align: right; }
   .weld.judgment { font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--muted); display: block; }
 </style>

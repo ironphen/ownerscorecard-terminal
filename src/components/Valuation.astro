@@ -20,6 +20,12 @@ const ownerEarnings = cfo != null && capex != null ? cfo - Math.abs(capex) : nul
 const netDebt = (L.totalDebt || 0) - (liquidAssets(L) || 0);
 const runnable = ownerEarnings != null && ownerEarnings > 0 && shares != null && shares > 0;
 
+// Graham's price-gate inputs: 3-year average earnings (his method, to avoid paying
+// for a peak) and current book value, both per share.
+const niH = (company.history || []).filter((h) => h?.lines?.netIncome != null).slice(-3).map((h) => h.lines.netIncome);
+const eps3 = niH.length >= 2 && shares ? niH.reduce((a, b) => a + b, 0) / niH.length / shares : null;
+const bvps = L.stockholdersEquity != null && shares ? L.stockholdersEquity / shares : null;
+
 const report = moatReport(company);
 const oeGrowth = report?.facts.find((f) => f.label === "Owner earnings growth")?.value ?? null;
 const name = company.name || company.ticker;
@@ -36,7 +42,7 @@ const name = company.name || company.ticker;
   ) : !runnable ? (
     <p class="note">Owner earnings are negative right now, so a reverse-DCF can't be run — there's no positive stream to discount. For a {cyclical ? "cyclical at this point in the cycle" : "loss-making or turnaround business"}, judge it on normalized (through-cycle) earnings or on assets, not a growth-on-growth model.</p>
   ) : (
-    <div id="valBox" data-oe={ownerEarnings} data-shares={shares} data-name={name}>
+    <div id="valBox" data-oe={ownerEarnings} data-shares={shares} data-name={name} data-eps3={eps3 ?? ""} data-bvps={bvps ?? ""}>
       <p class="intro">
         A price is the one input we don't pull — <b>you bring it</b>. Type today's close (read it off any
         broker or quote site) and see the owner-earnings growth you'd have to believe to justify it, set
@@ -56,6 +62,14 @@ const name = company.name || company.ticker;
         <div class="cmp"><span class="cl">Delivered (record)</span><span class="cv">{oeGrowth ? `${oeGrowth.replace("/yr", "")}/yr` : "—"}</span></div>
         <div class="cmp"><span class="cl">Owner-earnings yield</span><span class="cv" id="oeY">—</span></div>
       </div>
+
+      {eps3 != null && bvps != null ? (
+        <div class="compare gate">
+          <div class="cmp"><span class="cl">P/E (3-yr earnings)</span><span class="cv" id="pe">—</span></div>
+          <div class="cmp"><span class="cl">P/B</span><span class="cv" id="pb">—</span></div>
+          <div class="cmp"><span class="cl">Graham’s price gate</span><span class="cv" id="ggate">—</span></div>
+        </div>
+      ) : null}
 
       <div class="dials">
         <span class="dialsLbl">The assumptions — turn the dials</span>
@@ -117,6 +131,8 @@ const name = company.name || company.ticker;
     const r = document.getElementById("r"), n = document.getElementById("n"), g = document.getElementById("g");
     const rOut = document.getElementById("rOut"), nOut = document.getElementById("nOut"), gOut = document.getElementById("gOut");
     const lede = document.getElementById("lede"), impG = document.getElementById("impG"), oeY = document.getElementById("oeY");
+    const pe = document.getElementById("pe"), pb = document.getElementById("pb"), ggate = document.getElementById("ggate");
+    const EPS3 = parseFloat(box.dataset.eps3), BVPS = parseFloat(box.dataset.bvps);
 
     const pv = (gr, rr, N, gT) => { let p = 0, oe = 1; for (let y = 1; y <= N; y++) { oe *= 1 + gr; p += oe / Math.pow(1 + rr, y); } return p + (oe * (1 + gT)) / (rr - gT) / Math.pow(1 + rr, N); };
     function solve(mult, rr, N, gT) {
@@ -141,9 +157,22 @@ const name = company.name || company.ticker;
     function update() {
       const { rr, N, gT } = dials();
       const price = parseFloat(px.value);
-      if (!(price > 0)) { lede.textContent = "Enter a price above to run it."; impG.textContent = "—"; oeY.textContent = "—"; setURL(""); return; }
+      if (!(price > 0)) {
+        lede.textContent = "Enter a price above to run it."; impG.textContent = "—"; oeY.textContent = "—";
+        if (pe) pe.textContent = "—"; if (pb) pb.textContent = "—"; if (ggate) { ggate.textContent = "—"; ggate.style.color = ""; }
+        setURL(""); return;
+      }
       const mc = price * SH, res = solve(mc / OE, rr, N, gT);
       oeY.textContent = pcs(OE / mc);
+      if (pe || pb || ggate) {
+        const peV = EPS3 > 0 ? price / EPS3 : null, pbV = BVPS > 0 ? price / BVPS : null;
+        if (pe) pe.textContent = peV != null ? peV.toFixed(1) + "×" : "n/m";
+        if (pb) pb.textContent = pbV != null ? pbV.toFixed(1) + "×" : "n/m";
+        if (ggate) {
+          if (peV != null && pbV != null) { const ok = peV <= 15 && peV * pbV <= 22.5; ggate.textContent = ok ? "Clears" : "Too dear"; ggate.style.color = ok ? "var(--good)" : "var(--bad)"; }
+          else { ggate.textContent = "n/m"; ggate.style.color = ""; }
+        }
+      }
       if (!res) { impG.textContent = "—"; lede.textContent = "Set the discount rate above the terminal rate."; return; }
       impG.textContent = res.cap ? "100%+/yr" : pcs(res.g) + "/yr";
       const P = "$" + price.toFixed(2);
