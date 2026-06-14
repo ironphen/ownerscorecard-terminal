@@ -4,6 +4,7 @@ import fundamentals from "../data/fundamentals.json";
 import { getCollection } from "astro:content";
 import { fmtUSD, roicValue, ownerEarningsMargin, operatingMargin, liquidAssets } from "../lib/fundamentals.mjs";
 import { classify } from "../lib/archetype.mjs";
+import { grahamTests } from "../lib/graham.mjs";
 
 // ---- the catalog rows: every company reduced to the few sourced facts that
 // decide quality and survival. No rank, no score — the reader sorts by what they
@@ -21,6 +22,7 @@ const rows = [...(fundamentals.companies || [])]
     const cls = classify(c);
     const hasBal = L.totalDebt != null || L.cashAndEquivalents != null;
     const netCash = hasBal ? (liquidAssets(L) || 0) - (L.totalDebt || 0) : null; // + = net cash
+    const g = grahamTests(c);
     return {
       ticker: c.ticker,
       name: c.name || "",
@@ -33,6 +35,8 @@ const rows = [...(fundamentals.companies || [])]
       roic: roicValue(L),
       oeMargin: ownerEarningsMargin(L),
       netCash,
+      grahamPasses: g.passes,
+      grahamTestable: g.testable,
     };
   });
 
@@ -105,6 +109,7 @@ const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "
             <th class="num sortable" data-sort="roic">ROIC</th>
             <th class="num sortable" data-sort="oemargin">Owner-earn.</th>
             <th class="num sortable" data-sort="netdebt">Net cash / (debt)</th>
+            <th class="num sortable" data-sort="graham">Graham</th>
           </tr>
         </thead>
         <tbody>
@@ -118,6 +123,7 @@ const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "
               data-roic={r.roic ?? ""}
               data-oemargin={r.oeMargin ?? ""}
               data-netdebt={r.netCash ?? ""}
+              data-graham={r.grahamPasses ?? ""}
             >
               <td class="c-name">
                 <a href={`/c/${r.ticker}`} class="tkr">{r.ticker}</a>
@@ -132,12 +138,13 @@ const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "
               <td class="num">{pct(r.roic)}</td>
               <td class="num">{pct(r.oeMargin)}</td>
               <td class={`num nd ${r.netCash != null && r.netCash >= 0 ? "pos" : ""}`}>{ndCell(r.netCash)}</td>
+              <td class="num gra">{r.grahamTestable ? `${r.grahamPasses}/${r.grahamTestable}` : "—"}</td>
             </tr>
           ))}
         </tbody>
       </table>
     </div>
-    <p class="legend">Owner-earnings margin = (operating cash − capex) ÷ revenue. Net cash nets debt against cash and marketable securities. Parentheses are net debt.</p>
+    <p class="legend">Owner-earnings margin = (operating cash − capex) ÷ revenue. Net cash nets debt against cash and marketable securities; parentheses are net debt. Graham = how many of his defensive-investor tests the filings clear (of those computable) — a floor of safety, not a buy signal; sort by it to screen.</p>
   </section>
 
   <style>
