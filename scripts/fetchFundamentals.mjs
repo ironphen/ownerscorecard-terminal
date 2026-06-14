@@ -69,14 +69,19 @@ const CONCEPTS = {
   receivables: ["AccountsReceivableNetCurrent"],
   inventory: ["InventoryNet"],
   accountsPayable: ["AccountsPayableCurrent"],
+  sharesDiluted: [
+    "WeightedAverageNumberOfDilutedSharesOutstanding",
+    "WeightedAverageNumberOfShareOutstandingBasicAndDiluted",
+    "WeightedAverageNumberOfSharesOutstandingBasic",
+  ],
 };
 
 const days = (a, b) => Math.abs((new Date(b) - new Date(a)) / 86400000);
 
 // Pick the latest full-year (~annual duration) value from a 10-K for a concept.
-function pickAnnual(facts, tags) {
+function pickAnnual(facts, tags, unit = "USD") {
   for (const tag of tags) {
-    const units = facts?.facts?.["us-gaap"]?.[tag]?.units?.USD;
+    const units = facts?.facts?.["us-gaap"]?.[tag]?.units?.[unit];
     if (!units) continue;
     const annual = units
       .filter((u) => u.form && u.form.startsWith("10-K") && u.start && u.end && days(u.start, u.end) >= 350 && days(u.start, u.end) <= 380)
@@ -100,9 +105,9 @@ function pickInstant(facts, tags) {
 }
 
 // Collect every annual (duration) value per concept, keyed by fiscal year.
-function collectAnnual(facts, tags) {
+function collectAnnual(facts, tags, unit = "USD") {
   for (const tag of tags) {
-    const units = facts?.facts?.["us-gaap"]?.[tag]?.units?.USD;
+    const units = facts?.facts?.["us-gaap"]?.[tag]?.units?.[unit];
     if (!units) continue;
     const best = {};
     for (const u of units) {
@@ -199,6 +204,11 @@ async function main() {
       netIncome: collectAnnual(facts, CONCEPTS.netIncome),
       cashFromOps: collectAnnual(facts, CONCEPTS.cashFromOps),
       capex: collectAnnual(facts, CONCEPTS.capex),
+      costOfRevenue: collectAnnual(facts, CONCEPTS.costOfRevenue),
+      depreciation: collectAnnual(facts, CONCEPTS.depreciation),
+      dividendsPaid: collectAnnual(facts, CONCEPTS.dividendsPaid),
+      buybacks: collectAnnual(facts, CONCEPTS.buybacks),
+      sharesDiluted: collectAnnual(facts, CONCEPTS.sharesDiluted, "shares"),
     };
     const hi = {
       equity: collectInstant(facts, CONCEPTS.stockholdersEquity),
@@ -222,6 +232,11 @@ async function main() {
           cashAndEquivalents: hi.cash[fy] ?? null,
           cashFromOps: ha.cashFromOps[fy] ?? null,
           capex: ha.capex[fy] ?? null,
+          costOfRevenue: ha.costOfRevenue[fy] ?? null,
+          depreciation: ha.depreciation[fy] ?? null,
+          dividendsPaid: ha.dividendsPaid[fy] ?? null,
+          buybacks: ha.buybacks[fy] ?? null,
+          sharesDiluted: ha.sharesDiluted[fy] ?? null,
         },
       }));
 
@@ -254,6 +269,7 @@ async function main() {
         receivables: inst(CONCEPTS.receivables),
         inventory: inst(CONCEPTS.inventory),
         accountsPayable: inst(CONCEPTS.accountsPayable),
+        sharesDiluted: pickAnnual(facts, CONCEPTS.sharesDiluted, "shares")?.val ?? null,
       },
       history,
     });
