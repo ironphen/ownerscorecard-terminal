@@ -1,0 +1,36 @@
+# The Filing Wire — refreshes src/data/wire.json from SEC EDGAR submissions feeds.
+# Lightweight (just the recent-filings lists), so it runs daily on its own, keeping
+# the site current without the heavier fundamentals/filings refresh.
+name: Filing Wire
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 11 * * 1-5" # weekdays 11:00 UTC, after most filings post
+
+permissions:
+  contents: write
+
+jobs:
+  wire:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: npm run fetch:wire
+        env:
+          SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT }}
+      - name: Commit if changed
+        run: |
+          if ! git diff --quiet -- src/data/wire.json; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add src/data/wire.json
+            git commit -m "Refresh the filing wire"
+            git push
+          else
+            echo "No change."
+          fi
