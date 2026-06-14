@@ -25,6 +25,7 @@ const dataDir = path.join(process.cwd(), "src", "data");
 const fundamentals = JSON.parse(fs.readFileSync(path.join(dataDir, "fundamentals.json"), "utf8"));
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const ONLY = (process.env.ONLY_TICKERS || "").split(",").map((s) => s.trim().toUpperCase()).filter(Boolean);
+const DEBUG = (process.env.SEG_DEBUG || "").split(",").map((s) => s.trim().toUpperCase()).filter(Boolean);
 
 // ---- fetch with retry/backoff, EDGAR is polite-rate only ----
 async function fetchText(url) {
@@ -201,6 +202,21 @@ async function forCompany(c) {
   const meta = await (async () => { try { return JSON.parse((await fetchText(folder + "MetaLinks.json")) || "{}"); } catch { return {}; } })();
   const labels = buildLabels(meta);
   const contexts = parseContexts(xml, c.periodEnd);
+
+  if (DEBUG.includes(String(c.ticker).toUpperCase())) {
+    const axes = {};
+    for (const tag of [...new Set([...REV_TAGS, OI_TAGS[0]])]) {
+      for (const f of parseFacts(xml, tag)) {
+        const cx = contexts.get(f.ctx);
+        if (!cx || !cx.current || cx.dims.length !== 1) continue;
+        const ax = cx.dims[0].axisLocal;
+        (axes[ax] ||= new Set()).add(`${cx.dims[0].member}=${(f.val / 1e9).toFixed(1)}B`);
+      }
+    }
+    console.log(`\n=== ${c.ticker} (total rev ${(total / 1e9).toFixed(1)}B) single-dim current-year axes ===`);
+    for (const [ax, ms] of Object.entries(axes)) console.log(`  ${ax}: ${[...ms].join(", ")}`);
+    console.log("");
+  }
 
   // Segment revenue and segment operating income. We keep every member on the
   // segment axis except the named us-gaap roll-up subtotals (handled by AGGREGATE),

@@ -16,6 +16,10 @@ on:
         description: "Limit the segment fetch to these tickers (comma-separated; blank = all)"
         type: string
         default: ""
+      debug:
+        description: "Dump raw XBRL axes for these tickers (comma-separated; diagnostic only)"
+        type: string
+        default: ""
   schedule:
     - cron: "0 7 * * 1" # Mondays 07:00 UTC — self-refresh, no manual upkeep
 
@@ -45,6 +49,7 @@ jobs:
         env:
           SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT }}
           ONLY_TICKERS: ${{ github.event.inputs.tickers }}
+          SEG_DEBUG: ${{ github.event.inputs.debug }}
       - name: Commit if changed
         run: |
           if ! git diff --quiet -- src/data/fundamentals.json src/data/language.json src/data/segments.json; then
