@@ -162,7 +162,10 @@ function metrics(text) {
 // what they mean. Returns null when nothing clean is found, and the page falls back.
 const BIZ_DOING = /\b(designs?|manufactures?|manufacturing|develops?|markets?|provides?|providing|operates?|sells?|selling|distributes?|produces?|producing|delivers?|offers?|offering|supplies|supplying)\b/i;
 const BIZ_ISA = /\b(is|are)\s+(a|an|the)\b[^.]{0,60}?\b(compan|provider|manufacturer|producer|retailer|developer|operator|maker|supplier|distributor|platform|business|leader|corporation|holding|bank|insurer|airline|carrier)\w*/i;
-const BIZ_SKIP = /(was|were)\s+incorporated|incorporated\s+(under|in)\b|reincorporat|organized under the laws|founded in\s+\d|fiscal year|forward-looking|securities (act|exchange) of|report on form|unless the context|initial public offering|principal executive offices|market for (the )?registrant|common equity|equity securities|stockholder matters|may\s+(be|result|not|adversely|materially|cause|harm|decline|fail|impair)|could\s+(adversely|result|harm|cause|materially|impair)|no assurance|our ability to|unsubstantiated|misleading|table of contents/i;
+const BIZ_SKIP = /(was|were)\s+incorporated|incorporated\s+(under|in)\b|reincorporat|organized under the laws|founded in\s+\d|fiscal year|forward-looking|securities (act|exchange) of|report on form|unless the context|initial public offering|principal executive offices|market for (the )?registrant|common equity|equity securities|stockholder matters|\bmay\b|could\s+(adversely|result|harm|cause|materially|impair)|no assurance|our ability to|unsubstantiated|misleading|negative publicity|table of contents/i;
+// A weak subject: the sentence is about employees, customers or a side note, not the
+// company itself, so it is not a description of the business.
+const BIZ_WEAK = /^(we also\b|our (customers?|employees?|people|associates|team|more than|over\s|approximately|roughly|nearly))/i;
 const HEAD_TOKEN = /^(item\s*1[ab]?\b\.?|part\s*i+\b\.?|general development of (the )?business|business overview|company overview|our company|our business|the company|business|general|overview)\s*[:.\-–—]?\s+/i;
 const LEAD_VERB = /^(is|are|operates?|provides?|markets?|designs?|develops?|sells?|offers?|supplies|distributes?|delivers?|produces?|manufactures?|engages?)\b/i;
 
@@ -174,7 +177,7 @@ function businessDescription(sents, name) {
     let prev;
     do { prev = s; s = s.replace(HEAD_TOKEN, "").trim(); } while (s !== prev); // strip stacked headings
     if (s.length < 40 || s.length > 380) continue;
-    if (BIZ_SKIP.test(s)) continue;
+    if (BIZ_SKIP.test(s) || BIZ_WEAK.test(s)) continue;
     if (!BIZ_DOING.test(s) && !BIZ_ISA.test(s)) continue;
     s = s
       .replace(/\s*\([^)]*\)/g, "")
