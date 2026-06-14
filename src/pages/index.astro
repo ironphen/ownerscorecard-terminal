@@ -54,13 +54,6 @@ const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "
 ---
 
 <BaseLayout title="Owner Scorecard, read a company the way an owner would">
-  <p class="lede">
-    A company, read the way an owner would read it, from its own SEC filings, with the
-    arithmetic shown, no rating and no estimate. The catalog reduces each one to the few
-    facts that decide whether it survives and whether it's any good; the writing works
-    through what they mean.
-  </p>
-
   {articles.length ? (
     <section class="writing">
       <div class="bandHead">
@@ -105,10 +98,10 @@ const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "
             <th class="c-name sortable" data-sort="ticker">Company</th>
             <th class="c-model">Model</th>
             <th class="num sortable" data-sort="revenue">Revenue</th>
-            <th class="num sortable" data-sort="opmargin">Op. margin</th>
+            <th class="num sortable" data-sort="opmargin"><span class="lf">Op. margin</span><span class="ls">Op.</span></th>
             <th class="num sortable" data-sort="roic">ROIC</th>
-            <th class="num sortable" data-sort="oemargin">Owner-earn.</th>
-            <th class="num sortable" data-sort="netdebt">Net cash / (debt)</th>
+            <th class="num sortable" data-sort="oemargin"><span class="lf">Owner-earn.</span><span class="ls">OE</span></th>
+            <th class="num sortable" data-sort="netdebt"><span class="lf">Net cash / (debt)</span><span class="ls">Net cash</span></th>
             <th class="num sortable" data-sort="graham">Graham</th>
           </tr>
         </thead>
@@ -148,12 +141,6 @@ const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "
   </section>
 
   <style>
-    .lede {
-      font-family: var(--serif); font-style: italic;
-      font-size: clamp(18px, 2.6vw, 22px); line-height: 1.45;
-      color: #34383f; margin: 2px 0 30px; max-width: 64ch;
-    }
-
     .bandHead { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--rule-strong); padding-bottom: 6px; }
     .bandHead h2 { margin: 0; }
     .all { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; flex: 0 0 auto; }
@@ -203,9 +190,23 @@ const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "
 
     .legend { font-size: 11.5px; color: var(--faint); margin: 10px 0 0; line-height: 1.5; }
 
+    .ls { display: none; }
+
     @media (max-width: 640px) {
       .cards { grid-template-columns: 1fr; gap: 14px; }
       .cards li { border-left: 0; border-top: 1px solid var(--rule); padding: 10px 0 0; }
+    }
+
+    /* Tighten the catalog on a phone so more columns fit before it scrolls, and
+       swap the long headers for short ones. The ticker column stays sticky. */
+    @media (max-width: 560px) {
+      table.catalog { font-size: 12.5px; }
+      .catalog thead th { padding: 8px 7px 6px; font-size: 10px; letter-spacing: 0.03em; }
+      .catalog td { padding: 8px 7px; }
+      .lf { display: none; }
+      .ls { display: inline; }
+      .nm { max-width: 15ch; font-size: 10.5px; }
+      .tag { padding: 1px 5px; }
     }
   </style>
 
