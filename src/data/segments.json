@@ -1644,6 +1644,96 @@
           }
         ]
       }
+    },
+    "O": {
+      "fy": 2025,
+      "periodEnd": "2025-12-31",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/726728/000072672826000011/0000726728-26-000011-index.htm",
+      "revenueTotal": 5749377000,
+      "operatingIncomeTotal": null,
+      "byProduct": {
+        "reconcile": 0.946,
+        "items": [
+          {
+            "label": "Retail",
+            "qname": "o:ProductAndServiceRetailMember",
+            "revenue": 4325670000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Industrial",
+            "qname": "o:ProductAndServiceIndustrialMember",
+            "revenue": 864449000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Other",
+            "qname": "us-gaap:ProductAndServiceOtherMember",
+            "revenue": 247213000,
+            "operatingIncome": null
+          }
+        ]
+      }
+    },
+    "AMT": {
+      "fy": 2025,
+      "periodEnd": "2025-12-31",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1053507/000105350726000035/0001053507-26-000035-index.htm",
+      "revenueTotal": 935900000,
+      "operatingIncomeTotal": 4845800000,
+      "bySegment": {
+        "reconcile": 1,
+        "hasOperatingIncome": false,
+        "items": [
+          {
+            "label": "U.S. &amp; Canada",
+            "qname": "amt:PropertyUSAndCanadaMember",
+            "revenue": 632400000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Data Centers",
+            "qname": "amt:PropertyDataCentersMember",
+            "revenue": 151500000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Latin America",
+            "qname": "amt:PropertyLatinAmericaMember",
+            "revenue": 117600000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Africa &amp; APAC",
+            "qname": "amt:PropertyAfricaAPACMember",
+            "revenue": 24000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Europe",
+            "qname": "amt:PropertyEuropeMember",
+            "revenue": 10400000,
+            "operatingIncome": null
+          }
+        ]
+      },
+      "byProduct": {
+        "reconcile": 1,
+        "items": [
+          {
+            "label": "Non-lease property revenue",
+            "qname": "amt:NonLeasePropertyRevenueMember",
+            "revenue": 596300000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Services revenue",
+            "qname": "amt:ServicesRevenueMember",
+            "revenue": 339600000,
+            "operatingIncome": null
+          }
+        ]
+      }
     }
   }
 }
