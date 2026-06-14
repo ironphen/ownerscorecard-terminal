@@ -129,6 +129,54 @@ export function leverage(c) {
   };
 }
 
+// Liquid assets an owner can count against the debt: cash, plus short-term and
+// longer-dated marketable securities (not strategic or illiquid stakes).
+export function liquidAssets(L) {
+  if (!L) return null;
+  if (L.cashAndEquivalents == null && L.shortTermInvestments == null && L.longTermMarketable == null) return null;
+  return (L.cashAndEquivalents || 0) + (L.shortTermInvestments || 0) + (L.longTermMarketable || 0);
+}
+
+// Net debt = gross debt − (cash + short-term investments). The truer leverage
+// figure: gross debt ignores the cash already sitting against it. Negative means
+// net cash. Longer-dated marketable securities are surfaced in the note, not the
+// headline, to keep the definition conventional.
+export function cashPosition(c) {
+  const L = c?.lines || {};
+  const cash = L.cashAndEquivalents, debt = L.totalDebt;
+  if (cash == null && debt == null) return null;
+  const st = L.shortTermInvestments || 0;
+  const lt = L.longTermMarketable || 0;
+  const liquid = (cash || 0) + st;
+  const gross = debt || 0;
+  const net = gross - liquid; // >0 net debt, <0 net cash
+  const oi = L.operatingIncome;
+  const years = oi && oi > 0 && net > 0 ? net / oi : null;
+  const netCash = net < 0;
+
+  let tone, label;
+  if (netCash) { tone = "good"; label = gross === 0 ? "Net cash, debt-free" : "Net cash"; }
+  else if (net === 0) { tone = "good"; label = "Cash equals debt"; }
+  else if (years != null && years < 2) { tone = "ok"; label = "Modest net debt"; }
+  else if (years != null && years < 4) { tone = "warn"; label = "Meaningful net debt"; }
+  else if (years != null) { tone = "bad"; label = "Heavy net debt"; }
+  else { tone = "warn"; label = "Net debt"; }
+
+  const value = netCash ? `+${fmtUSD(-net)}` : fmtUSD(net);
+  const formula =
+    `Cash ${fmtUSD(cash || 0)}` + (st ? ` + ST investments ${fmtUSD(st)}` : "") + ` − debt ${fmtUSD(gross)}`;
+
+  let note = netCash
+    ? `Cash and short-term investments exceed every dollar of debt by ${fmtUSD(-net)} — on net the company owes nothing, and can act from strength when others can't.`
+    : `Netting ${fmtUSD(liquid)} of cash and short-term investments against ${fmtUSD(gross)} of debt leaves ${fmtUSD(net)} owed${years != null ? ` — about ${years.toFixed(1)}× a year's operating profit, versus the gross figure above` : ""}.`;
+  if (lt) {
+    const full = net - lt;
+    note += ` It also holds ${fmtUSD(lt)} in longer-dated marketable securities; counting those, it sits at ${full < 0 ? `net cash of ${fmtUSD(-full)}` : `${fmtUSD(full)} of net debt`}.`;
+  }
+  note += " Net debt is the leverage figure that matters; the gross ratio above ignores the cash already set against it. Strategic or illiquid investments aren't counted here.";
+  return { value, formula, tone, label, note };
+}
+
 // Capex vs. depreciation: a lens, not a grade.
 export function capexVsDepreciation(c) {
   const capex = c?.lines?.capex;
@@ -319,6 +367,7 @@ export function buildScorecard(company) {
         checks: [
           coverageCheck,
           wrap("How heavy is the debt?", leverage(company)),
+          wrap("Debt, net of cash", cashPosition(company)),
           wrap("How long is cash tied up?", cashConversionCycle(company)),
         ],
       },

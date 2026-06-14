@@ -66,6 +66,11 @@ const CONCEPTS = {
     "CashCashEquivalentsAndShortTermInvestmentsAtCarryingValue",
     "CashCashEquivalentsAndShortTermInvestments",
   ],
+  // Liquid securities held alongside cash — netted against debt for a truer
+  // leverage read (a company like Apple parks most of its war chest here, not in
+  // "cash"). Marketable-securities tags only, so strategic/illiquid stakes stay out.
+  shortTermInvestments: ["ShortTermInvestments", "MarketableSecuritiesCurrent", "AvailableForSaleSecuritiesCurrent", "OtherShortTermInvestments"],
+  longTermMarketable: ["MarketableSecuritiesNoncurrent", "AvailableForSaleSecuritiesNoncurrent"],
   receivables: ["AccountsReceivableNetCurrent"],
   inventory: ["InventoryNet"],
   accountsPayable: ["AccountsPayableCurrent", "AccountsPayableTradeCurrent", "AccountsPayableAndAccruedLiabilitiesCurrent"],
@@ -258,6 +263,8 @@ async function main() {
     const hi = {
       equity: collectInstant(facts, CONCEPTS.stockholdersEquity),
       cash: collectInstant(facts, CONCEPTS.cashAndEquivalents),
+      stInv: collectInstant(facts, CONCEPTS.shortTermInvestments),
+      ltMkt: collectInstant(facts, CONCEPTS.longTermMarketable),
       ltd: collectInstant(facts, CONCEPTS.longTermDebt),
       cur: collectInstant(facts, CONCEPTS.currentDebt),
     };
@@ -275,6 +282,8 @@ async function main() {
           totalDebt: hi.ltd[fy] != null || hi.cur[fy] != null ? (hi.ltd[fy] || 0) + (hi.cur[fy] || 0) : null,
           stockholdersEquity: hi.equity[fy] ?? null,
           cashAndEquivalents: hi.cash[fy] ?? null,
+          shortTermInvestments: hi.stInv[fy] ?? null,
+          longTermMarketable: hi.ltMkt[fy] ?? null,
           cashFromOps: ha.cashFromOps[fy] ?? null,
           capex: ha.capex[fy] ?? null,
           costOfRevenue: ha.costOfRevenue[fy] ?? null,
@@ -307,6 +316,8 @@ async function main() {
             depreciation: tf(CONCEPTS.depreciation),
             stockholdersEquity: latestObservation(facts, CONCEPTS.stockholdersEquity, "USD", true)?.val ?? null,
             cashAndEquivalents: latestObservation(facts, CONCEPTS.cashAndEquivalents, "USD", true)?.val ?? null,
+            shortTermInvestments: latestObservation(facts, CONCEPTS.shortTermInvestments, "USD", true)?.val ?? null,
+            longTermMarketable: latestObservation(facts, CONCEPTS.longTermMarketable, "USD", true)?.val ?? null,
             totalDebt: ttmLtd != null || ttmCurDebt != null ? (ttmLtd || 0) + (ttmCurDebt || 0) : null,
             sharesDiluted: latestObservation(facts, CONCEPTS.sharesDiluted, "shares", false)?.val ?? null,
           },
@@ -339,6 +350,8 @@ async function main() {
         buybacks: pick(CONCEPTS.buybacks),
         stockholdersEquity: inst(CONCEPTS.stockholdersEquity),
         cashAndEquivalents: inst(CONCEPTS.cashAndEquivalents),
+        shortTermInvestments: inst(CONCEPTS.shortTermInvestments),
+        longTermMarketable: inst(CONCEPTS.longTermMarketable),
         receivables: inst(CONCEPTS.receivables),
         inventory: inst(CONCEPTS.inventory),
         accountsPayable: inst(CONCEPTS.accountsPayable),
