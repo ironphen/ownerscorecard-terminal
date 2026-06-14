@@ -9,12 +9,12 @@ const { company } = Astro.props;
 const L = company.lines || {};
 const sbc = L.stockBasedComp;
 const rev = L.revenue, oi = L.operatingIncome;
-const oe = L.cashFromOps != null && L.capex != null ? L.cashFromOps - Math.abs(L.capex) : null;
 const comp = language?.companies?.[company.ticker]?.comp || null;
 
+// Against revenue (scale) and operating profit (materiality). Not owner earnings:
+// CFO adds SBC back, so it's baked into that denominator — a muddled comparison.
 const pctOf = (n, d, dp = 0) => (n != null && d && d > 0 ? `${((n / d) * 100).toFixed(dp)}%` : null);
 const sbcRev = sbc != null ? pctOf(sbc, rev) : null;
-const sbcOE = sbc != null ? pctOf(sbc, oe) : null;
 const sbcOI = sbc != null ? pctOf(sbc, oi) : null;
 
 const show = (sbc != null && rev) || comp?.payRatio != null;
@@ -42,7 +42,7 @@ const show = (sbc != null && rev) || comp?.payRatio != null;
       {sbc != null && rev ? (
         <li>
           <div class="r"><span class="k">Stock-based compensation</span><span class="v">{fmtUSD(sbc)}</span></div>
-          <p class="n">The slice of the business handed to employees in shares this year — {sbcRev} of revenue{sbcOE ? `, and ${sbcOE} of owner earnings` : sbcOI ? `, and ${sbcOI} of operating profit` : ""}. Buffett's oldest accounting fight: this is compensation, compensation is an expense, and the dilution is a cost you bear whether or not the headline earnings admit it. Net of it is the truer figure (see where the cash goes, above).</p>
+          <p class="n">The slice of the business handed to employees in shares this year — {sbcRev} of revenue{sbcOI ? `, equal to ${sbcOI} of operating profit` : ""}. Buffett's oldest accounting fight: this is compensation, compensation is an expense, real whether or not the headline earnings admit it. And note the trap — the cash-flow statement adds SBC back, so the operating cash, and the owner earnings drawn from it, are flattered by exactly this amount; counted as the cost it is, what an owner keeps is lower.</p>
         </li>
       ) : null}
     </ul>

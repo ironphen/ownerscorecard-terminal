@@ -45,31 +45,41 @@ const fmtDate = (d) =>
 <BaseLayout title={`${ticker} — Owner Scorecard`}>
   <p class="back"><a href="/">← All companies</a></p>
 
-  <header class="hero">
+  <header class="hero" id="top">
     <h1>{ticker}{name ? ` — ${name}` : ""}</h1>
     {fund ? <div class="meta">Latest filing: FY{fund.fy} {fund.form}</div> : null}
   </header>
 
-  {fund ? <Portrait company={fund} /> : null}
+  {fund ? (
+    <div class="cbar">
+      <a class="cbar-id" href="#top">{ticker}<span class="cbar-nm">{name ? ` · ${name}` : ""}</span></a>
+      <nav class="secnav" aria-label="Sections">
+        <a href="#sec-snapshot">Snapshot</a>
+        <a href="#sec-flags">Flags</a>
+        <a href="#sec-record">Record</a>
+        <a href="#sec-scorecard">Scorecard</a>
+        <a href="#sec-pay">Pay</a>
+        <a href="#sec-graham">Graham</a>
+        <a href="#sec-price">Price</a>
+        <a href="#sec-changes">Changes</a>
+        <a href="#sec-peers">Peers</a>
+        <a href="#sec-writing">Writing</a>
+      </nav>
+    </div>
+  ) : null}
 
-  {fund ? <OwnersRead company={fund} /> : null}
-
-  {fund ? <TenYear company={fund} /> : null}
-
-  {fund ? <Scorecard company={fund} sample={fundamentals.sample} /> : null}
-
-  {fund ? <Comp company={fund} /> : null}
-
-  {fund ? <Graham company={fund} /> : null}
-
-  {fund ? <Valuation company={fund} /> : null}
-
-  {fund ? <Language company={fund} /> : null}
-
-  {fund ? <Peers company={fund} /> : null}
+  {fund ? <div id="sec-snapshot" class="sec"><Portrait company={fund} /></div> : null}
+  {fund ? <div id="sec-flags" class="sec"><OwnersRead company={fund} /></div> : null}
+  {fund ? <div id="sec-record" class="sec"><TenYear company={fund} /></div> : null}
+  {fund ? <div id="sec-scorecard" class="sec"><Scorecard company={fund} sample={fundamentals.sample} /></div> : null}
+  {fund ? <div id="sec-pay" class="sec"><Comp company={fund} /></div> : null}
+  {fund ? <div id="sec-graham" class="sec"><Graham company={fund} /></div> : null}
+  {fund ? <div id="sec-price" class="sec"><Valuation company={fund} /></div> : null}
+  {fund ? <div id="sec-changes" class="sec"><Language company={fund} /></div> : null}
+  {fund ? <div id="sec-peers" class="sec"><Peers company={fund} /></div> : null}
 
   {related.length ? (
-    <>
+    <div id="sec-writing" class="sec">
       <h2>Writing</h2>
       <ul class="history">
         {related.map((a) => (
@@ -79,7 +89,7 @@ const fmtDate = (d) =>
           </li>
         ))}
       </ul>
-    </>
+    </div>
   ) : null}
 
   {!fund && !related.length ? <p>Nothing here for {ticker} yet.</p> : null}
@@ -88,10 +98,59 @@ const fmtDate = (d) =>
     .back { margin: 0 0 10px; }
     .hero h1 { margin: 0; }
     .meta { color: #555; font-size: 14px; margin-top: 4px; }
+
+    /* Sticky company bar — ticker always in view, plus section jump-nav. */
+    .cbar {
+      position: sticky; top: 0; z-index: 40; background: var(--paper);
+      display: flex; align-items: center; gap: 12px;
+      border-bottom: 1px solid var(--rule-strong); padding: 8px 0; margin: 12px 0 0;
+    }
+    .cbar-id { font-family: var(--sans); font-weight: 800; font-size: 14px; color: var(--ink); flex: 0 0 auto; }
+    .cbar-id:hover { color: var(--accent); text-decoration: none; }
+    .cbar-nm { font-weight: 500; color: var(--muted); font-size: 12.5px; }
+    .secnav { display: flex; gap: 2px; overflow-x: auto; flex: 1 1 auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+    .secnav::-webkit-scrollbar { display: none; }
+    .secnav a { flex: 0 0 auto; font-family: var(--sans); font-size: 11.5px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); padding: 4px 9px; white-space: nowrap; border-bottom: 2px solid transparent; }
+    .secnav a:hover { color: var(--ink); text-decoration: none; }
+    .secnav a.active { color: var(--ink); border-bottom-color: var(--accent); }
+    .sec { scroll-margin-top: 52px; }
+
     h2 { border-bottom: 1px solid #ddd; padding-bottom: 4px; margin-top: 24px; }
     .history { list-style: none; padding-left: 0; margin: 0; }
     .history li { padding: 10px 0; display: flex; justify-content: space-between; gap: 12px; border-bottom: 1px solid #f0f0f0; }
     .hDate { color: #666; flex: 0 0 auto; }
     .hLinks { flex: 1 1 auto; text-align: right; }
+    @media (max-width: 560px) { .cbar-nm { display: none; } }
   </style>
+
+  <script is:inline>
+    (function () {
+      const bar = document.querySelector(".cbar");
+      if (!bar) return;
+      const nav = bar.querySelector(".secnav");
+      // Drop nav links whose section rendered nothing (e.g. a company with no proxy or filing data).
+      nav.querySelectorAll("a").forEach((a) => {
+        const el = document.getElementById(a.getAttribute("href").slice(1));
+        if (!el || el.children.length === 0) a.remove();
+      });
+      const links = Array.from(nav.querySelectorAll("a"));
+      const byId = {}; links.forEach((a) => (byId[a.getAttribute("href").slice(1)] = a));
+      const targets = links.map((a) => document.getElementById(a.getAttribute("href").slice(1))).filter(Boolean);
+      if (!("IntersectionObserver" in window) || !targets.length) return;
+      let active = null;
+      const obs = new IntersectionObserver((entries) => {
+        entries.forEach((e) => {
+          if (!e.isIntersecting) return;
+          const a = byId[e.target.id];
+          if (!a || a === active) return;
+          if (active) active.classList.remove("active");
+          a.classList.add("active"); active = a;
+          const l = a.offsetLeft, r = l + a.offsetWidth;
+          if (l < nav.scrollLeft) nav.scrollLeft = l - 12;
+          else if (r > nav.scrollLeft + nav.clientWidth) nav.scrollLeft = r - nav.clientWidth + 12;
+        });
+      }, { rootMargin: "-15% 0px -75% 0px", threshold: 0 });
+      targets.forEach((t) => obs.observe(t));
+    })();
+  </script>
 </BaseLayout>
