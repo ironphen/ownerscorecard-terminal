@@ -5,6 +5,7 @@ import Scorecard from "../../components/Scorecard.astro";
 import Portrait from "../../components/Portrait.astro";
 import TenYear from "../../components/TenYear.astro";
 import Peers from "../../components/Peers.astro";
+import OwnersRead from "../../components/OwnersRead.astro";
 import Language from "../../components/Language.astro";
 import { getCollection } from "astro:content";
 
@@ -47,6 +48,8 @@ const fmtDate = (d) =>
   </header>
 
   {fund ? <Portrait company={fund} /> : null}
+
+  {fund ? <OwnersRead company={fund} /> : null}
 
   {fund ? <TenYear company={fund} /> : null}
 
