@@ -70,12 +70,30 @@ function section(text, startRe, endRes) {
   return best;
 }
 
+// Keep prose only — drop table rows, figure dumps, and page artifacts.
+function isProse(s) {
+  const digits = (s.match(/\d/g) || []).length;
+  const letters = (s.match(/[a-z]/gi) || []).length;
+  if (letters < 40) return false;
+  if (digits / (digits + letters) > 0.15) return false;
+  return !/table of contents|form 10-k|dollars in millions|^\s*index\b/i.test(s);
+}
+
 function sentences(text) {
   return text
+    .replace(/\d+\s+table of contents/gi, " ")
     .split(/(?<=[.!?])\s+(?=[A-Z(“"])/)
     .map((s) => s.trim())
-    .filter((s) => s.length >= 40 && /[a-z]/.test(s)); // drop headings/fragments
+    .filter((s) => s.length >= 50 && s.length <= 500 && isProse(s));
 }
+
+const tokenize = (s) => new Set(normalize(s).split(" ").filter((w) => w.length > 3));
+const jaccard = (a, b) => {
+  let inter = 0;
+  for (const x of a) if (b.has(x)) inter++;
+  const uni = a.size + b.size - inter;
+  return uni ? inter / uni : 0;
+};
 
 // Normalize so only language changes (not figures) count as "new".
 function normalize(s) {
@@ -90,11 +108,6 @@ function normalize(s) {
 }
 
 const HEDGE = /\b(may|might|could|would|believe|estimate|expect|intend|anticipate|potential|possibly|uncertain|depends?|adverse|risk|expose|fluctuat|assum|approximat)\w*/gi;
-const RED_FLAGS = [
-  "going concern", "substantial doubt", "material weakness", "restate",
-  "impairment", "impair", "covenant", "default", "delist", "subpoena",
-  "investigation", "decline in demand", "loss of a", "reduction in force",
-];
 const SIGNAL = /\b(risk|uncertain|adverse|declin|decreas|loss|weak|impair|litigation|competit|concentration|customer|supply|shortage|inflation|recession|headwind|slow|default|covenant|regulat|tariff)\w*/i;
 
 function countSyllables(w) {
@@ -140,28 +153,25 @@ async function getFiling(cik, f) {
   return { url, mdna: metrics(mdna), risk: metrics(risk), reportDate: f.reportDate };
 }
 
+// "New" = a prose sentence carrying a signal term whose wording doesn't closely
+// match anything in last year's filing (fuzzy, so figure updates and light edits
+// don't count). Returns only the notable handful — never a raw "everything
+// changed" count.
 function diff(curSents, priorSents) {
-  const priorSet = new Set(priorSents.map(normalize));
-  const added = curSents.filter((s) => !priorSet.has(normalize(s)));
-  const curSet = new Set(curSents.map(normalize));
-  const dropped = priorSents.filter((s) => !curSet.has(normalize(s)));
-  // notable = new sentences carrying a signal term, longest first, deduped
-  const notable = added
-    .filter((s) => SIGNAL.test(s))
+  const priorTok = priorSents.map(tokenize);
+  const isNew = (s) => {
+    const t = tokenize(s);
+    if (t.size < 6) return false;
+    for (const pt of priorTok) if (jaccard(t, pt) >= 0.55) return false;
+    return true;
+  };
+  const notable = curSents
+    .filter((s) => SIGNAL.test(s) && isNew(s))
     .sort((a, b) => b.length - a.length)
     .slice(0, 4)
-    .map((s) => s.replace(/\s+/g, " ").trim().slice(0, 320));
-  return { addedCount: added.length, droppedCount: dropped.length, notable };
+    .map((s) => s.replace(/\s+/g, " ").trim().slice(0, 300));
+  return { notableCount: notable.length, notable };
 }
-
-const redFlagsIn = (m1, m2) => {
-  const text = (arr) => arr.map((s) => s.toLowerCase()).join(" ");
-  const cur = text([...m1.mdna.sents, ...m1.risk.sents]);
-  const prior = m2 ? text([...m2.mdna.sents, ...m2.risk.sents]) : "";
-  const present = RED_FLAGS.filter((p) => cur.includes(p));
-  const fresh = present.filter((p) => prior && !prior.includes(p));
-  return { present: [...new Set(present)], fresh: [...new Set(fresh)] };
-};
 
 async function main() {
   const out = {};
@@ -183,14 +193,15 @@ async function main() {
       if (filings[1]) { await sleep(THROTTLE); prior = await getFiling(c.cik, filings[1]); }
     } catch (e) { console.warn(`  ! ${tk}: filing ${e.message}`); continue; }
 
-    if (cur.mdna.words < 300 && cur.risk.words < 300) {
-      console.warn(`  ! ${tk}: sections not extracted (words mdna=${cur.mdna.words} risk=${cur.risk.words})`);
+    // Quality gate: a clean Item 7 extraction is a few thousand words. Skip
+    // companies we couldn't parse rather than emit garbage.
+    if (cur.mdna.words < 1000) {
+      console.warn(`  ! ${tk}: MD&A not cleanly extracted (${cur.mdna.words}w) — skipping`);
       continue;
     }
 
     const mdnaDiff = prior ? diff(cur.mdna.sents, prior.mdna.sents) : null;
     const riskDiff = prior ? diff(cur.risk.sents, prior.risk.sents) : null;
-    const rf = redFlagsIn(cur, prior);
 
     out[tk] = {
       fy: cur.reportDate?.slice(0, 4) || null,
@@ -202,13 +213,11 @@ async function main() {
         hedgePrior: prior ? Math.round(prior.mdna.hedgeDensity * 1e4) / 1e4 : null,
       },
       risk: { words: cur.risk.words, wordsPrior: prior?.risk.words ?? null },
-      redFlags: rf.present,
-      newRedFlags: rf.fresh,
       mdnaChange: mdnaDiff,
       riskChange: riskDiff,
     };
     ok++;
-    console.log(`  ✓ ${tk}: MD&A ${cur.mdna.words}w fog ${cur.mdna.fog}` + (mdnaDiff ? `, +${mdnaDiff.addedCount} new sentences` : ""));
+    console.log(`  ✓ ${tk}: MD&A ${cur.mdna.words}w fog ${cur.mdna.fog}` + (mdnaDiff ? `, ${mdnaDiff.notableCount} notable new` : ""));
   }
 
   fs.writeFileSync(
