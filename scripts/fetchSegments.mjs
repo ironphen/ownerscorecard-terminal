@@ -147,7 +147,10 @@ function buildLabels(meta) {
     for (const inst of insts) {
       const tags = inst?.tag || {};
       for (const [rawKey, t] of Object.entries(tags)) {
-        const role = t?.lang?.["en-US"]?.role;
+        const langs = t?.lang;
+        if (!langs || typeof langs !== "object") continue;
+        const en = langs["en-US"] || langs["en-us"] || Object.values(langs)[0];
+        const role = en?.role;
         if (!role || typeof role !== "object") continue;
         let cands = [];
         for (const [k, v] of Object.entries(role)) { if (typeof v === "string" && !/documentation/i.test(k)) cands.push(v); }
@@ -252,6 +255,8 @@ async function forCompany(c) {
     }
     console.log(`\n=== ${c.ticker} (total rev ${(total / 1e9).toFixed(1)}B) single-dim current-year axes ===`);
     for (const [ax, ms] of Object.entries(axes)) console.log(`  ${ax}: ${[...ms].join(", ")}`);
+    const lk = Object.keys(labels);
+    console.log(`  labels resolved: ${lk.length}; sample: ${lk.slice(0, 5).map((k) => `${k}=${labels[k]}`).join(" | ")}`);
     console.log("");
   }
 
