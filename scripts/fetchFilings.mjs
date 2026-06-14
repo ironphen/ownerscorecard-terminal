@@ -155,19 +155,25 @@ function metrics(text) {
 }
 
 // The company's own one-sentence account of what it does, lifted verbatim from the
-// top of Item 1 (Business). We skip the incorporation and forward-looking openers
-// and take the first real "we design / it is a provider of ..." sentence, then strip
-// the parenthetical and subsidiary noise. Their words for what they do; our numbers
-// elsewhere for what it means. Returns null if nothing clean is found.
-const BIZ_DOING = /\b(designs?|manufactures?|manufacturing|develops?|markets?|provides?|providing|operates?|sells?|selling|distributes?|produces?|producing|delivers?|offers?|offering)\b/i;
-const BIZ_ISA = /\b(is|are)\s+(a|an|the)\b[^.]{0,60}?\b(compan|provider|manufacturer|producer|retailer|developer|operator|maker|supplier|distributor|platform|business|leader|corporation|holding|bank|insurer)\w*/i;
-const BIZ_SKIP = /(was incorporated|were incorporated|reincorporat|organized under the laws|founded in\s+\d|fiscal year (end|of|\s*\d)|forward-looking statement|securities (act|exchange) of|this (annual )?report on form|unless the context|completed (our|its) initial public offering|^\s*(general|overview|business|the company)\s*[:.]?\s*$)/i;
+// top of Item 1 (Business). We strip stacked section headings, reject incorporation,
+// forward-looking and risk-factor sentences, restore a subject lost to a split on
+// "Inc.", and require the company itself to be the subject so we never pass off a
+// risk line or a heading as the description. Their words; our numbers elsewhere for
+// what they mean. Returns null when nothing clean is found, and the page falls back.
+const BIZ_DOING = /\b(designs?|manufactures?|manufacturing|develops?|markets?|provides?|providing|operates?|sells?|selling|distributes?|produces?|producing|delivers?|offers?|offering|supplies|supplying)\b/i;
+const BIZ_ISA = /\b(is|are)\s+(a|an|the)\b[^.]{0,60}?\b(compan|provider|manufacturer|producer|retailer|developer|operator|maker|supplier|distributor|platform|business|leader|corporation|holding|bank|insurer|airline|carrier)\w*/i;
+const BIZ_SKIP = /(was|were)\s+incorporated|incorporated\s+(under|in)\b|reincorporat|organized under the laws|founded in\s+\d|fiscal year|forward-looking|securities (act|exchange) of|report on form|unless the context|initial public offering|principal executive offices|market for (the )?registrant|common equity|equity securities|stockholder matters|may\s+(be|result|not|adversely|materially|cause|harm|decline|fail|impair)|could\s+(adversely|result|harm|cause|materially|impair)|no assurance|our ability to|unsubstantiated|misleading|table of contents/i;
+const HEAD_TOKEN = /^(item\s*1[ab]?\b\.?|part\s*i+\b\.?|general development of (the )?business|business overview|company overview|our company|our business|the company|business|general|overview)\s*[:.\-–—]?\s+/i;
+const LEAD_VERB = /^(is|are|operates?|provides?|markets?|designs?|develops?|sells?|offers?|supplies|distributes?|delivers?|produces?|manufactures?|engages?)\b/i;
 
-function businessDescription(sents) {
+function businessDescription(sents, name) {
   if (!Array.isArray(sents)) return null;
-  for (const raw of sents.slice(0, 12)) {
+  const firstWord = ((name || "").replace(/^the\s+/i, "").match(/[A-Za-z]{3,}/) || [])[0];
+  for (const raw of sents.slice(0, 14)) {
     let s = cleanQuote(String(raw || ""));
-    if (s.length < 45 || s.length > 360) continue;
+    let prev;
+    do { prev = s; s = s.replace(HEAD_TOKEN, "").trim(); } while (s !== prev); // strip stacked headings
+    if (s.length < 40 || s.length > 380) continue;
     if (BIZ_SKIP.test(s)) continue;
     if (!BIZ_DOING.test(s) && !BIZ_ISA.test(s)) continue;
     s = s
@@ -175,7 +181,10 @@ function businessDescription(sents) {
       .replace(/,?\s+and its (wholly[- ]owned )?subsidiaries\b/i, "")
       .replace(/\s{2,}/g, " ")
       .trim();
-    if (s.length < 40) continue;
+    if (LEAD_VERB.test(s) && name) s = `${name.trim()} ${s}`; // restore the lost subject
+    const head = s.split(/\s+/).slice(0, 5).join(" ");
+    const hasSubject = /^(we|our)\b/i.test(s) || (firstWord && new RegExp(`\\b${firstWord}\\b`, "i").test(head));
+    if (!hasSubject || !/^[A-Z]/.test(s) || s.length < 40) continue;
     return s.length > 300 ? s.slice(0, 297).replace(/[\s,;]+\S*$/, "") + "…" : s;
   }
   return null;
@@ -443,7 +452,7 @@ async function main() {
       fy: cur.reportDate?.slice(0, 4) || null,
       priorFy: prior?.reportDate?.slice(0, 4) || null,
       sourceUrl: cur.url,
-      business: businessDescription(cur.business.sents),
+      business: businessDescription(cur.business.sents, c.name),
       ownerFlags: flags,
       mdna: {
         words: cur.mdna.words, fog: cur.mdna.fog, hedgeDensity: Math.round(cur.mdna.hedgeDensity * 1e4) / 1e4,
