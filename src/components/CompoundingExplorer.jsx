@@ -71,7 +71,7 @@ export default function CompoundingExplorer() {
       <p style={{ fontSize: 14, margin: "8px 0 0" }}>
         You put in <strong>{usd(contributed)}</strong>; compounding turns it into{" "}
         <strong>{usd(final)}</strong>. The gap between the dashed line (contributions) and the
-        solid line (value) is the part the market did for you — and almost all of it arrives
+        solid line (value) is the part the market did for you, and almost all of it arrives
         in the later years.
       </p>
     </div>

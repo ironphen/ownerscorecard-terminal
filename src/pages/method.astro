@@ -5,68 +5,68 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 // transfer to any company, and exactly how every number is made.
 const steps = [
   {
-    h: "1 — What is this business, really?",
-    p: "Before a single ratio, understand how the company turns effort into cash: what it sells, to whom, and why anyone keeps buying. Buffett's circle of competence isn't a slogan — if you can't explain the business in a sentence, you can't value it. We label each company by its economic shape (asset-light, capital-intensive, retail, consumer brand) because the questions that matter change with the model.",
+    h: "1. What is this business, really?",
+    p: "Before a single ratio, understand how the company turns effort into cash: what it sells, to whom, and why anyone keeps buying. Buffett's circle of competence is not a slogan. If you cannot explain the business in a sentence, you cannot value it. We label each company by its economic shape (asset-light, capital-intensive, retail, consumer brand), because the questions that matter change with the model.",
   },
   {
-    h: "2 — What does the company itself flag?",
-    p: "A 10-K's Risk Factors and Management's Discussion are where the people running the business must, under penalty of law, name what could go wrong and what's changing. Read their words before anyone else's. We surface the handful Graham and Buffett would stop on — customer concentration, pricing power, debt covenants, a real lawsuit — quoted verbatim, never paraphrased.",
+    h: "2. What does the company itself flag?",
+    p: "A 10-K's Risk Factors and Management's Discussion are where the people running the business must, under penalty of law, name what could go wrong and what is changing. Read their words before anyone else's. We surface the handful Graham and Buffett would stop on, such as customer concentration, pricing power, debt covenants, or a real lawsuit, quoted exactly as written and never paraphrased.",
   },
   {
-    h: "3 — Is there a record, and is it stable?",
-    p: "Graham wanted a profit in every one of the past ten years, not a good quarter. A decade of figures — from the filings, no estimates — tells you whether the economics are durable or whether one chart is hiding a cycle. Look at the worst year, not the average.",
+    h: "3. Is there a record, and is it stable?",
+    p: "Graham wanted a profit in every one of the past ten years, not one good quarter. A decade of figures, taken from the filings with no estimates, tells you whether the economics are durable or whether a single chart is hiding a cycle. Look at the worst year, not the average.",
   },
   {
-    h: "4 — Will it survive?",
-    p: "Solvency comes before everything. Can a year of operating profit cover the interest many times over? Is debt small against working capital and net of cash? A business that cannot be killed never has to be timed — and most permanent losses come from leverage, not bad businesses.",
+    h: "4. Will it survive?",
+    p: "Solvency comes first. Can a year of operating profit cover the interest many times over? Is debt small against working capital and net of cash? A business that cannot be killed never has to be timed, and most permanent losses come from leverage rather than from bad businesses.",
   },
   {
-    h: "5 — Is it a good business?",
-    p: "Buffett's north star is return on invested capital that doesn't fade — a high return year after year is the signature of a moat, and over time a stock tracks the returns of the business beneath it. Judge cash on owner earnings (operating cash minus the capex to stand still), not the accountant's earnings, and treat stock compensation as the real expense it is.",
+    h: "5. Is it a good business?",
+    p: "Buffett's north star is a return on invested capital that does not fade. A high return, repeated year after year, is the signature of a moat, and over time a stock tracks the returns of the business beneath it. Judge the cash on owner earnings, meaning operating cash minus the capex needed just to stand still, rather than the accountant's earnings, and treat stock compensation as the real expense it is.",
   },
   {
-    h: "6 — What does management do with the cash?",
-    p: "Capital allocation is, in Buffett's words, the most important job a CEO has. Over a decade, did the cash generated go back into the business at high returns, out to owners as dividends and honest buybacks, or up in smoke on empire-building? The split doesn't grade management; the return earned on what's reinvested does.",
+    h: "6. What does management do with the cash?",
+    p: "Capital allocation is, in Buffett's words, the most important job a chief executive has. Over a decade, did the cash go back into the business at high returns, out to owners as dividends and honest buybacks, or up in smoke on empire-building? The split alone does not grade management. The return earned on what gets reinvested does.",
   },
   {
-    h: "7 — What are you paying?",
-    p: "Price is what you give; value is what you get. We never print a 'fair value' or a target — that's false precision dressed as insight. Instead we turn a price into the expectation it embeds: the owner-earnings growth, or the future profitability, you'd have to believe to justify it. Then you demand a margin of safety. Those are Graham's three most important words.",
+    h: "7. What are you paying?",
+    p: "Price is what you give and value is what you get. We never print a fair value or a target, which is false precision dressed up as insight. Instead we turn a price into the expectation buried inside it: the owner-earnings growth, or the future profitability, you would have to believe to justify it. Then you ask for a margin of safety. Those were Graham's three most important words.",
   },
   {
-    h: "8 — Refuse the verdict.",
-    p: "No tool should tell you what to buy, and the ones that do are selling your attention. Every number here is sourced and the arithmetic is shown; the judgment is left, deliberately, to you. That friction is not a missing feature. It is the whole point.",
+    h: "8. Refuse the verdict.",
+    p: "No tool should tell you what to buy, and the ones that do are usually selling your attention. Every number here is sourced and the arithmetic is shown. The judgment is left to you on purpose, because making it yourself is the part that turns a trader into an investor.",
   },
 ];
 
 const build = [
-  ["Primary source, only.", "Every figure comes from the company's own SEC filings on EDGAR, and the link to the filing is one click away. No third-party estimates, no analyst price targets."],
-  ["The arithmetic is shown.", "Each ratio carries its formula and its inputs. Nothing is a black box you're asked to trust."],
-  ["No model writes the analysis.", "The qualitative flags are sentences quoted verbatim from the filing, found with plain classic text analysis — never generated by a language model, so never hallucinated."],
-  ["No rating. No price target. No buy or sell.", "By design. The product is the ability to check, not a verdict to follow."],
-  ["No ads, no paywall, no conflicts, $0.", "We don't sell your attention or your data, and the author's personal positions are not published. This is a method to learn, not a model portfolio to copy."],
-  ["It maintains itself.", "The data refreshes from EDGAR on its own — the deep figures weekly, new filings daily — so what you read stays current without anyone touching it."],
-  ["Built by a finance mind and AI.", "Which is rather the point. You no longer need a quant desk or a CS degree to build a serious instrument for thinking about businesses."],
+  ["Primary source, only.", "Every figure comes from the company's own SEC filings on EDGAR, and the link to that filing is one click away. No third-party estimates, no analyst price targets."],
+  ["The arithmetic is shown.", "Each ratio carries its formula and its inputs. Nothing is a black box you are asked to trust."],
+  ["No model writes the analysis.", "The qualitative flags are sentences quoted word for word from the filing, found with plain classic text analysis. No language model generates them, so none can hallucinate."],
+  ["No rating, no price target, no buy or sell.", "By design. The product is the ability to check, not a verdict to follow."],
+  ["No ads, no paywall, no conflicts, no cost.", "We do not sell your attention or your data, and the author's personal positions are not published. This is a method to learn, not a model portfolio to copy."],
+  ["It maintains itself.", "The data refreshes from EDGAR on its own, the deep figures weekly and new filings daily, so what you read stays current without anyone touching it."],
+  ["Built by a finance mind and AI.", "That is part of the point. You no longer need a quant desk or a computer-science degree to build a serious instrument for thinking about businesses."],
 ];
 ---
 
-<BaseLayout title="The Method — Owner Scorecard">
+<BaseLayout title="The Method, Owner Scorecard">
   <header class="hero">
     <h1>How to read a business</h1>
-    <p class="dek">The whole of intelligent investing fits in one book. This is that book's method, in a modern form — and the reason we built it.</p>
+    <p class="dek">The whole of intelligent investing fits in one book. This page is that book's method in a modern form, and the reason we built it.</p>
   </header>
 
   <section class="band">
     <h2>Why this exists</h2>
     <div class="prose">
-      <p>Charlie Munger called most of what passes for investment wisdom <em>twaddle</em> — the academic models, the Wall Street noise, the complexity sold hardest by the people whose jobs depend on it staying complex. He and Buffett liked to say they could teach the whole subject in a single class; the catch is that the professors would be out of work. Because the truth is almost insultingly simple: a share is a piece of a business, a business is worth the cash it will hand its owners over its life, and the job is to buy it for less than that, with a margin of safety. Graham wrote it down in 1949. Little of consequence has been added since.</p>
-      <p>What <em>has</em> changed is the noise — grown now into the most perverse state in its history. Zero-day options, SPACs, crypto, prediction markets, an IPO carnival, and a stampede into anything with “AI” in its name, business model optional. A generation has been handed gambling apps dressed as brokerages and almost nothing that teaches it to think like an owner.</p>
-      <p>This is a small attempt to push the other way. Not a tip service, not a screener that spits out a verdict — a place to learn the few questions that actually matter, applied to real companies from their own filings, so that the next time you look at <em>any</em> business, in this catalog or not, you know what to look for. We can't make you a great investor. Graham's book can. We're only trying to put its method where this generation already is.</p>
+      <p>Charlie Munger called most of what passes for investment wisdom twaddle: the academic models, the Wall Street noise, the complexity sold hardest by the people whose jobs depend on it staying complex. He and Buffett liked to say they could teach the whole subject in a single class, except that the professors would then be out of work. The truth is almost insultingly simple. A share is a piece of a business. A business is worth the cash it will hand its owners over its life. The job is to buy it for less than that, with a margin of safety. Graham wrote this down in 1949, and little of consequence has been added since.</p>
+      <p>What has changed is the noise, which has grown into the most perverse state in its history. Zero-day options, SPACs, crypto, prediction markets, an IPO carnival, and a stampede into anything with “AI” in its name whether or not there is a business behind it. A whole generation has been handed gambling apps dressed up as brokerages and almost nothing that teaches it to think like an owner.</p>
+      <p>This is a small attempt to push the other way. It is not a tip service, and not a screener that hands you a verdict. It is a place to learn the few questions that actually matter, applied to real companies from their own filings, so that the next time you look at any business, in this catalog or not, you know what to look for. We cannot make you a great investor. Graham's book can. We are only trying to put its method where this generation already spends its time.</p>
     </div>
   </section>
 
   <section class="band">
     <h2>The few questions that matter</h2>
-    <p class="sub">Every company page is built on these, in the order an owner asks them. Learn the order and you can read a 10-K you've never seen before.</p>
+    <p class="sub">Every company page is built on these, in the order an owner asks them. Learn the order and you can read a 10-K you have never seen before.</p>
     <ol class="steps">
       {steps.map((s) => (
         <li>
@@ -78,8 +78,8 @@ const build = [
   </section>
 
   <section class="band">
-    <h2>How it's built — and why you can trust it</h2>
-    <p class="sub">You should trust a research tool only as far as you can check it. So:</p>
+    <h2>How it is built, and why you can trust it</h2>
+    <p class="sub">You should trust a research tool only as far as you can check it, so here is how this one works.</p>
     <ul class="build">
       {build.map(([h, p]) => (
         <li><span class="bh">{h}</span> {p}</li>
@@ -90,20 +90,20 @@ const build = [
   <section class="band">
     <h2>Read the originals</h2>
     <div class="prose">
-      <p>There is no secret, and nothing here replaces the source. Read them:</p>
+      <p>There is no secret here, and nothing on this page replaces the source. Read them.</p>
       <ul class="reading">
-        <li>Benjamin Graham, <em>The Intelligent Investor</em> (1949) — above all the chapters on Mr. Market and on margin of safety.</li>
-        <li>Benjamin Graham &amp; David Dodd, <em>Security Analysis</em> (1934).</li>
-        <li>Warren Buffett, the Berkshire Hathaway shareholder letters — free, and the best finance education in print.</li>
+        <li>Benjamin Graham, <em>The Intelligent Investor</em> (1949), above all the chapters on Mr. Market and on margin of safety.</li>
+        <li>Benjamin Graham and David Dodd, <em>Security Analysis</em> (1934).</li>
+        <li>Warren Buffett, the Berkshire Hathaway shareholder letters, free to read and the best finance education in print.</li>
         <li>Charlie Munger, <em>Poor Charlie's Almanack</em>.</li>
       </ul>
-      <p>Read those, practice on real businesses with the help of pages like these, and ignore almost everything else. That, in full, is the method.</p>
+      <p>Read those, practice on real businesses with pages like these, and ignore almost everything else. That is the method, in full.</p>
     </div>
   </section>
 
   <style>
     .hero h1 { margin: 0 0 8px; }
-    .dek { font-family: var(--serif); font-style: italic; font-size: clamp(17px, 2.6vw, 21px); line-height: 1.45; color: #34383f; margin: 0; max-width: 60ch; }
+    .dek { font-family: var(--serif); font-style: italic; font-size: clamp(17px, 2.6vw, 21px); line-height: 1.45; color: #34383f; margin: 0; max-width: 62ch; }
 
     .band { margin: 34px 0; }
     .band h2 { border-bottom: 1px solid var(--rule-strong); padding-bottom: 6px; }
@@ -111,7 +111,7 @@ const build = [
 
     .prose p { font-size: 16px; line-height: 1.65; color: #2c2f36; margin: 12px 0 0; max-width: 68ch; }
 
-    .steps { list-style: none; counter-reset: none; padding: 0; margin: 14px 0 0; }
+    .steps { list-style: none; padding: 0; margin: 14px 0 0; }
     .steps li { padding: 14px 0; border-bottom: 1px solid var(--rule); }
     .steps h3 { font-family: var(--sans); font-size: 15px; font-weight: 700; letter-spacing: 0.01em; margin: 0; color: var(--ink); }
     .steps p { font-size: 15px; line-height: 1.6; color: #3a3e46; margin: 6px 0 0; max-width: 72ch; }

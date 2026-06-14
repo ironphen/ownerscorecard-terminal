@@ -1,18 +1,18 @@
 #!/usr/bin/env node
-// fetchFilings.mjs — the qualitative read of the 10-K.
+// fetchFilings.mjs, the qualitative read of the 10-K.
 //
 // Pulls each company's two most recent 10-K documents from EDGAR, extracts the
 // Business (Item 1), MD&A (Item 7) and Risk Factors (Item 1A), and produces two
 // things, both verbatim and sourced, never scored:
-//   1. "What an owner would flag" — the timeless sentences Graham and Buffett
+//   1. "What an owner would flag", the timeless sentences Graham and Buffett
 //      would stop on (customer concentration, pricing power, debt covenants,
 //      going-concern doubt, dilution, …), one per lens, from the latest filing.
-//   2. "What changed" — sentences genuinely new versus last year's filing
+//   2. "What changed", sentences genuinely new versus last year's filing
 //      (number-normalized so figure updates don't count), plus length,
 //      readability and hedging drift.
 // Writes src/data/language.json.
 //
-// 100% EDGAR — no key, no LLM. Runs in CI (needs data.sec.gov + www.sec.gov).
+// 100% EDGAR, no key, no LLM. Runs in CI (needs data.sec.gov + www.sec.gov).
 //   npm run fetch:filings
 
 import fs from "node:fs";
@@ -60,7 +60,7 @@ function htmlToText(html) {
 
 // Verbatim-but-tidy: strip a glued section sub-heading off the front of a quoted
 // sentence (the HTML flattens "Competition" / "Loss Contingencies" / "Foo Bar :"
-// onto the sentence that follows). Conservative — only a leading Title-Case run or
+// onto the sentence that follows). Conservative, only a leading Title-Case run or
 // a short colon-led label, never sentence content.
 function cleanQuote(s) {
   s = s.replace(/\s+/g, " ").trim();
@@ -97,7 +97,7 @@ function section(text, startRe, endRes) {
   return best;
 }
 
-// Keep prose only — drop table rows, figure dumps, and page artifacts.
+// Keep prose only, drop table rows, figure dumps, and page artifacts.
 function isProse(s) {
   const digits = (s.match(/\d/g) || []).length;
   const letters = (s.match(/[a-z]/gi) || []).length;
@@ -183,9 +183,8 @@ async function getFiling(cik, f) {
 
 // ---- executive pay (proxy statement / DEF 14A) ----
 // The CEO-to-median pay ratio is a required Item 402(u) disclosure, stated as a
-// formula ("X to 1"), so it extracts cleanly. We take only that number — table
-// parsing across varied proxies is too fragile for a credibility-first product —
-// and omit it when no clean match is found.
+// formula ("X to 1"), so it extracts cleanly. We take only that number, table
+// parsing across varied proxies is too fragile for a credibility-first product,// and omit it when no clean match is found.
 async function latestProxy(cik) {
   const sub = await fetchText(`https://data.sec.gov/submissions/CIK${cik}.json`);
   const j = JSON.parse(sub);
@@ -226,7 +225,7 @@ async function getComp(cik, f) {
 
 // "New" = a prose sentence carrying a signal term whose wording doesn't closely
 // match anything in last year's filing (fuzzy, so figure updates and light edits
-// don't count). Returns only the notable handful — never a raw "everything
+// don't count). Returns only the notable handful, never a raw "everything
 // changed" count.
 function diff(curSents, priorSents) {
   const priorTok = priorSents.map(tokenize);
@@ -249,19 +248,19 @@ function diff(curSents, priorSents) {
 // Business, MD&A and Risk Factors that Graham (solvency, stability) and Buffett
 // (a moat, who you depend on, who sets the price) would stop on. Each theme is a
 // lens; we surface the single most specific sentence that trips it, verbatim and
-// sourced — never a score. Ordered so the gravest, rarest flags come first.
+// sourced, never a score. Ordered so the gravest, rarest flags come first.
 const FLAG_THEMES = [
   {
     lens: "Going-concern doubt",
-    why: "The rarest and gravest flag — the company's own auditors questioning whether it survives the year. Graham's first test, failed.",
+    why: "The rarest and gravest flag, the company's own auditors questioning whether it survives the year. Graham's first test, failed.",
     test: (s) => /substantial doubt[\s\S]{0,60}(continue as a going concern|ability to continue)/i.test(s),
     bonus: () => 6,
   },
   {
     lens: "Customer concentration",
-    why: "Who the revenue leans on. When one buyer is a large slice of sales, that buyer holds the pricing power — and its troubles become the company's.",
+    why: "Who the revenue leans on. When one buyer is a large slice of sales, that buyer holds the pricing power, and its troubles become the company's.",
     // Require an actual share-of-revenue disclosure (a percentage), not merely the
-    // word "customers" next to some number — that mislabels subscriber/headcount lines.
+    // word "customers" next to some number, that mislabels subscriber/headcount lines.
     test: (s) =>
       /\bcustomers?\b/i.test(s) &&
       /\d{1,3}\s?(%|percent)/i.test(s) &&
@@ -282,10 +281,10 @@ const FLAG_THEMES = [
   },
   {
     lens: "Concentrated dependence",
-    why: "What the whole business leans on — a product, a platform, a partner. Concentration cuts both ways, and the filing is where management has to admit it.",
+    why: "What the whole business leans on, a product, a platform, a partner. Concentration cuts both ways, and the filing is where management has to admit it.",
     // Require a concrete object of dependence (product/platform/customer/supplier/
-    // single-something), so generic "our success depends on our employees" — true of
-    // every company — doesn't fill the slot.
+    // single-something), so generic "our success depends on our employees", true of
+    // every company, doesn't fill the slot.
     test: (s) =>
       /(substantially depend|depend\w* heavily|depend\w* significantly|materially depend|a significant (portion|percentage) of (our )?(revenue|net sales|sales|business))/i.test(s) ||
       /\bdepend\w*\s+(?:on|upon)\s+(?:the\s+)?(?:price|availability|supply|cost)s?\b/i.test(s) ||
@@ -301,9 +300,9 @@ const FLAG_THEMES = [
   },
   {
     lens: "Litigation & contingencies",
-    why: "Claims an owner inherits. Most disclosure is boilerplate; this fires only on an actual matter — a named suit, a settlement, a contingency, a number.",
+    why: "Claims an owner inherits. Most disclosure is boilerplate; this fires only on an actual matter, a named suit, a settlement, a contingency, a number.",
     // Require an actual legal/regulatory/tax matter (a named suit, a settlement of
-    // a lawsuit, a fine, a court ruling, a defendant, a specific allegation) — never
+    // a lawsuit, a fine, a court ruling, a defendant, a specific allegation), never
     // an operational $-line with an incidental "settle"/"penalty"/"contingency".
     test: (s) =>
       /(class action|securities (class action|fraud)|antitrust (suit|claim|lawsuit|investigation|matter|case|action|complaint|litigation|fine|probe)|monopoliz|anticompetitive|patent (infringement|dispute|suit|litigation)|product liability|qui tam|whistleblower|consent decree|(named (as )?a defendant|is a defendant|are defendants|sued (us|the company|the))|(lawsuit|complaint|class action|legal proceeding)s? (filed|brought|pending|alleging|seeking|that allege)|settle\w+ (of |a |an |the |this |that |certain |previously )*(lawsuit|litigation|class action|legal (matter|proceeding|claim|action)|patent|antitrust|opioid)|jury (verdict|award\w*|found)|(court|circuit|appeals?|tribunal|judge)[\sa-zA-Z']{0,30}(ruled|awarded|affirmed|reversed|judgment|denial|dismiss|enjoin)|investigation by (the )?(SEC|DOJ|FTC|EU|European Commission|attorney general|Department of Justice|state)|(fine|penalty)[\s\S]{0,25}(EC|European Commission|antitrust|competition authorit)|appeal\w+ the (EC|EU|European|decision)|infring\w+ (our|its|the|on|upon)|alleg\w+ (that|monopoli|fraud|infring|breach|violations? of|discriminat)|(IRS|tax authorit\w+)[\s\S]{0,55}(propos\w+|seeking|asserted|deficiency|adjustment|disput|notice)|(charge|liability|accru\w+|reserve|provision|net gains?)[\s\S]{0,50}(litigation|legal (matter|proceeding|settlement|claim)|class action|antitrust|opioid|interchange))/i.test(s),
@@ -325,7 +324,7 @@ const FLAG_THEMES = [
   },
   {
     lens: "Regulation & policy",
-    why: "Rules that can rewrite the economics — tariffs, antitrust, data, export controls.",
+    why: "Rules that can rewrite the economics, tariffs, antitrust, data, export controls.",
     // Require a specific named regime, not generic "we comply with regulations".
     test: (s) =>
       /(tariff|export control|economic sanction|antitrust|data privacy|GDPR|CHIPS Act|Inflation Reduction Act|Dodd-Frank|emissions?|FDA|EPA|FTC|DOJ|European Commission|net neutrality|price (control|cap)|excise tax|sugar tax|container deposit|extended producer responsibility)/i.test(s) &&
@@ -392,7 +391,7 @@ async function main() {
     // garbage. The owner-flags can carry even if one section came up short.
     const qualWords = cur.business.words + cur.mdna.words + cur.risk.words;
     if (qualWords < 1500) {
-      console.warn(`  ! ${tk}: qualitative sections not cleanly extracted (${qualWords}w) — skipping`);
+      console.warn(`  ! ${tk}: qualitative sections not cleanly extracted (${qualWords}w), skipping`);
       continue;
     }
 
@@ -406,7 +405,7 @@ async function main() {
     const mdnaDiff = prior ? diff(cur.mdna.sents, prior.mdna.sents) : null;
     const riskDiff = prior ? diff(cur.risk.sents, prior.risk.sents) : null;
 
-    // Executive pay from the latest proxy (non-fatal — a bonus layer).
+    // Executive pay from the latest proxy (non-fatal, a bonus layer).
     let comp = null;
     try {
       const proxy = await latestProxy(c.cik);
@@ -434,7 +433,7 @@ async function main() {
 
   fs.writeFileSync(
     path.join(dataDir, "language.json"),
-    JSON.stringify({ asOf: new Date().toISOString().slice(0, 10), source: "SEC EDGAR — 10-K documents", sample: false, companies: out }, null, 2) + "\n"
+    JSON.stringify({ asOf: new Date().toISOString().slice(0, 10), source: "SEC EDGAR, 10-K documents", sample: false, companies: out }, null, 2) + "\n"
   );
   console.log(`\n✅ Wrote language analysis for ${ok}/${fundamentals.companies.length} companies`);
 }

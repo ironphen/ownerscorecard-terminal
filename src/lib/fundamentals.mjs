@@ -17,7 +17,7 @@ export function fmtUSD(v) {
 
 // Interest coverage = operating income (EBIT) / interest expense.
 // Returns null when it can't be computed honestly (missing EBIT, or no
-// meaningful interest burden — which is a *good* sign, handled by the verdict).
+// meaningful interest burden, which is a *good* sign, handled by the verdict).
 export function coverage(company) {
   const oi = company?.lines?.operatingIncome;
   const interest = company?.lines?.interestExpense;
@@ -27,7 +27,7 @@ export function coverage(company) {
   return { ratio: oi / interest, oi, interest, noBurden: false };
 }
 
-// Verdict bands. Graham wanted a real margin of safety in coverage — several
+// Verdict bands. Graham wanted a real margin of safety in coverage, several
 // years of earnings covering interest many times over, not scraping by once. A
 // common distillation of his bond-selection tests is ~5x for an industrial;
 // treat it as a reference line, not a law, and read the original.
@@ -39,7 +39,7 @@ export function coverageVerdict(result) {
     return {
       tone: "good",
       label: "No meaningful interest burden",
-      note: "Little or no interest expense reported — the business isn't leaning on lenders to operate.",
+      note: "Little or no interest expense reported, the business isn't leaning on lenders to operate.",
     };
   const r = result.ratio;
   if (r < 1)
@@ -63,7 +63,7 @@ export function coverageVerdict(result) {
   return {
     tone: "good",
     label: "Comfortable",
-    note: "Operating profit covers interest with the kind of margin Graham wanted for a defensive holding. Necessary, not sufficient — it says solvent, not cheap.",
+    note: "Operating profit covers interest with the kind of margin Graham wanted for a defensive holding. Necessary, not sufficient, it says solvent, not cheap.",
   };
 }
 
@@ -92,7 +92,7 @@ export function earningsQuality(c) {
       tone: cfo > 0 ? "warn" : "bad",
       label: cfo > 0 ? "Loss, but cash-generative" : "Loss, and burning cash",
       note:
-        "The company reported a net loss, so a conversion ratio isn't meaningful. What matters then is whether operations still threw off cash — here, " +
+        "The company reported a net loss, so a conversion ratio isn't meaningful. What matters then is whether operations still threw off cash, here, " +
         (cfo > 0 ? "they did." : "they did not."),
     };
   }
@@ -104,7 +104,7 @@ export function earningsQuality(c) {
     formula: `Cash from ops ${fmtUSD(cfo)} ÷ net income ${fmtUSD(ni)}`,
     tone,
     label,
-    note: "How much of reported profit showed up as operating cash. Above 1× is reassuring; well below suggests earnings lean on accruals. One year is noisy — growth and working-capital swings distort it, and this is operating cash, not free cash. Watch the multi-year trend.",
+    note: "How much of reported profit showed up as operating cash. Above 1× is reassuring; well below suggests earnings lean on accruals. One year is noisy, growth and working-capital swings distort it, and this is operating cash, not free cash. Watch the multi-year trend.",
   };
 }
 
@@ -114,9 +114,9 @@ export function leverage(c) {
   const oi = c?.lines?.operatingIncome;
   if (debt == null || oi == null) return null;
   if (debt === 0)
-    return { value: "0×", formula: "No interest-bearing debt reported", tone: "good", label: "Debt-free", note: "The business doesn't depend on lenders — the strongest position to negotiate, wait, or weather a bad year from." };
+    return { value: "0×", formula: "No interest-bearing debt reported", tone: "good", label: "Debt-free", note: "The business doesn't depend on lenders, the strongest position to negotiate, wait, or weather a bad year from." };
   if (oi <= 0)
-    return { value: "—", formula: `Total debt ${fmtUSD(debt)} · operating income ${fmtUSD(oi)}`, tone: "bad", label: "Debt against an operating loss", note: "There's debt but no operating profit to measure it against — understand that combination before anything else about the company." };
+    return { value: "—", formula: `Total debt ${fmtUSD(debt)} · operating income ${fmtUSD(oi)}`, tone: "bad", label: "Debt against an operating loss", note: "There's debt but no operating profit to measure it against, understand that combination before anything else about the company." };
   const years = debt / oi;
   const tone = years < 2 ? "good" : years < 4 ? "ok" : years < 6 ? "warn" : "bad";
   const label = years < 2 ? "Conservative" : years < 4 ? "Moderate" : years < 6 ? "Heavy" : "High";
@@ -167,8 +167,8 @@ export function cashPosition(c) {
     `Cash ${fmtUSD(cash || 0)}` + (st ? ` + ST investments ${fmtUSD(st)}` : "") + ` − debt ${fmtUSD(gross)}`;
 
   let note = netCash
-    ? `Cash and short-term investments exceed every dollar of debt by ${fmtUSD(-net)} — on net the company owes nothing, and can act from strength when others can't.`
-    : `Netting ${fmtUSD(liquid)} of cash and short-term investments against ${fmtUSD(gross)} of debt leaves ${fmtUSD(net)} owed${years != null ? ` — about ${years.toFixed(1)}× a year's operating profit, versus the gross figure above` : ""}.`;
+    ? `Cash and short-term investments exceed every dollar of debt by ${fmtUSD(-net)}, on net the company owes nothing, and can act from strength when others can't.`
+    : `Netting ${fmtUSD(liquid)} of cash and short-term investments against ${fmtUSD(gross)} of debt leaves ${fmtUSD(net)} owed${years != null ? `, about ${years.toFixed(1)}× a year's operating profit, versus the gross figure above` : ""}.`;
   if (lt) {
     const full = net - lt;
     note += ` It also holds ${fmtUSD(lt)} in longer-dated marketable securities; counting those, it sits at ${full < 0 ? `net cash of ${fmtUSD(-full)}` : `${fmtUSD(full)} of net debt`}.`;
@@ -189,11 +189,11 @@ export function capexVsDepreciation(c) {
     formula: `Capex ${fmtUSD(capex)} ÷ depreciation ${fmtUSD(dep)}`,
     tone: "info",
     label,
-    note: "Descriptive, not a grade. Above ~1× means investing faster than assets wear out (growth — or, sustained for years, today's earnings carrying less depreciation than tomorrow's will). Below means spending less than it's wearing out (efficiency — or a melting asset base). The ratio won't tell you which; the filings will.",
+    note: "Descriptive, not a grade. Above ~1× means investing faster than assets wear out (growth, or, sustained for years, today's earnings carrying less depreciation than tomorrow's will). Below means spending less than it's wearing out (efficiency, or a melting asset base). The ratio won't tell you which; the filings will.",
   };
 }
 
-// Return on invested capital — Buffett's north star.
+// Return on invested capital, Buffett's north star.
 export function roic(c) {
   const L = c?.lines || {};
   const oi = L.operatingIncome, eq = L.stockholdersEquity, debt = L.totalDebt;
@@ -205,7 +205,7 @@ export function roic(c) {
       formula: `Invested capital ${fmtUSD(invested)} = debt ${fmtUSD(debt)} + equity ${fmtUSD(eq)} − cash`,
       tone: "none",
       label: "Not meaningful here",
-      note: "Invested capital is near zero or negative — usually years of buybacks pulling equity down. ROIC explodes or flips sign and stops meaning anything. Judge this one on Owner Earnings instead.",
+      note: "Invested capital is near zero or negative, usually years of buybacks pulling equity down. ROIC explodes or flips sign and stops meaning anything. Judge this one on Owner Earnings instead.",
     };
   // Effective tax rate from the filing (pretax ≈ net income + tax); fallback 21%.
   let t = 0.21;
@@ -220,11 +220,11 @@ export function roic(c) {
     formula: `NOPAT ${fmtUSD(nopat)} ÷ invested capital ${fmtUSD(invested)} (debt + equity − cash)`,
     tone,
     label,
-    note: "The rate the business earns on the money tied up in it — Buffett's north star, because over time a stock tracks the ROIC beneath it. Above ~15% sustained hints at a moat; below ~8% the company may destroy value as it grows. Asset-light businesses (R&D expensed, little capital) read artificially high — pair this with Owner Earnings.",
+    note: "The rate the business earns on the money tied up in it, Buffett's north star, because over time a stock tracks the ROIC beneath it. Above ~15% sustained hints at a moat; below ~8% the company may destroy value as it grows. Asset-light businesses (R&D expensed, little capital) read artificially high, pair this with Owner Earnings.",
   };
 }
 
-// Owner Earnings (owner earnings): operating cash minus capex — what an owner can take out.
+// Owner Earnings (owner earnings): operating cash minus capex, what an owner can take out.
 export function ownerCash(c) {
   const L = c?.lines || {};
   const cfo = L.cashFromOps, capex = L.capex;
@@ -247,29 +247,29 @@ export function ownerCash(c) {
   };
 }
 
-// Capital allocation: of the Owner Earnings, how much was returned — and was it real?
+// Capital allocation: of the Owner Earnings, how much was returned, and was it real?
 export function capitalAllocation(c) {
   const L = c?.lines || {};
   const cfo = L.cashFromOps, capex = L.capex, div = L.dividendsPaid, bb = L.buybacks;
   if (cfo == null || capex == null || (div == null && bb == null)) return null;
   const oc = cfo - Math.abs(capex);
   if (oc <= 0)
-    return { value: "—", formula: "", tone: "warn", label: "No surplus to allocate", note: "The business didn't generate positive Owner Earnings this year, so any distributions came from the balance sheet or borrowing — not from operations." };
+    return { value: "—", formula: "", tone: "warn", label: "No surplus to allocate", note: "The business didn't generate positive Owner Earnings this year, so any distributions came from the balance sheet or borrowing, not from operations." };
   const dividends = Math.abs(div || 0), buybacks = Math.abs(bb || 0), sbc = L.stockBasedComp;
   const returned = dividends + buybacks;
   const payout = returned / oc;
   const label = payout >= 0.9 ? "Returns most of it" : payout >= 0.4 ? "Returns about half" : "Reinvests most of it";
-  let note = `Of ${fmtUSD(oc)} Owner Earnings, ${fmtUSD(returned)} (${(payout * 100).toFixed(0)}%) went back to shareholders — ${fmtUSD(dividends)} dividends, ${fmtUSD(buybacks)} buybacks.`;
+  let note = `Of ${fmtUSD(oc)} Owner Earnings, ${fmtUSD(returned)} (${(payout * 100).toFixed(0)}%) went back to shareholders, ${fmtUSD(dividends)} dividends, ${fmtUSD(buybacks)} buybacks.`;
   if (buybacks > 0 && sbc != null)
     note += buybacks - sbc <= 0
-      ? ` But the buybacks barely exceed stock issued to employees (${fmtUSD(sbc)} SBC) — net of dilution, little was truly returned.`
+      ? ` But the buybacks barely exceed stock issued to employees (${fmtUSD(sbc)} SBC), net of dilution, little was truly returned.`
       : ` Net of ${fmtUSD(sbc)} stock comp, the real buyback was about ${fmtUSD(buybacks - sbc)}.`;
-  note += " Returning most of it signals a mature cash machine; reinvesting most could mean a long runway — or empire-building. The split doesn't say which; the return earned on it (see ROIC) does.";
+  note += " Returning most of it signals a mature cash machine; reinvesting most could mean a long runway, or empire-building. The split doesn't say which; the return earned on it (see ROIC) does.";
   return { value: `${(payout * 100).toFixed(0)}%`, formula: `Dividends + buybacks ${fmtUSD(returned)} ÷ Owner Earnings ${fmtUSD(oc)}`, tone: "info", label, note };
 }
 
 // Cash-conversion cycle: DSO + DIO − DPO (days). A liquidity check that doubles
-// as a moat detector — a negative cycle means others fund the business.
+// as a moat detector, a negative cycle means others fund the business.
 export function cashConversionCycle(c) {
   const L = c?.lines || {};
   const rev = L.revenue, cogs = L.costOfRevenue, recv = L.receivables, ap = L.accountsPayable;
@@ -281,7 +281,7 @@ export function cashConversionCycle(c) {
   const dpo = (ap / cogs) * 365;
   const ccc = dso + dio - dpo;
   const tone = ccc < 0 ? "good" : ccc < 60 ? "ok" : "warn";
-  const label = ccc < 0 ? "Negative — funded by others" : ccc < 60 ? "Tight" : "Capital-hungry";
+  const label = ccc < 0 ? "Negative, funded by others" : ccc < 60 ? "Tight" : "Capital-hungry";
   return {
     value: `${Math.round(ccc)}d`,
     formula: `DSO ${Math.round(dso)} + DIO ${Math.round(dio)} − DPO ${Math.round(dpo)} days`,
@@ -290,13 +290,13 @@ export function cashConversionCycle(c) {
     note:
       "Days cash is tied up between paying suppliers and collecting from customers." +
       (ccc < 0
-        ? " A negative cycle is a quiet moat: suppliers and customers fund the operation (Buffett's “float”) — the company grows on other people's money."
+        ? " A negative cycle is a quiet moat: suppliers and customers fund the operation (Buffett's “float”), the company grows on other people's money."
         : " Lower is better; a long cycle means growth itself eats cash.") +
-      (!hasInv ? " (Little or no inventory — a services / asset-light model, so the inventory leg is ~0.)" : ""),
+      (!hasInv ? " (Little or no inventory, a services / asset-light model, so the inventory leg is ~0.)" : ""),
   };
 }
 
-// Raw metric values from a single year's lines — reused for the time series.
+// Raw metric values from a single year's lines, reused for the time series.
 // Return null when not honestly computable.
 export function roicValue(L) {
   if (!L) return null;
@@ -320,7 +320,7 @@ export function ownerEarningsMargin(L) {
 }
 
 // Durability: the same business-quality metrics across ~10 years of filings.
-// A moat is high ROIC that doesn't fade — you can only see it over a cycle.
+// A moat is high ROIC that doesn't fade, you can only see it over a cycle.
 export function durability(company) {
   const hist = company?.history;
   if (!Array.isArray(hist) || hist.length < 3) return null;
