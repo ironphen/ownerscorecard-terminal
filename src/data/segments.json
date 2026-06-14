@@ -1,0 +1,1510 @@
+{
+  "asOf": "2026-06-14",
+  "source": "SEC EDGAR XBRL, reportable-segment and geographic disclosures",
+  "companies": {
+    "AAPL": {
+      "fy": 2025,
+      "periodEnd": "2025-09-27",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/0000320193-25-000079-index.htm",
+      "revenueTotal": 416161000000,
+      "operatingIncomeTotal": 133050000000,
+      "byGeography": {
+        "reconcile": 1,
+        "items": [
+          {
+            "label": "Other countries",
+            "qname": "aapl:OtherCountriesMember",
+            "revenue": 199994000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "United States",
+            "qname": "country:US",
+            "revenue": 151790000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "China",
+            "qname": "country:CN",
+            "revenue": 64377000000,
+            "operatingIncome": null
+          }
+        ]
+      },
+      "byProduct": {
+        "reconcile": 1,
+        "items": [
+          {
+            "label": "iPhone",
+            "qname": "aapl:IPhoneMember",
+            "revenue": 209586000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Services",
+            "qname": "us-gaap:ServiceMember",
+            "revenue": 109158000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Wearables, Home and Accessories",
+            "qname": "aapl:WearablesHomeandAccessoriesMember",
+            "revenue": 35686000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Mac",
+            "qname": "aapl:MacMember",
+            "revenue": 33708000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "iPad",
+            "qname": "aapl:IPadMember",
+            "revenue": 28023000000,
+            "operatingIncome": null
+          }
+        ]
+      }
+    },
+    "MSFT": {
+      "fy": 2025,
+      "periodEnd": "2025-06-30",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/789019/000095017025100235/0000950170-25-100235-index.htm",
+      "revenueTotal": 281724000000,
+      "operatingIncomeTotal": 128528000000,
+      "bySegment": {
+        "reconcile": 1,
+        "hasOperatingIncome": true,
+        "items": [
+          {
+            "label": "Productivity And Business Processes",
+            "qname": "msft:ProductivityAndBusinessProcessesMember",
+            "revenue": 120810000000,
+            "operatingIncome": 69773000000
+          },
+          {
+            "label": "Intelligent Cloud",
+            "qname": "msft:IntelligentCloudMember",
+            "revenue": 106265000000,
+            "operatingIncome": 44589000000
+          },
+          {
+            "label": "More Personal Computing",
+            "qname": "msft:MorePersonalComputingMember",
+            "revenue": 54649000000,
+            "operatingIncome": 14166000000
+          }
+        ]
+      },
+      "byGeography": {
+        "reconcile": 1,
+        "items": [
+          {
+            "label": "United States",
+            "qname": "country:US",
+            "revenue": 144546000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "International",
+            "qname": "us-gaap:NonUsMember",
+            "revenue": 137178000000,
+            "operatingIncome": null
+          }
+        ]
+      }
+    },
+    "GOOGL": {
+      "fy": 2025,
+      "periodEnd": "2025-12-31",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1652044/000165204426000018/0001652044-26-000018-index.htm",
+      "revenueTotal": 402836000000,
+      "operatingIncomeTotal": 129039000000,
+      "bySegment": {
+        "reconcile": 1,
+        "hasOperatingIncome": false,
+        "items": [
+          {
+            "label": "Google Services",
+            "qname": "goog:GoogleServicesMember",
+            "revenue": 342721000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Google Cloud",
+            "qname": "goog:GoogleCloudMember",
+            "revenue": 58705000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Other Bets",
+            "qname": "us-gaap:AllOtherSegmentsMember",
+            "revenue": 1537000000,
+            "operatingIncome": null
+          }
+        ]
+      },
+      "byGeography": {
+        "reconcile": 1,
+        "items": [
+          {
+            "label": "United States",
+            "qname": "country:US",
+            "revenue": 194229000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "EMEA",
+            "qname": "us-gaap:EMEAMember",
+            "revenue": 117152000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Asia Pacific",
+            "qname": "srt:AsiaPacificMember",
+            "revenue": 67680000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Other Americas",
+            "qname": "goog:AmericasExcludingUnitedStatesMember",
+            "revenue": 23902000000,
+            "operatingIncome": null
+          }
+        ]
+      }
+    },
+    "META": {
+      "fy": 2025,
+      "periodEnd": "2025-12-31",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1326801/000162828026003942/0001628280-26-003942-index.htm",
+      "revenueTotal": 200966000000,
+      "operatingIncomeTotal": 83276000000,
+      "bySegment": {
+        "reconcile": 1,
+        "hasOperatingIncome": true,
+        "items": [
+          {
+            "label": "Family of Apps",
+            "qname": "meta:FamilyOfAppsMember",
+            "revenue": 198759000000,
+            "operatingIncome": 102469000000
+          },
+          {
+            "label": "Reality Labs",
+            "qname": "meta:RealityLabsMember",
+            "revenue": 2207000000,
+            "operatingIncome": -19193000000
+          }
+        ]
+      },
+      "byGeography": {
+        "reconcile": 1,
+        "items": [
+          {
+            "label": "US &amp; Canada",
+            "qname": "meta:USCanadaMember",
+            "revenue": 78866000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Asia Pacific",
+            "qname": "srt:AsiaPacificMember",
+            "revenue": 53817000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Europe",
+            "qname": "srt:EuropeMember",
+            "revenue": 46569000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Rest of World",
+            "qname": "meta:RestOfWorldMember",
+            "revenue": 21714000000,
+            "operatingIncome": null
+          }
+        ]
+      }
+    },
+    "AMZN": {
+      "fy": 2025,
+      "periodEnd": "2025-12-31",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1018724/000101872426000004/0001018724-26-000004-index.htm",
+      "revenueTotal": 716924000000,
+      "operatingIncomeTotal": 79975000000,
+      "bySegment": {
+        "reconcile": 1,
+        "hasOperatingIncome": true,
+        "items": [
+          {
+            "label": "North America",
+            "qname": "amzn:NorthAmericaSegmentMember",
+            "revenue": 426305000000,
+            "operatingIncome": 29619000000
+          },
+          {
+            "label": "International",
+            "qname": "amzn:InternationalSegmentMember",
+            "revenue": 161894000000,
+            "operatingIncome": 4750000000
+          },
+          {
+            "label": "AWS",
+            "qname": "amzn:AmazonWebServicesSegmentMember",
+            "revenue": 128725000000,
+            "operatingIncome": 45606000000
+          }
+        ]
+      },
+      "byGeography": {
+        "reconcile": 1,
+        "items": [
+          {
+            "label": "United States",
+            "qname": "country:US",
+            "revenue": 489657000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "International",
+            "qname": "us-gaap:NonUsMember",
+            "revenue": 107467000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Germany",
+            "qname": "country:DE",
+            "revenue": 45900000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "United Kingdom",
+            "qname": "country:GB",
+            "revenue": 43212000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Japan",
+            "qname": "country:JP",
+            "revenue": 30688000000,
+            "operatingIncome": null
+          }
+        ]
+      }
+    },
+    "NVDA": {
+      "fy": 2026,
+      "periodEnd": "2026-01-25",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1045810/000104581026000021/0001045810-26-000021-index.htm",
+      "revenueTotal": 215938000000,
+      "operatingIncomeTotal": 130387000000,
+      "byGeography": {
+        "reconcile": 1,
+        "items": [
+          {
+            "label": "United States",
+            "qname": "country:US",
+            "revenue": 149617000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Taiwan",
+            "qname": "country:TW",
+            "revenue": 42345000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "China Including Hong Kong",
+            "qname": "nvda:ChinaIncludingHongKongMember",
+            "revenue": 19677000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Other",
+            "qname": "nvda:OtherCountriesMember",
+            "revenue": 4299000000,
+            "operatingIncome": null
+          }
+        ]
+      },
+      "byProduct": {
+        "reconcile": 1,
+        "items": [
+          {
+            "label": "Compute",
+            "qname": "nvda:ComputeMember",
+            "revenue": 162361000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Networking",
+            "qname": "nvda:NetworkingMember",
+            "revenue": 31376000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Gaming",
+            "qname": "nvda:GamingMember",
+            "revenue": 16042000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Professional Visualization",
+            "qname": "nvda:ProfessionalVisualizationMember",
+            "revenue": 3191000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Automotive",
+            "qname": "nvda:AutomotiveMember",
+            "revenue": 2349000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "OEM and Other",
+            "qname": "nvda:OEMAndOtherMember",
+            "revenue": 619000000,
+            "operatingIncome": null
+          }
+        ]
+      }
+    },
+    "AVGO": {
+      "fy": 2025,
+      "periodEnd": "2025-11-02",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1730168/000173016825000121/0001730168-25-000121-index.htm",
+      "revenueTotal": 63887000000,
+      "operatingIncomeTotal": 25484000000,
+      "bySegment": {
+        "reconcile": 1,
+        "hasOperatingIncome": true,
+        "items": [
+          {
+            "label": "Semiconductor Solutions",
+            "qname": "avgo:SemiconductorSolutionsMember",
+            "revenue": 36858000000,
+            "operatingIncome": 21232000000
+          },
+          {
+            "label": "Infrastructure Software",
+            "qname": "avgo:InfrastructureSoftwareMember",
+            "revenue": 27029000000,
+            "operatingIncome": 20765000000
+          }
+        ]
+      },
+      "byProduct": {
+        "reconcile": 1,
+        "items": [
+          {
+            "label": "Products",
+            "qname": "us-gaap:ProductMember",
+            "revenue": 44847000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Subscriptions and services",
+            "qname": "avgo:SubscriptionsandServicesMember",
+            "revenue": 19040000000,
+            "operatingIncome": null
+          }
+        ]
+      }
+    },
+    "AMD": {
+      "fy": 2025,
+      "periodEnd": "2025-12-27",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/2488/000000248826000018/0000002488-26-000018-index.htm",
+      "revenueTotal": 34639000000,
+      "operatingIncomeTotal": 3694000000,
+      "byGeography": {
+        "reconcile": 1,
+        "items": [
+          {
+            "label": "United States",
+            "qname": "country:US",
+            "revenue": 11363000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "China",
+            "qname": "country:CN",
+            "revenue": 7751000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Other Countries",
+            "qname": "amd:OtherCountriesMember",
+            "revenue": 6055000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Taiwan",
+            "qname": "country:TW",
+            "revenue": 5186000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Singapore",
+            "qname": "country:SG",
+            "revenue": 4284000000,
+            "operatingIncome": null
+          }
+        ]
+      }
+    },
+    "ORCL": {
+      "fy": 2025,
+      "periodEnd": "2025-05-31",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1341439/000095017025087926/0000950170-25-087926-index.htm",
+      "revenueTotal": 57399000000,
+      "operatingIncomeTotal": 17678000000,
+      "byGeography": {
+        "reconcile": 1,
+        "items": [
+          {
+            "label": "United States",
+            "qname": "country:US",
+            "revenue": 32075000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Other countries",
+            "qname": "orcl:OtherCountriesMember",
+            "revenue": 19154000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "United Kingdom",
+            "qname": "country:GB",
+            "revenue": 2594000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Germany",
+            "qname": "country:DE",
+            "revenue": 1817000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Japan",
+            "qname": "country:JP",
+            "revenue": 1759000000,
+            "operatingIncome": null
+          }
+        ]
+      }
+    },
+    "CRM": {
+      "fy": 2026,
+      "periodEnd": "2026-01-31",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1108524/000110852426000060/0001108524-26-000060-index.htm",
+      "revenueTotal": 41525000000,
+      "operatingIncomeTotal": 8331000000,
+      "byGeography": {
+        "reconcile": 1,
+        "items": [
+          {
+            "label": "Americas",
+            "qname": "srt:AmericasMember",
+            "revenue": 27193000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Europe",
+            "qname": "srt:EuropeMember",
+            "revenue": 10017000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Asia Pacific",
+            "qname": "srt:AsiaPacificMember",
+            "revenue": 4315000000,
+            "operatingIncome": null
+          }
+        ]
+      },
+      "byProduct": {
+        "reconcile": 1,
+        "items": [
+          {
+            "label": "Agentforce Service",
+            "qname": "crm:AgentforceServiceMember",
+            "revenue": 9818000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Agentforce Sales",
+            "qname": "crm:AgentforceSalesMember",
+            "revenue": 9028000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Agentforce 360 Platform, Slack and Other",
+            "qname": "crm:Agentforce360PlatformSlackAndOtherMember",
+            "revenue": 8882000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Agentforce Integration and Agentforce Analytics",
+            "qname": "crm:AgentforceIntegrationAndAgentforceAnalyticsMember",
+            "revenue": 6232000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Agentforce Marketing and Agentforce Commerce",
+            "qname": "crm:AgentforceMarketingAndAgentforceCommerceMember",
+            "revenue": 5428000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Professional services and other",
+            "qname": "crm:ProfessionalServicesandOtherMember",
+            "revenue": 2137000000,
+            "operatingIncome": null
+          }
+        ]
+      }
+    },
+    "ADBE": {
+      "fy": 2025,
+      "periodEnd": "2025-11-28",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/796343/000079634326000003/0000796343-26-000003-index.htm",
+      "revenueTotal": 23769000000,
+      "operatingIncomeTotal": 8706000000,
+      "bySegment": {
+        "reconcile": 1,
+        "hasOperatingIncome": false,
+        "items": [
+          {
+            "label": "Digital Media",
+            "qname": "adbe:DigitalMediaMember",
+            "revenue": 17649000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Digital Experience",
+            "qname": "adbe:DigitalExperienceMember",
+            "revenue": 5864000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Publishing and Advertising",
+            "qname": "adbe:PublishingAndAdvertisingMember",
+            "revenue": 256000000,
+            "operatingIncome": null
+          }
+        ]
+      },
+      "byGeography": {
+        "reconcile": 1,
+        "items": [
+          {
+            "label": "United States",
+            "qname": "country:US",
+            "revenue": 12529000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "EMEA",
+            "qname": "us-gaap:EMEAMember",
+            "revenue": 6289000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Asia Pacific",
+            "qname": "srt:AsiaPacificMember",
+            "revenue": 3360000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Other",
+            "qname": "adbe:OtherAmericasMember",
+            "revenue": 1591000000,
+            "operatingIncome": null
+          }
+        ]
+      },
+      "byProduct": {
+        "reconcile": 1,
+        "items": [
+          {
+            "label": "Subscription",
+            "qname": "adbe:SubscriptionRevenueMember",
+            "revenue": 22904000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Service, Other",
+            "qname": "us-gaap:ServiceOtherMember",
+            "revenue": 540000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Products",
+            "qname": "us-gaap:ProductMember",
+            "revenue": 325000000,
+            "operatingIncome": null
+          }
+        ]
+      }
+    },
+    "KO": {
+      "fy": 2025,
+      "periodEnd": "2025-12-31",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/21344/000162828026010047/0001628280-26-010047-index.htm",
+      "revenueTotal": 47941000000,
+      "operatingIncomeTotal": 13762000000,
+      "byGeography": {
+        "reconcile": 1,
+        "items": [
+          {
+            "label": "International",
+            "qname": "us-gaap:NonUsMember",
+            "revenue": 28814000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "United States",
+            "qname": "country:US",
+            "revenue": 19127000000,
+            "operatingIncome": null
+          }
+        ]
+      },
+      "byProduct": {
+        "reconcile": 1,
+        "items": [
+          {
+            "label": "Concentrate operations",
+            "qname": "ko:ConcentrateOperationsMember",
+            "revenue": 28462000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Finished product operations",
+            "qname": "ko:FinishedProductOperationsMember",
+            "revenue": 19479000000,
+            "operatingIncome": null
+          }
+        ]
+      }
+    },
+    "PEP": {
+      "fy": 2025,
+      "periodEnd": "2025-12-27",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/77476/000007747626000007/0000077476-26-000007-index.htm",
+      "revenueTotal": 93925000000,
+      "operatingIncomeTotal": 11498000000,
+      "byGeography": {
+        "reconcile": 1,
+        "items": [
+          {
+            "label": "United States",
+            "qname": "country:US",
+            "revenue": 52228000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "All Other Countries",
+            "qname": "pep:AllOtherCountriesMember",
+            "revenue": 17941000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Mexico",
+            "qname": "country:MX",
+            "revenue": 6947000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Russia",
+            "qname": "country:RU",
+            "revenue": 4768000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Canada",
+            "qname": "country:CA",
+            "revenue": 3729000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "China",
+            "qname": "country:CN",
+            "revenue": 2621000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "United Kingdom",
+            "qname": "country:GB",
+            "revenue": 2142000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Brazil",
+            "qname": "country:BR",
+            "revenue": 1782000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "South Africa",
+            "qname": "country:ZA",
+            "revenue": 1767000000,
+            "operatingIncome": null
+          }
+        ]
+      }
+    },
+    "KDP": {
+      "fy": 2025,
+      "periodEnd": "2025-12-31",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1418135/000141813526000016/0001418135-26-000016-index.htm",
+      "revenueTotal": 16603000000,
+      "operatingIncomeTotal": 3575000000,
+      "bySegment": {
+        "reconcile": 1,
+        "hasOperatingIncome": false,
+        "items": [
+          {
+            "label": "U.S. Refreshment Beverages",
+            "qname": "kdp:U.S.RefreshmentBeveragesMember",
+            "revenue": 10439000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "U.S. Coffee",
+            "qname": "kdp:U.S.CoffeeMember",
+            "revenue": 3990000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "International",
+            "qname": "kdp:InternationalMember",
+            "revenue": 2174000000,
+            "operatingIncome": null
+          }
+        ]
+      },
+      "byGeography": {
+        "reconcile": 1,
+        "items": [
+          {
+            "label": "United States",
+            "qname": "country:US",
+            "revenue": 14502000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "International",
+            "qname": "us-gaap:NonUsMember",
+            "revenue": 2101000000,
+            "operatingIncome": null
+          }
+        ]
+      },
+      "byProduct": {
+        "reconcile": 1,
+        "items": [
+          {
+            "label": "LRB",
+            "qname": "kdp:LRBMember",
+            "revenue": 11602000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Pods",
+            "qname": "kdp:KCupPodsMember",
+            "revenue": 3777000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Appliances",
+            "qname": "kdp:AppliancesMember",
+            "revenue": 646000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Other",
+            "qname": "kdp:OtherNetSalesMember",
+            "revenue": 578000000,
+            "operatingIncome": null
+          }
+        ]
+      }
+    },
+    "MNST": {
+      "fy": 2025,
+      "periodEnd": "2025-12-31",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/865752/000110465926020831/0001104659-26-020831-index.htm",
+      "revenueTotal": 8294343000,
+      "operatingIncomeTotal": 2419354000,
+      "bySegment": {
+        "reconcile": 1,
+        "hasOperatingIncome": false,
+        "items": [
+          {
+            "label": "Monster Energy Drinks",
+            "qname": "mnst:MonsterEnergyDrinksSegmentMember",
+            "revenue": 7665871000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Strategic Brands",
+            "qname": "mnst:StrategicBrandsSegmentMember",
+            "revenue": 468716000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Alcohol Brands",
+            "qname": "mnst:AlcoholBrandsSegmentMember",
+            "revenue": 134720000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Other",
+            "qname": "us-gaap:AllOtherSegmentsMember",
+            "revenue": 25036000,
+            "operatingIncome": null
+          }
+        ]
+      },
+      "byGeography": {
+        "reconcile": 1,
+        "items": [
+          {
+            "label": "U.S. and Canada",
+            "qname": "mnst:U.s.AndCanadaMember",
+            "revenue": 5072691000,
+            "operatingIncome": null
+          },
+          {
+            "label": "EMEA",
+            "qname": "us-gaap:EMEAMember",
+            "revenue": 1899568000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Latin America and Caribbean",
+            "qname": "mnst:LatinAmericaAndCaribbeanMember",
+            "revenue": 697971000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Asia Pacific",
+            "qname": "srt:AsiaPacificMember",
+            "revenue": 624113000,
+            "operatingIncome": null
+          }
+        ]
+      }
+    },
+    "KMB": {
+      "fy": 2025,
+      "periodEnd": "2025-12-31",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/55785/000162828026007567/0001628280-26-007567-index.htm",
+      "revenueTotal": 16447000000,
+      "operatingIncomeTotal": 2351000000,
+      "byProduct": {
+        "reconcile": 1,
+        "items": [
+          {
+            "label": "Baby and Child Care",
+            "qname": "kmb:BabyandchildcareproductsMember",
+            "revenue": 6773000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Family Care",
+            "qname": "kmb:FamilyCareMember",
+            "revenue": 4056000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Adult Care",
+            "qname": "kmb:AdultCareProductsMember",
+            "revenue": 1947000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Professional",
+            "qname": "kmb:ProfessionalMember",
+            "revenue": 1841000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Feminine Care",
+            "qname": "kmb:FeminineCareProductsMember",
+            "revenue": 1706000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "All Other",
+            "qname": "kmb:AllOtherMember",
+            "revenue": 124000000,
+            "operatingIncome": null
+          }
+        ]
+      }
+    },
+    "CLX": {
+      "fy": 2025,
+      "periodEnd": "2025-06-30",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/21076/000002107625000039/0000021076-25-000039-index.htm",
+      "revenueTotal": 7104000000,
+      "operatingIncomeTotal": null,
+      "byGeography": {
+        "reconcile": 1,
+        "items": [
+          {
+            "label": "United States",
+            "qname": "country:US",
+            "revenue": 6080000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "International",
+            "qname": "us-gaap:NonUsMember",
+            "revenue": 1024000000,
+            "operatingIncome": null
+          }
+        ]
+      }
+    },
+    "WDFC": {
+      "fy": 2025,
+      "periodEnd": "2025-08-31",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/105132/000010513225000067/0000105132-25-000067-index.htm",
+      "revenueTotal": 619985000,
+      "operatingIncomeTotal": 103793000,
+      "bySegment": {
+        "reconcile": 1,
+        "hasOperatingIncome": false,
+        "items": [
+          {
+            "label": "Americas",
+            "qname": "wdfc:AmericasSegmentMember",
+            "revenue": 290599000,
+            "operatingIncome": null
+          },
+          {
+            "label": "EIMEA",
+            "qname": "wdfc:EuropeIndiaMiddleEastAndAfricaSegmentMember",
+            "revenue": 236434000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Asia-Pacific",
+            "qname": "wdfc:AsiaPacificSegmentMember",
+            "revenue": 92952000,
+            "operatingIncome": null
+          }
+        ]
+      },
+      "byGeography": {
+        "reconcile": 1,
+        "items": [
+          {
+            "label": "International",
+            "qname": "us-gaap:NonUsMember",
+            "revenue": 409765000,
+            "operatingIncome": null
+          },
+          {
+            "label": "United States",
+            "qname": "country:US",
+            "revenue": 210220000,
+            "operatingIncome": null
+          }
+        ]
+      }
+    },
+    "WMT": {
+      "fy": 2026,
+      "periodEnd": "2026-01-31",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/104169/000010416926000055/0000104169-26-000055-index.htm",
+      "revenueTotal": 706413000000,
+      "operatingIncomeTotal": 29825000000,
+      "bySegment": {
+        "reconcile": 1,
+        "hasOperatingIncome": false,
+        "items": [
+          {
+            "label": "Walmart US",
+            "qname": "wmt:WalmartUSMember",
+            "revenue": 482975000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Walmart International",
+            "qname": "wmt:WalmartInternationalMember",
+            "revenue": 130423000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Sam's Club US",
+            "qname": "wmt:SamsClubUSMember",
+            "revenue": 93015000000,
+            "operatingIncome": null
+          }
+        ]
+      },
+      "byGeography": {
+        "reconcile": 1.01,
+        "items": [
+          {
+            "label": "United States",
+            "qname": "country:US",
+            "revenue": 581175000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "International",
+            "qname": "us-gaap:NonUsMember",
+            "revenue": 131988000000,
+            "operatingIncome": null
+          }
+        ]
+      }
+    },
+    "COST": {
+      "fy": 2025,
+      "periodEnd": "2025-08-31",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/909832/000090983225000101/0000909832-25-000101-index.htm",
+      "revenueTotal": 275235000000,
+      "operatingIncomeTotal": 10383000000,
+      "byProduct": {
+        "reconcile": 1,
+        "items": [
+          {
+            "label": "Food and Sundries",
+            "qname": "cost:FoodandSundriesMember",
+            "revenue": 109564000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Non-Foods",
+            "qname": "cost:NonFoodsMember",
+            "revenue": 71190000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Other",
+            "qname": "cost:OtherMember",
+            "revenue": 51170000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Fresh Food",
+            "qname": "cost:FreshFoodMember",
+            "revenue": 37988000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Membership",
+            "qname": "us-gaap:MembershipMember",
+            "revenue": 5323000000,
+            "operatingIncome": null
+          }
+        ]
+      }
+    },
+    "TGT": {
+      "fy": 2026,
+      "periodEnd": "2026-01-31",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/27419/000002741926000016/0000027419-26-000016-index.htm",
+      "revenueTotal": 104780000000,
+      "operatingIncomeTotal": 5117000000,
+      "byProduct": {
+        "reconcile": 1,
+        "items": [
+          {
+            "label": "Food and Beverage",
+            "qname": "us-gaap:FoodAndBeverageMember",
+            "revenue": 24136000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Household essentials",
+            "qname": "tgt:HouseholdEssentialsMember",
+            "revenue": 18017000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Hardlines",
+            "qname": "tgt:HardlinesMember",
+            "revenue": 15800000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Apparel And Accessories",
+            "qname": "tgt:ApparelAndAccessoriesMember",
+            "revenue": 15737000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Home Furnishings and Decor",
+            "qname": "tgt:HomeFurnishingsAndDecorMember",
+            "revenue": 15608000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Beauty",
+            "qname": "tgt:BeautyMember",
+            "revenue": 13214000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Advertising revenue",
+            "qname": "tgt:AdvertisingRevenueMember",
+            "revenue": 915000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Other",
+            "qname": "tgt:OtherOtherRevenueMember",
+            "revenue": 626000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Credit card profit sharing",
+            "qname": "tgt:CreditCardProfitSharingMember",
+            "revenue": 522000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Other Product",
+            "qname": "tgt:OtherProductMember",
+            "revenue": 205000000,
+            "operatingIncome": null
+          }
+        ]
+      }
+    },
+    "HD": {
+      "fy": 2026,
+      "periodEnd": "2026-02-01",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/354950/000162828026019436/0001628280-26-019436-index.htm",
+      "revenueTotal": 164683000000,
+      "operatingIncomeTotal": 20890000000,
+      "bySegment": {
+        "reconcile": 1,
+        "hasOperatingIncome": true,
+        "items": [
+          {
+            "label": "Primary",
+            "qname": "hd:PrimarySegmentMember",
+            "revenue": 151966000000,
+            "operatingIncome": 20574000000
+          },
+          {
+            "label": "Other",
+            "qname": "us-gaap:AllOtherSegmentsMember",
+            "revenue": 12717000000,
+            "operatingIncome": 316000000
+          }
+        ]
+      },
+      "byGeography": {
+        "reconcile": 1,
+        "items": [
+          {
+            "label": "United States",
+            "qname": "country:US",
+            "revenue": 152170000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "International",
+            "qname": "us-gaap:NonUsMember",
+            "revenue": 12513000000,
+            "operatingIncome": null
+          }
+        ]
+      },
+      "byProduct": {
+        "reconcile": 1,
+        "items": [
+          {
+            "label": "Products",
+            "qname": "us-gaap:ProductMember",
+            "revenue": 159029000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Services",
+            "qname": "us-gaap:ServiceMember",
+            "revenue": 5654000000,
+            "operatingIncome": null
+          }
+        ]
+      }
+    },
+    "LOW": {
+      "fy": 2026,
+      "periodEnd": "2026-01-30",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/60667/000006066726000029/0000060667-26-000029-index.htm",
+      "revenueTotal": 86286000000,
+      "operatingIncomeTotal": 10153000000,
+      "byGeography": {
+        "reconcile": 1,
+        "items": [
+          {
+            "label": "United States",
+            "qname": "country:US",
+            "revenue": 86225000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Canada",
+            "qname": "country:CA",
+            "revenue": 61000000,
+            "operatingIncome": null
+          }
+        ]
+      },
+      "byProduct": {
+        "reconcile": 1,
+        "items": [
+          {
+            "label": "Products",
+            "qname": "us-gaap:ProductMember",
+            "revenue": 82352000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Services",
+            "qname": "us-gaap:ServiceMember",
+            "revenue": 2542000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Other",
+            "qname": "us-gaap:ProductAndServiceOtherMember",
+            "revenue": 1392000000,
+            "operatingIncome": null
+          }
+        ]
+      }
+    },
+    "T": {
+      "fy": 2025,
+      "periodEnd": "2025-12-31",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/732717/000073271726000120/0000732717-26-000120-index.htm",
+      "revenueTotal": 125648000000,
+      "operatingIncomeTotal": 24162000000,
+      "byGeography": {
+        "reconcile": 1,
+        "items": [
+          {
+            "label": "United States",
+            "qname": "country:US",
+            "revenue": 120219000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Mexico",
+            "qname": "country:MX",
+            "revenue": 4428000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Asia Pacific",
+            "qname": "srt:AsiaPacificMember",
+            "revenue": 395000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Europe",
+            "qname": "srt:EuropeMember",
+            "revenue": 382000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Other",
+            "qname": "t:AllOtherGeographicalAreasMember",
+            "revenue": 114000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Latin America",
+            "qname": "t:RegionOfLatinAmericaAndCaribbeanMember",
+            "revenue": 110000000,
+            "operatingIncome": null
+          }
+        ]
+      }
+    },
+    "LUMN": {
+      "fy": 2025,
+      "periodEnd": "2025-12-31",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/18926/000001892626000014/0000018926-26-000014-index.htm",
+      "revenueTotal": 11331000000,
+      "operatingIncomeTotal": -812000000,
+      "bySegment": {
+        "reconcile": 1.095,
+        "hasOperatingIncome": false,
+        "items": [
+          {
+            "label": "Business",
+            "qname": "lumn:BusinessSegmentMember",
+            "revenue": 9895000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Mass Markets",
+            "qname": "lumn:MassMarketSegmentMember",
+            "revenue": 2507000000,
+            "operatingIncome": null
+          }
+        ]
+      }
+    },
+    "UAL": {
+      "fy": 2025,
+      "periodEnd": "2025-12-31",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/100517/000010051726000023/0000100517-26-000023-index.htm",
+      "revenueTotal": 59070000000,
+      "operatingIncomeTotal": 4713000000,
+      "byProduct": {
+        "reconcile": 1.081,
+        "items": [
+          {
+            "label": "Passenger",
+            "qname": "us-gaap:PassengerMember",
+            "revenue": 53438000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Passenger, Ancillary Fees",
+            "qname": "ual:PassengerAncillaryFeesMember",
+            "revenue": 4800000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Other operating revenue",
+            "qname": "us-gaap:ProductAndServiceOtherMember",
+            "revenue": 3853000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Cargo revenue",
+            "qname": "us-gaap:CargoAndFreightMember",
+            "revenue": 1779000000,
+            "operatingIncome": null
+          }
+        ]
+      }
+    },
+    "LUV": {
+      "fy": 2025,
+      "periodEnd": "2025-12-31",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/92380/000009238026000004/0000092380-26-000004-index.htm",
+      "revenueTotal": 28063000000,
+      "operatingIncomeTotal": 428000000,
+      "byGeography": {
+        "reconcile": 1,
+        "items": [
+          {
+            "label": "North America",
+            "qname": "srt:NorthAmericaMember",
+            "revenue": 27300000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Latin America",
+            "qname": "srt:LatinAmericaMember",
+            "revenue": 756000000,
+            "operatingIncome": null
+          }
+        ]
+      }
+    },
+    "CCL": {
+      "fy": 2025,
+      "periodEnd": "2025-11-30",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/815097/000081509726000007/0000815097-26-000007-index.htm",
+      "revenueTotal": 26622000000,
+      "operatingIncomeTotal": 4483000000,
+      "bySegment": {
+        "reconcile": 1,
+        "hasOperatingIncome": false,
+        "items": [
+          {
+            "label": "North America",
+            "qname": "ccl:NorthAmericaSegmentMember",
+            "revenue": 17604000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Europe",
+            "qname": "ccl:EuropeSegmentMember",
+            "revenue": 8467000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Cruise",
+            "qname": "ccl:CruiseMember",
+            "revenue": 309000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Tour and Other",
+            "qname": "ccl:TourAndOtherMember",
+            "revenue": 241000000,
+            "operatingIncome": null
+          }
+        ]
+      },
+      "byGeography": {
+        "reconcile": 1,
+        "items": [
+          {
+            "label": "United States",
+            "qname": "country:US",
+            "revenue": 14847000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Other",
+            "qname": "ccl:AllOtherGeographicAreasMember",
+            "revenue": 5374000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Germany",
+            "qname": "country:DE",
+            "revenue": 3348000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "United Kingdom",
+            "qname": "country:GB",
+            "revenue": 3054000000,
+            "operatingIncome": null
+          }
+        ]
+      },
+      "byProduct": {
+        "reconcile": 1,
+        "items": [
+          {
+            "label": "Passenger ticket",
+            "qname": "ccl:CruisePassengerTicketMember",
+            "revenue": 17419000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Onboard and other",
+            "qname": "ccl:CruiseOnboardAndOtherMember",
+            "revenue": 9202000000,
+            "operatingIncome": null
+          }
+        ]
+      }
+    }
+  }
+}
