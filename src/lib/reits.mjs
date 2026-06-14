@@ -19,7 +19,20 @@ export function ffoPerShare(L) { const f = ffo(L); return f != null && L.sharesD
 export function ffoMargin(L) { const f = ffo(L); return f != null && L.revenue ? f / L.revenue : null; }
 export function ffoOnAssets(L) { const f = ffo(L); return f != null && L.totalAssets ? f / L.totalAssets : null; }
 export function ffoPayout(L) { const f = ffo(L); return f != null && f > 0 && L.dividendsPaid != null ? Math.abs(L.dividendsPaid) / f : null; }
-export function debtToAssets(L) { return L && L.totalDebt != null && L.totalAssets ? L.totalDebt / L.totalAssets : null; }
+export function debtToAssets(L) {
+  if (!L || L.totalDebt == null || !L.totalAssets) return null;
+  const r = L.totalDebt / L.totalAssets;
+  // Under-capture guard: a property trust at near-zero leverage, or one whose
+  // reported debt implies an absurd interest rate, almost always means the filing
+  // tags its borrowings in a way the pipeline did not fully total. Decline the figure
+  // rather than print a misleadingly low one.
+  if (r < 0.1) return null;
+  if (L.interestExpense != null && L.totalDebt > 0 && L.interestExpense / L.totalDebt > 0.12) return null;
+  return r;
+}
+export function debtUnderCaptured(L) {
+  return !!(L && L.totalDebt != null && L.totalAssets && debtToAssets(L) == null);
+}
 export function ebitdaCoverage(L) {
   if (!L || !L.interestExpense || L.interestExpense <= 0) return null;
   const ebitda = L.operatingIncome != null && L.depreciation != null ? L.operatingIncome + L.depreciation : null;
@@ -47,7 +60,9 @@ export function buildReitScorecard(company) {
     note: "A REIT must distribute most of its taxable income, so a high payout is normal and the question is whether FFO covers it. Above 100%, the trust is funding the dividend with debt or asset sales, and a cut usually follows.",
   };
   const lev = debtToAssets(L);
-  const levCheck = lev == null ? none("Leverage", "Debt or total assets missing.") : {
+  const levCheck = lev == null ? (debtUnderCaptured(L)
+    ? { title: "Debt / assets", value: "—", formula: "", tone: "none", label: "Not cleanly captured", note: "This REIT tags its borrowings in a way the pipeline could not fully total, so we decline to show a leverage figure rather than a misleadingly low one. The debt schedule in the 10-K is where to read its true leverage." }
+    : none("Leverage", "Debt or total assets missing.")) : {
     title: "Debt / assets",
     value: pc(lev), formula: `Total debt ${fmtUSD(L.totalDebt)} ÷ assets ${fmtUSD(L.totalAssets)}`,
     tone: lev > 0.6 ? "bad" : lev > 0.5 ? "warn" : lev > 0.4 ? "ok" : "good",
