@@ -1,10 +1,12 @@
 ---
 import { fmtUSD, roicValue, operatingMargin, ownerEarningsMargin } from "../lib/fundamentals.mjs";
 import { returnOnEquity, returnOnTangibleEquity, efficiencyRatio, equityToAssets } from "../lib/financials.mjs";
+import { ffoMargin, ffoPayout, debtToAssets } from "../lib/reits.mjs";
 import { classify } from "../lib/archetype.mjs";
 
 const { company } = Astro.props;
-const isFin = ["financial", "reit"].includes(classify(company).sector.key);
+const archKey = classify(company).sector.key;
+const isReit = archKey === "reit", isBank = archKey === "financial";
 const L = company.lines || {};
 const rev = L.revenue;
 const hist = company.history || [];
@@ -31,7 +33,13 @@ const hist5 = hist.slice(-5).map((h) => h.lines);
 const avgOf = (fn) => { const xs = hist5.map(fn).filter((v) => v != null); return xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null; };
 // Vital signs differ by archetype: a bank's "is it a good business" lives in return
 // on equity and the efficiency of the operation, not in margins or ROIC.
-const vitals = (isFin
+const vitals = (isReit
+  ? [
+      { label: "FFO margin", value: ffoMargin(cur), avg: avgOf(ffoMargin), dp: 0 },
+      { label: "Dividend payout (FFO)", value: ffoPayout(cur), avg: avgOf(ffoPayout), dp: 0 },
+      { label: "Debt / assets", value: debtToAssets(cur), avg: avgOf(debtToAssets), dp: 0 },
+    ]
+  : isBank
   ? [
       { label: "Return on equity", value: returnOnEquity(cur), avg: avgOf(returnOnEquity), dp: 0 },
       { label: "Return on tangible equity", value: returnOnTangibleEquity(cur), avg: avgOf(returnOnTangibleEquity), dp: 0 },

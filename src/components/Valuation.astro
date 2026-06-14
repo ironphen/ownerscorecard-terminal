@@ -8,6 +8,7 @@ import { classify } from "../lib/archetype.mjs";
 import { moatReport } from "../lib/durability.mjs";
 import { fmtUSD, liquidAssets } from "../lib/fundamentals.mjs";
 import { tangibleEquity } from "../lib/financials.mjs";
+import { ffoPerShare } from "../lib/reits.mjs";
 
 const { company } = Astro.props;
 const { sector, overlays } = classify(company);
@@ -41,6 +42,21 @@ const rotceH = (company.history || [])
 const rotceMed = rotceH.length >= 3 ? median(rotceH) : null;
 const bankRunnable = isBank && tbvps != null && tbvps > 0 && rotceMed != null;
 
+// REIT valuation: a property trust is priced on a multiple of funds from operations,
+// its cash earnings once property depreciation is added back.
+const isReit = sector.key === "reit";
+const ffops = ffoPerShare(L);
+const dpsReit = L.dividendsPaid != null && shares ? Math.abs(L.dividendsPaid) / shares : null;
+const ffopsH = (company.history || []).map((h) => ffoPerShare(h.lines)).filter((v) => v != null);
+let ffoGrowthRaw = null;
+if (ffopsH.length >= 3) {
+  const span = Math.min(5, ffopsH.length - 1);
+  const first = ffopsH[ffopsH.length - 1 - span], last = ffops ?? ffopsH[ffopsH.length - 1];
+  if (first > 0 && last > 0) ffoGrowthRaw = Math.pow(last / first, 1 / span) - 1;
+}
+const reitGrowthPct = ffoGrowthRaw == null ? 3 : Math.max(0, Math.min(8, Math.round(ffoGrowthRaw * 100)));
+const reitRunnable = isReit && ffops != null && ffops > 0 && shares != null && shares > 0;
+
 // Negative-owner-earnings mode: a reverse-DCF can't grow a negative base, so we flip
 // the question to the future profitability the price demands. Inputs: revenue and its
 // recent growth, the only honest base when there are no earnings yet.
@@ -66,11 +82,33 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
 <section class="val">
   <div class="head">
     <h2>What the price implies</h2>
-    <span class="tag">{bankRunnable ? "price / tangible book" : "reverse-DCF"}</span>
+    <span class="tag">{bankRunnable ? "price / tangible book" : reitRunnable ? "price / FFO" : "reverse-DCF"}</span>
   </div>
 
   {offModel ? (
-    bankRunnable ? (
+    reitRunnable ? (
+      <div id="valBoxReit" data-ffops={ffops} data-dps={dpsReit ?? ""} data-name={name}>
+        <p class="intro">A REIT is priced on a multiple of its <b>funds from operations</b> (FFO), the cash it earns once the depreciation on its buildings is added back. Type today&rsquo;s price; we show the multiple you would pay and the income and growth it implies. Nothing is stored.</p>
+        <div class="priceRow">
+          <label for="pxr">Today&rsquo;s price</label>
+          <span class="dollar">$</span>
+          <input id="pxr" type="number" inputmode="decimal" step="0.01" min="0" placeholder="e.g. 55.00" />
+        </div>
+        <p class="lede" id="ledeR">Enter a price above to run it.</p>
+        <div class="compare">
+          <div class="cmp"><span class="cl">Price / FFO</span><span class="cv hot" id="pffo">—</span></div>
+          <div class="cmp"><span class="cl">Justified by growth</span><span class="cv" id="justpffo">—</span></div>
+          <div class="cmp"><span class="cl">Dividend yield</span><span class="cv" id="dyR">—</span></div>
+        </div>
+        <div class="dials">
+          <span class="dialsLbl">The assumptions, turn the dials</span>
+          <label>Discount rate <output id="rOutR">8%</output><input id="rR" type="range" min="5" max="12" step="0.5" value="8" /></label>
+          <label>FFO / share growth <output id="gOutR">{reitGrowthPct}%</output><input id="gR" type="range" min="0" max="8" step="0.5" value={reitGrowthPct} /></label>
+        </div>
+        <p class="dialsNote">The justified multiple is 1 ÷ (discount rate − growth), a perpetuity on FFO. At an 8% discount and 3% growth, a REIT is worth about 20× FFO. Raise the discount rate and the multiple falls: the same interest-rate gravity that pulls on every yield asset.</p>
+        <p class="foot">FFO about ${ffops.toFixed(2)} per share on {(shares / 1e6).toFixed(0)}M shares. A lens, not a target. FFO here adds back depreciation and removes property-sale gains, the NAREIT method; it does not net out maintenance capex (AFFO), occupancy or lease terms, which the 10-K does.</p>
+      </div>
+    ) : bankRunnable ? (
       <div id="valBoxBank" data-tbvps={tbvps} data-bvps={bvpsB} data-rotce={rotceMed} data-eps={epsB ?? ""} data-name={name}>
         <p class="intro">A bank is worth a multiple of its <b>tangible book value</b>, and the multiple it deserves is set by the return it earns on that book. Type today&rsquo;s price; we show what you would be paying against what {name}&rsquo;s record justifies. Nothing is stored; the number stays in your browser.</p>
         <div class="priceRow">
@@ -356,6 +394,46 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
       setURL(px.value);
     }
     [px, coe, gB].forEach((el) => el.addEventListener("input", update));
+    try { const q = new URL(location.href).searchParams.get("px"); if (q) px.value = q; } catch (e) {}
+    update();
+  })();
+</script>
+
+<script is:inline>
+  (function () {
+    const box = document.getElementById("valBoxReit");
+    if (!box) return;
+    const FFOPS = parseFloat(box.dataset.ffops), DPS = parseFloat(box.dataset.dps), NAME = box.dataset.name || "this REIT";
+    const px = document.getElementById("pxr");
+    const r = document.getElementById("rR"), g = document.getElementById("gR");
+    const rOut = document.getElementById("rOutR"), gOut = document.getElementById("gOutR");
+    const lede = document.getElementById("ledeR"), pffo = document.getElementById("pffo"), just = document.getElementById("justpffo"), dyR = document.getElementById("dyR");
+    const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+    function setURL(v) { try { const u = new URL(location.href); v ? u.searchParams.set("px", v) : u.searchParams.delete("px"); history.replaceState(null, "", u); } catch (e) {} }
+
+    function update() {
+      const rr = parseFloat(r.value) / 100, gg = parseFloat(g.value) / 100;
+      rOut.textContent = r.value + "%"; gOut.textContent = g.value + "%";
+      const price = parseFloat(px.value);
+      if (!(price > 0)) { lede.textContent = "Enter a price above to run it."; [pffo, just, dyR].forEach((e) => (e.textContent = "—")); setURL(""); return; }
+      const pf = price / FFOPS;
+      const justified = rr > gg ? 1 / (rr - gg) : null;
+      pffo.textContent = pf.toFixed(1) + "×";
+      just.textContent = justified != null ? justified.toFixed(1) + "×" : "—";
+      const dy = DPS > 0 ? DPS / price : null;
+      dyR.textContent = dy != null ? (dy * 100).toFixed(1) + "%" : "—";
+      const P = "$" + price.toFixed(2);
+      if (justified == null) { lede.textContent = "Set the discount rate above the growth rate."; setURL(px.value); return; }
+      const ratio = pf / justified;
+      let verdict;
+      if (ratio <= 0.85) verdict = `a <b class="hot">discount</b> to the about ${justified.toFixed(1)}× that ${g.value}% FFO growth justifies at an ${r.value}% discount rate.`;
+      else if (ratio <= 1.15) verdict = `roughly <b>in line</b> with the about ${justified.toFixed(1)}× that ${g.value}% FFO growth justifies.`;
+      else verdict = `a <b class="bad">premium</b> to the about ${justified.toFixed(1)}× that ${g.value}% FFO growth justifies; you are paying for faster growth or a lower rate.`;
+      const income = dy != null ? ` The income alone is a ${(dy * 100).toFixed(1)}% yield.` : "";
+      lede.innerHTML = `At <b>${P}</b>, you pay <b class="hot">${pf.toFixed(1)}×</b> funds from operations for ${esc(NAME)}, ${verdict}${income}`;
+      setURL(px.value);
+    }
+    [px, r, g].forEach((el) => el.addEventListener("input", update));
     try { const q = new URL(location.href).searchParams.get("px"); if (q) px.value = q; } catch (e) {}
     update();
   })();

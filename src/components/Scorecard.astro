@@ -1,14 +1,16 @@
 ---
 import { buildScorecard, TONE_COLOR } from "../lib/fundamentals.mjs";
 import { buildFinancialScorecard } from "../lib/financials.mjs";
+import { buildReitScorecard } from "../lib/reits.mjs";
 import { moatReport } from "../lib/durability.mjs";
 import { classify } from "../lib/archetype.mjs";
 
 const { company, sample = false } = Astro.props;
-// Banks and REITs are read on a different set of statements, so they get the
-// financials scorecard and skip the ROIC-based durability block, which does not apply.
-const isFin = ["financial", "reit"].includes(classify(company).sector.key);
-const { sections } = isFin ? buildFinancialScorecard(company) : buildScorecard(company);
+// Banks and REITs are read on different statements, so each gets its own scorecard
+// and skips the ROIC-based durability block, which does not apply to either.
+const key = classify(company).sector.key;
+const isReit = key === "reit", isBank = key === "financial", isFin = isReit || isBank;
+const { sections } = isReit ? buildReitScorecard(company) : isBank ? buildFinancialScorecard(company) : buildScorecard(company);
 const report = isFin ? null : moatReport(company);
 ---
 

@@ -37,6 +37,7 @@ const SIC_LABEL = {
   "2670": "Household & personal care", "2890": "Specialty chemicals", "5331": "Discount & variety retail",
   "5311": "Department stores", "5211": "Home-improvement retail", "4813": "Telecom", "4812": "Wireless telecom",
   "4512": "Airlines", "4400": "Cruise lines", "5812": "Restaurants", "2911": "Oil & gas", "3711": "Automakers",
+  "6798": "Real estate", "6500": "Real estate",
 };
 const SIC3_LABEL = {
   "357": "Computer hardware", "367": "Semiconductors", "737": "Software & internet", "596": "Online retail",
@@ -44,7 +45,7 @@ const SIC3_LABEL = {
   "267": "Paper & packaging", "289": "Specialty chemicals", "531": "Department stores", "533": "Discount retail",
   "521": "Home-improvement retail", "481": "Telecom", "451": "Airlines", "440": "Cruise & shipping",
   "601": "Banks", "602": "Banks", "603": "Savings institutions", "612": "Mortgage finance", "621": "Brokerage",
-  "631": "Insurance", "633": "Insurance", "635": "Insurance", "655": "Real estate", "291": "Oil & gas",
+  "631": "Insurance", "633": "Insurance", "635": "Insurance", "655": "Real estate", "679": "Real estate", "291": "Oil & gas",
 };
 
 function cleanSicDescription(d) {

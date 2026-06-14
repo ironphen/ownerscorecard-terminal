@@ -9,6 +9,7 @@ import segmentsData from "../data/segments.json";
 import { classify } from "../lib/archetype.mjs";
 import { roicValue, ownerEarningsMargin, cashConversionCycle } from "../lib/fundamentals.mjs";
 import { financialQuality } from "../lib/financials.mjs";
+import { reitQuality } from "../lib/reits.mjs";
 
 const { company } = Astro.props;
 const cls = classify(company);
@@ -98,9 +99,9 @@ const ccc = cashConversionCycle(company);
 const negativeCCC = ccc && /Negative/.test(ccc.label);
 const cyclical = (cls.overlays || []).some((o) => o.key === "cyclical");
 
-// Banks are read on return on equity through the cycle, not ROIC; route them there.
-const isFin = ["financial", "reit"].includes(cls.sector.key);
-let moat = isFin ? financialQuality(company) : null;
+// Banks read on ROE, REITs on FFO, neither on ROIC; route each to its own lens.
+const isReit = cls.sector.key === "reit", isBank = cls.sector.key === "financial", isFin = isReit || isBank;
+let moat = isReit ? reitQuality(company) : isBank ? financialQuality(company) : null;
 if (!isFin && roicSeries.length >= 3 && roicMed != null) {
   const n = roicSeries.length;
   const band = roicMed >= 0.2 ? "high" : roicMed >= 0.13 ? "mid" : roicMed >= 0.07 ? "low" : "poor";
