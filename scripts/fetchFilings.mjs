@@ -154,6 +154,33 @@ function metrics(text) {
   return { words: n, sentences: sents.length, fog: Math.round(fog * 10) / 10, hedgeDensity: hedges / n, sents };
 }
 
+// The company's own one-sentence account of what it does, lifted verbatim from the
+// top of Item 1 (Business). We skip the incorporation and forward-looking openers
+// and take the first real "we design / it is a provider of ..." sentence, then strip
+// the parenthetical and subsidiary noise. Their words for what they do; our numbers
+// elsewhere for what it means. Returns null if nothing clean is found.
+const BIZ_DOING = /\b(designs?|manufactures?|manufacturing|develops?|markets?|provides?|providing|operates?|sells?|selling|distributes?|produces?|producing|delivers?|offers?|offering)\b/i;
+const BIZ_ISA = /\b(is|are)\s+(a|an|the)\b[^.]{0,60}?\b(compan|provider|manufacturer|producer|retailer|developer|operator|maker|supplier|distributor|platform|business|leader|corporation|holding|bank|insurer)\w*/i;
+const BIZ_SKIP = /(was incorporated|were incorporated|reincorporat|organized under the laws|founded in\s+\d|fiscal year (end|of|\s*\d)|forward-looking statement|securities (act|exchange) of|this (annual )?report on form|unless the context|completed (our|its) initial public offering|^\s*(general|overview|business|the company)\s*[:.]?\s*$)/i;
+
+function businessDescription(sents) {
+  if (!Array.isArray(sents)) return null;
+  for (const raw of sents.slice(0, 12)) {
+    let s = cleanQuote(String(raw || ""));
+    if (s.length < 45 || s.length > 360) continue;
+    if (BIZ_SKIP.test(s)) continue;
+    if (!BIZ_DOING.test(s) && !BIZ_ISA.test(s)) continue;
+    s = s
+      .replace(/\s*\([^)]*\)/g, "")
+      .replace(/,?\s+and its (wholly[- ]owned )?subsidiaries\b/i, "")
+      .replace(/\s{2,}/g, " ")
+      .trim();
+    if (s.length < 40) continue;
+    return s.length > 300 ? s.slice(0, 297).replace(/[\s,;]+\S*$/, "") + "…" : s;
+  }
+  return null;
+}
+
 // ---- EDGAR document discovery ----
 
 async function latestTenKs(cik, n = 2) {
@@ -416,6 +443,7 @@ async function main() {
       fy: cur.reportDate?.slice(0, 4) || null,
       priorFy: prior?.reportDate?.slice(0, 4) || null,
       sourceUrl: cur.url,
+      business: businessDescription(cur.business.sents),
       ownerFlags: flags,
       mdna: {
         words: cur.mdna.words, fog: cur.mdna.fog, hedgeDensity: Math.round(cur.mdna.hedgeDensity * 1e4) / 1e4,
@@ -439,7 +467,7 @@ async function main() {
 }
 
 // Exported for the offline logic test; only hit EDGAR when run directly.
-export { ownerFlags, FLAG_THEMES, sentences, isProse, diff, extractPayRatio, htmlToText, section, fetchText };
+export { ownerFlags, FLAG_THEMES, sentences, isProse, diff, extractPayRatio, htmlToText, section, fetchText, businessDescription };
 
 if (import.meta.url === pathToFileURL(process.argv[1] || "").href) {
   main().catch((e) => { console.error(`\n❌ ${e.message}\n`); process.exit(1); });
