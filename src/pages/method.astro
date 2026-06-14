@@ -1,16 +1,16 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
 
-// The teaching spine of the publication: why it exists, the few questions that
-// transfer to any company, and exactly how every number is made.
+// The teaching spine of the publication: why it exists, what it is, the few
+// questions that transfer to any company, and exactly how every number is made.
 const steps = [
   {
     h: "1. What is this business, really?",
-    p: "Before a single ratio, understand how the company turns effort into cash: what it sells, to whom, and why anyone keeps buying. Buffett's circle of competence is not a slogan. If you cannot explain the business in a sentence, you cannot value it. We label each company by its economic shape (asset-light, capital-intensive, retail, consumer brand), because the questions that matter change with the model.",
+    p: "Before a single ratio, understand how the company turns effort into cash: what it sells, to whom, and why anyone keeps buying. Buffett's circle of competence is not a slogan. If you cannot explain the business in a sentence, you cannot value it. Each page opens by naming the economic model (asset-light, capital-intensive, brand, retail) and what moves its needle, because the questions that matter change with the model.",
   },
   {
-    h: "2. What does the company itself flag?",
-    p: "A 10-K's Risk Factors and Management's Discussion are where the people running the business must, under penalty of law, name what could go wrong and what is changing. Read their words before anyone else's. We surface the handful Graham and Buffett would stop on, such as customer concentration, pricing power, debt covenants, or a real lawsuit, quoted exactly as written and never paraphrased.",
+    h: "2. What moves the needle, and what could break it?",
+    p: "Every business runs on two or three levers. For an asset-light platform it is engagement and pricing; for a capital-intensive one it is how hard the assets work and what the inputs cost; for a brand it is whether it can raise prices without losing the customer. Find those levers first. Then read what management is required, under penalty of law, to name as its risks, in its own words and never paraphrased, and weigh it. The business in brief on each page is built to do exactly this.",
   },
   {
     h: "3. Is there a record, and is it stable?",
@@ -41,7 +41,7 @@ const steps = [
 const build = [
   ["Primary source, only.", "Every figure comes from the company's own SEC filings on EDGAR, and the link to that filing is one click away. No third-party estimates, no analyst price targets."],
   ["The arithmetic is shown.", "Each ratio carries its formula and its inputs. Nothing is a black box you are asked to trust."],
-  ["No model writes the analysis.", "The qualitative flags are sentences quoted word for word from the filing, found with plain classic text analysis. No language model generates them, so none can hallucinate."],
+  ["No model writes the analysis.", "The business read is arithmetic on the filings, the very numbers shown lower on the same page. The qualitative passages are sentences quoted word for word from the 10-K, found with plain text analysis. No language model generates either, so neither can invent a fact."],
   ["No rating, no price target, no buy or sell.", "By design. The product is the ability to check, not a verdict to follow."],
   ["No ads, no paywall, no conflicts, no cost.", "We do not sell your attention or your data, and the author's personal positions are not published. This is a method to learn, not a model portfolio to copy."],
   ["It maintains itself.", "The data refreshes from EDGAR on its own, the deep figures weekly and new filings daily, so what you read stays current without anyone touching it."],
@@ -58,9 +58,18 @@ const build = [
   <section class="band">
     <h2>Why this exists</h2>
     <div class="prose">
-      <p>Charlie Munger called most of what passes for investment wisdom twaddle: the academic models, the Wall Street noise, the complexity sold hardest by the people whose jobs depend on it staying complex. He and Buffett liked to say they could teach the whole subject in a single class, except that the professors would then be out of work. The truth is almost insultingly simple. A share is a piece of a business. A business is worth the cash it will hand its owners over its life. The job is to buy it for less than that, with a margin of safety. Graham wrote this down in 1949, and little of consequence has been added since.</p>
-      <p>What has changed is the noise, which has grown into the most perverse state in its history. Zero-day options, SPACs, crypto, prediction markets, an IPO carnival, and a stampede into anything with “AI” in its name whether or not there is a business behind it. A whole generation has been handed gambling apps dressed up as brokerages and almost nothing that teaches it to think like an owner.</p>
-      <p>This is a small attempt to push the other way. It is not a tip service, and not a screener that hands you a verdict. It is a place to learn the few questions that actually matter, applied to real companies from their own filings, so that the next time you look at any business, in this catalog or not, you know what to look for. We cannot make you a great investor. Graham's book can. We are only trying to put its method where this generation already spends its time.</p>
+      <p>Charlie Munger called most of what passes for investment wisdom twaddle: the academic models, the Wall Street noise, the complexity sold hardest by the people whose income depends on it staying complex. He and Buffett liked to say they could teach the whole subject in a single class, except that the professors would then be out of work. The truth is almost insultingly simple. A share is a piece of a business. A business is worth the cash it will hand its owners over its life. The job is to buy it for less than that, with a margin of safety. Graham wrote this down in 1949, and little of consequence has been added since.</p>
+      <p>What has changed is the noise, now at the most perverse pitch in its history. Zero-day options, an ocean of derivatives, valuations untethered from any business beneath them, an IPO and SPAC carnival, crypto, prediction markets, and a stampede into anything with “AI” stamped on it whether or not a business stands behind the letters. A whole generation has been handed gambling apps dressed up as brokerages, and almost nothing that teaches it to think like an owner. Taken together it is one large collective stain on the capital markets.</p>
+      <p>The cost is not abstract. Millions of young people now put real money to work with no instrument worthy of the decision. They were given the buttons and never the tools. This is a small attempt to push the other way.</p>
+    </div>
+  </section>
+
+  <section class="band">
+    <h2>What this is</h2>
+    <div class="prose">
+      <p>It is not a tip service, and not a screener that hands you a verdict. It is a place to learn the few questions that actually decide whether a business is any good, applied to real companies from their own filings, with the arithmetic shown. Learn the questions here and they travel with you: the next company you open, in this catalog or not, you will know what to ask of it. The catalog is the classroom, and it is going to grow a great deal.</p>
+      <p>The method is Graham's, carried forward the way Buffett and Munger carried it. There is no sacred multiple. A wonderful business can be cheap at fifty times earnings if the reasoning holds, and a trap at ten. The two of them moved from buying fair businesses at wonderful prices to wonderful businesses at fair ones, and learned to judge a company by the durability of what it earns on its capital. All of it still holds, and none of it requires a terminal or a trading desk.</p>
+      <p>This was built by one person with a finance education and a set of AI tools, and that is part of the point. You no longer need a quant desk or a computer-science degree to build a serious instrument for thinking about businesses; that leverage is finally within reach of anyone willing to do the work. The aim is plain, and maybe a little quixotic: to set Graham's method down where this generation already spends its time, and to help raise a more intelligent generation of investors. We cannot make you a great investor. Graham's book can. We are only trying to put its method in front of you, with the means to check every figure yourself.</p>
     </div>
   </section>
 
