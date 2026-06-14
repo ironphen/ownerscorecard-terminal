@@ -10,6 +10,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
+import { fetchText, htmlToText, section, sentences, diff } from "./fetchFilings.mjs";
 
 const UA = process.env.SEC_USER_AGENT || "Owner Scorecard research (ryanreinsant@gmail.com)";
 const HEADERS = { "User-Agent": UA, "Accept-Encoding": "gzip, deflate" };
@@ -55,8 +56,57 @@ function label8K(items) {
   return codes.length ? ITEM_8K[codes[0]] : "Current report";
 }
 
+// ---- moat-deepener: what changed in a new periodic report ----
+const RECENT_DAYS = 45; // run the NLP diff only on genuinely new filings
+
+function getMDNA(text, form) {
+  if (form.startsWith("10-K"))
+    return section(text, "item\\s*7[\\.\\s]+management", ["item\\s*7a[\\.\\s]+quantitative", "item\\s*8[\\.\\s]+financial"]);
+  return section(text, "item\\s*2[\\.\\s]+management", ["item\\s*3[\\.\\s]+quantitative", "item\\s*4[\\.\\s]+controls", "part\\s*ii\\b"]);
+}
+
+// The same period a year earlier (matched by report date, so quarters line up) for
+// a clean year-over-year diff rather than a noisy quarter-over-quarter one.
+function priorYoYIndex(r, i) {
+  const form = r.form[i], curRD = r.reportDate?.[i];
+  if (!curRD) return -1;
+  const target = new Date(curRD + "T00:00:00Z");
+  target.setUTCFullYear(target.getUTCFullYear() - 1);
+  let best = -1, bestD = Infinity;
+  for (let j = 0; j < r.form.length; j++) {
+    if (j === i || r.form[j] !== form || !r.reportDate?.[j]) continue;
+    const d = Math.abs(new Date(r.reportDate[j] + "T00:00:00Z") - target);
+    if (d < bestD && d < 70 * 86400000) { bestD = d; best = j; }
+  }
+  return best;
+}
+
+const docURL = (cik, r, idx) =>
+  `https://www.sec.gov/Archives/edgar/data/${Number(cik)}/${r.accessionNumber[idx].replace(/-/g, "")}/${r.primaryDocument[idx]}`;
+
+async function whatChanged(cik, r, i) {
+  const pj = priorYoYIndex(r, i);
+  if (pj < 0 || !r.primaryDocument[i] || !r.primaryDocument[pj]) return null;
+  try {
+    const cur = sentences(getMDNA(htmlToText(await fetchText(docURL(cik, r, i))), r.form[i]));
+    await sleep(150);
+    const prior = sentences(getMDNA(htmlToText(await fetchText(docURL(cik, r, pj))), r.form[i]));
+    if (cur.length < 20) return null; // MD&A didn't parse cleanly — skip rather than emit noise
+    const d = diff(cur, prior);
+    return d.notable.length ? d.notable.slice(0, 3) : null;
+  } catch (e) { return null; }
+}
+
 async function main() {
   const cutoff = new Date(Date.now() - DAYS * 86400000).toISOString().slice(0, 10);
+  const recentCutoff = new Date(Date.now() - RECENT_DAYS * 86400000).toISOString().slice(0, 10);
+  const wirePath = path.join(dataDir, "wire.json");
+
+  // Reuse already-computed diffs (keyed by accession) so each new filing is analysed
+  // once, not re-fetched on every daily run.
+  const cache = {};
+  try { for (const it of (JSON.parse(fs.readFileSync(wirePath, "utf8")).items || [])) if (it.accn) cache[it.accn] = it.whatChanged ?? null; } catch {}
+
   const items = [];
   for (const c of fundamentals.companies) {
     if (!c.cik) continue;
@@ -66,6 +116,7 @@ async function main() {
     catch (e) { console.warn(`  ! ${c.ticker}: ${e.message}`); continue; }
     const r = j.filings?.recent;
     if (!r?.form) continue;
+    let diffed = 0;
     for (let i = 0; i < r.form.length; i++) {
       const form = r.form[i], date = r.filingDate[i];
       if (!FORM_LABEL[form] || !date || date < cutoff) continue;
@@ -73,16 +124,24 @@ async function main() {
       const url = accn && doc ? `https://www.sec.gov/Archives/edgar/data/${Number(c.cik)}/${accn.replace(/-/g, "")}/${doc}` : null;
       const label = form === "8-K" ? label8K(r.items?.[i]) : FORM_LABEL[form];
       const grave = form === "8-K" && /can't be relied on|Changed its auditor|default|impairment|Delisting/.test(label);
-      items.push({ ticker: c.ticker, name: c.name || c.ticker, form, date, label, grave, url });
+
+      // What changed: only for genuinely new 10-K/10-Q, capped per company, computed once.
+      let changed = null;
+      if ((form === "10-K" || form === "10-Q") && date >= recentCutoff && diffed < 2) {
+        if (accn in cache) changed = cache[accn];
+        else { changed = await whatChanged(c.cik, r, i); diffed++; }
+      }
+
+      items.push({ ticker: c.ticker, name: c.name || c.ticker, form, date, label, grave, accn, url, whatChanged: changed });
     }
   }
   items.sort((a, b) => b.date.localeCompare(a.date) || a.ticker.localeCompare(b.ticker));
   const out = { asOf: new Date().toISOString().slice(0, 10), source: "SEC EDGAR — recent filings", items: items.slice(0, 90) };
-  fs.writeFileSync(path.join(dataDir, "wire.json"), JSON.stringify(out, null, 2) + "\n");
-  console.log(`✅ Wire: ${out.items.length} filings since ${cutoff}`);
+  fs.writeFileSync(wirePath, JSON.stringify(out, null, 2) + "\n");
+  console.log(`✅ Wire: ${out.items.length} filings, ${items.filter((x) => x.whatChanged).length} with what-changed`);
 }
 
-export { label8K, ITEM_8K };
+export { label8K, ITEM_8K, priorYoYIndex, getMDNA };
 
 if (import.meta.url === pathToFileURL(process.argv[1] || "").href) {
   main().catch((e) => { console.error(`❌ ${e.message}`); process.exit(1); });
