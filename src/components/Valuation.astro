@@ -139,7 +139,7 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
           <span class="dialsLbl">The assumptions, turn the dials</span>
           <label>Cost of equity <output id="coeOut">10%</output><input id="coeB" type="range" min="8" max="14" step="0.5" value="10" /></label>
           <label>Long-term growth <output id="gOutB">3%</output><input id="gB" type="range" min="0" max="6" step="0.5" value="3" /></label>
-          <p class="dialsNote">The justified multiple is (return on tangible equity − growth) ÷ (cost of equity − growth). A {finKind} earning exactly its cost of equity is worth about one times tangible book; every point of durable excess return above that is worth paying up for. Raise the cost of equity and the justified multiple falls: that is interest-rate gravity on a {finKind}.</p>
+          <p class="dialsNote">The justified multiple is (return on tangible equity − growth) ÷ (cost of equity − growth). {isInsurer ? "An" : "A"} {finKind} earning exactly its cost of equity is worth about one times tangible book; every point of durable excess return above that is worth paying up for. Raise the cost of equity and the justified multiple falls: that is interest-rate gravity on {isInsurer ? "an" : "a"} {finKind}.</p>
         </div>
         <p class="foot">Tangible book {fmtUSD(tEq)} on {(shares / 1e6).toFixed(0)}M shares, a {pctS(rotceMed)} normalized return on it. This is a lens, not a target. It assumes the {finKind} keeps earning that return; {bankRisk} changes it, which is what the record and the 10-K are for.</p>
       </div>
