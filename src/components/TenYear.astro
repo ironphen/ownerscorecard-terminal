@@ -46,6 +46,30 @@ if (company.ttm?.lines) {
   cols.push({ label: "TTM", sub: asOf, lines: company.ttm.lines, ttm: true });
 }
 const lastI = cols.length - 1;
+
+// Normalize diluted shares to the latest basis so per-share rows stay continuous
+// across stock splits. EDGAR only restates ~3 years back, so a year older than
+// that can still be pre-split; detect the jump and scale earlier years to match.
+{
+  const s = cols.map((c) => c.lines?.sharesDiluted ?? null);
+  const factor = new Array(s.length).fill(1);
+  let f = 1;
+  for (let i = s.length - 1; i > 0; i--) {
+    factor[i] = f;
+    let j = i - 1;
+    while (j >= 0 && s[j] == null) j--;
+    if (j >= 0 && s[i] != null && s[j] != null && s[j] > 0) {
+      const r = s[i] / s[j];
+      if (r > 1.4 || r < 0.7) f *= r; // a split (not buybacks) sits between j and i
+    }
+  }
+  factor[0] = f;
+  cols.forEach((c, i) => {
+    if (c.lines && c.lines.sharesDiluted != null && factor[i] !== 1)
+      c.lines = { ...c.lines, sharesDiluted: c.lines.sharesDiluted * factor[i] };
+  });
+}
+
 const chosen = SETS[sector.key] || SETS.general;
 // Drop any row the data can't fill across the whole record.
 const rows = chosen
