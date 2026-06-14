@@ -4,6 +4,8 @@ import { classify } from "../lib/archetype.mjs";
 import { fmtUSD, roicValue } from "../lib/fundamentals.mjs";
 import { returnOnEquity, returnOnTangibleEquity, efficiencyRatio, netInterestMargin } from "../lib/financials.mjs";
 import { ffoMargin, ffoPayout, ffoOnAssets, debtToAssets } from "../lib/reits.mjs";
+import { combinedRatio, lossRatio } from "../lib/insurers.mjs";
+import { financialKind } from "../lib/archetype.mjs";
 
 const { company } = Astro.props;
 const all = fundamentals.companies || [];
@@ -26,8 +28,8 @@ function findPeers(co) {
 const group = [company, ...findPeers(company)].sort((a, b) => (b.lines?.revenue || 0) - (a.lines?.revenue || 0));
 
 const pr = (v, dp = 0) => (v == null ? "—" : `${(v * 100).toFixed(dp)}%`);
-const archKey = classify(company).sector.key;
-const isReit = archKey === "reit", isBank = archKey === "financial";
+const fk = financialKind(company);
+const isReit = fk === "reit", isBank = fk === "bank", isInsurer = fk === "insurer";
 
 const metricsOf = (c) => {
   const L = c.lines || {};
@@ -45,6 +47,8 @@ const metricsOf = (c) => {
     ffoOnAssets: ffoOnAssets(L),
     payout: ffoPayout(L),
     debtToAssets: debtToAssets(L),
+    combined: combinedRatio(L),
+    lossR: lossRatio(L),
   };
 };
 
@@ -56,6 +60,12 @@ const COLS = isReit
       { key: "ffoOnAssets", label: "FFO / assets", dp: 1, better: "high" },
       { key: "payout", label: "Payout (FFO)", dp: 0, better: "neutral" },
       { key: "debtToAssets", label: "Debt / assets", dp: 0, better: "low" },
+    ]
+  : isInsurer
+  ? [
+      { key: "combined", label: "Combined ratio", dp: 0, better: "low" },
+      { key: "lossR", label: "Loss ratio", dp: 0, better: "low" },
+      { key: "roe", label: "ROE", dp: 0, better: "high" },
     ]
   : isBank
   ? [
@@ -84,7 +94,7 @@ for (const col of COLS) {
 {group.length >= 2 ? (
   <section class="peers">
     <h3 class="secHead">Peers, {classify(company).industry.label}</h3>
-    <p class="pNote">The same industry, side by side on {isReit ? "the REIT lens" : isBank ? "the bank lens" : "owner economics"}, compare, don't rank by a single number. <span class="bestKey">●</span> marks best in the group.</p>
+    <p class="pNote">The same industry, side by side on {isReit ? "the REIT lens" : isInsurer ? "the underwriting lens" : isBank ? "the bank lens" : "owner economics"}, compare, don't rank by a single number. <span class="bestKey">●</span> marks best in the group.</p>
     <div class="wrap">
       <table>
         <thead>

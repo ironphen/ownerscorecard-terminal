@@ -2,11 +2,12 @@
 import { fmtUSD, roicValue, operatingMargin, ownerEarningsMargin } from "../lib/fundamentals.mjs";
 import { returnOnEquity, returnOnTangibleEquity, efficiencyRatio, equityToAssets } from "../lib/financials.mjs";
 import { ffoMargin, ffoPayout, debtToAssets } from "../lib/reits.mjs";
-import { classify } from "../lib/archetype.mjs";
+import { combinedRatio, lossRatio } from "../lib/insurers.mjs";
+import { financialKind } from "../lib/archetype.mjs";
 
 const { company } = Astro.props;
-const archKey = classify(company).sector.key;
-const isReit = archKey === "reit", isBank = archKey === "financial";
+const fk = financialKind(company);
+const isReit = fk === "reit", isBank = fk === "bank", isInsurer = fk === "insurer";
 const L = company.lines || {};
 const rev = L.revenue;
 const hist = company.history || [];
@@ -38,6 +39,12 @@ const vitals = (isReit
       { label: "FFO margin", value: ffoMargin(cur), avg: avgOf(ffoMargin), dp: 0 },
       { label: "Dividend payout (FFO)", value: ffoPayout(cur), avg: avgOf(ffoPayout), dp: 0 },
       { label: "Debt / assets", value: debtToAssets(cur), avg: avgOf(debtToAssets), dp: 0 },
+    ]
+  : isInsurer
+  ? [
+      { label: "Combined ratio", value: combinedRatio(cur), avg: avgOf(combinedRatio), dp: 0 },
+      { label: "Loss ratio", value: lossRatio(cur), avg: avgOf(lossRatio), dp: 0 },
+      { label: "Return on equity", value: returnOnEquity(cur), avg: avgOf(returnOnEquity), dp: 0 },
     ]
   : isBank
   ? [
