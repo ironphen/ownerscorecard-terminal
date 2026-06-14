@@ -5,6 +5,7 @@ import Scorecard from "../../components/Scorecard.astro";
 import Portrait from "../../components/Portrait.astro";
 import TenYear from "../../components/TenYear.astro";
 import Peers from "../../components/Peers.astro";
+import BusinessRead from "../../components/BusinessRead.astro";
 import OwnersRead from "../../components/OwnersRead.astro";
 import Capital from "../../components/Capital.astro";
 import Comp from "../../components/Comp.astro";
@@ -56,7 +57,7 @@ const fmtDate = (d) =>
       <a class="cbar-id" href="#top">{ticker}<span class="cbar-nm">{name ? ` · ${name}` : ""}</span></a>
       <nav class="secnav" aria-label="Sections">
         <a href="#sec-snapshot">Snapshot</a>
-        <a href="#sec-flags">Flags</a>
+        <a href="#sec-business">Business</a>
         <a href="#sec-record">Record</a>
         <a href="#sec-scorecard">Scorecard</a>
         <a href="#sec-capital">Capital</a>
@@ -71,14 +72,19 @@ const fmtDate = (d) =>
   ) : null}
 
   {fund ? <div id="sec-snapshot" class="sec"><Portrait company={fund} /></div> : null}
-  {fund ? <div id="sec-flags" class="sec"><OwnersRead company={fund} /></div> : null}
+  {fund ? <div id="sec-business" class="sec"><BusinessRead company={fund} /></div> : null}
   {fund ? <div id="sec-record" class="sec"><TenYear company={fund} /></div> : null}
   {fund ? <div id="sec-scorecard" class="sec"><Scorecard company={fund} sample={fundamentals.sample} /></div> : null}
   {fund ? <div id="sec-capital" class="sec"><Capital company={fund} /></div> : null}
   {fund ? <div id="sec-pay" class="sec"><Comp company={fund} /></div> : null}
   {fund ? <div id="sec-graham" class="sec"><Graham company={fund} /></div> : null}
   {fund ? <div id="sec-price" class="sec"><Valuation company={fund} /></div> : null}
-  {fund ? <div id="sec-changes" class="sec"><Language company={fund} /></div> : null}
+  {fund ? (
+    <div id="sec-changes" class="sec">
+      <OwnersRead company={fund} />
+      <Language company={fund} />
+    </div>
+  ) : null}
   {fund ? <div id="sec-peers" class="sec"><Peers company={fund} /></div> : null}
 
   {related.length ? (
