@@ -135,7 +135,22 @@ function buildLabels(meta) {
 function prettify(localName) {
   return localName.replace(/Member$/, "").replace(/([a-z0-9])([A-Z])/g, "$1 $2").replace(/([A-Z]+)([A-Z][a-z])/g, "$1 $2").trim();
 }
-const labelFor = (qn, localName, labels) => labels[qn] || prettify(localName);
+// ISO country codes (country:US) to country names, plus the standard region and
+// product members whose filed label is just a code or an abbreviation.
+const REGION = (() => { try { return new Intl.DisplayNames(["en"], { type: "region" }); } catch { return null; } })();
+const STD_LABELS = {
+  "us-gaap:NonUsMember": "International", "us-gaap:ProductMember": "Products", "us-gaap:ServiceMember": "Services",
+  "us-gaap:EMEAMember": "EMEA", "us-gaap:AsiaPacificMember": "Asia Pacific",
+  "srt:AmericasMember": "Americas", "srt:NorthAmericaMember": "North America", "srt:SouthAmericaMember": "South America",
+  "srt:LatinAmericaMember": "Latin America", "srt:EuropeMember": "Europe", "srt:AsiaPacificMember": "Asia Pacific",
+  "srt:AsiaMember": "Asia", "srt:EuropeanUnionMember": "European Union", "srt:MiddleEastMember": "Middle East", "srt:AfricaMember": "Africa",
+};
+function labelFor(qn, localName, labels) {
+  if (/^country:/.test(qn) && REGION) { const code = qn.split(":")[1]; try { const n = REGION.of(code); if (n && n !== code) return n; } catch {} }
+  if (STD_LABELS[qn]) return STD_LABELS[qn];
+  if (labels[qn]) return labels[qn];
+  return prettify(localName);
+}
 
 // ---- reconcile a breakdown against the consolidated figure ----
 function reconcile(map, total, lo = 0.8, hi = 1.1) {
