@@ -9,6 +9,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 
 const UA = process.env.SEC_USER_AGENT || "Owner Scorecard research (ryanreinsant@gmail.com)";
 const HEADERS = { "User-Agent": UA, "Accept-Encoding": "gzip, deflate" };
@@ -81,4 +82,8 @@ async function main() {
   console.log(`✅ Wire: ${out.items.length} filings since ${cutoff}`);
 }
 
-main().catch((e) => { console.error(`❌ ${e.message}`); process.exit(1); });
+export { label8K, ITEM_8K };
+
+if (import.meta.url === pathToFileURL(process.argv[1] || "").href) {
+  main().catch((e) => { console.error(`❌ ${e.message}`); process.exit(1); });
+}
