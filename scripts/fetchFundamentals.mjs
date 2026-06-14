@@ -49,12 +49,15 @@ const CONCEPTS = {
   operatingIncome: ["OperatingIncomeLoss"],
   interestExpense: ["InterestExpense", "InterestExpenseNonoperating", "InterestAndDebtExpense"],
   revenue: ["RevenueFromContractWithCustomerExcludingAssessedTax", "Revenues", "RevenueFromContractWithCustomerIncludingAssessedTax"],
-  netIncome: ["NetIncomeLoss"],
+  netIncome: ["NetIncomeLoss", "NetIncomeLossAvailableToCommonStockholdersBasic", "ProfitLoss"],
   cashFromOps: ["NetCashProvidedByUsedInOperatingActivities"],
   depreciation: ["DepreciationDepletionAndAmortization", "DepreciationAmortizationAndAccretionNet", "DepreciationAndAmortization"],
   capex: ["PaymentsToAcquirePropertyPlantAndEquipment", "PaymentsToAcquireProductiveAssets"],
   longTermDebt: ["LongTermDebtNoncurrent", "LongTermDebt"],
   currentDebt: ["LongTermDebtCurrent", "DebtCurrent"],
+  // A single total-debt tag, preferred when present (REITs and some others report
+  // their borrowings this way rather than as separate long- and short-term lines).
+  combinedDebt: ["DebtLongtermAndShorttermCombinedAmount"],
   incomeTaxExpense: ["IncomeTaxExpenseBenefit"],
   costOfRevenue: ["CostOfGoodsAndServicesSold", "CostOfRevenue", "CostOfGoodsSold"],
   stockBasedComp: ["ShareBasedCompensation"],
@@ -250,8 +253,9 @@ async function main() {
     const anchor = oi || pickAnnual(facts, CONCEPTS.revenue); // for fy / period / filing link
     const ltd = pickInstant(facts, CONCEPTS.longTermDebt);
     const cur = pickInstant(facts, CONCEPTS.currentDebt);
+    const comb = pickInstant(facts, CONCEPTS.combinedDebt);
     const totalDebt =
-      ltd || cur ? (ltd?.val || 0) + (cur?.val || 0) : null;
+      comb ? comb.val : (ltd || cur ? (ltd?.val || 0) + (cur?.val || 0) : null);
 
     const pick = (tags) => pickAnnual(facts, tags)?.val ?? null;
     const inst = (tags) => pickInstant(facts, tags)?.val ?? null;
@@ -286,6 +290,7 @@ async function main() {
       ltMkt: collectInstant(facts, CONCEPTS.longTermMarketable),
       ltd: collectInstant(facts, CONCEPTS.longTermDebt),
       cur: collectInstant(facts, CONCEPTS.currentDebt),
+      comb: collectInstant(facts, CONCEPTS.combinedDebt),
       ca: collectInstant(facts, CONCEPTS.currentAssets),
       cl: collectInstant(facts, CONCEPTS.currentLiabilities),
       assets: collectInstant(facts, CONCEPTS.totalAssets),
@@ -305,7 +310,7 @@ async function main() {
           operatingIncome: ha.operatingIncome[fy] ?? null,
           incomeTaxExpense: ha.incomeTaxExpense[fy] ?? null,
           netIncome: ha.netIncome[fy] ?? null,
-          totalDebt: hi.ltd[fy] != null || hi.cur[fy] != null ? (hi.ltd[fy] || 0) + (hi.cur[fy] || 0) : null,
+          totalDebt: hi.comb[fy] != null ? hi.comb[fy] : (hi.ltd[fy] != null || hi.cur[fy] != null ? (hi.ltd[fy] || 0) + (hi.cur[fy] || 0) : null),
           stockholdersEquity: hi.equity[fy] ?? null,
           cashAndEquivalents: hi.cash[fy] ?? null,
           shortTermInvestments: hi.stInv[fy] ?? null,
@@ -339,6 +344,7 @@ async function main() {
     const ttmRev = ttmFlow(facts, CONCEPTS.revenue);
     const ttmLtd = latestObservation(facts, CONCEPTS.longTermDebt, "USD", true)?.val;
     const ttmCurDebt = latestObservation(facts, CONCEPTS.currentDebt, "USD", true)?.val;
+    const ttmComb = latestObservation(facts, CONCEPTS.combinedDebt, "USD", true)?.val;
     const ttm = ttmRev
       ? {
           asOf: ttmRev.asOf,
@@ -356,7 +362,7 @@ async function main() {
             cashAndEquivalents: latestObservation(facts, CONCEPTS.cashAndEquivalents, "USD", true)?.val ?? null,
             shortTermInvestments: latestObservation(facts, CONCEPTS.shortTermInvestments, "USD", true)?.val ?? null,
             longTermMarketable: latestObservation(facts, CONCEPTS.longTermMarketable, "USD", true)?.val ?? null,
-            totalDebt: ttmLtd != null || ttmCurDebt != null ? (ttmLtd || 0) + (ttmCurDebt || 0) : null,
+            totalDebt: ttmComb != null ? ttmComb : (ttmLtd != null || ttmCurDebt != null ? (ttmLtd || 0) + (ttmCurDebt || 0) : null),
             sharesDiluted: latestObservation(facts, CONCEPTS.sharesDiluted, "shares", false)?.val ?? null,
             netInterestIncome: tf(CONCEPTS.netInterestIncome),
             noninterestIncome: tf(CONCEPTS.noninterestIncome),
