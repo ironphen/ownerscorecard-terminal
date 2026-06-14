@@ -8,6 +8,7 @@ import language from "../data/language.json";
 import segmentsData from "../data/segments.json";
 import { classify } from "../lib/archetype.mjs";
 import { roicValue, ownerEarningsMargin, cashConversionCycle } from "../lib/fundamentals.mjs";
+import { financialQuality } from "../lib/financials.mjs";
 
 const { company } = Astro.props;
 const cls = classify(company);
@@ -97,8 +98,10 @@ const ccc = cashConversionCycle(company);
 const negativeCCC = ccc && /Negative/.test(ccc.label);
 const cyclical = (cls.overlays || []).some((o) => o.key === "cyclical");
 
-let moat = null;
-if (roicSeries.length >= 3 && roicMed != null) {
+// Banks are read on return on equity through the cycle, not ROIC; route them there.
+const isFin = ["financial", "reit"].includes(cls.sector.key);
+let moat = isFin ? financialQuality(company) : null;
+if (!isFin && roicSeries.length >= 3 && roicMed != null) {
   const n = roicSeries.length;
   const band = roicMed >= 0.2 ? "high" : roicMed >= 0.13 ? "mid" : roicMed >= 0.07 ? "low" : "poor";
   const figs = `median ${pc(roicMed)}, above 15% in ${roicAbove} of ${n} years`;

@@ -9,8 +9,9 @@ import { grahamTests } from "../lib/graham.mjs";
 // ---- the catalog rows: every company reduced to the few sourced facts that
 // decide quality and survival. No rank, no score, the reader sorts by what they
 // value, which is the judgment we refuse to make for them. ----
-const SHORT = { assetLight: "Asset-light", consumer: "Consumer", capital: "Capital-int.", retail: "Retail", financial: "Financial", reit: "REIT", general: "General" };
-const OV = { unprofitable: "loss", distress: "distress", buildout: "build-out", cyclical: "cyclical" };
+// The column shows the industry (the concrete identity); the chips filter by the
+// economic model (the broader lens), which groups the catalog more usefully.
+const MODEL = { assetLight: "Asset-light", consumer: "Consumer", capital: "Capital", retail: "Retail", financial: "Financial", reit: "REIT", general: "Other" };
 const CHIP_ORDER = ["assetLight", "consumer", "capital", "retail", "financial", "reit", "general"];
 
 const pct = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.abs(v * 100).toFixed(dp)}%`);
@@ -27,9 +28,8 @@ const rows = [...(fundamentals.companies || [])]
       ticker: c.ticker,
       name: c.name || "",
       fy: c.fy,
-      sectorKey: cls.sector.key,
-      sectorShort: SHORT[cls.sector.key] || "—",
-      overlays: cls.overlays.map((o) => OV[o.key] || o.key),
+      modelKey: cls.sector.key,
+      industry: cls.industry.short,
       revenue: L.revenue ?? null,
       opMargin: operatingMargin(L),
       roic: roicValue(L),
@@ -40,7 +40,7 @@ const rows = [...(fundamentals.companies || [])]
     };
   });
 
-const present = new Set(rows.map((r) => r.sectorKey));
+const present = new Set(rows.map((r) => r.modelKey));
 const chips = CHIP_ORDER.filter((k) => present.has(k));
 const ndCell = (v) => (v == null ? "—" : v >= 0 ? `+${fmtUSD(v)}` : fmtUSD(v));
 
@@ -87,7 +87,7 @@ const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "
       <input id="q" type="search" placeholder="Search ticker or name…" class="search" autocomplete="off" />
       <div class="filters">
         <button class="chip active" data-filter="all">All</button>
-        {chips.map((k) => <button class="chip" data-filter={k}>{SHORT[k]}</button>)}
+        {chips.map((k) => <button class="chip" data-filter={k}>{MODEL[k]}</button>)}
       </div>
     </div>
 
@@ -96,7 +96,7 @@ const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "
         <thead>
           <tr>
             <th class="c-name sortable" data-sort="ticker">Company</th>
-            <th class="c-model">Model</th>
+            <th class="c-model">Sector</th>
             <th class="num sortable" data-sort="revenue">Revenue</th>
             <th class="num sortable" data-sort="opmargin"><span class="lf">Op. margin</span><span class="ls">Op.</span></th>
             <th class="num sortable" data-sort="roic">ROIC</th>
@@ -109,7 +109,7 @@ const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "
           {rows.map((r) => (
             <tr
               data-search={`${r.ticker} ${r.name}`.toLowerCase()}
-              data-model={r.sectorKey}
+              data-model={r.modelKey}
               data-ticker={r.ticker}
               data-revenue={r.revenue ?? ""}
               data-opmargin={r.opMargin ?? ""}
@@ -123,8 +123,7 @@ const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "
                 <span class="nm">{r.name}</span>
               </td>
               <td class="c-model">
-                <span class="tag">{r.sectorShort}</span>
-                {r.overlays.map((o) => <span class="ov">{o}</span>)}
+                <span class="tag">{r.industry}</span>
               </td>
               <td class="num">{r.revenue == null ? "—" : fmtUSD(r.revenue)}</td>
               <td class="num">{pct(r.opMargin)}</td>
@@ -183,7 +182,6 @@ const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "
     .tkr { font-weight: 700; font-variant-numeric: tabular-nums; }
     .nm { display: block; font-size: 11.5px; color: var(--muted); max-width: 26ch; overflow: hidden; text-overflow: ellipsis; }
     .tag { font-size: 11px; letter-spacing: 0.02em; color: var(--ink); border: 1px solid var(--rule-strong); padding: 1px 6px; white-space: nowrap; }
-    .ov { font-size: 10px; letter-spacing: 0.03em; color: var(--warn); text-transform: uppercase; margin-left: 5px; }
     .nd.pos { color: var(--good); }
     tbody tr:hover td { background: #faf9f6; }
     tbody tr:hover .c-name { background: #faf9f6; }

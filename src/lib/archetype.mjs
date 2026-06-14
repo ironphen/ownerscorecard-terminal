@@ -52,11 +52,20 @@ function cleanSicDescription(d) {
   return d.replace(/^(services?|retail|wholesale)\s*[-–]\s*/i, "").replace(/\s*\([^)]*\)/g, "").replace(/,.*$/, "").replace(/\s{2,}/g, " ").trim() || null;
 }
 
+// A compact label for tight spaces (the catalog table).
+const SHORT_IND = {
+  "Computers & devices": "Computers", "Enterprise software": "Software", "Internet platforms": "Internet",
+  "Online retail": "E-commerce", "Semiconductors": "Semis", "Household & personal care": "Household",
+  "Specialty chemicals": "Chemicals", "Discount & variety retail": "Big-box retail", "Department stores": "Dept. stores",
+  "Home-improvement retail": "Home improv.", "Wireless telecom": "Wireless", "Cruise lines": "Cruise",
+  "Packaged food": "Food", "Paper & packaging": "Paper",
+};
+
 export function industryOf(company) {
   const sic = String(company?.sic || "");
   const s4 = sic.slice(0, 4), s3 = sic.slice(0, 3);
   const label = SIC_LABEL[s4] || SIC3_LABEL[s3] || cleanSicDescription(company?.sicDescription) || "Diversified";
-  return { sic, key: s3 || s4 || "gen", label, desc: company?.sicDescription || null };
+  return { sic, key: s3 || s4 || "gen", label, short: SHORT_IND[label] || label, desc: company?.sicDescription || null };
 }
 
 
@@ -201,10 +210,16 @@ export function classify(company) {
   let key = sectorFromSIC(company?.sic);
   let bySic = key != null;
   if (!key) key = sectorFromShape(s);
+  // The distress, build-out and cyclical overlays are industrial heuristics (built on
+  // operating cash flow, capex and operating margin) that misfire on a bank, whose
+  // cash-flow statement and capex mean something different. Keep only "unprofitable"
+  // for financials; their soundness is read properly in the bank scorecard instead.
+  let ovs = overlays(company, s);
+  if (key === "financial" || key === "reit") ovs = ovs.filter((o) => o.key === "unprofitable");
   return {
     sector: { key, label: SECTORS[key] || SECTORS.general, adj: SECTOR_ADJ[key] || SECTOR_ADJ.general, reason: sectorReason(key, s), bySic },
     industry: industryOf(company),
-    overlays: overlays(company, s),
+    overlays: ovs,
     figures: keyFigures(company, key),
   };
 }
