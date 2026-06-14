@@ -81,6 +81,15 @@ const CONCEPTS = {
     "WeightedAverageNumberOfShareOutstandingBasicAndDiluted",
     "WeightedAverageNumberOfSharesOutstandingBasic",
   ],
+  // --- banking & insurance (the financials archetype; null for industrials) ---
+  netInterestIncome: ["InterestIncomeExpenseNet"],
+  noninterestIncome: ["NoninterestIncome"],
+  noninterestExpense: ["NoninterestExpense"],
+  provisionForCreditLosses: ["ProvisionForLoanLeaseAndOtherLosses", "ProvisionForLoanAndLeaseLosses", "ProvisionForCreditLossExpenseReversal"],
+  totalAssets: ["Assets"],
+  deposits: ["Deposits"],
+  goodwill: ["Goodwill"],
+  intangibleAssets: ["IntangibleAssetsNetExcludingGoodwill", "FiniteLivedIntangibleAssetsNet"],
 };
 
 const days = (a, b) => Math.abs((new Date(b) - new Date(a)) / 86400000);
@@ -261,6 +270,10 @@ async function main() {
       dividendsPaid: collectAnnual(facts, CONCEPTS.dividendsPaid),
       buybacks: collectAnnual(facts, CONCEPTS.buybacks),
       sharesDiluted: collectAnnual(facts, CONCEPTS.sharesDiluted, "shares"),
+      netInterestIncome: collectAnnual(facts, CONCEPTS.netInterestIncome),
+      noninterestIncome: collectAnnual(facts, CONCEPTS.noninterestIncome),
+      noninterestExpense: collectAnnual(facts, CONCEPTS.noninterestExpense),
+      provisionForCreditLosses: collectAnnual(facts, CONCEPTS.provisionForCreditLosses),
     };
     const hi = {
       equity: collectInstant(facts, CONCEPTS.stockholdersEquity),
@@ -271,6 +284,10 @@ async function main() {
       cur: collectInstant(facts, CONCEPTS.currentDebt),
       ca: collectInstant(facts, CONCEPTS.currentAssets),
       cl: collectInstant(facts, CONCEPTS.currentLiabilities),
+      assets: collectInstant(facts, CONCEPTS.totalAssets),
+      deposits: collectInstant(facts, CONCEPTS.deposits),
+      goodwill: collectInstant(facts, CONCEPTS.goodwill),
+      intangibles: collectInstant(facts, CONCEPTS.intangibleAssets),
     };
     const history = Object.keys(ha.revenue)
       .map(Number)
@@ -297,6 +314,14 @@ async function main() {
           dividendsPaid: ha.dividendsPaid[fy] ?? null,
           buybacks: ha.buybacks[fy] ?? null,
           sharesDiluted: ha.sharesDiluted[fy] ?? null,
+          netInterestIncome: ha.netInterestIncome[fy] ?? null,
+          noninterestIncome: ha.noninterestIncome[fy] ?? null,
+          noninterestExpense: ha.noninterestExpense[fy] ?? null,
+          provisionForCreditLosses: ha.provisionForCreditLosses[fy] ?? null,
+          totalAssets: hi.assets[fy] ?? null,
+          deposits: hi.deposits[fy] ?? null,
+          goodwill: hi.goodwill[fy] ?? null,
+          intangibleAssets: hi.intangibles[fy] ?? null,
         },
       }));
 
@@ -326,6 +351,14 @@ async function main() {
             longTermMarketable: latestObservation(facts, CONCEPTS.longTermMarketable, "USD", true)?.val ?? null,
             totalDebt: ttmLtd != null || ttmCurDebt != null ? (ttmLtd || 0) + (ttmCurDebt || 0) : null,
             sharesDiluted: latestObservation(facts, CONCEPTS.sharesDiluted, "shares", false)?.val ?? null,
+            netInterestIncome: tf(CONCEPTS.netInterestIncome),
+            noninterestIncome: tf(CONCEPTS.noninterestIncome),
+            noninterestExpense: tf(CONCEPTS.noninterestExpense),
+            provisionForCreditLosses: tf(CONCEPTS.provisionForCreditLosses),
+            totalAssets: latestObservation(facts, CONCEPTS.totalAssets, "USD", true)?.val ?? null,
+            deposits: latestObservation(facts, CONCEPTS.deposits, "USD", true)?.val ?? null,
+            goodwill: latestObservation(facts, CONCEPTS.goodwill, "USD", true)?.val ?? null,
+            intangibleAssets: latestObservation(facts, CONCEPTS.intangibleAssets, "USD", true)?.val ?? null,
           },
         }
       : null;
@@ -364,6 +397,14 @@ async function main() {
         currentAssets: inst(CONCEPTS.currentAssets),
         currentLiabilities: inst(CONCEPTS.currentLiabilities),
         sharesDiluted: pickAnnual(facts, CONCEPTS.sharesDiluted, "shares")?.val ?? null,
+        netInterestIncome: pick(CONCEPTS.netInterestIncome),
+        noninterestIncome: pick(CONCEPTS.noninterestIncome),
+        noninterestExpense: pick(CONCEPTS.noninterestExpense),
+        provisionForCreditLosses: pick(CONCEPTS.provisionForCreditLosses),
+        totalAssets: inst(CONCEPTS.totalAssets),
+        deposits: inst(CONCEPTS.deposits),
+        goodwill: inst(CONCEPTS.goodwill),
+        intangibleAssets: inst(CONCEPTS.intangibleAssets),
       },
       history,
       ttm,
