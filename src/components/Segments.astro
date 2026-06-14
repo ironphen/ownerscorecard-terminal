@@ -1,0 +1,176 @@
+---
+// "Where the money comes from": the revenue mix, and crucially the operating-profit
+// mix when a company discloses it, so the reader can see that a small segment can be
+// the real engine (Amazon's AWS, a fifth of sales and over half the profit). Every
+// number is straight from the 10-K's segment footnote on EDGAR; no model, no estimate.
+import segmentsData from "../data/segments.json";
+import language from "../data/language.json";
+import { fmtUSD } from "../lib/fundamentals.mjs";
+
+const { company } = Astro.props;
+const S = segmentsData?.companies?.[company.ticker] || null;
+const srcUrl = language?.companies?.[company.ticker]?.sourceUrl || S?.sourceUrl || null;
+const total = S?.revenueTotal ?? null;
+
+// Stable categorical palette: a segment keeps its colour across the revenue and the
+// profit bar, so the eye can see how the proportions shift between the two.
+const PALETTE = ["#2f3b47", "#5a6b7a", "#5f7355", "#9c8f6e", "#86949f", "#a86b52", "#b3b9c0"];
+const pct = (v) => Math.round(v * 100);
+
+// Trim the redundant "Segment" suffix some filers append to their member labels.
+const clean = (s) => String(s || "").replace(/\s+Segments?$/i, "").trim();
+const tone = (it, i) => ({ ...it, label: clean(it.label), color: PALETTE[i] || PALETTE[PALETTE.length - 1] });
+
+// Order by revenue, cap the long tail into "Other", and attach a colour to each.
+function prep(items, cap = 6) {
+  const sorted = [...items].sort((a, b) => b.revenue - a.revenue);
+  if (sorted.length <= cap + 1) return sorted.map(tone);
+  const head = sorted.slice(0, cap);
+  const tail = sorted.slice(cap);
+  const other = { label: "Other", revenue: tail.reduce((a, b) => a + b.revenue, 0), operatingIncome: tail.every((t) => t.operatingIncome != null) ? tail.reduce((a, b) => a + (b.operatingIncome || 0), 0) : null };
+  return [...head, other].map(tone);
+}
+
+const GEO_RE = /America|Europe|Asia|China|Japan|Pacific|EMEA|United States|International|Africa|Latin|Middle East|Germany|Kingdom|Canada|India|Korea|Mexico|Brazil|Domestic|Foreign|Overseas/i;
+const isGeographic = (items) => items.filter((i) => GEO_RE.test(i.label)).length > items.length / 2;
+
+// Choose the primary breakdown: prefer reportable segments (the operating view, and
+// the one that can carry profit), then product, then geography.
+const primaryKind = S?.bySegment ? "segment" : S?.byProduct ? "product" : S?.byGeography ? "geography" : null;
+const primaryRaw = S?.bySegment || S?.byProduct || S?.byGeography || null;
+const primary = primaryRaw ? { kind: primaryKind, hasOI: !!primaryRaw.hasOperatingIncome, items: prep(primaryRaw.items) } : null;
+
+// Show a geography strip only when geography isn't already the primary view and the
+// primary isn't itself geographic (Apple's segments are regions, so no repeat).
+const showGeo = S?.byGeography && primaryKind !== "geography" && !(primary && isGeographic(primary.items));
+const geo = showGeo ? prep(S.byGeography.items, 6) : null;
+
+const kindNoun = { segment: "segment", product: "line", geography: "region" };
+const kindPlural = { segment: "segments", product: "lines", geography: "regions" };
+
+// The operating-profit pool (positive segments only) for the profit bar's shares.
+const oiPool = primary && primary.hasOI ? primary.items.filter((i) => (i.operatingIncome ?? 0) > 0).reduce((a, b) => a + b.operatingIncome, 0) : 0;
+const hasProfitBar = primary && primary.hasOI && oiPool > 0;
+
+// One computed sentence: the single most useful thing the split says.
+let takeaway = null;
+if (primary && total) {
+  const items = primary.items;
+  const topRev = items[0];
+  const topRevPct = pct(topRev.revenue / total);
+  if (hasProfitBar) {
+    const withOI = items.filter((i) => i.operatingIncome != null);
+    const topOI = [...withOI].sort((a, b) => (b.operatingIncome || 0) - (a.operatingIncome || 0))[0];
+    const topOIpct = pct((topOI.operatingIncome || 0) / oiPool);
+    if (topOI && topOI.label !== topRev.label) {
+      takeaway = `The largest slice of sales is ${topRev.label} at ${topRevPct}%, but the profit engine is ${topOI.label}: ${pct(topOI.revenue / total)}% of revenue and ${topOIpct}% of segment operating profit.`;
+    } else if (topOI) {
+      takeaway = `The biggest segment, ${topRev.label}, is also where the profit is made: ${topRevPct}% of revenue and ${topOIpct}% of segment operating profit.`;
+    }
+  }
+  if (!takeaway) {
+    if (primaryKind === "geography") {
+      const us = items.find((i) => /United States|Domestic/i.test(i.label));
+      if (us) takeaway = `${pct(1 - us.revenue / total)}% of revenue comes from outside ${/United States/i.test(us.label) ? "the United States" : "its home market"}.`;
+    }
+    if (!takeaway) {
+      if (topRevPct >= 60) takeaway = `${topRev.label} is ${topRevPct}% of revenue, so this is largely a single-${kindNoun[primaryKind]} business.`;
+      else takeaway = `Revenue spreads across ${items.length} ${kindPlural[primaryKind]}, the largest ${topRev.label} at ${topRevPct}%.`;
+    }
+  }
+}
+
+const sectionTitle = { segment: "by reportable segment", product: "by product line", geography: "by geography" }[primaryKind];
+---
+
+{S && primary ? (
+  <section class="mix">
+    <div class="head">
+      <h2>Where the money comes from</h2>
+      {srcUrl ? <a class="src" href={srcUrl} target="_blank" rel="noopener">read the 10-K →</a> : null}
+    </div>
+    {takeaway ? <p class="take">{takeaway}</p> : null}
+
+    <div class="block">
+      <div class="blabel">Revenue <span class="dim">{sectionTitle}{S.fy ? `, FY${S.fy}` : ""}</span></div>
+      <div class="bar" role="img" aria-label={`Revenue ${sectionTitle}`}>
+        {primary.items.map((it) => (
+          <span class="seg" style={`width:${(it.revenue / total) * 100}%;background:${it.color}`} title={`${it.label} ${pct(it.revenue / total)}%`}></span>
+        ))}
+      </div>
+    </div>
+
+    {hasProfitBar ? (
+      <div class="block">
+        <div class="blabel">Operating profit <span class="dim">same segments</span></div>
+        <div class="bar" role="img" aria-label="Operating profit by segment">
+          {primary.items.map((it) => (
+            <span class="seg" style={`width:${Math.max(0, it.operatingIncome || 0) / oiPool * 100}%;background:${it.color}`} title={`${it.label} ${pct(Math.max(0, it.operatingIncome || 0) / oiPool)}%`}></span>
+          ))}
+        </div>
+      </div>
+    ) : null}
+
+    <ul class="legend">
+      {primary.items.map((it) => (
+        <li>
+          <span class="sw" style={`background:${it.color}`}></span>
+          <span class="lb">{it.label}</span>
+          <span class="vals">
+            <b>{pct(it.revenue / total)}%</b> <span class="amt">{fmtUSD(it.revenue)}</span>
+            {hasProfitBar && it.operatingIncome != null ? (
+              <span class="oi">{it.operatingIncome < 0 ? "loss" : `${pct(Math.max(0, it.operatingIncome) / oiPool)}% of profit`}</span>
+            ) : null}
+          </span>
+        </li>
+      ))}
+    </ul>
+
+    {geo ? (
+      <div class="geostrip">
+        <span class="gtitle">By geography</span>
+        {geo.map((g) => (
+          <span class="gitem"><b>{g.label}</b> {pct(g.revenue / total)}%</span>
+        ))}
+      </div>
+    ) : null}
+
+    <p class="foot">From the segment footnote of the company's own 10-K. Shares are of total revenue; the profit bar shows each segment's share of segment operating profit, before unallocated corporate costs.</p>
+  </section>
+) : null}
+
+<style>
+  .mix { margin: 24px 0; }
+  .head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; border-bottom: 1px solid var(--rule-strong); padding-bottom: 6px; }
+  .head h2 { margin: 0; }
+  .src { font-size: 12px; color: var(--accent); flex: 0 0 auto; }
+  .take { font-family: var(--serif); font-size: 15.5px; line-height: 1.5; color: #2c2f36; margin: 12px 0 0; max-width: 70ch; }
+
+  .block { margin: 14px 0 0; }
+  .blabel { font-family: var(--sans); font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); margin-bottom: 5px; }
+  .blabel .dim { font-weight: 500; text-transform: none; letter-spacing: 0; color: var(--faint); }
+  .bar { display: flex; width: 100%; height: 22px; background: #f0eee9; overflow: hidden; border: 1px solid var(--rule); }
+  .seg { height: 100%; min-width: 1px; }
+  .seg + .seg { box-shadow: inset 1px 0 0 #fff; }
+
+  .legend { list-style: none; padding: 0; margin: 14px 0 0; display: grid; gap: 7px; }
+  .legend li { display: flex; align-items: baseline; gap: 9px; font-size: 13.5px; }
+  .sw { flex: 0 0 auto; width: 10px; height: 10px; border-radius: 2px; transform: translateY(1px); }
+  .lb { flex: 1 1 auto; color: var(--ink); }
+  .vals { flex: 0 0 auto; display: flex; align-items: baseline; gap: 8px; font-variant-numeric: tabular-nums; }
+  .vals b { color: var(--ink); }
+  .amt { color: var(--muted); font-size: 12.5px; }
+  .oi { color: var(--accent); font-size: 11.5px; letter-spacing: 0.02em; border-left: 1px solid var(--rule); padding-left: 8px; }
+
+  .geostrip { margin: 16px 0 0; padding-top: 10px; border-top: 1px solid var(--rule); display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; font-size: 13px; }
+  .gtitle { font-family: var(--sans); font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+  .gitem { color: #3a3e46; font-variant-numeric: tabular-nums; }
+  .gitem b { color: var(--ink); font-weight: 600; }
+
+  .foot { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--rule-strong); margin-top: 16px; padding-top: 10px; max-width: 72ch; }
+
+  @media (max-width: 560px) {
+    .legend li { flex-wrap: wrap; gap: 4px 9px; }
+    .vals { gap: 6px; }
+  }
+</style>
