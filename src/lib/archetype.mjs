@@ -101,14 +101,16 @@ function overlays(company, s) {
     }
   }
 
-  // Deep cyclical: operating margins swing widely across the record.
+  // Deep cyclical: margins that recurringly collapse, not a one-off writedown.
   const margins = hist.map((h) => ratio(h.lines.operatingIncome, h.lines.revenue)).filter((x) => x != null);
   if (margins.length >= 5) {
-    const m = avg(margins);
-    const sd = Math.sqrt(avg(margins.map((x) => (x - m) ** 2)));
-    if (sd != null && sd > 0.08) {
+    const sorted = [...margins].sort((a, b) => a - b);
+    const median = sorted[Math.floor(sorted.length / 2)];
+    const troughs = margins.filter((x) => x < median * 0.5).length; // recurring bad years, not one
+    const range = Math.max(...margins) - Math.min(...margins);
+    if (median > 0 && troughs >= 2 && range > 0.1) {
       out.push({ key: "cyclical", label: "Cyclical",
-        reason: "margins swing widely across the cycle — a single year misleads; look at normalized, through-cycle earnings and the balance sheet at the trough" });
+        reason: "margins collapse repeatedly across the cycle — a single year misleads; look at normalized, through-cycle earnings and the balance sheet at the trough" });
     }
   }
 
