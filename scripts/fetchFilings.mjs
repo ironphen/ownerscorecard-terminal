@@ -181,6 +181,45 @@ async function getFiling(cik, f) {
   return { url, business: metrics(business), mdna: metrics(mdna), risk: metrics(risk), reportDate: f.reportDate };
 }
 
+// ---- executive pay (proxy statement / DEF 14A) ----
+// The CEO-to-median pay ratio is a required Item 402(u) disclosure, stated as a
+// formula ("X to 1"), so it extracts cleanly. We take only that number — table
+// parsing across varied proxies is too fragile for a credibility-first product —
+// and omit it when no clean match is found.
+async function latestProxy(cik) {
+  const sub = await fetchText(`https://data.sec.gov/submissions/CIK${cik}.json`);
+  const j = JSON.parse(sub);
+  const r = j.filings?.recent;
+  if (!r) return null;
+  for (let i = 0; i < r.form.length; i++) {
+    if (r.form[i] === "DEF 14A" && r.primaryDocument[i]) {
+      return { accn: r.accessionNumber[i], doc: r.primaryDocument[i], date: r.filingDate[i] };
+    }
+  }
+  return null;
+}
+
+function extractPayRatio(text) {
+  const pats = [
+    /ratio of (?:the )?(?:annual )?total compensation of (?:our |the )?(?:ceo|chief executive officer|principal executive officer)[\s\S]{0,200}?median[\s\S]{0,200}?(?:was|is|of|:|equal to)\s*(?:approximately |estimated (?:to be )?|reasonably )?(\d[\d,]*)\s*(?:to|:)\s*1\b/i,
+    /(?:ceo pay ratio|pay ratio)[\s\S]{0,160}?(\d[\d,]*)\s*(?:to|:)\s*1\b/i,
+    /(\d[\d,]*)\s*(?:to|:)\s*1\b[\s\S]{0,60}?(?:pay ratio|times the median)/i,
+  ];
+  for (const re of pats) {
+    const m = text.match(re);
+    if (m) { const n = parseInt(m[1].replace(/,/g, ""), 10); if (n > 1 && n < 100000) return n; }
+  }
+  return null;
+}
+
+async function getComp(cik, f) {
+  const accnNoDash = f.accn.replace(/-/g, "");
+  const url = `https://www.sec.gov/Archives/edgar/data/${Number(cik)}/${accnNoDash}/${f.doc}`;
+  const text = htmlToText(await fetchText(url));
+  const payRatio = extractPayRatio(text);
+  return payRatio != null ? { payRatio, fy: f.date?.slice(0, 4) || null, sourceUrl: url } : null;
+}
+
 // "New" = a prose sentence carrying a signal term whose wording doesn't closely
 // match anything in last year's filing (fuzzy, so figure updates and light edits
 // don't count). Returns only the notable handful — never a raw "everything
@@ -351,6 +390,13 @@ async function main() {
     const mdnaDiff = prior ? diff(cur.mdna.sents, prior.mdna.sents) : null;
     const riskDiff = prior ? diff(cur.risk.sents, prior.risk.sents) : null;
 
+    // Executive pay from the latest proxy (non-fatal — a bonus layer).
+    let comp = null;
+    try {
+      const proxy = await latestProxy(c.cik);
+      if (proxy) { await sleep(THROTTLE); comp = await getComp(c.cik, proxy); }
+    } catch (e) { console.warn(`  ! ${tk}: proxy ${e.message}`); }
+
     out[tk] = {
       fy: cur.reportDate?.slice(0, 4) || null,
       priorFy: prior?.reportDate?.slice(0, 4) || null,
@@ -364,9 +410,10 @@ async function main() {
       risk: { words: cur.risk.words, wordsPrior: prior?.risk.words ?? null },
       mdnaChange: mdnaDiff,
       riskChange: riskDiff,
+      comp,
     };
     ok++;
-    console.log(`  ✓ ${tk}: ${flags.length} owner-flags, MD&A ${cur.mdna.words}w fog ${cur.mdna.fog}` + (mdnaDiff ? `, ${mdnaDiff.notableCount} new` : ""));
+    console.log(`  ✓ ${tk}: ${flags.length} owner-flags, MD&A ${cur.mdna.words}w` + (comp ? `, payRatio ${comp.payRatio}:1` : ""));
   }
 
   fs.writeFileSync(
@@ -377,7 +424,7 @@ async function main() {
 }
 
 // Exported for the offline logic test; only hit EDGAR when run directly.
-export { ownerFlags, FLAG_THEMES, sentences, isProse, diff };
+export { ownerFlags, FLAG_THEMES, sentences, isProse, diff, extractPayRatio };
 
 if (import.meta.url === pathToFileURL(process.argv[1] || "").href) {
   main().catch((e) => { console.error(`\n❌ ${e.message}\n`); process.exit(1); });
