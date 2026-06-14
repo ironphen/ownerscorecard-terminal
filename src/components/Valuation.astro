@@ -1,85 +1,95 @@
 ---
-// "What you're implicitly betting" — the reverse-DCF, rendered. Dark until a price
-// snapshot exists. Never a price target: it shows the growth the market is pricing
-// and sets it beside what the company has actually delivered. The reader judges.
-import prices from "../data/prices.json";
-import { expectations } from "../lib/valuation.mjs";
+// "What the price implies" — a reader-supplied-price reverse-DCF. We pull no price
+// feed and store nothing: you bring the quote (off any broker), we do the math in
+// your browser. That sidesteps every market-data licence and keeps the page honest
+// — the only number we'd ever "redistribute" is the one you typed in. Never a price
+// target: it shows the owner-earnings growth a price implies, set against the record.
 import { classify } from "../lib/archetype.mjs";
 import { moatReport } from "../lib/durability.mjs";
-import { fmtUSD } from "../lib/fundamentals.mjs";
+import { fmtUSD, liquidAssets } from "../lib/fundamentals.mjs";
 
 const { company } = Astro.props;
-const price = prices?.prices?.[company.ticker] ?? null;
-const asOf = prices?.asOf ?? null;
-
 const { sector, overlays } = classify(company);
 const offModel = sector.key === "financial" || sector.key === "reit";
 const cyclical = overlays.some((o) => o.key === "cyclical");
-const exp = price != null && !offModel ? expectations(company, price) : null;
+
+const L = company.ttm?.lines || company.lines || {};
+const shares = L.sharesDiluted;
+const cfo = L.cashFromOps, capex = L.capex;
+const ownerEarnings = cfo != null && capex != null ? cfo - Math.abs(capex) : null;
+const netDebt = (L.totalDebt || 0) - (liquidAssets(L) || 0);
+const runnable = ownerEarnings != null && ownerEarnings > 0 && shares != null && shares > 0;
 
 const report = moatReport(company);
 const oeGrowth = report?.facts.find((f) => f.label === "Owner earnings growth")?.value ?? null;
-
-const pc = (v, dp = 1) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.abs(v * 100).toFixed(dp)}%`);
-const mult = exp && exp.runnable ? exp.marketCap / exp.ownerEarnings : null;
 const name = company.name || company.ticker;
 ---
 
-{price != null ? (
-  <section class="val">
-    <div class="head">
-      <h2>What the price implies</h2>
-      <span class="asof">close ${price.toFixed(2)}{asOf ? ` · ${asOf}` : ""}</span>
+<section class="val">
+  <div class="head">
+    <h2>What the price implies</h2>
+    <span class="tag">reverse-DCF</span>
+  </div>
+
+  {offModel ? (
+    <p class="note">A {sector.label.toLowerCase()} isn't read on an owner-earnings DCF — its economics live on the balance sheet (book value, net interest margin, loan losses / FFO). We don't force this lens where it doesn't belong.</p>
+  ) : !runnable ? (
+    <p class="note">Owner earnings are negative right now, so a reverse-DCF can't be run — there's no positive stream to discount. For a {cyclical ? "cyclical at this point in the cycle" : "loss-making or turnaround business"}, judge it on normalized (through-cycle) earnings or on assets, not a growth-on-growth model.</p>
+  ) : (
+    <div id="valBox" data-oe={ownerEarnings} data-shares={shares} data-name={name}>
+      <p class="intro">
+        A price is the one input we don't pull — <b>you bring it</b>. Type today's close (read it off any
+        broker or quote site) and see the owner-earnings growth you'd have to believe to justify it, set
+        beside what {name} has actually delivered. Nothing is stored; the number stays in your browser.
+      </p>
+
+      <div class="priceRow">
+        <label for="px">Today&rsquo;s price</label>
+        <span class="dollar">$</span>
+        <input id="px" type="number" inputmode="decimal" step="0.01" min="0" placeholder="e.g. 220.50" />
+      </div>
+
+      <p class="lede" id="lede">Enter a price above to run it.</p>
+
+      <div class="compare">
+        <div class="cmp"><span class="cl">Implied by the price</span><span class="cv hot" id="impG">—</span></div>
+        <div class="cmp"><span class="cl">Delivered (record)</span><span class="cv">{oeGrowth ? `${oeGrowth.replace("/yr", "")}/yr` : "—"}</span></div>
+        <div class="cmp"><span class="cl">Owner-earnings yield</span><span class="cv" id="oeY">—</span></div>
+      </div>
+
+      <div class="dials">
+        <span class="dialsLbl">The assumptions — turn the dials</span>
+        <label>Discount rate (interest rate) <output id="rOut">9%</output><input id="r" type="range" min="4" max="15" step="0.5" value="9" /></label>
+        <label>Years of high growth <output id="nOut">10</output><input id="n" type="range" min="5" max="15" step="1" value="10" /></label>
+        <label>Terminal growth <output id="gOut">2.5%</output><input id="g" type="range" min="0" max="4" step="0.25" value="2.5" /></label>
+        <p class="dialsNote">The discount rate is your interest rate — what a dollar years from now is worth today, anchored to the long-term Treasury yield (~4–5% today, plus whatever premium you want for risk). Drag it toward the risk-free rate and watch how much growth the price suddenly “needs”: interest rates are gravity on valuations.</p>
+      </div>
+
+      <p class="foot">
+        Owner earnings {fmtUSD(ownerEarnings)} on {(shares / 1e6).toFixed(0)}M diluted shares; net {netDebt >= 0 ? `debt ${fmtUSD(netDebt)}` : `cash ${fmtUSD(-netDebt)}`}.
+        This is a lens, not a price target — it says what you'd have to <em>believe</em>, not what the company
+        is <em>worth</em>, and it runs on one year of (noisy) owner earnings at assumptions you can see and change.
+      </p>
     </div>
-
-    {offModel ? (
-      <p class="note">A {sector.label.toLowerCase()} isn't read on an owner-earnings DCF — its economics live on the balance sheet (book value, net interest margin, loan losses / FFO). We don't force this lens where it doesn't belong.</p>
-    ) : !exp || !exp.runnable ? (
-      <p class="note">Owner earnings are negative this year, so a reverse-DCF can't be run — there's no positive stream to discount. For a {cyclical ? "cyclical at this point in the cycle" : "loss-making or turnaround business"}, judge it on normalized (through-cycle) earnings or on assets, not a growth-on-growth model.</p>
-    ) : (
-      <>
-        <p class="lede" data-mult={mult.toFixed(4)}>
-          At <b>${price.toFixed(2)}</b>, the market is pricing <b>{name}</b> to grow owner earnings
-          {exp.capped ? (
-            <> faster than <b class="hot">100%/yr</b> — beyond what this model can justify on owner earnings alone.</>
-          ) : exp.floored || (exp.impliedG != null && exp.impliedG < 0) ? (
-            <> at <b class="hot" id="ig">{pc(exp.impliedG)}</b>/yr — i.e. it's priced for owner earnings to <b>shrink</b> for a decade.</>
-          ) : (
-            <> about <b class="hot" id="ig">{pc(exp.impliedG)}</b>/yr for <span id="igN">10</span> years, then 2.5% forever — discounted at <span id="igR">9</span>%.</>
-          )}
-        </p>
-
-        <div class="compare">
-          <div class="cmp"><span class="cl">Implied by today's price</span><span class="cv hot" id="igEcho">{pc(exp.impliedG)}/yr</span></div>
-          <div class="cmp"><span class="cl">Actually delivered (record)</span><span class="cv">{oeGrowth ? `${oeGrowth.replace("/yr", "")}/yr` : "—"}</span></div>
-          <div class="cmp"><span class="cl">Owner-earnings yield</span><span class="cv">{pc(exp.oeYield)}</span></div>
-        </div>
-
-        <div class="dials" id="dials" data-mult={mult.toFixed(4)}>
-          <span class="dialsLbl">Turn the dials — what would you have to believe?</span>
-          <label>Discount rate <output id="rOut">9%</output><input id="r" type="range" min="6" max="14" step="0.5" value="9" /></label>
-          <label>Years of high growth <output id="nOut">10</output><input id="n" type="range" min="5" max="15" step="1" value="10" /></label>
-          <label>Terminal growth <output id="gOut">2.5%</output><input id="g" type="range" min="0" max="4" step="0.25" value="2.5" /></label>
-        </div>
-
-        <p class="foot">
-          This is a lens, not a price target — it says what you'd have to <em>believe</em>, not what the
-          company is <em>worth</em>. It runs on one year of owner earnings (noisy by nature) at assumptions
-          you can see and change above. Market cap {fmtUSD(exp.marketCap)} ÷ owner earnings {fmtUSD(exp.ownerEarnings)} = {mult.toFixed(0)}×.
-        </p>
-      </>
-    )}
-  </section>
-) : null}
+  )}
+</section>
 
 <style>
   .val { margin: 24px 0; }
   .head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; border-bottom: 1px solid var(--rule-strong); padding-bottom: 6px; }
   .head h2 { margin: 0; }
-  .asof { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; flex: 0 0 auto; }
+  .tag { font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); flex: 0 0 auto; }
 
   .note { font-family: var(--serif); font-style: italic; font-size: 14px; color: #3a3e46; margin: 12px 0 0; line-height: 1.5; max-width: 66ch; }
-  .lede { font-family: var(--serif); font-size: clamp(16px, 2.3vw, 18.5px); line-height: 1.5; margin: 14px 0 0; max-width: 66ch; }
+  .intro { font-family: var(--serif); font-style: italic; font-size: 14px; color: var(--muted); margin: 12px 0 0; line-height: 1.55; max-width: 68ch; }
+  .intro b { font-style: normal; color: var(--ink); }
+
+  .priceRow { display: flex; align-items: center; gap: 8px; margin: 16px 0 0; }
+  .priceRow label { font-size: 13px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+  .priceRow .dollar { font-size: 20px; font-weight: 700; color: var(--ink); }
+  .priceRow input { width: 140px; padding: 8px 10px; border: 1px solid var(--rule-strong); font-family: var(--sans); font-size: 18px; font-variant-numeric: tabular-nums; background: #fff; }
+
+  .lede { font-family: var(--serif); font-size: clamp(16px, 2.3vw, 18.5px); line-height: 1.5; margin: 14px 0 0; max-width: 66ch; min-height: 1.5em; }
   .lede b { font-weight: 600; }
   .hot { color: var(--accent); font-variant-numeric: tabular-nums; }
 
@@ -93,41 +103,57 @@ const name = company.name || company.ticker;
   .dials label { display: flex; align-items: center; gap: 10px; margin: 9px 0 0; font-size: 13.5px; color: #3a3e46; }
   .dials output { font-weight: 700; font-variant-numeric: tabular-nums; min-width: 44px; color: var(--ink); }
   .dials input[type="range"] { flex: 1 1 auto; max-width: 320px; accent-color: var(--accent); }
+  .dialsNote { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); margin: 10px 0 0; line-height: 1.5; max-width: 70ch; }
 
   .foot { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); margin: 14px 0 0; line-height: 1.5; max-width: 70ch; }
 </style>
 
 <script is:inline>
   (function () {
-    const dials = document.getElementById("dials");
-    if (!dials) return;
-    const mult = parseFloat(dials.dataset.mult);
+    const box = document.getElementById("valBox");
+    if (!box) return;
+    const OE = parseFloat(box.dataset.oe), SH = parseFloat(box.dataset.shares), NAME = box.dataset.name || "this company";
+    const px = document.getElementById("px");
     const r = document.getElementById("r"), n = document.getElementById("n"), g = document.getElementById("g");
     const rOut = document.getElementById("rOut"), nOut = document.getElementById("nOut"), gOut = document.getElementById("gOut");
-    const ig = document.getElementById("ig"), igN = document.getElementById("igN"), igR = document.getElementById("igR"), igEcho = document.getElementById("igEcho");
+    const lede = document.getElementById("lede"), impG = document.getElementById("impG"), oeY = document.getElementById("oeY");
 
     const pv = (gr, rr, N, gT) => { let p = 0, oe = 1; for (let y = 1; y <= N; y++) { oe *= 1 + gr; p += oe / Math.pow(1 + rr, y); } return p + (oe * (1 + gT)) / (rr - gT) / Math.pow(1 + rr, N); };
-    function solve(rr, N, gT) {
+    function solve(mult, rr, N, gT) {
       if (rr <= gT) return null;
       const f = (gr) => pv(gr, rr, N, gT) - mult;
       let lo = -0.5, hi = 1.0;
-      if (f(lo) > 0) return lo; if (f(hi) < 0) return hi;
+      if (f(lo) > 0) return { g: lo, floor: true };
+      if (f(hi) < 0) return { g: hi, cap: true };
       for (let i = 0; i < 60; i++) { const m = (lo + hi) / 2; if (f(m) > 0) hi = m; else lo = m; }
-      return (lo + hi) / 2;
+      return { g: (lo + hi) / 2 };
     }
-    const fmtPc = (v) => (v == null ? "—" : (v < 0 ? "−" : "") + Math.abs(v * 100).toFixed(1) + "%");
+    const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+    const pcs = (v) => (v < 0 ? "−" : "") + Math.abs(v * 100).toFixed(1) + "%";
+
+    function dials() {
+      const rr = parseFloat(r.value) / 100, N = parseInt(n.value, 10), gT = parseFloat(g.value) / 100;
+      rOut.textContent = r.value + "%"; nOut.textContent = N; gOut.textContent = parseFloat(g.value) + "%";
+      return { rr, N, gT };
+    }
+    function setURL(v) { try { const u = new URL(location.href); v ? u.searchParams.set("px", v) : u.searchParams.delete("px"); history.replaceState(null, "", u); } catch (e) {} }
 
     function update() {
-      const rr = parseFloat(r.value) / 100, N = parseInt(n.value, 10), gT = parseFloat(g.value) / 100;
-      rOut.textContent = r.value + "%"; nOut.textContent = N; gOut.textContent = parseFloat(g.value).toFixed(2).replace(/\.00$/, "") + "%";
-      const gr = solve(rr, N, gT);
-      const txt = gr == null ? "—" : (Math.abs(gr) >= 1 ? (gr > 0 ? "100%+" : fmtPc(gr)) : fmtPc(gr));
-      if (ig) ig.textContent = txt;
-      if (igEcho) igEcho.textContent = txt + "/yr";
-      if (igN) igN.textContent = N;
-      if (igR) igR.textContent = r.value;
+      const { rr, N, gT } = dials();
+      const price = parseFloat(px.value);
+      if (!(price > 0)) { lede.textContent = "Enter a price above to run it."; impG.textContent = "—"; oeY.textContent = "—"; setURL(""); return; }
+      const mc = price * SH, res = solve(mc / OE, rr, N, gT);
+      oeY.textContent = pcs(OE / mc);
+      if (!res) { impG.textContent = "—"; lede.textContent = "Set the discount rate above the terminal rate."; return; }
+      impG.textContent = res.cap ? "100%+/yr" : pcs(res.g) + "/yr";
+      const P = "$" + price.toFixed(2);
+      if (res.cap) lede.innerHTML = `At <b>${P}</b>, even <b class="hot">100%+/yr</b> growth for a decade can't justify the price on owner earnings alone.`;
+      else if (res.g < 0) lede.innerHTML = `At <b>${P}</b>, the market is pricing owner earnings to <b>shrink ${pcs(res.g)}/yr</b> for ${N} years — priced for decline.`;
+      else lede.innerHTML = `At <b>${P}</b>, the market is pricing <b>${esc(NAME)}</b> to grow owner earnings about <b class="hot">${pcs(res.g)}</b>/yr for ${N} years, then ${(gT * 100).toFixed(1)}% forever — discounted at ${(rr * 100).toFixed(0)}%.`;
+      setURL(px.value);
     }
-    [r, n, g].forEach((el) => el.addEventListener("input", update));
+    [px, r, n, g].forEach((el) => el.addEventListener("input", update));
+    try { const q = new URL(location.href).searchParams.get("px"); if (q) px.value = q; } catch (e) {}
     update();
   })();
 </script>
