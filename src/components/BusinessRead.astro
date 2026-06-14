@@ -18,6 +18,12 @@ const cls = classify(company);
 const L = language?.companies?.[company.ticker] || null;
 const sourceUrl = L?.sourceUrl || null;
 
+// Banks, insurers and REITs share the "financial" sector but read on different
+// levers, so resolve a model key off financialKind first; everything else keys off
+// the economic-model sector. Used for both "what moves the needle" and "what it is".
+const fk = financialKind(company);
+const modelKey = fk === "insurer" ? "insurer" : fk === "reit" ? "reit" : fk === "bank" ? "financial" : cls.sector.key;
+
 const pc = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${(Math.abs(v) * 100).toFixed(dp)}%`);
 const median = (xs) => { const s = [...xs].sort((a, b) => a - b); return s.length ? s[Math.floor((s.length - 1) / 2)] : null; };
 
@@ -30,10 +36,11 @@ const LEVER = {
   capital: "How hard the assets work, and what the inputs cost. What decides it: utilization, how much of the capex merely keeps the assets running, and what a downturn does to a heavy fixed-cost base.",
   retail: "Sales per store and how fast inventory moves. What decides it: same-store sales, inventory turns, and whether thin margins survive a price war.",
   financial: "Net interest margin, loan losses, and book value. A lender is read on the quality of its balance sheet, not on an earnings multiple.",
+  insurer: "Underwriting discipline and the float. What decides it: whether the combined ratio stays below 100% so the policies make money on their own, how large the float is against equity, and what that float earns once it is invested.",
   reit: "Occupancy, rents, and the cost of debt. Read on funds from operations and net asset value, because GAAP depreciation distorts the earnings.",
   general: "Where the revenue actually comes from, and whether the margin is earned or bought. The segment detail in the 10-K is where this one is settled.",
 };
-const lever = LEVER[cls.sector.key] || LEVER.general;
+const lever = LEVER[modelKey] || LEVER.general;
 
 // Segment reality check: when the profit engine is not the biggest seller, say so,
 // so an archetype label (Amazon read as "retail") does not mislead about the needle.
@@ -57,6 +64,7 @@ const MODEL_PHRASE = {
   capital: "A capital-intensive business, run on heavy physical assets that have to be kept working.",
   retail: "A retailer, earning thin margins on high volume where inventory turns and scale decide the outcome.",
   financial: "A balance-sheet business, read on book value, net interest margin and credit losses rather than an earnings multiple.",
+  insurer: "An insurance business, read on its underwriting result, the combined ratio, and the float it invests, rather than an earnings multiple.",
   reit: "A property business, read on funds from operations and net asset value rather than reported earnings.",
   general: "A diversified business; the segment detail in the filing tells the real story.",
 };
@@ -75,7 +83,7 @@ if (mix && seg.revenueTotal) {
     ? `Revenue is ${joinList(items)}.`
     : `Revenue is led by ${fmtItem(items[0])} and ${fmtItem(items[1])}, with ${items.length - 2} more ${mixKind}s behind.`;
 }
-const whatItIs = composition || MODEL_PHRASE[cls.sector.key] || MODEL_PHRASE.general;
+const whatItIs = composition || MODEL_PHRASE[modelKey] || MODEL_PHRASE.general;
 
 // Is it a good business? Read return on capital across the whole record, but treat
 // the ratio with the skepticism modern accounting demands: buybacks and expensed
@@ -102,8 +110,7 @@ const negativeCCC = ccc && /Negative/.test(ccc.label);
 const cyclical = (cls.overlays || []).some((o) => o.key === "cyclical");
 
 // Banks read on ROE, insurers on the combined ratio and float, REITs on FFO, none on
-// ROIC; route each financial kind to its own lens.
-const fk = financialKind(company);
+// ROIC; route each financial kind to its own lens (fk resolved above).
 const isFin = !!fk;
 let moat = fk === "reit" ? reitQuality(company) : fk === "insurer" ? insurerQuality(company) : fk === "bank" ? financialQuality(company) : null;
 if (!isFin && roicSeries.length >= 3 && roicMed != null) {

@@ -1,8 +1,9 @@
 ---
-import { classify } from "../lib/archetype.mjs";
+import { classify, financialKind } from "../lib/archetype.mjs";
 import { fmtUSD, roicValue, liquidAssets } from "../lib/fundamentals.mjs";
 import { returnOnEquity, returnOnTangibleEquity, efficiencyRatio, tangibleEquity } from "../lib/financials.mjs";
 import { ffo, ffoPerShare, ffoPayout, debtToAssets } from "../lib/reits.mjs";
+import { combinedRatio, lossRatio } from "../lib/insurers.mjs";
 
 const { company } = Astro.props;
 const hist = (company.history || []).filter((h) => h?.lines?.revenue != null);
@@ -57,6 +58,12 @@ const ROW = {
   ffoPS: { label: "FFO / share", short: "FFO/sh", get: (L) => { const f = ffoPerShare(L); return f == null ? "—" : `$${f.toFixed(2)}`; } },
   payout: { label: "Dividend payout (FFO)", short: "Payout", get: (L) => { const p = ffoPayout(L); return p == null ? "—" : `${(p * 100).toFixed(0)}%`; } },
   debtAssets: { label: "Debt / assets", short: "Debt/assets", get: (L) => { const d = debtToAssets(L); return d == null ? "—" : `${(d * 100).toFixed(0)}%`; } },
+  // --- insurers: read on underwriting (combined ratio), the float, and book value ---
+  premiums: { label: "Premiums earned", short: "Premiums", get: (L) => money(L.premiumsEarned) },
+  combined: { label: "Combined ratio", short: "Combined", get: (L) => { const c = combinedRatio(L); return c == null ? "—" : `≈ ${(c * 100).toFixed(0)}%`; } },
+  lossRatio: { label: "Loss ratio", short: "Loss", get: (L) => { const r = lossRatio(L); return r == null ? "—" : `${(r * 100).toFixed(0)}%`; } },
+  invInc: { label: "Investment income", short: "Inv. inc.", get: (L) => money(L.investmentIncome) },
+  float: { label: "Float (reserves)", short: "Float", get: (L) => money(L.lossReserves) },
 };
 
 const SETS = {
@@ -65,6 +72,7 @@ const SETS = {
   capital: [ROW.revenue, ROW.opMargin, ROW.netIncome, ROW.eps, ROW.ownerEarnings, ROW.roic, ROW.capex, ROW.capexToRev, ROW.capexToDep, ROW.totalDebt, ROW.cash, ROW.netDebt],
   retail: [ROW.revenue, ROW.grossMargin, ROW.opMargin, ROW.netIncome, ROW.eps, ROW.ownerEarnings, ROW.oeMargin, ROW.roic, ROW.cash, ROW.netDebt],
   financial: [ROW.revenue, ROW.nii, ROW.netIncome, ROW.eps, ROW.roe, ROW.rotce, ROW.efficiency, ROW.deposits, ROW.bvps, ROW.tbvps, ROW.dps],
+  insurer: [ROW.revenue, ROW.premiums, ROW.netIncome, ROW.combined, ROW.lossRatio, ROW.roe, ROW.invInc, ROW.float, ROW.bvps, ROW.dps],
   reit: [ROW.revenue, ROW.netIncome, ROW.ffo, ROW.ffoPS, ROW.payout, ROW.debtAssets, ROW.totalDebt, ROW.dps, ROW.bvps],
   general: [ROW.revenue, ROW.opMargin, ROW.netIncome, ROW.eps, ROW.ownerEarnings, ROW.oeMargin, ROW.roic, ROW.totalDebt, ROW.cash, ROW.netDebt],
 };
@@ -103,7 +111,12 @@ const lastI = cols.length - 1;
   });
 }
 
-const chosen = SETS[sector.key] || SETS.general;
+// The row-set follows the business model. Banks, insurers and REITs each read on
+// their own measures, so key off financialKind first (future-proof for any new
+// financial), and fall back to the economic-model sector for everything else.
+const fk = financialKind(company);
+const setKey = fk === "insurer" ? "insurer" : fk === "reit" ? "reit" : fk === "bank" ? "financial" : sector.key;
+const chosen = SETS[setKey] || SETS.general;
 // Drop any row the data can't fill across the whole record.
 const rows = chosen
   .map((r) => ({ label: r.label, short: r.short || r.label, kind: r.kind || "plain", cells: cols.map((c) => r.get(c.lines)) }))

@@ -4,8 +4,9 @@
 // claims come due, the closest thing to free leverage there is. Plus the universal
 // measure Berkshire itself is judged on: growth in book value per share, and the
 // return earned on equity. Underwriting at a profit while the float compounds is the
-// whole game. Arithmetic on the filings; the combined ratio here can understate the
-// expense side where a filer tags acquisition costs separately, so read it as a floor.
+// whole game. Arithmetic on the filings; the combined ratio here is approximate, built
+// from the filer's total benefits, losses and expenses over premiums earned, so
+// non-underwriting costs can nudge it a point or two either way from the headline.
 
 import { fmtUSD } from "./fundamentals.mjs";
 import { returnOnEquity } from "./financials.mjs";
@@ -15,7 +16,18 @@ const pc = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${(Math.abs
 
 export function lossRatio(L) { return L && L.claimsIncurred != null && L.premiumsEarned ? Math.abs(L.claimsIncurred) / L.premiumsEarned : null; }
 export function expenseRatio(L) { return L && L.underwritingExpense != null && L.premiumsEarned ? Math.abs(L.underwritingExpense) / L.premiumsEarned : null; }
-export function combinedRatio(L) { const lr = lossRatio(L), er = expenseRatio(L); return lr != null && er != null ? lr + er : null; }
+export function combinedRatio(L) {
+  if (!L || !L.premiumsEarned) return null;
+  // Use the filer's own all-in total of benefits, losses and expenses over premiums
+  // earned. Summing our single expense pick understates the cost side badly (it misses
+  // acquisition costs), so we trust only the total tag, and only when it lands in a
+  // believable band; otherwise we show the loss ratio alone rather than a wrong figure.
+  if (L.lossesAndExpenses != null) {
+    const r = Math.abs(L.lossesAndExpenses) / L.premiumsEarned;
+    if (r >= 0.6 && r <= 1.6) return r;
+  }
+  return null;
+}
 export function insuranceFloat(L) { return L && L.lossReserves != null ? L.lossReserves : null; }
 export function floatToEquity(L) { return L && L.lossReserves != null && L.stockholdersEquity ? L.lossReserves / L.stockholdersEquity : null; }
 export function bookValuePerShare(L) { return L && L.stockholdersEquity != null && L.sharesDiluted ? L.stockholdersEquity / L.sharesDiluted : null; }
@@ -27,10 +39,10 @@ export function buildInsurerScorecard(company) {
   const comb = combinedRatio(L), lr = lossRatio(L);
   const combCheck = comb != null ? {
     title: "Combined ratio",
-    value: pc(comb), formula: `Claims ${fmtUSD(Math.abs(L.claimsIncurred))} + expenses ${fmtUSD(Math.abs(L.underwritingExpense))} ÷ premiums ${fmtUSD(L.premiumsEarned)}`,
+    value: `≈ ${pc(comb)}`, formula: `Total benefits, losses and expenses ${fmtUSD(Math.abs(L.lossesAndExpenses))} ÷ premiums earned ${fmtUSD(L.premiumsEarned)}`,
     tone: comb > 1.05 ? "bad" : comb > 1 ? "warn" : comb > 0.95 ? "ok" : "good",
     label: comb > 1 ? "Underwriting loss" : comb > 0.95 ? "Roughly breakeven" : "Underwriting profit",
-    note: "The heart of an insurer: claims and costs as a share of premiums. Below 100% means it is paid to hold the float, the gold standard; above 100% means it loses money on the policies and must make it back on investments. A figure held below 100% across cycles is the mark of a disciplined underwriter, the rarest thing in the business.",
+    note: "The heart of an insurer: claims and costs as a share of premiums. Below 100% means it is paid to hold the float, the gold standard; above 100% means it loses money on the policies and must make it back on investments. Approximate here, taken from the filer's total benefits, losses and expenses over premiums, so it can sit a point or two off the company's headline figure; a number held below 100% across cycles is the mark of a disciplined underwriter, the rarest thing in the business.",
   } : lr != null ? {
     title: "Loss ratio",
     value: pc(lr), formula: `Claims incurred ${fmtUSD(Math.abs(L.claimsIncurred))} ÷ premiums earned ${fmtUSD(L.premiumsEarned)}`,
@@ -79,7 +91,7 @@ export function insurerQuality(company) {
   const fe = floatToEquity(company.lines || {});
 
   let s1;
-  if (comb != null) s1 = comb < 1 ? `It underwrites at a profit, a ${pc(comb)} combined ratio (it keeps ${pc(1 - comb)} of premiums before investing the float)` : `It runs an underwriting loss, a ${pc(comb)} combined ratio, and must earn the difference back on the float`;
+  if (comb != null) s1 = comb < 1 ? `It underwrites at a profit, about a ${pc(comb)} combined ratio (it keeps roughly ${pc(1 - comb)} of premiums before investing the float)` : `It runs an underwriting loss, about a ${pc(comb)} combined ratio, and must earn the difference back on the float`;
   else if (lr != null) s1 = `Claims run ${pc(lr)} of premiums, with underwriting costs on top`;
   else s1 = "The underwriting result is not cleanly tagged in the filings";
   s1 += ".";
