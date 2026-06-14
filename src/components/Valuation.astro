@@ -64,11 +64,14 @@ const name = company.name || company.ticker;
       </div>
 
       {eps3 != null && bvps != null ? (
-        <div class="compare gate">
-          <div class="cmp"><span class="cl">P/E (3-yr earnings)</span><span class="cv" id="pe">—</span></div>
-          <div class="cmp"><span class="cl">P/B</span><span class="cv" id="pb">—</span></div>
-          <div class="cmp"><span class="cl">Graham’s price gate</span><span class="cv" id="ggate">—</span></div>
-        </div>
+        <>
+          <div class="compare gate">
+            <div class="cmp"><span class="cl">P/E (3-yr earnings)</span><span class="cv" id="pe">—</span></div>
+            <div class="cmp"><span class="cl">P/B</span><span class="cv" id="pb">—</span></div>
+            <div class="cmp"><span class="cl">Graham’s price gate</span><span class="cv" id="ggate">—</span></div>
+          </div>
+          <p class="gatenote">Graham capped the multiple at 15×; Buffett and Munger let that rule go — a wonderful business can deserve 50× if the thesis holds. Read it as the bargain-hunter's floor, not a ceiling on good sense.</p>
+        </>
       ) : null}
 
       <div class="dials">
@@ -119,6 +122,7 @@ const name = company.name || company.ticker;
   .dials input[type="range"] { flex: 1 1 auto; max-width: 320px; accent-color: var(--accent); }
   .dialsNote { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); margin: 10px 0 0; line-height: 1.5; max-width: 70ch; }
 
+  .gatenote { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); margin: 8px 0 0; line-height: 1.5; max-width: 70ch; }
   .foot { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); margin: 14px 0 0; line-height: 1.5; max-width: 70ch; }
 </style>
 
@@ -169,7 +173,7 @@ const name = company.name || company.ticker;
         if (pe) pe.textContent = peV != null ? peV.toFixed(1) + "×" : "n/m";
         if (pb) pb.textContent = pbV != null ? pbV.toFixed(1) + "×" : "n/m";
         if (ggate) {
-          if (peV != null && pbV != null) { const ok = peV <= 15 && peV * pbV <= 22.5; ggate.textContent = ok ? "Clears" : "Too dear"; ggate.style.color = ok ? "var(--good)" : "var(--bad)"; }
+          if (peV != null && pbV != null) { const ok = peV <= 15 && peV * pbV <= 22.5; ggate.textContent = ok ? "Clears" : "Above his line"; ggate.style.color = ok ? "var(--good)" : "var(--muted)"; }
           else { ggate.textContent = "n/m"; ggate.style.color = ""; }
         }
       }

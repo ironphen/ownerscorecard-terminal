@@ -76,7 +76,7 @@ export function grahamTests(company) {
   const eps = L.netIncome != null && L.sharesDiluted ? L.netIncome / L.sharesDiluted : null;
   const bvps = L.stockholdersEquity != null && L.sharesDiluted ? L.stockholdersEquity / L.sharesDiluted : null;
   add("Moderate price", "P/E ≤ 15 and P/E × P/B ≤ 22.5", "decided by the price", "na",
-    `Graham's valuation gate — the one test a price decides, and the wall he kept between a sound business and a sound investment. ${eps ? `Earnings are $${eps.toFixed(2)}/share` : ""}${eps && bvps ? " and " : ""}${bvps ? `book value $${bvps.toFixed(2)}/share` : ""}. Enter a price in “What the price implies” just below — it returns the P/E, P/B, and whether this gate clears.`);
+    `Graham's valuation gate — the wall he kept between a sound business and a sound investment. ${eps ? `Earnings are $${eps.toFixed(2)}/share` : ""}${eps && bvps ? " and " : ""}${bvps ? `book value $${bvps.toFixed(2)}/share` : ""}. Enter a price in “What the price implies” just below for the P/E, P/B, and whether it clears. But this is the rule Buffett outgrew: there's no hard P/E law, and a wonderful business can deserve a far richer multiple if the thesis holds — treat it as the bargain-hunter's floor, not a verdict on the price.`);
 
   const runnable = t.filter((x) => x.status !== "na");
   const passes = t.filter((x) => x.status === "pass").length;
