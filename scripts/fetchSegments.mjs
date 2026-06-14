@@ -137,24 +137,40 @@ function stripSubtotals(map, total) {
 }
 
 // ---- labels: MetaLinks.json carries the human label for every member ----
+// MetaLinks keys its tags with underscores (aapl_IPhoneMember), not the colon form
+// used inside the instance, so we index every label under both forms and the bare
+// local name to be sure the member resolves.
 function buildLabels(meta) {
   const map = {};
   try {
-    const inst = meta?.instance && Object.values(meta.instance)[0];
-    const tags = inst?.tag || {};
-    for (const [qn, t] of Object.entries(tags)) {
-      const role = t?.lang?.["en-US"]?.role;
-      if (!role || typeof role !== "object") continue;
-      let cands = [];
-      for (const [k, v] of Object.entries(role)) { if (typeof v === "string" && !/documentation/i.test(k)) cands.push(v); }
-      cands = cands.map((s) => s.replace(/\s*\[member\]\s*$/i, "").trim()).filter(Boolean);
-      if (cands.length) { cands.sort((a, b) => a.length - b.length); map[qn] = cands[0]; }
+    const insts = meta?.instance ? Object.values(meta.instance) : [];
+    for (const inst of insts) {
+      const tags = inst?.tag || {};
+      for (const [rawKey, t] of Object.entries(tags)) {
+        const role = t?.lang?.["en-US"]?.role;
+        if (!role || typeof role !== "object") continue;
+        let cands = [];
+        for (const [k, v] of Object.entries(role)) { if (typeof v === "string" && !/documentation/i.test(k)) cands.push(v); }
+        cands = cands.map((s) => s.replace(/\s*\[member\]\s*$/i, "").trim()).filter(Boolean);
+        if (!cands.length) continue;
+        cands.sort((a, b) => a.length - b.length);
+        const label = cands[0];
+        map[rawKey] = label;
+        map[rawKey.replace("_", ":")] = label;
+        const localK = rawKey.split(/[:_]/).pop();
+        if (!(localK in map)) map[localK] = label;
+      }
     }
   } catch {}
   return map;
 }
 function prettify(localName) {
-  return localName.replace(/Member$/, "").replace(/([a-z0-9])([A-Z])/g, "$1 $2").replace(/([A-Z]+)([A-Z][a-z])/g, "$1 $2").trim();
+  return localName
+    .replace(/Member$/, "")
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .replace(/([A-Z]+)([A-Z][a-z])/g, "$1 $2")
+    .replace(/\bI (Phone|Pad|Pod|Mac|Cloud|Tunes|Watch|OS|Message)\b/g, "i$1") // I Phone -> iPhone
+    .trim();
 }
 // ISO country codes (country:US) to country names, plus the standard region and
 // product members whose filed label is just a code or an abbreviation.
@@ -169,7 +185,8 @@ const STD_LABELS = {
 function labelFor(qn, localName, labels) {
   if (/^country:/.test(qn) && REGION) { const code = qn.split(":")[1]; try { const n = REGION.of(code); if (n && n !== code) return n; } catch {} }
   if (STD_LABELS[qn]) return STD_LABELS[qn];
-  if (labels[qn]) return labels[qn];
+  const meta = labels[qn] || labels[qn.replace(":", "_")] || labels[localName];
+  if (meta) return meta;
   return prettify(localName);
 }
 
