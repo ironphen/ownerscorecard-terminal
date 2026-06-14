@@ -138,7 +138,7 @@
             "operatingIncome": null
           },
           {
-            "label": "All Other Segments",
+            "label": "Other Bets",
             "qname": "us-gaap:AllOtherSegmentsMember",
             "revenue": 1537000000,
             "operatingIncome": null
@@ -167,7 +167,7 @@
             "operatingIncome": null
           },
           {
-            "label": "Americas Excluding United States",
+            "label": "Other Americas",
             "qname": "goog:AmericasExcludingUnitedStatesMember",
             "revenue": 23902000000,
             "operatingIncome": null
@@ -186,7 +186,7 @@
         "hasOperatingIncome": true,
         "items": [
           {
-            "label": "Family Of Apps",
+            "label": "Family of Apps",
             "qname": "meta:FamilyOfAppsMember",
             "revenue": 198759000000,
             "operatingIncome": 102469000000
@@ -203,7 +203,7 @@
         "reconcile": 1,
         "items": [
           {
-            "label": "US Canada",
+            "label": "US &amp; Canada",
             "qname": "meta:USCanadaMember",
             "revenue": 78866000000,
             "operatingIncome": null
@@ -221,7 +221,7 @@
             "operatingIncome": null
           },
           {
-            "label": "Rest Of World",
+            "label": "Rest of World",
             "qname": "meta:RestOfWorldMember",
             "revenue": 21714000000,
             "operatingIncome": null
@@ -240,19 +240,19 @@
         "hasOperatingIncome": true,
         "items": [
           {
-            "label": "North America Segment",
+            "label": "North America",
             "qname": "amzn:NorthAmericaSegmentMember",
             "revenue": 426305000000,
             "operatingIncome": 29619000000
           },
           {
-            "label": "International Segment",
+            "label": "International",
             "qname": "amzn:InternationalSegmentMember",
             "revenue": 161894000000,
             "operatingIncome": 4750000000
           },
           {
-            "label": "Amazon Web Services Segment",
+            "label": "AWS",
             "qname": "amzn:AmazonWebServicesSegmentMember",
             "revenue": 128725000000,
             "operatingIncome": 45606000000
@@ -323,7 +323,7 @@
             "operatingIncome": null
           },
           {
-            "label": "Other Countries",
+            "label": "Other",
             "qname": "nvda:OtherCountriesMember",
             "revenue": 4299000000,
             "operatingIncome": null
@@ -364,7 +364,7 @@
             "operatingIncome": null
           },
           {
-            "label": "OEM And Other",
+            "label": "OEM and Other",
             "qname": "nvda:OEMAndOtherMember",
             "revenue": 619000000,
             "operatingIncome": null
@@ -406,7 +406,7 @@
             "operatingIncome": null
           },
           {
-            "label": "Subscriptionsand Services",
+            "label": "Subscriptions and services",
             "qname": "avgo:SubscriptionsandServicesMember",
             "revenue": 19040000000,
             "operatingIncome": null
@@ -472,7 +472,7 @@
             "operatingIncome": null
           },
           {
-            "label": "Other Countries",
+            "label": "Other countries",
             "qname": "orcl:OtherCountriesMember",
             "revenue": 19154000000,
             "operatingIncome": null
@@ -543,25 +543,25 @@
             "operatingIncome": null
           },
           {
-            "label": "Agentforce360 Platform Slack And Other",
+            "label": "Agentforce 360 Platform, Slack and Other",
             "qname": "crm:Agentforce360PlatformSlackAndOtherMember",
             "revenue": 8882000000,
             "operatingIncome": null
           },
           {
-            "label": "Agentforce Integration And Agentforce Analytics",
+            "label": "Agentforce Integration and Agentforce Analytics",
             "qname": "crm:AgentforceIntegrationAndAgentforceAnalyticsMember",
             "revenue": 6232000000,
             "operatingIncome": null
           },
           {
-            "label": "Agentforce Marketing And Agentforce Commerce",
+            "label": "Agentforce Marketing and Agentforce Commerce",
             "qname": "crm:AgentforceMarketingAndAgentforceCommerceMember",
             "revenue": 5428000000,
             "operatingIncome": null
           },
           {
-            "label": "Professional Servicesand Other",
+            "label": "Professional services and other",
             "qname": "crm:ProfessionalServicesandOtherMember",
             "revenue": 2137000000,
             "operatingIncome": null
@@ -592,7 +592,7 @@
             "operatingIncome": null
           },
           {
-            "label": "Publishing And Advertising",
+            "label": "Publishing and Advertising",
             "qname": "adbe:PublishingAndAdvertisingMember",
             "revenue": 256000000,
             "operatingIncome": null
@@ -621,7 +621,7 @@
             "operatingIncome": null
           },
           {
-            "label": "Other Americas",
+            "label": "Other",
             "qname": "adbe:OtherAmericasMember",
             "revenue": 1591000000,
             "operatingIncome": null
@@ -632,13 +632,13 @@
         "reconcile": 1,
         "items": [
           {
-            "label": "Subscription Revenue",
+            "label": "Subscription",
             "qname": "adbe:SubscriptionRevenueMember",
             "revenue": 22904000000,
             "operatingIncome": null
           },
           {
-            "label": "Service Other",
+            "label": "Service, Other",
             "qname": "us-gaap:ServiceOtherMember",
             "revenue": 540000000,
             "operatingIncome": null
@@ -679,13 +679,13 @@
         "reconcile": 1,
         "items": [
           {
-            "label": "Concentrate Operations",
+            "label": "Concentrate operations",
             "qname": "ko:ConcentrateOperationsMember",
             "revenue": 28462000000,
             "operatingIncome": null
           },
           {
-            "label": "Finished Product Operations",
+            "label": "Finished product operations",
             "qname": "ko:FinishedProductOperationsMember",
             "revenue": 19479000000,
             "operatingIncome": null
@@ -770,13 +770,13 @@
         "hasOperatingIncome": false,
         "items": [
           {
-            "label": "U.S.Refreshment Beverages",
+            "label": "U.S. Refreshment Beverages",
             "qname": "kdp:U.S.RefreshmentBeveragesMember",
             "revenue": 10439000000,
             "operatingIncome": null
           },
           {
-            "label": "U.S.Coffee",
+            "label": "U.S. Coffee",
             "qname": "kdp:U.S.CoffeeMember",
             "revenue": 3990000000,
             "operatingIncome": null
@@ -816,7 +816,7 @@
             "operatingIncome": null
           },
           {
-            "label": "K Cup Pods",
+            "label": "Pods",
             "qname": "kdp:KCupPodsMember",
             "revenue": 3777000000,
             "operatingIncome": null
@@ -828,7 +828,7 @@
             "operatingIncome": null
           },
           {
-            "label": "Other Net Sales",
+            "label": "Other",
             "qname": "kdp:OtherNetSalesMember",
             "revenue": 578000000,
             "operatingIncome": null
@@ -847,25 +847,25 @@
         "hasOperatingIncome": false,
         "items": [
           {
-            "label": "Monster Energy Drinks Segment",
+            "label": "Monster Energy Drinks",
             "qname": "mnst:MonsterEnergyDrinksSegmentMember",
             "revenue": 7665871000,
             "operatingIncome": null
           },
           {
-            "label": "Strategic Brands Segment",
+            "label": "Strategic Brands",
             "qname": "mnst:StrategicBrandsSegmentMember",
             "revenue": 468716000,
             "operatingIncome": null
           },
           {
-            "label": "Alcohol Brands Segment",
+            "label": "Alcohol Brands",
             "qname": "mnst:AlcoholBrandsSegmentMember",
             "revenue": 134720000,
             "operatingIncome": null
           },
           {
-            "label": "All Other Segments",
+            "label": "Other",
             "qname": "us-gaap:AllOtherSegmentsMember",
             "revenue": 25036000,
             "operatingIncome": null
@@ -876,7 +876,7 @@
         "reconcile": 1,
         "items": [
           {
-            "label": "U.s.And Canada",
+            "label": "U.S. and Canada",
             "qname": "mnst:U.s.AndCanadaMember",
             "revenue": 5072691000,
             "operatingIncome": null
@@ -888,7 +888,7 @@
             "operatingIncome": null
           },
           {
-            "label": "Latin America And Caribbean",
+            "label": "Latin America and Caribbean",
             "qname": "mnst:LatinAmericaAndCaribbeanMember",
             "revenue": 697971000,
             "operatingIncome": null
@@ -912,7 +912,7 @@
         "reconcile": 1,
         "items": [
           {
-            "label": "Babyandchildcareproducts",
+            "label": "Baby and Child Care",
             "qname": "kmb:BabyandchildcareproductsMember",
             "revenue": 6773000000,
             "operatingIncome": null
@@ -924,7 +924,7 @@
             "operatingIncome": null
           },
           {
-            "label": "Adult Care Products",
+            "label": "Adult Care",
             "qname": "kmb:AdultCareProductsMember",
             "revenue": 1947000000,
             "operatingIncome": null
@@ -936,7 +936,7 @@
             "operatingIncome": null
           },
           {
-            "label": "Feminine Care Products",
+            "label": "Feminine Care",
             "qname": "kmb:FeminineCareProductsMember",
             "revenue": 1706000000,
             "operatingIncome": null
@@ -985,19 +985,19 @@
         "hasOperatingIncome": false,
         "items": [
           {
-            "label": "Americas Segment",
+            "label": "Americas",
             "qname": "wdfc:AmericasSegmentMember",
             "revenue": 290599000,
             "operatingIncome": null
           },
           {
-            "label": "Europe India Middle East And Africa Segment",
+            "label": "EIMEA",
             "qname": "wdfc:EuropeIndiaMiddleEastAndAfricaSegmentMember",
             "revenue": 236434000,
             "operatingIncome": null
           },
           {
-            "label": "Asia Pacific Segment",
+            "label": "Asia-Pacific",
             "qname": "wdfc:AsiaPacificSegmentMember",
             "revenue": 92952000,
             "operatingIncome": null
@@ -1045,7 +1045,7 @@
             "operatingIncome": null
           },
           {
-            "label": "Sams Club US",
+            "label": "Sam's Club US",
             "qname": "wmt:SamsClubUSMember",
             "revenue": 93015000000,
             "operatingIncome": null
@@ -1080,13 +1080,13 @@
         "reconcile": 1,
         "items": [
           {
-            "label": "Foodand Sundries",
+            "label": "Food and Sundries",
             "qname": "cost:FoodandSundriesMember",
             "revenue": 109564000000,
             "operatingIncome": null
           },
           {
-            "label": "Non Foods",
+            "label": "Non-Foods",
             "qname": "cost:NonFoodsMember",
             "revenue": 71190000000,
             "operatingIncome": null
@@ -1122,13 +1122,13 @@
         "reconcile": 1,
         "items": [
           {
-            "label": "Food And Beverage",
+            "label": "Food and Beverage",
             "qname": "us-gaap:FoodAndBeverageMember",
             "revenue": 24136000000,
             "operatingIncome": null
           },
           {
-            "label": "Household Essentials",
+            "label": "Household essentials",
             "qname": "tgt:HouseholdEssentialsMember",
             "revenue": 18017000000,
             "operatingIncome": null
@@ -1146,7 +1146,7 @@
             "operatingIncome": null
           },
           {
-            "label": "Home Furnishings And Decor",
+            "label": "Home Furnishings and Decor",
             "qname": "tgt:HomeFurnishingsAndDecorMember",
             "revenue": 15608000000,
             "operatingIncome": null
@@ -1158,19 +1158,19 @@
             "operatingIncome": null
           },
           {
-            "label": "Advertising Revenue",
+            "label": "Advertising revenue",
             "qname": "tgt:AdvertisingRevenueMember",
             "revenue": 915000000,
             "operatingIncome": null
           },
           {
-            "label": "Other Other Revenue",
+            "label": "Other",
             "qname": "tgt:OtherOtherRevenueMember",
             "revenue": 626000000,
             "operatingIncome": null
           },
           {
-            "label": "Credit Card Profit Sharing",
+            "label": "Credit card profit sharing",
             "qname": "tgt:CreditCardProfitSharingMember",
             "revenue": 522000000,
             "operatingIncome": null
@@ -1195,13 +1195,13 @@
         "hasOperatingIncome": true,
         "items": [
           {
-            "label": "Primary Segment",
+            "label": "Primary",
             "qname": "hd:PrimarySegmentMember",
             "revenue": 151966000000,
             "operatingIncome": 20574000000
           },
           {
-            "label": "All Other Segments",
+            "label": "Other",
             "qname": "us-gaap:AllOtherSegmentsMember",
             "revenue": 12717000000,
             "operatingIncome": 316000000
@@ -1282,7 +1282,7 @@
             "operatingIncome": null
           },
           {
-            "label": "Product And Service Other",
+            "label": "Other",
             "qname": "us-gaap:ProductAndServiceOtherMember",
             "revenue": 1392000000,
             "operatingIncome": null
@@ -1324,13 +1324,13 @@
             "operatingIncome": null
           },
           {
-            "label": "All Other Geographical Areas",
+            "label": "Other",
             "qname": "t:AllOtherGeographicalAreasMember",
             "revenue": 114000000,
             "operatingIncome": null
           },
           {
-            "label": "Region Of Latin America And Caribbean",
+            "label": "Latin America",
             "qname": "t:RegionOfLatinAmericaAndCaribbeanMember",
             "revenue": 110000000,
             "operatingIncome": null
@@ -1349,13 +1349,13 @@
         "hasOperatingIncome": false,
         "items": [
           {
-            "label": "Business Segment",
+            "label": "Business",
             "qname": "lumn:BusinessSegmentMember",
             "revenue": 9895000000,
             "operatingIncome": null
           },
           {
-            "label": "Mass Market Segment",
+            "label": "Mass Markets",
             "qname": "lumn:MassMarketSegmentMember",
             "revenue": 2507000000,
             "operatingIncome": null
@@ -1379,19 +1379,19 @@
             "operatingIncome": null
           },
           {
-            "label": "Passenger Ancillary Fees",
+            "label": "Passenger, Ancillary Fees",
             "qname": "ual:PassengerAncillaryFeesMember",
             "revenue": 4800000000,
             "operatingIncome": null
           },
           {
-            "label": "Product And Service Other",
+            "label": "Other operating revenue",
             "qname": "us-gaap:ProductAndServiceOtherMember",
             "revenue": 3853000000,
             "operatingIncome": null
           },
           {
-            "label": "Cargo And Freight",
+            "label": "Cargo revenue",
             "qname": "us-gaap:CargoAndFreightMember",
             "revenue": 1779000000,
             "operatingIncome": null
@@ -1434,13 +1434,13 @@
         "hasOperatingIncome": false,
         "items": [
           {
-            "label": "North America Segment",
+            "label": "North America",
             "qname": "ccl:NorthAmericaSegmentMember",
             "revenue": 17604000000,
             "operatingIncome": null
           },
           {
-            "label": "Europe Segment",
+            "label": "Europe",
             "qname": "ccl:EuropeSegmentMember",
             "revenue": 8467000000,
             "operatingIncome": null
@@ -1452,7 +1452,7 @@
             "operatingIncome": null
           },
           {
-            "label": "Tour And Other",
+            "label": "Tour and Other",
             "qname": "ccl:TourAndOtherMember",
             "revenue": 241000000,
             "operatingIncome": null
@@ -1469,7 +1469,7 @@
             "operatingIncome": null
           },
           {
-            "label": "All Other Geographic Areas",
+            "label": "Other",
             "qname": "ccl:AllOtherGeographicAreasMember",
             "revenue": 5374000000,
             "operatingIncome": null
@@ -1492,13 +1492,13 @@
         "reconcile": 1,
         "items": [
           {
-            "label": "Cruise Passenger Ticket",
+            "label": "Passenger ticket",
             "qname": "ccl:CruisePassengerTicketMember",
             "revenue": 17419000000,
             "operatingIncome": null
           },
           {
-            "label": "Cruise Onboard And Other",
+            "label": "Onboard and other",
             "qname": "ccl:CruiseOnboardAndOtherMember",
             "revenue": 9202000000,
             "operatingIncome": null
