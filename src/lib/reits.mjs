@@ -16,7 +16,14 @@ export function ffo(L) {
   return L.netIncome + L.depreciation - (L.gainOnSaleRealEstate || 0);
 }
 export function ffoPerShare(L) { const f = ffo(L); return f != null && L.sharesDiluted ? f / L.sharesDiluted : null; }
-export function ffoMargin(L) { const f = ffo(L); return f != null && L.revenue ? f / L.revenue : null; }
+export function ffoMargin(L) {
+  const f = ffo(L);
+  if (f == null || !L.revenue) return null;
+  const m = f / L.revenue;
+  // FFO above revenue is impossible; it means the filing tagged only part of revenue
+  // (a lease-heavy REIT often reports total under "Revenues", not contract revenue).
+  return m > 1 ? null : m;
+}
 export function ffoOnAssets(L) { const f = ffo(L); return f != null && L.totalAssets ? f / L.totalAssets : null; }
 export function ffoPayout(L) { const f = ffo(L); return f != null && f > 0 && L.dividendsPaid != null ? Math.abs(L.dividendsPaid) / f : null; }
 export function debtToAssets(L) {

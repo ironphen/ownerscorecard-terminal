@@ -93,6 +93,12 @@ const CONCEPTS = {
   // --- REITs (the reit archetype): FFO = net income + real-estate D&A − gains on sale ---
   gainOnSaleRealEstate: ["GainLossOnSaleOfPropertiesNetOfApplicableIncomeTaxes", "GainLossOnDispositionOfRealEstate", "GainsLossesOnSalesOfInvestmentRealEstate", "GainLossOnSaleOfProperties", "GainLossOnDispositionOfAssets1"],
   realEstateGross: ["RealEstateInvestmentPropertyAtCost", "RealEstateGrossAtCarryingValue"],
+  // --- insurers (financials, the underwriting + float lens) ---
+  premiumsEarned: ["PremiumsEarnedNet", "PremiumsEarnedNetPropertyAndCasualty"],
+  claimsIncurred: ["PolicyholderBenefitsAndClaimsIncurredNet", "IncurredClaimsPropertyCasualtyAndLiability", "PolicyholderBenefitsAndClaimsIncurredHomeAndAutomobile"],
+  underwritingExpense: ["OtherUnderwritingExpense", "DeferredPolicyAcquisitionCostAmortizationExpense"],
+  investmentIncome: ["NetInvestmentIncome"],
+  lossReserves: ["LiabilityForClaimsAndClaimsAdjustmentExpense", "LiabilityForFuturePolicyBenefits"],
 };
 
 const days = (a, b) => Math.abs((new Date(b) - new Date(a)) / 86400000);
@@ -278,6 +284,10 @@ async function main() {
       noninterestExpense: collectAnnual(facts, CONCEPTS.noninterestExpense),
       provisionForCreditLosses: collectAnnual(facts, CONCEPTS.provisionForCreditLosses),
       gainOnSaleRealEstate: collectAnnual(facts, CONCEPTS.gainOnSaleRealEstate),
+      premiumsEarned: collectAnnual(facts, CONCEPTS.premiumsEarned),
+      claimsIncurred: collectAnnual(facts, CONCEPTS.claimsIncurred),
+      underwritingExpense: collectAnnual(facts, CONCEPTS.underwritingExpense),
+      investmentIncome: collectAnnual(facts, CONCEPTS.investmentIncome),
     };
     const hi = {
       equity: collectInstant(facts, CONCEPTS.stockholdersEquity),
@@ -293,6 +303,7 @@ async function main() {
       goodwill: collectInstant(facts, CONCEPTS.goodwill),
       intangibles: collectInstant(facts, CONCEPTS.intangibleAssets),
       realEstateGross: collectInstant(facts, CONCEPTS.realEstateGross),
+      lossReserves: collectInstant(facts, CONCEPTS.lossReserves),
     };
     const history = Object.keys(ha.revenue)
       .map(Number)
@@ -329,6 +340,11 @@ async function main() {
           intangibleAssets: hi.intangibles[fy] ?? null,
           gainOnSaleRealEstate: ha.gainOnSaleRealEstate[fy] ?? null,
           realEstateGross: hi.realEstateGross[fy] ?? null,
+          premiumsEarned: ha.premiumsEarned[fy] ?? null,
+          claimsIncurred: ha.claimsIncurred[fy] ?? null,
+          underwritingExpense: ha.underwritingExpense[fy] ?? null,
+          investmentIncome: ha.investmentIncome[fy] ?? null,
+          lossReserves: hi.lossReserves[fy] ?? null,
         },
       }));
 
@@ -368,6 +384,11 @@ async function main() {
             intangibleAssets: latestObservation(facts, CONCEPTS.intangibleAssets, "USD", true)?.val ?? null,
             gainOnSaleRealEstate: tf(CONCEPTS.gainOnSaleRealEstate),
             realEstateGross: latestObservation(facts, CONCEPTS.realEstateGross, "USD", true)?.val ?? null,
+            premiumsEarned: tf(CONCEPTS.premiumsEarned),
+            claimsIncurred: tf(CONCEPTS.claimsIncurred),
+            underwritingExpense: tf(CONCEPTS.underwritingExpense),
+            investmentIncome: tf(CONCEPTS.investmentIncome),
+            lossReserves: latestObservation(facts, CONCEPTS.lossReserves, "USD", true)?.val ?? null,
           },
         }
       : null;
@@ -416,6 +437,11 @@ async function main() {
         intangibleAssets: inst(CONCEPTS.intangibleAssets),
         gainOnSaleRealEstate: pick(CONCEPTS.gainOnSaleRealEstate),
         realEstateGross: inst(CONCEPTS.realEstateGross),
+        premiumsEarned: pick(CONCEPTS.premiumsEarned),
+        claimsIncurred: pick(CONCEPTS.claimsIncurred),
+        underwritingExpense: pick(CONCEPTS.underwritingExpense),
+        investmentIncome: pick(CONCEPTS.investmentIncome),
+        lossReserves: inst(CONCEPTS.lossReserves),
       },
       history,
       ttm,

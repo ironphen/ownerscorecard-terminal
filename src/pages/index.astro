@@ -21,9 +21,13 @@ const rows = [...(fundamentals.companies || [])]
   .map((c) => {
     const L = c.lines || {};
     const cls = classify(c);
+    // Banks and REITs are not read on operating margin, ROIC, owner earnings or the
+    // industrial Graham tests, so we leave those blank rather than print a number
+    // that means nothing (or, worse, an absurd one). Their lens lives on their page.
+    const isFin = ["financial", "reit"].includes(cls.sector.key);
     const hasBal = L.totalDebt != null || L.cashAndEquivalents != null;
     const netCash = hasBal ? (liquidAssets(L) || 0) - (L.totalDebt || 0) : null; // + = net cash
-    const g = grahamTests(c);
+    const g = isFin ? { passes: null, testable: null } : grahamTests(c);
     return {
       ticker: c.ticker,
       name: c.name || "",
@@ -31,9 +35,9 @@ const rows = [...(fundamentals.companies || [])]
       modelKey: cls.sector.key,
       industry: cls.industry.short,
       revenue: L.revenue ?? null,
-      opMargin: operatingMargin(L),
-      roic: roicValue(L),
-      oeMargin: ownerEarningsMargin(L),
+      opMargin: isFin ? null : operatingMargin(L),
+      roic: isFin ? null : roicValue(L),
+      oeMargin: isFin ? null : ownerEarningsMargin(L),
       netCash,
       grahamPasses: g.passes,
       grahamTestable: g.testable,

@@ -1734,6 +1734,30 @@
           }
         ]
       }
+    },
+    "AIG": {
+      "fy": 2025,
+      "periodEnd": "2025-12-31",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/5272/000000527226000023/0000005272-26-000023-index.htm",
+      "revenueTotal": 26775000000,
+      "operatingIncomeTotal": null,
+      "byGeography": {
+        "reconcile": 1,
+        "items": [
+          {
+            "label": "International",
+            "qname": "aig:InternationalMember",
+            "revenue": 14076000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "North America",
+            "qname": "srt:NorthAmericaMember",
+            "revenue": 12699000000,
+            "operatingIncome": null
+          }
+        ]
+      }
     }
   }
 }
