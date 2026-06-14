@@ -62,6 +62,17 @@ const SHORT_IND = {
   "Packaged food": "Food", "Paper & packaging": "Paper",
 };
 
+// Within the financial world, which kind: banks, insurers and REITs are read on
+// different statements, so the page needs to tell them apart. By SIC, which is
+// authoritative: 60-62 depositories and credit, 63-64 insurance, 65-67 real estate.
+export function financialKind(company) {
+  const sic = Number(company?.sic) || 0;
+  if (sic >= 6500 && sic <= 6799) return "reit";
+  if (sic >= 6300 && sic <= 6499) return "insurer";
+  if (sic >= 6000 && sic <= 6299) return "bank";
+  return null;
+}
+
 export function industryOf(company) {
   const sic = String(company?.sic || "");
   const s4 = sic.slice(0, 4), s3 = sic.slice(0, 3);
