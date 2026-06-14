@@ -74,6 +74,8 @@ const CONCEPTS = {
   receivables: ["AccountsReceivableNetCurrent"],
   inventory: ["InventoryNet"],
   accountsPayable: ["AccountsPayableCurrent", "AccountsPayableTradeCurrent", "AccountsPayableAndAccruedLiabilitiesCurrent"],
+  currentAssets: ["AssetsCurrent"],
+  currentLiabilities: ["LiabilitiesCurrent"],
   sharesDiluted: [
     "WeightedAverageNumberOfDilutedSharesOutstanding",
     "WeightedAverageNumberOfShareOutstandingBasicAndDiluted",
@@ -267,6 +269,8 @@ async function main() {
       ltMkt: collectInstant(facts, CONCEPTS.longTermMarketable),
       ltd: collectInstant(facts, CONCEPTS.longTermDebt),
       cur: collectInstant(facts, CONCEPTS.currentDebt),
+      ca: collectInstant(facts, CONCEPTS.currentAssets),
+      cl: collectInstant(facts, CONCEPTS.currentLiabilities),
     };
     const history = Object.keys(ha.revenue)
       .map(Number)
@@ -284,6 +288,8 @@ async function main() {
           cashAndEquivalents: hi.cash[fy] ?? null,
           shortTermInvestments: hi.stInv[fy] ?? null,
           longTermMarketable: hi.ltMkt[fy] ?? null,
+          currentAssets: hi.ca[fy] ?? null,
+          currentLiabilities: hi.cl[fy] ?? null,
           cashFromOps: ha.cashFromOps[fy] ?? null,
           capex: ha.capex[fy] ?? null,
           costOfRevenue: ha.costOfRevenue[fy] ?? null,
@@ -355,6 +361,8 @@ async function main() {
         receivables: inst(CONCEPTS.receivables),
         inventory: inst(CONCEPTS.inventory),
         accountsPayable: inst(CONCEPTS.accountsPayable),
+        currentAssets: inst(CONCEPTS.currentAssets),
+        currentLiabilities: inst(CONCEPTS.currentLiabilities),
         sharesDiluted: pickAnnual(facts, CONCEPTS.sharesDiluted, "shares")?.val ?? null,
       },
       history,

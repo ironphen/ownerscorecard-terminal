@@ -54,16 +54,18 @@ export function moatReport(company) {
       "A moat shows up as a high return on invested capital that holds year after year — not one good vintage.");
   }
 
-  // 3 — Pricing power: where did the operating margin go?
+  // 3 — Pricing power: where did the operating margin go? Anchored to the first
+  // and last years on record (both findable in the table), not hidden averages.
   const om = L.map((x) => (x.operatingIncome != null && x.revenue ? x.operatingIncome / x.revenue : null));
-  const omE = avgFirst(om, 2), omL = avgLast(om, 2);
-  if (omE != null && omL != null) {
-    const d = omL - omE;
+  const fI = om.findIndex((v) => v != null);
+  const lI = om.length - 1 - [...om].reverse().findIndex((v) => v != null);
+  if (fI >= 0 && lI > fI) {
+    const d = om[lI] - om[fI];
     const dir = d > 0.02 ? "good" : d < -0.02 ? "warn" : "ok";
-    add("Operating margin", `${pct(omE)} → ${pct(omL)}`, dir,
-      d > 0.02 ? "Margins are widening — pricing power intact or improving."
-        : d < -0.02 ? "Margins are slipping — competition or costs are biting in."
-        : "Margins held steady across the cycle.");
+    add("Operating margin", `${pct(om[fI])} (FY${years[fI]}) → ${pct(om[lI])} (FY${years[lI]})`, dir,
+      d > 0.02 ? "Margins widened over the record — pricing power intact or improving."
+        : d < -0.02 ? "Margins slipped over the record — competition or costs are biting in."
+        : "Margins held roughly steady across the record.");
   }
 
   // 4 — The centerpiece: incremental ROIC (what reinvested capital earned).

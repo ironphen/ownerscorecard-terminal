@@ -1,0 +1,60 @@
+---
+import { grahamTests } from "../lib/graham.mjs";
+import { TONE_COLOR } from "../lib/fundamentals.mjs";
+
+const { company } = Astro.props;
+const { tests, passes, testable } = grahamTests(company);
+
+const TONE = { pass: "good", near: "warn", fail: "bad", na: "none" };
+const LABEL = { pass: "Pass", near: "Near", fail: "Miss", na: "—" };
+---
+
+<section class="graham">
+  <div class="head">
+    <h2>Graham’s defensive-investor test</h2>
+    {testable ? <span class="count">{passes} of {testable} met</span> : null}
+  </div>
+
+  <p class="intro">
+    Graham gave the defensive investor seven numerical criteria in <em>The Intelligent Investor</em>.
+    Here they are, run mechanically on the filings — his framework, not our verdict. Meeting them is a
+    floor of safety, not a reason to buy; missing one is no veto, since many fine modern businesses fail
+    his strictest liquidity tests by design. The worth is in seeing exactly where a company stands against
+    the canon, every number sourced.
+  </p>
+
+  <ul class="tests">
+    {tests.map((t) => (
+      <li>
+        <div class="row">
+          <span class="name">{t.name}</span>
+          <span class="badge" style={`color:${TONE_COLOR[TONE[t.status]]}; border-color:${TONE_COLOR[TONE[t.status]]}`}>{LABEL[t.status]}</span>
+        </div>
+        <div class="crit">{t.criterion} · <b>{t.value}</b></div>
+        <p class="note">{t.note}</p>
+      </li>
+    ))}
+  </ul>
+
+  <p class="foot">Graham would be the first to say a checklist is a starting point, not an answer — but a company that clears these has earned a closer look, and one that fails them has earned harder questions.</p>
+</section>
+
+<style>
+  .graham { border: 1px solid var(--rule-strong); padding: 20px 22px; margin: 20px 0; background: #fff; }
+  .head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .head h2 { margin: 0; }
+  .count { font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); font-variant-numeric: tabular-nums; flex: 0 0 auto; }
+
+  .intro { font-family: var(--serif); font-style: italic; font-size: 13.5px; color: var(--muted); margin: 10px 0 0; line-height: 1.55; max-width: 70ch; }
+
+  .tests { list-style: none; padding: 0; margin: 16px 0 0; }
+  .tests li { padding: 12px 0; border-bottom: 1px solid var(--rule); }
+  .row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+  .name { font-weight: 600; font-size: 16px; }
+  .badge { font-family: var(--sans); font-size: 10.5px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; border: 1px solid; border-radius: 2px; padding: 1px 7px; flex: 0 0 auto; }
+  .crit { font-size: 13px; color: var(--muted); margin-top: 3px; font-variant-numeric: tabular-nums; }
+  .crit b { color: var(--ink); font-weight: 700; }
+  .note { font-size: 13px; color: #3a3e46; margin: 5px 0 0; line-height: 1.5; }
+
+  .foot { font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--muted); border-top: 1px solid var(--rule-strong); margin-top: 14px; padding-top: 11px; }
+</style>
