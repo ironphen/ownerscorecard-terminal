@@ -90,6 +90,9 @@ const CONCEPTS = {
   deposits: ["Deposits"],
   goodwill: ["Goodwill"],
   intangibleAssets: ["IntangibleAssetsNetExcludingGoodwill", "FiniteLivedIntangibleAssetsNet"],
+  // --- REITs (the reit archetype): FFO = net income + real-estate D&A − gains on sale ---
+  gainOnSaleRealEstate: ["GainLossOnSaleOfPropertiesNetOfApplicableIncomeTaxes", "GainLossOnDispositionOfRealEstate", "GainsLossesOnSalesOfInvestmentRealEstate", "GainLossOnSaleOfProperties", "GainLossOnDispositionOfAssets1"],
+  realEstateGross: ["RealEstateInvestmentPropertyAtCost", "RealEstateGrossAtCarryingValue"],
 };
 
 const days = (a, b) => Math.abs((new Date(b) - new Date(a)) / 86400000);
@@ -274,6 +277,7 @@ async function main() {
       noninterestIncome: collectAnnual(facts, CONCEPTS.noninterestIncome),
       noninterestExpense: collectAnnual(facts, CONCEPTS.noninterestExpense),
       provisionForCreditLosses: collectAnnual(facts, CONCEPTS.provisionForCreditLosses),
+      gainOnSaleRealEstate: collectAnnual(facts, CONCEPTS.gainOnSaleRealEstate),
     };
     const hi = {
       equity: collectInstant(facts, CONCEPTS.stockholdersEquity),
@@ -288,6 +292,7 @@ async function main() {
       deposits: collectInstant(facts, CONCEPTS.deposits),
       goodwill: collectInstant(facts, CONCEPTS.goodwill),
       intangibles: collectInstant(facts, CONCEPTS.intangibleAssets),
+      realEstateGross: collectInstant(facts, CONCEPTS.realEstateGross),
     };
     const history = Object.keys(ha.revenue)
       .map(Number)
@@ -322,6 +327,8 @@ async function main() {
           deposits: hi.deposits[fy] ?? null,
           goodwill: hi.goodwill[fy] ?? null,
           intangibleAssets: hi.intangibles[fy] ?? null,
+          gainOnSaleRealEstate: ha.gainOnSaleRealEstate[fy] ?? null,
+          realEstateGross: hi.realEstateGross[fy] ?? null,
         },
       }));
 
@@ -359,6 +366,8 @@ async function main() {
             deposits: latestObservation(facts, CONCEPTS.deposits, "USD", true)?.val ?? null,
             goodwill: latestObservation(facts, CONCEPTS.goodwill, "USD", true)?.val ?? null,
             intangibleAssets: latestObservation(facts, CONCEPTS.intangibleAssets, "USD", true)?.val ?? null,
+            gainOnSaleRealEstate: tf(CONCEPTS.gainOnSaleRealEstate),
+            realEstateGross: latestObservation(facts, CONCEPTS.realEstateGross, "USD", true)?.val ?? null,
           },
         }
       : null;
@@ -405,6 +414,8 @@ async function main() {
         deposits: inst(CONCEPTS.deposits),
         goodwill: inst(CONCEPTS.goodwill),
         intangibleAssets: inst(CONCEPTS.intangibleAssets),
+        gainOnSaleRealEstate: pick(CONCEPTS.gainOnSaleRealEstate),
+        realEstateGross: inst(CONCEPTS.realEstateGross),
       },
       history,
       ttm,
