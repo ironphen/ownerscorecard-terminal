@@ -36,27 +36,39 @@ const SETS = {
   general: [ROW.revenue, ROW.opMargin, ROW.netIncome, ROW.eps, ROW.ownerEarnings, ROW.oeMargin, ROW.roic, ROW.totalDebt],
 };
 
-const years = hist.map((h) => h.fy);
+// Columns: each fiscal year, plus a trailing-twelve-months column when present
+// (the freshest 12 months, folding in any quarter filed since the last 10-K).
+const cols = hist.map((h) => ({ label: String(h.fy), lines: h.lines, ttm: false }));
+if (company.ttm?.lines) {
+  const asOf = company.ttm.asOf
+    ? new Date(company.ttm.asOf + "T00:00:00Z").toLocaleDateString("en-US", { month: "short", year: "numeric", timeZone: "UTC" })
+    : null;
+  cols.push({ label: "TTM", sub: asOf, lines: company.ttm.lines, ttm: true });
+}
+const lastI = cols.length - 1;
 const chosen = SETS[sector.key] || SETS.general;
-// Drop any row the data can't fill across the whole record (e.g. per-share
-// before the pipeline enrichment lands).
+// Drop any row the data can't fill across the whole record.
 const rows = chosen
-  .map((r) => ({ label: r.label, cells: hist.map((h) => r.get(h.lines)) }))
+  .map((r) => ({ label: r.label, cells: cols.map((c) => r.get(c.lines)) }))
   .filter((r) => r.cells.some((c) => c !== "—"));
 ---
 
 {hist.length >= 3 ? (
   <section class="tenyear">
     <div class="head">
-      <h3 class="secHead">The record — {years[0]}–{years[years.length - 1]}</h3>
-      <span class="hint">realized figures from each year's filing — no estimates</span>
+      <h3 class="secHead">The record — {hist[0].fy}–{hist[hist.length - 1].fy}</h3>
+      <span class="hint">realized figures from each filing — no estimates</span>
     </div>
     <div class="wrap">
       <table>
         <thead>
           <tr>
             <th class="rowlabel"></th>
-            {years.map((y, i) => <th class={i === years.length - 1 ? "last" : ""}>{y}</th>)}
+            {cols.map((c, i) => (
+              <th class={`${i === lastI ? "last" : ""} ${c.ttm ? "ttm" : ""}`}>
+                {c.label}{c.sub ? <span class="sub">{c.sub}</span> : null}
+              </th>
+            ))}
           </tr>
         </thead>
         <tbody>
@@ -64,7 +76,7 @@ const rows = chosen
             <tr>
               <th class="rowlabel">{r.label}</th>
               {r.cells.map((c, i) => (
-                <td class={`${i === years.length - 1 ? "last" : ""} ${c.startsWith("(") || c.startsWith("−") ? "neg" : ""}`}>{c}</td>
+                <td class={`${i === lastI ? "last" : ""} ${cols[i].ttm ? "ttm" : ""} ${c.startsWith("(") || c.startsWith("−") ? "neg" : ""}`}>{c}</td>
               ))}
             </tr>
           ))}
@@ -87,6 +99,8 @@ const rows = chosen
   thead th.rowlabel { position: sticky; left: 0; background: var(--paper); }
   td { text-align: right; padding: 7px 10px; border-bottom: 1px solid var(--rule); color: var(--ink); }
   td.last, thead th.last { font-weight: 700; }
+  th.ttm, td.ttm { background: var(--accent-tint); }
+  .sub { display: block; font-weight: 400; font-size: 10px; letter-spacing: 0.02em; color: var(--muted); text-transform: none; }
   td.neg { color: var(--bad); }
   tbody tr:hover td, tbody tr:hover th.rowlabel { background: #faf9f6; }
 </style>

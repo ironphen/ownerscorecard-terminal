@@ -78,72 +78,117 @@ const CONCEPTS = {
 
 const days = (a, b) => Math.abs((new Date(b) - new Date(a)) / 86400000);
 
-// Pick the latest full-year (~annual duration) value from a 10-K for a concept.
-function pickAnnual(facts, tags, unit = "USD") {
+// ---- value extraction (tag-merged) ----
+// EDGAR concepts get renamed and companies switch tags, so one tag can go stale
+// mid-decade. Merge across the candidate tags in priority order: a higher-priority
+// tag wins a year; lower-priority tags fill the years it lacks (so a stale tag is
+// supplemented, not frozen). Within a tag, the latest filing wins — picking up
+// restatements and split adjustments. Keyed by PERIOD-end year, not filing fy.
+
+function annualByYear(facts, tags, unit = "USD") {
+  const out = {};
   for (const tag of tags) {
     const units = facts?.facts?.["us-gaap"]?.[tag]?.units?.[unit];
     if (!units) continue;
-    const annual = units
-      .filter((u) => u.form && u.form.startsWith("10-K") && u.start && u.end && days(u.start, u.end) >= 350 && days(u.start, u.end) <= 380)
-      .sort((a, b) => new Date(b.end) - new Date(a.end) || (b.filed || "").localeCompare(a.filed || ""));
-    if (annual.length) return { ...annual[0], tag };
-  }
-  return null;
-}
-
-// Pick the latest point-in-time (instant) value from a 10-K — for balance-sheet items.
-function pickInstant(facts, tags) {
-  for (const tag of tags) {
-    const units = facts?.facts?.["us-gaap"]?.[tag]?.units?.USD;
-    if (!units) continue;
-    const inst = units
-      .filter((u) => u.form && u.form.startsWith("10-K") && u.end && !u.start)
-      .sort((a, b) => new Date(b.end) - new Date(a.end) || (b.filed || "").localeCompare(a.filed || ""));
-    if (inst.length) return { ...inst[0], tag };
-  }
-  return null;
-}
-
-// Collect every annual (duration) value per concept, keyed by fiscal year.
-function collectAnnual(facts, tags, unit = "USD") {
-  for (const tag of tags) {
-    const units = facts?.facts?.["us-gaap"]?.[tag]?.units?.[unit];
-    if (!units) continue;
-    const best = {};
+    const perTag = {};
     for (const u of units) {
       if (!u.form || !u.form.startsWith("10-K") || !u.start || !u.end) continue;
       const dur = days(u.start, u.end);
       if (dur < 350 || dur > 380) continue;
-      const fy = new Date(u.end).getUTCFullYear(); // key by PERIOD-end year, not filing fy
-      if (!best[fy] || (u.filed || "") > (best[fy].filed || "")) best[fy] = { val: u.val, end: u.end, filed: u.filed || "" };
+      const fy = new Date(u.end).getUTCFullYear();
+      if (!perTag[fy] || (u.filed || "") > (perTag[fy].filed || ""))
+        perTag[fy] = { val: u.val, end: u.end, filed: u.filed || "", accn: u.accn, form: u.form };
     }
-    if (Object.keys(best).length) {
-      const m = {};
-      for (const fy in best) m[fy] = best[fy].val;
-      return m;
-    }
+    for (const fy in perTag) if (!(fy in out)) out[fy] = perTag[fy];
   }
-  return {};
+  return out;
 }
 
-// Collect every instant (balance-sheet) value per concept, keyed by fiscal year.
-function collectInstant(facts, tags) {
+function instantByYear(facts, tags, unit = "USD") {
+  const out = {};
   for (const tag of tags) {
-    const units = facts?.facts?.["us-gaap"]?.[tag]?.units?.USD;
+    const units = facts?.facts?.["us-gaap"]?.[tag]?.units?.[unit];
     if (!units) continue;
-    const best = {};
+    const perTag = {};
     for (const u of units) {
       if (!u.form || !u.form.startsWith("10-K") || !u.end || u.start) continue;
-      const fy = new Date(u.end).getUTCFullYear(); // key by PERIOD-end year, not filing fy
-      if (!best[fy] || (u.filed || "") > (best[fy].filed || "")) best[fy] = { val: u.val, end: u.end, filed: u.filed || "" };
+      const fy = new Date(u.end).getUTCFullYear();
+      if (!perTag[fy] || (u.filed || "") > (perTag[fy].filed || ""))
+        perTag[fy] = { val: u.val, end: u.end, filed: u.filed || "" };
     }
-    if (Object.keys(best).length) {
-      const m = {};
-      for (const fy in best) m[fy] = best[fy].val;
-      return m;
+    for (const fy in perTag) if (!(fy in out)) out[fy] = perTag[fy];
+  }
+  return out;
+}
+
+const valuesByYear = (by) => Object.fromEntries(Object.entries(by).map(([fy, e]) => [fy, e.val]));
+const latestEntry = (by) => {
+  const fys = Object.keys(by).map(Number);
+  if (!fys.length) return null;
+  const fy = Math.max(...fys);
+  return { ...by[fy], fy };
+};
+
+const pickAnnual = (facts, tags, unit = "USD") => latestEntry(annualByYear(facts, tags, unit));
+const pickInstant = (facts, tags, unit = "USD") => latestEntry(instantByYear(facts, tags, unit));
+const collectAnnual = (facts, tags, unit = "USD") => valuesByYear(annualByYear(facts, tags, unit));
+const collectInstant = (facts, tags, unit = "USD") => valuesByYear(instantByYear(facts, tags, unit));
+
+// ---- trailing twelve months ----
+// All duration observations (10-K and 10-Q) for a concept.
+function durations(facts, tags, unit = "USD") {
+  const all = [];
+  for (const tag of tags) {
+    const units = facts?.facts?.["us-gaap"]?.[tag]?.units?.[unit];
+    if (!units) continue;
+    for (const u of units) {
+      if (!u.form || !u.start || !u.end) continue;
+      if (!(u.form.startsWith("10-K") || u.form.startsWith("10-Q"))) continue;
+      all.push({ val: u.val, start: u.start, end: u.end, dur: days(u.start, u.end), filed: u.filed || "" });
     }
   }
-  return {};
+  return all;
+}
+
+// TTM(flow) = prior full year + current year-to-date − prior-year same-period YTD,
+// using the cumulative durations 10-Qs report. If the freshest data is already a
+// full year (a 10-K with no newer quarter), TTM equals that year. null if unclean.
+function ttmFlow(facts, tags, unit = "USD") {
+  const all = durations(facts, tags, unit);
+  if (!all.length) return null;
+  const maxEnd = all.reduce((m, e) => (new Date(e.end) > new Date(m) ? e.end : m), all[0].end);
+  const cur = all.filter((e) => e.end === maxEnd).sort((a, b) => b.dur - a.dur || b.filed.localeCompare(a.filed))[0];
+  if (!cur) return null;
+  if (cur.dur >= 350 && cur.dur <= 380) return { val: cur.val, asOf: cur.end, isFY: true };
+  const prevEnd = new Date(cur.end);
+  prevEnd.setUTCFullYear(prevEnd.getUTCFullYear() - 1);
+  const prevEndStr = prevEnd.toISOString().slice(0, 10);
+  const priorYTD = all
+    .filter((e) => Math.abs(days(e.end, prevEndStr)) <= 20 && Math.abs(e.dur - cur.dur) <= 25)
+    .sort((a, b) => b.filed.localeCompare(a.filed))[0];
+  const priorFY = all
+    .filter((e) => e.dur >= 350 && e.dur <= 380 && Math.abs(days(e.end, cur.start)) <= 45)
+    .sort((a, b) => b.filed.localeCompare(a.filed))[0];
+  if (priorYTD && priorFY) return { val: priorFY.val + cur.val - priorYTD.val, asOf: cur.end, isFY: false };
+  const fy = all.filter((e) => e.dur >= 350 && e.dur <= 380).sort((a, b) => new Date(b.end) - new Date(a.end))[0];
+  return fy ? { val: fy.val, asOf: fy.end, isFY: true } : null;
+}
+
+// Latest period value across 10-K and 10-Q — for the freshest share count (flow)
+// and balance-sheet items (instant).
+function latestObservation(facts, tags, unit = "USD", instant = false) {
+  let best = null;
+  for (const tag of tags) {
+    const units = facts?.facts?.["us-gaap"]?.[tag]?.units?.[unit];
+    if (!units) continue;
+    for (const u of units) {
+      if (!u.form || !u.end || (instant ? !!u.start : !u.start)) continue;
+      if (!(u.form.startsWith("10-K") || u.form.startsWith("10-Q"))) continue;
+      if (!best || new Date(u.end) > new Date(best.end) || (u.end === best.end && (u.filed || "") > best.filed))
+        best = { val: u.val, end: u.end, filed: u.filed || "" };
+    }
+  }
+  return best;
 }
 
 async function main() {
@@ -240,6 +285,34 @@ async function main() {
         },
       }));
 
+    // Trailing twelve months — the freshest 12-month picture; folds in any
+    // quarter filed since the last 10-K. Flows are TTM-summed; balance sheet and
+    // share count are taken at the latest quarter.
+    const tf = (tags, unit = "USD") => ttmFlow(facts, tags, unit)?.val ?? null;
+    const ttmRev = ttmFlow(facts, CONCEPTS.revenue);
+    const ttmLtd = latestObservation(facts, CONCEPTS.longTermDebt, "USD", true)?.val;
+    const ttmCurDebt = latestObservation(facts, CONCEPTS.currentDebt, "USD", true)?.val;
+    const ttm = ttmRev
+      ? {
+          asOf: ttmRev.asOf,
+          isFY: ttmRev.isFY,
+          lines: {
+            revenue: ttmRev.val,
+            operatingIncome: tf(CONCEPTS.operatingIncome),
+            netIncome: tf(CONCEPTS.netIncome),
+            incomeTaxExpense: tf(CONCEPTS.incomeTaxExpense),
+            cashFromOps: tf(CONCEPTS.cashFromOps),
+            capex: tf(CONCEPTS.capex),
+            costOfRevenue: tf(CONCEPTS.costOfRevenue),
+            depreciation: tf(CONCEPTS.depreciation),
+            stockholdersEquity: latestObservation(facts, CONCEPTS.stockholdersEquity, "USD", true)?.val ?? null,
+            cashAndEquivalents: latestObservation(facts, CONCEPTS.cashAndEquivalents, "USD", true)?.val ?? null,
+            totalDebt: ttmLtd != null || ttmCurDebt != null ? (ttmLtd || 0) + (ttmCurDebt || 0) : null,
+            sharesDiluted: latestObservation(facts, CONCEPTS.sharesDiluted, "shares", false)?.val ?? null,
+          },
+        }
+      : null;
+
     companies.push({
       ticker: ticker.toUpperCase(),
       name,
@@ -272,6 +345,7 @@ async function main() {
         sharesDiluted: pickAnnual(facts, CONCEPTS.sharesDiluted, "shares")?.val ?? null,
       },
       history,
+      ttm,
     });
     console.log(`  ✓ ${ticker} (CIK ${cik}, FY${anchor?.fy ?? "?"})`);
   }
