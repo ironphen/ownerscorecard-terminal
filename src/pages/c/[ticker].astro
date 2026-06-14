@@ -4,6 +4,7 @@ import fundamentals from "../../data/fundamentals.json";
 import Scorecard from "../../components/Scorecard.astro";
 import Portrait from "../../components/Portrait.astro";
 import TenYear from "../../components/TenYear.astro";
+import Peers from "../../components/Peers.astro";
 import { getCollection } from "astro:content";
 
 export async function getStaticPaths() {
@@ -49,6 +50,8 @@ const fmtDate = (d) =>
   {fund ? <TenYear company={fund} /> : null}
 
   {fund ? <Scorecard company={fund} sample={fundamentals.sample} /> : null}
+
+  {fund ? <Peers company={fund} /> : null}
 
   {related.length ? (
     <>

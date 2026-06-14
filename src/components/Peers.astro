@@ -1,0 +1,93 @@
+---
+import fundamentals from "../data/fundamentals.json";
+import { classify } from "../lib/archetype.mjs";
+import { fmtUSD, roicValue } from "../lib/fundamentals.mjs";
+
+const { company } = Astro.props;
+const all = fundamentals.companies || [];
+
+// Peers: same 3-digit SIC (a tight industry group); broaden to the sector
+// archetype if that's too thin. Free — just the data we already pull.
+function findPeers(co) {
+  const sic3 = String(co.sic || "").slice(0, 3);
+  let p = sic3 ? all.filter((c) => c.ticker !== co.ticker && String(c.sic || "").slice(0, 3) === sic3) : [];
+  if (p.length < 2) {
+    const arch = classify(co).sector.key;
+    p = all.filter((c) => c.ticker !== co.ticker && classify(c).sector.key === arch);
+  }
+  const rev = co.lines?.revenue || 0;
+  return p.sort((a, b) => Math.abs((a.lines?.revenue || 0) - rev) - Math.abs((b.lines?.revenue || 0) - rev)).slice(0, 7);
+}
+
+const group = [company, ...findPeers(company)].sort((a, b) => (b.lines?.revenue || 0) - (a.lines?.revenue || 0));
+
+const pr = (v, dp = 0) => (v == null ? "—" : `${(v * 100).toFixed(dp)}%`);
+const metricsOf = (c) => {
+  const L = c.lines || {};
+  return {
+    revenue: L.revenue,
+    grossMargin: L.revenue && L.costOfRevenue != null ? (L.revenue - L.costOfRevenue) / L.revenue : null,
+    opMargin: L.operatingIncome != null && L.revenue ? L.operatingIncome / L.revenue : null,
+    roic: roicValue(L),
+    oeMargin: L.cashFromOps != null && L.capex != null && L.revenue ? (L.cashFromOps - Math.abs(L.capex)) / L.revenue : null,
+  };
+};
+
+// "Best in group" per column (higher is better for all of these).
+const rows = group.map((c) => ({ c, m: metricsOf(c) }));
+const best = {};
+for (const k of ["grossMargin", "opMargin", "roic", "oeMargin"]) {
+  let bt = null, bv = -Infinity;
+  for (const r of rows) if (r.m[k] != null && r.m[k] > bv) { bv = r.m[k]; bt = r.c.ticker; }
+  best[k] = bt;
+}
+---
+
+{group.length >= 2 ? (
+  <section class="peers">
+    <h3 class="secHead">Peers — {classify(company).sector.label}</h3>
+    <p class="pNote">The same business model, side by side on owner economics — compare, don't rank by a single number. <span class="bestKey">●</span> marks best in the group.</p>
+    <div class="wrap">
+      <table>
+        <thead>
+          <tr>
+            <th class="tl">Company</th><th>Revenue</th><th>Gross margin</th>
+            <th>Op. margin</th><th>ROIC</th><th>Owner earn. margin</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map(({ c, m }) => (
+            <tr class={c.ticker === company.ticker ? "me" : ""}>
+              <th class="tl"><a href={`/c/${c.ticker}`}>{c.ticker}</a><span class="nm">{c.name}</span></th>
+              <td>{m.revenue != null ? fmtUSD(m.revenue) : "—"}</td>
+              <td class={best.grossMargin === c.ticker ? "win" : ""}>{pr(m.grossMargin)}</td>
+              <td class={best.opMargin === c.ticker ? "win" : ""}>{pr(m.opMargin, 1)}</td>
+              <td class={best.roic === c.ticker ? "win" : ""}>{pr(m.roic)}</td>
+              <td class={best.oeMargin === c.ticker ? "win" : ""}>{pr(m.oeMargin)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </section>
+) : null}
+
+<style>
+  .peers { margin: 22px 0; }
+  .secHead { font-family: var(--sans); font-weight: 600; margin: 0; font-size: 11.5px; letter-spacing: 0.09em; text-transform: uppercase; color: var(--ink); border-bottom: 1px solid var(--rule-strong); padding-bottom: 5px; }
+  .pNote { font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--muted); margin: 9px 0 6px; }
+  .bestKey { color: var(--good); font-style: normal; }
+
+  .wrap { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  thead th { font-weight: 600; color: var(--muted); font-size: 12px; text-align: right; padding: 8px 10px 6px; border-bottom: 1px solid var(--rule); }
+  thead th.tl, tbody th.tl { text-align: left; }
+  tbody th.tl { font-weight: 600; padding: 9px 12px 9px 0; }
+  tbody th.tl a { color: var(--accent); }
+  .nm { color: var(--muted); font-weight: 400; font-size: 12px; margin-left: 8px; }
+  td { text-align: right; padding: 9px 10px; border-bottom: 1px solid var(--rule); }
+  tr.me th.tl a, tr.me td { font-weight: 700; }
+  tr.me { background: var(--accent-tint); }
+  td.win { color: var(--good); font-weight: 700; }
+  td.win::after { content: " ●"; font-size: 9px; vertical-align: middle; }
+</style>
