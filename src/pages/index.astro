@@ -2,98 +2,250 @@
 import BaseLayout from "../layouts/BaseLayout.astro";
 import fundamentals from "../data/fundamentals.json";
 import { getCollection } from "astro:content";
+import { fmtUSD, roicValue, ownerEarningsMargin, operatingMargin, liquidAssets } from "../lib/fundamentals.mjs";
+import { classify } from "../lib/archetype.mjs";
 
-const companies = [...(fundamentals.companies || [])].sort((a, b) =>
-  String(a.ticker).localeCompare(String(b.ticker))
-);
+// ---- the catalog rows: every company reduced to the few sourced facts that
+// decide quality and survival. No rank, no score — the reader sorts by what they
+// value, which is the judgment we refuse to make for them. ----
+const SHORT = { assetLight: "Asset-light", consumer: "Consumer", capital: "Capital-int.", retail: "Retail", financial: "Financial", reit: "REIT", general: "General" };
+const OV = { unprofitable: "loss", distress: "distress", buildout: "build-out", cyclical: "cyclical" };
+const CHIP_ORDER = ["assetLight", "consumer", "capital", "retail", "financial", "reit", "general"];
+
+const pct = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.abs(v * 100).toFixed(dp)}%`);
+
+const rows = [...(fundamentals.companies || [])]
+  .sort((a, b) => String(a.ticker).localeCompare(String(b.ticker)))
+  .map((c) => {
+    const L = c.lines || {};
+    const cls = classify(c);
+    const hasBal = L.totalDebt != null || L.cashAndEquivalents != null;
+    const netCash = hasBal ? (liquidAssets(L) || 0) - (L.totalDebt || 0) : null; // + = net cash
+    return {
+      ticker: c.ticker,
+      name: c.name || "",
+      fy: c.fy,
+      sectorKey: cls.sector.key,
+      sectorShort: SHORT[cls.sector.key] || "—",
+      overlays: cls.overlays.map((o) => OV[o.key] || o.key),
+      revenue: L.revenue ?? null,
+      opMargin: operatingMargin(L),
+      roic: roicValue(L),
+      oeMargin: ownerEarningsMargin(L),
+      netCash,
+    };
+  });
+
+const present = new Set(rows.map((r) => r.sectorKey));
+const chips = CHIP_ORDER.filter((k) => present.has(k));
+const ndCell = (v) => (v == null ? "—" : v >= 0 ? `+${fmtUSD(v)}` : fmtUSD(v));
 
 const articles = (
-  await getCollection("articles", ({ data }) =>
-    import.meta.env.PROD ? !data.draft : true
-  )
+  await getCollection("articles", ({ data }) => (import.meta.env.PROD ? !data.draft : true))
 )
   .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
-  .slice(0, 4);
+  .slice(0, 3);
 
-const fmtDate = (d) =>
-  d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric", timeZone: "UTC" });
+const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric", timeZone: "UTC" });
 ---
 
-<BaseLayout title="Owner Scorecard">
-  <p class="intro">
-    The vital signs of a business — pulled from its own SEC filings, shown with the
-    arithmetic, with no rating and no estimate. Pick a company for its Owner’s
-    Scorecard, or read why the numbers matter.
+<BaseLayout title="Owner Scorecard — read a company the way an owner would">
+  <p class="lede">
+    A company, read the way an owner would read it — from its own SEC filings, with the
+    arithmetic shown, no rating and no estimate. The catalog reduces each one to the few
+    facts that decide whether it survives and whether it's any good; the writing works
+    through what they mean.
   </p>
 
-  <div class="stickyBar">
-    <div class="metaRow">
-      <div class="count">{companies.length} companies</div>
-      <div class="count">{fundamentals.sample ? "sample data" : `as of ${fundamentals.asOf}`}</div>
-    </div>
-    <input id="q" type="search" placeholder="Search ticker or name…" class="search" autocomplete="off" />
-  </div>
-
-  <ul class="list" id="list">
-    {companies.map((c) => (
-      <li data-search={`${c.ticker} ${c.name || ""}`.toLowerCase()}>
-        <span class="ticker"><a href={`/c/${c.ticker}`}>{c.ticker}</a></span>
-        <span class="name"><a href={`/c/${c.ticker}`}>{c.name}</a></span>
-      </li>
-    ))}
-  </ul>
-
   {articles.length ? (
-    <section class="reading">
-      <h2>Reading</h2>
-      <ul class="alist">
+    <section class="writing">
+      <div class="bandHead">
+        <h2>Latest writing</h2>
+        <a class="all" href="/articles">All articles →</a>
+      </div>
+      <ul class="cards">
         {articles.map((a) => (
           <li>
-            <a href={`/articles/${a.id}`}>{a.data.title}</a>
-            <span class="adate">{fmtDate(a.data.date)}</span>
+            <a class="cardTitle" href={`/articles/${a.id}`}>{a.data.title}</a>
+            <p class="dek">{a.data.description}</p>
+            <div class="cardMeta"><span class="sec">{a.data.section}</span> {fmtDate(a.data.date)}</div>
           </li>
         ))}
       </ul>
-      <p class="more"><a href="/articles">All articles →</a></p>
     </section>
   ) : null}
 
+  <section class="catalogWrap">
+    <div class="bandHead">
+      <h2>The Catalog</h2>
+      <span id="count" class="count">{rows.length} companies</span>
+    </div>
+    <p class="method">
+      Every figure is the latest annual number from the company's own 10-K — click a
+      column to rank by it, filter by business model, or search. We don't score them.
+      Pick a company for its full Owner's Scorecard.
+    </p>
+
+    <div class="controls">
+      <input id="q" type="search" placeholder="Search ticker or name…" class="search" autocomplete="off" />
+      <div class="filters">
+        <button class="chip active" data-filter="all">All</button>
+        {chips.map((k) => <button class="chip" data-filter={k}>{SHORT[k]}</button>)}
+      </div>
+    </div>
+
+    <div class="scroll">
+      <table class="catalog" id="catalog">
+        <thead>
+          <tr>
+            <th class="c-name sortable" data-sort="ticker">Company</th>
+            <th class="c-model">Model</th>
+            <th class="num sortable" data-sort="revenue">Revenue</th>
+            <th class="num sortable" data-sort="opmargin">Op. margin</th>
+            <th class="num sortable" data-sort="roic">ROIC</th>
+            <th class="num sortable" data-sort="oemargin">Owner-earn.</th>
+            <th class="num sortable" data-sort="netdebt">Net cash / (debt)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r) => (
+            <tr
+              data-search={`${r.ticker} ${r.name}`.toLowerCase()}
+              data-model={r.sectorKey}
+              data-ticker={r.ticker}
+              data-revenue={r.revenue ?? ""}
+              data-opmargin={r.opMargin ?? ""}
+              data-roic={r.roic ?? ""}
+              data-oemargin={r.oeMargin ?? ""}
+              data-netdebt={r.netCash ?? ""}
+            >
+              <td class="c-name">
+                <a href={`/c/${r.ticker}`} class="tkr">{r.ticker}</a>
+                <span class="nm">{r.name}</span>
+              </td>
+              <td class="c-model">
+                <span class="tag">{r.sectorShort}</span>
+                {r.overlays.map((o) => <span class="ov">{o}</span>)}
+              </td>
+              <td class="num">{r.revenue == null ? "—" : fmtUSD(r.revenue)}</td>
+              <td class="num">{pct(r.opMargin)}</td>
+              <td class="num">{pct(r.roic)}</td>
+              <td class="num">{pct(r.oeMargin)}</td>
+              <td class={`num nd ${r.netCash != null && r.netCash >= 0 ? "pos" : ""}`}>{ndCell(r.netCash)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+    <p class="legend">Owner-earnings margin = (operating cash − capex) ÷ revenue. Net cash nets debt against cash and marketable securities. Parentheses are net debt.</p>
+  </section>
+
   <style>
-    .intro {
+    .lede {
       font-family: var(--serif); font-style: italic;
-      font-size: clamp(18px, 2.6vw, 21px); line-height: 1.45;
-      color: #3a3e46; margin: 2px 0 24px; max-width: 64ch;
+      font-size: clamp(18px, 2.6vw, 22px); line-height: 1.45;
+      color: #34383f; margin: 2px 0 30px; max-width: 64ch;
     }
 
-    .stickyBar { position: sticky; top: 0; z-index: 20; background: var(--paper); padding: 12px 0; border-bottom: 1px solid var(--rule); }
-    .metaRow { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 8px; }
-    .count { font-size: 11.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
-    .search { width: 100%; padding: 11px 12px; border: 1px solid var(--rule-strong); font-family: var(--sans); font-size: 15px; background: #fff; }
+    .bandHead { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--rule-strong); padding-bottom: 6px; }
+    .bandHead h2 { margin: 0; }
+    .all { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; flex: 0 0 auto; }
+    .count { font-size: 11.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); flex: 0 0 auto; }
+
+    /* ---- writing band ---- */
+    .writing { margin: 0 0 36px; }
+    .cards { list-style: none; padding: 0; margin: 14px 0 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+    .cards li { border-left: 2px solid var(--rule); padding: 2px 0 2px 14px; }
+    .cardTitle { font-family: var(--serif); font-weight: 600; font-size: 17px; line-height: 1.25; display: block; color: var(--ink); }
+    .cardTitle:hover { color: var(--accent); }
+    .dek { font-size: 13.5px; color: #41454d; margin: 6px 0 8px; line-height: 1.45; }
+    .cardMeta { font-size: 11.5px; color: var(--muted); letter-spacing: 0.02em; }
+    .cardMeta .sec { text-transform: uppercase; letter-spacing: 0.06em; border: 1px solid var(--rule); padding: 1px 5px; margin-right: 6px; font-size: 10px; }
+
+    /* ---- catalog ---- */
+    .method { font-family: var(--serif); font-style: italic; font-size: 13.5px; color: var(--muted); margin: 9px 0 0; max-width: 66ch; }
+
+    .controls { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin: 14px 0 0; position: sticky; top: 0; z-index: 5; background: var(--paper); padding: 8px 0; }
+    .search { flex: 1 1 220px; min-width: 180px; padding: 9px 11px; border: 1px solid var(--rule-strong); font-family: var(--sans); font-size: 14px; background: #fff; }
     .search::placeholder { color: var(--faint); }
+    .filters { display: flex; gap: 6px; flex-wrap: wrap; }
+    .chip { font-family: var(--sans); font-size: 11.5px; letter-spacing: 0.03em; padding: 6px 10px; border: 1px solid var(--rule-strong); background: #fff; color: var(--ink); cursor: pointer; text-transform: uppercase; }
+    .chip:hover { background: var(--accent-tint); }
+    .chip.active { background: var(--ink); color: #fff; border-color: var(--ink); }
 
-    .list { list-style: none; padding-left: 0; margin: 16px 0 0; }
-    .list li { padding: 12px 2px; display: flex; gap: 14px; align-items: baseline; border-bottom: 1px solid var(--rule); }
-    .ticker { font-weight: 700; width: 76px; flex: 0 0 auto; font-variant-numeric: tabular-nums; }
-    .ticker a { color: var(--accent); }
-    .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
-    .name a { color: var(--ink); }
+    .scroll { overflow-x: auto; margin-top: 6px; }
+    table.catalog { border-collapse: collapse; width: 100%; font-size: 13.5px; font-variant-numeric: tabular-nums; }
+    .catalog thead th { font-family: var(--sans); font-weight: 600; font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); text-align: right; padding: 9px 10px 7px; border-bottom: 1px solid var(--rule-strong); white-space: nowrap; }
+    .catalog th.c-name, .catalog th.c-model { text-align: left; }
+    .catalog th.sortable { cursor: pointer; user-select: none; }
+    .catalog th.sortable:hover { color: var(--ink); }
+    .catalog th.sortable::after { content: "↕"; opacity: 0.35; margin-left: 4px; font-size: 10px; }
+    .catalog th.sortable.asc::after { content: "↑"; opacity: 1; }
+    .catalog th.sortable.desc::after { content: "↓"; opacity: 1; }
 
-    .reading { margin-top: 36px; }
-    .reading h2 { border-bottom: 1px solid var(--rule-strong); padding-bottom: 6px; }
-    .alist { list-style: none; padding-left: 0; margin: 12px 0 0; }
-    .alist li { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--rule); align-items: baseline; }
-    .alist a { font-family: var(--serif); font-size: 17px; }
-    .adate { color: var(--muted); font-size: 12px; flex: 0 0 auto; font-variant-numeric: tabular-nums; }
-    .more { margin: 12px 0 0; font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; }
+    .catalog td { padding: 9px 10px; border-bottom: 1px solid var(--rule); text-align: right; white-space: nowrap; }
+    .catalog td.c-name, .catalog td.c-model { text-align: left; }
+    .c-name { position: sticky; left: 0; background: var(--paper); }
+    .tkr { font-weight: 700; font-variant-numeric: tabular-nums; }
+    .nm { display: block; font-size: 11.5px; color: var(--muted); max-width: 26ch; overflow: hidden; text-overflow: ellipsis; }
+    .tag { font-size: 11px; letter-spacing: 0.02em; color: var(--ink); border: 1px solid var(--rule-strong); padding: 1px 6px; white-space: nowrap; }
+    .ov { font-size: 10px; letter-spacing: 0.03em; color: var(--warn); text-transform: uppercase; margin-left: 5px; }
+    .nd.pos { color: var(--good); }
+    tbody tr:hover td { background: #faf9f6; }
+    tbody tr:hover .c-name { background: #faf9f6; }
+
+    .legend { font-size: 11.5px; color: var(--faint); margin: 10px 0 0; line-height: 1.5; }
+
+    @media (max-width: 640px) {
+      .cards { grid-template-columns: 1fr; gap: 14px; }
+      .cards li { border-left: 0; border-top: 1px solid var(--rule); padding: 10px 0 0; }
+    }
   </style>
 
   <script is:inline>
-    const q = document.getElementById("q");
-    const items = Array.from(document.querySelectorAll('li[data-search]'));
-    function refresh() {
-      const term = (q.value || "").trim().toLowerCase();
-      for (const li of items) li.style.display = !term || li.dataset.search.includes(term) ? "" : "none";
-    }
-    q?.addEventListener("input", refresh);
+    (function () {
+      const table = document.getElementById("catalog");
+      if (!table) return;
+      const tbody = table.tBodies[0];
+      const rows = Array.from(tbody.rows);
+      const q = document.getElementById("q");
+      const chips = Array.from(document.querySelectorAll(".chip"));
+      const countEl = document.getElementById("count");
+      let term = "", filter = "all", sortKey = null, sortDir = -1;
+
+      const visible = (r) =>
+        (!term || r.dataset.search.includes(term)) && (filter === "all" || r.dataset.model === filter);
+
+      function apply() {
+        let n = 0;
+        for (const r of rows) { const v = visible(r); r.style.display = v ? "" : "none"; if (v) n++; }
+        if (countEl) countEl.textContent = n + (n === 1 ? " company" : " companies");
+      }
+      const num = (r, k) => { const v = r.dataset[k]; if (v === "" || v == null) return -Infinity; const f = parseFloat(v); return isNaN(f) ? -Infinity : f; };
+
+      function sortBy(key) {
+        if (sortKey === key) sortDir *= -1; else { sortKey = key; sortDir = key === "ticker" ? 1 : -1; }
+        const cmp = key === "ticker"
+          ? (a, b) => a.dataset.ticker.localeCompare(b.dataset.ticker) * sortDir
+          : (a, b) => (num(a, key) - num(b, key)) * sortDir;
+        rows.sort(cmp);
+        for (const r of rows) tbody.appendChild(r);
+        document.querySelectorAll("th.sortable").forEach((th) => {
+          const on = th.dataset.sort === key;
+          th.classList.toggle("asc", on && sortDir > 0);
+          th.classList.toggle("desc", on && sortDir < 0);
+        });
+      }
+
+      q && q.addEventListener("input", () => { term = (q.value || "").trim().toLowerCase(); apply(); });
+      chips.forEach((c) => c.addEventListener("click", () => {
+        chips.forEach((x) => x.classList.remove("active"));
+        c.classList.add("active");
+        filter = c.dataset.filter;
+        apply();
+      }));
+      document.querySelectorAll("th.sortable").forEach((th) => th.addEventListener("click", () => sortBy(th.dataset.sort)));
+      apply();
+    })();
   </script>
 </BaseLayout>
