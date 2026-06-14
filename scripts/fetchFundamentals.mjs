@@ -85,7 +85,7 @@ function pickAnnual(facts, tags, unit = "USD") {
     if (!units) continue;
     const annual = units
       .filter((u) => u.form && u.form.startsWith("10-K") && u.start && u.end && days(u.start, u.end) >= 350 && days(u.start, u.end) <= 380)
-      .sort((a, b) => new Date(b.end) - new Date(a.end));
+      .sort((a, b) => new Date(b.end) - new Date(a.end) || (b.filed || "").localeCompare(a.filed || ""));
     if (annual.length) return { ...annual[0], tag };
   }
   return null;
@@ -98,7 +98,7 @@ function pickInstant(facts, tags) {
     if (!units) continue;
     const inst = units
       .filter((u) => u.form && u.form.startsWith("10-K") && u.end && !u.start)
-      .sort((a, b) => new Date(b.end) - new Date(a.end));
+      .sort((a, b) => new Date(b.end) - new Date(a.end) || (b.filed || "").localeCompare(a.filed || ""));
     if (inst.length) return { ...inst[0], tag };
   }
   return null;
@@ -115,7 +115,7 @@ function collectAnnual(facts, tags, unit = "USD") {
       const dur = days(u.start, u.end);
       if (dur < 350 || dur > 380) continue;
       const fy = u.fy ?? new Date(u.end).getUTCFullYear();
-      if (!best[fy] || new Date(u.end) > new Date(best[fy].end)) best[fy] = { val: u.val, end: u.end };
+      if (!best[fy] || (u.filed || "") > (best[fy].filed || "")) best[fy] = { val: u.val, end: u.end, filed: u.filed || "" };
     }
     if (Object.keys(best).length) {
       const m = {};
@@ -135,7 +135,7 @@ function collectInstant(facts, tags) {
     for (const u of units) {
       if (!u.form || !u.form.startsWith("10-K") || !u.end || u.start) continue;
       const fy = u.fy ?? new Date(u.end).getUTCFullYear();
-      if (!best[fy] || new Date(u.end) > new Date(best[fy].end)) best[fy] = { val: u.val, end: u.end };
+      if (!best[fy] || (u.filed || "") > (best[fy].filed || "")) best[fy] = { val: u.val, end: u.end, filed: u.filed || "" };
     }
     if (Object.keys(best).length) {
       const m = {};
