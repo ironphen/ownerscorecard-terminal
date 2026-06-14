@@ -52,11 +52,20 @@ function cleanSicDescription(d) {
   return d.replace(/^(services?|retail|wholesale)\s*[-–]\s*/i, "").replace(/\s*\([^)]*\)/g, "").replace(/,.*$/, "").replace(/\s{2,}/g, " ").trim() || null;
 }
 
+// A compact label for tight spaces (the catalog table).
+const SHORT_IND = {
+  "Computers & devices": "Computers", "Enterprise software": "Software", "Internet platforms": "Internet",
+  "Online retail": "E-commerce", "Semiconductors": "Semis", "Household & personal care": "Household",
+  "Specialty chemicals": "Chemicals", "Discount & variety retail": "Big-box retail", "Department stores": "Dept. stores",
+  "Home-improvement retail": "Home improv.", "Wireless telecom": "Wireless", "Cruise lines": "Cruise",
+  "Packaged food": "Food", "Paper & packaging": "Paper",
+};
+
 export function industryOf(company) {
   const sic = String(company?.sic || "");
   const s4 = sic.slice(0, 4), s3 = sic.slice(0, 3);
   const label = SIC_LABEL[s4] || SIC3_LABEL[s3] || cleanSicDescription(company?.sicDescription) || "Diversified";
-  return { sic, key: s3 || s4 || "gen", label, desc: company?.sicDescription || null };
+  return { sic, key: s3 || s4 || "gen", label, short: SHORT_IND[label] || label, desc: company?.sicDescription || null };
 }
 
 

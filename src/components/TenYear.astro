@@ -1,6 +1,7 @@
 ---
 import { classify } from "../lib/archetype.mjs";
 import { fmtUSD, roicValue, liquidAssets } from "../lib/fundamentals.mjs";
+import { returnOnEquity, returnOnTangibleEquity, efficiencyRatio, tangibleEquity } from "../lib/financials.mjs";
 
 const { company } = Astro.props;
 const hist = (company.history || []).filter((h) => h?.lines?.revenue != null);
@@ -43,6 +44,13 @@ const ROW = {
   },
   dps: { label: "Dividends / share", short: "Div/sh", get: (L) => perShare(L.dividendsPaid != null ? Math.abs(L.dividendsPaid) : null, L.sharesDiluted) },
   bvps: { label: "Book value / share", short: "BVPS", get: (L) => perShare(L.stockholdersEquity, L.sharesDiluted) },
+  // --- financials (banks): a bank's record is read on these, not on margins/owner earnings ---
+  nii: { label: "Net interest income", short: "Net int.", get: (L) => money(L.netInterestIncome) },
+  roe: { label: "Return on equity", short: "ROE", get: (L) => { const r = returnOnEquity(L); return r == null ? "—" : `${(r * 100).toFixed(0)}%`; } },
+  rotce: { label: "Return on tangible equity", short: "ROTCE", get: (L) => { const r = returnOnTangibleEquity(L); return r == null ? "—" : `${(r * 100).toFixed(0)}%`; } },
+  efficiency: { label: "Efficiency ratio", short: "Effic.", get: (L) => { const r = efficiencyRatio(L); return r == null ? "—" : `${(r * 100).toFixed(0)}%`; } },
+  deposits: { label: "Deposits", short: "Deposits", get: (L) => money(L.deposits) },
+  tbvps: { label: "Tangible book / share", short: "TBVPS", get: (L) => perShare(tangibleEquity(L), L.sharesDiluted) },
 };
 
 const SETS = {
@@ -50,6 +58,7 @@ const SETS = {
   consumer: [ROW.revenue, ROW.grossMargin, ROW.opMargin, ROW.netIncome, ROW.eps, ROW.ownerEarnings, ROW.roic, ROW.cash, ROW.netDebt, ROW.dps, ROW.bvps],
   capital: [ROW.revenue, ROW.opMargin, ROW.netIncome, ROW.eps, ROW.ownerEarnings, ROW.roic, ROW.capex, ROW.capexToRev, ROW.capexToDep, ROW.totalDebt, ROW.cash, ROW.netDebt],
   retail: [ROW.revenue, ROW.grossMargin, ROW.opMargin, ROW.netIncome, ROW.eps, ROW.ownerEarnings, ROW.oeMargin, ROW.roic, ROW.cash, ROW.netDebt],
+  financial: [ROW.revenue, ROW.nii, ROW.netIncome, ROW.eps, ROW.roe, ROW.rotce, ROW.efficiency, ROW.deposits, ROW.bvps, ROW.tbvps, ROW.dps],
   general: [ROW.revenue, ROW.opMargin, ROW.netIncome, ROW.eps, ROW.ownerEarnings, ROW.oeMargin, ROW.roic, ROW.totalDebt, ROW.cash, ROW.netDebt],
 };
 
