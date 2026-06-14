@@ -1,5 +1,245 @@
 {
-  "asOf": null,
+  "asOf": "2026-06-14",
   "source": "SEC EDGAR XBRL, reportable-segment and geographic disclosures",
-  "companies": {}
+  "companies": {
+    "AAPL": {
+      "fy": 2025,
+      "periodEnd": "2025-09-27",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/0000320193-25-000079-index.htm",
+      "revenueTotal": 416161000000,
+      "operatingIncomeTotal": 133050000000,
+      "byGeography": {
+        "reconcile": 1,
+        "items": [
+          {
+            "label": "Other Countries",
+            "qname": "aapl:OtherCountriesMember",
+            "revenue": 199994000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "US",
+            "qname": "country:US",
+            "revenue": 151790000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "CN",
+            "qname": "country:CN",
+            "revenue": 64377000000,
+            "operatingIncome": null
+          }
+        ]
+      }
+    },
+    "MSFT": {
+      "fy": 2025,
+      "periodEnd": "2025-06-30",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/789019/000095017025100235/0000950170-25-100235-index.htm",
+      "revenueTotal": 281724000000,
+      "operatingIncomeTotal": 128528000000,
+      "bySegment": {
+        "reconcile": 1,
+        "hasOperatingIncome": true,
+        "items": [
+          {
+            "label": "Productivity And Business Processes",
+            "qname": "msft:ProductivityAndBusinessProcessesMember",
+            "revenue": 120810000000,
+            "operatingIncome": 69773000000
+          },
+          {
+            "label": "Intelligent Cloud",
+            "qname": "msft:IntelligentCloudMember",
+            "revenue": 106265000000,
+            "operatingIncome": 44589000000
+          },
+          {
+            "label": "More Personal Computing",
+            "qname": "msft:MorePersonalComputingMember",
+            "revenue": 54649000000,
+            "operatingIncome": 14166000000
+          }
+        ]
+      },
+      "byGeography": {
+        "reconcile": 1,
+        "items": [
+          {
+            "label": "US",
+            "qname": "country:US",
+            "revenue": 144546000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Non Us",
+            "qname": "us-gaap:NonUsMember",
+            "revenue": 137178000000,
+            "operatingIncome": null
+          }
+        ]
+      }
+    },
+    "GOOGL": {
+      "fy": 2025,
+      "periodEnd": "2025-12-31",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1652044/000165204426000018/0001652044-26-000018-index.htm",
+      "revenueTotal": 402836000000,
+      "operatingIncomeTotal": 129039000000,
+      "bySegment": {
+        "reconcile": 0.996,
+        "hasOperatingIncome": false,
+        "items": [
+          {
+            "label": "Google Services",
+            "qname": "goog:GoogleServicesMember",
+            "revenue": 342721000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Google Cloud",
+            "qname": "goog:GoogleCloudMember",
+            "revenue": 58705000000,
+            "operatingIncome": null
+          }
+        ]
+      },
+      "byGeography": {
+        "reconcile": 1,
+        "items": [
+          {
+            "label": "US",
+            "qname": "country:US",
+            "revenue": 194229000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "EMEA",
+            "qname": "us-gaap:EMEAMember",
+            "revenue": 117152000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Asia Pacific",
+            "qname": "srt:AsiaPacificMember",
+            "revenue": 67680000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Americas Excluding United States",
+            "qname": "goog:AmericasExcludingUnitedStatesMember",
+            "revenue": 23902000000,
+            "operatingIncome": null
+          }
+        ]
+      }
+    },
+    "AMZN": {
+      "fy": 2025,
+      "periodEnd": "2025-12-31",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1018724/000101872426000004/0001018724-26-000004-index.htm",
+      "revenueTotal": 716924000000,
+      "operatingIncomeTotal": 79975000000,
+      "bySegment": {
+        "reconcile": 1,
+        "hasOperatingIncome": true,
+        "items": [
+          {
+            "label": "North America Segment",
+            "qname": "amzn:NorthAmericaSegmentMember",
+            "revenue": 426305000000,
+            "operatingIncome": 29619000000
+          },
+          {
+            "label": "International Segment",
+            "qname": "amzn:InternationalSegmentMember",
+            "revenue": 161894000000,
+            "operatingIncome": 4750000000
+          },
+          {
+            "label": "Amazon Web Services Segment",
+            "qname": "amzn:AmazonWebServicesSegmentMember",
+            "revenue": 128725000000,
+            "operatingIncome": 45606000000
+          }
+        ]
+      },
+      "byGeography": {
+        "reconcile": 1,
+        "items": [
+          {
+            "label": "US",
+            "qname": "country:US",
+            "revenue": 489657000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Non Us",
+            "qname": "us-gaap:NonUsMember",
+            "revenue": 107467000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "DE",
+            "qname": "country:DE",
+            "revenue": 45900000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "GB",
+            "qname": "country:GB",
+            "revenue": 43212000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "JP",
+            "qname": "country:JP",
+            "revenue": 30688000000,
+            "operatingIncome": null
+          }
+        ]
+      }
+    },
+    "KO": {
+      "fy": 2025,
+      "periodEnd": "2025-12-31",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/21344/000162828026010047/0001628280-26-010047-index.htm",
+      "revenueTotal": 47941000000,
+      "operatingIncomeTotal": 13762000000,
+      "byGeography": {
+        "reconcile": 1,
+        "items": [
+          {
+            "label": "Non Us",
+            "qname": "us-gaap:NonUsMember",
+            "revenue": 28814000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "US",
+            "qname": "country:US",
+            "revenue": 19127000000,
+            "operatingIncome": null
+          }
+        ]
+      },
+      "byProduct": {
+        "reconcile": 1,
+        "items": [
+          {
+            "label": "Concentrate Operations",
+            "qname": "ko:ConcentrateOperationsMember",
+            "revenue": 28462000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Finished Product Operations",
+            "qname": "ko:FinishedProductOperationsMember",
+            "revenue": 19479000000,
+            "operatingIncome": null
+          }
+        ]
+      }
+    }
+  }
 }
