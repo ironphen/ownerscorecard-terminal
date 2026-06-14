@@ -59,7 +59,7 @@ const name = company.name || company.ticker;
 
       <div class="dials">
         <span class="dialsLbl">The assumptions — turn the dials</span>
-        <label>Discount rate (interest rate) <output id="rOut">9%</output><input id="r" type="range" min="4" max="15" step="0.5" value="9" /></label>
+        <label>Discount rate <output id="rOut">9%</output><input id="r" type="range" min="4" max="15" step="0.5" value="9" /></label>
         <label>Years of high growth <output id="nOut">10</output><input id="n" type="range" min="5" max="15" step="1" value="10" /></label>
         <label>Terminal growth <output id="gOut">2.5%</output><input id="g" type="range" min="0" max="4" step="0.25" value="2.5" /></label>
         <p class="dialsNote">The discount rate is your interest rate — what a dollar years from now is worth today, anchored to the long-term Treasury yield (~4–5% today, plus whatever premium you want for risk). Drag it toward the risk-free rate and watch how much growth the price suddenly “needs”: interest rates are gravity on valuations.</p>
