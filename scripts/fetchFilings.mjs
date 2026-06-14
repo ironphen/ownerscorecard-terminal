@@ -64,6 +64,7 @@ function htmlToText(html) {
 // a short colon-led label, never sentence content.
 function cleanQuote(s) {
   s = s.replace(/\s+/g, " ").trim();
+  s = s.replace(/^\(\d+\)\s+/, ""); // leading footnote marker "(3) Legal-related…"
   s = s.replace(/^[A-Z][A-Za-z&/,\- ]{1,48}?\s*:\s+(?=[A-Z])/, "");
   s = s.replace(
     /^(?:[A-Z][A-Za-z&\-]+)(?:\s+(?:and|of|the|or|&|[A-Z][A-Za-z&\-]+)){0,3}\s+(?=(?:The|This|These|Those|Our|We|Your|During|For|Because|If|In|As|Although|While|When|Beyond|Any|Each|Some|Many|Most|No|A|An|Sales|Demand|Revenue)\b)/,
@@ -244,6 +245,7 @@ const FLAG_THEMES = [
     // every company — doesn't fill the slot.
     test: (s) =>
       /(substantially depend|depend\w* heavily|depend\w* significantly|materially depend|a significant (portion|percentage) of (our )?(revenue|net sales|sales|business))/i.test(s) ||
+      /\bdepend\w*\s+(?:on|upon)\s+(?:the\s+)?(?:price|availability|supply|cost)s?\b/i.test(s) ||
       (/(our (success|business|growth|results|revenue))[\s\S]{0,50}depend/i.test(s) &&
         /(product|platform|customer|supplier|vendor|single|sole|concentrat|one |few |limited|key (account|customer|supplier|product))/i.test(s)),
     bonus: (s) => (/\d/.test(s) ? 1 : 0),
