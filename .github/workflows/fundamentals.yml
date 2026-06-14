@@ -1,12 +1,21 @@
-# Refreshes the deep data (fundamentals.json + language.json) from SEC EDGAR and
-# commits any change, which redeploys the site. Runs on its own every Monday — no
-# manual upkeep — and can be kicked by hand from the Actions tab. The lighter
-# Filing Wire (wire.yml) refreshes daily; this heavier quarterly-grade data weekly.
+# Refreshes the deep data (fundamentals.json + language.json + segments.json) from
+# SEC EDGAR and commits any change, which redeploys the site. Runs on its own every
+# Monday — no manual upkeep — and can be kicked by hand from the Actions tab. The
+# lighter Filing Wire (wire.yml) refreshes daily; this heavier data weekly.
 # Set an Actions variable SEC_USER_AGENT with a contact string (SEC requests one).
 name: Fundamentals
 
 on:
   workflow_dispatch:
+    inputs:
+      segments_only:
+        description: "Run only the segment fetch (skip fundamentals/filings)"
+        type: boolean
+        default: false
+      tickers:
+        description: "Limit the segment fetch to these tickers (comma-separated; blank = all)"
+        type: string
+        default: ""
   schedule:
     - cron: "0 7 * * 1" # Mondays 07:00 UTC — self-refresh, no manual upkeep
 
@@ -23,19 +32,26 @@ jobs:
           node-version: 22
       - run: npm ci
       - run: npm run fetch:fundamentals
+        if: ${{ github.event.inputs.segments_only != 'true' }}
         env:
           SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT }}
       - run: npm run fetch:filings
+        if: ${{ github.event.inputs.segments_only != 'true' }}
         continue-on-error: true # qualitative layer; never fail the fundamentals refresh
         env:
           SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT }}
+      - run: npm run fetch:segments
+        continue-on-error: true # where-the-money-comes-from layer; never fail the refresh
+        env:
+          SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT }}
+          ONLY_TICKERS: ${{ github.event.inputs.tickers }}
       - name: Commit if changed
         run: |
-          if ! git diff --quiet -- src/data/fundamentals.json src/data/language.json; then
+          if ! git diff --quiet -- src/data/fundamentals.json src/data/language.json src/data/segments.json; then
             git config user.name "github-actions[bot]"
             git config user.email "github-actions[bot]@users.noreply.github.com"
-            git add src/data/fundamentals.json src/data/language.json
-            git commit -m "Refresh fundamentals + filing language"
+            git add src/data/fundamentals.json src/data/language.json src/data/segments.json
+            git commit -m "Refresh fundamentals + filing language + segments"
             git push
           else
             echo "No change."
