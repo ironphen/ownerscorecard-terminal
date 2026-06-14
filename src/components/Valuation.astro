@@ -4,7 +4,7 @@
 // your browser. That sidesteps every market-data licence and keeps the page honest
 //, the only number we'd ever "redistribute" is the one you typed in. Never a price
 // target: it shows the owner-earnings growth a price implies, set against the record.
-import { classify } from "../lib/archetype.mjs";
+import { classify, financialKind } from "../lib/archetype.mjs";
 import { moatReport } from "../lib/durability.mjs";
 import { fmtUSD, liquidAssets } from "../lib/fundamentals.mjs";
 import { tangibleEquity } from "../lib/financials.mjs";
@@ -12,7 +12,10 @@ import { ffoPerShare } from "../lib/reits.mjs";
 
 const { company } = Astro.props;
 const { sector, overlays } = classify(company);
-const offModel = sector.key === "financial" || sector.key === "reit";
+// Financials are not read on an owner-earnings DCF; each routes to its own lens.
+const fk = financialKind(company);
+const isInsurer = fk === "insurer";
+const offModel = !!fk;
 const cyclical = overlays.some((o) => o.key === "cyclical");
 const median = (xs) => { const s = [...xs].sort((a, b) => a - b); return s.length ? s[Math.floor((s.length - 1) / 2)] : null; };
 
@@ -29,9 +32,14 @@ const niH = (company.history || []).filter((h) => h?.lines?.netIncome != null).s
 const eps3 = niH.length >= 2 && shares ? niH.reduce((a, b) => a + b, 0) / niH.length / shares : null;
 const bvps = L.stockholdersEquity != null && shares ? L.stockholdersEquity / shares : null;
 
-// Bank valuation: a lender is worth a multiple of tangible book set by the return it
-// earns on that book. Normalize the return over the record, since one year is noisy.
-const isBank = sector.key === "financial";
+// Book-value valuation: a bank or an insurer is worth a multiple of tangible book set
+// by the return it earns on that book. Same math for both; only the wording differs,
+// since an insurer's cycle is underwriting, not credit. Normalize over the record.
+const isBank = fk === "bank" || fk === "insurer";
+const finKind = isInsurer ? "insurer" : "bank";
+const bankRisk = isInsurer
+  ? "an underwriting cycle, a reserve shortfall or a bad year on the float"
+  : "a credit cycle, a rate shock or a bad acquisition";
 const tEq = tangibleEquity(L);
 const tbvps = tEq != null && shares ? tEq / shares : null;
 const bvpsB = L.stockholdersEquity != null && shares ? L.stockholdersEquity / shares : null;
@@ -44,7 +52,7 @@ const bankRunnable = isBank && tbvps != null && tbvps > 0 && rotceMed != null;
 
 // REIT valuation: a property trust is priced on a multiple of funds from operations,
 // its cash earnings once property depreciation is added back.
-const isReit = sector.key === "reit";
+const isReit = fk === "reit";
 const ffops = ffoPerShare(L);
 const dpsReit = L.dividendsPaid != null && shares ? Math.abs(L.dividendsPaid) / shares : null;
 const ffopsH = (company.history || []).map((h) => ffoPerShare(h.lines)).filter((v) => v != null);
@@ -109,8 +117,8 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
         <p class="foot">FFO about ${ffops.toFixed(2)} per share on {(shares / 1e6).toFixed(0)}M shares. A lens, not a target. FFO here adds back depreciation and removes property-sale gains, the NAREIT method; it does not net out maintenance capex (AFFO), occupancy or lease terms, which the 10-K does.</p>
       </div>
     ) : bankRunnable ? (
-      <div id="valBoxBank" data-tbvps={tbvps} data-bvps={bvpsB} data-rotce={rotceMed} data-eps={epsB ?? ""} data-name={name}>
-        <p class="intro">A bank is worth a multiple of its <b>tangible book value</b>, and the multiple it deserves is set by the return it earns on that book. Type today&rsquo;s price; we show what you would be paying against what {name}&rsquo;s record justifies. Nothing is stored; the number stays in your browser.</p>
+      <div id="valBoxBank" data-tbvps={tbvps} data-bvps={bvpsB} data-rotce={rotceMed} data-eps={epsB ?? ""} data-name={name} data-cycle={isInsurer ? "underwriting cycle" : "credit cycle"}>
+        <p class="intro">{isInsurer ? "An" : "A"} {finKind} is worth a multiple of its <b>tangible book value</b>, and the multiple it deserves is set by the return it earns on that book. Type today&rsquo;s price; we show what you would be paying against what {name}&rsquo;s record justifies. Nothing is stored; the number stays in your browser.</p>
         <div class="priceRow">
           <label for="pxb">Today&rsquo;s price</label>
           <span class="dollar">$</span>
@@ -131,12 +139,12 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
           <span class="dialsLbl">The assumptions, turn the dials</span>
           <label>Cost of equity <output id="coeOut">10%</output><input id="coeB" type="range" min="8" max="14" step="0.5" value="10" /></label>
           <label>Long-term growth <output id="gOutB">3%</output><input id="gB" type="range" min="0" max="6" step="0.5" value="3" /></label>
-          <p class="dialsNote">The justified multiple is (return on tangible equity − growth) ÷ (cost of equity − growth). A bank earning exactly its cost of equity is worth about one times tangible book; every point of durable excess return above that is worth paying up for. Raise the cost of equity and the justified multiple falls: that is interest-rate gravity on a bank.</p>
+          <p class="dialsNote">The justified multiple is (return on tangible equity − growth) ÷ (cost of equity − growth). A {finKind} earning exactly its cost of equity is worth about one times tangible book; every point of durable excess return above that is worth paying up for. Raise the cost of equity and the justified multiple falls: that is interest-rate gravity on a {finKind}.</p>
         </div>
-        <p class="foot">Tangible book {fmtUSD(tEq)} on {(shares / 1e6).toFixed(0)}M shares, a {pctS(rotceMed)} normalized return on it. This is a lens, not a target. It assumes the bank keeps earning that return; a credit cycle, a rate shock or a bad acquisition changes it, which is what the record and the 10-K are for.</p>
+        <p class="foot">Tangible book {fmtUSD(tEq)} on {(shares / 1e6).toFixed(0)}M shares, a {pctS(rotceMed)} normalized return on it. This is a lens, not a target. It assumes the {finKind} keeps earning that return; {bankRisk} changes it, which is what the record and the 10-K are for.</p>
       </div>
     ) : (
-      <p class="note">A {sector.label.toLowerCase()} isn't read on an owner-earnings DCF, its economics live on the balance sheet (book value, net interest margin, loan losses / FFO). We don't force this lens where it doesn't belong.</p>
+      <p class="note">A {sector.label.toLowerCase()} isn't read on an owner-earnings DCF, its economics live on the balance sheet (book value, the return earned on it, and the cash the assets throw off). We don't force this lens where it doesn't belong.</p>
     )
   ) : !runnable ? (
     negMode ? (
@@ -361,7 +369,7 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
     const box = document.getElementById("valBoxBank");
     if (!box) return;
     const TBVPS = parseFloat(box.dataset.tbvps), BVPS = parseFloat(box.dataset.bvps), ROTCE = parseFloat(box.dataset.rotce);
-    const EPS = parseFloat(box.dataset.eps), NAME = box.dataset.name || "this bank";
+    const EPS = parseFloat(box.dataset.eps), NAME = box.dataset.name || "this company", CYCLE = box.dataset.cycle || "credit cycle";
     const px = document.getElementById("pxb");
     const coe = document.getElementById("coeB"), gB = document.getElementById("gB");
     const coeOut = document.getElementById("coeOut"), gOutB = document.getElementById("gOutB");
@@ -389,7 +397,7 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
       let verdict;
       if (ratio <= 0.85) verdict = `a <b class="hot">discount</b> to what its ${R}% return on tangible equity would justify (about ${justified.toFixed(2)}×). The market is doubting the return holds; the record is where you check whether that doubt is earned.`;
       else if (ratio <= 1.15) verdict = `roughly <b>in line</b> with what its ${R}% return on tangible equity justifies (about ${justified.toFixed(2)}×).`;
-      else verdict = `a <b class="bad">premium</b> to what its ${R}% return justifies (about ${justified.toFixed(2)}×). You are paying for the return to rise, or to outlast the credit cycle.`;
+      else verdict = `a <b class="bad">premium</b> to what its ${R}% return justifies (about ${justified.toFixed(2)}×). You are paying for the return to rise, or to outlast the ${CYCLE}.`;
       lede.innerHTML = `At <b>${P}</b>, you pay <b class="hot">${ptb.toFixed(2)}×</b> tangible book for ${esc(NAME)}, ${verdict}`;
       setURL(px.value);
     }
