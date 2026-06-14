@@ -187,9 +187,12 @@ async function forCompany(c) {
   const labels = buildLabels(meta);
   const contexts = parseContexts(xml, c.periodEnd);
 
-  // Segment revenue (company members only) and segment operating income.
-  const segRev = bestRevenue(xml, contexts, SEG_AXIS, true);
-  const segOI = membersOnAxis(parseFacts(xml, OI_TAGS[0]), contexts, SEG_AXIS, true);
+  // Segment revenue and segment operating income. We keep every member on the
+  // segment axis except the named us-gaap roll-up subtotals (handled by AGGREGATE),
+  // because some filers (Apple) report their segments with standard srt geographic
+  // members rather than company-defined ones. Reconciliation is the real safety net.
+  const segRev = bestRevenue(xml, contexts, SEG_AXIS, false);
+  const segOI = membersOnAxis(parseFacts(xml, OI_TAGS[0]), contexts, SEG_AXIS, false);
   const geoRev = bestRevenue(xml, contexts, GEO_AXIS, false);
   const prodRev = bestRevenue(xml, contexts, PROD_AXIS, false);
 
