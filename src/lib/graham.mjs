@@ -75,8 +75,8 @@ export function grahamTests(company) {
   // 7 — Moderate price (price-dependent → the reader-supplied calculator)
   const eps = L.netIncome != null && L.sharesDiluted ? L.netIncome / L.sharesDiluted : null;
   const bvps = L.stockholdersEquity != null && L.sharesDiluted ? L.stockholdersEquity / L.sharesDiluted : null;
-  add("Moderate price", "P/E ≤ 15 and P/E × P/B ≤ 22.5", "needs a price", "na",
-    `Graham's valuation gate — the one test a price decides. ${eps ? `Latest earnings are $${eps.toFixed(2)}/share` : ""}${eps && bvps ? " and " : ""}${bvps ? `book value is $${bvps.toFixed(2)}/share` : ""}; enter a price in the section above and divide. He wanted P/E under 15 and P/E × P/B under 22.5.`);
+  add("Moderate price", "P/E ≤ 15 and P/E × P/B ≤ 22.5", "decided by the price", "na",
+    `Graham's valuation gate — the one test a price decides, and the wall he kept between a sound business and a sound investment. ${eps ? `Earnings are $${eps.toFixed(2)}/share` : ""}${eps && bvps ? " and " : ""}${bvps ? `book value $${bvps.toFixed(2)}/share` : ""}. Enter a price in “What the price implies” just below — it returns the P/E, P/B, and whether this gate clears.`);
 
   const runnable = t.filter((x) => x.status !== "na");
   const passes = t.filter((x) => x.status === "pass").length;
