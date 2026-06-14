@@ -1,5 +1,5 @@
 {
-  "asOf": "2026-06-13",
+  "asOf": "2026-06-14",
   "source": "SEC EDGAR XBRL (companyfacts)",
   "sample": false,
   "note": "Latest annual (10-K) figures pulled from EDGAR. Values are raw USD.",
@@ -8,6 +8,8 @@
       "ticker": "AAPL",
       "name": "Apple Inc.",
       "cik": "0000320193",
+      "sic": "3571",
+      "sicDescription": "Electronic Computers",
       "fy": 2025,
       "periodEnd": "2025-09-27",
       "form": "10-K",
@@ -30,7 +32,8 @@
         "cashAndEquivalents": 35934000000,
         "receivables": 39777000000,
         "inventory": 5718000000,
-        "accountsPayable": 69860000000
+        "accountsPayable": 69860000000,
+        "sharesDiluted": 15004697000
       },
       "history": [
         {
@@ -44,7 +47,12 @@
             "stockholdersEquity": 90488000000,
             "cashAndEquivalents": 48844000000,
             "cashFromOps": 69391000000,
-            "capex": 10495000000
+            "capex": 10495000000,
+            "costOfRevenue": 161782000000,
+            "depreciation": 12547000000,
+            "dividendsPaid": null,
+            "buybacks": 66897000000,
+            "sharesDiluted": 4648913000
           }
         },
         {
@@ -58,7 +66,12 @@
             "stockholdersEquity": 65339000000,
             "cashAndEquivalents": 38016000000,
             "cashFromOps": 80674000000,
-            "capex": 7309000000
+            "capex": 7309000000,
+            "costOfRevenue": 169559000000,
+            "depreciation": 11056000000,
+            "dividendsPaid": null,
+            "buybacks": 72358000000,
+            "sharesDiluted": 17528214000
           }
         },
         {
@@ -72,7 +85,12 @@
             "stockholdersEquity": 63090000000,
             "cashAndEquivalents": 34940000000,
             "cashFromOps": 104038000000,
-            "capex": 11085000000
+            "capex": 11085000000,
+            "costOfRevenue": 212981000000,
+            "depreciation": 11284000000,
+            "dividendsPaid": null,
+            "buybacks": 85971000000,
+            "sharesDiluted": 16864919000
           }
         },
         {
@@ -86,7 +104,12 @@
             "stockholdersEquity": 50672000000,
             "cashAndEquivalents": 23646000000,
             "cashFromOps": 122151000000,
-            "capex": 10708000000
+            "capex": 10708000000,
+            "costOfRevenue": 223546000000,
+            "depreciation": 11104000000,
+            "dividendsPaid": null,
+            "buybacks": 89402000000,
+            "sharesDiluted": 16325819000
           }
         },
         {
@@ -100,7 +123,12 @@
             "stockholdersEquity": 62146000000,
             "cashAndEquivalents": 29965000000,
             "cashFromOps": 110543000000,
-            "capex": 10959000000
+            "capex": 10959000000,
+            "costOfRevenue": 214137000000,
+            "depreciation": 11519000000,
+            "dividendsPaid": null,
+            "buybacks": 77550000000,
+            "sharesDiluted": 15812547000
           }
         },
         {
@@ -114,7 +142,12 @@
             "stockholdersEquity": 56950000000,
             "cashAndEquivalents": 29943000000,
             "cashFromOps": 118254000000,
-            "capex": 9447000000
+            "capex": 9447000000,
+            "costOfRevenue": 210352000000,
+            "depreciation": 11445000000,
+            "dividendsPaid": null,
+            "buybacks": 94949000000,
+            "sharesDiluted": 15408095000
           }
         },
         {
@@ -128,17 +161,22 @@
             "stockholdersEquity": 73733000000,
             "cashAndEquivalents": 35934000000,
             "cashFromOps": 111482000000,
-            "capex": 12715000000
+            "capex": 12715000000,
+            "costOfRevenue": 220960000000,
+            "depreciation": 11698000000,
+            "dividendsPaid": null,
+            "buybacks": 90711000000,
+            "sharesDiluted": 15004697000
           }
         }
-      ],
-      "sic": "3571",
-      "sicDescription": "Electronic Computers"
+      ]
     },
     {
       "ticker": "MSFT",
       "name": "Microsoft Corp.",
       "cik": "0000789019",
+      "sic": "7372",
+      "sicDescription": "Services-Prepackaged Software",
       "fy": 2025,
       "periodEnd": "2025-06-30",
       "form": "10-K",
@@ -161,7 +199,8 @@
         "cashAndEquivalents": 30242000000,
         "receivables": 69905000000,
         "inventory": 938000000,
-        "accountsPayable": 27724000000
+        "accountsPayable": 27724000000,
+        "sharesDiluted": 7465000000
       },
       "history": [
         {
@@ -175,7 +214,12 @@
             "stockholdersEquity": 82718000000,
             "cashAndEquivalents": 11946000000,
             "cashFromOps": 43884000000,
-            "capex": 11632000000
+            "capex": 11632000000,
+            "costOfRevenue": 38353000000,
+            "depreciation": null,
+            "dividendsPaid": 12699000000,
+            "buybacks": 10721000000,
+            "sharesDiluted": 7794000000
           }
         },
         {
@@ -189,7 +233,12 @@
             "stockholdersEquity": 102330000000,
             "cashAndEquivalents": 11356000000,
             "cashFromOps": 52185000000,
-            "capex": 13925000000
+            "capex": 13925000000,
+            "costOfRevenue": 42910000000,
+            "depreciation": null,
+            "dividendsPaid": 13811000000,
+            "buybacks": 19543000000,
+            "sharesDiluted": 7753000000
           }
         },
         {
@@ -203,7 +252,12 @@
             "stockholdersEquity": 118304000000,
             "cashAndEquivalents": 13576000000,
             "cashFromOps": 60675000000,
-            "capex": 15441000000
+            "capex": 15441000000,
+            "costOfRevenue": 46078000000,
+            "depreciation": null,
+            "dividendsPaid": 15137000000,
+            "buybacks": 22968000000,
+            "sharesDiluted": 7683000000
           }
         },
         {
@@ -217,7 +271,12 @@
             "stockholdersEquity": 141988000000,
             "cashAndEquivalents": 14224000000,
             "cashFromOps": 76740000000,
-            "capex": 20622000000
+            "capex": 20622000000,
+            "costOfRevenue": 52232000000,
+            "depreciation": null,
+            "dividendsPaid": 16521000000,
+            "buybacks": 27385000000,
+            "sharesDiluted": 7608000000
           }
         },
         {
@@ -231,7 +290,12 @@
             "stockholdersEquity": 166542000000,
             "cashAndEquivalents": 13931000000,
             "cashFromOps": 89035000000,
-            "capex": 23886000000
+            "capex": 23886000000,
+            "costOfRevenue": 62650000000,
+            "depreciation": null,
+            "dividendsPaid": 18135000000,
+            "buybacks": 32696000000,
+            "sharesDiluted": 7540000000
           }
         },
         {
@@ -245,7 +309,12 @@
             "stockholdersEquity": 206223000000,
             "cashAndEquivalents": 34704000000,
             "cashFromOps": 87582000000,
-            "capex": 28107000000
+            "capex": 28107000000,
+            "costOfRevenue": 65863000000,
+            "depreciation": null,
+            "dividendsPaid": 19800000000,
+            "buybacks": 22245000000,
+            "sharesDiluted": 7472000000
           }
         },
         {
@@ -259,7 +328,12 @@
             "stockholdersEquity": 268477000000,
             "cashAndEquivalents": 18315000000,
             "cashFromOps": 118548000000,
-            "capex": 44477000000
+            "capex": 44477000000,
+            "costOfRevenue": 74114000000,
+            "depreciation": null,
+            "dividendsPaid": 21771000000,
+            "buybacks": 17254000000,
+            "sharesDiluted": 7469000000
           }
         },
         {
@@ -273,17 +347,22 @@
             "stockholdersEquity": 343479000000,
             "cashAndEquivalents": 30242000000,
             "cashFromOps": 136162000000,
-            "capex": 64551000000
+            "capex": 64551000000,
+            "costOfRevenue": 87831000000,
+            "depreciation": null,
+            "dividendsPaid": 24082000000,
+            "buybacks": 18420000000,
+            "sharesDiluted": 7465000000
           }
         }
-      ],
-      "sic": "7372",
-      "sicDescription": "Prepackaged Software"
+      ]
     },
     {
       "ticker": "KO",
       "name": "Coca-Cola Co.",
       "cik": "0000021344",
+      "sic": "2080",
+      "sicDescription": "Beverages",
       "fy": 2025,
       "periodEnd": "2025-12-31",
       "form": "10-K",
@@ -306,7 +385,8 @@
         "cashAndEquivalents": 10270000000,
         "receivables": 3038000000,
         "inventory": 4425000000,
-        "accountsPayable": null
+        "accountsPayable": null,
+        "sharesDiluted": 4313000000
       },
       "history": [
         {
@@ -320,7 +400,12 @@
             "stockholdersEquity": 16981000000,
             "cashAndEquivalents": 8926000000,
             "cashFromOps": 7320000000,
-            "capex": 1347000000
+            "capex": 1347000000,
+            "costOfRevenue": 11770000000,
+            "depreciation": 1086000000,
+            "dividendsPaid": 6644000000,
+            "buybacks": 1912000000,
+            "sharesDiluted": 4299000000
           }
         },
         {
@@ -334,7 +419,12 @@
             "stockholdersEquity": 18981000000,
             "cashAndEquivalents": 6480000000,
             "cashFromOps": 10471000000,
-            "capex": 2054000000
+            "capex": 2054000000,
+            "costOfRevenue": 14619000000,
+            "depreciation": 1365000000,
+            "dividendsPaid": 6845000000,
+            "buybacks": 1103000000,
+            "sharesDiluted": 4314000000
           }
         },
         {
@@ -348,7 +438,12 @@
             "stockholdersEquity": 19299000000,
             "cashAndEquivalents": 6795000000,
             "cashFromOps": 9844000000,
-            "capex": 1177000000
+            "capex": 1177000000,
+            "costOfRevenue": 13433000000,
+            "depreciation": 1536000000,
+            "dividendsPaid": 7047000000,
+            "buybacks": 118000000,
+            "sharesDiluted": 4323000000
           }
         },
         {
@@ -362,7 +457,12 @@
             "stockholdersEquity": 22999000000,
             "cashAndEquivalents": 9684000000,
             "cashFromOps": 12625000000,
-            "capex": 1367000000
+            "capex": 1367000000,
+            "costOfRevenue": 15357000000,
+            "depreciation": 1452000000,
+            "dividendsPaid": 7252000000,
+            "buybacks": 111000000,
+            "sharesDiluted": 4340000000
           }
         },
         {
@@ -376,7 +476,12 @@
             "stockholdersEquity": 24105000000,
             "cashAndEquivalents": 9519000000,
             "cashFromOps": 11018000000,
-            "capex": 1484000000
+            "capex": 1484000000,
+            "costOfRevenue": 18000000000,
+            "depreciation": 1260000000,
+            "dividendsPaid": 7616000000,
+            "buybacks": 1418000000,
+            "sharesDiluted": 4350000000
           }
         },
         {
@@ -390,7 +495,12 @@
             "stockholdersEquity": 25941000000,
             "cashAndEquivalents": 9366000000,
             "cashFromOps": 11599000000,
-            "capex": 1852000000
+            "capex": 1852000000,
+            "costOfRevenue": 18520000000,
+            "depreciation": 1128000000,
+            "dividendsPaid": 7952000000,
+            "buybacks": 2289000000,
+            "sharesDiluted": 4339000000
           }
         },
         {
@@ -404,7 +514,12 @@
             "stockholdersEquity": 24856000000,
             "cashAndEquivalents": 10828000000,
             "cashFromOps": 6805000000,
-            "capex": 2064000000
+            "capex": 2064000000,
+            "costOfRevenue": 18324000000,
+            "depreciation": 1075000000,
+            "dividendsPaid": 8359000000,
+            "buybacks": 1795000000,
+            "sharesDiluted": 4320000000
           }
         },
         {
@@ -418,17 +533,22 @@
             "stockholdersEquity": 32169000000,
             "cashAndEquivalents": 10270000000,
             "cashFromOps": 7408000000,
-            "capex": 2112000000
+            "capex": 2112000000,
+            "costOfRevenue": 18397000000,
+            "depreciation": 1050000000,
+            "dividendsPaid": 8779000000,
+            "buybacks": 746000000,
+            "sharesDiluted": 4313000000
           }
         }
-      ],
-      "sic": "2080",
-      "sicDescription": "Beverages"
+      ]
     },
     {
       "ticker": "PG",
       "name": "Procter & Gamble Co.",
       "cik": "0000080424",
+      "sic": "2840",
+      "sicDescription": "Soap, Detergents, Cleang Preparations, Perfumes, Cosmetics",
       "fy": 2025,
       "periodEnd": "2025-06-30",
       "form": "10-K",
@@ -451,7 +571,8 @@
         "cashAndEquivalents": 4239000000,
         "receivables": 6185000000,
         "inventory": 7551000000,
-        "accountsPayable": 15227000000
+        "accountsPayable": 15227000000,
+        "sharesDiluted": 2454400000
       },
       "history": [
         {
@@ -465,7 +586,12 @@
             "stockholdersEquity": null,
             "cashAndEquivalents": 8558000000,
             "cashFromOps": 13958000000,
-            "capex": 3848000000
+            "capex": 3848000000,
+            "costOfRevenue": null,
+            "depreciation": 3141000000,
+            "dividendsPaid": 6911000000,
+            "buybacks": 6005000000,
+            "sharesDiluted": 2904700000
           }
         },
         {
@@ -479,7 +605,12 @@
             "stockholdersEquity": null,
             "cashAndEquivalents": 4239000000,
             "cashFromOps": 15242000000,
-            "capex": 3347000000
+            "capex": 3347000000,
+            "costOfRevenue": 34768000000,
+            "depreciation": 2824000000,
+            "dividendsPaid": 7498000000,
+            "buybacks": 5003000000,
+            "sharesDiluted": 2539500000
           }
         },
         {
@@ -493,7 +624,12 @@
             "stockholdersEquity": null,
             "cashAndEquivalents": null,
             "cashFromOps": 17403000000,
-            "capex": 3073000000
+            "capex": 3073000000,
+            "costOfRevenue": 35250000000,
+            "depreciation": 3013000000,
+            "dividendsPaid": 7789000000,
+            "buybacks": 7405000000,
+            "sharesDiluted": 2625800000
           }
         },
         {
@@ -507,7 +643,12 @@
             "stockholdersEquity": null,
             "cashAndEquivalents": null,
             "cashFromOps": 18371000000,
-            "capex": 2787000000
+            "capex": 2787000000,
+            "costOfRevenue": 37108000000,
+            "depreciation": 2735000000,
+            "dividendsPaid": 8263000000,
+            "buybacks": 11009000000,
+            "sharesDiluted": 2601000000
           }
         },
         {
@@ -521,7 +662,12 @@
             "stockholdersEquity": null,
             "cashAndEquivalents": null,
             "cashFromOps": 16723000000,
-            "capex": 3156000000
+            "capex": 3156000000,
+            "costOfRevenue": 42157000000,
+            "depreciation": 2807000000,
+            "dividendsPaid": 8770000000,
+            "buybacks": 10003000000,
+            "sharesDiluted": 2539100000
           }
         },
         {
@@ -535,7 +681,12 @@
             "stockholdersEquity": null,
             "cashAndEquivalents": null,
             "cashFromOps": 16848000000,
-            "capex": 3062000000
+            "capex": 3062000000,
+            "costOfRevenue": 42760000000,
+            "depreciation": 2714000000,
+            "dividendsPaid": 8999000000,
+            "buybacks": 7353000000,
+            "sharesDiluted": 2483900000
           }
         },
         {
@@ -549,7 +700,12 @@
             "stockholdersEquity": null,
             "cashAndEquivalents": null,
             "cashFromOps": 19846000000,
-            "capex": 3322000000
+            "capex": 3322000000,
+            "costOfRevenue": 40848000000,
+            "depreciation": 2896000000,
+            "dividendsPaid": 9312000000,
+            "buybacks": 5006000000,
+            "sharesDiluted": 2471900000
           }
         },
         {
@@ -563,17 +719,22 @@
             "stockholdersEquity": null,
             "cashAndEquivalents": null,
             "cashFromOps": 17817000000,
-            "capex": 3773000000
+            "capex": 3773000000,
+            "costOfRevenue": 41164000000,
+            "depreciation": 2847000000,
+            "dividendsPaid": 9872000000,
+            "buybacks": 6500000000,
+            "sharesDiluted": 2454400000
           }
         }
-      ],
-      "sic": "2840",
-      "sicDescription": "Soap, Detergents & Cleaning Preparations"
+      ]
     },
     {
       "ticker": "WMT",
       "name": "Walmart Inc.",
       "cik": "0000104169",
+      "sic": "5331",
+      "sicDescription": "Retail-Variety Stores",
       "fy": 2026,
       "periodEnd": "2026-01-31",
       "form": "10-K",
@@ -596,7 +757,8 @@
         "cashAndEquivalents": 10727000000,
         "receivables": null,
         "inventory": 58851000000,
-        "accountsPayable": 63061000000
+        "accountsPayable": 63061000000,
+        "sharesDiluted": 8022000000
       },
       "history": [
         {
@@ -610,7 +772,12 @@
             "stockholdersEquity": 72496000000,
             "cashAndEquivalents": 7722000000,
             "cashFromOps": 27753000000,
-            "capex": 10344000000
+            "capex": 10344000000,
+            "costOfRevenue": 385301000000,
+            "depreciation": 10678000000,
+            "dividendsPaid": null,
+            "buybacks": 7410000000,
+            "sharesDiluted": 2945000000
           }
         },
         {
@@ -624,7 +791,12 @@
             "stockholdersEquity": 74669000000,
             "cashAndEquivalents": 9465000000,
             "cashFromOps": 25255000000,
-            "capex": 10705000000
+            "capex": 10705000000,
+            "costOfRevenue": 394605000000,
+            "depreciation": null,
+            "dividendsPaid": null,
+            "buybacks": 5717000000,
+            "sharesDiluted": 2868000000
           }
         },
         {
@@ -638,7 +810,12 @@
             "stockholdersEquity": 80925000000,
             "cashAndEquivalents": 17741000000,
             "cashFromOps": 36074000000,
-            "capex": 10264000000
+            "capex": 10264000000,
+            "costOfRevenue": 420315000000,
+            "depreciation": null,
+            "dividendsPaid": 6116000000,
+            "buybacks": 2625000000,
+            "sharesDiluted": 2847000000
           }
         },
         {
@@ -652,7 +829,12 @@
             "stockholdersEquity": 83253000000,
             "cashAndEquivalents": 14760000000,
             "cashFromOps": 24181000000,
-            "capex": 13106000000
+            "capex": 13106000000,
+            "costOfRevenue": 429000000000,
+            "depreciation": null,
+            "dividendsPaid": 6152000000,
+            "buybacks": 9787000000,
+            "sharesDiluted": 2805000000
           }
         },
         {
@@ -666,7 +848,12 @@
             "stockholdersEquity": 76693000000,
             "cashAndEquivalents": 8625000000,
             "cashFromOps": 28841000000,
-            "capex": 16857000000
+            "capex": 16857000000,
+            "costOfRevenue": 463721000000,
+            "depreciation": null,
+            "dividendsPaid": 6114000000,
+            "buybacks": 9920000000,
+            "sharesDiluted": 2734000000
           }
         },
         {
@@ -680,7 +867,12 @@
             "stockholdersEquity": 83861000000,
             "cashAndEquivalents": 9867000000,
             "cashFromOps": 35726000000,
-            "capex": 20606000000
+            "capex": 20606000000,
+            "costOfRevenue": 490142000000,
+            "depreciation": null,
+            "dividendsPaid": 6140000000,
+            "buybacks": 2779000000,
+            "sharesDiluted": 8108000000
           }
         },
         {
@@ -694,7 +886,12 @@
             "stockholdersEquity": 91013000000,
             "cashAndEquivalents": 9037000000,
             "cashFromOps": 36443000000,
-            "capex": 23783000000
+            "capex": 23783000000,
+            "costOfRevenue": 511753000000,
+            "depreciation": null,
+            "dividendsPaid": 6688000000,
+            "buybacks": 4494000000,
+            "sharesDiluted": 8081000000
           }
         },
         {
@@ -708,17 +905,22 @@
             "stockholdersEquity": 99617000000,
             "cashAndEquivalents": 10727000000,
             "cashFromOps": 41565000000,
-            "capex": 26642000000
+            "capex": 26642000000,
+            "costOfRevenue": 535395000000,
+            "depreciation": null,
+            "dividendsPaid": 7507000000,
+            "buybacks": 8088000000,
+            "sharesDiluted": 8022000000
           }
         }
-      ],
-      "sic": "5331",
-      "sicDescription": "Retail-Variety Stores"
+      ]
     },
     {
       "ticker": "VZ",
       "name": "Verizon Communications",
       "cik": "0000732712",
+      "sic": "4813",
+      "sicDescription": "Telephone Communications (No Radiotelephone)",
       "fy": 2025,
       "periodEnd": "2025-12-31",
       "form": "10-K",
@@ -741,7 +943,8 @@
         "cashAndEquivalents": 19048000000,
         "receivables": 23846000000,
         "inventory": 2441000000,
-        "accountsPayable": 12154000000
+        "accountsPayable": 12154000000,
+        "sharesDiluted": 4231000000
       },
       "history": [
         {
@@ -755,7 +958,12 @@
             "stockholdersEquity": null,
             "cashAndEquivalents": 2880000000,
             "cashFromOps": 22715000000,
-            "capex": 17059000000
+            "capex": 17059000000,
+            "costOfRevenue": null,
+            "depreciation": 15928000000,
+            "dividendsPaid": 9262000000,
+            "buybacks": 5134000000,
+            "sharesDiluted": 4086000000
           }
         },
         {
@@ -769,7 +977,12 @@
             "stockholdersEquity": null,
             "cashAndEquivalents": 2079000000,
             "cashFromOps": 25305000000,
-            "capex": 17247000000
+            "capex": 17247000000,
+            "costOfRevenue": null,
+            "depreciation": 16954000000,
+            "dividendsPaid": 9472000000,
+            "buybacks": 0,
+            "sharesDiluted": 4089000000
           }
         },
         {
@@ -783,7 +996,12 @@
             "stockholdersEquity": null,
             "cashAndEquivalents": 2745000000,
             "cashFromOps": 34339000000,
-            "capex": 16658000000
+            "capex": 16658000000,
+            "costOfRevenue": null,
+            "depreciation": 17403000000,
+            "dividendsPaid": 9772000000,
+            "buybacks": null,
+            "sharesDiluted": 4132000000
           }
         },
         {
@@ -797,7 +1015,12 @@
             "stockholdersEquity": null,
             "cashAndEquivalents": 2594000000,
             "cashFromOps": 35746000000,
-            "capex": null
+            "capex": null,
+            "costOfRevenue": null,
+            "depreciation": 16682000000,
+            "dividendsPaid": 10016000000,
+            "buybacks": null,
+            "sharesDiluted": 4140000000
           }
         },
         {
@@ -811,7 +1034,12 @@
             "stockholdersEquity": null,
             "cashAndEquivalents": 22171000000,
             "cashFromOps": 41768000000,
-            "capex": null
+            "capex": null,
+            "costOfRevenue": null,
+            "depreciation": 16720000000,
+            "dividendsPaid": 10232000000,
+            "buybacks": null,
+            "sharesDiluted": 4142000000
           }
         },
         {
@@ -825,7 +1053,12 @@
             "stockholdersEquity": null,
             "cashAndEquivalents": 2921000000,
             "cashFromOps": 39539000000,
-            "capex": null
+            "capex": null,
+            "costOfRevenue": null,
+            "depreciation": 16206000000,
+            "dividendsPaid": 10445000000,
+            "buybacks": null,
+            "sharesDiluted": 4150000000
           }
         },
         {
@@ -839,7 +1072,12 @@
             "stockholdersEquity": null,
             "cashAndEquivalents": 2605000000,
             "cashFromOps": 37141000000,
-            "capex": null
+            "capex": null,
+            "costOfRevenue": null,
+            "depreciation": 17099000000,
+            "dividendsPaid": 10805000000,
+            "buybacks": null,
+            "sharesDiluted": 4204000000
           }
         },
         {
@@ -853,7 +1091,12 @@
             "stockholdersEquity": null,
             "cashAndEquivalents": 2065000000,
             "cashFromOps": 37475000000,
-            "capex": null
+            "capex": null,
+            "costOfRevenue": null,
+            "depreciation": 17624000000,
+            "dividendsPaid": 11025000000,
+            "buybacks": null,
+            "sharesDiluted": 4215000000
           }
         },
         {
@@ -867,7 +1110,12 @@
             "stockholdersEquity": null,
             "cashAndEquivalents": 4194000000,
             "cashFromOps": 36912000000,
-            "capex": null
+            "capex": null,
+            "costOfRevenue": null,
+            "depreciation": 17892000000,
+            "dividendsPaid": 11249000000,
+            "buybacks": null,
+            "sharesDiluted": 4223000000
           }
         },
         {
@@ -881,17 +1129,22 @@
             "stockholdersEquity": null,
             "cashAndEquivalents": 19048000000,
             "cashFromOps": 37137000000,
-            "capex": null
+            "capex": null,
+            "costOfRevenue": null,
+            "depreciation": 18349000000,
+            "dividendsPaid": 11481000000,
+            "buybacks": null,
+            "sharesDiluted": 4231000000
           }
         }
-      ],
-      "sic": "4813",
-      "sicDescription": "Telephone Communications"
+      ]
     },
     {
       "ticker": "T",
       "name": "AT&T Inc.",
       "cik": "0000732717",
+      "sic": "4813",
+      "sicDescription": "Telephone Communications (No Radiotelephone)",
       "fy": 2025,
       "periodEnd": "2025-12-31",
       "form": "10-K",
@@ -914,7 +1167,8 @@
         "cashAndEquivalents": 18234000000,
         "receivables": 8843000000,
         "inventory": 3592000000,
-        "accountsPayable": 29910000000
+        "accountsPayable": 29910000000,
+        "sharesDiluted": 7179000000
       },
       "history": [
         {
@@ -928,7 +1182,12 @@
             "stockholdersEquity": null,
             "cashAndEquivalents": 5788000000,
             "cashFromOps": 39344000000,
-            "capex": 21516000000
+            "capex": 21516000000,
+            "costOfRevenue": null,
+            "depreciation": 25847000000,
+            "dividendsPaid": 11797000000,
+            "buybacks": 512000000,
+            "sharesDiluted": 6189000000
           }
         },
         {
@@ -942,7 +1201,12 @@
             "stockholdersEquity": null,
             "cashAndEquivalents": 50498000000,
             "cashFromOps": 39151000000,
-            "capex": 20647000000
+            "capex": 20647000000,
+            "costOfRevenue": null,
+            "depreciation": 24387000000,
+            "dividendsPaid": 12038000000,
+            "buybacks": 463000000,
+            "sharesDiluted": 6183000000
           }
         },
         {
@@ -956,7 +1220,12 @@
             "stockholdersEquity": null,
             "cashAndEquivalents": 5204000000,
             "cashFromOps": 43602000000,
-            "capex": null
+            "capex": null,
+            "costOfRevenue": null,
+            "depreciation": 28430000000,
+            "dividendsPaid": 13410000000,
+            "buybacks": 609000000,
+            "sharesDiluted": 6806000000
           }
         },
         {
@@ -970,7 +1239,12 @@
             "stockholdersEquity": null,
             "cashAndEquivalents": 12130000000,
             "cashFromOps": 48668000000,
-            "capex": null
+            "capex": null,
+            "costOfRevenue": null,
+            "depreciation": 28217000000,
+            "dividendsPaid": 14888000000,
+            "buybacks": 2417000000,
+            "sharesDiluted": 7348000000
           }
         },
         {
@@ -984,7 +1258,12 @@
             "stockholdersEquity": null,
             "cashAndEquivalents": 9740000000,
             "cashFromOps": 43130000000,
-            "capex": null
+            "capex": null,
+            "costOfRevenue": null,
+            "depreciation": 28516000000,
+            "dividendsPaid": 14956000000,
+            "buybacks": 5498000000,
+            "sharesDiluted": 7183000000
           }
         },
         {
@@ -998,7 +1277,12 @@
             "stockholdersEquity": null,
             "cashAndEquivalents": 21169000000,
             "cashFromOps": 41957000000,
-            "capex": null
+            "capex": null,
+            "costOfRevenue": null,
+            "depreciation": 22862000000,
+            "dividendsPaid": 15068000000,
+            "buybacks": 202000000,
+            "sharesDiluted": 7199000000
           }
         },
         {
@@ -1012,7 +1296,12 @@
             "stockholdersEquity": null,
             "cashAndEquivalents": 3701000000,
             "cashFromOps": null,
-            "capex": null
+            "capex": null,
+            "costOfRevenue": null,
+            "depreciation": 18021000000,
+            "dividendsPaid": 9859000000,
+            "buybacks": 890000000,
+            "sharesDiluted": 7587000000
           }
         },
         {
@@ -1026,7 +1315,12 @@
             "stockholdersEquity": null,
             "cashAndEquivalents": 6722000000,
             "cashFromOps": null,
-            "capex": null
+            "capex": null,
+            "costOfRevenue": null,
+            "depreciation": 18777000000,
+            "dividendsPaid": 8136000000,
+            "buybacks": 194000000,
+            "sharesDiluted": 7258000000
           }
         },
         {
@@ -1040,7 +1334,12 @@
             "stockholdersEquity": null,
             "cashAndEquivalents": 3298000000,
             "cashFromOps": null,
-            "capex": null
+            "capex": null,
+            "costOfRevenue": null,
+            "depreciation": 20580000000,
+            "dividendsPaid": 8208000000,
+            "buybacks": 215000000,
+            "sharesDiluted": 7204000000
           }
         },
         {
@@ -1054,17 +1353,22 @@
             "stockholdersEquity": null,
             "cashAndEquivalents": 18234000000,
             "cashFromOps": 40284000000,
-            "capex": null
+            "capex": null,
+            "costOfRevenue": null,
+            "depreciation": 20886000000,
+            "dividendsPaid": 8180000000,
+            "buybacks": 4500000000,
+            "sharesDiluted": 7179000000
           }
         }
-      ],
-      "sic": "4813",
-      "sicDescription": "Telephone Communications"
+      ]
     },
     {
       "ticker": "CCL",
       "name": "Carnival Corp.",
       "cik": "0000815097",
+      "sic": "4400",
+      "sicDescription": "Water Transportation",
       "fy": 2025,
       "periodEnd": "2025-11-30",
       "form": "10-K",
@@ -1087,7 +1391,8 @@
         "cashAndEquivalents": 1928000000,
         "receivables": null,
         "inventory": 505000000,
-        "accountsPayable": 1245000000
+        "accountsPayable": 1245000000,
+        "sharesDiluted": 1402000000
       },
       "history": [
         {
@@ -1101,7 +1406,12 @@
             "stockholdersEquity": 25365000000,
             "cashAndEquivalents": 518000000,
             "cashFromOps": 5475000000,
-            "capex": 5429000000
+            "capex": 5429000000,
+            "costOfRevenue": 12909000000,
+            "depreciation": 2160000000,
+            "dividendsPaid": 1387000000,
+            "buybacks": 603000000,
+            "sharesDiluted": 692000000
           }
         },
         {
@@ -1115,7 +1425,12 @@
             "stockholdersEquity": 20555000000,
             "cashAndEquivalents": 9513000000,
             "cashFromOps": -6301000000,
-            "capex": 3620000000
+            "capex": 3620000000,
+            "costOfRevenue": null,
+            "depreciation": 2241000000,
+            "dividendsPaid": 689000000,
+            "buybacks": 12000000,
+            "sharesDiluted": 775000000
           }
         },
         {
@@ -1129,7 +1444,12 @@
             "stockholdersEquity": 12144000000,
             "cashAndEquivalents": 8939000000,
             "cashFromOps": -4109000000,
-            "capex": 3607000000
+            "capex": 3607000000,
+            "costOfRevenue": null,
+            "depreciation": 2233000000,
+            "dividendsPaid": 0,
+            "buybacks": 0,
+            "sharesDiluted": 1123000000
           }
         },
         {
@@ -1143,7 +1463,12 @@
             "stockholdersEquity": 7065000000,
             "cashAndEquivalents": 4029000000,
             "cashFromOps": -1670000000,
-            "capex": 4940000000
+            "capex": 4940000000,
+            "costOfRevenue": null,
+            "depreciation": 2275000000,
+            "dividendsPaid": 0,
+            "buybacks": 0,
+            "sharesDiluted": 1180000000
           }
         },
         {
@@ -1157,7 +1482,12 @@
             "stockholdersEquity": 6882000000,
             "cashAndEquivalents": 2415000000,
             "cashFromOps": 4281000000,
-            "capex": 3284000000
+            "capex": 3284000000,
+            "costOfRevenue": 14317000000,
+            "depreciation": 2370000000,
+            "dividendsPaid": null,
+            "buybacks": null,
+            "sharesDiluted": 1262000000
           }
         },
         {
@@ -1171,7 +1501,12 @@
             "stockholdersEquity": 9251000000,
             "cashAndEquivalents": 1210000000,
             "cashFromOps": 5923000000,
-            "capex": 4626000000
+            "capex": 4626000000,
+            "costOfRevenue": 15638000000,
+            "depreciation": 2557000000,
+            "dividendsPaid": null,
+            "buybacks": null,
+            "sharesDiluted": 1398000000
           }
         },
         {
@@ -1185,17 +1520,22 @@
             "stockholdersEquity": 12284000000,
             "cashAndEquivalents": 1928000000,
             "cashFromOps": 6218000000,
-            "capex": 3611000000
+            "capex": 3611000000,
+            "costOfRevenue": null,
+            "depreciation": 2790000000,
+            "dividendsPaid": null,
+            "buybacks": null,
+            "sharesDiluted": 1402000000
           }
         }
-      ],
-      "sic": "4400",
-      "sicDescription": "Water Transportation"
+      ]
     },
     {
       "ticker": "AAL",
       "name": "American Airlines Group",
       "cik": "0000006201",
+      "sic": "4512",
+      "sicDescription": "Air Transportation, Scheduled",
       "fy": 2025,
       "periodEnd": "2025-12-31",
       "form": "10-K",
@@ -1218,7 +1558,8 @@
         "cashAndEquivalents": 1140000000,
         "receivables": 2075000000,
         "inventory": null,
-        "accountsPayable": 2840000000
+        "accountsPayable": 2840000000,
+        "sharesDiluted": 661052000
       },
       "history": [
         {
@@ -1232,7 +1573,12 @@
             "stockholdersEquity": -169000000,
             "cashAndEquivalents": null,
             "cashFromOps": 3533000000,
-            "capex": 3745000000
+            "capex": 3745000000,
+            "costOfRevenue": null,
+            "depreciation": 2400000000,
+            "dividendsPaid": null,
+            "buybacks": 837000000,
+            "sharesDiluted": 465660000
           }
         },
         {
@@ -1246,7 +1592,12 @@
             "stockholdersEquity": -118000000,
             "cashAndEquivalents": null,
             "cashFromOps": 3815000000,
-            "capex": 4268000000
+            "capex": 4268000000,
+            "costOfRevenue": null,
+            "depreciation": 2600000000,
+            "dividendsPaid": null,
+            "buybacks": 1097000000,
+            "sharesDiluted": 444269000
           }
         },
         {
@@ -1260,7 +1611,12 @@
             "stockholdersEquity": -6867000000,
             "cashAndEquivalents": null,
             "cashFromOps": -6543000000,
-            "capex": 1958000000
+            "capex": 1958000000,
+            "costOfRevenue": null,
+            "depreciation": 2400000000,
+            "dividendsPaid": null,
+            "buybacks": 173000000,
+            "sharesDiluted": 483888000
           }
         },
         {
@@ -1274,7 +1630,12 @@
             "stockholdersEquity": -7340000000,
             "cashAndEquivalents": null,
             "cashFromOps": 704000000,
-            "capex": 208000000
+            "capex": 208000000,
+            "costOfRevenue": null,
+            "depreciation": 2300000000,
+            "dividendsPaid": null,
+            "buybacks": 18000000,
+            "sharesDiluted": 644015000
           }
         },
         {
@@ -1288,7 +1649,12 @@
             "stockholdersEquity": -5799000000,
             "cashAndEquivalents": null,
             "cashFromOps": 2173000000,
-            "capex": 2546000000
+            "capex": 2546000000,
+            "costOfRevenue": null,
+            "depreciation": 2300000000,
+            "dividendsPaid": null,
+            "buybacks": 21000000,
+            "sharesDiluted": 655122000
           }
         },
         {
@@ -1302,7 +1668,12 @@
             "stockholdersEquity": -5202000000,
             "cashAndEquivalents": null,
             "cashFromOps": 3803000000,
-            "capex": 2596000000
+            "capex": 2596000000,
+            "costOfRevenue": null,
+            "depreciation": 2300000000,
+            "dividendsPaid": null,
+            "buybacks": null,
+            "sharesDiluted": 719669000
           }
         },
         {
@@ -1316,7 +1687,12 @@
             "stockholdersEquity": -3977000000,
             "cashAndEquivalents": null,
             "cashFromOps": 3983000000,
-            "capex": 2683000000
+            "capex": 2683000000,
+            "costOfRevenue": null,
+            "depreciation": 2200000000,
+            "dividendsPaid": null,
+            "buybacks": null,
+            "sharesDiluted": 721300000
           }
         },
         {
@@ -1330,17 +1706,22 @@
             "stockholdersEquity": -3727000000,
             "cashAndEquivalents": null,
             "cashFromOps": 3099000000,
-            "capex": 3779000000
+            "capex": 3779000000,
+            "costOfRevenue": null,
+            "depreciation": 2200000000,
+            "dividendsPaid": null,
+            "buybacks": null,
+            "sharesDiluted": 661052000
           }
         }
-      ],
-      "sic": "4512",
-      "sicDescription": "Air Transportation, Scheduled"
+      ]
     },
     {
       "ticker": "LUMN",
       "name": "Lumen Technologies",
       "cik": "0000018926",
+      "sic": "4813",
+      "sicDescription": "Telephone Communications (No Radiotelephone)",
       "fy": 2025,
       "periodEnd": "2025-12-31",
       "form": "10-K",
@@ -1363,7 +1744,8 @@
         "cashAndEquivalents": 1003000000,
         "receivables": 1314000000,
         "inventory": 32717000,
-        "accountsPayable": 1508000000
+        "accountsPayable": 1508000000,
+        "sharesDiluted": 994548000
       },
       "history": [
         {
@@ -1377,7 +1759,12 @@
             "stockholdersEquity": 13470000000,
             "cashAndEquivalents": 1690000000,
             "cashFromOps": 6680000000,
-            "capex": null
+            "capex": null,
+            "costOfRevenue": 10077000000,
+            "depreciation": 4829000000,
+            "dividendsPaid": 1100000000,
+            "buybacks": null,
+            "sharesDiluted": 1071441000
           }
         },
         {
@@ -1391,7 +1778,12 @@
             "stockholdersEquity": 11162000000,
             "cashAndEquivalents": 406000000,
             "cashFromOps": 6524000000,
-            "capex": null
+            "capex": null,
+            "costOfRevenue": 8934000000,
+            "depreciation": 4710000000,
+            "dividendsPaid": 1109000000,
+            "buybacks": null,
+            "sharesDiluted": 1079130000
           }
         },
         {
@@ -1405,7 +1797,12 @@
             "stockholdersEquity": 11840000000,
             "cashAndEquivalents": 354000000,
             "cashFromOps": 6501000000,
-            "capex": null
+            "capex": null,
+            "costOfRevenue": 8488000000,
+            "depreciation": 4019000000,
+            "dividendsPaid": 1087000000,
+            "buybacks": 1000000000,
+            "sharesDiluted": 1066778000
           }
         },
         {
@@ -1419,7 +1816,12 @@
             "stockholdersEquity": 10437000000,
             "cashAndEquivalents": 1251000000,
             "cashFromOps": 4735000000,
-            "capex": null
+            "capex": null,
+            "costOfRevenue": 7868000000,
+            "depreciation": 3239000000,
+            "dividendsPaid": 780000000,
+            "buybacks": 200000000,
+            "sharesDiluted": 1007517000
           }
         },
         {
@@ -1433,7 +1835,12 @@
             "stockholdersEquity": 417000000,
             "cashAndEquivalents": 2234000000,
             "cashFromOps": 2160000000,
-            "capex": null
+            "capex": null,
+            "costOfRevenue": 7144000000,
+            "depreciation": 2985000000,
+            "dividendsPaid": 11000000,
+            "buybacks": 0,
+            "sharesDiluted": 983081000
           }
         },
         {
@@ -1447,7 +1854,12 @@
             "stockholdersEquity": 464000000,
             "cashAndEquivalents": 1889000000,
             "cashFromOps": 4333000000,
-            "capex": null
+            "capex": null,
+            "costOfRevenue": 6703000000,
+            "depreciation": 2956000000,
+            "dividendsPaid": 3000000,
+            "buybacks": 0,
+            "sharesDiluted": 987680000
           }
         },
         {
@@ -1461,17 +1873,22 @@
             "stockholdersEquity": -1117000000,
             "cashAndEquivalents": 1003000000,
             "cashFromOps": 4738000000,
-            "capex": null
+            "capex": null,
+            "costOfRevenue": 6638000000,
+            "depreciation": 2749000000,
+            "dividendsPaid": 1000000,
+            "buybacks": null,
+            "sharesDiluted": 994548000
           }
         }
-      ],
-      "sic": "4813",
-      "sicDescription": "Telephone Communications"
+      ]
     },
     {
       "ticker": "WDFC",
       "name": "WD-40 Co.",
       "cik": "0000105132",
+      "sic": "2890",
+      "sicDescription": "Miscellaneous Chemical Products",
       "fy": 2025,
       "periodEnd": "2025-08-31",
       "form": "10-K",
@@ -1494,7 +1911,8 @@
         "cashAndEquivalents": 58130000,
         "receivables": 120589000,
         "inventory": 79871000,
-        "accountsPayable": 37955000
+        "accountsPayable": 37955000,
+        "sharesDiluted": 13567000
       },
       "history": [
         {
@@ -1508,7 +1926,12 @@
             "stockholdersEquity": 188624000,
             "cashAndEquivalents": 37843000,
             "cashFromOps": 2604000,
-            "capex": 8303000
+            "capex": 8303000,
+            "costOfRevenue": 264055000,
+            "depreciation": 8294000,
+            "dividendsPaid": 41988000,
+            "buybacks": 29156000,
+            "sharesDiluted": 13696000
           }
         },
         {
@@ -1522,7 +1945,12 @@
             "stockholdersEquity": 210178000,
             "cashAndEquivalents": 48143000,
             "cashFromOps": 98391000,
-            "capex": 6871000
+            "capex": 6871000,
+            "costOfRevenue": 263035000,
+            "depreciation": 8151000,
+            "dividendsPaid": 44581000,
+            "buybacks": 10434000,
+            "sharesDiluted": 13604000
           }
         },
         {
@@ -1536,7 +1964,12 @@
             "stockholdersEquity": 230526000,
             "cashAndEquivalents": 46699000,
             "cashFromOps": 92034000,
-            "capex": 4206000
+            "capex": 4206000,
+            "costOfRevenue": 275330000,
+            "depreciation": 9456000,
+            "dividendsPaid": 47201000,
+            "buybacks": 8094000,
+            "sharesDiluted": 13580000
           }
         },
         {
@@ -1550,17 +1983,22 @@
             "stockholdersEquity": 268152000,
             "cashAndEquivalents": 58130000,
             "cashFromOps": 87925000,
-            "capex": 4528000
+            "capex": 4528000,
+            "costOfRevenue": 278642000,
+            "depreciation": 8191000,
+            "dividendsPaid": 50260000,
+            "buybacks": 12314000,
+            "sharesDiluted": 13567000
           }
         }
-      ],
-      "sic": "2840",
-      "sicDescription": "Soap, Detergents & Cleaning Preparations"
+      ]
     },
     {
       "ticker": "MNST",
       "name": "Monster Beverage Corp.",
       "cik": "0000865752",
+      "sic": "2086",
+      "sicDescription": "Bottled & Canned Soft Drinks & Carbonated Waters",
       "fy": 2025,
       "periodEnd": "2025-12-31",
       "form": "10-K",
@@ -1583,7 +2021,8 @@
         "cashAndEquivalents": 2088117000,
         "receivables": 1618072000,
         "inventory": 799623000,
-        "accountsPayable": 565974000
+        "accountsPayable": 565974000,
+        "sharesDiluted": 984451000
       },
       "history": [
         {
@@ -1597,7 +2036,12 @@
             "stockholdersEquity": 3610901000,
             "cashAndEquivalents": 637513000,
             "cashFromOps": 1161881000,
-            "capex": 61941000
+            "capex": 61941000,
+            "costOfRevenue": null,
+            "depreciation": 56979000,
+            "dividendsPaid": null,
+            "buybacks": 1342076000,
+            "sharesDiluted": 564254000
           }
         },
         {
@@ -1611,7 +2055,12 @@
             "stockholdersEquity": 4171281000,
             "cashAndEquivalents": 797957000,
             "cashFromOps": 1113762000,
-            "capex": 101661000
+            "capex": 101661000,
+            "costOfRevenue": 1682234000,
+            "depreciation": 64814000,
+            "dividendsPaid": null,
+            "buybacks": 707300000,
+            "sharesDiluted": 546608000
           }
         },
         {
@@ -1625,7 +2074,12 @@
             "stockholdersEquity": 5160860000,
             "cashAndEquivalents": 1180413000,
             "cashFromOps": 1364163000,
-            "capex": 48722000
+            "capex": 48722000,
+            "costOfRevenue": 1874758000,
+            "depreciation": 60973000,
+            "dividendsPaid": null,
+            "buybacks": 595918000,
+            "sharesDiluted": 534807000
           }
         },
         {
@@ -1639,7 +2093,12 @@
             "stockholdersEquity": 6566951000,
             "cashAndEquivalents": 1326462000,
             "cashFromOps": 1155741000,
-            "capex": 43868000
+            "capex": 43868000,
+            "costOfRevenue": 2432839000,
+            "depreciation": 50155000,
+            "dividendsPaid": null,
+            "buybacks": 13830000,
+            "sharesDiluted": 535639000
           }
         },
         {
@@ -1653,7 +2112,12 @@
             "stockholdersEquity": 7025041000,
             "cashAndEquivalents": 1307141000,
             "cashFromOps": 887699000,
-            "capex": 188726000
+            "capex": 188726000,
+            "costOfRevenue": 3136483000,
+            "depreciation": 61241000,
+            "dividendsPaid": null,
+            "buybacks": 771028000,
+            "sharesDiluted": 533221000
           }
         },
         {
@@ -1667,7 +2131,12 @@
             "stockholdersEquity": 8228744000,
             "cashAndEquivalents": 2297675000,
             "cashFromOps": 1717753000,
-            "capex": 221428000
+            "capex": 221428000,
+            "costOfRevenue": 3345821000,
+            "depreciation": 68898000,
+            "dividendsPaid": null,
+            "buybacks": 658952000,
+            "sharesDiluted": 1057981000
           }
         },
         {
@@ -1681,7 +2150,12 @@
             "stockholdersEquity": 5957718000,
             "cashAndEquivalents": 1533287000,
             "cashFromOps": 1928533000,
-            "capex": 264074000
+            "capex": 264074000,
+            "costOfRevenue": 3443831000,
+            "depreciation": 80434000,
+            "dividendsPaid": null,
+            "buybacks": 3771875000,
+            "sharesDiluted": 1013107000
           }
         },
         {
@@ -1695,12 +2169,15 @@
             "stockholdersEquity": 8254108000,
             "cashAndEquivalents": 2088117000,
             "cashFromOps": 2098177000,
-            "capex": 132275000
+            "capex": 132275000,
+            "costOfRevenue": 3662148000,
+            "depreciation": 114441000,
+            "dividendsPaid": null,
+            "buybacks": 103646000,
+            "sharesDiluted": 984451000
           }
         }
-      ],
-      "sic": "2086",
-      "sicDescription": "Bottled & Canned Soft Drinks"
+      ]
     }
   ]
 }
