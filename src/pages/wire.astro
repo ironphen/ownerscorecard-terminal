@@ -1,0 +1,70 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import wire from "../data/wire.json";
+import fundamentals from "../data/fundamentals.json";
+
+const known = new Set((fundamentals.companies || []).map((c) => String(c.ticker).toUpperCase()));
+const items = wire?.items || [];
+
+const fmtDate = (s) => new Date(s + "T00:00:00Z").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" });
+
+// group by filing date, newest first
+const groups = [];
+for (const it of items) {
+  const g = groups.find((x) => x.date === it.date);
+  if (g) g.items.push(it);
+  else groups.push({ date: it.date, items: [it] });
+}
+---
+
+<BaseLayout title="The Filing Wire — Owner Scorecard">
+  <header class="hd">
+    <h1>The Filing Wire</h1>
+    {wire?.asOf ? <span class="asof">updated {wire.asOf}</span> : null}
+  </header>
+  <p class="lede">
+    Not what the market did — what companies actually <em>disclosed</em>. Every new filing across the
+    catalog, straight from EDGAR, newest first, with the 8-K codes translated into plain English. The grave
+    ones — an auditor change, a restatement, a default — announce themselves. This is the only ticker an owner needs.
+  </p>
+
+  {items.length ? (
+    groups.map((g) => (
+      <section class="day">
+        <h2 class="date">{fmtDate(g.date)}</h2>
+        <ul>
+          {g.items.map((it) => (
+            <li class={it.grave ? "grave" : ""}>
+              <span class="tkr">{known.has(it.ticker) ? <a href={`/c/${it.ticker}`}>{it.ticker}</a> : it.ticker}</span>
+              <span class="what">{it.label}</span>
+              <span class="form">{it.form}</span>
+              {it.url ? <a class="src" href={it.url} target="_blank" rel="noopener">source →</a> : null}
+            </li>
+          ))}
+        </ul>
+      </section>
+    ))
+  ) : (
+    <p class="empty">The wire refreshes daily from EDGAR. Nothing loaded yet — once the daily job runs, the latest filings appear here.</p>
+  )}
+
+  <style>
+    .hd { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+    .hd h1 { margin: 0; }
+    .asof { font-size: 12px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); }
+    .lede { font-family: var(--serif); font-style: italic; font-size: clamp(16px, 2.4vw, 19px); line-height: 1.45; color: #34383f; margin: 10px 0 26px; max-width: 66ch; }
+
+    .day { margin: 0 0 22px; }
+    .date { font-family: var(--sans); font-size: 11.5px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 0 0 4px; border-bottom: 1px solid var(--rule-strong); padding-bottom: 5px; }
+    ul { list-style: none; padding: 0; margin: 0; }
+    li { display: flex; align-items: baseline; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--rule); flex-wrap: wrap; }
+    .tkr { font-weight: 700; font-variant-numeric: tabular-nums; flex: 0 0 64px; }
+    .tkr a { color: var(--accent); }
+    .what { flex: 1 1 auto; min-width: 200px; color: var(--ink); }
+    .form { font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); border: 1px solid var(--rule); padding: 1px 6px; flex: 0 0 auto; }
+    .src { font-size: 12px; color: var(--accent); flex: 0 0 auto; }
+    li.grave .what { color: var(--bad); font-weight: 600; }
+    li.grave .tkr a { color: var(--bad); }
+    .empty { color: var(--muted); font-family: var(--serif); font-style: italic; }
+  </style>
+</BaseLayout>

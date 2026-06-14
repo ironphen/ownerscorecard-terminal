@@ -9,7 +9,8 @@
     "astro": "astro",
     "import:fidelity": "node scripts/importFidelity.mjs",
     "fetch:fundamentals": "node scripts/fetchFundamentals.mjs",
-    "fetch:filings": "node scripts/fetchFilings.mjs"
+    "fetch:filings": "node scripts/fetchFilings.mjs",
+    "fetch:wire": "node scripts/fetchWire.mjs"
   },
   "dependencies": {
     "@astrojs/mdx": "^6.0.3",
