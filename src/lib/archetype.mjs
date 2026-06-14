@@ -7,7 +7,7 @@ const ratio = (n, d) => (n != null && d ? n / d : null);
 const pct = (v, dp = 0) => (v == null ? "—" : `${(v * 100).toFixed(dp)}%`);
 const avg = (xs) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null);
 
-// ---- sector: the business model (pick one) ----
+// ---- sector: the business model, the lens for how to read the company ----
 
 const SECTORS = {
   assetLight: "Asset-light compounder",
@@ -18,6 +18,47 @@ const SECTORS = {
   reit: "REIT / real estate",          // phase 2
   general: "General",
 };
+
+// A short adjective for the model, for a chip beside the industry.
+const SECTOR_ADJ = {
+  assetLight: "asset-light", consumer: "consumer brand", capital: "capital-intensive",
+  retail: "retail", financial: "financial", reit: "REIT", general: "diversified",
+};
+
+// ---- industry: what the company actually does, from its SEC SIC code. This is the
+// identity (and the peer key); the model above is only the lens. SIC cannot be fooled
+// by margins the way the financial-shape read can, so a high-margin marketer like
+// WD-40 reads as specialty chemicals, not as a software compounder. ----
+
+const SIC_LABEL = {
+  "3571": "Computers & devices", "3674": "Semiconductors", "7372": "Enterprise software",
+  "7370": "Internet platforms", "5961": "Online retail", "2080": "Beverages", "2086": "Beverages",
+  "2840": "Household & personal care", "2844": "Household & personal care", "2842": "Household & personal care",
+  "2670": "Household & personal care", "2890": "Specialty chemicals", "5331": "Discount & variety retail",
+  "5311": "Department stores", "5211": "Home-improvement retail", "4813": "Telecom", "4812": "Wireless telecom",
+  "4512": "Airlines", "4400": "Cruise lines", "5812": "Restaurants", "2911": "Oil & gas", "3711": "Automakers",
+};
+const SIC3_LABEL = {
+  "357": "Computer hardware", "367": "Semiconductors", "737": "Software & internet", "596": "Online retail",
+  "208": "Beverages", "204": "Packaged food", "200": "Packaged food", "284": "Household & personal care",
+  "267": "Paper & packaging", "289": "Specialty chemicals", "531": "Department stores", "533": "Discount retail",
+  "521": "Home-improvement retail", "481": "Telecom", "451": "Airlines", "440": "Cruise & shipping",
+  "601": "Banks", "602": "Banks", "603": "Savings institutions", "612": "Mortgage finance", "621": "Brokerage",
+  "631": "Insurance", "633": "Insurance", "635": "Insurance", "655": "Real estate", "291": "Oil & gas",
+};
+
+function cleanSicDescription(d) {
+  if (!d) return null;
+  return d.replace(/^(services?|retail|wholesale)\s*[-–]\s*/i, "").replace(/\s*\([^)]*\)/g, "").replace(/,.*$/, "").replace(/\s{2,}/g, " ").trim() || null;
+}
+
+export function industryOf(company) {
+  const sic = String(company?.sic || "");
+  const s4 = sic.slice(0, 4), s3 = sic.slice(0, 3);
+  const label = SIC_LABEL[s4] || SIC3_LABEL[s3] || cleanSicDescription(company?.sicDescription) || "Diversified";
+  return { sic, key: s3 || s4 || "gen", label, desc: company?.sicDescription || null };
+}
+
 
 // SIC ranges → sector. Primary signal when we have it.
 function sectorFromSIC(sic) {
@@ -161,7 +202,8 @@ export function classify(company) {
   let bySic = key != null;
   if (!key) key = sectorFromShape(s);
   return {
-    sector: { key, label: SECTORS[key] || SECTORS.general, reason: sectorReason(key, s), bySic },
+    sector: { key, label: SECTORS[key] || SECTORS.general, adj: SECTOR_ADJ[key] || SECTOR_ADJ.general, reason: sectorReason(key, s), bySic },
+    industry: industryOf(company),
     overlays: overlays(company, s),
     figures: keyFigures(company, key),
   };
