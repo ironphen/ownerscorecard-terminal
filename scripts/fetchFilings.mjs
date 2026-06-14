@@ -69,6 +69,8 @@ function cleanQuote(s) {
     /^(?:[A-Z][A-Za-z&\-]+)(?:\s+(?:and|of|the|or|&|[A-Z][A-Za-z&\-]+)){0,3}\s+(?=(?:The|This|These|Those|Our|We|Your|During|For|Because|If|In|As|Although|While|When|Beyond|Any|Each|Some|Many|Most|No|A|An|Sales|Demand|Revenue)\b)/,
     ""
   );
+  // A heading with a glued stray quote: 'Risk Factors " Our business…' → 'Our business…'
+  s = s.replace(/^(?:[A-Z][A-Za-z&\-]+)(?:\s+[A-Z][A-Za-z&\-]+){0,3}\s*["'"]\s*(?=[A-Z])/, "");
   s = s.replace(/^["'"\s]+/, "");
   return s.trim();
 }
@@ -237,7 +239,13 @@ const FLAG_THEMES = [
   {
     lens: "Concentrated dependence",
     why: "What the whole business leans on — a product, a platform, a partner. Concentration cuts both ways, and the filing is where management has to admit it.",
-    test: (s) => /(substantially depend|depends? heavily|depend\w* significantly|materially depend|a significant (portion|percentage) of (our )?(revenue|net sales|sales)|our (success|business|growth|results)[\s\S]{0,40}depends?)/i.test(s),
+    // Require a concrete object of dependence (product/platform/customer/supplier/
+    // single-something), so generic "our success depends on our employees" — true of
+    // every company — doesn't fill the slot.
+    test: (s) =>
+      /(substantially depend|depend\w* heavily|depend\w* significantly|materially depend|a significant (portion|percentage) of (our )?(revenue|net sales|sales|business))/i.test(s) ||
+      (/(our (success|business|growth|results|revenue))[\s\S]{0,50}depend/i.test(s) &&
+        /(product|platform|customer|supplier|vendor|single|sole|concentrat|one |few |limited|key (account|customer|supplier|product))/i.test(s)),
     bonus: (s) => (/\d/.test(s) ? 1 : 0),
   },
   {
