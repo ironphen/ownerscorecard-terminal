@@ -43,6 +43,7 @@ const related = (
 
 const name = fund?.name || "";
 const cls = fund ? classify(fund) : null;
+const isFin = !!cls && ["financial", "reit"].includes(cls.sector.key);
 const bizLine = language?.companies?.[ticker]?.business || null;
 
 const fmtDate = (d) =>
@@ -90,9 +91,9 @@ const fmtDate = (d) =>
   {fund ? <div id="sec-mix" class="sec"><Segments company={fund} /></div> : null}
   {fund ? <div id="sec-record" class="sec"><TenYear company={fund} /></div> : null}
   {fund ? <div id="sec-scorecard" class="sec"><Scorecard company={fund} sample={fundamentals.sample} /></div> : null}
-  {fund ? <div id="sec-capital" class="sec"><Capital company={fund} /></div> : null}
+  {fund && !isFin ? <div id="sec-capital" class="sec"><Capital company={fund} /></div> : null}
   {fund ? <div id="sec-pay" class="sec"><Comp company={fund} /></div> : null}
-  {fund ? <div id="sec-graham" class="sec"><Graham company={fund} /></div> : null}
+  {fund && !isFin ? <div id="sec-graham" class="sec"><Graham company={fund} /></div> : null}
   {fund ? <div id="sec-price" class="sec"><Valuation company={fund} /></div> : null}
   {fund ? (
     <div id="sec-changes" class="sec">

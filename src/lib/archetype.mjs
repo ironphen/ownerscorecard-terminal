@@ -201,10 +201,16 @@ export function classify(company) {
   let key = sectorFromSIC(company?.sic);
   let bySic = key != null;
   if (!key) key = sectorFromShape(s);
+  // The distress, build-out and cyclical overlays are industrial heuristics (built on
+  // operating cash flow, capex and operating margin) that misfire on a bank, whose
+  // cash-flow statement and capex mean something different. Keep only "unprofitable"
+  // for financials; their soundness is read properly in the bank scorecard instead.
+  let ovs = overlays(company, s);
+  if (key === "financial" || key === "reit") ovs = ovs.filter((o) => o.key === "unprofitable");
   return {
     sector: { key, label: SECTORS[key] || SECTORS.general, adj: SECTOR_ADJ[key] || SECTOR_ADJ.general, reason: sectorReason(key, s), bySic },
     industry: industryOf(company),
-    overlays: overlays(company, s),
+    overlays: ovs,
     figures: keyFigures(company, key),
   };
 }
