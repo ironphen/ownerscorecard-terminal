@@ -30,6 +30,7 @@ function sectorFromSIC(sic) {
   if (c >= 1300 && c <= 1399) return "capital";          // oil & gas extraction
   if (c >= 2900 && c <= 2999) return "capital";          // petroleum refining
   if (c >= 7370 && c <= 7379) return "assetLight";       // software & IT services
+  if (c >= 3670 && c <= 3679) return "assetLight";       // semiconductors & components (fabless / IP-led)
   if (c >= 5200 && c <= 5999) return "retail";
   if (c >= 2000 && c <= 2199) return "consumer";         // food, beverage, tobacco
   if (c >= 2300 && c <= 2399) return "consumer";         // apparel
@@ -84,10 +85,11 @@ function overlays(company, s) {
   }
 
   const cov = L.operatingIncome != null && L.interestExpense ? L.operatingIncome / L.interestExpense : null;
-  const oe = L.cashFromOps != null && L.capex != null ? L.cashFromOps - Math.abs(L.capex) : null;
-  if ((cov != null && cov < 1.5) || (oe != null && oe < 0 && L.totalDebt > 0)) {
+  // Real distress = can't cover interest, or operations themselves burn cash —
+  // not merely negative free cash flow, which heavy capex (a build-out) also causes.
+  if ((cov != null && cov < 1.5) || (L.cashFromOps != null && L.cashFromOps < 0 && L.totalDebt > 0)) {
     out.push({ key: "distress", label: "Distress / turnaround",
-      reason: "thin coverage or negative free cash flow against real debt — the first questions are liquidity and the maturity wall, not growth" });
+      reason: "thin interest coverage or cash-burning operations against real debt — the first questions are liquidity and the maturity wall, not growth" });
   }
 
   // Capital build-out (the Chanos lens): capex elevated AND surging vs its own past.
