@@ -15,6 +15,7 @@ const cls = classify(company);
 const cur = company.ttm?.lines || company.lines || {};
 const L = language?.companies?.[company.ticker] || null;
 const sourceUrl = L?.sourceUrl || null;
+const bizLine = L?.business || null; // the company's own one-sentence account, verbatim from Item 1
 
 const pc = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${(Math.abs(v) * 100).toFixed(dp)}%`);
 const median = (xs) => { const s = [...xs].sort((a, b) => a - b); return s.length ? s[Math.floor((s.length - 1) / 2)] : null; };
@@ -163,7 +164,10 @@ const overlays = cls.overlays || [];
   <dl class="reads">
     <div class="r">
       <dt>What it is</dt>
-      <dd><span class="tag">{cls.sector.label}</span> {whatItIs}</dd>
+      <dd>
+        {bizLine ? <span class="said">“{bizLine}”</span> : null}
+        <span class="tag">{cls.sector.label}</span> {whatItIs}
+      </dd>
     </div>
     {overlays.length ? (
       <div class="r">
@@ -218,6 +222,7 @@ const overlays = cls.overlays || [];
   .r { display: grid; grid-template-columns: 190px 1fr; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--rule); }
   .r dt { font-family: var(--sans); font-weight: 700; font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
   .r dd { margin: 0; font-size: 14.5px; line-height: 1.55; color: #2c2f36; max-width: 72ch; }
+  .said { display: block; font-family: var(--serif); font-style: italic; font-size: 14.5px; line-height: 1.5; color: #3a3e46; margin: 0 0 7px; }
   .ov b { color: var(--ink); }
   .tag { font-size: 11px; letter-spacing: 0.02em; color: var(--ink); border: 1px solid var(--rule-strong); padding: 1px 6px; margin-right: 6px; white-space: nowrap; }
   .fig { font-weight: 700; font-variant-numeric: tabular-nums; color: var(--ink); margin-right: 4px; }
