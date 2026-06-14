@@ -20,12 +20,18 @@ if (revSeries.length >= 4) {
 // One vital-signs strip — the universal "is it a good business?" numbers, latest
 // year. (No second strip: the business-model specifics live in the record table
 // and in what the filing flags below, so they aren't duplicated up here.)
-const grossMargin = rev && L.costOfRevenue != null ? 1 - L.costOfRevenue / rev : null;
+// Vital signs from the freshest twelve months (TTM), each with its 5-year average
+// for context — is the business running above or below its own recent norm?
+const cur = company.ttm?.lines || L;
+const curLabel = company.ttm?.lines ? "TTM" : `FY${company.fy}`;
+const grossM = (l) => (l && l.revenue && l.costOfRevenue != null ? 1 - l.costOfRevenue / l.revenue : null);
+const hist5 = hist.slice(-5).map((h) => h.lines);
+const avgOf = (fn) => { const xs = hist5.map(fn).filter((v) => v != null); return xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null; };
 const vitals = [
-  { label: "Gross margin", value: grossMargin, dp: 0 },
-  { label: "Operating margin", value: operatingMargin(L), dp: 1 },
-  { label: "ROIC", value: roicValue(L), dp: 0 },
-  { label: "Owner-earnings margin", value: ownerEarningsMargin(L), dp: 0 },
+  { label: "Gross margin", value: grossM(cur), avg: avgOf(grossM), dp: 0 },
+  { label: "Operating margin", value: operatingMargin(cur), avg: avgOf(operatingMargin), dp: 1 },
+  { label: "ROIC", value: roicValue(cur), avg: avgOf(roicValue), dp: 0 },
+  { label: "Owner-earnings margin", value: ownerEarningsMargin(cur), avg: avgOf(ownerEarningsMargin), dp: 0 },
 ].filter((v) => v.value != null);
 
 const { sector, overlays } = classify(company);
@@ -65,10 +71,14 @@ const sp = spark(revSeries);
 
   {vitals.length ? (
     <div class="vitals">
-      <span class="vLbl">Vital signs · FY{company.fy}</span>
+      <span class="vLbl">Vital signs · {curLabel}, with 5-yr average</span>
       <div class="vRow">
         {vitals.map((v) => (
-          <div class="v"><span class="vk">{v.label}</span><span class="vv">{pct(v.value, v.dp)}</span></div>
+          <div class="v">
+            <span class="vk">{v.label}</span>
+            <span class="vv">{pct(v.value, v.dp)}</span>
+            {v.avg != null ? <span class="va">5-yr avg {pct(v.avg, v.dp)}</span> : null}
+          </div>
         ))}
       </div>
     </div>
@@ -107,6 +117,7 @@ const sp = spark(revSeries);
   .v { display: flex; flex-direction: column; }
   .vk { font-size: 12px; color: var(--muted); }
   .vv { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.1; margin-top: 2px; }
+  .va { font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; margin-top: 2px; }
 
   .reads { font-family: var(--serif); font-size: clamp(17px, 2.4vw, 19px); line-height: 1.45; margin: 16px 0 0; }
   .reads strong { font-weight: 600; }

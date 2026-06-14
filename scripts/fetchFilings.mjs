@@ -201,13 +201,17 @@ async function latestProxy(cik) {
 
 function extractPayRatio(text) {
   const pats = [
-    /ratio of (?:the )?(?:annual )?total compensation of (?:our |the )?(?:ceo|chief executive officer|principal executive officer)[\s\S]{0,200}?median[\s\S]{0,200}?(?:was|is|of|:|equal to)\s*(?:approximately |estimated (?:to be )?|reasonably )?(\d[\d,]*)\s*(?:to|:)\s*1\b/i,
-    /(?:ceo pay ratio|pay ratio)[\s\S]{0,160}?(\d[\d,]*)\s*(?:to|:)\s*1\b/i,
-    /(\d[\d,]*)\s*(?:to|:)\s*1\b[\s\S]{0,60}?(?:pay ratio|times the median)/i,
+    /ratio of (?:the )?(?:annual )?total compensation of (?:our |the )?(?:ceo|chief executive officer|principal executive officer)[\s\S]{0,240}?median[\s\S]{0,240}?(?:was|is|of|:|equal to)\s*(?:approximately |estimated (?:to be )?|reasonably )?(\d[\d,]*)\s*(?:to|:)\s*1\b/i,
+    /median[\s\S]{0,240}?(?:ceo|chief executive officer)[\s\S]{0,200}?ratio[\s\S]{0,40}?(?:was|is|of|:)\s*(?:approximately )?(\d[\d,]*)\s*(?:to|:)\s*1\b/i,
+    /(?:ceo|chief executive)?\s*(?:to[- ]median)?\s*pay ratio[\s\S]{0,80}?(?:was|is|of|:)?\s*(?:approximately )?(\d[\d,]*)\s*(?:to|:)\s*1\b/i,
+    /(\d[\d,]*)\s*(?:to|:)\s*1\b[\s\S]{0,40}?(?:ceo )?pay ratio/i,
+    /(?:ceo|chief executive)[\s\S]{0,80}?(\d[\d,]*)\s*times (?:that of |the (?:annual )?(?:total )?compensation of (?:our )?)?(?:our )?median/i,
   ];
+  // A real large-cap CEO-to-median ratio is never single digits; reject implausibly
+  // low matches (stock splits, votes, "3 to 1") rather than show a wrong number.
   for (const re of pats) {
     const m = text.match(re);
-    if (m) { const n = parseInt(m[1].replace(/,/g, ""), 10); if (n > 1 && n < 100000) return n; }
+    if (m) { const n = parseInt(m[1].replace(/,/g, ""), 10); if (n >= 20 && n < 100000) return n; }
   }
   return null;
 }
