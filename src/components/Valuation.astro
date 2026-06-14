@@ -1,0 +1,60 @@
+---
+import prices from "../data/prices.json";
+import { valuation, vsRange } from "../lib/valuation.mjs";
+import { fmtUSD, TONE_COLOR } from "../lib/fundamentals.mjs";
+
+const { company } = Astro.props;
+const entry = prices?.prices?.[company.ticker] || null;
+const v = entry ? valuation(company, entry) : null;
+
+const mult = (r, dp = 1) => (r == null ? "—" : `${r.toFixed(dp)}×`);
+const pct = (r, dp = 1) => (r == null ? "—" : `${(r * 100).toFixed(dp)}%`);
+const peCtx = v ? vsRange(v.cur.pe, v.peRange, true) : null;
+const oeyCtx = v ? vsRange(v.cur.oeYield, v.oeyRange, false) : null;
+---
+
+{v ? (
+  <section class="valuation">
+    <div class="head">
+      <h3 class="secHead">What it's priced at</h3>
+      <span class="hint">${v.cur.price} · {v.cur.asOf} · {prices.source}</span>
+    </div>
+
+    <dl class="vals">
+      <div class="val"><dt>Market cap</dt><dd>{fmtUSD(v.cur.marketCap)}</dd></div>
+      <div class="val">
+        <dt>P / E <span class="ttm">(TTM)</span></dt><dd>{mult(v.cur.pe)}</dd>
+        {peCtx ? <span class="ctx" style={`color:${TONE_COLOR[peCtx.tone]}`}>{peCtx.label}</span> : null}
+      </div>
+      <div class="val">
+        <dt>Owner-earnings yield</dt><dd>{pct(v.cur.oeYield)}</dd>
+        {oeyCtx ? <span class="ctx" style={`color:${TONE_COLOR[oeyCtx.tone]}`}>{oeyCtx.label}</span> : null}
+      </div>
+      <div class="val"><dt>Price / book</dt><dd>{mult(v.cur.pb)}</dd></div>
+      <div class="val"><dt>Dividend yield</dt><dd>{pct(v.cur.divYield)}</dd></div>
+    </dl>
+
+    {v.peRange ? (
+      <p class="rangeNote">
+        Its P/E has ranged {mult(v.peRange.min)}–{mult(v.peRange.max)} (median {mult(v.peRange.median)}) over the past decade.
+        Cheap and good are different questions — this answers only the first.
+      </p>
+    ) : null}
+  </section>
+) : null}
+
+<style>
+  .valuation { margin: 22px 0; }
+  .head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; border-bottom: 1px solid var(--rule-strong); padding-bottom: 5px; }
+  .secHead { font-family: var(--sans); font-weight: 600; margin: 0; font-size: 11.5px; letter-spacing: 0.09em; text-transform: uppercase; color: var(--ink); }
+  .hint { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); }
+
+  .vals { display: flex; flex-wrap: wrap; gap: 0 36px; margin: 14px 0 0; }
+  .val { margin: 8px 0; min-width: 120px; }
+  .vals dt { font-size: 11.5px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+  .ttm { text-transform: none; letter-spacing: 0; }
+  .vals dd { margin: 2px 0 0; font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .ctx { display: block; font-size: 12px; margin-top: 2px; }
+
+  .rangeNote { font-family: var(--serif); font-style: italic; font-size: 13.5px; color: var(--muted); margin: 12px 0 0; max-width: 64ch; }
+</style>
