@@ -301,9 +301,12 @@ const FLAG_THEMES = [
   },
   {
     lens: "Litigation & contingencies",
-    why: "Claims an owner inherits. Most are noise; the filing is where the ones that aren't first surface.",
-    test: (s) => /(litigation|lawsuit|class action|patent infringement|legal proceeding|investigation by|subpoena|antitrust (suit|claim|lawsuit))/i.test(s),
-    bonus: (s) => (/(material|adverse|damages|settle|enjoin)/i.test(s) ? 1 : 0),
+    why: "Claims an owner inherits. Most disclosure is boilerplate; this fires only on an actual matter — a named suit, a settlement, a contingency, a number.",
+    // Require a real, specific matter, not the generic "litigation could adversely
+    // affect us" that every 10-K carries.
+    test: (s) =>
+      /(class action|patent (infringement|dispute|suit|litigation)|antitrust|securities (class action|fraud)|product liability|consent decree|qui tam|whistleblower|infringe\w+|misappropriat\w+|investigation by (the )?(SEC|DOJ|FTC|EU|European|State|Federal|Attorney|Department of)|jury (verdict|award|found)|loss contingenc\w+|settle\w+ (of |a |the )?(lawsuit|litigation|claim|matter|case|legal)|\$\s?[\d,.]+\s?(million|billion)[\s\S]{0,70}(settle|judgment|verdict|damages|award|fine|penalt|litigation|lawsuit|contingenc)|alleg\w+ (that|violations|fraud|breach))/i.test(s),
+    bonus: (s) => (/(class action|antitrust|securities fraud|patent|\$\s?[\d,.]+\s?(million|billion)|consent decree|qui tam)/i.test(s) ? 2 : 0),
   },
   {
     lens: "Dilution",
@@ -314,20 +317,26 @@ const FLAG_THEMES = [
   {
     lens: "Cyclicality & demand",
     why: "How the business behaves when the economy turns. A cyclical earns its keep across the whole cycle, not at the peak.",
-    test: (s) => /(cyclical(ity)?|economic downturn|recession|volatil\w* demand|demand[\s\S]{0,30}(fluctuat|volatil))/i.test(s),
-    bonus: () => 0,
+    // Require named cyclicality/seasonality or an industry downturn, not a generic
+    // "a recession could hurt demand" that is true of every business.
+    test: (s) => /(cyclical|highly seasonal|(industry|severe|sharp|prolonged|economic) downturn|downturn in (the|our|demand)|recession\w*[\s\S]{0,30}(reduce|decreas|lower|impact|demand|weaken|soften))/i.test(s),
+    bonus: (s) => (/(cyclical|industry downturn|severe downturn)/i.test(s) ? 1 : 0),
   },
   {
     lens: "Regulation & policy",
     why: "Rules that can rewrite the economics — tariffs, antitrust, data, export controls.",
-    // Must carry a consequence, so routine "we monitor legislation" compliance prose
-    // doesn't surface as a risk flag.
+    // Require a specific named regime, not generic "we comply with regulations".
     test: (s) =>
-      /(tariff|export control|economic sanction|antitrust|data privacy|new regulation|regulatory (change|requirement|action)|recently enacted|legislation|GDPR)/i.test(s) &&
-      /(could|may|would|adversely|materially|restrict|increase|impose|prohibit|penalt|fine|subject to|harm|impact|require|cost)/i.test(s),
+      /(tariff|export control|economic sanction|antitrust|data privacy|GDPR|CHIPS Act|Inflation Reduction Act|Dodd-Frank|emissions?|FDA|EPA|FTC|DOJ|European Commission|net neutrality|price (control|cap)|excise tax|sugar tax|container deposit|extended producer responsibility)/i.test(s) &&
+      /(could|may|would|adversely|materially|restrict|increase|impose|prohibit|penalt|fine|subject to|harm|impact|require|cost|ban|limit|tax)/i.test(s),
     bonus: () => 0,
   },
 ];
+
+// Generic risk-tail boilerplate that says nothing company-specific; penalised so a
+// concrete sentence wins. Anchors (a number, %, $, or a hard quantifier) mark specificity.
+const BOILERPLATE = /(material(ly)? ?(and )?adverse|adversely (affect|impact)|adverse (effect|impact)|no assurance|beyond (our|its) control|financial condition,? and (its )?results of operations|reputation and brand|costly and time-consuming)/i;
+const ANCHOR = /\$\s?\d|\d{1,3}\s?%|\b(single|sole|one |two |largest|primary|limited number|a few|substantially all)\b/i;
 
 // From the current filing's prose pool (sentence + section tag), pick the single
 // strongest sentence per theme: signal-bearing, specific (a number helps), the
@@ -339,11 +348,13 @@ function ownerFlags(pool) {
     let best = null, bestScore = -1;
     for (const p of pool) {
       if (used.has(p.s) || !th.test(p.s)) continue;
+      const s = p.s;
       const score =
-        (SIGNAL.test(p.s) ? 1 : 0) +
-        (/\d/.test(p.s) ? 1 : 0) +
-        (p.s.length >= 90 && p.s.length <= 320 ? 1 : 0) +
-        th.bonus(p.s);
+        (SIGNAL.test(s) ? 1 : 0) +
+        (ANCHOR.test(s) ? 2 : 0) +
+        (s.length >= 90 && s.length <= 300 ? 1 : 0) +
+        th.bonus(s) -
+        (BOILERPLATE.test(s) ? 2 : 0);
       if (score > bestScore) { bestScore = score; best = p; }
     }
     if (best) {
