@@ -26,7 +26,7 @@
         "incomeTaxExpense": 20719000000,
         "costOfRevenue": 220960000000,
         "stockBasedComp": 12863000000,
-        "dividendsPaid": 12563000000,
+        "dividendsPaid": 15421000000,
         "buybacks": 90711000000,
         "stockholdersEquity": 73733000000,
         "cashAndEquivalents": 35934000000,
@@ -36,6 +36,25 @@
         "sharesDiluted": 15004697000
       },
       "history": [
+        {
+          "fy": 2016,
+          "lines": {
+            "revenue": 215639000000,
+            "operatingIncome": 60024000000,
+            "incomeTaxExpense": 15685000000,
+            "netIncome": 45687000000,
+            "totalDebt": 78927000000,
+            "stockholdersEquity": 128249000000,
+            "cashAndEquivalents": 20484000000,
+            "cashFromOps": 66231000000,
+            "capex": 12734000000,
+            "costOfRevenue": 131376000000,
+            "depreciation": 10505000000,
+            "dividendsPaid": 11965000000,
+            "buybacks": 29722000000,
+            "sharesDiluted": 5500281000
+          }
+        },
         {
           "fy": 2017,
           "lines": {
@@ -69,7 +88,7 @@
             "capex": 13313000000,
             "costOfRevenue": 163756000000,
             "depreciation": 10903000000,
-            "dividendsPaid": null,
+            "dividendsPaid": 13712000000,
             "buybacks": 72738000000,
             "sharesDiluted": 20000435000
           }
@@ -88,7 +107,7 @@
             "capex": 10495000000,
             "costOfRevenue": 161782000000,
             "depreciation": 12547000000,
-            "dividendsPaid": null,
+            "dividendsPaid": 14119000000,
             "buybacks": 66897000000,
             "sharesDiluted": 18595651000
           }
@@ -107,7 +126,7 @@
             "capex": 7309000000,
             "costOfRevenue": 169559000000,
             "depreciation": 11056000000,
-            "dividendsPaid": null,
+            "dividendsPaid": 14081000000,
             "buybacks": 72358000000,
             "sharesDiluted": 17528214000
           }
@@ -126,7 +145,7 @@
             "capex": 11085000000,
             "costOfRevenue": 212981000000,
             "depreciation": 11284000000,
-            "dividendsPaid": null,
+            "dividendsPaid": 14467000000,
             "buybacks": 85971000000,
             "sharesDiluted": 16864919000
           }
@@ -145,7 +164,7 @@
             "capex": 10708000000,
             "costOfRevenue": 223546000000,
             "depreciation": 11104000000,
-            "dividendsPaid": null,
+            "dividendsPaid": 14841000000,
             "buybacks": 89402000000,
             "sharesDiluted": 16325819000
           }
@@ -164,7 +183,7 @@
             "capex": 10959000000,
             "costOfRevenue": 214137000000,
             "depreciation": 11519000000,
-            "dividendsPaid": null,
+            "dividendsPaid": 15025000000,
             "buybacks": 77550000000,
             "sharesDiluted": 15812547000
           }
@@ -183,7 +202,7 @@
             "capex": 9447000000,
             "costOfRevenue": 210352000000,
             "depreciation": 11445000000,
-            "dividendsPaid": null,
+            "dividendsPaid": 15234000000,
             "buybacks": 94949000000,
             "sharesDiluted": 15408095000
           }
@@ -202,12 +221,30 @@
             "capex": 12715000000,
             "costOfRevenue": 220960000000,
             "depreciation": 11698000000,
-            "dividendsPaid": null,
+            "dividendsPaid": 15421000000,
             "buybacks": 90711000000,
             "sharesDiluted": 15004697000
           }
         }
-      ]
+      ],
+      "ttm": {
+        "asOf": "2026-03-28",
+        "isFY": false,
+        "lines": {
+          "revenue": 451442000000,
+          "operatingIncome": 147366000000,
+          "netIncome": 122575000000,
+          "incomeTaxExpense": 25095000000,
+          "cashFromOps": 140222000000,
+          "capex": 11048000000,
+          "costOfRevenue": 235371000000,
+          "depreciation": 12610000000,
+          "stockholdersEquity": 106491000000,
+          "cashAndEquivalents": 45572000000,
+          "totalDebt": 82714000000,
+          "sharesDiluted": 14768115000
+        }
+      }
     },
     {
       "ticker": "MSFT",
@@ -221,7 +258,7 @@
       "sourceUrl": "https://www.sec.gov/Archives/edgar/data/789019/000095017025100235/0000950170-25-100235-index.htm",
       "lines": {
         "operatingIncome": 128528000000,
-        "interestExpense": 2935000000,
+        "interestExpense": 2385000000,
         "revenue": 281724000000,
         "netIncome": 101832000000,
         "totalDebt": 43151000000,
@@ -431,7 +468,25 @@
             "sharesDiluted": 7465000000
           }
         }
-      ]
+      ],
+      "ttm": {
+        "asOf": "2026-03-31",
+        "isFY": false,
+        "lines": {
+          "revenue": 318273000000,
+          "operatingIncome": 148957000000,
+          "netIncome": 125216000000,
+          "incomeTaxExpense": 29287000000,
+          "cashFromOps": 170141000000,
+          "capex": 97225000000,
+          "costOfRevenue": 100863000000,
+          "depreciation": null,
+          "stockholdersEquity": 414367000000,
+          "cashAndEquivalents": 32105000000,
+          "totalDebt": 40262000000,
+          "sharesDiluted": 7457000000
+        }
+      }
     },
     {
       "ticker": "GOOGL",
@@ -445,8 +500,8 @@
       "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1652044/000165204426000018/0001652044-26-000018-index.htm",
       "lines": {
         "operatingIncome": 129039000000,
-        "interestExpense": 308000000,
-        "revenue": 350018000000,
+        "interestExpense": 736000000,
+        "revenue": 402836000000,
         "netIncome": 132170000000,
         "totalDebt": 48543000000,
         "cashFromOps": 164713000000,
@@ -548,7 +603,7 @@
             "operatingIncome": 41224000000,
             "incomeTaxExpense": 7813000000,
             "netIncome": 40269000000,
-            "totalDebt": 999000000,
+            "totalDebt": 16318000000,
             "stockholdersEquity": 222544000000,
             "cashAndEquivalents": 26465000000,
             "cashFromOps": 65124000000,
@@ -567,7 +622,7 @@
             "operatingIncome": 78714000000,
             "incomeTaxExpense": 14701000000,
             "netIncome": 76033000000,
-            "totalDebt": 0,
+            "totalDebt": 15440000000,
             "stockholdersEquity": 251635000000,
             "cashAndEquivalents": 20945000000,
             "cashFromOps": 91652000000,
@@ -586,7 +641,7 @@
             "operatingIncome": 74842000000,
             "incomeTaxExpense": 11356000000,
             "netIncome": 59972000000,
-            "totalDebt": 0,
+            "totalDebt": 15312000000,
             "stockholdersEquity": 256144000000,
             "cashAndEquivalents": 21879000000,
             "cashFromOps": 91495000000,
@@ -635,8 +690,45 @@
             "buybacks": 62222000000,
             "sharesDiluted": 12447000000
           }
+        },
+        {
+          "fy": 2025,
+          "lines": {
+            "revenue": 402836000000,
+            "operatingIncome": 129039000000,
+            "incomeTaxExpense": 26656000000,
+            "netIncome": 132170000000,
+            "totalDebt": 48543000000,
+            "stockholdersEquity": 415265000000,
+            "cashAndEquivalents": 30708000000,
+            "cashFromOps": 164713000000,
+            "capex": 91447000000,
+            "costOfRevenue": 162535000000,
+            "depreciation": null,
+            "dividendsPaid": 10049000000,
+            "buybacks": 45709000000,
+            "sharesDiluted": 12230000000
+          }
         }
-      ]
+      ],
+      "ttm": {
+        "asOf": "2026-03-31",
+        "isFY": false,
+        "lines": {
+          "revenue": 422498000000,
+          "operatingIncome": 138129000000,
+          "netIncome": 160208000000,
+          "incomeTaxExpense": 34241000000,
+          "cashFromOps": 174353000000,
+          "capex": 109924000000,
+          "costOfRevenue": 167445000000,
+          "depreciation": null,
+          "stockholdersEquity": 478746000000,
+          "cashAndEquivalents": 38063000000,
+          "totalDebt": 79499000000,
+          "sharesDiluted": 12238000000
+        }
+      }
     },
     {
       "ticker": "META",
@@ -650,7 +742,7 @@
       "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1326801/000162828026003942/0001628280-26-003942-index.htm",
       "lines": {
         "operatingIncome": 83276000000,
-        "interestExpense": 446000000,
+        "interestExpense": 1165000000,
         "revenue": 200966000000,
         "netIncome": 60458000000,
         "totalDebt": 58744000000,
@@ -666,7 +758,7 @@
         "cashAndEquivalents": 35873000000,
         "receivables": 19769000000,
         "inventory": null,
-        "accountsPayable": 1331000000,
+        "accountsPayable": 8894000000,
         "sharesDiluted": 2574000000
       },
       "history": [
@@ -860,7 +952,25 @@
             "sharesDiluted": 2574000000
           }
         }
-      ]
+      ],
+      "ttm": {
+        "asOf": "2026-03-31",
+        "isFY": false,
+        "lines": {
+          "revenue": 214963000000,
+          "operatingIncome": 88593000000,
+          "netIncome": 70587000000,
+          "incomeTaxExpense": 18715000000,
+          "cashFromOps": 124000000000,
+          "capex": 75747000000,
+          "costOfRevenue": 38821000000,
+          "depreciation": 20715000000,
+          "stockholdersEquity": 243681000000,
+          "cashAndEquivalents": 23426000000,
+          "totalDebt": 58748000000,
+          "sharesDiluted": 2564000000
+        }
+      }
     },
     {
       "ticker": "AMZN",
@@ -874,13 +984,13 @@
       "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1018724/000101872426000004/0001018724-26-000004-index.htm",
       "lines": {
         "operatingIncome": 79975000000,
-        "interestExpense": 3182000000,
+        "interestExpense": 2274000000,
         "revenue": 716924000000,
         "netIncome": 77670000000,
         "totalDebt": 68396000000,
         "cashFromOps": 139514000000,
         "depreciation": 65756000000,
-        "capex": 6737000000,
+        "capex": 131819000000,
         "incomeTaxExpense": 19087000000,
         "costOfRevenue": 356414000000,
         "stockBasedComp": 19467000000,
@@ -924,7 +1034,7 @@
             "stockholdersEquity": 27709000000,
             "cashAndEquivalents": 20522000000,
             "cashFromOps": 18365000000,
-            "capex": null,
+            "capex": 11955000000,
             "costOfRevenue": 111934000000,
             "depreciation": 11478000000,
             "dividendsPaid": null,
@@ -943,7 +1053,7 @@
             "stockholdersEquity": 43549000000,
             "cashAndEquivalents": 31750000000,
             "cashFromOps": 30723000000,
-            "capex": null,
+            "capex": 13427000000,
             "costOfRevenue": 139156000000,
             "depreciation": 15341000000,
             "dividendsPaid": null,
@@ -962,7 +1072,7 @@
             "stockholdersEquity": 62060000000,
             "cashAndEquivalents": 36092000000,
             "cashFromOps": 38514000000,
-            "capex": null,
+            "capex": 16861000000,
             "costOfRevenue": 165536000000,
             "depreciation": 21789000000,
             "dividendsPaid": null,
@@ -981,7 +1091,7 @@
             "stockholdersEquity": 93404000000,
             "cashAndEquivalents": 42122000000,
             "cashFromOps": 66064000000,
-            "capex": null,
+            "capex": 40140000000,
             "costOfRevenue": 233307000000,
             "depreciation": 25180000000,
             "dividendsPaid": null,
@@ -1000,7 +1110,7 @@
             "stockholdersEquity": 138245000000,
             "cashAndEquivalents": 36220000000,
             "cashFromOps": 46327000000,
-            "capex": null,
+            "capex": 61053000000,
             "costOfRevenue": 272344000000,
             "depreciation": 34433000000,
             "dividendsPaid": null,
@@ -1019,7 +1129,7 @@
             "stockholdersEquity": 146043000000,
             "cashAndEquivalents": 53888000000,
             "cashFromOps": 46752000000,
-            "capex": null,
+            "capex": 63645000000,
             "costOfRevenue": 288831000000,
             "depreciation": 41921000000,
             "dividendsPaid": null,
@@ -1038,7 +1148,7 @@
             "stockholdersEquity": 201875000000,
             "cashAndEquivalents": 73387000000,
             "cashFromOps": 84946000000,
-            "capex": null,
+            "capex": 52729000000,
             "costOfRevenue": 304739000000,
             "depreciation": 48663000000,
             "dividendsPaid": null,
@@ -1057,7 +1167,7 @@
             "stockholdersEquity": 285970000000,
             "cashAndEquivalents": 78779000000,
             "cashFromOps": 115877000000,
-            "capex": null,
+            "capex": 82999000000,
             "costOfRevenue": 326288000000,
             "depreciation": 52795000000,
             "dividendsPaid": null,
@@ -1076,7 +1186,7 @@
             "stockholdersEquity": 411065000000,
             "cashAndEquivalents": 86810000000,
             "cashFromOps": 139514000000,
-            "capex": null,
+            "capex": 131819000000,
             "costOfRevenue": 356414000000,
             "depreciation": 65756000000,
             "dividendsPaid": null,
@@ -1084,7 +1194,25 @@
             "sharesDiluted": 10827000000
           }
         }
-      ]
+      ],
+      "ttm": {
+        "asOf": "2026-03-31",
+        "isFY": false,
+        "lines": {
+          "revenue": 742776000000,
+          "operatingIncome": 85422000000,
+          "netIncome": 90798000000,
+          "incomeTaxExpense": 24094000000,
+          "cashFromOps": 148531000000,
+          "capex": 151003000000,
+          "costOfRevenue": 366901000000,
+          "depreciation": 70439000000,
+          "stockholdersEquity": 441914000000,
+          "cashAndEquivalents": 101816000000,
+          "totalDebt": 121906000000,
+          "sharesDiluted": 10874000000
+        }
+      }
     },
     {
       "ticker": "NVDA",
@@ -1098,15 +1226,15 @@
       "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1045810/000104581026000021/0001045810-26-000021-index.htm",
       "lines": {
         "operatingIncome": 130387000000,
-        "interestExpense": 257000000,
-        "revenue": 26914000000,
+        "interestExpense": 259000000,
+        "revenue": 215938000000,
         "netIncome": 120067000000,
         "totalDebt": 8468000000,
         "cashFromOps": 102718000000,
         "depreciation": 2843000000,
-        "capex": 138735000,
+        "capex": 6042000000,
         "incomeTaxExpense": 21383000000,
-        "costOfRevenue": 6279000000,
+        "costOfRevenue": 62475000000,
         "stockBasedComp": 6386000000,
         "dividendsPaid": 974000000,
         "buybacks": 40086000000,
@@ -1125,13 +1253,13 @@
             "operatingIncome": 1934000000,
             "incomeTaxExpense": 239000000,
             "netIncome": 1666000000,
-            "totalDebt": null,
+            "totalDebt": 1983000000,
             "stockholdersEquity": 5762000000,
             "cashAndEquivalents": 1766000000,
             "cashFromOps": 1672000000,
             "capex": null,
             "costOfRevenue": 2847000000,
-            "depreciation": null,
+            "depreciation": 187000000,
             "dividendsPaid": 261000000,
             "buybacks": 739000000,
             "sharesDiluted": 649000000
@@ -1144,13 +1272,13 @@
             "operatingIncome": 3210000000,
             "incomeTaxExpense": 149000000,
             "netIncome": 3047000000,
-            "totalDebt": null,
+            "totalDebt": 1985000000,
             "stockholdersEquity": 7471000000,
             "cashAndEquivalents": 4002000000,
             "cashFromOps": 3502000000,
             "capex": null,
             "costOfRevenue": 3892000000,
-            "depreciation": null,
+            "depreciation": 199000000,
             "dividendsPaid": 341000000,
             "buybacks": 909000000,
             "sharesDiluted": 632000000
@@ -1163,13 +1291,13 @@
             "operatingIncome": 3804000000,
             "incomeTaxExpense": -245000000,
             "netIncome": 4141000000,
-            "totalDebt": null,
+            "totalDebt": 1988000000,
             "stockholdersEquity": 9342000000,
             "cashAndEquivalents": 782000000,
             "cashFromOps": 3743000000,
             "capex": null,
             "costOfRevenue": 4545000000,
-            "depreciation": null,
+            "depreciation": 262000000,
             "dividendsPaid": 371000000,
             "buybacks": 1579000000,
             "sharesDiluted": 625000000
@@ -1224,15 +1352,109 @@
             "stockholdersEquity": 26612000000,
             "cashAndEquivalents": 1990000000,
             "cashFromOps": 9108000000,
-            "capex": null,
-            "costOfRevenue": null,
+            "capex": 976000000,
+            "costOfRevenue": 9439000000,
             "depreciation": 1174000000,
             "dividendsPaid": 399000000,
             "buybacks": 0,
             "sharesDiluted": 2535000000
           }
+        },
+        {
+          "fy": 2023,
+          "lines": {
+            "revenue": 26974000000,
+            "operatingIncome": 4224000000,
+            "incomeTaxExpense": -187000000,
+            "netIncome": 4368000000,
+            "totalDebt": 10953000000,
+            "stockholdersEquity": 22101000000,
+            "cashAndEquivalents": 3389000000,
+            "cashFromOps": 5641000000,
+            "capex": 1833000000,
+            "costOfRevenue": 11618000000,
+            "depreciation": 1544000000,
+            "dividendsPaid": 398000000,
+            "buybacks": 10039000000,
+            "sharesDiluted": 25070000000
+          }
+        },
+        {
+          "fy": 2024,
+          "lines": {
+            "revenue": 60922000000,
+            "operatingIncome": 32972000000,
+            "incomeTaxExpense": 4058000000,
+            "netIncome": 29760000000,
+            "totalDebt": 9709000000,
+            "stockholdersEquity": 42978000000,
+            "cashAndEquivalents": 7280000000,
+            "cashFromOps": 28090000000,
+            "capex": 1069000000,
+            "costOfRevenue": 16621000000,
+            "depreciation": 1508000000,
+            "dividendsPaid": 395000000,
+            "buybacks": 9533000000,
+            "sharesDiluted": 24940000000
+          }
+        },
+        {
+          "fy": 2025,
+          "lines": {
+            "revenue": 130497000000,
+            "operatingIncome": 81453000000,
+            "incomeTaxExpense": 11146000000,
+            "netIncome": 72880000000,
+            "totalDebt": 8463000000,
+            "stockholdersEquity": 79327000000,
+            "cashAndEquivalents": 8589000000,
+            "cashFromOps": 64089000000,
+            "capex": 3236000000,
+            "costOfRevenue": 32639000000,
+            "depreciation": 1864000000,
+            "dividendsPaid": 834000000,
+            "buybacks": 33706000000,
+            "sharesDiluted": 24804000000
+          }
+        },
+        {
+          "fy": 2026,
+          "lines": {
+            "revenue": 215938000000,
+            "operatingIncome": 130387000000,
+            "incomeTaxExpense": 21383000000,
+            "netIncome": 120067000000,
+            "totalDebt": 8468000000,
+            "stockholdersEquity": 157293000000,
+            "cashAndEquivalents": 10605000000,
+            "cashFromOps": 102718000000,
+            "capex": 6042000000,
+            "costOfRevenue": 62475000000,
+            "depreciation": 2843000000,
+            "dividendsPaid": 974000000,
+            "buybacks": 40086000000,
+            "sharesDiluted": 24514000000
+          }
         }
-      ]
+      ],
+      "ttm": {
+        "asOf": "2026-04-26",
+        "isFY": false,
+        "lines": {
+          "revenue": 253491000000,
+          "operatingIncome": 162285000000,
+          "netIncome": 159613000000,
+          "incomeTaxExpense": 29830000000,
+          "cashFromOps": 125648000000,
+          "capex": 6572000000,
+          "costOfRevenue": 65539000000,
+          "depreciation": 3229000000,
+          "stockholdersEquity": 195474000000,
+          "cashAndEquivalents": 13237000000,
+          "totalDebt": 8470000000,
+          "sharesDiluted": 24391000000
+        }
+      }
     },
     {
       "ticker": "AVGO",
@@ -1246,7 +1468,7 @@
       "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1730168/000173016825000121/0001730168-25-000121-index.htm",
       "lines": {
         "operatingIncome": 25484000000,
-        "interestExpense": 3953000000,
+        "interestExpense": 3210000000,
         "revenue": 63887000000,
         "netIncome": 5895000000,
         "totalDebt": 42592000000,
@@ -1254,7 +1476,7 @@
         "depreciation": null,
         "capex": 623000000,
         "incomeTaxExpense": -397000000,
-        "costOfRevenue": 10115000000,
+        "costOfRevenue": 20593000000,
         "stockBasedComp": 7568000000,
         "dividendsPaid": 11142000000,
         "buybacks": 2450000000,
@@ -1266,6 +1488,25 @@
         "sharesDiluted": 4853000000
       },
       "history": [
+        {
+          "fy": 2016,
+          "lines": {
+            "revenue": 13240000000,
+            "operatingIncome": -409000000,
+            "incomeTaxExpense": 642000000,
+            "netIncome": -1739000000,
+            "totalDebt": null,
+            "stockholdersEquity": null,
+            "cashAndEquivalents": 3097000000,
+            "cashFromOps": 3411000000,
+            "capex": 723000000,
+            "costOfRevenue": 7300000000,
+            "depreciation": null,
+            "dividendsPaid": 716000000,
+            "buybacks": 0,
+            "sharesDiluted": 383000000
+          }
+        },
         {
           "fy": 2017,
           "lines": {
@@ -1316,7 +1557,7 @@
             "cashAndEquivalents": 5055000000,
             "cashFromOps": 9697000000,
             "capex": 432000000,
-            "costOfRevenue": null,
+            "costOfRevenue": 10114000000,
             "depreciation": null,
             "dividendsPaid": 4235000000,
             "buybacks": 5435000000,
@@ -1335,7 +1576,7 @@
             "cashAndEquivalents": 7618000000,
             "cashFromOps": 12061000000,
             "capex": 463000000,
-            "costOfRevenue": null,
+            "costOfRevenue": 10372000000,
             "depreciation": null,
             "dividendsPaid": 5235000000,
             "buybacks": 0,
@@ -1354,7 +1595,7 @@
             "cashAndEquivalents": 12163000000,
             "cashFromOps": 13764000000,
             "capex": 443000000,
-            "costOfRevenue": null,
+            "costOfRevenue": 10606000000,
             "depreciation": null,
             "dividendsPaid": 5913000000,
             "buybacks": 0,
@@ -1373,7 +1614,7 @@
             "cashAndEquivalents": 12416000000,
             "cashFromOps": 16736000000,
             "capex": 424000000,
-            "costOfRevenue": null,
+            "costOfRevenue": 11108000000,
             "depreciation": null,
             "dividendsPaid": 6733000000,
             "buybacks": 7000000000,
@@ -1392,7 +1633,7 @@
             "cashAndEquivalents": 14189000000,
             "cashFromOps": 18085000000,
             "capex": 452000000,
-            "costOfRevenue": null,
+            "costOfRevenue": 11129000000,
             "depreciation": null,
             "dividendsPaid": 7645000000,
             "buybacks": 5824000000,
@@ -1411,7 +1652,7 @@
             "cashAndEquivalents": 9348000000,
             "cashFromOps": 19962000000,
             "capex": 548000000,
-            "costOfRevenue": null,
+            "costOfRevenue": 19065000000,
             "depreciation": null,
             "dividendsPaid": 9814000000,
             "buybacks": 7176000000,
@@ -1430,14 +1671,32 @@
             "cashAndEquivalents": 16178000000,
             "cashFromOps": 27537000000,
             "capex": 623000000,
-            "costOfRevenue": null,
+            "costOfRevenue": 20593000000,
             "depreciation": null,
             "dividendsPaid": 11142000000,
             "buybacks": 2450000000,
             "sharesDiluted": 4853000000
           }
         }
-      ]
+      ],
+      "ttm": {
+        "asOf": "2026-05-03",
+        "isFY": false,
+        "lines": {
+          "revenue": 75465000000,
+          "operatingIncome": 32746000000,
+          "netIncome": 5895000000,
+          "incomeTaxExpense": 1162000000,
+          "cashFromOps": 33622000000,
+          "capex": 860000000,
+          "costOfRevenue": 23941000000,
+          "depreciation": null,
+          "stockholdersEquity": 24941000000,
+          "cashAndEquivalents": 19628000000,
+          "totalDebt": 64907000000,
+          "sharesDiluted": 4882000000
+        }
+      }
     },
     {
       "ticker": "AMD",
@@ -1497,7 +1756,7 @@
             "operatingIncome": 127000000,
             "incomeTaxExpense": 18000000,
             "netIncome": -33000000,
-            "totalDebt": 1325000000,
+            "totalDebt": 1395000000,
             "stockholdersEquity": 596000000,
             "cashAndEquivalents": 1185000000,
             "cashFromOps": 12000000,
@@ -1516,7 +1775,7 @@
             "operatingIncome": 451000000,
             "incomeTaxExpense": -9000000,
             "netIncome": 337000000,
-            "totalDebt": 1114000000,
+            "totalDebt": 1250000000,
             "stockholdersEquity": 1266000000,
             "cashAndEquivalents": 1078000000,
             "cashFromOps": 34000000,
@@ -1661,7 +1920,25 @@
             "sharesDiluted": 1636000000
           }
         }
-      ]
+      ],
+      "ttm": {
+        "asOf": "2026-03-28",
+        "isFY": false,
+        "lines": {
+          "revenue": 37454000000,
+          "operatingIncome": 4364000000,
+          "netIncome": 5009000000,
+          "incomeTaxExpense": 12000000,
+          "cashFromOps": 9725000000,
+          "capex": 1151000000,
+          "costOfRevenue": 18622000000,
+          "depreciation": 222000000,
+          "stockholdersEquity": 64462000000,
+          "cashAndEquivalents": 5585000000,
+          "totalDebt": 3224000000,
+          "sharesDiluted": 1650000000
+        }
+      }
     },
     {
       "ticker": "ORCL",
@@ -1695,6 +1972,25 @@
         "sharesDiluted": 2866000000
       },
       "history": [
+        {
+          "fy": 2016,
+          "lines": {
+            "revenue": 37047000000,
+            "operatingIncome": 12604000000,
+            "incomeTaxExpense": 2541000000,
+            "netIncome": 8901000000,
+            "totalDebt": 3750000000,
+            "stockholdersEquity": 47289000000,
+            "cashAndEquivalents": 20152000000,
+            "cashFromOps": 13685000000,
+            "capex": 1189000000,
+            "costOfRevenue": null,
+            "depreciation": null,
+            "dividendsPaid": 2541000000,
+            "buybacks": 10440000000,
+            "sharesDiluted": 4305000000
+          }
+        },
         {
           "fy": 2017,
           "lines": {
@@ -1866,7 +2162,25 @@
             "sharesDiluted": 2866000000
           }
         }
-      ]
+      ],
+      "ttm": {
+        "asOf": "2026-02-28",
+        "isFY": false,
+        "lines": {
+          "revenue": 64076000000,
+          "operatingIncome": 19582000000,
+          "netIncome": 16210000000,
+          "incomeTaxExpense": 2127000000,
+          "cashFromOps": 23514000000,
+          "capex": 48250000000,
+          "costOfRevenue": 2057000000,
+          "depreciation": null,
+          "stockholdersEquity": 38495000000,
+          "cashAndEquivalents": 38455000000,
+          "totalDebt": 7271000000,
+          "sharesDiluted": 2914000000
+        }
+      }
     },
     {
       "ticker": "CRM",
@@ -1874,7 +2188,7 @@
       "cik": "0001108524",
       "sic": "7372",
       "sicDescription": "Services-Prepackaged Software",
-      "fy": 2025,
+      "fy": 2026,
       "periodEnd": "2026-01-31",
       "form": "10-K",
       "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1108524/000110852426000060/0001108524-26-000060-index.htm",
@@ -1913,7 +2227,7 @@
             "cashFromOps": 2162000000,
             "capex": 464000000,
             "costOfRevenue": 2234000000,
-            "depreciation": null,
+            "depreciation": 632000000,
             "dividendsPaid": null,
             "buybacks": null,
             "sharesDiluted": 700000000
@@ -2090,7 +2404,25 @@
             "sharesDiluted": 956000000
           }
         }
-      ]
+      ],
+      "ttm": {
+        "asOf": "2026-04-30",
+        "isFY": false,
+        "lines": {
+          "revenue": 42829000000,
+          "operatingIncome": 8736000000,
+          "netIncome": 8023000000,
+          "incomeTaxExpense": 2244000000,
+          "cashFromOps": 15221000000,
+          "capex": 560000000,
+          "costOfRevenue": 9575000000,
+          "depreciation": 1342000000,
+          "stockholdersEquity": 34235000000,
+          "cashAndEquivalents": 8935000000,
+          "totalDebt": 39280000000,
+          "sharesDiluted": 871000000
+        }
+      }
     },
     {
       "ticker": "ADBE",
@@ -2104,10 +2436,10 @@
       "sourceUrl": "https://www.sec.gov/Archives/edgar/data/796343/000079634326000003/0000796343-26-000003-index.htm",
       "lines": {
         "operatingIncome": 8706000000,
-        "interestExpense": 113000000,
+        "interestExpense": 263000000,
         "revenue": 23769000000,
         "netIncome": 7130000000,
-        "totalDebt": 1000000000,
+        "totalDebt": 6210000000,
         "cashFromOps": 10031000000,
         "depreciation": 818000000,
         "capex": 179000000,
@@ -2169,7 +2501,7 @@
             "operatingIncome": 2840000000,
             "incomeTaxExpense": 203000000,
             "netIncome": 2591000000,
-            "totalDebt": null,
+            "totalDebt": 0,
             "stockholdersEquity": 9362000000,
             "cashAndEquivalents": 1643000000,
             "cashFromOps": 4029000000,
@@ -2188,7 +2520,7 @@
             "operatingIncome": 3268000000,
             "incomeTaxExpense": 254000000,
             "netIncome": 2951000000,
-            "totalDebt": null,
+            "totalDebt": 4138000000,
             "stockholdersEquity": 10530000000,
             "cashAndEquivalents": 2650000000,
             "cashFromOps": 4422000000,
@@ -2207,7 +2539,7 @@
             "operatingIncome": 4237000000,
             "incomeTaxExpense": -1084000000,
             "netIncome": 5260000000,
-            "totalDebt": null,
+            "totalDebt": 4117000000,
             "stockholdersEquity": 13264000000,
             "cashAndEquivalents": 4478000000,
             "cashFromOps": 5727000000,
@@ -2226,7 +2558,7 @@
             "operatingIncome": 5802000000,
             "incomeTaxExpense": 883000000,
             "netIncome": 4822000000,
-            "totalDebt": null,
+            "totalDebt": 4123000000,
             "stockholdersEquity": 14797000000,
             "cashAndEquivalents": 3844000000,
             "cashFromOps": 7230000000,
@@ -2245,7 +2577,7 @@
             "operatingIncome": 6098000000,
             "incomeTaxExpense": 1252000000,
             "netIncome": 4756000000,
-            "totalDebt": null,
+            "totalDebt": 4129000000,
             "stockholdersEquity": 14051000000,
             "cashAndEquivalents": 4236000000,
             "cashFromOps": 7838000000,
@@ -2264,7 +2596,7 @@
             "operatingIncome": 6650000000,
             "incomeTaxExpense": 1371000000,
             "netIncome": 5428000000,
-            "totalDebt": null,
+            "totalDebt": 3634000000,
             "stockholdersEquity": 16518000000,
             "cashAndEquivalents": 7141000000,
             "cashFromOps": 7302000000,
@@ -2283,7 +2615,7 @@
             "operatingIncome": 6741000000,
             "incomeTaxExpense": 1371000000,
             "netIncome": 5560000000,
-            "totalDebt": 1500000000,
+            "totalDebt": 5629000000,
             "stockholdersEquity": 14105000000,
             "cashAndEquivalents": 7613000000,
             "cashFromOps": 8056000000,
@@ -2302,7 +2634,7 @@
             "operatingIncome": 8706000000,
             "incomeTaxExpense": 1604000000,
             "netIncome": 7130000000,
-            "totalDebt": 0,
+            "totalDebt": 6210000000,
             "stockholdersEquity": 11623000000,
             "cashAndEquivalents": 5431000000,
             "cashFromOps": 10031000000,
@@ -2314,7 +2646,25 @@
             "sharesDiluted": 427000000
           }
         }
-      ]
+      ],
+      "ttm": {
+        "asOf": "2026-02-27",
+        "isFY": false,
+        "lines": {
+          "revenue": 24453000000,
+          "operatingIncome": 8961000000,
+          "netIncome": 7208000000,
+          "incomeTaxExpense": 1766000000,
+          "cashFromOps": 10507000000,
+          "capex": 190000000,
+          "costOfRevenue": 2593000000,
+          "depreciation": 775000000,
+          "stockholdersEquity": 11433000000,
+          "cashAndEquivalents": 6332000000,
+          "totalDebt": 6229000000,
+          "sharesDiluted": 410800000
+        }
+      }
     },
     {
       "ticker": "KO",
@@ -2538,7 +2888,25 @@
             "sharesDiluted": 4313000000
           }
         }
-      ]
+      ],
+      "ttm": {
+        "asOf": "2026-04-03",
+        "isFY": false,
+        "lines": {
+          "revenue": 49284000000,
+          "operatingIncome": 14462000000,
+          "netIncome": 13701000000,
+          "incomeTaxExpense": 2784000000,
+          "cashFromOps": 14631000000,
+          "capex": 2069000000,
+          "costOfRevenue": 18854000000,
+          "depreciation": 1047000000,
+          "stockholdersEquity": 33633000000,
+          "cashAndEquivalents": 10574000000,
+          "totalDebt": 36496000000,
+          "sharesDiluted": 4314000000
+        }
+      }
     },
     {
       "ticker": "PEP",
@@ -2555,7 +2923,7 @@
         "interestExpense": 1121000000,
         "revenue": 93925000000,
         "netIncome": 8240000000,
-        "totalDebt": 44521000000,
+        "totalDebt": 49182000000,
         "cashFromOps": 12087000000,
         "depreciation": 3451000000,
         "capex": 4415000000,
@@ -2579,7 +2947,7 @@
             "operatingIncome": 9804000000,
             "incomeTaxExpense": 2174000000,
             "netIncome": 6329000000,
-            "totalDebt": 30053000000,
+            "totalDebt": 36945000000,
             "stockholdersEquity": 11246000000,
             "cashAndEquivalents": 9158000000,
             "cashFromOps": 10663000000,
@@ -2598,7 +2966,7 @@
             "operatingIncome": 10276000000,
             "incomeTaxExpense": 4694000000,
             "netIncome": 4857000000,
-            "totalDebt": 33796000000,
+            "totalDebt": 39281000000,
             "stockholdersEquity": 11045000000,
             "cashAndEquivalents": 10610000000,
             "cashFromOps": 10030000000,
@@ -2617,7 +2985,7 @@
             "operatingIncome": 10110000000,
             "incomeTaxExpense": -3370000000,
             "netIncome": 12515000000,
-            "totalDebt": 28295000000,
+            "totalDebt": 32321000000,
             "stockholdersEquity": 14518000000,
             "cashAndEquivalents": 8721000000,
             "cashFromOps": 9415000000,
@@ -2636,7 +3004,7 @@
             "operatingIncome": 10291000000,
             "incomeTaxExpense": 1959000000,
             "netIncome": 7314000000,
-            "totalDebt": 29148000000,
+            "totalDebt": 32068000000,
             "stockholdersEquity": 14786000000,
             "cashAndEquivalents": 5509000000,
             "cashFromOps": 9649000000,
@@ -2655,7 +3023,7 @@
             "operatingIncome": 10080000000,
             "incomeTaxExpense": 1894000000,
             "netIncome": 7120000000,
-            "totalDebt": 40370000000,
+            "totalDebt": 44150000000,
             "stockholdersEquity": 13454000000,
             "cashAndEquivalents": 8185000000,
             "cashFromOps": 10613000000,
@@ -2674,7 +3042,7 @@
             "operatingIncome": 11162000000,
             "incomeTaxExpense": 2142000000,
             "netIncome": 7618000000,
-            "totalDebt": 36026000000,
+            "totalDebt": 40334000000,
             "stockholdersEquity": 16043000000,
             "cashAndEquivalents": 5596000000,
             "cashFromOps": 11616000000,
@@ -2693,7 +3061,7 @@
             "operatingIncome": 11512000000,
             "incomeTaxExpense": 1727000000,
             "netIncome": 8910000000,
-            "totalDebt": 35657000000,
+            "totalDebt": 39071000000,
             "stockholdersEquity": 17149000000,
             "cashAndEquivalents": 4954000000,
             "cashFromOps": 10811000000,
@@ -2712,7 +3080,7 @@
             "operatingIncome": 11986000000,
             "incomeTaxExpense": 2262000000,
             "netIncome": 9074000000,
-            "totalDebt": 37595000000,
+            "totalDebt": 44105000000,
             "stockholdersEquity": 18503000000,
             "cashAndEquivalents": 9711000000,
             "cashFromOps": 13442000000,
@@ -2731,7 +3099,7 @@
             "operatingIncome": 12887000000,
             "incomeTaxExpense": 2320000000,
             "netIncome": 9578000000,
-            "totalDebt": 37224000000,
+            "totalDebt": 44306000000,
             "stockholdersEquity": 18041000000,
             "cashAndEquivalents": 8505000000,
             "cashFromOps": 12507000000,
@@ -2750,7 +3118,7 @@
             "operatingIncome": 11498000000,
             "incomeTaxExpense": 1949000000,
             "netIncome": 8240000000,
-            "totalDebt": 42321000000,
+            "totalDebt": 49182000000,
             "stockholdersEquity": 20406000000,
             "cashAndEquivalents": 9159000000,
             "cashFromOps": 12087000000,
@@ -2762,7 +3130,25 @@
             "sharesDiluted": 1373000000
           }
         }
-      ]
+      ],
+      "ttm": {
+        "asOf": "2026-03-21",
+        "isFY": false,
+        "lines": {
+          "revenue": 95449000000,
+          "operatingIncome": 12128000000,
+          "netIncome": 8733000000,
+          "incomeTaxExpense": 2082000000,
+          "cashFromOps": 13101000000,
+          "capex": 4259000000,
+          "costOfRevenue": 43852000000,
+          "depreciation": 3509000000,
+          "stockholdersEquity": 21383000000,
+          "cashAndEquivalents": 10475000000,
+          "totalDebt": 43921000000,
+          "sharesDiluted": 1371000000
+        }
+      }
     },
     {
       "ticker": "KDP",
@@ -2786,7 +3172,7 @@
         "incomeTaxExpense": 608000000,
         "costOfRevenue": 7604000000,
         "stockBasedComp": 97000000,
-        "dividendsPaid": 414000000,
+        "dividendsPaid": 1250000000,
         "buybacks": 9000000,
         "stockholdersEquity": 25516000000,
         "cashAndEquivalents": 1026000000,
@@ -2829,7 +3215,7 @@
             "capex": 180000000,
             "costOfRevenue": 3560000000,
             "depreciation": null,
-            "dividendsPaid": null,
+            "dividendsPaid": 232000000,
             "buybacks": null,
             "sharesDiluted": 1097600000
           }
@@ -2848,7 +3234,7 @@
             "capex": 330000000,
             "costOfRevenue": 4778000000,
             "depreciation": null,
-            "dividendsPaid": null,
+            "dividendsPaid": 844000000,
             "buybacks": null,
             "sharesDiluted": 1419100000
           }
@@ -2867,7 +3253,7 @@
             "capex": 461000000,
             "costOfRevenue": 5132000000,
             "depreciation": null,
-            "dividendsPaid": null,
+            "dividendsPaid": 846000000,
             "buybacks": 0,
             "sharesDiluted": 1422100000
           }
@@ -2886,7 +3272,7 @@
             "capex": 423000000,
             "costOfRevenue": 5706000000,
             "depreciation": null,
-            "dividendsPaid": null,
+            "dividendsPaid": 955000000,
             "buybacks": 0,
             "sharesDiluted": 1427900000
           }
@@ -2905,7 +3291,7 @@
             "capex": 353000000,
             "costOfRevenue": 6734000000,
             "depreciation": null,
-            "dividendsPaid": null,
+            "dividendsPaid": 1080000000,
             "buybacks": 379000000,
             "sharesDiluted": 1428500000
           }
@@ -2924,7 +3310,7 @@
             "capex": 425000000,
             "costOfRevenue": 6734000000,
             "depreciation": null,
-            "dividendsPaid": null,
+            "dividendsPaid": 1142000000,
             "buybacks": 706000000,
             "sharesDiluted": 1408400000
           }
@@ -2943,7 +3329,7 @@
             "capex": 563000000,
             "costOfRevenue": 6822000000,
             "depreciation": null,
-            "dividendsPaid": null,
+            "dividendsPaid": 1194000000,
             "buybacks": 1110000000,
             "sharesDiluted": 1368300000
           }
@@ -2962,12 +3348,30 @@
             "capex": 486000000,
             "costOfRevenue": 7604000000,
             "depreciation": null,
-            "dividendsPaid": null,
+            "dividendsPaid": 1250000000,
             "buybacks": 9000000,
             "sharesDiluted": 1362800000
           }
         }
-      ]
+      ],
+      "ttm": {
+        "asOf": "2026-03-31",
+        "isFY": false,
+        "lines": {
+          "revenue": 16944000000,
+          "operatingIncome": 3530000000,
+          "netIncome": 1832000000,
+          "incomeTaxExpense": 552000000,
+          "cashFromOps": 2063000000,
+          "capex": 482000000,
+          "costOfRevenue": 7832000000,
+          "depreciation": 107000000,
+          "stockholdersEquity": 25261000000,
+          "cashAndEquivalents": 898000000,
+          "totalDebt": 22886000000,
+          "sharesDiluted": 1363700000
+        }
+      }
     },
     {
       "ticker": "MNST",
@@ -3013,7 +3417,7 @@
             "cashAndEquivalents": 377582000,
             "cashFromOps": 701355000,
             "capex": 99819000,
-            "costOfRevenue": null,
+            "costOfRevenue": 1107393000,
             "depreciation": 40845000,
             "dividendsPaid": null,
             "buybacks": 2252437000,
@@ -3191,7 +3595,25 @@
             "sharesDiluted": 984451000
           }
         }
-      ]
+      ],
+      "ttm": {
+        "asOf": "2026-03-31",
+        "isFY": false,
+        "lines": {
+          "revenue": 8793076000,
+          "operatingIncome": 2579567000,
+          "netIncome": null,
+          "incomeTaxExpense": 622716000,
+          "cashFromOps": 2195563000,
+          "capex": 123823000,
+          "costOfRevenue": 3915494000,
+          "depreciation": 117993000,
+          "stockholdersEquity": 8727035000,
+          "cashAndEquivalents": 2039700000,
+          "totalDebt": 199059000,
+          "sharesDiluted": 988258000
+        }
+      }
     },
     {
       "ticker": "STZ",
@@ -3205,7 +3627,7 @@
       "sourceUrl": "https://www.sec.gov/Archives/edgar/data/16918/000001691826000011/0000016918-26-000011-index.htm",
       "lines": {
         "operatingIncome": 2721400000,
-        "interestExpense": 379100000,
+        "interestExpense": 361600000,
         "revenue": 9139000000,
         "netIncome": 1686700000,
         "totalDebt": 10296500000,
@@ -3415,7 +3837,25 @@
             "sharesDiluted": null
           }
         }
-      ]
+      ],
+      "ttm": {
+        "asOf": "2026-02-28",
+        "isFY": true,
+        "lines": {
+          "revenue": 9139000000,
+          "operatingIncome": 2721400000,
+          "netIncome": 1686700000,
+          "incomeTaxExpense": 621000000,
+          "cashFromOps": 2669000000,
+          "capex": 875000000,
+          "costOfRevenue": 4427500000,
+          "depreciation": 420000000,
+          "stockholdersEquity": 8082400000,
+          "cashAndEquivalents": 102400000,
+          "totalDebt": 10296500000,
+          "sharesDiluted": null
+        }
+      }
     },
     {
       "ticker": "PG",
@@ -3429,7 +3869,7 @@
       "sourceUrl": "https://www.sec.gov/Archives/edgar/data/80424/000008042425000076/0000080424-25-000076-index.htm",
       "lines": {
         "operatingIncome": 20451000000,
-        "interestExpense": 756000000,
+        "interestExpense": 907000000,
         "revenue": 84284000000,
         "netIncome": 15974000000,
         "totalDebt": 30372000000,
@@ -3461,7 +3901,7 @@
             "cashAndEquivalents": 8548000000,
             "cashFromOps": 13958000000,
             "capex": 3848000000,
-            "costOfRevenue": null,
+            "costOfRevenue": 39030000000,
             "depreciation": 3141000000,
             "dividendsPaid": 6911000000,
             "buybacks": 6005000000,
@@ -3639,7 +4079,25 @@
             "sharesDiluted": 2454400000
           }
         }
-      ]
+      ],
+      "ttm": {
+        "asOf": "2026-03-31",
+        "isFY": false,
+        "lines": {
+          "revenue": 86717000000,
+          "operatingIncome": 20153000000,
+          "netIncome": 16617000000,
+          "incomeTaxExpense": 4276000000,
+          "cashFromOps": 19410000000,
+          "capex": 4382000000,
+          "costOfRevenue": 43073000000,
+          "depreciation": 3071000000,
+          "stockholdersEquity": null,
+          "cashAndEquivalents": 9304000000,
+          "totalDebt": 37026000000,
+          "sharesDiluted": 2425800000
+        }
+      }
     },
     {
       "ticker": "CL",
@@ -3659,7 +4117,7 @@
         "totalDebt": 7986000000,
         "cashFromOps": 4198000000,
         "depreciation": 630000000,
-        "capex": 696000000,
+        "capex": 564000000,
         "incomeTaxExpense": 798000000,
         "costOfRevenue": 8131000000,
         "stockBasedComp": 155000000,
@@ -3817,7 +4275,7 @@
             "stockholdersEquity": 609000000,
             "cashAndEquivalents": 966000000,
             "cashFromOps": 3745000000,
-            "capex": null,
+            "capex": 705000000,
             "costOfRevenue": 8131000000,
             "depreciation": 567000000,
             "dividendsPaid": null,
@@ -3836,7 +4294,7 @@
             "stockholdersEquity": 212000000,
             "cashAndEquivalents": 1096000000,
             "cashFromOps": 4107000000,
-            "capex": null,
+            "capex": 561000000,
             "costOfRevenue": 7940000000,
             "depreciation": 605000000,
             "dividendsPaid": null,
@@ -3855,7 +4313,7 @@
             "stockholdersEquity": 54000000,
             "cashAndEquivalents": 1288000000,
             "cashFromOps": 4198000000,
-            "capex": null,
+            "capex": 564000000,
             "costOfRevenue": 8131000000,
             "depreciation": 630000000,
             "dividendsPaid": null,
@@ -3863,7 +4321,25 @@
             "sharesDiluted": 811100000
           }
         }
-      ]
+      ],
+      "ttm": {
+        "asOf": "2026-03-31",
+        "isFY": false,
+        "lines": {
+          "revenue": 20795000000,
+          "operatingIncome": 3194000000,
+          "netIncome": 2088000000,
+          "incomeTaxExpense": 782000000,
+          "cashFromOps": 4345000000,
+          "capex": 578000000,
+          "costOfRevenue": 8305000000,
+          "depreciation": 638000000,
+          "stockholdersEquity": 145000000,
+          "cashAndEquivalents": 1335000000,
+          "totalDebt": 9052000000,
+          "sharesDiluted": 805100000
+        }
+      }
     },
     {
       "ticker": "KMB",
@@ -3880,7 +4356,7 @@
         "interestExpense": 256000000,
         "revenue": 16447000000,
         "netIncome": 2021000000,
-        "totalDebt": 7402000000,
+        "totalDebt": 7133000000,
         "cashFromOps": 2777000000,
         "depreciation": 805000000,
         "capex": 1138000000,
@@ -3904,14 +4380,14 @@
             "operatingIncome": 3358000000,
             "incomeTaxExpense": 776000000,
             "netIncome": 2278000000,
-            "totalDebt": null,
+            "totalDebt": 953000000,
             "stockholdersEquity": 629000000,
             "cashAndEquivalents": 616000000,
             "cashFromOps": 2929000000,
             "capex": 785000000,
             "costOfRevenue": 11761000000,
             "depreciation": 724000000,
-            "dividendsPaid": null,
+            "dividendsPaid": 1359000000,
             "buybacks": 911000000,
             "sharesDiluted": 355900000
           }
@@ -3923,14 +4399,14 @@
             "operatingIncome": 2229000000,
             "incomeTaxExpense": 471000000,
             "netIncome": 1410000000,
-            "totalDebt": null,
+            "totalDebt": 1208000000,
             "stockholdersEquity": -287000000,
             "cashAndEquivalents": 539000000,
             "cashFromOps": 2970000000,
             "capex": 877000000,
             "costOfRevenue": 12889000000,
             "depreciation": 882000000,
-            "dividendsPaid": null,
+            "dividendsPaid": 1386000000,
             "buybacks": 800000000,
             "sharesDiluted": 349600000
           }
@@ -3942,14 +4418,14 @@
             "operatingIncome": 2991000000,
             "incomeTaxExpense": 576000000,
             "netIncome": 2157000000,
-            "totalDebt": null,
+            "totalDebt": 1534000000,
             "stockholdersEquity": -33000000,
             "cashAndEquivalents": 442000000,
             "cashFromOps": 2736000000,
             "capex": 1209000000,
             "costOfRevenue": 12415000000,
             "depreciation": 917000000,
-            "dividendsPaid": null,
+            "dividendsPaid": 1408000000,
             "buybacks": 800000000,
             "sharesDiluted": 345600000
           }
@@ -3961,14 +4437,14 @@
             "operatingIncome": 3244000000,
             "incomeTaxExpense": 676000000,
             "netIncome": 2352000000,
-            "totalDebt": null,
+            "totalDebt": 486000000,
             "stockholdersEquity": 626000000,
             "cashAndEquivalents": 303000000,
             "cashFromOps": 3729000000,
             "capex": 1217000000,
             "costOfRevenue": 12318000000,
             "depreciation": 796000000,
-            "dividendsPaid": null,
+            "dividendsPaid": 1451000000,
             "buybacks": 700000000,
             "sharesDiluted": 342500000
           }
@@ -3980,14 +4456,14 @@
             "operatingIncome": 2561000000,
             "incomeTaxExpense": 479000000,
             "netIncome": 1814000000,
-            "totalDebt": null,
+            "totalDebt": 433000000,
             "stockholdersEquity": 514000000,
             "cashAndEquivalents": 270000000,
             "cashFromOps": 2730000000,
             "capex": 1007000000,
             "costOfRevenue": 13452000000,
             "depreciation": 766000000,
-            "dividendsPaid": null,
+            "dividendsPaid": 1516000000,
             "buybacks": 400000000,
             "sharesDiluted": 338800000
           }
@@ -3999,7 +4475,7 @@
             "operatingIncome": 2681000000,
             "incomeTaxExpense": 495000000,
             "netIncome": 1934000000,
-            "totalDebt": null,
+            "totalDebt": 844000000,
             "stockholdersEquity": 547000000,
             "cashAndEquivalents": 427000000,
             "cashFromOps": 2733000000,
@@ -4018,7 +4494,7 @@
             "operatingIncome": 1928000000,
             "incomeTaxExpense": 343000000,
             "netIncome": 1764000000,
-            "totalDebt": null,
+            "totalDebt": 567000000,
             "stockholdersEquity": 915000000,
             "cashAndEquivalents": 1093000000,
             "cashFromOps": 3542000000,
@@ -4037,7 +4513,7 @@
             "operatingIncome": 2700000000,
             "incomeTaxExpense": 442000000,
             "netIncome": 2545000000,
-            "totalDebt": null,
+            "totalDebt": 564000000,
             "stockholdersEquity": 840000000,
             "cashAndEquivalents": 1010000000,
             "cashFromOps": 3234000000,
@@ -4056,7 +4532,7 @@
             "operatingIncome": 2351000000,
             "incomeTaxExpense": 599000000,
             "netIncome": 2021000000,
-            "totalDebt": null,
+            "totalDebt": 694000000,
             "stockholdersEquity": 1502000000,
             "cashAndEquivalents": 688000000,
             "cashFromOps": 2777000000,
@@ -4068,7 +4544,25 @@
             "sharesDiluted": 333200000
           }
         }
-      ]
+      ],
+      "ttm": {
+        "asOf": "2026-03-31",
+        "isFY": false,
+        "lines": {
+          "revenue": 16556000000,
+          "operatingIncome": 2473000000,
+          "netIncome": 2119000000,
+          "incomeTaxExpense": 632000000,
+          "cashFromOps": 3195000000,
+          "capex": 1358000000,
+          "costOfRevenue": 10608000000,
+          "depreciation": 780000000,
+          "stockholdersEquity": 1796000000,
+          "cashAndEquivalents": 542000000,
+          "totalDebt": 7048000000,
+          "sharesDiluted": 333200000
+        }
+      }
     },
     {
       "ticker": "CLX",
@@ -4102,6 +4596,63 @@
         "sharesDiluted": 124287000
       },
       "history": [
+        {
+          "fy": 2016,
+          "lines": {
+            "revenue": 5761000000,
+            "operatingIncome": null,
+            "incomeTaxExpense": 335000000,
+            "netIncome": 648000000,
+            "totalDebt": 1789000000,
+            "stockholdersEquity": 297000000,
+            "cashAndEquivalents": 401000000,
+            "cashFromOps": 778000000,
+            "capex": 172000000,
+            "costOfRevenue": 3163000000,
+            "depreciation": 165000000,
+            "dividendsPaid": 398000000,
+            "buybacks": 254000000,
+            "sharesDiluted": 131717000
+          }
+        },
+        {
+          "fy": 2017,
+          "lines": {
+            "revenue": 5973000000,
+            "operatingIncome": null,
+            "incomeTaxExpense": 330000000,
+            "netIncome": 701000000,
+            "totalDebt": 1791000000,
+            "stockholdersEquity": 542000000,
+            "cashAndEquivalents": 418000000,
+            "cashFromOps": 865000000,
+            "capex": 231000000,
+            "costOfRevenue": 3302000000,
+            "depreciation": 163000000,
+            "dividendsPaid": 412000000,
+            "buybacks": 183000000,
+            "sharesDiluted": 131566000
+          }
+        },
+        {
+          "fy": 2018,
+          "lines": {
+            "revenue": 6124000000,
+            "operatingIncome": null,
+            "incomeTaxExpense": 231000000,
+            "netIncome": 823000000,
+            "totalDebt": 2284000000,
+            "stockholdersEquity": 726000000,
+            "cashAndEquivalents": 131000000,
+            "cashFromOps": 976000000,
+            "capex": 194000000,
+            "costOfRevenue": 3449000000,
+            "depreciation": 166000000,
+            "dividendsPaid": 450000000,
+            "buybacks": 271000000,
+            "sharesDiluted": 131581000
+          }
+        },
         {
           "fy": 2019,
           "lines": {
@@ -4235,7 +4786,25 @@
             "sharesDiluted": 124287000
           }
         }
-      ]
+      ],
+      "ttm": {
+        "asOf": "2026-03-31",
+        "isFY": false,
+        "lines": {
+          "revenue": 6760000000,
+          "operatingIncome": null,
+          "netIncome": 756000000,
+          "incomeTaxExpense": 218000000,
+          "cashFromOps": 576000000,
+          "capex": 196000000,
+          "costOfRevenue": 3796000000,
+          "depreciation": 226000000,
+          "stockholdersEquity": -67000000,
+          "cashAndEquivalents": 1187000000,
+          "totalDebt": 2487000000,
+          "sharesDiluted": 122240000
+        }
+      }
     },
     {
       "ticker": "WDFC",
@@ -4249,10 +4818,10 @@
       "sourceUrl": "https://www.sec.gov/Archives/edgar/data/105132/000010513225000067/0000105132-25-000067-index.htm",
       "lines": {
         "operatingIncome": 103793000,
-        "interestExpense": 5614000,
+        "interestExpense": 3441000,
         "revenue": 619985000,
         "netIncome": 90994000,
-        "totalDebt": 86195000,
+        "totalDebt": 86995000,
         "cashFromOps": 87925000,
         "depreciation": 8191000,
         "capex": 4528000,
@@ -4270,13 +4839,89 @@
       },
       "history": [
         {
+          "fy": 2016,
+          "lines": {
+            "revenue": 380670000,
+            "operatingIncome": 71348000,
+            "incomeTaxExpense": 20161000,
+            "netIncome": 52628000,
+            "totalDebt": null,
+            "stockholdersEquity": 140395000,
+            "cashAndEquivalents": 50891000,
+            "cashFromOps": 65302000,
+            "capex": 4354000,
+            "costOfRevenue": 166301000,
+            "depreciation": 6465000,
+            "dividendsPaid": 23669000,
+            "buybacks": 32131000,
+            "sharesDiluted": 14379000
+          }
+        },
+        {
+          "fy": 2017,
+          "lines": {
+            "revenue": 380506000,
+            "operatingIncome": 75909000,
+            "incomeTaxExpense": 21692000,
+            "netIncome": 52930000,
+            "totalDebt": 154000000,
+            "stockholdersEquity": 139387000,
+            "cashAndEquivalents": 37082000,
+            "cashFromOps": 55572000,
+            "capex": 20150000,
+            "costOfRevenue": 166621000,
+            "depreciation": 6769000,
+            "dividendsPaid": 26808000,
+            "buybacks": 31109000,
+            "sharesDiluted": 14123000
+          }
+        },
+        {
+          "fy": 2018,
+          "lines": {
+            "revenue": 408518000,
+            "operatingIncome": 78604000,
+            "incomeTaxExpense": 9963000,
+            "netIncome": 65215000,
+            "totalDebt": 86400000,
+            "stockholdersEquity": 155489000,
+            "cashAndEquivalents": 48866000,
+            "cashFromOps": 64822000,
+            "capex": 12356000,
+            "costOfRevenue": 183255000,
+            "depreciation": 7800000,
+            "dividendsPaid": 29585000,
+            "buybacks": 22616000,
+            "sharesDiluted": 13962000
+          }
+        },
+        {
+          "fy": 2019,
+          "lines": {
+            "revenue": 423350000,
+            "operatingIncome": 82382000,
+            "incomeTaxExpense": 24862000,
+            "netIncome": 55908000,
+            "totalDebt": 81426000,
+            "stockholdersEquity": 145475000,
+            "cashAndEquivalents": 27233000,
+            "cashFromOps": 62851000,
+            "capex": 13282000,
+            "costOfRevenue": 191010000,
+            "depreciation": 7593000,
+            "dividendsPaid": 32889000,
+            "buybacks": 29625000,
+            "sharesDiluted": 13830000
+          }
+        },
+        {
           "fy": 2020,
           "lines": {
             "revenue": 408498000,
             "operatingIncome": 77220000,
             "incomeTaxExpense": 14805000,
             "netIncome": 60710000,
-            "totalDebt": 113098000,
+            "totalDebt": 113898000,
             "stockholdersEquity": 160313000,
             "cashAndEquivalents": 56462000,
             "cashFromOps": 72664000,
@@ -4295,7 +4940,7 @@
             "operatingIncome": 88841000,
             "incomeTaxExpense": 16270000,
             "netIncome": 70229000,
-            "totalDebt": 114940000,
+            "totalDebt": 115740000,
             "stockholdersEquity": 200382000,
             "cashAndEquivalents": 85961000,
             "cashFromOps": 84714000,
@@ -4314,7 +4959,7 @@
             "operatingIncome": 87330000,
             "incomeTaxExpense": 16779000,
             "netIncome": 67329000,
-            "totalDebt": 107139000,
+            "totalDebt": 146312000,
             "stockholdersEquity": 188624000,
             "cashAndEquivalents": 37843000,
             "cashFromOps": 2604000,
@@ -4333,7 +4978,7 @@
             "operatingIncome": 89724000,
             "incomeTaxExpense": 19170000,
             "netIncome": 65993000,
-            "totalDebt": 109743000,
+            "totalDebt": 120543000,
             "stockholdersEquity": 210178000,
             "cashAndEquivalents": 48143000,
             "cashFromOps": 98391000,
@@ -4352,7 +4997,7 @@
             "operatingIncome": 96351000,
             "incomeTaxExpense": 21864000,
             "netIncome": 69644000,
-            "totalDebt": 85977000,
+            "totalDebt": 94636000,
             "stockholdersEquity": 230526000,
             "cashAndEquivalents": 46699000,
             "cashFromOps": 92034000,
@@ -4371,7 +5016,7 @@
             "operatingIncome": 103793000,
             "incomeTaxExpense": 10632000,
             "netIncome": 90994000,
-            "totalDebt": 86195000,
+            "totalDebt": 86995000,
             "stockholdersEquity": 268152000,
             "cashAndEquivalents": 58130000,
             "cashFromOps": 87925000,
@@ -4383,7 +5028,25 @@
             "sharesDiluted": 13567000
           }
         }
-      ]
+      ],
+      "ttm": {
+        "asOf": "2026-02-28",
+        "isFY": false,
+        "lines": {
+          "revenue": 636480000,
+          "operatingIncome": 104937000,
+          "netIncome": 79987000,
+          "incomeTaxExpense": 23390000,
+          "cashFromOps": 89298000,
+          "capex": 5181000,
+          "costOfRevenue": 282167000,
+          "depreciation": 8604000,
+          "stockholdersEquity": 268955000,
+          "cashAndEquivalents": 50348000,
+          "totalDebt": 101208000,
+          "sharesDiluted": 13529000
+        }
+      }
     },
     {
       "ticker": "WMT",
@@ -4402,7 +5065,7 @@
         "netIncome": 21893000000,
         "totalDebt": 38166000000,
         "cashFromOps": 41565000000,
-        "depreciation": 10678000000,
+        "depreciation": 14203000000,
         "capex": 26642000000,
         "incomeTaxExpense": 7199000000,
         "costOfRevenue": 535395000000,
@@ -4431,7 +5094,7 @@
             "capex": 10619000000,
             "costOfRevenue": 361256000000,
             "depreciation": 10080000000,
-            "dividendsPaid": null,
+            "dividendsPaid": 6216000000,
             "buybacks": 8298000000,
             "sharesDiluted": 3112000000
           }
@@ -4450,7 +5113,7 @@
             "capex": 10051000000,
             "costOfRevenue": 373396000000,
             "depreciation": 10529000000,
-            "dividendsPaid": null,
+            "dividendsPaid": 6124000000,
             "buybacks": 8296000000,
             "sharesDiluted": 3010000000
           }
@@ -4487,7 +5150,7 @@
             "cashFromOps": 25255000000,
             "capex": 10705000000,
             "costOfRevenue": 394605000000,
-            "depreciation": null,
+            "depreciation": 10987000000,
             "dividendsPaid": 6048000000,
             "buybacks": 5717000000,
             "sharesDiluted": 2868000000
@@ -4506,7 +5169,7 @@
             "cashFromOps": 36074000000,
             "capex": 10264000000,
             "costOfRevenue": 420315000000,
-            "depreciation": null,
+            "depreciation": 11152000000,
             "dividendsPaid": 6116000000,
             "buybacks": 2625000000,
             "sharesDiluted": 2847000000
@@ -4525,7 +5188,7 @@
             "cashFromOps": 24181000000,
             "capex": 13106000000,
             "costOfRevenue": 429000000000,
-            "depreciation": null,
+            "depreciation": 10658000000,
             "dividendsPaid": 6152000000,
             "buybacks": 9787000000,
             "sharesDiluted": 8415000000
@@ -4544,7 +5207,7 @@
             "cashFromOps": 28841000000,
             "capex": 16857000000,
             "costOfRevenue": 463721000000,
-            "depreciation": null,
+            "depreciation": 10945000000,
             "dividendsPaid": 6114000000,
             "buybacks": 9920000000,
             "sharesDiluted": 8202000000
@@ -4563,7 +5226,7 @@
             "cashFromOps": 35726000000,
             "capex": 20606000000,
             "costOfRevenue": 490142000000,
-            "depreciation": null,
+            "depreciation": 11853000000,
             "dividendsPaid": 6140000000,
             "buybacks": 2779000000,
             "sharesDiluted": 8108000000
@@ -4582,7 +5245,7 @@
             "cashFromOps": 36443000000,
             "capex": 23783000000,
             "costOfRevenue": 511753000000,
-            "depreciation": null,
+            "depreciation": 12973000000,
             "dividendsPaid": 6688000000,
             "buybacks": 4494000000,
             "sharesDiluted": 8081000000
@@ -4601,13 +5264,31 @@
             "cashFromOps": 41565000000,
             "capex": 26642000000,
             "costOfRevenue": 535395000000,
-            "depreciation": null,
+            "depreciation": 14203000000,
             "dividendsPaid": 7507000000,
             "buybacks": 8088000000,
             "sharesDiluted": 8022000000
           }
         }
-      ]
+      ],
+      "ttm": {
+        "asOf": "2026-04-30",
+        "isFY": false,
+        "lines": {
+          "revenue": 718116000000,
+          "operatingIncome": 30183000000,
+          "netIncome": 22736000000,
+          "incomeTaxExpense": 7502000000,
+          "cashFromOps": 40892000000,
+          "capex": 28340000000,
+          "costOfRevenue": 544150000000,
+          "depreciation": 14655000000,
+          "stockholdersEquity": 94330000000,
+          "cashAndEquivalents": 10729000000,
+          "totalDebt": 40783000000,
+          "sharesDiluted": 7999000000
+        }
+      }
     },
     {
       "ticker": "COST",
@@ -4655,7 +5336,7 @@
             "capex": 2649000000,
             "costOfRevenue": 102901000000,
             "depreciation": 1255000000,
-            "dividendsPaid": null,
+            "dividendsPaid": 746000000,
             "buybacks": 486000000,
             "sharesDiluted": 441263000
           }
@@ -4674,7 +5355,7 @@
             "capex": 2502000000,
             "costOfRevenue": 111882000000,
             "depreciation": 1370000000,
-            "dividendsPaid": null,
+            "dividendsPaid": 3904000000,
             "buybacks": 469000000,
             "sharesDiluted": 440937000
           }
@@ -4693,7 +5374,7 @@
             "capex": 2969000000,
             "costOfRevenue": 123152000000,
             "depreciation": 1437000000,
-            "dividendsPaid": null,
+            "dividendsPaid": 689000000,
             "buybacks": 328000000,
             "sharesDiluted": 441834000
           }
@@ -4712,7 +5393,7 @@
             "capex": 2998000000,
             "costOfRevenue": 132886000000,
             "depreciation": 1492000000,
-            "dividendsPaid": null,
+            "dividendsPaid": 1038000000,
             "buybacks": 247000000,
             "sharesDiluted": 442923000
           }
@@ -4831,7 +5512,25 @@
             "sharesDiluted": 444803000
           }
         }
-      ]
+      ],
+      "ttm": {
+        "asOf": "2026-05-10",
+        "isFY": false,
+        "lines": {
+          "revenue": 293587000000,
+          "operatingIncome": 11225000000,
+          "netIncome": 8838000000,
+          "incomeTaxExpense": 2914000000,
+          "cashFromOps": 15000000000,
+          "capex": 6194000000,
+          "costOfRevenue": 255785000000,
+          "depreciation": 2565000000,
+          "stockholdersEquity": 33509000000,
+          "cashAndEquivalents": 18946000000,
+          "totalDebt": 5670000000,
+          "sharesDiluted": 444455000
+        }
+      }
     },
     {
       "ticker": "TGT",
@@ -4839,16 +5538,16 @@
       "cik": "0000027419",
       "sic": "5331",
       "sicDescription": "Retail-Variety Stores",
-      "fy": 2025,
+      "fy": 2026,
       "periodEnd": "2026-01-31",
       "form": "10-K",
       "sourceUrl": "https://www.sec.gov/Archives/edgar/data/27419/000002741926000016/0000027419-26-000016-index.htm",
       "lines": {
         "operatingIncome": 5117000000,
-        "interestExpense": 502000000,
+        "interestExpense": 445000000,
         "revenue": 104780000000,
         "netIncome": 3705000000,
-        "totalDebt": 14815000000,
+        "totalDebt": 14559000000,
         "cashFromOps": 6562000000,
         "depreciation": 3134000000,
         "capex": 3727000000,
@@ -4872,7 +5571,7 @@
             "operatingIncome": 4864000000,
             "incomeTaxExpense": 1295000000,
             "netIncome": null,
-            "totalDebt": 1718000000,
+            "totalDebt": 13433000000,
             "stockholdersEquity": 10915000000,
             "cashAndEquivalents": 2512000000,
             "cashFromOps": 5444000000,
@@ -4891,7 +5590,7 @@
             "operatingIncome": 4224000000,
             "incomeTaxExpense": 722000000,
             "netIncome": null,
-            "totalDebt": 270000000,
+            "totalDebt": 10710000000,
             "stockholdersEquity": 11651000000,
             "cashAndEquivalents": 2643000000,
             "cashFromOps": 6935000000,
@@ -4910,7 +5609,7 @@
             "operatingIncome": 4110000000,
             "incomeTaxExpense": 746000000,
             "netIncome": null,
-            "totalDebt": 1052000000,
+            "totalDebt": 11299000000,
             "stockholdersEquity": 11297000000,
             "cashAndEquivalents": 1556000000,
             "cashFromOps": 5973000000,
@@ -4929,7 +5628,7 @@
             "operatingIncome": 4658000000,
             "incomeTaxExpense": 921000000,
             "netIncome": null,
-            "totalDebt": 161000000,
+            "totalDebt": 10153000000,
             "stockholdersEquity": 11833000000,
             "cashAndEquivalents": 2577000000,
             "cashFromOps": 7117000000,
@@ -4948,7 +5647,7 @@
             "operatingIncome": 6539000000,
             "incomeTaxExpense": 1178000000,
             "netIncome": 4368000000,
-            "totalDebt": null,
+            "totalDebt": 10643000000,
             "stockholdersEquity": 14440000000,
             "cashAndEquivalents": 8511000000,
             "cashFromOps": 10525000000,
@@ -4967,7 +5666,7 @@
             "operatingIncome": 8946000000,
             "incomeTaxExpense": 1961000000,
             "netIncome": 6946000000,
-            "totalDebt": null,
+            "totalDebt": 11568000000,
             "stockholdersEquity": 12827000000,
             "cashAndEquivalents": 5911000000,
             "cashFromOps": 8625000000,
@@ -4986,7 +5685,7 @@
             "operatingIncome": 3848000000,
             "incomeTaxExpense": 638000000,
             "netIncome": 2780000000,
-            "totalDebt": null,
+            "totalDebt": 14141000000,
             "stockholdersEquity": 11232000000,
             "cashAndEquivalents": 2229000000,
             "cashFromOps": 4018000000,
@@ -5005,7 +5704,7 @@
             "operatingIncome": 5707000000,
             "incomeTaxExpense": 1159000000,
             "netIncome": 4138000000,
-            "totalDebt": null,
+            "totalDebt": 14151000000,
             "stockholdersEquity": 13432000000,
             "cashAndEquivalents": 3805000000,
             "cashFromOps": 8621000000,
@@ -5024,7 +5723,7 @@
             "operatingIncome": 5566000000,
             "incomeTaxExpense": 1170000000,
             "netIncome": 4091000000,
-            "totalDebt": null,
+            "totalDebt": 13904000000,
             "stockholdersEquity": 14666000000,
             "cashAndEquivalents": 4762000000,
             "cashFromOps": 7367000000,
@@ -5043,7 +5742,7 @@
             "operatingIncome": 5117000000,
             "incomeTaxExpense": 1062000000,
             "netIncome": 3705000000,
-            "totalDebt": null,
+            "totalDebt": 14398000000,
             "stockholdersEquity": 16165000000,
             "cashAndEquivalents": 5488000000,
             "cashFromOps": 6562000000,
@@ -5055,7 +5754,25 @@
             "sharesDiluted": 455600000
           }
         }
-      ]
+      ],
+      "ttm": {
+        "asOf": "2026-05-02",
+        "isFY": false,
+        "lines": {
+          "revenue": 106377000000,
+          "operatingIncome": 4780000000,
+          "netIncome": 3450000000,
+          "incomeTaxExpense": 968000000,
+          "cashFromOps": 7003000000,
+          "capex": 3972000000,
+          "costOfRevenue": 76444000000,
+          "depreciation": 3160000000,
+          "stockholdersEquity": 16395000000,
+          "cashAndEquivalents": 3534000000,
+          "totalDebt": 14559000000,
+          "sharesDiluted": 455800000
+        }
+      }
     },
     {
       "ticker": "HD",
@@ -5063,16 +5780,16 @@
       "cik": "0000354950",
       "sic": "5211",
       "sicDescription": "Retail-Lumber & Other Building Materials Dealers",
-      "fy": 2025,
+      "fy": 2026,
       "periodEnd": "2026-02-01",
       "form": "10-K",
       "sourceUrl": "https://www.sec.gov/Archives/edgar/data/354950/000162828026019436/0001628280-26-019436-index.htm",
       "lines": {
         "operatingIncome": 20890000000,
-        "interestExpense": 1943000000,
+        "interestExpense": 2412000000,
         "revenue": 164683000000,
         "netIncome": 14156000000,
-        "totalDebt": 9749000000,
+        "totalDebt": 50439000000,
         "cashFromOps": 16325000000,
         "depreciation": 3514000000,
         "capex": 3679000000,
@@ -5153,7 +5870,7 @@
             "operatingIncome": 15843000000,
             "incomeTaxExpense": 3473000000,
             "netIncome": 11242000000,
-            "totalDebt": null,
+            "totalDebt": 29500000000,
             "stockholdersEquity": -3116000000,
             "cashAndEquivalents": 2133000000,
             "cashFromOps": 13687000000,
@@ -5172,7 +5889,7 @@
             "operatingIncome": 18278000000,
             "incomeTaxExpense": 4112000000,
             "netIncome": 12866000000,
-            "totalDebt": null,
+            "totalDebt": 34750000000,
             "stockholdersEquity": 3299000000,
             "cashAndEquivalents": 7895000000,
             "cashFromOps": 18839000000,
@@ -5191,7 +5908,7 @@
             "operatingIncome": 23040000000,
             "incomeTaxExpense": 5304000000,
             "netIncome": 16433000000,
-            "totalDebt": null,
+            "totalDebt": 36400000000,
             "stockholdersEquity": -1696000000,
             "cashAndEquivalents": 2343000000,
             "cashFromOps": 16571000000,
@@ -5210,7 +5927,7 @@
             "operatingIncome": 24039000000,
             "incomeTaxExpense": 5372000000,
             "netIncome": 17105000000,
-            "totalDebt": null,
+            "totalDebt": 41150000000,
             "stockholdersEquity": 1562000000,
             "cashAndEquivalents": 2757000000,
             "cashFromOps": 14615000000,
@@ -5229,7 +5946,7 @@
             "operatingIncome": 21689000000,
             "incomeTaxExpense": 4781000000,
             "netIncome": 15143000000,
-            "totalDebt": null,
+            "totalDebt": 42150000000,
             "stockholdersEquity": 1044000000,
             "cashAndEquivalents": 3760000000,
             "cashFromOps": 21172000000,
@@ -5248,7 +5965,7 @@
             "operatingIncome": 21526000000,
             "incomeTaxExpense": 4600000000,
             "netIncome": 14806000000,
-            "totalDebt": null,
+            "totalDebt": 51365000000,
             "stockholdersEquity": 6640000000,
             "cashAndEquivalents": 1659000000,
             "cashFromOps": 19810000000,
@@ -5267,7 +5984,7 @@
             "operatingIncome": 20890000000,
             "incomeTaxExpense": 4446000000,
             "netIncome": 14156000000,
-            "totalDebt": null,
+            "totalDebt": 49397000000,
             "stockholdersEquity": 12813000000,
             "cashAndEquivalents": 1389000000,
             "cashFromOps": 16325000000,
@@ -5279,7 +5996,25 @@
             "sharesDiluted": 995000000
           }
         }
-      ]
+      ],
+      "ttm": {
+        "asOf": "2026-05-03",
+        "isFY": false,
+        "lines": {
+          "revenue": 166592000000,
+          "operatingIncome": 20738000000,
+          "netIncome": 14012000000,
+          "incomeTaxExpense": 4425000000,
+          "cashFromOps": 18032000000,
+          "capex": 3717000000,
+          "costOfRevenue": 111405000000,
+          "depreciation": 3569000000,
+          "stockholdersEquity": 13874000000,
+          "cashAndEquivalents": 1601000000,
+          "totalDebt": 50439000000,
+          "sharesDiluted": 996000000
+        }
+      }
     },
     {
       "ticker": "LOW",
@@ -5287,7 +6022,7 @@
       "cik": "0000060667",
       "sic": "5211",
       "sicDescription": "Retail-Lumber & Other Building Materials Dealers",
-      "fy": 2025,
+      "fy": 2026,
       "periodEnd": "2026-01-30",
       "form": "10-K",
       "sourceUrl": "https://www.sec.gov/Archives/edgar/data/60667/000006066726000029/0000060667-26-000029-index.htm",
@@ -5503,7 +6238,25 @@
             "sharesDiluted": 560000000
           }
         }
-      ]
+      ],
+      "ttm": {
+        "asOf": "2026-05-01",
+        "isFY": false,
+        "lines": {
+          "revenue": 88434000000,
+          "operatingIncome": 10213000000,
+          "netIncome": 6641000000,
+          "incomeTaxExpense": 2104000000,
+          "cashFromOps": 9835000000,
+          "capex": 2216000000,
+          "costOfRevenue": 58992000000,
+          "depreciation": 2331000000,
+          "stockholdersEquity": -9270000000,
+          "cashAndEquivalents": 786000000,
+          "totalDebt": 40372000000,
+          "sharesDiluted": 560000000
+        }
+      }
     },
     {
       "ticker": "VZ",
@@ -5517,7 +6270,7 @@
       "sourceUrl": "https://www.sec.gov/Archives/edgar/data/732712/000073271226000007/0000732712-26-000007-index.htm",
       "lines": {
         "operatingIncome": 29259000000,
-        "interestExpense": 5524000000,
+        "interestExpense": 6694000000,
         "revenue": 138191000000,
         "netIncome": 17174000000,
         "totalDebt": 108276000000,
@@ -5525,7 +6278,7 @@
         "depreciation": 18349000000,
         "capex": 16658000000,
         "incomeTaxExpense": 5064000000,
-        "costOfRevenue": 49931000000,
+        "costOfRevenue": 22147000000,
         "stockBasedComp": 400000000,
         "dividendsPaid": 11481000000,
         "buybacks": 0,
@@ -5544,12 +6297,12 @@
             "operatingIncome": 29249000000,
             "incomeTaxExpense": 7378000000,
             "netIncome": 13127000000,
-            "totalDebt": null,
+            "totalDebt": 2645000000,
             "stockholdersEquity": null,
             "cashAndEquivalents": 2880000000,
             "cashFromOps": 21689000000,
             "capex": 17059000000,
-            "costOfRevenue": null,
+            "costOfRevenue": 22238000000,
             "depreciation": 15928000000,
             "dividendsPaid": 9262000000,
             "buybacks": 0,
@@ -5563,12 +6316,12 @@
             "operatingIncome": 27425000000,
             "incomeTaxExpense": -9956000000,
             "netIncome": 30101000000,
-            "totalDebt": null,
+            "totalDebt": 3453000000,
             "stockholdersEquity": null,
             "cashAndEquivalents": 2079000000,
             "cashFromOps": 24318000000,
             "capex": 17247000000,
-            "costOfRevenue": null,
+            "costOfRevenue": 22147000000,
             "depreciation": 16954000000,
             "dividendsPaid": 9472000000,
             "buybacks": 0,
@@ -5582,7 +6335,7 @@
             "operatingIncome": 22278000000,
             "incomeTaxExpense": 3584000000,
             "netIncome": 15528000000,
-            "totalDebt": null,
+            "totalDebt": 7190000000,
             "stockholdersEquity": null,
             "cashAndEquivalents": 2745000000,
             "cashFromOps": 34339000000,
@@ -5727,7 +6480,25 @@
             "sharesDiluted": 4231000000
           }
         }
-      ]
+      ],
+      "ttm": {
+        "asOf": "2026-03-31",
+        "isFY": false,
+        "lines": {
+          "revenue": 139146000000,
+          "operatingIncome": 29523000000,
+          "netIncome": 17340000000,
+          "incomeTaxExpense": 5212000000,
+          "cashFromOps": 37339000000,
+          "capex": 16964000000,
+          "costOfRevenue": 22648000000,
+          "depreciation": 18664000000,
+          "stockholdersEquity": null,
+          "cashAndEquivalents": 8366000000,
+          "totalDebt": 117887000000,
+          "sharesDiluted": 4210000000
+        }
+      }
     },
     {
       "ticker": "T",
@@ -5741,13 +6512,13 @@
       "sourceUrl": "https://www.sec.gov/Archives/edgar/data/732717/000073271726000120/0000732717-26-000120-index.htm",
       "lines": {
         "operatingIncome": 24162000000,
-        "interestExpense": 6704000000,
+        "interestExpense": 6804000000,
         "revenue": 125648000000,
         "netIncome": 21953000000,
-        "totalDebt": 64753000000,
+        "totalDebt": 143729000000,
         "cashFromOps": 40284000000,
         "depreciation": 20886000000,
-        "capex": 20647000000,
+        "capex": 20842000000,
         "incomeTaxExpense": 3621000000,
         "costOfRevenue": 60611000000,
         "stockBasedComp": null,
@@ -5768,7 +6539,7 @@
             "operatingIncome": 23543000000,
             "incomeTaxExpense": 6479000000,
             "netIncome": 12976000000,
-            "totalDebt": null,
+            "totalDebt": 9832000000,
             "stockholdersEquity": null,
             "cashAndEquivalents": 5788000000,
             "cashFromOps": 38442000000,
@@ -5787,7 +6558,7 @@
             "operatingIncome": 19970000000,
             "incomeTaxExpense": -14708000000,
             "netIncome": 29450000000,
-            "totalDebt": null,
+            "totalDebt": 38374000000,
             "stockholdersEquity": null,
             "cashAndEquivalents": 50498000000,
             "cashFromOps": 38010000000,
@@ -5806,11 +6577,11 @@
             "operatingIncome": 26096000000,
             "incomeTaxExpense": 4920000000,
             "netIncome": 19370000000,
-            "totalDebt": null,
+            "totalDebt": 10255000000,
             "stockholdersEquity": null,
             "cashAndEquivalents": 5204000000,
             "cashFromOps": 43602000000,
-            "capex": null,
+            "capex": 21251000000,
             "costOfRevenue": null,
             "depreciation": 28430000000,
             "dividendsPaid": 13410000000,
@@ -5825,11 +6596,11 @@
             "operatingIncome": 27955000000,
             "incomeTaxExpense": 3493000000,
             "netIncome": 13903000000,
-            "totalDebt": null,
+            "totalDebt": 172947000000,
             "stockholdersEquity": null,
             "cashAndEquivalents": 9702000000,
             "cashFromOps": 48668000000,
-            "capex": null,
+            "capex": 19635000000,
             "costOfRevenue": null,
             "depreciation": 28217000000,
             "dividendsPaid": 14888000000,
@@ -5844,11 +6615,11 @@
             "operatingIncome": 8372000000,
             "incomeTaxExpense": 1168000000,
             "netIncome": -5176000000,
-            "totalDebt": null,
+            "totalDebt": 158679000000,
             "stockholdersEquity": null,
             "cashAndEquivalents": 7924000000,
             "cashFromOps": 43130000000,
-            "capex": null,
+            "capex": 14690000000,
             "costOfRevenue": null,
             "depreciation": 22523000000,
             "dividendsPaid": 14956000000,
@@ -5863,11 +6634,11 @@
             "operatingIncome": 25897000000,
             "incomeTaxExpense": 5395000000,
             "netIncome": 20081000000,
-            "totalDebt": null,
+            "totalDebt": 192096000000,
             "stockholdersEquity": null,
             "cashAndEquivalents": 19223000000,
             "cashFromOps": 41957000000,
-            "capex": null,
+            "capex": 15545000000,
             "costOfRevenue": null,
             "depreciation": 17852000000,
             "dividendsPaid": 15068000000,
@@ -5882,11 +6653,11 @@
             "operatingIncome": -4587000000,
             "incomeTaxExpense": 3780000000,
             "netIncome": -8524000000,
-            "totalDebt": null,
+            "totalDebt": 140674000000,
             "stockholdersEquity": null,
             "cashAndEquivalents": 3701000000,
             "cashFromOps": null,
-            "capex": null,
+            "capex": 19626000000,
             "costOfRevenue": null,
             "depreciation": 18021000000,
             "dividendsPaid": 9859000000,
@@ -5901,11 +6672,11 @@
             "operatingIncome": 23461000000,
             "incomeTaxExpense": 4225000000,
             "netIncome": 14400000000,
-            "totalDebt": null,
+            "totalDebt": 142879000000,
             "stockholdersEquity": null,
             "cashAndEquivalents": 6722000000,
             "cashFromOps": 38314000000,
-            "capex": null,
+            "capex": 17853000000,
             "costOfRevenue": null,
             "depreciation": 18777000000,
             "dividendsPaid": 8136000000,
@@ -5920,11 +6691,11 @@
             "operatingIncome": 19049000000,
             "incomeTaxExpense": 4445000000,
             "netIncome": 10948000000,
-            "totalDebt": null,
+            "totalDebt": 127205000000,
             "stockholdersEquity": null,
             "cashAndEquivalents": 3298000000,
             "cashFromOps": 38771000000,
-            "capex": null,
+            "capex": 20263000000,
             "costOfRevenue": null,
             "depreciation": 20580000000,
             "dividendsPaid": 8208000000,
@@ -5939,11 +6710,11 @@
             "operatingIncome": 24162000000,
             "incomeTaxExpense": 3621000000,
             "netIncome": 21953000000,
-            "totalDebt": null,
+            "totalDebt": 143729000000,
             "stockholdersEquity": null,
             "cashAndEquivalents": 18234000000,
             "cashFromOps": 40284000000,
-            "capex": null,
+            "capex": 20842000000,
             "costOfRevenue": null,
             "depreciation": 20886000000,
             "dividendsPaid": 8180000000,
@@ -5951,7 +6722,25 @@
             "sharesDiluted": 7179000000
           }
         }
-      ]
+      ],
+      "ttm": {
+        "asOf": "2026-03-31",
+        "isFY": false,
+        "lines": {
+          "revenue": 126528000000,
+          "operatingIncome": 25066000000,
+          "netIncome": 21431000000,
+          "incomeTaxExpense": 3501000000,
+          "cashFromOps": 40284000000,
+          "capex": 21442000000,
+          "costOfRevenue": 60611000000,
+          "depreciation": 20662000000,
+          "stockholdersEquity": null,
+          "cashAndEquivalents": 11964000000,
+          "totalDebt": 141536000000,
+          "sharesDiluted": 7027000000
+        }
+      }
     },
     {
       "ticker": "TMUS",
@@ -5973,7 +6762,7 @@
         "depreciation": 13508000000,
         "capex": 9955000000,
         "incomeTaxExpense": 3289000000,
-        "costOfRevenue": 2930051000,
+        "costOfRevenue": 11608000000,
         "stockBasedComp": 829000000,
         "dividendsPaid": 4121000000,
         "buybacks": 9974000000,
@@ -5992,14 +6781,14 @@
             "operatingIncome": 4050000000,
             "incomeTaxExpense": 867000000,
             "netIncome": 1460000000,
-            "totalDebt": 21832000000,
+            "totalDebt": 22186000000,
             "stockholdersEquity": 18236000000,
             "cashAndEquivalents": 5500000000,
             "cashFromOps": 2779000000,
             "capex": 4702000000,
-            "costOfRevenue": null,
+            "costOfRevenue": 10819000000,
             "depreciation": 6243000000,
-            "dividendsPaid": null,
+            "dividendsPaid": 55000000,
             "buybacks": 0,
             "sharesDiluted": 833054545
           }
@@ -6011,14 +6800,14 @@
             "operatingIncome": 4888000000,
             "incomeTaxExpense": -1375000000,
             "netIncome": 4536000000,
-            "totalDebt": 12121000000,
+            "totalDebt": 13733000000,
             "stockholdersEquity": 22559000000,
             "cashAndEquivalents": 1219000000,
             "cashFromOps": 3831000000,
             "capex": 5237000000,
-            "costOfRevenue": null,
+            "costOfRevenue": 11608000000,
             "depreciation": 5984000000,
-            "dividendsPaid": null,
+            "dividendsPaid": 55000000,
             "buybacks": 427000000,
             "sharesDiluted": 871787450
           }
@@ -6037,7 +6826,7 @@
             "capex": 5541000000,
             "costOfRevenue": null,
             "depreciation": 6486000000,
-            "dividendsPaid": null,
+            "dividendsPaid": 0,
             "buybacks": 1071000000,
             "sharesDiluted": 858290174
           }
@@ -6056,7 +6845,7 @@
             "capex": 6391000000,
             "costOfRevenue": null,
             "depreciation": 6616000000,
-            "dividendsPaid": null,
+            "dividendsPaid": 0,
             "buybacks": 0,
             "sharesDiluted": 863433511
           }
@@ -6175,7 +6964,25 @@
             "sharesDiluted": 1131076251
           }
         }
-      ]
+      ],
+      "ttm": {
+        "asOf": "2026-03-31",
+        "isFY": false,
+        "lines": {
+          "revenue": 90530000000,
+          "operatingIncome": 17976000000,
+          "netIncome": 10543000000,
+          "incomeTaxExpense": 3234000000,
+          "cashFromOps": 28325000000,
+          "capex": 10127000000,
+          "costOfRevenue": 11693000000,
+          "depreciation": 14127000000,
+          "stockholdersEquity": 55879000000,
+          "cashAndEquivalents": 3520000000,
+          "totalDebt": 86311000000,
+          "sharesDiluted": 1102053246
+        }
+      }
     },
     {
       "ticker": "LUMN",
@@ -6195,7 +7002,7 @@
         "totalDebt": 7339170000,
         "cashFromOps": 4738000000,
         "depreciation": 2749000000,
-        "capex": 3048000000,
+        "capex": 4367000000,
         "incomeTaxExpense": -977000000,
         "costOfRevenue": 6638000000,
         "stockBasedComp": 48000000,
@@ -6210,6 +7017,44 @@
       },
       "history": [
         {
+          "fy": 2016,
+          "lines": {
+            "revenue": 17470000000,
+            "operatingIncome": 2333000000,
+            "incomeTaxExpense": 394000000,
+            "netIncome": 626000000,
+            "totalDebt": null,
+            "stockholdersEquity": 13399000000,
+            "cashAndEquivalents": 222000000,
+            "cashFromOps": 4608000000,
+            "capex": 2981000000,
+            "costOfRevenue": 7774000000,
+            "depreciation": 3916000000,
+            "dividendsPaid": 1167000000,
+            "buybacks": 16000000,
+            "sharesDiluted": 540679000
+          }
+        },
+        {
+          "fy": 2017,
+          "lines": {
+            "revenue": 17656000000,
+            "operatingIncome": 2009000000,
+            "incomeTaxExpense": -849000000,
+            "netIncome": 1389000000,
+            "totalDebt": null,
+            "stockholdersEquity": 23491000000,
+            "cashAndEquivalents": 551000000,
+            "cashFromOps": 3878000000,
+            "capex": 3106000000,
+            "costOfRevenue": 8203000000,
+            "depreciation": 3936000000,
+            "dividendsPaid": 1453000000,
+            "buybacks": 17000000,
+            "sharesDiluted": 628693000
+          }
+        },
+        {
           "fy": 2018,
           "lines": {
             "revenue": 21042000000,
@@ -6220,7 +7065,7 @@
             "stockholdersEquity": 19828000000,
             "cashAndEquivalents": 488000000,
             "cashFromOps": 7032000000,
-            "capex": null,
+            "capex": 3175000000,
             "costOfRevenue": 9999000000,
             "depreciation": 5120000000,
             "dividendsPaid": 2312000000,
@@ -6239,7 +7084,7 @@
             "stockholdersEquity": 13470000000,
             "cashAndEquivalents": 1690000000,
             "cashFromOps": 6680000000,
-            "capex": null,
+            "capex": 3628000000,
             "costOfRevenue": 9134000000,
             "depreciation": 4829000000,
             "dividendsPaid": 1100000000,
@@ -6258,7 +7103,7 @@
             "stockholdersEquity": 11162000000,
             "cashAndEquivalents": 406000000,
             "cashFromOps": 6524000000,
-            "capex": null,
+            "capex": 3729000000,
             "costOfRevenue": 8934000000,
             "depreciation": 4710000000,
             "dividendsPaid": 1109000000,
@@ -6277,7 +7122,7 @@
             "stockholdersEquity": 11777000000,
             "cashAndEquivalents": 354000000,
             "cashFromOps": 6501000000,
-            "capex": null,
+            "capex": 2900000000,
             "costOfRevenue": 8488000000,
             "depreciation": 4019000000,
             "dividendsPaid": 1087000000,
@@ -6296,7 +7141,7 @@
             "stockholdersEquity": 10374000000,
             "cashAndEquivalents": 1251000000,
             "cashFromOps": 4735000000,
-            "capex": null,
+            "capex": 3016000000,
             "costOfRevenue": 7868000000,
             "depreciation": 3239000000,
             "dividendsPaid": 780000000,
@@ -6315,7 +7160,7 @@
             "stockholdersEquity": 417000000,
             "cashAndEquivalents": 2234000000,
             "cashFromOps": 2160000000,
-            "capex": null,
+            "capex": 3100000000,
             "costOfRevenue": 7144000000,
             "depreciation": 2985000000,
             "dividendsPaid": 11000000,
@@ -6334,7 +7179,7 @@
             "stockholdersEquity": 464000000,
             "cashAndEquivalents": 1889000000,
             "cashFromOps": 4333000000,
-            "capex": null,
+            "capex": 3231000000,
             "costOfRevenue": 6703000000,
             "depreciation": 2956000000,
             "dividendsPaid": 3000000,
@@ -6353,7 +7198,7 @@
             "stockholdersEquity": -1117000000,
             "cashAndEquivalents": 1003000000,
             "cashFromOps": 4738000000,
-            "capex": null,
+            "capex": 4367000000,
             "costOfRevenue": 6638000000,
             "depreciation": 2749000000,
             "dividendsPaid": 1000000,
@@ -6361,7 +7206,25 @@
             "sharesDiluted": 994548000
           }
         }
-      ]
+      ],
+      "ttm": {
+        "asOf": "2026-03-31",
+        "isFY": false,
+        "lines": {
+          "revenue": 11018000000,
+          "operatingIncome": -317000000,
+          "netIncome": -1738000000,
+          "incomeTaxExpense": -556000000,
+          "cashFromOps": 4966000000,
+          "capex": 4519000000,
+          "costOfRevenue": 6386000000,
+          "depreciation": 2700000000,
+          "stockholdersEquity": -1317000000,
+          "cashAndEquivalents": 1625000000,
+          "totalDebt": 31511539000,
+          "sharesDiluted": 998891000
+        }
+      }
     },
     {
       "ticker": "AAL",
@@ -6375,20 +7238,20 @@
       "sourceUrl": "https://www.sec.gov/Archives/edgar/data/6201/000000620126000014/0000006201-26-000014-index.htm",
       "lines": {
         "operatingIncome": 1467000000,
-        "interestExpense": 2145000000,
+        "interestExpense": 1716000000,
         "revenue": 54633000000,
         "netIncome": 111000000,
-        "totalDebt": 10376000000,
+        "totalDebt": 28280000000,
         "cashFromOps": 3099000000,
         "depreciation": 2200000000,
         "capex": 3779000000,
         "incomeTaxExpense": 79000000,
         "costOfRevenue": null,
         "stockBasedComp": 57000000,
-        "dividendsPaid": 278000000,
+        "dividendsPaid": 43000000,
         "buybacks": 21000000,
         "stockholdersEquity": -3727000000,
-        "cashAndEquivalents": 1140000000,
+        "cashAndEquivalents": 12400000000,
         "receivables": 2075000000,
         "inventory": null,
         "accountsPayable": 2840000000,
@@ -6409,7 +7272,7 @@
             "capex": 5731000000,
             "costOfRevenue": null,
             "depreciation": 1900000000,
-            "dividendsPaid": null,
+            "dividendsPaid": 224000000,
             "buybacks": 4500000000,
             "sharesDiluted": 556099000
           }
@@ -6421,14 +7284,14 @@
             "operatingIncome": 4231000000,
             "incomeTaxExpense": 2113000000,
             "netIncome": 1282000000,
-            "totalDebt": 2476000000,
+            "totalDebt": 24294000000,
             "stockholdersEquity": -780000000,
             "cashAndEquivalents": null,
             "cashFromOps": 4744000000,
             "capex": 5971000000,
             "costOfRevenue": null,
             "depreciation": 2200000000,
-            "dividendsPaid": null,
+            "dividendsPaid": 198000000,
             "buybacks": 1615000000,
             "sharesDiluted": 491692000
           }
@@ -6440,14 +7303,14 @@
             "operatingIncome": 2656000000,
             "incomeTaxExpense": 472000000,
             "netIncome": 1412000000,
-            "totalDebt": 3213000000,
+            "totalDebt": 23779000000,
             "stockholdersEquity": -169000000,
             "cashAndEquivalents": null,
             "cashFromOps": 3533000000,
             "capex": 3745000000,
             "costOfRevenue": null,
             "depreciation": 2400000000,
-            "dividendsPaid": null,
+            "dividendsPaid": 186000000,
             "buybacks": 837000000,
             "sharesDiluted": 465660000
           }
@@ -6459,14 +7322,14 @@
             "operatingIncome": 3065000000,
             "incomeTaxExpense": 570000000,
             "netIncome": 1686000000,
-            "totalDebt": 2749000000,
+            "totalDebt": 23645000000,
             "stockholdersEquity": -118000000,
             "cashAndEquivalents": null,
             "cashFromOps": 3815000000,
             "capex": 4268000000,
             "costOfRevenue": null,
             "depreciation": 2600000000,
-            "dividendsPaid": null,
+            "dividendsPaid": 178000000,
             "buybacks": 1097000000,
             "sharesDiluted": 444269000
           }
@@ -6478,14 +7341,14 @@
             "operatingIncome": -10421000000,
             "incomeTaxExpense": -2568000000,
             "netIncome": -8885000000,
-            "totalDebt": 2697000000,
+            "totalDebt": 32021000000,
             "stockholdersEquity": -6867000000,
-            "cashAndEquivalents": null,
+            "cashAndEquivalents": 6900000000,
             "cashFromOps": -6543000000,
             "capex": 1958000000,
             "costOfRevenue": null,
             "depreciation": 2400000000,
-            "dividendsPaid": null,
+            "dividendsPaid": 43000000,
             "buybacks": 173000000,
             "sharesDiluted": 483888000
           }
@@ -6497,9 +7360,9 @@
             "operatingIncome": -1059000000,
             "incomeTaxExpense": -555000000,
             "netIncome": -1993000000,
-            "totalDebt": 2315000000,
+            "totalDebt": 37323000000,
             "stockholdersEquity": -7340000000,
-            "cashAndEquivalents": null,
+            "cashAndEquivalents": 12400000000,
             "cashFromOps": 704000000,
             "capex": 208000000,
             "costOfRevenue": null,
@@ -6516,7 +7379,7 @@
             "operatingIncome": 1607000000,
             "incomeTaxExpense": 59000000,
             "netIncome": 127000000,
-            "totalDebt": 3059000000,
+            "totalDebt": 34903000000,
             "stockholdersEquity": -5799000000,
             "cashAndEquivalents": null,
             "cashFromOps": 2173000000,
@@ -6535,7 +7398,7 @@
             "operatingIncome": 3034000000,
             "incomeTaxExpense": 299000000,
             "netIncome": 822000000,
-            "totalDebt": 3501000000,
+            "totalDebt": 32396000000,
             "stockholdersEquity": -5202000000,
             "cashAndEquivalents": null,
             "cashFromOps": 3803000000,
@@ -6554,7 +7417,7 @@
             "operatingIncome": 2614000000,
             "incomeTaxExpense": 308000000,
             "netIncome": 846000000,
-            "totalDebt": 5196000000,
+            "totalDebt": 29813000000,
             "stockholdersEquity": -3977000000,
             "cashAndEquivalents": null,
             "cashFromOps": 3983000000,
@@ -6573,7 +7436,7 @@
             "operatingIncome": 1467000000,
             "incomeTaxExpense": 79000000,
             "netIncome": 111000000,
-            "totalDebt": 3641000000,
+            "totalDebt": 28280000000,
             "stockholdersEquity": -3727000000,
             "cashAndEquivalents": null,
             "cashFromOps": 3099000000,
@@ -6585,7 +7448,25 @@
             "sharesDiluted": 661052000
           }
         }
-      ]
+      ],
+      "ttm": {
+        "asOf": "2026-03-31",
+        "isFY": false,
+        "lines": {
+          "revenue": 55994000000,
+          "operatingIncome": 1696000000,
+          "netIncome": 202000000,
+          "incomeTaxExpense": 160000000,
+          "cashFromOps": 4866000000,
+          "capex": 3766000000,
+          "costOfRevenue": null,
+          "depreciation": 2207000000,
+          "stockholdersEquity": -4077000000,
+          "cashAndEquivalents": 12400000000,
+          "totalDebt": 27017000000,
+          "sharesDiluted": 661181000
+        }
+      }
     },
     {
       "ticker": "DAL",
@@ -6809,7 +7690,25 @@
             "sharesDiluted": 654000000
           }
         }
-      ]
+      ],
+      "ttm": {
+        "asOf": "2026-03-31",
+        "isFY": false,
+        "lines": {
+          "revenue": 65178000000,
+          "operatingIncome": 5754000000,
+          "netIncome": 4476000000,
+          "incomeTaxExpense": 1175000000,
+          "cashFromOps": 8396000000,
+          "capex": 4475000000,
+          "costOfRevenue": null,
+          "depreciation": 2471000000,
+          "stockholdersEquity": 20376000000,
+          "cashAndEquivalents": 5053000000,
+          "totalDebt": 13235000000,
+          "sharesDiluted": 652000000
+        }
+      }
     },
     {
       "ticker": "UAL",
@@ -6823,7 +7722,7 @@
       "sourceUrl": "https://www.sec.gov/Archives/edgar/data/100517/000010051726000023/0000100517-26-000023-index.htm",
       "lines": {
         "operatingIncome": 4713000000,
-        "interestExpense": 670000000,
+        "interestExpense": 1373000000,
         "revenue": 59070000000,
         "netIncome": 3353000000,
         "totalDebt": 21266000000,
@@ -6856,7 +7755,7 @@
             "cashFromOps": null,
             "capex": 3223000000,
             "costOfRevenue": null,
-            "depreciation": null,
+            "depreciation": 1977000000,
             "dividendsPaid": null,
             "buybacks": 2614000000,
             "sharesDiluted": 330300000
@@ -6875,7 +7774,7 @@
             "cashFromOps": 3474000000,
             "capex": 3870000000,
             "costOfRevenue": null,
-            "depreciation": null,
+            "depreciation": 2096000000,
             "dividendsPaid": null,
             "buybacks": 1844000000,
             "sharesDiluted": 303600000
@@ -7033,7 +7932,25 @@
             "sharesDiluted": 328500000
           }
         }
-      ]
+      ],
+      "ttm": {
+        "asOf": "2026-03-31",
+        "isFY": false,
+        "lines": {
+          "revenue": 60465000000,
+          "operatingIncome": 5103000000,
+          "netIncome": 3665000000,
+          "incomeTaxExpense": 1034000000,
+          "cashFromOps": 9520000000,
+          "capex": 6313000000,
+          "costOfRevenue": null,
+          "depreciation": 2968000000,
+          "stockholdersEquity": 15876000000,
+          "cashAndEquivalents": 7869000000,
+          "totalDebt": 21266000000,
+          "sharesDiluted": 326800000
+        }
+      }
     },
     {
       "ticker": "LUV",
@@ -7047,17 +7964,17 @@
       "sourceUrl": "https://www.sec.gov/Archives/edgar/data/92380/000009238026000004/0000092380-26-000004-index.htm",
       "lines": {
         "operatingIncome": 428000000,
-        "interestExpense": 118000000,
+        "interestExpense": 167000000,
         "revenue": 28063000000,
         "netIncome": 441000000,
-        "totalDebt": 3154000000,
+        "totalDebt": 5200000000,
         "cashFromOps": 1842000000,
         "depreciation": 1560000000,
-        "capex": 1447000000,
+        "capex": 2673000000,
         "incomeTaxExpense": 122000000,
         "costOfRevenue": null,
         "stockBasedComp": 13000000,
-        "dividendsPaid": 274000000,
+        "dividendsPaid": 399000000,
         "buybacks": 2550000000,
         "stockholdersEquity": 7981000000,
         "cashAndEquivalents": 3231000000,
@@ -7078,7 +7995,7 @@
             "stockholdersEquity": 7784000000,
             "cashAndEquivalents": 1680000000,
             "cashFromOps": 4293000000,
-            "capex": null,
+            "capex": 2038000000,
             "costOfRevenue": null,
             "depreciation": 1221000000,
             "dividendsPaid": 222000000,
@@ -7097,7 +8014,7 @@
             "stockholdersEquity": 9641000000,
             "cashAndEquivalents": 1495000000,
             "cashFromOps": 3929000000,
-            "capex": null,
+            "capex": 2123000000,
             "costOfRevenue": null,
             "depreciation": 1218000000,
             "dividendsPaid": 274000000,
@@ -7116,10 +8033,10 @@
             "stockholdersEquity": 9853000000,
             "cashAndEquivalents": 1854000000,
             "cashFromOps": 4893000000,
-            "capex": null,
+            "capex": 1922000000,
             "costOfRevenue": null,
             "depreciation": 1201000000,
-            "dividendsPaid": null,
+            "dividendsPaid": 332000000,
             "buybacks": 2000000000,
             "sharesDiluted": 574000000
           }
@@ -7135,10 +8052,10 @@
             "stockholdersEquity": 9832000000,
             "cashAndEquivalents": 2548000000,
             "cashFromOps": 3987000000,
-            "capex": null,
+            "capex": 1027000000,
             "costOfRevenue": null,
             "depreciation": 1219000000,
-            "dividendsPaid": null,
+            "dividendsPaid": 372000000,
             "buybacks": 2000000000,
             "sharesDiluted": 539000000
           }
@@ -7154,10 +8071,10 @@
             "stockholdersEquity": 8876000000,
             "cashAndEquivalents": 11063000000,
             "cashFromOps": -1127000000,
-            "capex": null,
+            "capex": 515000000,
             "costOfRevenue": null,
             "depreciation": 1255000000,
-            "dividendsPaid": null,
+            "dividendsPaid": 188000000,
             "buybacks": 451000000,
             "sharesDiluted": 565000000
           }
@@ -7173,10 +8090,10 @@
             "stockholdersEquity": 10414000000,
             "cashAndEquivalents": 12480000000,
             "cashFromOps": 2322000000,
-            "capex": null,
+            "capex": 505000000,
             "costOfRevenue": null,
             "depreciation": 1272000000,
-            "dividendsPaid": null,
+            "dividendsPaid": 0,
             "buybacks": 0,
             "sharesDiluted": 609000000
           }
@@ -7188,14 +8105,14 @@
             "operatingIncome": 1017000000,
             "incomeTaxExpense": 189000000,
             "netIncome": 539000000,
-            "totalDebt": null,
+            "totalDebt": 8097000000,
             "stockholdersEquity": 10687000000,
             "cashAndEquivalents": 9492000000,
             "cashFromOps": 3790000000,
-            "capex": null,
+            "capex": 3924000000,
             "costOfRevenue": null,
             "depreciation": 1351000000,
-            "dividendsPaid": null,
+            "dividendsPaid": 0,
             "buybacks": 0,
             "sharesDiluted": 642000000
           }
@@ -7207,14 +8124,14 @@
             "operatingIncome": 224000000,
             "incomeTaxExpense": 168000000,
             "netIncome": 465000000,
-            "totalDebt": null,
+            "totalDebt": 8012000000,
             "stockholdersEquity": 10515000000,
             "cashAndEquivalents": 9288000000,
             "cashFromOps": 3164000000,
-            "capex": null,
+            "capex": 3520000000,
             "costOfRevenue": null,
             "depreciation": 1522000000,
-            "dividendsPaid": null,
+            "dividendsPaid": 428000000,
             "buybacks": 0,
             "sharesDiluted": 640000000
           }
@@ -7226,14 +8143,14 @@
             "operatingIncome": 321000000,
             "incomeTaxExpense": 133000000,
             "netIncome": 465000000,
-            "totalDebt": null,
+            "totalDebt": 6697000000,
             "stockholdersEquity": 10350000000,
             "cashAndEquivalents": 7509000000,
             "cashFromOps": 462000000,
-            "capex": null,
+            "capex": 2054000000,
             "costOfRevenue": null,
             "depreciation": 1657000000,
-            "dividendsPaid": null,
+            "dividendsPaid": 430000000,
             "buybacks": 250000000,
             "sharesDiluted": 643000000
           }
@@ -7245,19 +8162,37 @@
             "operatingIncome": 428000000,
             "incomeTaxExpense": 122000000,
             "netIncome": 441000000,
-            "totalDebt": null,
+            "totalDebt": 4929000000,
             "stockholdersEquity": 7981000000,
             "cashAndEquivalents": 3231000000,
             "cashFromOps": 1842000000,
-            "capex": null,
+            "capex": 2673000000,
             "costOfRevenue": null,
             "depreciation": 1560000000,
-            "dividendsPaid": null,
+            "dividendsPaid": 399000000,
             "buybacks": 2550000000,
             "sharesDiluted": 558000000
           }
         }
-      ]
+      ],
+      "ttm": {
+        "asOf": "2026-03-31",
+        "isFY": false,
+        "lines": {
+          "revenue": 28884000000,
+          "operatingIncome": 981000000,
+          "netIncome": 817000000,
+          "incomeTaxExpense": 223000000,
+          "cashFromOps": 2400000000,
+          "capex": 2776000000,
+          "costOfRevenue": null,
+          "depreciation": 1562000000,
+          "stockholdersEquity": 6875000000,
+          "cashAndEquivalents": 3328000000,
+          "totalDebt": 5188000000,
+          "sharesDiluted": 503000000
+        }
+      }
     },
     {
       "ticker": "CCL",
@@ -7271,7 +8206,7 @@
       "sourceUrl": "https://www.sec.gov/Archives/edgar/data/815097/000081509726000007/0000815097-26-000007-index.htm",
       "lines": {
         "operatingIncome": 4483000000,
-        "interestExpense": 2066000000,
+        "interestExpense": 1349000000,
         "revenue": 26622000000,
         "netIncome": 2760000000,
         "totalDebt": 26640000000,
@@ -7291,6 +8226,25 @@
         "sharesDiluted": 1402000000
       },
       "history": [
+        {
+          "fy": 2016,
+          "lines": {
+            "revenue": 16389000000,
+            "operatingIncome": 3071000000,
+            "incomeTaxExpense": -49000000,
+            "netIncome": 2779000000,
+            "totalDebt": 8942000000,
+            "stockholdersEquity": 22597000000,
+            "cashAndEquivalents": 603000000,
+            "cashFromOps": 5134000000,
+            "capex": 3062000000,
+            "costOfRevenue": 9383000000,
+            "depreciation": 1738000000,
+            "dividendsPaid": 977000000,
+            "buybacks": 2340000000,
+            "sharesDiluted": 747000000
+          }
+        },
         {
           "fy": 2017,
           "lines": {
@@ -7462,7 +8416,25 @@
             "sharesDiluted": 1402000000
           }
         }
-      ]
+      ],
+      "ttm": {
+        "asOf": "2026-02-28",
+        "isFY": false,
+        "lines": {
+          "revenue": 26977000000,
+          "operatingIncome": 4547000000,
+          "netIncome": 3096000000,
+          "incomeTaxExpense": 22000000,
+          "cashFromOps": 6556000000,
+          "capex": 3570000000,
+          "costOfRevenue": 15870000000,
+          "depreciation": 2832000000,
+          "stockholdersEquity": 13031000000,
+          "cashAndEquivalents": 1424000000,
+          "totalDebt": 25290000000,
+          "sharesDiluted": 1392000000
+        }
+      }
     },
     {
       "ticker": "RCL",
@@ -7476,10 +8448,10 @@
       "sourceUrl": "https://www.sec.gov/Archives/edgar/data/884887/000088488726000007/0000884887-26-000007-index.htm",
       "lines": {
         "operatingIncome": 4910000000,
-        "interestExpense": 1402000000,
+        "interestExpense": 992000000,
         "revenue": 17935000000,
         "netIncome": 4268000000,
-        "totalDebt": 8495853000,
+        "totalDebt": 11036962000,
         "cashFromOps": 6465000000,
         "depreciation": 1718000000,
         "capex": 5229000000,
@@ -7522,7 +8494,7 @@
             "operatingIncome": 1744056000,
             "incomeTaxExpense": null,
             "netIncome": 1625133000,
-            "totalDebt": null,
+            "totalDebt": 1188514000,
             "stockholdersEquity": 10702303000,
             "cashAndEquivalents": 120112000,
             "cashFromOps": 2874566000,
@@ -7541,7 +8513,7 @@
             "operatingIncome": 1894801000,
             "incomeTaxExpense": null,
             "netIncome": 1811042000,
-            "totalDebt": null,
+            "totalDebt": 2422329000,
             "stockholdersEquity": 11105461000,
             "cashAndEquivalents": 287852000,
             "cashFromOps": 3479139000,
@@ -7560,7 +8532,7 @@
             "operatingIncome": 2082701000,
             "incomeTaxExpense": null,
             "netIncome": 1878887000,
-            "totalDebt": null,
+            "totalDebt": 2620766000,
             "stockholdersEquity": 12163846000,
             "cashAndEquivalents": 243738000,
             "cashFromOps": 3716366000,
@@ -7579,7 +8551,7 @@
             "operatingIncome": -4601557000,
             "incomeTaxExpense": null,
             "netIncome": -5797462000,
-            "totalDebt": null,
+            "totalDebt": 1371087000,
             "stockholdersEquity": 8760669000,
             "cashAndEquivalents": 3684474000,
             "cashFromOps": -3731653000,
@@ -7598,7 +8570,7 @@
             "operatingIncome": -3870000000,
             "incomeTaxExpense": -45000000,
             "netIncome": -5260000000,
-            "totalDebt": null,
+            "totalDebt": 2243131000,
             "stockholdersEquity": 5085556000,
             "cashAndEquivalents": 2701770000,
             "cashFromOps": -1878000000,
@@ -7617,7 +8589,7 @@
             "operatingIncome": -766000000,
             "incomeTaxExpense": 4000000,
             "netIncome": -2156000000,
-            "totalDebt": null,
+            "totalDebt": 2088000000,
             "stockholdersEquity": 2869000000,
             "cashAndEquivalents": 1935000000,
             "cashFromOps": 481000000,
@@ -7636,7 +8608,7 @@
             "operatingIncome": 2878000000,
             "incomeTaxExpense": 6000000,
             "netIncome": 1697000000,
-            "totalDebt": null,
+            "totalDebt": 1720000000,
             "stockholdersEquity": 4724000000,
             "cashAndEquivalents": 497000000,
             "cashFromOps": 4477000000,
@@ -7655,7 +8627,7 @@
             "operatingIncome": 4106000000,
             "incomeTaxExpense": 46000000,
             "netIncome": 2877000000,
-            "totalDebt": null,
+            "totalDebt": 1603000000,
             "stockholdersEquity": 7563000000,
             "cashAndEquivalents": 388000000,
             "cashFromOps": 5265000000,
@@ -7674,7 +8646,7 @@
             "operatingIncome": 4910000000,
             "incomeTaxExpense": 82000000,
             "netIncome": 4268000000,
-            "totalDebt": null,
+            "totalDebt": 3180000000,
             "stockholdersEquity": 10037000000,
             "cashAndEquivalents": 825000000,
             "cashFromOps": 6465000000,
@@ -7686,7 +8658,25 @@
             "sharesDiluted": 274000000
           }
         }
-      ]
+      ],
+      "ttm": {
+        "asOf": "2026-03-31",
+        "isFY": false,
+        "lines": {
+          "revenue": 18388000000,
+          "operatingIncome": 5127000000,
+          "netIncome": 4479000000,
+          "incomeTaxExpense": 92000000,
+          "cashFromOps": 6672000000,
+          "capex": 5301000000,
+          "costOfRevenue": 9251000000,
+          "depreciation": 1767000000,
+          "stockholdersEquity": 9810000000,
+          "cashAndEquivalents": 512000000,
+          "totalDebt": 7648000000,
+          "sharesDiluted": 271000000
+        }
+      }
     }
   ]
 }
