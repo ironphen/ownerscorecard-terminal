@@ -30,6 +30,41 @@
             "operatingIncome": null
           }
         ]
+      },
+      "byProduct": {
+        "reconcile": 1,
+        "items": [
+          {
+            "label": "I Phone",
+            "qname": "aapl:IPhoneMember",
+            "revenue": 209586000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Services",
+            "qname": "us-gaap:ServiceMember",
+            "revenue": 109158000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Wearables Homeand Accessories",
+            "qname": "aapl:WearablesHomeandAccessoriesMember",
+            "revenue": 35686000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Mac",
+            "qname": "aapl:MacMember",
+            "revenue": 33708000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "I Pad",
+            "qname": "aapl:IPadMember",
+            "revenue": 28023000000,
+            "operatingIncome": null
+          }
+        ]
       }
     },
     "MSFT": {
@@ -163,6 +198,35 @@
             "operatingIncome": -19193000000
           }
         ]
+      },
+      "byGeography": {
+        "reconcile": 1,
+        "items": [
+          {
+            "label": "US Canada",
+            "qname": "meta:USCanadaMember",
+            "revenue": 78866000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Asia Pacific",
+            "qname": "srt:AsiaPacificMember",
+            "revenue": 53817000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Europe",
+            "qname": "srt:EuropeMember",
+            "revenue": 46569000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Rest Of World",
+            "qname": "meta:RestOfWorldMember",
+            "revenue": 21714000000,
+            "operatingIncome": null
+          }
+        ]
       }
     },
     "AMZN": {
@@ -262,6 +326,47 @@
             "label": "Other Countries",
             "qname": "nvda:OtherCountriesMember",
             "revenue": 4299000000,
+            "operatingIncome": null
+          }
+        ]
+      },
+      "byProduct": {
+        "reconcile": 1,
+        "items": [
+          {
+            "label": "Compute",
+            "qname": "nvda:ComputeMember",
+            "revenue": 162361000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Networking",
+            "qname": "nvda:NetworkingMember",
+            "revenue": 31376000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Gaming",
+            "qname": "nvda:GamingMember",
+            "revenue": 16042000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Professional Visualization",
+            "qname": "nvda:ProfessionalVisualizationMember",
+            "revenue": 3191000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Automotive",
+            "qname": "nvda:AutomotiveMember",
+            "revenue": 2349000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "OEM And Other",
+            "qname": "nvda:OEMAndOtherMember",
+            "revenue": 619000000,
             "operatingIncome": null
           }
         ]
@@ -421,6 +526,47 @@
             "operatingIncome": null
           }
         ]
+      },
+      "byProduct": {
+        "reconcile": 1,
+        "items": [
+          {
+            "label": "Agentforce Service",
+            "qname": "crm:AgentforceServiceMember",
+            "revenue": 9818000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Agentforce Sales",
+            "qname": "crm:AgentforceSalesMember",
+            "revenue": 9028000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Agentforce360 Platform Slack And Other",
+            "qname": "crm:Agentforce360PlatformSlackAndOtherMember",
+            "revenue": 8882000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Agentforce Integration And Agentforce Analytics",
+            "qname": "crm:AgentforceIntegrationAndAgentforceAnalyticsMember",
+            "revenue": 6232000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Agentforce Marketing And Agentforce Commerce",
+            "qname": "crm:AgentforceMarketingAndAgentforceCommerceMember",
+            "revenue": 5428000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Professional Servicesand Other",
+            "qname": "crm:ProfessionalServicesandOtherMember",
+            "revenue": 2137000000,
+            "operatingIncome": null
+          }
+        ]
       }
     },
     "ADBE": {
@@ -449,6 +595,35 @@
             "label": "Publishing And Advertising",
             "qname": "adbe:PublishingAndAdvertisingMember",
             "revenue": 256000000,
+            "operatingIncome": null
+          }
+        ]
+      },
+      "byGeography": {
+        "reconcile": 1,
+        "items": [
+          {
+            "label": "United States",
+            "qname": "country:US",
+            "revenue": 12529000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "EMEA",
+            "qname": "us-gaap:EMEAMember",
+            "revenue": 6289000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Asia Pacific",
+            "qname": "srt:AsiaPacificMember",
+            "revenue": 3360000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Other Americas",
+            "qname": "adbe:OtherAmericasMember",
+            "revenue": 1591000000,
             "operatingIncome": null
           }
         ]
@@ -890,6 +1065,120 @@
             "label": "International",
             "qname": "us-gaap:NonUsMember",
             "revenue": 131988000000,
+            "operatingIncome": null
+          }
+        ]
+      }
+    },
+    "COST": {
+      "fy": 2025,
+      "periodEnd": "2025-08-31",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/909832/000090983225000101/0000909832-25-000101-index.htm",
+      "revenueTotal": 275235000000,
+      "operatingIncomeTotal": 10383000000,
+      "byProduct": {
+        "reconcile": 1,
+        "items": [
+          {
+            "label": "Foodand Sundries",
+            "qname": "cost:FoodandSundriesMember",
+            "revenue": 109564000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Non Foods",
+            "qname": "cost:NonFoodsMember",
+            "revenue": 71190000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Other",
+            "qname": "cost:OtherMember",
+            "revenue": 51170000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Fresh Food",
+            "qname": "cost:FreshFoodMember",
+            "revenue": 37988000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Membership",
+            "qname": "us-gaap:MembershipMember",
+            "revenue": 5323000000,
+            "operatingIncome": null
+          }
+        ]
+      }
+    },
+    "TGT": {
+      "fy": 2026,
+      "periodEnd": "2026-01-31",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/27419/000002741926000016/0000027419-26-000016-index.htm",
+      "revenueTotal": 104780000000,
+      "operatingIncomeTotal": 5117000000,
+      "byProduct": {
+        "reconcile": 1,
+        "items": [
+          {
+            "label": "Food And Beverage",
+            "qname": "us-gaap:FoodAndBeverageMember",
+            "revenue": 24136000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Household Essentials",
+            "qname": "tgt:HouseholdEssentialsMember",
+            "revenue": 18017000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Hardlines",
+            "qname": "tgt:HardlinesMember",
+            "revenue": 15800000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Apparel And Accessories",
+            "qname": "tgt:ApparelAndAccessoriesMember",
+            "revenue": 15737000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Home Furnishings And Decor",
+            "qname": "tgt:HomeFurnishingsAndDecorMember",
+            "revenue": 15608000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Beauty",
+            "qname": "tgt:BeautyMember",
+            "revenue": 13214000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Advertising Revenue",
+            "qname": "tgt:AdvertisingRevenueMember",
+            "revenue": 915000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Other Other Revenue",
+            "qname": "tgt:OtherOtherRevenueMember",
+            "revenue": 626000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Credit Card Profit Sharing",
+            "qname": "tgt:CreditCardProfitSharingMember",
+            "revenue": 522000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Other Product",
+            "qname": "tgt:OtherProductMember",
+            "revenue": 205000000,
             "operatingIncome": null
           }
         ]
