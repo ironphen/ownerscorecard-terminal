@@ -114,7 +114,7 @@ function collectAnnual(facts, tags, unit = "USD") {
       if (!u.form || !u.form.startsWith("10-K") || !u.start || !u.end) continue;
       const dur = days(u.start, u.end);
       if (dur < 350 || dur > 380) continue;
-      const fy = u.fy ?? new Date(u.end).getUTCFullYear();
+      const fy = new Date(u.end).getUTCFullYear(); // key by PERIOD-end year, not filing fy
       if (!best[fy] || (u.filed || "") > (best[fy].filed || "")) best[fy] = { val: u.val, end: u.end, filed: u.filed || "" };
     }
     if (Object.keys(best).length) {
@@ -134,7 +134,7 @@ function collectInstant(facts, tags) {
     const best = {};
     for (const u of units) {
       if (!u.form || !u.form.startsWith("10-K") || !u.end || u.start) continue;
-      const fy = u.fy ?? new Date(u.end).getUTCFullYear();
+      const fy = new Date(u.end).getUTCFullYear(); // key by PERIOD-end year, not filing fy
       if (!best[fy] || (u.filed || "") > (best[fy].filed || "")) best[fy] = { val: u.val, end: u.end, filed: u.filed || "" };
     }
     if (Object.keys(best).length) {
