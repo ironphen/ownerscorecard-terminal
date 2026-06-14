@@ -8,8 +8,7 @@
     "preview": "astro preview",
     "astro": "astro",
     "import:fidelity": "node scripts/importFidelity.mjs",
-    "fetch:fundamentals": "node scripts/fetchFundamentals.mjs",
-    "fetch:prices": "node scripts/fetchPrices.mjs"
+    "fetch:fundamentals": "node scripts/fetchFundamentals.mjs"
   },
   "dependencies": {
     "@astrojs/mdx": "^6.0.3",
