@@ -294,6 +294,25 @@ export function durability(company) {
   };
 }
 
+// Normalize a diluted-share series (oldest→newest) to the latest basis, undoing
+// unadjusted stock splits (EDGAR only restates ~3 years back). A jump far from 1
+// between adjacent years is a split, not buybacks.
+export function normalizeShares(series) {
+  const factor = new Array(series.length).fill(1);
+  let f = 1;
+  for (let i = series.length - 1; i > 0; i--) {
+    factor[i] = f;
+    let j = i - 1;
+    while (j >= 0 && series[j] == null) j--;
+    if (j >= 0 && series[i] != null && series[j] != null && series[j] > 0) {
+      const r = series[i] / series[j];
+      if (r > 1.4 || r < 0.7) f *= r;
+    }
+  }
+  factor[0] = f;
+  return series.map((v, i) => (v == null ? null : v * factor[i]));
+}
+
 // Assemble the panel, grouped into the two questions Graham and Buffett asked.
 export function buildScorecard(company) {
   const cov = coverage(company);
