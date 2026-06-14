@@ -5,8 +5,9 @@
 // elsewhere on the page, and the company's own account of the business is one click
 // away in the 10-K. This is the lens Graham and Buffett would bring before any ratio.
 import language from "../data/language.json";
+import segmentsData from "../data/segments.json";
 import { classify } from "../lib/archetype.mjs";
-import { roicValue, ownerEarningsMargin, cashPosition, coverage } from "../lib/fundamentals.mjs";
+import { roicValue, ownerEarningsMargin, cashPosition, coverage, cashConversionCycle } from "../lib/fundamentals.mjs";
 import { capitalHistory } from "../lib/capital.mjs";
 
 const { company } = Astro.props;
@@ -30,27 +31,78 @@ const LEVER = {
   reit: "Occupancy, rents, and the cost of debt. Read on funds from operations and net asset value, because GAAP depreciation distorts the earnings.",
   general: "Where the revenue actually comes from, and whether the margin is earned or bought. The segment detail in the 10-K is where this one is settled.",
 };
+const lever = LEVER[cls.sector.key] || LEVER.general;
 
-// Is it a good business? Read the moat from the durability of return on capital,
-// across the whole record rather than a single year, which is the only way it shows.
+// Segment reality check: when the profit engine is not the biggest seller, say so,
+// so an archetype label (Amazon read as "retail") does not mislead about the needle.
+const cleanSeg = (s) => String(s || "").replace(/\s+Segments?$/i, "").trim();
+let leverExtra = "";
+const seg = segmentsData?.companies?.[company.ticker];
+if (seg?.bySegment?.hasOperatingIncome) {
+  const items = seg.bySegment.items;
+  const oiSum = items.filter((i) => (i.operatingIncome ?? 0) > 0).reduce((a, b) => a + b.operatingIncome, 0);
+  const topRev = [...items].sort((a, b) => b.revenue - a.revenue)[0];
+  const topOI = [...items].sort((a, b) => (b.operatingIncome ?? 0) - (a.operatingIncome ?? 0))[0];
+  if (oiSum > 0 && topRev && topOI && topOI.label !== topRev.label)
+    leverExtra = ` In practice most of the profit now comes from ${cleanSeg(topOI.label)}, even though ${cleanSeg(topRev.label)} is the bigger seller, so that is the part to watch (see the mix below).`;
+}
+
+// Is it a good business? Read return on capital across the whole record, but treat
+// the ratio with the skepticism modern accounting demands: buybacks and expensed
+// R&D and brands shrink invested capital and inflate ROIC, so flag that, lean on the
+// harder-to-game cash measure (owner earnings), and hand the verdict to the filing.
 const H = (company.history || []).filter((h) => h?.lines?.revenue != null);
 const roicSeries = H.map((h) => roicValue(h.lines)).filter((v) => v != null);
 const roicMed = median(roicSeries);
 const roicAbove = roicSeries.filter((v) => v >= 0.15).length;
+
+// Is the ROIC figure trustworthy, or mechanically inflated by a small capital base?
+const annual = company.lines || {};
+const invested = annual.totalDebt != null && annual.stockholdersEquity != null
+  ? annual.totalDebt + annual.stockholdersEquity - (annual.cashAndEquivalents || 0) : null;
+const investedIntensity = invested != null && annual.revenue ? invested / annual.revenue : null;
+const roicInflated = cls.sector.key === "assetLight"
+  || (investedIntensity != null && investedIntensity < 0.3)
+  || (roicMed != null && roicMed > 0.3);
+
+// Corroborants we now have the data for: owner-earnings durability, and a negative
+// cash-conversion cycle (others fund the business), which no return ratio reveals.
+const oeSeries = H.map((h) => ownerEarningsMargin(h.lines)).filter((v) => v != null);
+const oeMed = median(oeSeries);
+const oeStable = oeSeries.length >= 3 && oeSeries.filter((v) => v > 0).length >= oeSeries.length - 1;
+const ccc = cashConversionCycle(company);
+const negativeCCC = ccc && /Negative/.test(ccc.label);
+const cyclical = (cls.overlays || []).some((o) => o.key === "cyclical");
+
 let moat = null;
 if (roicSeries.length >= 3 && roicMed != null) {
-  let verdict;
-  if (roicMed >= 0.15 && roicAbove / roicSeries.length >= 0.6)
-    verdict = "the statistical signature of a moat: returns on capital have stayed high across the record, not just in one good year";
-  else if (roicMed >= 0.1)
-    verdict = "respectable, short of a franchise: returns clear the cost of capital without dominating it";
-  else if (roicMed >= 0.07)
-    verdict = "closer to a price-taker than a franchise: returns sit near the cost of capital";
-  else
-    verdict = "returns have not consistently cleared the cost of capital, so the business runs hard just to stand still";
-  if (cls.sector.key === "assetLight")
-    verdict += " (asset-light accounting flatters the figure, so weigh it against owner earnings below)";
-  moat = { value: `${pc(roicMed)} median, hit 15% in ${roicAbove} of ${roicSeries.length} years`, text: verdict };
+  const n = roicSeries.length;
+  const band = roicMed >= 0.2 ? "high" : roicMed >= 0.13 ? "mid" : roicMed >= 0.07 ? "low" : "poor";
+  const figs = `median ${pc(roicMed)}, above 15% in ${roicAbove} of ${n} years`;
+
+  let s1;
+  if (band === "high") s1 = `Return on capital has run high across the record (${figs})`;
+  else if (band === "mid") s1 = `Return on capital has run in the teens (${figs})`;
+  else if (band === "low") s1 = `Return on capital has sat near the cost of capital (median ${pc(roicMed)})`;
+  else s1 = `Return on capital has rarely cleared the cost of capital (${figs})`;
+  if (roicInflated && (band === "high" || band === "mid"))
+    s1 += ", though buybacks and expensed R&D and brands shrink the capital base, so the figure overstates the underlying economics";
+  s1 += ".";
+
+  let s2 = "";
+  if (oeMed != null && oeMed >= 0.03)
+    s2 = `${roicInflated ? "The steadier read is owner earnings" : "Owner earnings agree"}: roughly ${pc(oeMed)} of revenue reaches owners as cash${oeStable ? ", consistently" : ", though it swings"}` +
+      `${negativeCCC ? ", and customers and suppliers fund the business through negative working capital" : ""}.`;
+  else if (oeMed != null) s2 = "Owner earnings, the cash-based check, have been thin too.";
+  else if (negativeCCC) s2 = "Customers and suppliers fund the business through negative working capital, a structural edge the ratio does not show.";
+
+  let s3;
+  if (band === "high") s3 = "High, durable returns can mark a moat, but whether this one is real pricing power or an accounting artifact is the judgment the 10-K is for.";
+  else if (band === "mid") s3 = "Returns like these are solid but short of clear franchise economics; whether they hold is what the 10-K settles, not the multiple.";
+  else if (cyclical) s3 = "The cycle and the balance sheet decide this one, so weigh the worst year against the median, and read the 10-K.";
+  else s3 = "This is price-taker territory, where the balance sheet and the cycle matter more than any multiple; the 10-K is where you look.";
+
+  moat = { text: [s1, s2, s3].filter(Boolean).join(" ") };
 }
 
 // What owners actually keep: owner earnings as a share of revenue, this period.
@@ -100,12 +152,12 @@ const overlays = cls.overlays || [];
     ) : null}
     <div class="r">
       <dt>What moves the needle</dt>
-      <dd>{LEVER[cls.sector.key] || LEVER.general}</dd>
+      <dd>{lever}{leverExtra}</dd>
     </div>
     {moat ? (
       <div class="r">
         <dt>Is it a good business?</dt>
-        <dd><span class="fig">{moat.value}</span> {moat.text}.</dd>
+        <dd>{moat.text}</dd>
       </div>
     ) : null}
     {owners ? (
