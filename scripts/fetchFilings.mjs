@@ -51,8 +51,26 @@ function htmlToText(html) {
     .replace(/&#8220;|&#8221;|&ldquo;|&rdquo;|&quot;/gi, '"')
     .replace(/&#8212;|&mdash;/gi, "—")
     .replace(/&[a-z#0-9]+;/gi, " ")
+    // Re-insert the space the HTML dropped between a sentence and the next, so the
+    // splitter sees the boundary ("...customers.The loss" → "...customers. The loss").
+    .replace(/([a-z,)])([.!?])([A-Z])/g, "$1$2 $3")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+// Verbatim-but-tidy: strip a glued section sub-heading off the front of a quoted
+// sentence (the HTML flattens "Competition" / "Loss Contingencies" / "Foo Bar :"
+// onto the sentence that follows). Conservative — only a leading Title-Case run or
+// a short colon-led label, never sentence content.
+function cleanQuote(s) {
+  s = s.replace(/\s+/g, " ").trim();
+  s = s.replace(/^[A-Z][A-Za-z&/,\- ]{1,48}?\s*:\s+(?=[A-Z])/, "");
+  s = s.replace(
+    /^(?:[A-Z][A-Za-z&\-]+)(?:\s+(?:and|of|the|or|&|[A-Z][A-Za-z&\-]+)){0,3}\s+(?=(?:The|This|These|Those|Our|We|Your|During|For|Because|If|In|As|Although|While|When|Beyond|Any|Each|Some|Many|Most|No|A|An|Sales|Demand|Revenue)\b)/,
+    ""
+  );
+  s = s.replace(/^["'"\s]+/, "");
+  return s.trim();
 }
 
 // Capture from a start heading to the earliest following end heading. With a TOC
@@ -176,7 +194,7 @@ function diff(curSents, priorSents) {
     .filter((s) => SIGNAL.test(s) && isNew(s))
     .sort((a, b) => b.length - a.length)
     .slice(0, 4)
-    .map((s) => s.replace(/\s+/g, " ").trim().slice(0, 300));
+    .map((s) => cleanQuote(s).slice(0, 300));
   return { notableCount: notable.length, notable };
 }
 
@@ -196,7 +214,12 @@ const FLAG_THEMES = [
   {
     lens: "Customer concentration",
     why: "Who the revenue leans on. When one buyer is a large slice of sales, that buyer holds the pricing power — and its troubles become the company's.",
-    test: (s) => /\bcustomers?\b/i.test(s) && /\d/.test(s) && /(accounted for|represented|approximately|% of|percent of|concentrat|largest customer)/i.test(s),
+    // Require an actual share-of-revenue disclosure (a percentage), not merely the
+    // word "customers" next to some number — that mislabels subscriber/headcount lines.
+    test: (s) =>
+      /\bcustomers?\b/i.test(s) &&
+      /\d{1,3}\s?(%|percent)/i.test(s) &&
+      /(account|represent|concentrat|% of|percent of|of (its |our |total |net )*(net )?(revenue|sales|operating revenue))/i.test(s),
     bonus: (s) => (/%|percent/i.test(s) ? 3 : 0),
   },
   {
@@ -244,7 +267,11 @@ const FLAG_THEMES = [
   {
     lens: "Regulation & policy",
     why: "Rules that can rewrite the economics — tariffs, antitrust, data, export controls.",
-    test: (s) => /(tariff|export control|economic sanction|antitrust|data privacy|new regulation|regulatory (change|requirement|action)|recently enacted|legislation)/i.test(s),
+    // Must carry a consequence, so routine "we monitor legislation" compliance prose
+    // doesn't surface as a risk flag.
+    test: (s) =>
+      /(tariff|export control|economic sanction|antitrust|data privacy|new regulation|regulatory (change|requirement|action)|recently enacted|legislation|GDPR)/i.test(s) &&
+      /(could|may|would|adversely|materially|restrict|increase|impose|prohibit|penalt|fine|subject to|harm|impact|require|cost)/i.test(s),
     bonus: () => 0,
   },
 ];
@@ -268,7 +295,7 @@ function ownerFlags(pool) {
     }
     if (best) {
       used.add(best.s);
-      out.push({ lens: th.lens, why: th.why, section: best.section, quote: best.s.replace(/\s+/g, " ").trim().slice(0, 300) });
+      out.push({ lens: th.lens, why: th.why, section: best.section, quote: cleanQuote(best.s).slice(0, 300) });
     }
     if (out.length >= 7) break;
   }
