@@ -7,57 +7,101 @@ const L = language?.companies?.[company.ticker] || null;
 const pctChange = (cur, prior) => (cur == null || !prior ? null : (cur - prior) / prior);
 const pctΔ = (v) => (v == null ? null : `${v >= 0 ? "+" : "−"}${Math.abs(v * 100).toFixed(0)}%`);
 
+const flags = L?.ownerFlags || [];
+
 const lenΔ = L ? pctChange(L.mdna.words, L.mdna.wordsPrior) : null;
 const fogΔ = L && L.mdna.fogPrior != null ? L.mdna.fog - L.mdna.fogPrior : null;
 const hedgeΔ = L && L.mdna.hedgePrior != null ? L.mdna.hedgeDensity - L.mdna.hedgePrior : null;
 const notable = L ? [...(L.mdnaChange?.notable || []), ...(L.riskChange?.notable || [])].slice(0, 5) : [];
+const hasChange = L && (notable.length || lenΔ != null);
 
-const show = L && (notable.length || lenΔ != null);
+const show = flags.length || hasChange;
 ---
 
 {show ? (
   <section class="language">
     <div class="head">
-      <h3 class="secHead">What changed in the filing{L.priorFy ? ` — FY${L.fy} vs FY${L.priorFy}` : ""}</h3>
-      {L.sourceUrl ? <a class="src" href={L.sourceUrl} target="_blank" rel="noopener">read the 10-K →</a> : null}
+      <h2>The qualitative read{L?.fy ? ` — FY${L.fy}` : ""}</h2>
+      {L?.sourceUrl ? <a class="src" href={L.sourceUrl} target="_blank" rel="noopener">read the 10-K →</a> : null}
     </div>
 
-    <p class="intro">A 10-K is mostly boilerplate; the signal is in what's <em>new</em>. These sentences appear this year and weren't there last — read them, don't take a score.</p>
+    {flags.length ? (
+      <div class="block">
+        <h3 class="secHead">What an owner would flag</h3>
+        <p class="intro">
+          A 10-K buries a few sentences that decide the thesis under thousands that don't.
+          These are the ones Graham and Buffett would stop on — pulled from the Business, MD&amp;A and
+          Risk Factors, quoted exactly as written. We point; we don't score. Read them, then read the filing.
+        </p>
+        <ul class="flags">
+          {flags.map((f) => (
+            <li>
+              <div class="lensRow">
+                <span class="lens">{f.lens}</span>
+                <span class="sec">{f.section}</span>
+              </div>
+              <p class="why">{f.why}</p>
+              <blockquote>“{f.quote}{f.quote.length >= 300 ? "…" : ""}”</blockquote>
+            </li>
+          ))}
+        </ul>
+      </div>
+    ) : null}
 
-    <div class="stats">
-      {lenΔ != null ? <span class="stat">MD&A length <b class={lenΔ > 0.1 ? "warn" : ""}>{pctΔ(lenΔ)}</b></span> : null}
-      {fogΔ != null ? <span class="stat">Readability <b class={fogΔ > 0.5 ? "warn" : ""}>{fogΔ >= 0 ? "harder" : "easier"}</b></span> : null}
-      {hedgeΔ != null ? <span class="stat">Hedging <b class={hedgeΔ > 0 ? "warn" : ""}>{hedgeΔ >= 0 ? "up" : "down"}</b></span> : null}
-    </div>
+    {hasChange ? (
+      <div class="block">
+        <h3 class="secHead">What changed{L.priorFy ? ` since FY${L.priorFy}` : ""}</h3>
+        <p class="intro">Most of a 10-K is boilerplate carried over verbatim; the signal is in what's <em>new</em>. These lines appear this year and weren't there last — figure updates filtered out, so only the language shift remains.</p>
+        <div class="stats">
+          {lenΔ != null ? <span class="stat">MD&amp;A length <b class={lenΔ > 0.1 ? "warn" : ""}>{pctΔ(lenΔ)}</b></span> : null}
+          {fogΔ != null ? <span class="stat">Readability <b class={fogΔ > 0.5 ? "warn" : ""}>{fogΔ >= 0 ? "harder" : "easier"}</b></span> : null}
+          {hedgeΔ != null ? <span class="stat">Hedging <b class={hedgeΔ > 0 ? "warn" : ""}>{hedgeΔ >= 0 ? "up" : "down"}</b></span> : null}
+        </div>
+        {notable.length ? (
+          <ul class="quotes">
+            {notable.map((q) => <li>“{q}{q.length >= 300 ? "…" : ""}”</li>)}
+          </ul>
+        ) : (
+          <p class="muted">No materially new language flagged this year — the filing reads largely as it did last year.</p>
+        )}
+      </div>
+    ) : null}
 
-    {notable.length ? (
-      <ul class="quotes">
-        {notable.map((q) => <li>“{q}{q.length >= 320 ? "…" : ""}”</li>)}
-      </ul>
-    ) : (
-      <p class="muted">No notable new language flagged this year — the filing reads largely as it did last year.</p>
-    )}
+    <p class="foot">Classic text analysis over the filing itself — no model wrote a word of this, and every quote is the company's own. The judgment is yours.</p>
   </section>
 ) : null}
 
 <style>
   .language { margin: 22px 0; }
-  .head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; border-bottom: 1px solid var(--rule-strong); padding-bottom: 5px; }
-  .secHead { font-family: var(--sans); font-weight: 600; margin: 0; font-size: 11.5px; letter-spacing: 0.09em; text-transform: uppercase; color: var(--ink); }
+  .head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; border-bottom: 1px solid var(--rule-strong); padding-bottom: 6px; }
+  .head h2 { margin: 0; }
   .src { font-size: 12px; color: var(--accent); flex: 0 0 auto; }
 
-  .intro { font-family: var(--serif); font-style: italic; font-size: 13.5px; color: var(--muted); margin: 9px 0 0; max-width: 64ch; }
-  .redflag { font-size: 14px; color: var(--bad); margin: 10px 0 0; }
-  .redflag strong { text-transform: capitalize; }
+  .block { margin-top: 18px; }
+  .secHead { font-family: var(--sans); font-weight: 600; margin: 0; font-size: 11.5px; letter-spacing: 0.09em; text-transform: uppercase; color: var(--ink); }
+  .intro { font-family: var(--serif); font-style: italic; font-size: 13.5px; color: var(--muted); margin: 7px 0 0; max-width: 66ch; }
 
-  .stats { display: flex; flex-wrap: wrap; gap: 8px 24px; margin: 12px 0 0; font-size: 13px; color: var(--muted); }
+  .flags { list-style: none; padding: 0; margin: 12px 0 0; }
+  .flags li { padding: 12px 0; border-bottom: 1px solid var(--rule); }
+  .lensRow { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+  .lens { font-family: var(--sans); font-weight: 700; font-size: 14px; color: var(--ink); }
+  .sec { font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); flex: 0 0 auto; }
+  .why { font-size: 13px; color: #3a3e46; margin: 4px 0 0; line-height: 1.5; }
+  .flags blockquote {
+    font-family: var(--serif); font-size: 14.5px; line-height: 1.5; color: #2c2f36;
+    border-left: 2px solid var(--accent); padding: 3px 0 3px 14px; margin: 8px 0 0;
+  }
+
+  .stats { display: flex; flex-wrap: wrap; gap: 8px 24px; margin: 10px 0 0; font-size: 13px; color: var(--muted); }
   .stat b { color: var(--ink); font-variant-numeric: tabular-nums; }
   .stat b.warn { color: var(--warn); }
 
-  .quotes { list-style: none; padding: 0; margin: 12px 0 0; }
+  .quotes { list-style: none; padding: 0; margin: 10px 0 0; }
   .quotes li {
-    font-family: var(--serif); font-size: 14.5px; line-height: 1.5; color: #2c2f36;
-    border-left: 2px solid var(--accent); padding: 4px 0 4px 14px; margin: 10px 0;
+    font-family: var(--serif); font-size: 14px; line-height: 1.5; color: #2c2f36;
+    border-left: 2px solid var(--rule-strong); padding: 3px 0 3px 14px; margin: 9px 0;
   }
-  .muted { font-size: 13.5px; color: var(--muted); margin: 12px 0 0; }
+  .muted { font-size: 13.5px; color: var(--muted); margin: 10px 0 0; }
+
+  .foot { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--rule-strong); margin-top: 16px; padding-top: 10px; }
 </style>

@@ -1,17 +1,23 @@
 #!/usr/bin/env node
-// fetchFilings.mjs — the qualitative "what changed" layer.
+// fetchFilings.mjs — the qualitative read of the 10-K.
 //
 // Pulls each company's two most recent 10-K documents from EDGAR, extracts the
-// MD&A (Item 7) and Risk Factors (Item 1A), and computes what changed year over
-// year: genuinely new sentences (number-normalized so only language shifts
-// surface, not figure updates), length, readability, hedging density, and
-// red-flag phrase first-appearances. Writes src/data/language.json.
+// Business (Item 1), MD&A (Item 7) and Risk Factors (Item 1A), and produces two
+// things, both verbatim and sourced, never scored:
+//   1. "What an owner would flag" — the timeless sentences Graham and Buffett
+//      would stop on (customer concentration, pricing power, debt covenants,
+//      going-concern doubt, dilution, …), one per lens, from the latest filing.
+//   2. "What changed" — sentences genuinely new versus last year's filing
+//      (number-normalized so figure updates don't count), plus length,
+//      readability and hedging drift.
+// Writes src/data/language.json.
 //
 // 100% EDGAR — no key, no LLM. Runs in CI (needs data.sec.gov + www.sec.gov).
 //   npm run fetch:filings
 
 import fs from "node:fs";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 
 const UA = process.env.SEC_USER_AGENT || "Owner Scorecard research (ryanreinsant@gmail.com)";
 const HEADERS = { "User-Agent": UA, "Accept-Encoding": "gzip, deflate" };
@@ -148,9 +154,10 @@ async function getFiling(cik, f) {
   const url = `https://www.sec.gov/Archives/edgar/data/${Number(cik)}/${accnNoDash}/${f.doc}`;
   const html = await fetchText(url);
   const text = htmlToText(html);
+  const business = section(text, "item\\s*1[\\.\\s]+business", ["item\\s*1a[\\.\\s]+risk", "item\\s*1b[\\.\\s]", "item\\s*2[\\.\\s]+propert"]);
   const mdna = section(text, "item\\s*7[\\.\\s]+management", ["item\\s*7a[\\.\\s]+quantitative", "item\\s*8[\\.\\s]+financial"]);
   const risk = section(text, "item\\s*1a[\\.\\s]+risk\\s*factors", ["item\\s*1b[\\.\\s]", "item\\s*2[\\.\\s]+propert"]);
-  return { url, mdna: metrics(mdna), risk: metrics(risk), reportDate: f.reportDate };
+  return { url, business: metrics(business), mdna: metrics(mdna), risk: metrics(risk), reportDate: f.reportDate };
 }
 
 // "New" = a prose sentence carrying a signal term whose wording doesn't closely
@@ -173,6 +180,101 @@ function diff(curSents, priorSents) {
   return { notableCount: notable.length, notable };
 }
 
+// ---- "What an owner would flag" ----
+// The timeless read, not the year-over-year diff: the handful of sentences in the
+// Business, MD&A and Risk Factors that Graham (solvency, stability) and Buffett
+// (a moat, who you depend on, who sets the price) would stop on. Each theme is a
+// lens; we surface the single most specific sentence that trips it, verbatim and
+// sourced — never a score. Ordered so the gravest, rarest flags come first.
+const FLAG_THEMES = [
+  {
+    lens: "Going-concern doubt",
+    why: "The rarest and gravest flag — the company's own auditors questioning whether it survives the year. Graham's first test, failed.",
+    test: (s) => /substantial doubt[\s\S]{0,60}(continue as a going concern|ability to continue)/i.test(s),
+    bonus: () => 6,
+  },
+  {
+    lens: "Customer concentration",
+    why: "Who the revenue leans on. When one buyer is a large slice of sales, that buyer holds the pricing power — and its troubles become the company's.",
+    test: (s) => /\bcustomers?\b/i.test(s) && /\d/.test(s) && /(accounted for|represented|approximately|% of|percent of|concentrat|largest customer)/i.test(s),
+    bonus: (s) => (/%|percent/i.test(s) ? 3 : 0),
+  },
+  {
+    lens: "Pricing power & competition",
+    why: "Whether the company sets its price or takes it. Durable pricing power is the surest mark of a moat; price competition is the surest mark there isn't one.",
+    test: (s) => /(pricing pressure|price competition|competitive pricing|intense(ly)? competit|highly competitive|barriers to entry|substitute products|commoditiz|downward pressure on (our )?(price|selling price))/i.test(s),
+    bonus: (s) => (/(pricing|barrier|substitut|commoditiz)/i.test(s) ? 2 : 0),
+  },
+  {
+    lens: "Supplier & input dependence",
+    why: "A choke point upstream. A sole or limited supplier can dictate terms, and a single shortage can stop the line.",
+    test: (s) => /(single source|sole source|sole supplier|single supplier|one supplier|limited number of suppliers|few suppliers|rely on a (single|limited)|depend\w* on .{0,30}suppl)/i.test(s),
+    bonus: () => 0,
+  },
+  {
+    lens: "Concentrated dependence",
+    why: "What the whole business leans on — a product, a platform, a partner. Concentration cuts both ways, and the filing is where management has to admit it.",
+    test: (s) => /(substantially depend|depends? heavily|depend\w* significantly|materially depend|a significant (portion|percentage) of (our )?(revenue|net sales|sales)|our (success|business|growth|results)[\s\S]{0,40}depends?)/i.test(s),
+    bonus: (s) => (/\d/.test(s) ? 1 : 0),
+  },
+  {
+    lens: "Debt terms & refinancing",
+    why: "The fine print behind the debt. Covenants and near-term maturities decide who is really in control when a year goes badly.",
+    test: (s) => /(financial covenant|covenants (under|contained|require)|indenture|refinanc|debt maturit|maturities of|revolving credit facility|default under)/i.test(s),
+    bonus: (s) => (/(covenant|default)/i.test(s) ? 2 : 0),
+  },
+  {
+    lens: "Litigation & contingencies",
+    why: "Claims an owner inherits. Most are noise; the filing is where the ones that aren't first surface.",
+    test: (s) => /(litigation|lawsuit|class action|patent infringement|legal proceeding|investigation by|subpoena|antitrust (suit|claim|lawsuit))/i.test(s),
+    bonus: (s) => (/(material|adverse|damages|settle|enjoin)/i.test(s) ? 1 : 0),
+  },
+  {
+    lens: "Dilution",
+    why: "Whether your slice quietly shrinks. New shares fund the company at the existing owner's expense.",
+    test: (s) => /(significant(ly)? dilut|substantial dilut|dilut\w* to (our |existing )?(stockholders|shareholders)|issue additional shares of|result in dilution)/i.test(s),
+    bonus: () => 0,
+  },
+  {
+    lens: "Cyclicality & demand",
+    why: "How the business behaves when the economy turns. A cyclical earns its keep across the whole cycle, not at the peak.",
+    test: (s) => /(cyclical(ity)?|economic downturn|recession|volatil\w* demand|demand[\s\S]{0,30}(fluctuat|volatil))/i.test(s),
+    bonus: () => 0,
+  },
+  {
+    lens: "Regulation & policy",
+    why: "Rules that can rewrite the economics — tariffs, antitrust, data, export controls.",
+    test: (s) => /(tariff|export control|economic sanction|antitrust|data privacy|new regulation|regulatory (change|requirement|action)|recently enacted|legislation)/i.test(s),
+    bonus: () => 0,
+  },
+];
+
+// From the current filing's prose pool (sentence + section tag), pick the single
+// strongest sentence per theme: signal-bearing, specific (a number helps), the
+// right length, with theme-specific weighting. Returns up to 7, gravest first.
+function ownerFlags(pool) {
+  const used = new Set();
+  const out = [];
+  for (const th of FLAG_THEMES) {
+    let best = null, bestScore = -1;
+    for (const p of pool) {
+      if (used.has(p.s) || !th.test(p.s)) continue;
+      const score =
+        (SIGNAL.test(p.s) ? 1 : 0) +
+        (/\d/.test(p.s) ? 1 : 0) +
+        (p.s.length >= 90 && p.s.length <= 320 ? 1 : 0) +
+        th.bonus(p.s);
+      if (score > bestScore) { bestScore = score; best = p; }
+    }
+    if (best) {
+      used.add(best.s);
+      out.push({ lens: th.lens, why: th.why, section: best.section, quote: best.s.replace(/\s+/g, " ").trim().slice(0, 300) });
+    }
+    if (out.length >= 7) break;
+  }
+  return out;
+}
+
 async function main() {
   const out = {};
   let ok = 0;
@@ -193,13 +295,22 @@ async function main() {
       if (filings[1]) { await sleep(THROTTLE); prior = await getFiling(c.cik, filings[1]); }
     } catch (e) { console.warn(`  ! ${tk}: filing ${e.message}`); continue; }
 
-    // Quality gate: a clean Item 7 extraction is a few thousand words. Skip
-    // companies we couldn't parse rather than emit garbage.
-    if (cur.mdna.words < 1000) {
-      console.warn(`  ! ${tk}: MD&A not cleanly extracted (${cur.mdna.words}w) — skipping`);
+    // Quality gate: a clean qualitative extraction (Business + MD&A + Risk) runs
+    // to several thousand words. Skip companies we couldn't parse rather than emit
+    // garbage. The owner-flags can carry even if one section came up short.
+    const qualWords = cur.business.words + cur.mdna.words + cur.risk.words;
+    if (qualWords < 1500) {
+      console.warn(`  ! ${tk}: qualitative sections not cleanly extracted (${qualWords}w) — skipping`);
       continue;
     }
 
+    // The timeless read: what an owner would flag, from the latest filing only.
+    const pool = [];
+    for (const [sec, m] of [["Business", cur.business], ["MD&A", cur.mdna], ["Risk Factors", cur.risk]])
+      for (const s of m.sents || []) pool.push({ s, section: sec });
+    const flags = ownerFlags(pool);
+
+    // The diff: what's genuinely new versus last year (needs the prior filing).
     const mdnaDiff = prior ? diff(cur.mdna.sents, prior.mdna.sents) : null;
     const riskDiff = prior ? diff(cur.risk.sents, prior.risk.sents) : null;
 
@@ -207,6 +318,7 @@ async function main() {
       fy: cur.reportDate?.slice(0, 4) || null,
       priorFy: prior?.reportDate?.slice(0, 4) || null,
       sourceUrl: cur.url,
+      ownerFlags: flags,
       mdna: {
         words: cur.mdna.words, fog: cur.mdna.fog, hedgeDensity: Math.round(cur.mdna.hedgeDensity * 1e4) / 1e4,
         wordsPrior: prior?.mdna.words ?? null, fogPrior: prior?.mdna.fog ?? null,
@@ -217,7 +329,7 @@ async function main() {
       riskChange: riskDiff,
     };
     ok++;
-    console.log(`  ✓ ${tk}: MD&A ${cur.mdna.words}w fog ${cur.mdna.fog}` + (mdnaDiff ? `, ${mdnaDiff.notableCount} notable new` : ""));
+    console.log(`  ✓ ${tk}: ${flags.length} owner-flags, MD&A ${cur.mdna.words}w fog ${cur.mdna.fog}` + (mdnaDiff ? `, ${mdnaDiff.notableCount} new` : ""));
   }
 
   fs.writeFileSync(
@@ -227,4 +339,9 @@ async function main() {
   console.log(`\n✅ Wrote language analysis for ${ok}/${fundamentals.companies.length} companies`);
 }
 
-main().catch((e) => { console.error(`\n❌ ${e.message}\n`); process.exit(1); });
+// Exported for the offline logic test; only hit EDGAR when run directly.
+export { ownerFlags, FLAG_THEMES, sentences, isProse, diff };
+
+if (import.meta.url === pathToFileURL(process.argv[1] || "").href) {
+  main().catch((e) => { console.error(`\n❌ ${e.message}\n`); process.exit(1); });
+}

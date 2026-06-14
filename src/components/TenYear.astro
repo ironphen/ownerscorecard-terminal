@@ -1,6 +1,6 @@
 ---
 import { classify } from "../lib/archetype.mjs";
-import { fmtUSD, roicValue } from "../lib/fundamentals.mjs";
+import { fmtUSD, roicValue, liquidAssets } from "../lib/fundamentals.mjs";
 
 const { company } = Astro.props;
 const hist = (company.history || []).filter((h) => h?.lines?.revenue != null);
@@ -24,16 +24,31 @@ const ROW = {
   capexToRev: { label: "Capex / revenue", get: (L) => marginStr(L.capex != null ? Math.abs(L.capex) : null, L.revenue) },
   capexToDep: { label: "Capex vs depreciation", get: (L) => (L.capex != null && L.depreciation ? `${(Math.abs(L.capex) / L.depreciation).toFixed(2)}×` : "—") },
   totalDebt: { label: "Total debt", get: (L) => money(L.totalDebt) },
+  cash: {
+    label: "Cash & investments",
+    get: (L) => {
+      const v = liquidAssets(L);
+      return v == null ? "—" : money(v);
+    },
+  },
+  netDebt: {
+    label: "Net debt / (cash)",
+    kind: "netdebt",
+    get: (L) => {
+      if (L.totalDebt == null && L.cashAndEquivalents == null) return "—";
+      return money((L.totalDebt || 0) - (liquidAssets(L) || 0));
+    },
+  },
   dps: { label: "Dividends / share", get: (L) => perShare(L.dividendsPaid != null ? Math.abs(L.dividendsPaid) : null, L.sharesDiluted) },
   bvps: { label: "Book value / share", get: (L) => perShare(L.stockholdersEquity, L.sharesDiluted) },
 };
 
 const SETS = {
-  assetLight: [ROW.revenue, ROW.grossMargin, ROW.opMargin, ROW.netIncome, ROW.eps, ROW.ownerEarnings, ROW.oeMargin, ROW.roic, ROW.bvps],
-  consumer: [ROW.revenue, ROW.grossMargin, ROW.opMargin, ROW.netIncome, ROW.eps, ROW.ownerEarnings, ROW.roic, ROW.dps, ROW.bvps],
-  capital: [ROW.revenue, ROW.opMargin, ROW.netIncome, ROW.eps, ROW.ownerEarnings, ROW.roic, ROW.capex, ROW.capexToRev, ROW.capexToDep, ROW.totalDebt],
-  retail: [ROW.revenue, ROW.grossMargin, ROW.opMargin, ROW.netIncome, ROW.eps, ROW.ownerEarnings, ROW.oeMargin, ROW.roic],
-  general: [ROW.revenue, ROW.opMargin, ROW.netIncome, ROW.eps, ROW.ownerEarnings, ROW.oeMargin, ROW.roic, ROW.totalDebt],
+  assetLight: [ROW.revenue, ROW.grossMargin, ROW.opMargin, ROW.netIncome, ROW.eps, ROW.ownerEarnings, ROW.oeMargin, ROW.roic, ROW.cash, ROW.netDebt, ROW.bvps],
+  consumer: [ROW.revenue, ROW.grossMargin, ROW.opMargin, ROW.netIncome, ROW.eps, ROW.ownerEarnings, ROW.roic, ROW.cash, ROW.netDebt, ROW.dps, ROW.bvps],
+  capital: [ROW.revenue, ROW.opMargin, ROW.netIncome, ROW.eps, ROW.ownerEarnings, ROW.roic, ROW.capex, ROW.capexToRev, ROW.capexToDep, ROW.totalDebt, ROW.cash, ROW.netDebt],
+  retail: [ROW.revenue, ROW.grossMargin, ROW.opMargin, ROW.netIncome, ROW.eps, ROW.ownerEarnings, ROW.oeMargin, ROW.roic, ROW.cash, ROW.netDebt],
+  general: [ROW.revenue, ROW.opMargin, ROW.netIncome, ROW.eps, ROW.ownerEarnings, ROW.oeMargin, ROW.roic, ROW.totalDebt, ROW.cash, ROW.netDebt],
 };
 
 // Columns: each fiscal year, plus a trailing-twelve-months column when present
@@ -73,8 +88,16 @@ const lastI = cols.length - 1;
 const chosen = SETS[sector.key] || SETS.general;
 // Drop any row the data can't fill across the whole record.
 const rows = chosen
-  .map((r) => ({ label: r.label, cells: cols.map((c) => r.get(c.lines)) }))
+  .map((r) => ({ label: r.label, kind: r.kind || "plain", cells: cols.map((c) => r.get(c.lines)) }))
   .filter((r) => r.cells.some((c) => c !== "—"));
+
+// A parenthesised/minus cell is a loss in most rows (red) — but in the net-debt
+// row it means net cash, which is a good thing (green).
+const cellClass = (kind, c) => {
+  const neg = c.startsWith("(") || c.startsWith("−");
+  if (kind === "netdebt") return neg ? "pos" : "";
+  return neg ? "neg" : "";
+};
 ---
 
 {hist.length >= 3 ? (
@@ -100,7 +123,7 @@ const rows = chosen
             <tr>
               <th class="rowlabel">{r.label}</th>
               {r.cells.map((c, i) => (
-                <td class={`${i === lastI ? "last" : ""} ${cols[i].ttm ? "ttm" : ""} ${c.startsWith("(") || c.startsWith("−") ? "neg" : ""}`}>{c}</td>
+                <td class={`${i === lastI ? "last" : ""} ${cols[i].ttm ? "ttm" : ""} ${cellClass(r.kind, c)}`}>{c}</td>
               ))}
             </tr>
           ))}
@@ -126,5 +149,6 @@ const rows = chosen
   th.ttm, td.ttm { background: var(--accent-tint); }
   .sub { display: block; font-weight: 400; font-size: 10px; letter-spacing: 0.02em; color: var(--muted); text-transform: none; }
   td.neg { color: var(--bad); }
+  td.pos { color: var(--good, #1a7a3c); }
   tbody tr:hover td, tbody tr:hover th.rowlabel { background: #faf9f6; }
 </style>
