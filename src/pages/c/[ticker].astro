@@ -6,6 +6,7 @@ import Portrait from "../../components/Portrait.astro";
 import TenYear from "../../components/TenYear.astro";
 import Peers from "../../components/Peers.astro";
 import OwnersRead from "../../components/OwnersRead.astro";
+import Capital from "../../components/Capital.astro";
 import Comp from "../../components/Comp.astro";
 import Graham from "../../components/Graham.astro";
 import Valuation from "../../components/Valuation.astro";
@@ -58,6 +59,7 @@ const fmtDate = (d) =>
         <a href="#sec-flags">Flags</a>
         <a href="#sec-record">Record</a>
         <a href="#sec-scorecard">Scorecard</a>
+        <a href="#sec-capital">Capital</a>
         <a href="#sec-pay">Pay</a>
         <a href="#sec-graham">Graham</a>
         <a href="#sec-price">Price</a>
@@ -72,6 +74,7 @@ const fmtDate = (d) =>
   {fund ? <div id="sec-flags" class="sec"><OwnersRead company={fund} /></div> : null}
   {fund ? <div id="sec-record" class="sec"><TenYear company={fund} /></div> : null}
   {fund ? <div id="sec-scorecard" class="sec"><Scorecard company={fund} sample={fundamentals.sample} /></div> : null}
+  {fund ? <div id="sec-capital" class="sec"><Capital company={fund} /></div> : null}
   {fund ? <div id="sec-pay" class="sec"><Comp company={fund} /></div> : null}
   {fund ? <div id="sec-graham" class="sec"><Graham company={fund} /></div> : null}
   {fund ? <div id="sec-price" class="sec"><Valuation company={fund} /></div> : null}
