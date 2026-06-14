@@ -1,25 +1,10 @@
 ---
-import { buildScorecard, durability, TONE_COLOR } from "../lib/fundamentals.mjs";
+import { buildScorecard, TONE_COLOR } from "../lib/fundamentals.mjs";
+import { moatReport } from "../lib/durability.mjs";
 
 const { company, sample = false } = Astro.props;
 const { sections } = buildScorecard(company);
-const dur = durability(company);
-
-const fmtPct = (v) => (v == null ? "—" : `${(v * 100).toFixed(0)}%`);
-
-// Inline sparkline path over a self-scaled series (nulls become gaps).
-function spark(values, w = 132, h = 30) {
-  const pts = values.map((v, i) => ({ v, i })).filter((p) => p.v != null);
-  if (pts.length < 2) return null;
-  const vs = pts.map((p) => p.v);
-  const min = Math.min(...vs), max = Math.max(...vs), span = max - min || 1;
-  const x = (i) => (w * i) / (values.length - 1);
-  const y = (v) => h - 3 - (h - 6) * ((v - min) / span);
-  const d = pts.map((p, k) => `${k ? "L" : "M"}${x(p.i).toFixed(1)},${y(p.v).toFixed(1)}`).join("");
-  const last = pts[pts.length - 1];
-  const zeroY = min < 0 && max > 0 ? y(0) : null;
-  return { d, w, h, lastX: x(last.i), lastY: y(last.v), zeroY };
-}
+const report = moatReport(company);
 ---
 
 <section class="scorecard">
@@ -59,31 +44,20 @@ function spark(values, w = 132, h = 30) {
     </div>
   ))}
 
-  {dur ? (
+  {report ? (
     <div class="section">
-      <h3 class="secHead">Durability — {dur.years[0]}–{dur.years[dur.years.length - 1]}</h3>
-      <p class="durNote">A moat is high return that doesn’t fade. Here are the quality metrics across a full cycle — judge the consistency, not the latest dot.</p>
-      <ul class="strips">
-        {dur.metrics.map((m) => {
-          const sp = spark(m.values);
-          const last = [...m.values].reverse().find((v) => v != null);
-          return (
-            <li>
-              <div class="stripLabel">
-                <span class="sl">{m.label}</span>
-                {m.consistency ? <span class="consist">{m.consistency}</span> : null}
-              </div>
-              {sp ? (
-                <svg class="sparkSvg" viewBox={`0 0 ${sp.w} ${sp.h}`} preserveAspectRatio="none" role="img" aria-label={`${m.label} trend`}>
-                  {sp.zeroY != null ? <line x1="0" y1={sp.zeroY} x2={sp.w} y2={sp.zeroY} class="zero" /> : null}
-                  <path d={sp.d} class="sparkLine" />
-                  <circle cx={sp.lastX} cy={sp.lastY} r="2.4" class="sparkDot" />
-                </svg>
-              ) : <span class="noHist">history pending</span>}
-              <span class="stripVal">{fmtPct(last)}</span>
-            </li>
-          );
-        })}
+      <h3 class="secHead">Durability &amp; moat — {report.years[0]}–{report.years[report.years.length - 1]}</h3>
+      <p class="durNote">A moat is a high return that doesn’t fade, reinvested at high returns. Here is what the record says — judgments, not another chart of the numbers.</p>
+      <ul class="report">
+        {report.facts.map((ft) => (
+          <li>
+            <div class="factRow">
+              <span class="factLabel">{ft.label}</span>
+              <span class="factValue" style={`color:${TONE_COLOR[ft.tone]}`}>{ft.value}</span>
+            </div>
+            <p class="factNote">{ft.note}</p>
+          </li>
+        ))}
       </ul>
     </div>
   ) : null}
@@ -122,18 +96,13 @@ function spark(values, w = 132, h = 30) {
   .formula { font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; margin-top: 4px; }
   .note { font-size: 13.5px; color: #3a3e46; margin: 6px 0 0; line-height: 1.5; }
 
-  .durNote { font-family: var(--serif); font-style: italic; font-size: 13.5px; color: var(--muted); margin: 9px 0 4px; }
-  .strips { list-style: none; padding: 0; margin: 0; }
-  .strips li { display: flex; align-items: center; gap: 14px; padding: 11px 0; border-bottom: 1px solid var(--rule); }
-  .stripLabel { flex: 1 1 auto; min-width: 0; }
-  .sl { font-weight: 600; display: block; }
-  .consist { font-size: 12px; color: var(--good); }
-  .sparkSvg { width: 132px; height: 30px; flex: 0 0 auto; overflow: visible; }
-  .sparkLine { fill: none; stroke: var(--ink); stroke-width: 1.4; vector-effect: non-scaling-stroke; }
-  .sparkDot { fill: var(--accent); }
-  .zero { stroke: var(--rule); stroke-width: 1; vector-effect: non-scaling-stroke; }
-  .noHist { font-size: 12px; color: var(--faint); flex: 0 0 auto; width: 132px; text-align: center; }
-  .stripVal { font-weight: 700; font-variant-numeric: tabular-nums; width: 48px; text-align: right; flex: 0 0 auto; }
+  .durNote { font-family: var(--serif); font-style: italic; font-size: 13.5px; color: var(--muted); margin: 9px 0 6px; }
+  .report { list-style: none; padding: 0; margin: 0; }
+  .report li { padding: 11px 0; border-bottom: 1px solid var(--rule); }
+  .factRow { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+  .factLabel { font-weight: 600; font-size: 15px; }
+  .factValue { font-weight: 700; font-size: 17px; font-variant-numeric: tabular-nums; flex: 0 0 auto; text-align: right; }
+  .factNote { font-size: 13px; color: #3a3e46; margin: 4px 0 0; line-height: 1.5; }
 
   .foot { font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--muted); border-top: 1px solid var(--rule-strong); margin-top: 16px; padding-top: 11px; }
 </style>

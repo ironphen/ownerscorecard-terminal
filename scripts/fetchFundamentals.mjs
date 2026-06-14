@@ -68,7 +68,7 @@ const CONCEPTS = {
   ],
   receivables: ["AccountsReceivableNetCurrent"],
   inventory: ["InventoryNet"],
-  accountsPayable: ["AccountsPayableCurrent"],
+  accountsPayable: ["AccountsPayableCurrent", "AccountsPayableTradeCurrent", "AccountsPayableAndAccruedLiabilitiesCurrent"],
   sharesDiluted: [
     "WeightedAverageNumberOfDilutedSharesOutstanding",
     "WeightedAverageNumberOfShareOutstandingBasicAndDiluted",
