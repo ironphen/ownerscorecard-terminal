@@ -116,6 +116,26 @@ function bestRevenue(xml, contexts, axisLocal, companyOnly) {
   return best;
 }
 
+// Filers often tag the same axis at two granularities at once: Apple's "Products"
+// ($307B) alongside iPhone/Mac/iPad/Wearables that compose it, or Nvidia's "Data
+// Center" alongside Compute + Networking. Summed naively that double counts. A
+// roll-up is exactly the member whose value equals the overshoot above the total,
+// so we can find and drop it precisely, then re-check.
+function stripSubtotals(map, total) {
+  if (!total || map.size < 2) return map;
+  let entries = [...map.values()];
+  for (let guard = 0; guard < 6; guard++) {
+    const sum = entries.reduce((a, b) => a + b.value, 0);
+    if (sum <= total * 1.1) break;
+    const diff = sum - total;
+    let idx = -1, best = Infinity;
+    entries.forEach((e, i) => { const d = Math.abs(e.value - diff); if (d < best) { best = d; idx = i; } });
+    if (idx < 0 || best > total * 0.05) break; // no member cleanly equal to the overshoot; leave it for reconcile to reject
+    entries.splice(idx, 1);
+  }
+  return new Map(entries.map((e) => [e.member, e]));
+}
+
 // ---- labels: MetaLinks.json carries the human label for every member ----
 function buildLabels(meta) {
   const map = {};
@@ -222,10 +242,10 @@ async function forCompany(c) {
   // segment axis except the named us-gaap roll-up subtotals (handled by AGGREGATE),
   // because some filers (Apple) report their segments with standard srt geographic
   // members rather than company-defined ones. Reconciliation is the real safety net.
-  const segRev = bestRevenue(xml, contexts, SEG_AXIS, false);
+  const segRev = stripSubtotals(bestRevenue(xml, contexts, SEG_AXIS, false), total);
   const segOI = membersOnAxis(parseFacts(xml, OI_TAGS[0]), contexts, SEG_AXIS, false);
-  const geoRev = bestRevenue(xml, contexts, GEO_AXIS, false);
-  const prodRev = bestRevenue(xml, contexts, PROD_AXIS, false);
+  const geoRev = stripSubtotals(bestRevenue(xml, contexts, GEO_AXIS, false), total);
+  const prodRev = stripSubtotals(bestRevenue(xml, contexts, PROD_AXIS, false), total);
 
   const out = { fy: c.fy, periodEnd: c.periodEnd, sourceUrl: c.sourceUrl, revenueTotal: total, operatingIncomeTotal: oiTotal };
   let any = false;
