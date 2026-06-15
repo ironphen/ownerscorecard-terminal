@@ -3,12 +3,15 @@ import { fmtUSD, roicValue, operatingMargin, ownerEarningsMargin } from "../lib/
 import { returnOnEquity, returnOnTangibleEquity, efficiencyRatio, equityToAssets } from "../lib/financials.mjs";
 import { ffoMargin, ffoPayout, debtToAssets } from "../lib/reits.mjs";
 import { combinedRatio, lossRatio } from "../lib/insurers.mjs";
+import { netMargin, feeReturnOnEquity } from "../lib/feeFinancials.mjs";
+import { medicalLossRatio } from "../lib/managedCare.mjs";
 import { financialKind } from "../lib/archetype.mjs";
 import Term from "./Term.astro";
 
 const { company } = Astro.props;
 const fk = financialKind(company);
 const isReit = fk === "reit", isBank = fk === "bank", isInsurer = fk === "insurer";
+const isFee = fk === "fee", isManagedCare = fk === "managedCare";
 const L = company.lines || {};
 const rev = L.revenue;
 const hist = company.history || [];
@@ -55,6 +58,18 @@ const vitals = (isReit
       { label: "Return on tangible equity", concept: "rotce", value: returnOnTangibleEquity(cur), avg: avgOf(returnOnTangibleEquity), dp: 0 },
       { label: "Efficiency ratio", concept: "efficiency-ratio", value: efficiencyRatio(cur), avg: avgOf(efficiencyRatio), dp: 0 },
       { label: "Equity / assets", concept: "tangible-book", value: equityToAssets(cur), avg: avgOf(equityToAssets), dp: 1 },
+    ]
+  : isManagedCare
+  ? [
+      { label: "Medical loss ratio", concept: "medical-loss-ratio", value: medicalLossRatio(cur), avg: avgOf(medicalLossRatio), dp: 1 },
+      { label: "Operating margin", concept: "operating-margin", value: operatingMargin(cur), avg: avgOf(operatingMargin), dp: 1 },
+      { label: "Return on equity", concept: "return-on-equity", value: returnOnEquity(cur), avg: avgOf(returnOnEquity), dp: 0 },
+    ]
+  : isFee
+  ? [
+      { label: "Operating margin", concept: "operating-margin", value: operatingMargin(cur), avg: avgOf(operatingMargin), dp: 1 },
+      { label: "Net margin", concept: null, value: netMargin(cur), avg: avgOf(netMargin), dp: 1 },
+      { label: "Return on equity", concept: "return-on-equity", value: feeReturnOnEquity(cur), avg: avgOf(feeReturnOnEquity), dp: 0 },
     ]
   : [
       { label: "Gross margin", concept: "gross-margin", value: grossM(cur), avg: avgOf(grossM), dp: 0 },

@@ -38,6 +38,7 @@ const SIC_LABEL = {
   "5311": "Department stores", "5211": "Home-improvement retail", "4813": "Telecom", "4812": "Wireless telecom",
   "4512": "Airlines", "4400": "Cruise lines", "5812": "Restaurants", "2911": "Oil & gas", "3711": "Automakers",
   "6798": "Real estate", "6500": "Real estate",
+  "7320": "Financial data & analytics", "7323": "Financial data & analytics",
 };
 const SIC3_LABEL = {
   // technology & electronics
@@ -107,20 +108,43 @@ const SHORT_IND = {
   "Building materials": "Materials", "Communications equipment": "Comms equip.", "Electrical equipment": "Electrical",
   "Medical devices": "Med devices", "Trucking & logistics": "Logistics", "Capital markets": "Capital mkts",
   "Asset management": "Asset mgmt", "Pharma distribution": "Pharma dist.", "Food distribution": "Food dist.",
+  "Financial data & analytics": "Financial data",
   "Media & entertainment": "Media", "Toys & leisure": "Toys", "Steel & metals": "Steel", "Paints & coatings": "Coatings",
   "Specialty retail": "Retail", "General retail": "Retail", "Apparel retail": "Apparel retail",
 };
 
-// Within the financial world, which kind: banks, insurers and REITs are read on
-// different statements, so the page needs to tell them apart. By SIC, which is
-// authoritative: 60-62 depositories and credit, 63-64 insurance, 65-67 real estate.
-export function financialKind(company) {
+// Within the financial world, which kind: a lender, an insurer and a REIT are read on
+// different statements, but so are an asset manager, an exchange and a managed-care
+// plan, none of which a bank's net-interest-margin-and-deposits lens fits. We resolve a
+// coarse `kind` (which scorecard and vitals to show) and a finer `subtype` (which words
+// to use) from the SEC SIC code, with one data tie-break: a "broker" that funds a real
+// balance sheet with deposits (Goldman, Schwab) reads like a bank, while one that does
+// not (BlackRock) is a fee-earning asset manager. Authoritative ranges: 60-61 and most
+// of 62 are depositories and credit; 6280 is investment advice; 6300-64 insurance, with
+// 6324 the medical-plan (managed-care) carve-out and 6411 fee-earning brokers; 65-67
+// real estate.
+export function financialProfile(company) {
   const sic = Number(company?.sic) || 0;
-  if (sic >= 6500 && sic <= 6799) return "reit";
-  if (sic >= 6300 && sic <= 6499) return "insurer";
-  if (sic >= 6000 && sic <= 6299) return "bank";
-  return null;
+  const L = company?.lines || {};
+  const deposits = L.deposits != null && L.deposits > 0;
+  if (sic >= 6500 && sic <= 6799) return { kind: "reit", subtype: "reit" };
+  if (sic >= 6300 && sic <= 6499) {
+    if (sic === 6324) return { kind: "managedCare", subtype: "managed-care" };
+    if (sic >= 6410 && sic <= 6419) return { kind: "fee", subtype: "insurance-broker" };
+    if (sic >= 6310 && sic <= 6319) return { kind: "insurer", subtype: "life-insurer" };
+    return { kind: "insurer", subtype: "insurer" };
+  }
+  if (sic >= 6000 && sic <= 6299) {
+    if (sic >= 6280 && sic <= 6289) return { kind: "fee", subtype: "asset-manager" };
+    if (sic >= 6210 && sic <= 6219)
+      return deposits ? { kind: "bank", subtype: "broker-dealer" } : { kind: "fee", subtype: "asset-manager" };
+    if (sic >= 6200 && sic <= 6299) return { kind: "fee", subtype: "exchange" };
+    return { kind: "bank", subtype: "bank" };
+  }
+  return { kind: null, subtype: null };
 }
+export function financialKind(company) { return financialProfile(company).kind; }
+export function financialSubtype(company) { return financialProfile(company).subtype; }
 
 export function industryOf(company) {
   const sic = String(company?.sic || "");

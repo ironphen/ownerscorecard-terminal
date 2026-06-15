@@ -12,10 +12,13 @@ import { ffoPerShare } from "../lib/reits.mjs";
 
 const { company } = Astro.props;
 const { sector, overlays } = classify(company);
-// Financials are not read on an owner-earnings DCF; each routes to its own lens.
+// A lender, an insurer and a REIT are not read on an owner-earnings DCF; each routes to
+// its own balance-sheet or FFO lens. Asset managers, exchanges, brokers and health plans
+// are capital-light cash generators, so they keep the owner-earnings reverse-DCF, the
+// right lens for a business whose value is the cash it throws off, not its book.
 const fk = financialKind(company);
 const isInsurer = fk === "insurer";
-const offModel = !!fk;
+const offModel = fk === "bank" || fk === "insurer" || fk === "reit";
 const cyclical = overlays.some((o) => o.key === "cyclical");
 const median = (xs) => { const s = [...xs].sort((a, b) => a - b); return s.length ? s[Math.floor((s.length - 1) / 2)] : null; };
 
