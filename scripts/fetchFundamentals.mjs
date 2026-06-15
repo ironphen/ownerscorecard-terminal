@@ -76,6 +76,7 @@ const CONCEPTS = {
   // Domino's ~$5B. Used only as a floor via max(), so it can correct under-capture
   // but never reduce a figure the component tags already got right.
   debtTotal: [
+    "DebtAndCapitalLeaseObligations",
     "DebtLongtermAndShorttermCombinedAmount",
     "LongTermDebtAndCapitalLeaseObligationsIncludingCurrentMaturities",
     "LongTermDebtAndCapitalLeaseObligations",
@@ -292,11 +293,40 @@ async function main() {
 
     const oi = pickAnnual(facts, CONCEPTS.operatingIncome);
     const anchor = oi || pickAnnual(facts, CONCEPTS.revenue); // for fy / period / filing link
-    const maxDebt = (a, b) => { const xs = [a, b].filter((v) => v != null); return xs.length ? Math.max(...xs) : null; };
+    const maxOf = (...vals) => { const xs = vals.filter((v) => v != null); return xs.length ? Math.max(...xs) : null; };
+    // Total debt: long-term + current from the component tags, taken against the max of
+    // every aggregate total-debt tag. We take the MAX across the tags (not a priority
+    // merge) because a filer can tag its debt under different concepts in different
+    // years; the max keeps the year-to-year series consistent and complete, and can
+    // only correct an under-capture, never reduce a figure the components already got.
     const ltd = pickInstant(facts, CONCEPTS.longTermDebt);
     const cur = pickInstant(facts, CONCEPTS.currentDebt);
     const componentDebt = ltd || cur ? (ltd?.val || 0) + (cur?.val || 0) : null;
-    const totalDebt = maxDebt(componentDebt, pickInstant(facts, CONCEPTS.debtTotal)?.val ?? null);
+    const aggInstantVals = CONCEPTS.debtTotal.map((t) => pickInstant(facts, [t])?.val ?? null);
+    const aggSeriesByTag = CONCEPTS.debtTotal.map((t) => collectInstant(facts, [t]));
+    const aggTTMVals = CONCEPTS.debtTotal.map((t) => latestObservation(facts, [t], "USD", true)?.val ?? null);
+    const aggYear = (fy) => maxOf(...aggSeriesByTag.map((s) => s[fy] ?? null));
+    const totalDebt = maxOf(componentDebt, ...aggInstantVals);
+
+    // Diagnostic: DEBT_DEBUG=DPZ dumps every debt-like us-gaap tag and its latest annual
+    // value, so a debt-capture problem can be diagnosed from the actual filings.
+    if (process.env.DEBT_DEBUG && process.env.DEBT_DEBUG.toUpperCase().split(",").map((s) => s.trim()).includes(ticker.toUpperCase())) {
+      const ug = facts?.facts?.["us-gaap"] || {};
+      const TOTAL = /^(Debt|LongTermDebt|SecuredLongTermDebt|SecuredDebt|SeniorNotes|NotesPayable)/;
+      console.log(`\n=== DEBT_DEBUG ${ticker}: componentDebt=${componentDebt}, totalDebt=${totalDebt} ===`);
+      for (const concept of Object.keys(ug)) {
+        if (!/debt|notespay|borrow|capitallease|senior/i.test(concept)) continue;
+        const usd = ug[concept]?.units?.USD;
+        if (!usd) continue;
+        const byYear = {};
+        for (const o of usd) { if (o.form !== "10-K" || o.fp !== "FY" || o.fy == null) continue; if (!byYear[o.fy] || o.end > byYear[o.fy].end) byYear[o.fy] = o; }
+        const years = Object.keys(byYear).sort();
+        if (!years.length) continue;
+        if (TOTAL.test(concept)) console.log(`  [series] ${concept}: ${years.map((y) => `${y}=${(byYear[y].val / 1e6).toFixed(0)}M`).join(" ")}`);
+        else console.log(`  ${concept.padEnd(56)} ${(byYear[years[years.length - 1]].val / 1e6).toFixed(0).padStart(9)}M  (FY${years[years.length - 1]})`);
+      }
+      console.log("=== end DEBT_DEBUG ===\n");
+    }
 
     const pick = (tags) => pickAnnual(facts, tags)?.val ?? null;
     const inst = (tags) => pickInstant(facts, tags)?.val ?? null;
@@ -336,7 +366,6 @@ async function main() {
       ltMkt: collectInstant(facts, CONCEPTS.longTermMarketable),
       ltd: collectInstant(facts, CONCEPTS.longTermDebt),
       cur: collectInstant(facts, CONCEPTS.currentDebt),
-      agg: collectInstant(facts, CONCEPTS.debtTotal),
       ca: collectInstant(facts, CONCEPTS.currentAssets),
       cl: collectInstant(facts, CONCEPTS.currentLiabilities),
       assets: collectInstant(facts, CONCEPTS.totalAssets),
@@ -357,7 +386,7 @@ async function main() {
           operatingIncome: ha.operatingIncome[fy] ?? null,
           incomeTaxExpense: ha.incomeTaxExpense[fy] ?? null,
           netIncome: ha.netIncome[fy] ?? null,
-          totalDebt: maxDebt(hi.ltd[fy] != null || hi.cur[fy] != null ? (hi.ltd[fy] || 0) + (hi.cur[fy] || 0) : null, hi.agg[fy] ?? null),
+          totalDebt: maxOf(hi.ltd[fy] != null || hi.cur[fy] != null ? (hi.ltd[fy] || 0) + (hi.cur[fy] || 0) : null, aggYear(fy)),
           stockholdersEquity: hi.equity[fy] ?? null,
           cashAndEquivalents: hi.cash[fy] ?? null,
           shortTermInvestments: hi.stInv[fy] ?? null,
@@ -397,7 +426,6 @@ async function main() {
     const ttmRev = ttmFlow(facts, CONCEPTS.revenue);
     const ttmLtd = latestObservation(facts, CONCEPTS.longTermDebt, "USD", true)?.val;
     const ttmCurDebt = latestObservation(facts, CONCEPTS.currentDebt, "USD", true)?.val;
-    const ttmAgg = latestObservation(facts, CONCEPTS.debtTotal, "USD", true)?.val;
     const ttm = ttmRev
       ? {
           asOf: ttmRev.asOf,
@@ -415,7 +443,7 @@ async function main() {
             cashAndEquivalents: latestObservation(facts, CONCEPTS.cashAndEquivalents, "USD", true)?.val ?? null,
             shortTermInvestments: latestObservation(facts, CONCEPTS.shortTermInvestments, "USD", true)?.val ?? null,
             longTermMarketable: latestObservation(facts, CONCEPTS.longTermMarketable, "USD", true)?.val ?? null,
-            totalDebt: maxDebt(ttmLtd != null || ttmCurDebt != null ? (ttmLtd || 0) + (ttmCurDebt || 0) : null, ttmAgg ?? null),
+            totalDebt: maxOf(ttmLtd != null || ttmCurDebt != null ? (ttmLtd || 0) + (ttmCurDebt || 0) : null, ...aggTTMVals),
             sharesDiluted: latestObservation(facts, CONCEPTS.sharesDiluted, "shares", false)?.val ?? null,
             netInterestIncome: tf(CONCEPTS.netInterestIncome),
             noninterestIncome: tf(CONCEPTS.noninterestIncome),
