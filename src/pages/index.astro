@@ -4,6 +4,8 @@ import fundamentals from "../data/fundamentals.json";
 import { getCollection } from "astro:content";
 import { fmtUSD, roicValue, ownerEarningsMargin, operatingMargin, liquidAssets } from "../lib/fundamentals.mjs";
 import { classify, financialKind } from "../lib/archetype.mjs";
+import { returnOnEquity, returnOnTangibleEquity, equityToAssets } from "../lib/financials.mjs";
+import { ffoMargin, ffoPayout, debtToAssets } from "../lib/reits.mjs";
 import { grahamTests } from "../lib/graham.mjs";
 import Term from "../components/Term.astro";
 
@@ -29,8 +31,10 @@ const rows = [...(fundamentals.companies || [])]
     // Net cash/(debt) isn't the lens for a bank or an insurer (their borrowings fund the
     // business, not a leverage signal), so blank it there; keep it for REITs, where it is.
     const fk = financialKind(c);
+    const isBankIns = fk === "bank" || fk === "insurer";
+    const isReit = fk === "reit";
     const hasBal = L.totalDebt != null || L.cashAndEquivalents != null;
-    const netCash = (fk === "bank" || fk === "insurer") ? null : (hasBal ? (liquidAssets(L) || 0) - (L.totalDebt || 0) : null); // + = net cash
+    const netCash = isBankIns ? null : (hasBal ? (liquidAssets(L) || 0) - (L.totalDebt || 0) : null); // + = net cash
     const g = isFin ? { passes: null, testable: null } : grahamTests(c);
     return {
       ticker: c.ticker,
@@ -39,12 +43,22 @@ const rows = [...(fundamentals.companies || [])]
       modelKey: cls.sector.key,
       industry: cls.industry.short,
       revenue: L.revenue ?? null,
+      // industrial lens
       opMargin: isFin ? null : operatingMargin(L),
       roic: isFin ? null : roicValue(L),
       oeMargin: isFin ? null : ownerEarningsMargin(L),
       netCash,
       grahamPasses: g.passes,
       grahamTestable: g.testable,
+      // financial lens (banks & insurers)
+      roe: isBankIns ? returnOnEquity(L) : null,
+      rotce: isBankIns ? returnOnTangibleEquity(L) : null,
+      netMargin: isBankIns && L.netIncome != null && L.revenue ? L.netIncome / L.revenue : null,
+      equityAssets: isBankIns ? equityToAssets(L) : null,
+      // REIT lens
+      ffoM: isReit ? ffoMargin(L) : null,
+      payout: isReit ? ffoPayout(L) : null,
+      dta: isReit ? debtToAssets(L) : null,
     };
   });
 
@@ -57,9 +71,10 @@ const ndCell = (v) => (v == null ? "—" : v >= 0 ? `+${fmtUSD(v)}` : fmtUSD(v))
 // first 50 are rendered server-side as a no-JS fallback and for instant first paint.
 const r4 = (v) => (v == null ? null : Math.round(v * 1e4) / 1e4); // ratios need no more than 4 dp
 const slim = rows.map((r) => ({
-  t: r.ticker, n: r.name, m: r.modelKey, i: r.industry,
-  rev: r.revenue, op: r4(r.opMargin), roic: r4(r.roic), oe: r4(r.oeMargin),
-  nd: r.netCash, gp: r.grahamPasses, gt: r.grahamTestable,
+  t: r.ticker, n: r.name, m: r.modelKey, i: r.industry, rev: r.revenue,
+  op: r4(r.opMargin), roic: r4(r.roic), oe: r4(r.oeMargin), nd: r.netCash, gp: r.grahamPasses, gt: r.grahamTestable,
+  roe: r4(r.roe), rotce: r4(r.rotce), nm: r4(r.netMargin), ea: r4(r.equityAssets),
+  ffoM: r4(r.ffoM), payout: r4(r.payout), dta: r4(r.dta),
 }));
 const FALLBACK = rows.slice(0, 50);
 const slimJSON = JSON.stringify(slim).replace(/</g, "\\u003c");
@@ -142,8 +157,7 @@ const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "
               data-graham={r.grahamPasses ?? ""}
             >
               <td class="c-name">
-                <a href={`/c/${r.ticker}`} class="tkr">{r.ticker}</a>
-                <span class="nm">{r.name}</span>
+                <a href={`/c/${r.ticker}`} class="tkr" title={r.name}>{r.ticker}</a>
               </td>
               <td class="c-model">
                 <span class="tag">{r.industry}</span>
@@ -206,8 +220,11 @@ const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "
     .catalog td.c-name, .catalog td.c-model { text-align: left; }
     .c-name { position: sticky; left: 0; background: var(--paper); }
     .tkr { font-weight: 700; font-variant-numeric: tabular-nums; }
+    .tkr:hover { color: var(--accent); }
     .nm { display: block; font-size: 11.5px; color: var(--muted); max-width: 26ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 1px; }
-    .tag { font-size: 11px; letter-spacing: 0.02em; color: var(--ink); border: 1px solid var(--rule-strong); padding: 1px 6px; white-space: nowrap; }
+    .tag { display: inline-block; font-size: 10.5px; letter-spacing: 0.02em; color: #565961; background: #f0efe9; border-radius: 3px; padding: 2px 8px; white-space: nowrap; }
+    .num { color: #2c2f36; }
+    .gra { color: var(--muted); }
     .nd.pos { color: var(--good); }
     tbody tr:hover td { background: #faf9f6; }
     tbody tr:hover .c-name { background: #faf9f6; }
@@ -239,75 +256,96 @@ const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "
     (function () {
       const table = document.getElementById("catalog");
       const dataEl = document.getElementById("catalog-data");
-      if (!table || !dataEl) return;
-      const tbody = table.tBodies[0];
+      if (!table || !dataEl || !table.tHead) return;
+      const tbody = table.tBodies[0], thead = table.tHead;
       let DATA = [];
       try { DATA = JSON.parse(dataEl.textContent || "[]"); } catch (e) { return; }
 
-      // Formatters, ported from the lib so client-built rows match the server fallback.
       const esc = (s) => String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-      function fmtUSD(v) { if (v == null) return "—"; const neg = v < 0, a = Math.abs(v); let s; if (a >= 1e9) s = "$" + (a / 1e9).toFixed(1) + "B"; else if (a >= 1e6) s = "$" + Math.round(a / 1e6) + "M"; else if (a >= 1e3) s = "$" + Math.round(a / 1e3) + "K"; else s = "$" + Math.round(a); return neg ? "(" + s + ")" : s; }
-      const pct = (v, dp = 0) => (v == null ? "—" : (v < 0 ? "−" : "") + Math.abs(v * 100).toFixed(dp) + "%");
-      const ndCell = (v) => (v == null ? "—" : v >= 0 ? "+" + fmtUSD(v) : fmtUSD(v));
-      const attr = (v) => (v == null ? "" : v);
+      function usd(v) { if (v == null) return "—"; const neg = v < 0, a = Math.abs(v); let s; if (a >= 1e9) s = "$" + (a / 1e9).toFixed(1) + "B"; else if (a >= 1e6) s = "$" + Math.round(a / 1e6) + "M"; else if (a >= 1e3) s = "$" + Math.round(a / 1e3) + "K"; else s = "$" + Math.round(a); return neg ? "(" + s + ")" : s; }
+      const pct = (v) => (v == null ? "—" : (v < 0 ? "−" : "") + Math.abs(v * 100).toFixed(0) + "%");
+      const pct1 = (v) => (v == null ? "—" : Math.abs(v * 100).toFixed(1) + "%");
+      const ndCell = (v) => (v == null ? "—" : v >= 0 ? "+" + usd(v) : usd(v));
 
-      function rowHTML(r) {
-        const ndCls = r.nd != null && r.nd >= 0 ? "num nd pos" : "num nd";
-        const gra = r.gt ? r.gp + "/" + r.gt : "—";
-        return '<tr data-search="' + esc((r.t + " " + r.n).toLowerCase()) + '" data-model="' + esc(r.m) + '" data-ticker="' + esc(r.t) +
-          '" data-revenue="' + attr(r.rev) + '" data-opmargin="' + attr(r.op) + '" data-roic="' + attr(r.roic) +
-          '" data-oemargin="' + attr(r.oe) + '" data-netdebt="' + attr(r.nd) + '" data-graham="' + attr(r.gp) + '">' +
-          '<td class="c-name"><a href="/c/' + esc(r.t) + '" class="tkr">' + esc(r.t) + '</a><span class="nm">' + esc(r.n) + '</span></td>' +
-          '<td class="c-model"><span class="tag">' + esc(r.i) + '</span></td>' +
-          '<td class="num">' + (r.rev == null ? "—" : fmtUSD(r.rev)) + '</td>' +
-          '<td class="num">' + pct(r.op) + '</td>' +
-          '<td class="num">' + pct(r.roic) + '</td>' +
-          '<td class="num">' + pct(r.oe) + '</td>' +
-          '<td class="' + ndCls + '">' + ndCell(r.nd) + '</td>' +
-          '<td class="num gra">' + gra + '</td></tr>';
-      }
+      // Column sets adapt to the model you filter to: a bank or insurer reads on return
+      // on equity, a REIT on FFO, an industrial on owner economics. Company and sector
+      // are always shown; this is why a financial isn't a row of dashes.
+      const COLSETS = {
+        industrial: [
+          { k: "rev", label: "Revenue", fmt: usd },
+          { k: "op", label: "Op. margin", short: "Op.", fmt: pct },
+          { k: "roic", label: "ROIC", fmt: pct },
+          { k: "oe", label: "Owner-earn.", short: "OE", fmt: pct },
+          { k: "nd", label: "Net cash / (debt)", short: "Net cash", kind: "nd" },
+          { k: "gp", label: "Graham", kind: "graham" },
+        ],
+        financial: [
+          { k: "rev", label: "Revenue", fmt: usd },
+          { k: "roe", label: "ROE", fmt: pct },
+          { k: "rotce", label: "ROTCE", fmt: pct },
+          { k: "nm", label: "Net margin", short: "Net mgn", fmt: pct },
+          { k: "ea", label: "Equity / assets", short: "Eq/assets", fmt: pct1 },
+        ],
+        reit: [
+          { k: "rev", label: "Revenue", fmt: usd },
+          { k: "ffoM", label: "FFO margin", fmt: pct },
+          { k: "payout", label: "Payout (FFO)", short: "Payout", fmt: pct },
+          { k: "dta", label: "Debt / assets", short: "Debt/assets", fmt: pct },
+        ],
+      };
+      const colsetFor = (f) => (f === "financial" ? COLSETS.financial : f === "reit" ? COLSETS.reit : COLSETS.industrial);
 
-      // Build the full catalog once from the slim index, replacing the fallback rows.
-      tbody.innerHTML = DATA.map(rowHTML).join("");
-      const rows = Array.from(tbody.rows);
       const q = document.getElementById("q");
       const chips = Array.from(document.querySelectorAll(".chip"));
       const countEl = document.getElementById("count");
       let term = "", filter = "all", sortKey = null, sortDir = -1;
 
-      const visible = (r) =>
-        (!term || r.dataset.search.includes(term)) && (filter === "all" || r.dataset.model === filter);
-
-      function apply() {
-        let n = 0;
-        for (const r of rows) { const v = visible(r); r.style.display = v ? "" : "none"; if (v) n++; }
-        if (countEl) countEl.textContent = n + (n === 1 ? " company" : " companies");
+      function cell(r, col) {
+        if (col.kind === "graham") return '<td class="num gra">' + (r.gt ? r.gp + "/" + r.gt : "—") + "</td>";
+        if (col.kind === "nd") { const v = r.nd; return '<td class="num nd' + (v != null && v >= 0 ? " pos" : "") + '">' + ndCell(v) + "</td>"; }
+        return '<td class="num">' + col.fmt(r[col.k]) + "</td>";
       }
-      const num = (r, k) => { const v = r.dataset[k]; if (v === "" || v == null) return -Infinity; const f = parseFloat(v); return isNaN(f) ? -Infinity : f; };
+      function rowHTML(r, cols) {
+        return '<tr><td class="c-name"><a href="/c/' + esc(r.t) + '" class="tkr" title="' + esc(r.n) + '">' + esc(r.t) +
+          '</a></td><td class="c-model"><span class="tag">' + esc(r.i) + "</span></td>" + cols.map((c) => cell(r, c)).join("") + "</tr>";
+      }
+      function headHTML(cols) {
+        let h = '<tr><th class="c-name sortable" data-k="t">Company</th><th class="c-model">Sector</th>';
+        for (const c of cols) {
+          const on = sortKey === c.k ? (sortDir > 0 ? " asc" : " desc") : "";
+          const lbl = c.short ? '<span class="lf">' + c.label + '</span><span class="ls">' + c.short + "</span>" : c.label;
+          h += '<th class="num sortable' + on + '" data-k="' + c.k + '">' + lbl + "</th>";
+        }
+        return h + "</tr>";
+      }
+      const numv = (v) => (v == null || v === "" ? -Infinity : v);
 
-      function sortBy(key) {
-        if (sortKey === key) sortDir *= -1; else { sortKey = key; sortDir = key === "ticker" ? 1 : -1; }
-        const cmp = key === "ticker"
-          ? (a, b) => a.dataset.ticker.localeCompare(b.dataset.ticker) * sortDir
-          : (a, b) => (num(a, key) - num(b, key)) * sortDir;
-        rows.sort(cmp);
-        for (const r of rows) tbody.appendChild(r);
-        document.querySelectorAll("th.sortable").forEach((th) => {
-          const on = th.dataset.sort === key;
-          th.classList.toggle("asc", on && sortDir > 0);
-          th.classList.toggle("desc", on && sortDir < 0);
-        });
+      function render() {
+        const cols = colsetFor(filter);
+        thead.innerHTML = headHTML(cols);
+        let view = DATA.filter((r) => (!term || (r.t + " " + r.n).toLowerCase().indexOf(term) >= 0) && (filter === "all" || r.m === filter));
+        if (sortKey) {
+          const k = sortKey, dir = sortDir;
+          view = view.slice().sort(k === "t" ? (a, b) => a.t.localeCompare(b.t) * dir : (a, b) => (numv(a[k]) - numv(b[k])) * dir);
+        }
+        tbody.innerHTML = view.map((r) => rowHTML(r, cols)).join("");
+        if (countEl) countEl.textContent = view.length + (view.length === 1 ? " company" : " companies");
       }
 
-      q && q.addEventListener("input", () => { term = (q.value || "").trim().toLowerCase(); apply(); });
+      q && q.addEventListener("input", () => { term = (q.value || "").trim().toLowerCase(); render(); });
       chips.forEach((c) => c.addEventListener("click", () => {
         chips.forEach((x) => x.classList.remove("active"));
         c.classList.add("active");
-        filter = c.dataset.filter;
-        apply();
+        filter = c.dataset.filter; sortKey = null; sortDir = -1; // a new lens, a fresh sort
+        render();
       }));
-      document.querySelectorAll("th.sortable").forEach((th) => th.addEventListener("click", () => sortBy(th.dataset.sort)));
-      apply();
+      table.addEventListener("click", (e) => {
+        const th = e.target.closest && e.target.closest("th.sortable"); if (!th) return;
+        const k = th.dataset.k;
+        if (sortKey === k) sortDir *= -1; else { sortKey = k; sortDir = k === "t" ? 1 : -1; }
+        render();
+      });
+      render();
     })();
   </script>
 </BaseLayout>

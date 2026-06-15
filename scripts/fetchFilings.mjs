@@ -168,17 +168,29 @@ const BIZ_SKIP = /(was|were)\s+incorporated|incorporated\s+(under|in)\b|reincorp
 const BIZ_WEAK = /^(we also\b|our (customers?|employees?|people|associates|team|more than|over\s|approximately|roughly|nearly))/i;
 const HEAD_TOKEN = /^(item\s*1[ab]?\b\.?|part\s*i+\b\.?|general development of (the )?business|business overview|company overview|our company|our business|the company|business|general|overview)\s*[:.\-–—]?\s+/i;
 const LEAD_VERB = /^(is|are|operates?|provides?|markets?|designs?|develops?|sells?|offers?|supplies|distributes?|delivers?|produces?|manufactures?|engages?)\b/i;
+// Signals a richer description: names products, markets, customers or segments rather
+// than a bare "we operate" line.
+const BIZ_RICH = /\b(products?|services?|segments?|brands?|markets?|customers?|solutions?|software|platforms?|stores?|technolog|devices?|equipment|systems?)/i;
 
+// Pull the company's own one-line description from the top of Item 1. Rather than take
+// the first sentence that passes, we collect candidates from the opening and score
+// them, so the canonical "<Company> is a <type> ..." form and richer, company-named
+// sentences win, with earliness as the tiebreaker (the opener is usually the intended
+// overview). Verbatim, lightly cleaned; null when nothing clean is found.
 function businessDescription(sents, name) {
   if (!Array.isArray(sents)) return null;
   const firstWord = ((name || "").replace(/^the\s+/i, "").match(/[A-Za-z]{3,}/) || [])[0];
-  for (const raw of sents.slice(0, 14)) {
-    let s = cleanQuote(String(raw || ""));
+  const cands = [];
+  const slice = sents.slice(0, 20);
+  for (let i = 0; i < slice.length; i++) {
+    let s = cleanQuote(String(slice[i] || ""));
     let prev;
     do { prev = s; s = s.replace(HEAD_TOKEN, "").trim(); } while (s !== prev); // strip stacked headings
     if (s.length < 40 || s.length > 380) continue;
     if (BIZ_SKIP.test(s) || BIZ_WEAK.test(s)) continue;
-    if (!BIZ_DOING.test(s) && !BIZ_ISA.test(s)) continue;
+    const isa = BIZ_ISA.test(s);
+    if (!BIZ_DOING.test(s) && !isa) continue;
+    const rich = BIZ_RICH.test(s);
     s = s
       .replace(/\s*\([^)]*\)/g, "")
       .replace(/,?\s+and its (wholly[- ]owned )?subsidiaries\b/i, "")
@@ -186,11 +198,21 @@ function businessDescription(sents, name) {
       .trim();
     if (LEAD_VERB.test(s) && name) s = `${name.trim()} ${s}`; // restore the lost subject
     const head = s.split(/\s+/).slice(0, 5).join(" ");
-    const hasSubject = /^(we|our)\b/i.test(s) || (firstWord && new RegExp(`\\b${firstWord}\\b`, "i").test(head));
-    if (!hasSubject || !/^[A-Z]/.test(s) || s.length < 40) continue;
-    return s.length > 300 ? s.slice(0, 297).replace(/[\s,;]+\S*$/, "") + "…" : s;
+    const weSubject = /^(we|our)\b/i.test(s);
+    const namedSubject = !!(firstWord && new RegExp(`\\b${firstWord}\\b`, "i").test(head));
+    if ((!weSubject && !namedSubject) || !/^[A-Z]/.test(s) || s.length < 40) continue;
+    let score = 0;
+    if (isa) score += 3;                       // the canonical "is a/an <type>" form
+    if (namedSubject && !weSubject) score += 2; // names the company, not a bare "we"
+    if (rich) score += 1;                       // products, markets, segments
+    score -= i * 0.6;                           // the opener is usually the intended one
+    if (s.length < 70) score -= 1;              // too terse to describe a business
+    cands.push({ s, score });
   }
-  return null;
+  if (!cands.length) return null;
+  cands.sort((a, b) => b.score - a.score);
+  const best = cands[0].s;
+  return best.length > 300 ? best.slice(0, 297).replace(/[\s,;]+\S*$/, "") + "…" : best;
 }
 
 // ---- EDGAR document discovery ----

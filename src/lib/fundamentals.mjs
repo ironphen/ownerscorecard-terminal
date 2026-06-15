@@ -300,8 +300,11 @@ export function cashConversionCycle(c) {
 // Return null when not honestly computable.
 export function roicValue(L) {
   if (!L) return null;
-  const oi = L.operatingIncome, eq = L.stockholdersEquity, debt = L.totalDebt;
-  if (oi == null || eq == null || debt == null) return null;
+  const oi = L.operatingIncome, eq = L.stockholdersEquity;
+  if (oi == null || eq == null) return null;
+  // A company with no debt tags carries no debt (our debt capture is thorough), so a
+  // null reads as zero rather than disqualifying the whole ratio.
+  const debt = L.totalDebt || 0;
   const invested = debt + eq - (L.cashAndEquivalents || 0);
   if (invested <= 0) return null;
   let t = 0.21;
