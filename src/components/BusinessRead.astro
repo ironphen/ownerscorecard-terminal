@@ -95,6 +95,16 @@ if (seg?.bySegment?.hasOperatingIncome) {
     leverExtra = ` In practice most of the profit now comes from ${cleanSeg(topOI.label)}, even though ${cleanSeg(topRev.label)} is the bigger seller, so that is the part to watch (see the mix below).`;
 }
 
+// Make the industry lens company-specific by pointing to the filing's own top flagged
+// driver, reusing the same ownerFlags the section below sets against the numbers. A
+// pointer, not a repeat: the quote and the weld stay in "what the filing emphasizes".
+const DRIVER_LENSES = new Set(["Customer concentration", "Pricing power & competition", "Supplier & input dependence", "Concentrated dependence", "Cyclicality & demand"]);
+const oflags = L?.ownerFlags || [];
+const topFlag = oflags.find((f) => DRIVER_LENSES.has(f.lens)) || oflags[0] || null;
+const flagPointer = topFlag
+  ? ` On its own account, the filing leans hardest on ${topFlag.lens.toLowerCase()}, set against the numbers in what the filing emphasizes, below.`
+  : "";
+
 // What it is: what the company actually sells, drawn from the product or reportable-
 // segment mix. Where no breakdown is disclosed, a short economic characterization.
 const MODEL_PHRASE = {
@@ -208,7 +218,7 @@ const overlays = cls.overlays || [];
     ) : null}
     <div class="r">
       <dt>What moves the needle</dt>
-      <dd>{lever}{leverExtra}</dd>
+      <dd>{lever}{leverExtra}{flagPointer}</dd>
     </div>
     {moat ? (
       <div class="r">
