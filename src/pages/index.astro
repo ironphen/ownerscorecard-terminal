@@ -49,6 +49,18 @@ const present = new Set(rows.map((r) => r.modelKey));
 const chips = CHIP_ORDER.filter((k) => present.has(k));
 const ndCell = (v) => (v == null ? "—" : v >= 0 ? `+${fmtUSD(v)}` : fmtUSD(v));
 
+// The catalog scales by shipping a slim index (a few sourced numbers per company)
+// and building the table on the client, rather than server-rendering every row. The
+// first 50 are rendered server-side as a no-JS fallback and for instant first paint.
+const r4 = (v) => (v == null ? null : Math.round(v * 1e4) / 1e4); // ratios need no more than 4 dp
+const slim = rows.map((r) => ({
+  t: r.ticker, n: r.name, m: r.modelKey, i: r.industry,
+  rev: r.revenue, op: r4(r.opMargin), roic: r4(r.roic), oe: r4(r.oeMargin),
+  nd: r.netCash, gp: r.grahamPasses, gt: r.grahamTestable,
+}));
+const FALLBACK = rows.slice(0, 50);
+const slimJSON = JSON.stringify(slim).replace(/</g, "\\u003c");
+
 const articles = (
   await getCollection("articles", ({ data }) => (import.meta.env.PROD ? !data.draft : true))
 )
@@ -97,6 +109,8 @@ const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "
       </div>
     </div>
 
+    <noscript><p class="nojs">Showing the first {FALLBACK.length} of {rows.length} companies. Enable JavaScript for the full sortable, filterable catalog.</p></noscript>
+
     <div class="scroll">
       <table class="catalog" id="catalog">
         <thead>
@@ -112,7 +126,7 @@ const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "
           </tr>
         </thead>
         <tbody>
-          {rows.map((r) => (
+          {FALLBACK.map((r) => (
             <tr
               data-search={`${r.ticker} ${r.name}`.toLowerCase()}
               data-model={r.modelKey}
@@ -142,6 +156,9 @@ const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "
         </tbody>
       </table>
     </div>
+
+    <script type="application/json" id="catalog-data" is:inline set:html={slimJSON}></script>
+
     <p class="legend"><Term id="owner-earnings">Owner-earnings margin</Term> = (operating cash − capex) ÷ revenue. <Term id="net-debt">Net cash</Term> nets debt against cash and marketable securities; parentheses are net debt. Graham = how many of his defensive-investor tests the filings clear (of those computable), a floor of safety, not a buy signal; sort by it to screen.</p>
   </section>
 
@@ -193,6 +210,7 @@ const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "
     tbody tr:hover .c-name { background: #faf9f6; }
 
     .legend { font-size: 11.5px; color: var(--faint); margin: 10px 0 0; line-height: 1.5; }
+    .nojs { font-size: 12.5px; color: var(--warn); margin: 8px 0 0; }
 
     .ls { display: none; }
 
@@ -217,8 +235,37 @@ const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "
   <script is:inline>
     (function () {
       const table = document.getElementById("catalog");
-      if (!table) return;
+      const dataEl = document.getElementById("catalog-data");
+      if (!table || !dataEl) return;
       const tbody = table.tBodies[0];
+      let DATA = [];
+      try { DATA = JSON.parse(dataEl.textContent || "[]"); } catch (e) { return; }
+
+      // Formatters, ported from the lib so client-built rows match the server fallback.
+      const esc = (s) => String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+      function fmtUSD(v) { if (v == null) return "—"; const neg = v < 0, a = Math.abs(v); let s; if (a >= 1e9) s = "$" + (a / 1e9).toFixed(1) + "B"; else if (a >= 1e6) s = "$" + Math.round(a / 1e6) + "M"; else if (a >= 1e3) s = "$" + Math.round(a / 1e3) + "K"; else s = "$" + Math.round(a); return neg ? "(" + s + ")" : s; }
+      const pct = (v, dp = 0) => (v == null ? "—" : (v < 0 ? "−" : "") + Math.abs(v * 100).toFixed(dp) + "%");
+      const ndCell = (v) => (v == null ? "—" : v >= 0 ? "+" + fmtUSD(v) : fmtUSD(v));
+      const attr = (v) => (v == null ? "" : v);
+
+      function rowHTML(r) {
+        const ndCls = r.nd != null && r.nd >= 0 ? "num nd pos" : "num nd";
+        const gra = r.gt ? r.gp + "/" + r.gt : "—";
+        return '<tr data-search="' + esc((r.t + " " + r.n).toLowerCase()) + '" data-model="' + esc(r.m) + '" data-ticker="' + esc(r.t) +
+          '" data-revenue="' + attr(r.rev) + '" data-opmargin="' + attr(r.op) + '" data-roic="' + attr(r.roic) +
+          '" data-oemargin="' + attr(r.oe) + '" data-netdebt="' + attr(r.nd) + '" data-graham="' + attr(r.gp) + '">' +
+          '<td class="c-name"><a href="/c/' + esc(r.t) + '" class="tkr">' + esc(r.t) + '</a><span class="nm">' + esc(r.n) + '</span></td>' +
+          '<td class="c-model"><span class="tag">' + esc(r.i) + '</span></td>' +
+          '<td class="num">' + (r.rev == null ? "—" : fmtUSD(r.rev)) + '</td>' +
+          '<td class="num">' + pct(r.op) + '</td>' +
+          '<td class="num">' + pct(r.roic) + '</td>' +
+          '<td class="num">' + pct(r.oe) + '</td>' +
+          '<td class="' + ndCls + '">' + ndCell(r.nd) + '</td>' +
+          '<td class="num gra">' + gra + '</td></tr>';
+      }
+
+      // Build the full catalog once from the slim index, replacing the fallback rows.
+      tbody.innerHTML = DATA.map(rowHTML).join("");
       const rows = Array.from(tbody.rows);
       const q = document.getElementById("q");
       const chips = Array.from(document.querySelectorAll(".chip"));
