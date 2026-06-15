@@ -18,7 +18,7 @@ const PALETTE = ["#2f3b47", "#5a6b7a", "#5f7355", "#9c8f6e", "#86949f", "#a86b52
 const pct = (v) => Math.round(v * 100);
 
 // Trim the redundant "Segment" suffix some filers append to their member labels.
-const clean = (s) => String(s || "").replace(/\s+Segments?$/i, "").trim();
+const clean = (s) => String(s || "").replace(/&amp;/gi, "&").replace(/\s+Segments?$/i, "").trim();
 const tone = (it, i) => ({ ...it, label: clean(it.label), color: PALETTE[i] || PALETTE[PALETTE.length - 1] });
 
 // Order by revenue, cap the long tail into "Other", and attach a colour to each.

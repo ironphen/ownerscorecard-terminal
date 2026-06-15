@@ -83,7 +83,7 @@ const lever = (indEntry && indEntry.l) || LEVER[modelKey] || LEVER.general;
 
 // Segment reality check: when the profit engine is not the biggest seller, say so,
 // so an archetype label (Amazon read as "retail") does not mislead about the needle.
-const cleanSeg = (s) => String(s || "").replace(/\s+Segments?$/i, "").replace(/ And /g, " and ").trim();
+const cleanSeg = (s) => String(s || "").replace(/&amp;/gi, "&").replace(/\s+Segments?$/i, "").replace(/ And /g, " and ").trim();
 let leverExtra = "";
 const seg = segmentsData?.companies?.[company.ticker];
 if (seg?.bySegment?.hasOperatingIncome) {
