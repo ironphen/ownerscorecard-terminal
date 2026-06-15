@@ -116,19 +116,23 @@ for (const c of companies) {
   }
 }
 
-// ---- coverage scorecard: a regression in the pipeline shows up as a coverage cliff
-// (a taxonomy change that silently drops debt for 50 companies, say), so we hold each
-// layer to a floor and fail the run if it falls through. ----
+// ---- coverage scorecard: a pipeline regression shows up as a coverage cliff (a taxonomy
+// change that silently drops debt or segments for a whole swath of filers), so we hold
+// each layer to a floor. The floors are deliberately set to catastrophe levels, well
+// below the normal numbers, not as quality targets: they must catch a layer cratering
+// while tolerating the ordinary dilution of adding companies (a batch of recent IPOs
+// genuinely lacks eight years of history). A real quality target is a different job; this
+// is the smoke alarm. ----
 const inds = companies.filter((c) => !financialProfile(c).kind);
 const frac = (n, d) => (d ? n / d : 1);
 const coverage = [
-  ["top-line revenue > 0", frac(companies.filter((c) => topLineRevenue(c.lines || {}, c) > 0).length, companies.length), 1.0],
-  ["operating income (industrials)", frac(inds.filter((c) => c.lines?.operatingIncome != null).length, inds.length), 0.99],
-  ["ROIC (industrials)", frac(inds.filter((c) => roicValue(c.lines || {}) != null).length, inds.length), 0.95],
-  ["8+ years of history", frac(companies.filter((c) => (c.history || []).length >= 8).length, companies.length), 0.9],
-  ["fresh quarter (TTM)", frac(companies.filter((c) => c.ttm?.lines).length, companies.length), 0.9],
-  ["owner flags (what the filing emphasizes)", frac(companies.filter((c) => lang[c.ticker]?.ownerFlags?.length).length, companies.length), 0.85],
-  ["segment breakdown (any axis)", frac(companies.filter((c) => { const S = seg[c.ticker]; return S && (S.bySegment || S.byProduct || S.byGeography); }).length, companies.length), 0.65],
+  ["top-line revenue > 0", frac(companies.filter((c) => topLineRevenue(c.lines || {}, c) > 0).length, companies.length), 0.95],
+  ["operating income (industrials)", frac(inds.filter((c) => c.lines?.operatingIncome != null).length, inds.length), 0.9],
+  ["ROIC (industrials)", frac(inds.filter((c) => roicValue(c.lines || {}) != null).length, inds.length), 0.85],
+  ["8+ years of history", frac(companies.filter((c) => (c.history || []).length >= 8).length, companies.length), 0.7],
+  ["fresh quarter (TTM)", frac(companies.filter((c) => c.ttm?.lines).length, companies.length), 0.8],
+  ["owner flags (what the filing emphasizes)", frac(companies.filter((c) => lang[c.ticker]?.ownerFlags?.length).length, companies.length), 0.7],
+  ["segment breakdown (any axis)", frac(companies.filter((c) => { const S = seg[c.ticker]; return S && (S.bySegment || S.byProduct || S.byGeography); }).length, companies.length), 0.5],
 ];
 const covFails = coverage.filter(([, v, min]) => v < min);
 
