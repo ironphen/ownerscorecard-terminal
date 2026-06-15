@@ -26,6 +26,17 @@ const universe = JSON.parse(fs.readFileSync(path.join(dataDir, "universe.json"),
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+// Operating income, with a fallback for filers that don't tag OperatingIncomeLoss
+// (Nike, IBM, the oil majors, much of pharma run gross profit straight to pretax):
+// revenue minus total costs and expenses, else pretax (net income + tax) plus interest
+// as an EBIT proxy. Returns null only when none of the inputs are present.
+function deriveOpInc(opInc, rev, costsExp, ni, tax, interest) {
+  if (opInc != null) return opInc;
+  if (rev != null && costsExp != null) return rev - costsExp;
+  if (ni != null && tax != null) return ni + tax + (interest || 0);
+  return null;
+}
+
 // Title-case EDGAR's all-caps entityName for use as a display-name fallback when the
 // universe doesn't carry a curated name. Keeps short all-caps acronyms (HP, AMD, IBM),
 // normalizes the common legal suffixes, and lowercases the little joining words.
@@ -63,6 +74,7 @@ async function getJSON(url) {
 // try each and take the first that yields a usable annual figure.
 const CONCEPTS = {
   operatingIncome: ["OperatingIncomeLoss"],
+  costsAndExpenses: ["CostsAndExpenses"], // total operating costs incl COGS; revenue − this = operating income
   interestExpense: ["InterestExpense", "InterestExpenseNonoperating", "InterestAndDebtExpense"],
   revenue: ["RevenueFromContractWithCustomerExcludingAssessedTax", "Revenues", "RevenueFromContractWithCustomerIncludingAssessedTax"],
   netIncome: ["NetIncomeLoss", "NetIncomeLossAvailableToCommonStockholdersBasic", "ProfitLoss"],
@@ -339,6 +351,8 @@ async function main() {
     const ha = {
       revenue: collectAnnual(facts, CONCEPTS.revenue),
       operatingIncome: collectAnnual(facts, CONCEPTS.operatingIncome),
+      costsAndExpenses: collectAnnual(facts, CONCEPTS.costsAndExpenses),
+      interestExpense: collectAnnual(facts, CONCEPTS.interestExpense),
       incomeTaxExpense: collectAnnual(facts, CONCEPTS.incomeTaxExpense),
       netIncome: collectAnnual(facts, CONCEPTS.netIncome),
       cashFromOps: collectAnnual(facts, CONCEPTS.cashFromOps),
@@ -383,7 +397,7 @@ async function main() {
         fy,
         lines: {
           revenue: ha.revenue[fy] ?? null,
-          operatingIncome: ha.operatingIncome[fy] ?? null,
+          operatingIncome: deriveOpInc(ha.operatingIncome[fy] ?? null, ha.revenue[fy] ?? null, ha.costsAndExpenses[fy] ?? null, ha.netIncome[fy] ?? null, ha.incomeTaxExpense[fy] ?? null, ha.interestExpense[fy] ?? null),
           incomeTaxExpense: ha.incomeTaxExpense[fy] ?? null,
           netIncome: ha.netIncome[fy] ?? null,
           totalDebt: maxOf(hi.ltd[fy] != null || hi.cur[fy] != null ? (hi.ltd[fy] || 0) + (hi.cur[fy] || 0) : null, aggYear(fy)),
@@ -432,7 +446,7 @@ async function main() {
           isFY: ttmRev.isFY,
           lines: {
             revenue: ttmRev.val,
-            operatingIncome: tf(CONCEPTS.operatingIncome),
+            operatingIncome: deriveOpInc(tf(CONCEPTS.operatingIncome), ttmRev?.val ?? null, tf(CONCEPTS.costsAndExpenses), tf(CONCEPTS.netIncome), tf(CONCEPTS.incomeTaxExpense), tf(CONCEPTS.interestExpense)),
             netIncome: tf(CONCEPTS.netIncome),
             incomeTaxExpense: tf(CONCEPTS.incomeTaxExpense),
             cashFromOps: tf(CONCEPTS.cashFromOps),
@@ -476,7 +490,7 @@ async function main() {
       form: anchor?.form ?? "10-K",
       sourceUrl,
       lines: {
-        operatingIncome: oi?.val ?? null,
+        operatingIncome: deriveOpInc(oi?.val ?? null, pick(CONCEPTS.revenue), pick(CONCEPTS.costsAndExpenses), pick(CONCEPTS.netIncome), pick(CONCEPTS.incomeTaxExpense), pick(CONCEPTS.interestExpense)),
         interestExpense: pick(CONCEPTS.interestExpense),
         revenue: pick(CONCEPTS.revenue),
         netIncome: pick(CONCEPTS.netIncome),
