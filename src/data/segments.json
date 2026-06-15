@@ -1,5 +1,5 @@
 {
-  "asOf": "2026-06-14",
+  "asOf": "2026-06-15",
   "source": "SEC EDGAR XBRL, reportable-segment and geographic disclosures",
   "companies": {
     "AAPL": {
@@ -1755,6 +1755,115 @@
             "qname": "srt:NorthAmericaMember",
             "revenue": 12699000000,
             "operatingIncome": null
+          }
+        ]
+      }
+    },
+    "GME": {
+      "fy": 2026,
+      "periodEnd": "2026-01-31",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1326380/000132638026000013/0001326380-26-000013-index.htm",
+      "revenueTotal": 3629900000,
+      "operatingIncomeTotal": 232100000,
+      "bySegment": {
+        "reconcile": 1,
+        "hasOperatingIncome": true,
+        "items": [
+          {
+            "label": "United States",
+            "qname": "gme:UnitedStatesSegmentMember",
+            "revenue": 2667600000,
+            "operatingIncome": 283200000
+          },
+          {
+            "label": "Australia",
+            "qname": "gme:AustraliaSegmentMember",
+            "revenue": 494700000,
+            "operatingIncome": 4600000
+          },
+          {
+            "label": "Europe",
+            "qname": "gme:EuropeSegmentMember",
+            "revenue": 429400000,
+            "operatingIncome": -33500000
+          },
+          {
+            "label": "Canada",
+            "qname": "gme:CanadaSegmentMember",
+            "revenue": 38200000,
+            "operatingIncome": -22200000
+          }
+        ]
+      },
+      "byProduct": {
+        "reconcile": 1,
+        "items": [
+          {
+            "label": "Hardware and accessories",
+            "qname": "gme:VideogamehardwareaccessoriesMember",
+            "revenue": 1840400000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Collectibles",
+            "qname": "gme:CollectiblesMember",
+            "revenue": 1060200000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Software",
+            "qname": "gme:SoftwareMember",
+            "revenue": 729300000,
+            "operatingIncome": null
+          }
+        ]
+      }
+    },
+    "HPQ": {
+      "fy": 2025,
+      "periodEnd": "2025-10-31",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/47217/000004721725000071/0000047217-25-000071-index.htm",
+      "revenueTotal": 55295000000,
+      "operatingIncomeTotal": 3174000000,
+      "byProduct": {
+        "reconcile": 1,
+        "items": [
+          {
+            "label": "Products",
+            "qname": "us-gaap:ProductMember",
+            "revenue": 52002000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Services",
+            "qname": "us-gaap:ServiceMember",
+            "revenue": 3293000000,
+            "operatingIncome": null
+          }
+        ]
+      }
+    },
+    "MZTI": {
+      "fy": 2025,
+      "periodEnd": "2025-06-30",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/57515/000005751525000020/0000057515-25-000020-index.htm",
+      "revenueTotal": 1909122000,
+      "operatingIncomeTotal": 220317000,
+      "bySegment": {
+        "reconcile": 1,
+        "hasOperatingIncome": true,
+        "items": [
+          {
+            "label": "Retail",
+            "qname": "mzti:RetailSegmentMember",
+            "revenue": 1003409000,
+            "operatingIncome": 211695000
+          },
+          {
+            "label": "Foodservice",
+            "qname": "mzti:FoodserviceMember",
+            "revenue": 905713000,
+            "operatingIncome": 111579000
           }
         ]
       }
