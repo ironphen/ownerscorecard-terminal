@@ -32,6 +32,8 @@ const cur = company.ttm?.lines || L;
 const curLabel = company.ttm?.lines ? "TTM" : `FY${company.fy}`;
 const grossM = (l) => (l && l.revenue && l.costOfRevenue != null ? 1 - l.costOfRevenue / l.revenue : null);
 const hist5 = hist.slice(-5).map((h) => h.lines);
+const avgLabel = hist5.length >= 5 ? "5-yr average" : hist5.length >= 2 ? `${hist5.length}-yr average` : null;
+const avgShort = avgLabel ? avgLabel.replace("average", "avg") : "";
 const avgOf = (fn) => { const xs = hist5.map(fn).filter((v) => v != null); return xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null; };
 // Vital signs differ by archetype: a bank's "is it a good business" lives in return
 // on equity and the efficiency of the operation, not in margins or ROIC.
@@ -98,13 +100,13 @@ const sp = spark(revSeries);
 
   {vitals.length ? (
     <div class="vitals">
-      <span class="vLbl">Vital signs · {curLabel}, with 5-yr average</span>
+      <span class="vLbl">Vital signs · {curLabel}{avgLabel ? `, with ${avgLabel}` : ""}</span>
       <div class="vRow">
         {vitals.map((v) => (
           <div class="v">
             <span class="vk">{v.concept ? <Term id={v.concept}>{v.label}</Term> : v.label}</span>
             <span class="vv">{pct(v.value, v.dp)}</span>
-            {v.avg != null ? <span class="va">5-yr avg {pct(v.avg, v.dp)}</span> : null}
+            {v.avg != null && avgShort ? <span class="va">{avgShort} {pct(v.avg, v.dp)}</span> : null}
           </div>
         ))}
       </div>
@@ -114,7 +116,7 @@ const sp = spark(revSeries);
 </section>
 
 <style>
-  .portrait { margin: 14px 0 4px; }
+  .portrait { margin: 14px 0 18px; }
 
   .topline { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
   .lbl { font-size: 11.5px; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); }
