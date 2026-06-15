@@ -55,8 +55,11 @@ const PROD_AXIS = "ProductOrServiceAxis";
 // Standard XBRL namespaces, used to tell a company's own segment member from the
 // us-gaap roll-up members (OperatingSegmentsMember and friends) that would double count.
 const STD_PREFIX = new Set(["us-gaap", "srt", "dei", "country", "stpr", "exch", "currency", "naics", "sic", "xbrli", "iso4217"]);
-// Aggregate / reconciling members to exclude from any axis (they are subtotals, not parts).
-const AGGREGATE = /^(OperatingSegments|ReportableSegments?|ReportableGeographicalSegments?|IntersegmentEliminations?|ConsolidationEliminations?|MaterialReconcilingItems|SegmentReconcilingItems|CorporateNonSegment|ProductsAndServices)Member$/i;
+// Aggregate / reconciling members to exclude from any axis (they are subtotals, not
+// parts). Includes the us-gaap ASU 2023-07 roll-up (ReportableSegmentAggregationBefore-
+// OtherOperatingSegment), the sum of reportable segments before the residual bucket,
+// which otherwise leads a breakdown at ~100% with a meaningless label (Chevron, FAST).
+const AGGREGATE = /^(OperatingSegments|ReportableSegments?|ReportableSegmentAggregationBeforeOtherOperatingSegment|ReportableGeographicalSegments?|IntersegmentEliminations?|ConsolidationEliminations?|MaterialReconcilingItems|SegmentReconcilingItems|CorporateNonSegment|ProductsAndServices)Member$/i;
 
 const local = (qn) => (qn || "").split(":").pop();
 const prefixOf = (qn) => ((qn || "").includes(":") ? qn.split(":")[0] : "");
