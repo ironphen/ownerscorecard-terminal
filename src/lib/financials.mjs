@@ -46,31 +46,34 @@ export function provisionRate(L) {
 // industrial scorecard uses, so the page renders it through the same component.
 export function buildFinancialScorecard(company) {
   const L = company?.lines || {};
-  const none = (title, note) => ({ title, value: "—", formula: "", tone: "none", label: "Not enough data", note });
+  const none = (title, note, concept = null) => ({ title, concept, value: "—", formula: "", tone: "none", label: "Not enough data", note });
 
   // Is it a good business: return on equity, on tangible equity, and efficiency.
   const roe = returnOnEquity(L);
-  const roeCheck = roe == null ? none("Return on equity", "Net income or equity wasn't found in the filing data.") : (() => {
+  const roeCheck = roe == null ? none("Return on equity", "Net income or equity wasn't found in the filing data.", "return-on-equity") : (() => {
     const tone = roe < 0 ? "bad" : roe < 0.1 ? "warn" : roe < 0.13 ? "ok" : "good";
     const label = roe < 0 ? "Loss on equity" : roe < 0.1 ? "Below the cost of equity" : roe < 0.13 ? "Adequate" : roe < 0.17 ? "Strong" : "Exceptional";
     return {
       title: "Return on equity",
+      concept: "return-on-equity",
       value: pc(roe), formula: `Net income ${fmtUSD(L.netIncome)} ÷ equity ${fmtUSD(L.stockholdersEquity)}`,
       tone, label,
       note: "The bank's north star, what it earns on shareholders' capital. Cost of equity is roughly 10%, so a return durably above that builds value and below it destroys it. One year is noisy; the durability across a full credit cycle is what counts.",
     };
   })();
   const rotce = returnOnTangibleEquity(L);
-  const rotceCheck = rotce == null ? none("Return on tangible equity", "Equity, goodwill or intangibles missing.") : {
+  const rotceCheck = rotce == null ? none("Return on tangible equity", "Equity, goodwill or intangibles missing.", "rotce") : {
     title: "Return on tangible equity",
+    concept: "rotce",
     value: pc(rotce), formula: `Net income ÷ (equity − goodwill ${fmtUSD(L.goodwill || 0)} − intangibles ${fmtUSD(L.intangibleAssets || 0)})`,
     tone: rotce < 0 ? "bad" : rotce < 0.12 ? "warn" : rotce < 0.15 ? "ok" : "good",
     label: rotce < 0 ? "Loss" : rotce < 0.12 ? "Modest" : rotce < 0.18 ? "Strong" : "Exceptional",
     note: "The cleaner return, stripping out the goodwill paid for past acquisitions. This is the number a buyer of the whole bank actually earns on the hard capital.",
   };
   const eff = efficiencyRatio(L);
-  const effCheck = eff == null ? none("Efficiency ratio", "Noninterest expense or revenue missing.") : {
+  const effCheck = eff == null ? none("Efficiency ratio", "Noninterest expense or revenue missing.", "efficiency-ratio") : {
     title: "Efficiency ratio",
+    concept: "efficiency-ratio",
     value: pc(eff), formula: `Noninterest expense ${fmtUSD(L.noninterestExpense)} ÷ (net interest income + fees)`,
     tone: eff > 0.75 ? "bad" : eff > 0.65 ? "warn" : eff > 0.58 ? "ok" : "good",
     label: eff > 0.75 ? "Bloated" : eff > 0.65 ? "Average" : eff > 0.58 ? "Efficient" : "Lean",
@@ -87,8 +90,9 @@ export function buildFinancialScorecard(company) {
     note: "A plain-English leverage read: how much of the balance sheet is the owners' own money. This is a rough proxy; the regulatory figure is the CET1 ratio, which is risk-weighted and reported in the filing. The point is the same, how much loss the bank can absorb before depositors are at risk.",
   };
   const fund = depositFunding(L);
-  const fundCheck = fund == null ? none("Funding", "Deposits or total assets missing.") : {
+  const fundCheck = fund == null ? none("Funding", "Deposits or total assets missing.", "net-interest-margin") : {
     title: "Deposit funding",
+    concept: "net-interest-margin",
     value: pc(fund), formula: `Deposits ${fmtUSD(L.deposits)} ÷ assets ${fmtUSD(L.totalAssets)}`,
     tone: fund < 0.5 ? "warn" : fund < 0.65 ? "ok" : "good",
     label: fund < 0.5 ? "Leans on wholesale funding" : fund < 0.65 ? "Mostly deposit-funded" : "Deposit-funded",

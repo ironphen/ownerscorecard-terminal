@@ -67,6 +67,17 @@ const fmtDate = (d) =>
   </header>
 
   {fund ? (
+    <p class="readguide">
+      Read top to bottom, the owner's questions in the order an owner asks them:
+      <a href="#sec-business">what the business is</a>,
+      <a href="#sec-record">whether the record holds</a>,
+      <a href="#sec-scorecard">whether it survives and is any good</a>, and
+      <a href="#sec-price">what you would be paying</a>.
+      New to the questions? Start with the <a href="/method">Method</a>.
+    </p>
+  ) : null}
+
+  {fund ? (
     <div class="cbar">
       <a class="cbar-id" href="#top">{ticker}<span class="cbar-nm">{name ? ` · ${name}` : ""}</span></a>
       <nav class="secnav" aria-label="Sections">
@@ -128,6 +139,11 @@ const fmtDate = (d) =>
     .ident .ov { font-family: var(--sans); font-size: 10px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--warn); border: 1px solid var(--warn); padding: 1px 6px; }
     .lede { font-family: var(--serif); font-size: clamp(16px, 2.4vw, 19px); line-height: 1.5; color: #2c2f36; margin: 12px 0 0; max-width: 70ch; }
     .meta { color: #555; font-size: 13px; margin-top: 8px; }
+
+    /* A one-line walk through the method: the page asks the owner's questions in
+       order, each phrase jumping to the section that answers it. */
+    .readguide { font-family: var(--serif); font-style: italic; font-size: 13.5px; line-height: 1.6; color: var(--muted); margin: 14px 0 0; max-width: 74ch; }
+    .readguide a { color: var(--accent); }
 
     /* Sticky company bar, ticker always in view, plus section jump-nav. */
     .cbar {

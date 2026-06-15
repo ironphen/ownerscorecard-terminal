@@ -348,6 +348,7 @@ export function buildScorecard(company) {
   const covV = coverageVerdict(cov);
   const coverageCheck = {
     title: "Can it pay its interest?",
+    concept: "interest-coverage",
     value: cov?.ratio != null ? `${cov.ratio.toFixed(1)}×` : "—",
     formula: cov && !cov.noBurden ? `Operating income ${fmtUSD(cov.oi)} ÷ interest expense ${fmtUSD(cov.interest)}` : "Little or no interest expense reported",
     tone: covV.tone,
@@ -355,10 +356,10 @@ export function buildScorecard(company) {
     note: covV.note,
   };
 
-  const wrap = (title, result) =>
+  const wrap = (title, concept, result) =>
     result
-      ? { title, ...result }
-      : { title, value: "—", formula: "", tone: "none", label: "Not enough data", note: "The filing data didn't include the inputs for this check." };
+      ? { title, concept, ...result }
+      : { title, concept, value: "—", formula: "", tone: "none", label: "Not enough data", note: "The filing data didn't include the inputs for this check." };
 
   return {
     sections: [
@@ -366,24 +367,24 @@ export function buildScorecard(company) {
         heading: "Will it survive?",
         checks: [
           coverageCheck,
-          wrap("How heavy is the debt?", leverage(company)),
-          wrap("Debt, net of cash", cashPosition(company)),
-          wrap("How long is cash tied up?", cashConversionCycle(company)),
+          wrap("How heavy is the debt?", "net-debt", leverage(company)),
+          wrap("Debt, net of cash", "net-debt", cashPosition(company)),
+          wrap("How long is cash tied up?", "cash-conversion-cycle", cashConversionCycle(company)),
         ],
       },
       {
         heading: "Is it a good business?",
         checks: [
-          wrap("Return on invested capital", roic(company)),
-          wrap("Owner Earnings (free cash) margin", ownerCash(company)),
-          wrap("Are earnings backed by cash?", earningsQuality(company)),
+          wrap("Return on invested capital", "roic", roic(company)),
+          wrap("Owner Earnings (free cash) margin", "owner-earnings", ownerCash(company)),
+          wrap("Are earnings backed by cash?", "free-cash-flow", earningsQuality(company)),
         ],
       },
       {
         heading: "How is the cash used?",
         checks: [
-          wrap("Where do the earnings go?", capitalAllocation(company)),
-          wrap("Investing or harvesting?", capexVsDepreciation(company)),
+          wrap("Where do the earnings go?", "incremental-roic", capitalAllocation(company)),
+          wrap("Investing or harvesting?", null, capexVsDepreciation(company)),
         ],
       },
     ],

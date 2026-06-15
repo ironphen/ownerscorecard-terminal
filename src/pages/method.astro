@@ -1,6 +1,7 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
 import Term from "../components/Term.astro";
+import { conceptById } from "../data/concepts.mjs";
 
 // The teaching spine of the publication: why it exists, what it is, the few
 // questions that transfer to any company, and exactly how every number is made.
@@ -8,34 +9,42 @@ const steps = [
   {
     h: "1. What is this business, really?",
     p: "Before a single ratio, understand how the company turns effort into cash: what it sells, to whom, and why anyone keeps buying. Buffett's circle of competence is not a slogan. If you cannot explain the business in a sentence, you cannot value it. Each page opens by naming the economic model (asset-light, capital-intensive, brand, retail) and what moves its needle, because the questions that matter change with the model.",
+    concepts: ["circle-of-competence", "moat"],
   },
   {
     h: "2. What moves the needle, and what could break it?",
     p: "Every business runs on two or three levers. For an asset-light platform it is engagement and pricing; for a capital-intensive one it is how hard the assets work and what the inputs cost; for a brand it is whether it can raise prices without losing the customer. Find those levers first. Then read what management is required, under penalty of law, to name as its risks, in its own words and never paraphrased, and weigh it. The business in brief on each page is built to do exactly this.",
+    concepts: ["gross-margin", "operating-margin"],
   },
   {
     h: "3. Is there a record, and is it stable?",
     p: "Graham wanted a profit in every one of the past ten years, not one good quarter. A decade of figures, taken from the filings with no estimates, tells you whether the economics are durable or whether a single chart is hiding a cycle. Look at the worst year, not the average.",
+    concepts: ["owner-earnings", "roic"],
   },
   {
     h: "4. Will it survive?",
     p: "Solvency comes first. Can a year of operating profit cover the interest many times over? Is debt small against working capital and net of cash? A business that cannot be killed never has to be timed, and most permanent losses come from leverage rather than from bad businesses.",
+    concepts: ["interest-coverage", "net-debt", "dilution"],
   },
   {
     h: "5. Is it a good business?",
     p: "Buffett's north star is a return on invested capital that does not fade. A high return, repeated year after year, is the signature of a moat, and over time a stock tracks the returns of the business beneath it. Judge the cash on owner earnings, meaning operating cash minus the capex needed just to stand still, rather than the accountant's earnings, and treat stock compensation as the real expense it is.",
+    concepts: ["roic", "incremental-roic", "owner-earnings", "moat"],
   },
   {
     h: "6. What does management do with the cash?",
     p: "Capital allocation is, in Buffett's words, the most important job a chief executive has. Over a decade, did the cash go back into the business at high returns, out to owners as dividends and honest buybacks, or up in smoke on empire-building? The split alone does not grade management. The return earned on what gets reinvested does.",
+    concepts: ["free-cash-flow", "incremental-roic"],
   },
   {
     h: "7. What are you paying?",
     p: "Price is what you give and value is what you get. We never print a fair value or a target, which is false precision dressed up as insight. Instead we turn a price into the expectation buried inside it: the owner-earnings growth, or the future profitability, you would have to believe to justify it. Then you ask for a margin of safety. Those were Graham's three most important words.",
+    concepts: ["margin-of-safety", "reverse-dcf", "owner-earnings-yield", "discount-rate"],
   },
   {
     h: "8. Refuse the verdict.",
     p: "No tool should tell you what to buy, and the ones that do are usually selling your attention. Every number here is sourced and the arithmetic is shown. The judgment is left to you on purpose, because making it yourself is the part that turns a trader into an investor.",
+    concepts: ["mr-market"],
   },
 ];
 
@@ -82,6 +91,14 @@ const build = [
         <li>
           <h3>{s.h}</h3>
           <p>{s.p}</p>
+          {s.concepts && s.concepts.length ? (
+            <p class="qterms">
+              <span class="ql">Terms</span>
+              {s.concepts.map((id) => (
+                <a href={`/concepts#${id}`}>{conceptById[id]?.term || id}</a>
+              ))}
+            </p>
+          ) : null}
         </li>
       ))}
     </ol>
@@ -125,6 +142,10 @@ const build = [
     .steps li { padding: 14px 0; border-bottom: 1px solid var(--rule); }
     .steps h3 { font-family: var(--sans); font-size: 15px; font-weight: 700; letter-spacing: 0.01em; margin: 0; color: var(--ink); }
     .steps p { font-size: 15px; line-height: 1.6; color: #3a3e46; margin: 6px 0 0; max-width: 72ch; }
+    .qterms { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; margin: 8px 0 0 !important; }
+    .qterms .ql { font-size: 10.5px; letter-spacing: 0.07em; text-transform: uppercase; color: var(--faint); }
+    .qterms a { font-size: 12.5px; color: var(--muted); }
+    .qterms a:hover { color: var(--accent); }
 
     .build { list-style: none; padding: 0; margin: 14px 0 0; }
     .build li { font-size: 15px; line-height: 1.6; color: #3a3e46; padding: 10px 0; border-bottom: 1px solid var(--rule); max-width: 74ch; }
