@@ -22,8 +22,8 @@ export const GROUPS = [
   },
   {
     key: "financial",
-    title: "Banks, insurers and REITs",
-    blurb: "Balance-sheet businesses are read on their own measures, not on margins or an earnings multiple.",
+    title: "Banks, insurers and other financial businesses",
+    blurb: "Each is read on its own measure, a bank on return on equity, an insurer on the combined ratio, a health plan on its medical loss ratio, not on a single earnings multiple.",
   },
   {
     key: "price",
@@ -157,7 +157,16 @@ export const CONCEPTS = [
     short: "An insurer's claims and costs as a share of the premiums it collects. Below 100% means the policies make money on their own.",
     body: "The heart of underwriting. Below 100% means the insurer is paid to hold its customers' money before claims come due, the gold standard; above 100% means it loses money on the policies and must earn the difference back by investing. A figure held below 100% across cycles is the mark of a disciplined underwriter, the rarest thing in the business. We compute it from the filer's total benefits, losses and expenses over premiums, so read it as approximate, good to a point or two.",
     formula: "(Claims + underwriting expenses) ÷ premiums earned",
-    seeAlso: ["insurance-float"],
+    seeAlso: ["insurance-float", "medical-loss-ratio"],
+  },
+  {
+    id: "medical-loss-ratio",
+    term: "Medical loss ratio (MLR)",
+    group: "financial",
+    short: "The share of the premiums a health plan collects that it pays back out as medical care. The number a managed-care business runs on.",
+    body: "A health plan is not the float business a property insurer is: it pays most claims within weeks, so there is little to invest in the meantime. What matters is the medical loss ratio, the cents of every premium dollar spent on care. The law sets a floor (the ACA requires roughly 80 to 85 percent be spent on care or rebated to customers), so the plan keeps only a thin sliver, and the discipline is pricing premiums a step ahead of medical cost trend. Read it across years, because a bad cost trend shows up here first, as the recent squeeze in Medicare Advantage did.",
+    formula: "Medical claims incurred ÷ premiums earned",
+    seeAlso: ["combined-ratio", "return-on-equity"],
   },
   {
     id: "insurance-float",

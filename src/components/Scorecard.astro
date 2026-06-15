@@ -3,16 +3,27 @@ import { buildScorecard, TONE_COLOR } from "../lib/fundamentals.mjs";
 import { buildFinancialScorecard } from "../lib/financials.mjs";
 import { buildReitScorecard } from "../lib/reits.mjs";
 import { buildInsurerScorecard } from "../lib/insurers.mjs";
+import { buildFeeScorecard } from "../lib/feeFinancials.mjs";
+import { buildManagedCareScorecard } from "../lib/managedCare.mjs";
 import { moatReport } from "../lib/durability.mjs";
-import { financialKind } from "../lib/archetype.mjs";
+import { financialKind, financialSubtype } from "../lib/archetype.mjs";
 import Term from "./Term.astro";
 
 const { company, sample = false } = Astro.props;
-// Banks, insurers and REITs are read on different statements, so each gets its own
-// scorecard and skips the ROIC-based durability block, which applies to none of them.
+// Each financial kind is read on different statements, so each gets its own scorecard
+// and skips the ROIC-based durability block, which applies to none of them: a lender on
+// return on equity and credit cost, an insurer on the combined ratio and float, a REIT
+// on FFO, an asset manager or exchange on fee margins, a health plan on its medical loss
+// ratio.
 const fk = financialKind(company);
 const isFin = !!fk;
-const { sections } = fk === "reit" ? buildReitScorecard(company) : fk === "insurer" ? buildInsurerScorecard(company) : fk === "bank" ? buildFinancialScorecard(company) : buildScorecard(company);
+const { sections } =
+  fk === "reit" ? buildReitScorecard(company)
+  : fk === "insurer" ? buildInsurerScorecard(company)
+  : fk === "managedCare" ? buildManagedCareScorecard(company)
+  : fk === "fee" ? buildFeeScorecard(company, financialSubtype(company))
+  : fk === "bank" ? buildFinancialScorecard(company)
+  : buildScorecard(company);
 const report = isFin ? null : moatReport(company);
 ---
 

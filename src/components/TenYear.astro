@@ -4,6 +4,7 @@ import { fmtUSD, roicValue, liquidAssets } from "../lib/fundamentals.mjs";
 import { returnOnEquity, returnOnTangibleEquity, efficiencyRatio, tangibleEquity } from "../lib/financials.mjs";
 import { ffo, ffoPerShare, ffoPayout, debtToAssets } from "../lib/reits.mjs";
 import { combinedRatio, lossRatio } from "../lib/insurers.mjs";
+import { medicalLossRatio } from "../lib/managedCare.mjs";
 import Term from "./Term.astro";
 
 const { company } = Astro.props;
@@ -65,6 +66,9 @@ const ROW = {
   lossRatio: { label: "Loss ratio", short: "Loss", get: (L) => { const r = lossRatio(L); return r == null ? "—" : `${(r * 100).toFixed(0)}%`; } },
   invInc: { label: "Investment income", short: "Inv. inc.", get: (L) => money(L.investmentIncome) },
   float: { label: "Float (reserves)", short: "Float", get: (L) => money(L.lossReserves) },
+  // --- fee financials (asset managers, exchanges, brokers) and managed care ---
+  netMargin: { label: "Net margin", short: "Net mgn", get: (L) => marginStr(L.netIncome, L.revenue) },
+  mlr: { label: "Medical loss ratio", short: "MLR", get: (L) => { const r = medicalLossRatio(L); return r == null ? "—" : `${(r * 100).toFixed(0)}%`; } },
 };
 
 const SETS = {
@@ -74,6 +78,8 @@ const SETS = {
   retail: [ROW.revenue, ROW.grossMargin, ROW.opMargin, ROW.netIncome, ROW.eps, ROW.ownerEarnings, ROW.oeMargin, ROW.roic, ROW.cash, ROW.netDebt],
   financial: [ROW.revenue, ROW.nii, ROW.netIncome, ROW.eps, ROW.roe, ROW.rotce, ROW.efficiency, ROW.deposits, ROW.bvps, ROW.tbvps, ROW.dps],
   insurer: [ROW.revenue, ROW.premiums, ROW.netIncome, ROW.combined, ROW.lossRatio, ROW.roe, ROW.invInc, ROW.float, ROW.bvps, ROW.dps],
+  fee: [ROW.revenue, ROW.opMargin, ROW.netMargin, ROW.netIncome, ROW.eps, ROW.roe, ROW.cash, ROW.dps, ROW.bvps],
+  managedCare: [ROW.revenue, ROW.premiums, ROW.mlr, ROW.opMargin, ROW.netIncome, ROW.eps, ROW.roe, ROW.bvps, ROW.dps],
   reit: [ROW.revenue, ROW.netIncome, ROW.ffo, ROW.ffoPS, ROW.payout, ROW.debtAssets, ROW.totalDebt, ROW.dps, ROW.bvps],
   general: [ROW.revenue, ROW.opMargin, ROW.netIncome, ROW.eps, ROW.ownerEarnings, ROW.oeMargin, ROW.roic, ROW.totalDebt, ROW.cash, ROW.netDebt],
 };
@@ -116,7 +122,7 @@ const lastI = cols.length - 1;
 // their own measures, so key off financialKind first (future-proof for any new
 // financial), and fall back to the economic-model sector for everything else.
 const fk = financialKind(company);
-const setKey = fk === "insurer" ? "insurer" : fk === "reit" ? "reit" : fk === "bank" ? "financial" : sector.key;
+const setKey = fk === "insurer" ? "insurer" : fk === "reit" ? "reit" : fk === "managedCare" ? "managedCare" : fk === "fee" ? "fee" : fk === "bank" ? "financial" : sector.key;
 const chosen = SETS[setKey] || SETS.general;
 
 // Link a row's label to its entry on the Concepts page, where the term is defined.
@@ -130,6 +136,7 @@ const ROW_CONCEPT = {
   "Funds from operations": "ffo", "FFO / share": "ffo", "Dividend payout (FFO)": "ffo", "Debt / assets": "net-debt",
   "Combined ratio": "combined-ratio", "Loss ratio": "combined-ratio",
   "Investment income": "insurance-float", "Float (reserves)": "insurance-float",
+  "Medical loss ratio": "medical-loss-ratio",
 };
 // Drop any row the data can't fill across the whole record.
 const rows = chosen

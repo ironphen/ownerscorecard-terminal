@@ -28,13 +28,17 @@ const rows = [...(fundamentals.companies || [])]
     // industrial Graham tests, so we leave those blank rather than print a number
     // that means nothing (or, worse, an absurd one). Their lens lives on their page.
     const isFin = ["financial", "reit"].includes(cls.sector.key);
-    // Net cash/(debt) isn't the lens for a bank or an insurer (their borrowings fund the
-    // business, not a leverage signal), so blank it there; keep it for REITs, where it is.
+    // Net cash/(debt) isn't the lens for any non-REIT financial (their borrowings fund the
+    // business, not a leverage signal), so blank it for banks, insurers, asset managers,
+    // exchanges and health plans; keep it for REITs, where it is real, and industrials.
     const fk = financialKind(c);
     const isBankIns = fk === "bank" || fk === "insurer";
+    const isFee = fk === "fee", isManagedCare = fk === "managedCare";
     const isReit = fk === "reit";
+    // Read on return on equity and net margin: every financial except a REIT.
+    const onEquity = isBankIns || isFee || isManagedCare;
     const hasBal = L.totalDebt != null || L.cashAndEquivalents != null;
-    const netCash = isBankIns ? null : (hasBal ? (liquidAssets(L) || 0) - (L.totalDebt || 0) : null); // + = net cash
+    const netCash = onEquity ? null : (hasBal ? (liquidAssets(L) || 0) - (L.totalDebt || 0) : null); // + = net cash
     const g = isFin ? { passes: null, testable: null } : grahamTests(c);
     return {
       ticker: c.ticker,
@@ -50,10 +54,11 @@ const rows = [...(fundamentals.companies || [])]
       netCash,
       grahamPasses: g.passes,
       grahamTestable: g.testable,
-      // financial lens (banks & insurers)
-      roe: isBankIns ? returnOnEquity(L) : null,
+      // financial lens: ROE and net margin read across every financial; tangible-equity
+      // and equity/assets are the bank and insurer measures, blank for the fee businesses.
+      roe: onEquity ? returnOnEquity(L) : null,
       rotce: isBankIns ? returnOnTangibleEquity(L) : null,
-      netMargin: isBankIns && L.netIncome != null && L.revenue ? L.netIncome / L.revenue : null,
+      netMargin: onEquity && L.netIncome != null && L.revenue ? L.netIncome / L.revenue : null,
       equityAssets: isBankIns ? equityToAssets(L) : null,
       // REIT lens
       ffoM: isReit ? ffoMargin(L) : null,
@@ -282,8 +287,8 @@ const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "
         financial: [
           { k: "rev", label: "Revenue", fmt: usd },
           { k: "roe", label: "ROE", fmt: pct },
-          { k: "rotce", label: "ROTCE", fmt: pct },
           { k: "nm", label: "Net margin", short: "Net mgn", fmt: pct },
+          { k: "rotce", label: "ROTCE", fmt: pct },
           { k: "ea", label: "Equity / assets", short: "Eq/assets", fmt: pct1 },
         ],
         reit: [

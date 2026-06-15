@@ -3,7 +3,7 @@
 // finer than the 8 economic models, so a utility, an airline and an oil major don't all
 // read as a generic "capital-intensive business." Every line teaches the lens for that
 // kind of business; none is a verdict on this one.
-import { classify, financialKind } from "./archetype.mjs";
+import { classify, financialKind, financialSubtype } from "./archetype.mjs";
 
 // One lever and one one-line characterization per economic model (the fallback layer).
 const LEVER = {
@@ -47,6 +47,29 @@ const _semis = { p: "A semiconductor business, riding a brutal capacity cycle on
 const _software = { p: "A software business, earning high margins on code once it is written.", l: "Retention and the cost of growth. What decides it: whether customers expand rather than churn, how much of revenue is spent winning the next one, and whether software's gross margin holds as it scales." };
 const _telecom = { p: "A telecom carrier, renting access to a network that must be constantly rebuilt.", l: "Subscribers, revenue per user, and network capex. What decides it: net adds against churn, ARPU, and the relentless capital to keep the network competitive." };
 const _restaurant = { p: "A restaurant business, earning on traffic through its doors and the returns on each new unit.", l: "Same-store sales and unit economics. What decides it: traffic and check at existing locations, the return on each new unit, and whether the model is franchised, an asset-light royalty stream, or company-owned." };
+const _findata = { p: "A financial-data and analytics business, selling the information, ratings and benchmarks the markets run on.", l: "Recurring subscriptions and the data moat. What decides it: how much revenue renews each year against the share that rides the cycle of new debt issuance on the ratings side, the pricing power of being embedded in customers' workflows and benchmarks, and the operating leverage as the same data is sold again at almost no extra cost." };
+// Finer than the eight economic models where a financial subtype earns its own lens: an
+// asset manager, an exchange, an insurance broker and a health plan are each read on
+// something a bank's deposit-and-spread lens would miss entirely. Teaches the lens for
+// that kind of business; never a verdict on this one.
+const SUBTYPE_COPY = {
+  "asset-manager": {
+    p: "An asset manager, paid a fee on the money it runs for other people.",
+    l: "Assets under management and the fee rate on them. What decides it: net flows in or out, the market's move on the assets already there (the firm rises and falls with the indices it invests in), the drift toward cheaper passive products, and the operating leverage on a largely fixed cost base.",
+  },
+  "exchange": {
+    p: "An exchange, a toll booth on trading and the market data that trading generates.",
+    l: "Trading volume and the data franchise. What decides it: volumes across its markets, which spike when volatility does; the network economics of a deep liquidity pool rivals cannot easily replicate; and the recurring, high-margin market-data and listing fees layered on top.",
+  },
+  "insurance-broker": {
+    p: "An insurance broker, paid a commission to place coverage without bearing the risk itself.",
+    l: "Commissions on the premiums it places, and organic growth. What decides it: insurance prices in the market, since it earns a slice of them; new business won and kept; and a capital-light fee stream that carries none of the underwriting risk of the insurers it sells for.",
+  },
+  "managed-care": {
+    p: "A managed-care business, taking in premiums and paying out its members' medical claims.",
+    l: "The medical loss ratio and membership. What decides it: keeping medical costs below the premiums collected, where a regulated floor sets how much must be paid out as care, so the spread is thin; membership growth across commercial, Medicare and Medicaid; and the cost discipline on what little is left.",
+  },
+};
 const IND = {
   "491": _util, "492": _util, "493": _util, "494": _util,
   "131": _energy, "132": _energy, "290": _energy, "291": _energy, "299": _energy, "138": _energy, "461": _midstream,
@@ -59,6 +82,9 @@ const IND = {
   "800": _health, "805": _health, "806": _health, "807": _health, "808": _health,
   "367": _semis, "737": _software, "481": _telecom, "482": _telecom, "489": _telecom, "581": _restaurant,
 };
+// A few four-digit overrides where the three-digit group is too coarse: credit-reporting
+// and ratings/data firms (S&P Global, Moody's) sit in a generic "business services" SIC.
+const IND4 = { "7320": _findata, "7323": _findata };
 
 function modelKeyOf(company) {
   const fk = financialKind(company);
@@ -68,20 +94,28 @@ function modelKeyOf(company) {
   return classify(company).sector.key;
 }
 // Industry copy overrides only the non-financial models; banks, insurers and REITs keep
-// their own lens, which their financialKind-routed scorecards depend on.
+// their own lens, which their financialKind-routed scorecards depend on. The fee and
+// managed-care subtypes are handled before this by SUBTYPE_COPY.
 function indEntryOf(company) {
   if (financialKind(company)) return null;
-  return IND[String(company?.sic || "").slice(0, 3)] || null;
+  const sic = String(company?.sic || "");
+  return IND4[sic.slice(0, 4)] || IND[sic.slice(0, 3)] || null;
 }
 
-// What moves the needle: the lever for this business.
+// What moves the needle: the lever for this business. A financial subtype with its own
+// lens (asset manager, exchange, broker, health plan) wins first, then the industry, then
+// the economic model.
 export function businessLever(company) {
+  const sub = financialSubtype(company);
+  if (sub && SUBTYPE_COPY[sub]) return SUBTYPE_COPY[sub].l;
   const ind = indEntryOf(company);
   return (ind && ind.l) || LEVER[modelKeyOf(company)] || LEVER.general;
 }
 // A one-line characterization of what the business is, the computed fallback for the
 // hero when the filing has no clean description, and the brief's "what it is".
 export function businessPhrase(company) {
+  const sub = financialSubtype(company);
+  if (sub && SUBTYPE_COPY[sub]) return SUBTYPE_COPY[sub].p;
   const ind = indEntryOf(company);
   return (ind && ind.p) || MODEL_PHRASE[modelKeyOf(company)] || MODEL_PHRASE.general;
 }

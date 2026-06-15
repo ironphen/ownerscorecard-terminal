@@ -5,6 +5,7 @@ import { fmtUSD, roicValue } from "../lib/fundamentals.mjs";
 import { returnOnEquity, returnOnTangibleEquity, efficiencyRatio, netInterestMargin } from "../lib/financials.mjs";
 import { ffoMargin, ffoPayout, ffoOnAssets, debtToAssets } from "../lib/reits.mjs";
 import { combinedRatio, lossRatio } from "../lib/insurers.mjs";
+import { medicalLossRatio } from "../lib/managedCare.mjs";
 import { financialKind } from "../lib/archetype.mjs";
 import Term from "./Term.astro";
 
@@ -36,6 +37,7 @@ const cls = classify(company);
 const pr = (v, dp = 0) => (v == null ? "—" : `${(v * 100).toFixed(dp)}%`);
 const fk = financialKind(company);
 const isReit = fk === "reit", isBank = fk === "bank", isInsurer = fk === "insurer";
+const isFee = fk === "fee", isManagedCare = fk === "managedCare";
 
 const metricsOf = (c) => {
   const L = c.lines || {};
@@ -45,6 +47,7 @@ const metricsOf = (c) => {
     opMargin: L.operatingIncome != null && L.revenue ? L.operatingIncome / L.revenue : null,
     roic: roicValue(L),
     oeMargin: L.cashFromOps != null && L.capex != null && L.revenue ? (L.cashFromOps - Math.abs(L.capex)) / L.revenue : null,
+    netMargin: L.netIncome != null && L.revenue ? L.netIncome / L.revenue : null,
     roe: returnOnEquity(L),
     rotce: returnOnTangibleEquity(L),
     efficiency: efficiencyRatio(L),
@@ -55,6 +58,7 @@ const metricsOf = (c) => {
     debtToAssets: debtToAssets(L),
     combined: combinedRatio(L),
     lossR: lossRatio(L),
+    mlr: medicalLossRatio(L),
   };
 };
 
@@ -80,6 +84,18 @@ const COLS = isReit
       { key: "efficiency", label: "Efficiency", concept: "efficiency-ratio", dp: 0, better: "low" },
       { key: "nim", label: "Net int. margin", concept: "net-interest-margin", dp: 1, better: "high" },
     ]
+  : isManagedCare
+  ? [
+      { key: "mlr", label: "Medical loss ratio", concept: "medical-loss-ratio", dp: 0, better: "neutral" },
+      { key: "opMargin", label: "Op. margin", concept: "operating-margin", dp: 1, better: "high" },
+      { key: "roe", label: "ROE", concept: "return-on-equity", dp: 0, better: "high" },
+    ]
+  : isFee
+  ? [
+      { key: "opMargin", label: "Op. margin", concept: "operating-margin", dp: 1, better: "high" },
+      { key: "netMargin", label: "Net margin", concept: null, dp: 1, better: "high" },
+      { key: "roe", label: "ROE", concept: "return-on-equity", dp: 0, better: "high" },
+    ]
   : [
       { key: "grossMargin", label: "Gross margin", concept: "gross-margin", dp: 0, better: "high" },
       { key: "opMargin", label: "Op. margin", concept: "operating-margin", dp: 1, better: "high" },
@@ -96,7 +112,7 @@ for (const col of COLS) {
   best[col.key] = bt;
 }
 
-const lens = isReit ? "the REIT lens" : isInsurer ? "the underwriting lens" : isBank ? "the bank lens" : "owner economics";
+const lens = isReit ? "the REIT lens" : isInsurer ? "the underwriting lens" : isBank ? "the bank lens" : isManagedCare ? "the medical-loss-ratio lens" : isFee ? "fee margins" : "owner economics";
 const heading = basis === "model" ? "Peers, nearest by economic model" : `Peers, ${cls.industry.label}`;
 const intro = basis === "model"
   ? `No close industry peers in the catalog yet, so these are the nearest by economic model (${cls.sector.label.toLowerCase()}), compared on ${lens}. Don't rank by a single number.`
