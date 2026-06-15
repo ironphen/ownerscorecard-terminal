@@ -15,6 +15,7 @@ import Valuation from "../../components/Valuation.astro";
 import Language from "../../components/Language.astro";
 import language from "../../data/language.json";
 import { classify } from "../../lib/archetype.mjs";
+import { businessPhrase, weakLede } from "../../lib/business.mjs";
 import { getCollection } from "astro:content";
 
 export async function getStaticPaths() {
@@ -44,7 +45,11 @@ const related = (
 const name = fund?.name || "";
 const cls = fund ? classify(fund) : null;
 const isFin = !!cls && ["financial", "reit"].includes(cls.sector.key);
-const bizLine = language?.companies?.[ticker]?.business || null;
+// Lede: the filing's own description when it is actually a description, else the computed
+// one-line characterization, so the hero always opens with something accurate, not an
+// outsourcing clause that happened to parse.
+const rawBiz = language?.companies?.[ticker]?.business || null;
+const bizLine = fund ? (rawBiz && !weakLede(rawBiz) ? rawBiz : businessPhrase(fund)) : rawBiz;
 
 const fmtDate = (d) =>
   d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric", timeZone: "UTC" });
