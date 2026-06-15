@@ -5,6 +5,7 @@ import { getCollection } from "astro:content";
 import { fmtUSD, roicValue, ownerEarningsMargin, operatingMargin, liquidAssets } from "../lib/fundamentals.mjs";
 import { classify } from "../lib/archetype.mjs";
 import { grahamTests } from "../lib/graham.mjs";
+import Term from "../components/Term.astro";
 
 // ---- the catalog rows: every company reduced to the few sourced facts that
 // decide quality and survival. No rank, no score, the reader sorts by what they
@@ -84,7 +85,8 @@ const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "
     <p class="method">
       Every figure is the latest annual number from the company's own 10-K, click a
       column to rank by it, filter by business model, or search. We don't score them.
-      Pick a company for its full Owner's Scorecard.
+      Pick a company for its full Owner's Scorecard. New here? The <a href="/method">Method</a> shows
+      how to read these, and <a href="/concepts">Concepts</a> defines every term.
     </p>
 
     <div class="controls">
@@ -140,7 +142,7 @@ const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "
         </tbody>
       </table>
     </div>
-    <p class="legend">Owner-earnings margin = (operating cash − capex) ÷ revenue. Net cash nets debt against cash and marketable securities; parentheses are net debt. Graham = how many of his defensive-investor tests the filings clear (of those computable), a floor of safety, not a buy signal; sort by it to screen.</p>
+    <p class="legend"><Term id="owner-earnings">Owner-earnings margin</Term> = (operating cash − capex) ÷ revenue. <Term id="net-debt">Net cash</Term> nets debt against cash and marketable securities; parentheses are net debt. Graham = how many of his defensive-investor tests the filings clear (of those computable), a floor of safety, not a buy signal; sort by it to screen.</p>
   </section>
 
   <style>
