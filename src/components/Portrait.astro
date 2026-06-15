@@ -4,6 +4,7 @@ import { returnOnEquity, returnOnTangibleEquity, efficiencyRatio, equityToAssets
 import { ffoMargin, ffoPayout, debtToAssets } from "../lib/reits.mjs";
 import { combinedRatio, lossRatio } from "../lib/insurers.mjs";
 import { financialKind } from "../lib/archetype.mjs";
+import Term from "./Term.astro";
 
 const { company } = Astro.props;
 const fk = financialKind(company);
@@ -36,28 +37,28 @@ const avgOf = (fn) => { const xs = hist5.map(fn).filter((v) => v != null); retur
 // on equity and the efficiency of the operation, not in margins or ROIC.
 const vitals = (isReit
   ? [
-      { label: "FFO margin", value: ffoMargin(cur), avg: avgOf(ffoMargin), dp: 0 },
-      { label: "Dividend payout (FFO)", value: ffoPayout(cur), avg: avgOf(ffoPayout), dp: 0 },
-      { label: "Debt / assets", value: debtToAssets(cur), avg: avgOf(debtToAssets), dp: 0 },
+      { label: "FFO margin", concept: "ffo", value: ffoMargin(cur), avg: avgOf(ffoMargin), dp: 0 },
+      { label: "Dividend payout (FFO)", concept: "ffo", value: ffoPayout(cur), avg: avgOf(ffoPayout), dp: 0 },
+      { label: "Debt / assets", concept: "net-debt", value: debtToAssets(cur), avg: avgOf(debtToAssets), dp: 0 },
     ]
   : isInsurer
   ? [
-      { label: "Combined ratio", value: combinedRatio(cur), avg: avgOf(combinedRatio), dp: 0 },
-      { label: "Loss ratio", value: lossRatio(cur), avg: avgOf(lossRatio), dp: 0 },
-      { label: "Return on equity", value: returnOnEquity(cur), avg: avgOf(returnOnEquity), dp: 0 },
+      { label: "Combined ratio", concept: "combined-ratio", value: combinedRatio(cur), avg: avgOf(combinedRatio), dp: 0 },
+      { label: "Loss ratio", concept: "combined-ratio", value: lossRatio(cur), avg: avgOf(lossRatio), dp: 0 },
+      { label: "Return on equity", concept: "return-on-equity", value: returnOnEquity(cur), avg: avgOf(returnOnEquity), dp: 0 },
     ]
   : isBank
   ? [
-      { label: "Return on equity", value: returnOnEquity(cur), avg: avgOf(returnOnEquity), dp: 0 },
-      { label: "Return on tangible equity", value: returnOnTangibleEquity(cur), avg: avgOf(returnOnTangibleEquity), dp: 0 },
-      { label: "Efficiency ratio", value: efficiencyRatio(cur), avg: avgOf(efficiencyRatio), dp: 0 },
-      { label: "Equity / assets", value: equityToAssets(cur), avg: avgOf(equityToAssets), dp: 1 },
+      { label: "Return on equity", concept: "return-on-equity", value: returnOnEquity(cur), avg: avgOf(returnOnEquity), dp: 0 },
+      { label: "Return on tangible equity", concept: "rotce", value: returnOnTangibleEquity(cur), avg: avgOf(returnOnTangibleEquity), dp: 0 },
+      { label: "Efficiency ratio", concept: "efficiency-ratio", value: efficiencyRatio(cur), avg: avgOf(efficiencyRatio), dp: 0 },
+      { label: "Equity / assets", concept: "tangible-book", value: equityToAssets(cur), avg: avgOf(equityToAssets), dp: 1 },
     ]
   : [
-      { label: "Gross margin", value: grossM(cur), avg: avgOf(grossM), dp: 0 },
-      { label: "Operating margin", value: operatingMargin(cur), avg: avgOf(operatingMargin), dp: 1 },
-      { label: "ROIC", value: roicValue(cur), avg: avgOf(roicValue), dp: 0 },
-      { label: "Owner-earnings margin", value: ownerEarningsMargin(cur), avg: avgOf(ownerEarningsMargin), dp: 0 },
+      { label: "Gross margin", concept: "gross-margin", value: grossM(cur), avg: avgOf(grossM), dp: 0 },
+      { label: "Operating margin", concept: "operating-margin", value: operatingMargin(cur), avg: avgOf(operatingMargin), dp: 1 },
+      { label: "ROIC", concept: "roic", value: roicValue(cur), avg: avgOf(roicValue), dp: 0 },
+      { label: "Owner-earnings margin", concept: "owner-earnings", value: ownerEarningsMargin(cur), avg: avgOf(ownerEarningsMargin), dp: 0 },
     ]
 ).filter((v) => v.value != null);
 
@@ -101,7 +102,7 @@ const sp = spark(revSeries);
       <div class="vRow">
         {vitals.map((v) => (
           <div class="v">
-            <span class="vk">{v.label}</span>
+            <span class="vk">{v.concept ? <Term id={v.concept}>{v.label}</Term> : v.label}</span>
             <span class="vv">{pct(v.value, v.dp)}</span>
             {v.avg != null ? <span class="va">5-yr avg {pct(v.avg, v.dp)}</span> : null}
           </div>

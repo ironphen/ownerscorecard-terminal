@@ -1,5 +1,6 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
+import Term from "../components/Term.astro";
 
 // The teaching spine of the publication: why it exists, what it is, the few
 // questions that transfer to any company, and exactly how every number is made.
@@ -58,7 +59,7 @@ const build = [
   <section class="band">
     <h2>Why this exists</h2>
     <div class="prose">
-      <p>Charlie Munger called most of what passes for investment wisdom twaddle: the academic models, the Wall Street noise, the complexity sold hardest by the people whose income depends on it staying complex. He and Buffett liked to say they could teach the whole subject in a single class, except that the professors would then be out of work. The truth is almost insultingly simple. A share is a piece of a business. A business is worth the cash it will hand its owners over its life. The job is to buy it for less than that, with a margin of safety. Graham wrote this down in 1949, and little of consequence has been added since.</p>
+      <p>Charlie Munger called most of what passes for investment wisdom twaddle: the academic models, the Wall Street noise, the complexity sold hardest by the people whose income depends on it staying complex. He and Buffett liked to say they could teach the whole subject in a single class, except that the professors would then be out of work. The truth is almost insultingly simple. A share is a piece of a business. A business is worth the cash it will hand its owners over its life. The job is to buy it for less than that, with a <Term id="margin-of-safety">margin of safety</Term>. Graham wrote this down in 1949, and little of consequence has been added since.</p>
       <p>What has changed is the noise, now at the most perverse pitch in its history. Zero-day options, an ocean of derivatives, valuations untethered from any business beneath them, an IPO and SPAC carnival, crypto, prediction markets, and a stampede into anything with “AI” stamped on it whether or not a business stands behind the letters. A whole generation has been handed gambling apps dressed up as brokerages, and almost nothing that teaches it to think like an owner. Taken together it is one large collective stain on the capital markets.</p>
       <p>The cost is not abstract. Millions of young people now put real money to work with no instrument worthy of the decision. They were given the buttons and never the tools. This is a small attempt to push the other way.</p>
     </div>
@@ -75,7 +76,7 @@ const build = [
 
   <section class="band">
     <h2>The few questions that matter</h2>
-    <p class="sub">Every company page is built on these, in the order an owner asks them. Learn the order and you can read a 10-K you have never seen before.</p>
+    <p class="sub">Every company page is built on these, in the order an owner asks them. Learn the order and you can read a 10-K you have never seen before. The terms each question leans on are defined in plain language under <a href="/concepts">Concepts</a>.</p>
     <ol class="steps">
       {steps.map((s) => (
         <li>

@@ -1,0 +1,263 @@
+// The vocabulary of ownership, defined once. Every term the pages use lives here in
+// plain language, with why an owner cares and the honest limit of the measure. This
+// is the teaching layer: a reader learns the word in context on a company page, then
+// follows it here to understand it for good. No model writes these; they are the same
+// arithmetic and the same Graham/Buffett framing the rest of the site is built on.
+
+export const GROUPS = [
+  {
+    key: "business",
+    title: "Reading the business and its moat",
+    blurb: "Before a single ratio: what the company sells, why anyone keeps buying, and whether the advantage lasts.",
+  },
+  {
+    key: "capital",
+    title: "The cash, and the return on capital",
+    blurb: "What an owner could actually keep, and how hard the capital in the business is working.",
+  },
+  {
+    key: "survival",
+    title: "Will it survive?",
+    blurb: "Solvency comes first. Most permanent losses come from leverage, not from bad businesses.",
+  },
+  {
+    key: "financial",
+    title: "Banks, insurers and REITs",
+    blurb: "Balance-sheet businesses are read on their own measures, not on margins or an earnings multiple.",
+  },
+  {
+    key: "price",
+    title: "Price and the margin of safety",
+    blurb: "Price is what you give and value is what you get. The whole discipline lives in the gap between them.",
+  },
+];
+
+export const CONCEPTS = [
+  // --- Reading the business and its moat ---
+  {
+    id: "moat",
+    term: "Moat",
+    group: "business",
+    short: "A durable competitive advantage that keeps competitors from quickly competing a business's high returns away.",
+    body: "Buffett's word for the defenses around an economic castle: a brand customers will pay up for, a network that grows more useful as it grows larger, switching costs that make leaving painful, or a cost advantage rivals cannot match. You never see a moat directly. You infer it from a return on capital that stays high for years while competitors fail to drag it down. The honest limit: a high return can also be an accounting artifact or the top of a cycle, so the moat is a judgment the record and the 10-K inform, never a number the scorecard hands you.",
+    seeAlso: ["roic", "circle-of-competence"],
+  },
+  {
+    id: "circle-of-competence",
+    term: "Circle of competence",
+    group: "business",
+    short: "The set of businesses you understand well enough to judge. Knowing where its edge lies matters more than how wide it is.",
+    body: "Buffett's discipline of staying inside what you can actually evaluate. The point is not to understand everything but to be honest about the boundary, because the costly errors come from operating just outside it while feeling sure of yourself. If you cannot explain in a sentence how a business turns effort into cash and why its customers keep coming back, it sits outside your circle, and no valuation model rescues a business you do not understand.",
+  },
+  {
+    id: "gross-margin",
+    term: "Gross margin",
+    group: "business",
+    short: "The share of each sales dollar that survives after the direct cost of making the product or delivering the service.",
+    body: "The first read on pricing power. A high, stable gross margin says customers pay well above what the product costs to make, the mark of a brand or a genuine edge. A thin or falling gross margin says the company is closer to a price-taker, living on volume rather than on pricing. It is the ceiling every other margin sits beneath.",
+    formula: "(Revenue − cost of goods sold) ÷ revenue",
+    seeAlso: ["operating-margin"],
+  },
+  {
+    id: "operating-margin",
+    term: "Operating margin",
+    group: "business",
+    short: "The share of each sales dollar left as profit after both the cost of the product and the cost of running the business.",
+    body: "Gross margin after the overhead of selling, research and administration. It shows whether scale actually reaches the bottom line or gets eaten by the cost of operating. Watched across a decade it answers a question the headline cannot: does growth make this business more profitable, or merely bigger?",
+    formula: "Operating income ÷ revenue",
+    seeAlso: ["gross-margin"],
+  },
+
+  // --- The cash, and the return on capital ---
+  {
+    id: "owner-earnings",
+    term: "Owner earnings",
+    group: "capital",
+    short: "The cash an owner could take out of a business in a year without starving it of what it needs to keep earning.",
+    body: "Buffett's preferred measure of profit, and a more honest one than reported earnings. Start with the cash the operations throw off, subtract the capital spending needed just to stand still, and treat the stock paid to employees as the real cost it is. What remains is what an owner could actually pocket. The honest limit: published capital spending blends the maintenance kind with the growth kind, so a fast-growing company's steady-state owner earnings can run higher than the simple subtraction shows.",
+    formula: "Operating cash flow − maintenance capital spending − stock-based compensation",
+    seeAlso: ["free-cash-flow", "roic", "dilution"],
+  },
+  {
+    id: "free-cash-flow",
+    term: "Free cash flow",
+    group: "capital",
+    short: "The cash left from operations after all capital spending: the raw material for dividends, buybacks, debt paydown and reinvestment.",
+    body: "A close cousin of owner earnings, and the pool from which every capital-allocation decision is funded. A business can report rising profits while free cash flow stays flat or turns negative, usually because earnings are being consumed by working capital or heavy capital spending. Cash is harder to dress up than earnings, which is why owners watch it.",
+    formula: "Operating cash flow − capital spending",
+    seeAlso: ["owner-earnings"],
+  },
+  {
+    id: "roic",
+    term: "Return on invested capital (ROIC)",
+    group: "capital",
+    short: "The rate of profit a business earns on every dollar of capital tied up in it. Buffett's north star.",
+    body: "Over a long enough holding period a stock's return converges on the return the business earns on its capital, so a company that compounds at 20% is a different animal from one that earns 6%. A high return repeated year after year is the fingerprint of a moat: above roughly 15% sustained hints at a real advantage, while below about 8% a company may destroy value as it grows. The honest limit: modern accounting expenses research and brand-building and shrinks the capital base through buybacks, so an asset-light firm's ROIC can read far higher than its underlying economics. Always cross-check it against owner earnings.",
+    formula: "After-tax operating profit ÷ (debt + equity − cash)",
+    seeAlso: ["incremental-roic", "owner-earnings", "moat"],
+  },
+  {
+    id: "incremental-roic",
+    term: "Incremental return on capital",
+    group: "capital",
+    short: "The return earned on the new dollars a company reinvests, rather than on its whole capital base.",
+    body: "The cleaner test of both the moat and management. A business can show a high average return that is really the echo of one great decision made long ago. What matters going forward is the return on the next dollar reinvested. If profits grow by fifty cents for every dollar plowed back, incremental returns are extraordinary; if they barely move, the reinvestment is treading water no matter how good the headline ratio looks.",
+    seeAlso: ["roic", "owner-earnings"],
+  },
+  {
+    id: "return-on-equity",
+    term: "Return on equity (ROE)",
+    group: "capital",
+    short: "The profit a business earns on the shareholders' capital left in it. The headline return for banks and insurers.",
+    body: "The measure Berkshire itself is judged on. Durably above the roughly 10% cost of equity is what compounds book value over the years. The honest limit: debt flatters it, because borrowing shrinks the equity in the denominator, so a high return on equity built on heavy leverage is a different and more fragile thing than one earned with little debt.",
+    formula: "Net income ÷ shareholders' equity",
+    seeAlso: ["roic", "rotce", "tangible-book"],
+  },
+  {
+    id: "cash-conversion-cycle",
+    term: "Cash conversion cycle",
+    group: "capital",
+    short: "How long cash is tied up in inventory and unpaid bills before sales turn it back into cash. Negative means customers fund the business.",
+    body: "A quiet structural advantage when it runs negative. If a company collects from its customers before it has to pay its suppliers, the business grows on other people's money, the same trick Buffett prized in insurance float. It needs no capital from owners to expand its working capital, which is one reason some retailers and platforms compound so efficiently.",
+    seeAlso: ["insurance-float", "owner-earnings"],
+  },
+
+  // --- Will it survive? ---
+  {
+    id: "interest-coverage",
+    term: "Interest coverage",
+    group: "survival",
+    short: "How many times over a year's operating profit could pay the interest on the company's debt.",
+    body: "Graham's basic solvency test. A defensive holding should cover its interest several times over, so a bad year dents profits without threatening survival. Most permanent losses come from leverage rather than from bad businesses, which is why this question comes before any question of value. Necessary, not sufficient: it tells you the business is solvent, not that it is cheap.",
+    formula: "Operating income ÷ interest expense",
+    seeAlso: ["net-debt"],
+  },
+  {
+    id: "net-debt",
+    term: "Net debt",
+    group: "survival",
+    short: "Total debt minus the cash and liquid investments on hand: what the company would still owe if it paid down everything it could today.",
+    body: "The honest measure of leverage, because gross debt sitting beside a large cash pile overstates the danger. Net cash, the reverse, is both a cushion and an option: it lets a business buy when others are forced to sell. Weigh it against a year of operating profit and against working capital to see whether the balance sheet is a fortress or a fault line.",
+    seeAlso: ["interest-coverage"],
+  },
+  {
+    id: "dilution",
+    term: "Dilution and stock-based pay",
+    group: "survival",
+    short: "The slow growth in share count, often from paying employees in stock, that shrinks each existing owner's slice of the business.",
+    body: "A real cost that hides outside the income statement. Stock paid to employees is compensation as surely as a cash wage, and unless it is offset by buybacks it quietly transfers ownership away from shareholders year after year. Owner earnings treat it as the expense it is. Watch the share count across a decade: a business whose profits grow while its shares multiply may be enriching its staff more than its owners.",
+    seeAlso: ["owner-earnings"],
+  },
+
+  // --- Banks, insurers and REITs ---
+  {
+    id: "combined-ratio",
+    term: "Combined ratio",
+    group: "financial",
+    short: "An insurer's claims and costs as a share of the premiums it collects. Below 100% means the policies make money on their own.",
+    body: "The heart of underwriting. Below 100% means the insurer is paid to hold its customers' money before claims come due, the gold standard; above 100% means it loses money on the policies and must earn the difference back by investing. A figure held below 100% across cycles is the mark of a disciplined underwriter, the rarest thing in the business. We compute it from the filer's total benefits, losses and expenses over premiums, so read it as approximate, good to a point or two.",
+    formula: "(Claims + underwriting expenses) ÷ premiums earned",
+    seeAlso: ["insurance-float"],
+  },
+  {
+    id: "insurance-float",
+    term: "Insurance float",
+    group: "financial",
+    short: "The pool of customers' premiums an insurer holds and invests before it has to pay claims. Leverage that can cost less than nothing.",
+    body: "Buffett's great insight about insurance. Policyholders pay premiums today against claims paid years from now, and in between the insurer invests the money. If underwriting at least breaks even, that float costs less than nothing: a pool of other people's money the owners earn on. The larger the float against equity, the harder the leverage works, for better in a good year and worse in a bad one.",
+    seeAlso: ["combined-ratio", "cash-conversion-cycle"],
+  },
+  {
+    id: "ffo",
+    term: "Funds from operations (FFO)",
+    group: "financial",
+    short: "A property company's cash earnings once the accounting depreciation of its buildings is added back.",
+    body: "The right earnings number for a real estate trust. Standard accounting depreciates buildings that often hold or gain value, which makes reported profit understate the cash. Funds from operations adds that depreciation back and strips out one-time gains on property sales. It is what the dividend is paid from and what a REIT is valued on. The cleaner version, which we do not compute, also subtracts the upkeep spending needed to keep the buildings competitive.",
+    formula: "Net income + real-estate depreciation − gains on property sales",
+  },
+  {
+    id: "rotce",
+    term: "Return on tangible common equity (ROTCE)",
+    group: "financial",
+    short: "A bank's profit measured against its equity after stripping out the goodwill left over from acquisitions.",
+    body: "The truest read on a bank's profitability, and the measure that sets the multiple of book value it deserves. Goodwill is money already spent on past deals; tangible equity is the real capital at work today, so the return on it is what compounds. A bank durably earning well above its cost of equity on tangible book is worth a premium to that book; one earning less is worth a discount to it.",
+    formula: "Net income ÷ (equity − goodwill and intangibles)",
+    seeAlso: ["tangible-book", "return-on-equity"],
+  },
+  {
+    id: "net-interest-margin",
+    term: "Net interest margin",
+    group: "financial",
+    short: "The spread a bank earns between the interest it charges on loans and the interest it pays for deposits and funding.",
+    body: "A lender's core engine. It widens and narrows with interest rates and with the bank's funding advantage: a bank rich in cheap, sticky deposits earns more spread than one forced to borrow in the market. Stable margins through a rate cycle point to a deposit franchise worth having.",
+  },
+  {
+    id: "efficiency-ratio",
+    term: "Efficiency ratio",
+    group: "financial",
+    short: "What a bank spends to earn a dollar of revenue. Lower is better, the opposite direction of most ratios.",
+    body: "A bank's cost discipline in one number. An efficiency ratio of 55% means it spends 55 cents of cost for every dollar of revenue. The best-run banks operate well below 60%, and a low, steady ratio across cycles is a durable cost advantage that compounds into superior returns on equity.",
+    formula: "Operating expense ÷ revenue",
+  },
+  {
+    id: "tangible-book",
+    term: "Tangible book value",
+    group: "financial",
+    short: "A company's equity after subtracting goodwill and other intangibles: the hard capital actually backing the business.",
+    body: "Book value stripped of the accounting residue of past acquisitions. For banks and insurers it is the conservative anchor for value, because it is the capital that would remain if the goodwill from old deals proved worthless. Growth in tangible book value per share, compounded over years, is the clearest scoreboard for a financial business.",
+    seeAlso: ["rotce", "return-on-equity"],
+  },
+
+  // --- Price and the margin of safety ---
+  {
+    id: "margin-of-safety",
+    term: "Margin of safety",
+    group: "price",
+    short: "Buying for meaningfully less than a conservative estimate of value, so that being wrong need not cost you.",
+    body: "Graham's three most important words, and the heart of the whole method. You cannot value a business precisely, the future will not cooperate, and you will sometimes be wrong, so you demand a gap between the price you pay and the value you estimate. That gap absorbs errors and bad luck. The wider your uncertainty about a business, the wider the margin you should require. Price is what you give, value is what you get, and the difference is your protection.",
+    seeAlso: ["mr-market", "reverse-dcf"],
+  },
+  {
+    id: "mr-market",
+    term: "Mr. Market",
+    group: "price",
+    short: "Graham's parable of the market as a moody partner who quotes you a different price every day, some euphoric, some despairing.",
+    body: "Imagine a business partner who each day offers to buy your share or sell you his, at a price driven by his mood rather than by the business. On most days you simply ignore him. His usefulness is that now and then his panic lets you buy cheaply, or his greed lets you sell dearly. The lesson is temperament: the market is there to serve you, not to instruct you, and its swings are opportunities to act on, not verdicts to obey.",
+    seeAlso: ["margin-of-safety"],
+  },
+  {
+    id: "reverse-dcf",
+    term: "Reverse discounted cash flow",
+    group: "price",
+    short: "Instead of guessing a company's value, you read the price backward to find the growth it already assumes, then judge whether that is believable.",
+    body: "A discounted cash flow estimates value by projecting future cash and discounting it back to today, which invites false precision through hopeful assumptions. We run it in reverse: take the price the market is offering and solve for the owner-earnings growth that would justify it. That turns a vague valuation into a single testable claim. You then set the implied growth against what the business has actually delivered, and decide whether the market is asking you to believe something reasonable.",
+    formula: "Solve for the growth rate where today's price equals the discounted stream of future owner earnings",
+    seeAlso: ["discount-rate", "owner-earnings-yield", "margin-of-safety"],
+  },
+  {
+    id: "owner-earnings-yield",
+    term: "Owner-earnings yield",
+    group: "price",
+    short: "A company's owner earnings as a percentage of its market price: the cash return at today's price if nothing grew.",
+    body: "The inverse of a price-to-earnings multiple, expressed in cash an owner can keep. A yield of 5% is the starting return you would earn if the business simply held steady, before any growth. It is the plainest way to weigh what you are paying against a risk-free Treasury yield: a business that yields less than a government bond and is not growing is asking a great deal of the buyer.",
+    seeAlso: ["owner-earnings", "discount-rate"],
+  },
+  {
+    id: "discount-rate",
+    term: "Discount rate",
+    group: "price",
+    short: "The rate at which a future dollar is marked down to its worth today: your required return, anchored to interest rates.",
+    body: "The gravity in every valuation. A dollar received years from now is worth less than one today, and the discount rate sets how much less. Anchor it to the long-term Treasury yield plus whatever premium you want for the risk, then watch what happens: as the rate rises, the value of distant cash falls and the growth a price demands climbs. Most of what looks like a change in a company's worth is really a change in this rate.",
+    seeAlso: ["reverse-dcf"],
+  },
+  {
+    id: "graham-price-gate",
+    term: "Graham's price gate",
+    group: "price",
+    short: "Graham's rough ceiling for a defensive buyer: a price no higher than about 15 times earnings, and price times book no higher than about 22.5.",
+    body: "A blunt screen against overpaying, using a three-year average of earnings so you are not paying for a single good year. Buffett and Munger later let the rule go, recognizing that a wonderful business can deserve fifty times earnings if its returns endure. Read it as the bargain-hunter's floor, a discipline against your own enthusiasm, not a ceiling on good judgment.",
+    seeAlso: ["margin-of-safety"],
+  },
+];
+
+export const conceptById = Object.fromEntries(CONCEPTS.map((c) => [c.id, c]));
