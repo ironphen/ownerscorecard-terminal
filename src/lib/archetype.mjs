@@ -41,7 +41,7 @@ const SIC_LABEL = {
 };
 const SIC3_LABEL = {
   "357": "Computer hardware", "367": "Semiconductors", "737": "Software & internet", "596": "Online retail",
-  "208": "Beverages", "204": "Packaged food", "200": "Packaged food", "284": "Household & personal care",
+  "208": "Beverages", "204": "Packaged food", "203": "Packaged food", "200": "Packaged food", "284": "Household & personal care",
   "267": "Paper & packaging", "289": "Specialty chemicals", "531": "Department stores", "533": "Discount retail",
   "521": "Home-improvement retail", "481": "Telecom", "451": "Airlines", "440": "Cruise & shipping",
   "601": "Banks", "602": "Banks", "603": "Savings institutions", "612": "Mortgage finance", "621": "Brokerage",
@@ -97,7 +97,7 @@ function sectorFromSIC(sic) {
   if (c >= 2000 && c <= 2199) return "consumer";         // food, beverage, tobacco
   if (c >= 2300 && c <= 2399) return "consumer";         // apparel
   if (c >= 2800 && c <= 2899) return "consumer";         // household / personal products
-  if (c >= 3571 && c <= 3579) return "consumer";         // computer/consumer hardware (brand-led)
+  if (c >= 3570 && c <= 3579) return "consumer";         // computer/office hardware (brand-led); 3570 is the parent code
   return null;
 }
 
