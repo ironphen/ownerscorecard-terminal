@@ -174,6 +174,9 @@ const BIZ_RICH = /\b(products?|services?|segments?|brands?|markets?|customers?|s
 // Describes the company's structure, not what it does ("operates through five segments",
 // "conducts business through its subsidiaries"); a poor stand-in for a real description.
 const BIZ_STRUCTURAL = /\boperat\w*\b[^.]{0,40}\bthrough\b|operating segments?|reportable segments?|conduct\w*\s+(its\s+)?business through/i;
+// Additional descriptive forms beyond a plain verb or "is a <type>": "engaged in",
+// "principal business", "a leading provider/manufacturer of", "<noun> of".
+const BIZ_ENGAGED = /\b(engaged?|engages?)\s+(primarily\s+)?in\b|\b(principal|primary|core|main)\s+business\b|\b(leading|global|largest|world'?s)\b[^.]{0,32}\b(provider|manufacturer|producer|operator|supplier|distributor|retailer|developer|maker|company|leader|bank|insurer)s?\b|\b(provider|manufacturer|producer|operator|developer|maker|distributor)s?\s+of\b/i;
 
 // Pull the company's own one-line description from the top of Item 1. Rather than take
 // the first sentence that passes, we collect candidates from the opening and score
@@ -182,9 +185,14 @@ const BIZ_STRUCTURAL = /\boperat\w*\b[^.]{0,40}\bthrough\b|operating segments?|r
 // overview). Verbatim, lightly cleaned; null when nothing clean is found.
 function businessDescription(sents, name) {
   if (!Array.isArray(sents)) return null;
-  const firstWord = ((name || "").replace(/^the\s+/i, "").match(/[A-Za-z]{3,}/) || [])[0];
+  // Distinctive words from the company's name, for a robust subject match: handles
+  // "Exxon Mobil" appearing as "ExxonMobil" in the filing, which a word-boundary on the
+  // first word alone would miss. Legal suffixes and joiners are dropped.
+  const nameWords = (name || "")
+    .toLowerCase().replace(/[^a-z0-9\s]/g, " ").split(/\s+/)
+    .filter((w) => w.length >= 3 && !["the", "inc", "incorporated", "corp", "corporation", "company", "companies", "ltd", "plc", "llc", "holding", "holdings", "group", "and"].includes(w));
   const cands = [];
-  const slice = sents.slice(0, 20);
+  const slice = sents.slice(0, 25);
   for (let i = 0; i < slice.length; i++) {
     let s = cleanQuote(String(slice[i] || ""));
     let prev;
@@ -192,7 +200,7 @@ function businessDescription(sents, name) {
     if (s.length < 40 || s.length > 380) continue;
     if (BIZ_SKIP.test(s) || BIZ_WEAK.test(s)) continue;
     const isa = BIZ_ISA.test(s);
-    if (!BIZ_DOING.test(s) && !isa) continue;
+    if (!BIZ_DOING.test(s) && !isa && !BIZ_ENGAGED.test(s)) continue;
     const rich = BIZ_RICH.test(s);
     s = s
       .replace(/\s*\([^)]*\)/g, "")
@@ -200,9 +208,10 @@ function businessDescription(sents, name) {
       .replace(/\s{2,}/g, " ")
       .trim();
     if (LEAD_VERB.test(s) && name) s = `${name.trim()} ${s}`; // restore the lost subject
-    const head = s.split(/\s+/).slice(0, 5).join(" ");
-    const weSubject = /^(we|our)\b/i.test(s);
-    const namedSubject = !!(firstWord && new RegExp(`\\b${firstWord}\\b`, "i").test(head));
+    const head = s.split(/\s+/).slice(0, 6).join(" ");
+    const headNorm = head.toLowerCase().replace(/[^a-z0-9]/g, "");
+    const weSubject = /^(we|our|the (company|registrant|firm|group)|us)\b/i.test(s);
+    const namedSubject = nameWords.some((w) => headNorm.includes(w));
     if ((!weSubject && !namedSubject) || !/^[A-Z]/.test(s) || s.length < 40) continue;
     let score = 0;
     if (isa) score += 3;                       // the canonical "is a/an <type>" form
