@@ -206,7 +206,7 @@ const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "
     .catalog td.c-name, .catalog td.c-model { text-align: left; }
     .c-name { position: sticky; left: 0; background: var(--paper); }
     .tkr { font-weight: 700; font-variant-numeric: tabular-nums; }
-    .nm { display: block; font-size: 11.5px; color: var(--muted); max-width: 26ch; overflow: hidden; text-overflow: ellipsis; }
+    .nm { display: block; font-size: 11.5px; color: var(--muted); max-width: 26ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 1px; }
     .tag { font-size: 11px; letter-spacing: 0.02em; color: var(--ink); border: 1px solid var(--rule-strong); padding: 1px 6px; white-space: nowrap; }
     .nd.pos { color: var(--good); }
     tbody tr:hover td { background: #faf9f6; }
@@ -230,7 +230,7 @@ const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "
       .catalog td { padding: 8px 7px; }
       .lf { display: none; }
       .ls { display: inline; }
-      .nm { max-width: 15ch; font-size: 10.5px; }
+      .nm { max-width: 20ch; font-size: 10.5px; }
       .tag { padding: 1px 5px; }
     }
   </style>
