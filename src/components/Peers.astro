@@ -6,6 +6,7 @@ import { returnOnEquity, returnOnTangibleEquity, efficiencyRatio, netInterestMar
 import { ffoMargin, ffoPayout, ffoOnAssets, debtToAssets } from "../lib/reits.mjs";
 import { combinedRatio, lossRatio } from "../lib/insurers.mjs";
 import { financialKind } from "../lib/archetype.mjs";
+import Term from "./Term.astro";
 
 const { company } = Astro.props;
 const all = fundamentals.companies || [];
@@ -56,29 +57,29 @@ const metricsOf = (c) => {
 // FFO. "Best" respects each column's direction; "neutral" gets no best mark.
 const COLS = isReit
   ? [
-      { key: "ffoMargin", label: "FFO margin", dp: 0, better: "high" },
-      { key: "ffoOnAssets", label: "FFO / assets", dp: 1, better: "high" },
-      { key: "payout", label: "Payout (FFO)", dp: 0, better: "neutral" },
-      { key: "debtToAssets", label: "Debt / assets", dp: 0, better: "low" },
+      { key: "ffoMargin", label: "FFO margin", concept: "ffo", dp: 0, better: "high" },
+      { key: "ffoOnAssets", label: "FFO / assets", concept: "ffo", dp: 1, better: "high" },
+      { key: "payout", label: "Payout (FFO)", concept: "ffo", dp: 0, better: "neutral" },
+      { key: "debtToAssets", label: "Debt / assets", concept: "net-debt", dp: 0, better: "low" },
     ]
   : isInsurer
   ? [
-      { key: "combined", label: "Combined ratio", dp: 0, better: "low" },
-      { key: "lossR", label: "Loss ratio", dp: 0, better: "low" },
-      { key: "roe", label: "ROE", dp: 0, better: "high" },
+      { key: "combined", label: "Combined ratio", concept: "combined-ratio", dp: 0, better: "low" },
+      { key: "lossR", label: "Loss ratio", concept: "combined-ratio", dp: 0, better: "low" },
+      { key: "roe", label: "ROE", concept: "return-on-equity", dp: 0, better: "high" },
     ]
   : isBank
   ? [
-      { key: "roe", label: "ROE", dp: 0, better: "high" },
-      { key: "rotce", label: "ROTCE", dp: 0, better: "high" },
-      { key: "efficiency", label: "Efficiency", dp: 0, better: "low" },
-      { key: "nim", label: "Net int. margin", dp: 1, better: "high" },
+      { key: "roe", label: "ROE", concept: "return-on-equity", dp: 0, better: "high" },
+      { key: "rotce", label: "ROTCE", concept: "rotce", dp: 0, better: "high" },
+      { key: "efficiency", label: "Efficiency", concept: "efficiency-ratio", dp: 0, better: "low" },
+      { key: "nim", label: "Net int. margin", concept: "net-interest-margin", dp: 1, better: "high" },
     ]
   : [
-      { key: "grossMargin", label: "Gross margin", dp: 0, better: "high" },
-      { key: "opMargin", label: "Op. margin", dp: 1, better: "high" },
-      { key: "roic", label: "ROIC", dp: 0, better: "high" },
-      { key: "oeMargin", label: "Owner earn. margin", dp: 0, better: "high" },
+      { key: "grossMargin", label: "Gross margin", concept: "gross-margin", dp: 0, better: "high" },
+      { key: "opMargin", label: "Op. margin", concept: "operating-margin", dp: 1, better: "high" },
+      { key: "roic", label: "ROIC", concept: "roic", dp: 0, better: "high" },
+      { key: "oeMargin", label: "Owner earn. margin", concept: "owner-earnings", dp: 0, better: "high" },
     ];
 
 const rows = group.map((c) => ({ c, m: metricsOf(c) }));
@@ -100,7 +101,7 @@ for (const col of COLS) {
         <thead>
           <tr>
             <th class="tl">Company</th><th>Revenue</th>
-            {COLS.map((col) => <th>{col.label}</th>)}
+            {COLS.map((col) => <th>{col.concept ? <Term id={col.concept}>{col.label}</Term> : col.label}</th>)}
           </tr>
         </thead>
         <tbody>
