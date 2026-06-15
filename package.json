@@ -11,7 +11,8 @@
     "fetch:fundamentals": "node scripts/fetchFundamentals.mjs",
     "fetch:filings": "node scripts/fetchFilings.mjs",
     "fetch:wire": "node scripts/fetchWire.mjs",
-    "fetch:segments": "node scripts/fetchSegments.mjs"
+    "fetch:segments": "node scripts/fetchSegments.mjs",
+    "audit": "node scripts/auditData.mjs"
   },
   "dependencies": {
     "@astrojs/mdx": "^6.0.3",
