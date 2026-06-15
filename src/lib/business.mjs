@@ -69,6 +69,10 @@ const SUBTYPE_COPY = {
     p: "A managed-care business, taking in premiums and paying out its members' medical claims.",
     l: "The medical loss ratio and membership. What decides it: keeping medical costs below the premiums collected, where a regulated floor sets how much must be paid out as care, so the spread is thin; membership growth across commercial, Medicare and Medicaid; and the cost discipline on what little is left.",
   },
+  "life-insurer": {
+    p: "A life insurer, collecting premiums for decades and earning a spread on the reserves it invests until claims fall due.",
+    l: "The spread on the float and the growth in book value. What decides it: the gap between what the invested reserves earn and what is credited to policyholders, the mortality and fee margins on top, and the scale of the float against equity. Benefits exceed premiums by design, so a P&C combined ratio is the wrong lens; the risks are interest rates and reserve adequacy.",
+  },
 };
 const IND = {
   "491": _util, "492": _util, "493": _util, "494": _util,

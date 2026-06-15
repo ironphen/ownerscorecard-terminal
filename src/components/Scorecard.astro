@@ -19,7 +19,7 @@ const fk = financialKind(company);
 const isFin = !!fk;
 const { sections } =
   fk === "reit" ? buildReitScorecard(company)
-  : fk === "insurer" ? buildInsurerScorecard(company)
+  : fk === "insurer" ? buildInsurerScorecard(company, financialSubtype(company))
   : fk === "managedCare" ? buildManagedCareScorecard(company)
   : fk === "fee" ? buildFeeScorecard(company, financialSubtype(company))
   : fk === "bank" ? buildFinancialScorecard(company)

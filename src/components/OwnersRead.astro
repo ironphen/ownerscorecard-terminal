@@ -5,7 +5,7 @@
 // you can't locate is worse than none). The company's words on the left, the
 // arithmetic that tests them on the right.
 import language from "../data/language.json";
-import { fmtUSD, ownerEarningsMargin, operatingMargin, coverage, cashPosition } from "../lib/fundamentals.mjs";
+import { fmtUSD, ownerEarningsMargin, operatingMargin, coverage, cashPosition, topLineRevenue } from "../lib/fundamentals.mjs";
 
 const { company } = Astro.props;
 const L = language?.companies?.[company.ticker] || null;
@@ -14,7 +14,7 @@ const flags = L?.ownerFlags || [];
 const H = (company.history || []).filter((h) => h?.lines?.revenue != null);
 const cur = company.ttm?.lines || company.lines || {};
 const curLabel = company.ttm?.lines ? "TTM" : company.fy ? `FY${company.fy}` : "latest";
-const rev = cur.revenue ?? company.lines?.revenue ?? null;
+const rev = topLineRevenue(cur, company) ?? topLineRevenue(company.lines, company);
 const grossMargin = (l) => (l && l.revenue && l.costOfRevenue != null ? 1 - l.costOfRevenue / l.revenue : null);
 const curGM = grossMargin(cur);
 const curOEM = ownerEarningsMargin(cur);

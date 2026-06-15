@@ -116,7 +116,7 @@ const cyclical = (cls.overlays || []).some((o) => o.key === "cyclical");
 // on ROIC; route each financial kind to its own lens (fk resolved above).
 const isFin = !!fk;
 let moat = fk === "reit" ? reitQuality(company)
-  : fk === "insurer" ? insurerQuality(company)
+  : fk === "insurer" ? insurerQuality(company, financialSubtype(company))
   : fk === "managedCare" ? managedCareQuality(company)
   : fk === "fee" ? feeQuality(company, financialSubtype(company))
   : fk === "bank" ? financialQuality(company)
