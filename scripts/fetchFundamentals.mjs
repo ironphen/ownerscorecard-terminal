@@ -26,6 +26,22 @@ const universe = JSON.parse(fs.readFileSync(path.join(dataDir, "universe.json"),
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+// Title-case EDGAR's all-caps entityName for use as a display-name fallback when the
+// universe doesn't carry a curated name. Keeps short all-caps acronyms (HP, AMD, IBM),
+// normalizes the common legal suffixes, and lowercases the little joining words.
+const NAME_FIXED = { INC: "Inc", "INC.": "Inc.", CORP: "Corp", "CORP.": "Corp.", CO: "Co", "CO.": "Co.", LTD: "Ltd", "LTD.": "Ltd.", LLC: "LLC", PLC: "PLC", LP: "LP", HLDGS: "Holdings", HLDG: "Holding", GRP: "Group", CL: "Class", NV: "NV", SA: "SA", AG: "AG", "&": "&" };
+const NAME_SMALL = new Set(["a", "an", "and", "of", "the", "for"]);
+function prettifyName(s) {
+  if (!s) return null;
+  return s.trim().split(/\s+/).map((w, i) => {
+    const u = w.toUpperCase(), lo = w.toLowerCase();
+    if (NAME_FIXED[u]) return NAME_FIXED[u];
+    if (i > 0 && NAME_SMALL.has(lo)) return lo; // joining words, before the acronym rule
+    if (w.length <= 3 && /^[A-Z0-9.&'-]+$/.test(w)) return w; // short all-caps: acronym/ticker
+    return lo.charAt(0).toUpperCase() + lo.slice(1);
+  }).join(" ") || null;
+}
+
 async function getJSON(url) {
   for (let attempt = 1; attempt <= 4; attempt++) {
     try {
@@ -55,6 +71,19 @@ const CONCEPTS = {
   capex: ["PaymentsToAcquirePropertyPlantAndEquipment", "PaymentsToAcquireProductiveAssets"],
   longTermDebt: ["LongTermDebtNoncurrent", "LongTermDebt"],
   currentDebt: ["LongTermDebtCurrent", "DebtCurrent"],
+  // Aggregate total-debt tags for filers whose borrowings sit outside the standard
+  // noncurrent/current pair, e.g. a securitized or secured-note structure like
+  // Domino's ~$5B. Used only as a floor via max(), so it can correct under-capture
+  // but never reduce a figure the component tags already got right.
+  debtTotal: [
+    "DebtLongtermAndShorttermCombinedAmount",
+    "LongTermDebtAndCapitalLeaseObligationsIncludingCurrentMaturities",
+    "LongTermDebtAndCapitalLeaseObligations",
+    "SecuredLongTermDebt",
+    "SecuredDebt",
+    "SeniorNotes",
+    "NotesPayableNoncurrent",
+  ],
   incomeTaxExpense: ["IncomeTaxExpenseBenefit"],
   costOfRevenue: ["CostOfGoodsAndServicesSold", "CostOfRevenue", "CostOfGoodsSold"],
   stockBasedComp: ["ShareBasedCompensation"],
@@ -255,12 +284,19 @@ async function main() {
       /* leave null */
     }
 
+    // Display name: a curated universe name wins; otherwise fall back to EDGAR's own
+    // entity name, title-cased. Lets the catalog grow by listing tickers alone.
+    const displayName = (name && name.trim().toUpperCase() !== ticker.toUpperCase())
+      ? name
+      : (prettifyName(facts?.entityName) || name);
+
     const oi = pickAnnual(facts, CONCEPTS.operatingIncome);
     const anchor = oi || pickAnnual(facts, CONCEPTS.revenue); // for fy / period / filing link
+    const maxDebt = (a, b) => { const xs = [a, b].filter((v) => v != null); return xs.length ? Math.max(...xs) : null; };
     const ltd = pickInstant(facts, CONCEPTS.longTermDebt);
     const cur = pickInstant(facts, CONCEPTS.currentDebt);
-    const totalDebt =
-      ltd || cur ? (ltd?.val || 0) + (cur?.val || 0) : null;
+    const componentDebt = ltd || cur ? (ltd?.val || 0) + (cur?.val || 0) : null;
+    const totalDebt = maxDebt(componentDebt, pickInstant(facts, CONCEPTS.debtTotal)?.val ?? null);
 
     const pick = (tags) => pickAnnual(facts, tags)?.val ?? null;
     const inst = (tags) => pickInstant(facts, tags)?.val ?? null;
@@ -300,6 +336,7 @@ async function main() {
       ltMkt: collectInstant(facts, CONCEPTS.longTermMarketable),
       ltd: collectInstant(facts, CONCEPTS.longTermDebt),
       cur: collectInstant(facts, CONCEPTS.currentDebt),
+      agg: collectInstant(facts, CONCEPTS.debtTotal),
       ca: collectInstant(facts, CONCEPTS.currentAssets),
       cl: collectInstant(facts, CONCEPTS.currentLiabilities),
       assets: collectInstant(facts, CONCEPTS.totalAssets),
@@ -320,7 +357,7 @@ async function main() {
           operatingIncome: ha.operatingIncome[fy] ?? null,
           incomeTaxExpense: ha.incomeTaxExpense[fy] ?? null,
           netIncome: ha.netIncome[fy] ?? null,
-          totalDebt: hi.ltd[fy] != null || hi.cur[fy] != null ? (hi.ltd[fy] || 0) + (hi.cur[fy] || 0) : null,
+          totalDebt: maxDebt(hi.ltd[fy] != null || hi.cur[fy] != null ? (hi.ltd[fy] || 0) + (hi.cur[fy] || 0) : null, hi.agg[fy] ?? null),
           stockholdersEquity: hi.equity[fy] ?? null,
           cashAndEquivalents: hi.cash[fy] ?? null,
           shortTermInvestments: hi.stInv[fy] ?? null,
@@ -360,6 +397,7 @@ async function main() {
     const ttmRev = ttmFlow(facts, CONCEPTS.revenue);
     const ttmLtd = latestObservation(facts, CONCEPTS.longTermDebt, "USD", true)?.val;
     const ttmCurDebt = latestObservation(facts, CONCEPTS.currentDebt, "USD", true)?.val;
+    const ttmAgg = latestObservation(facts, CONCEPTS.debtTotal, "USD", true)?.val;
     const ttm = ttmRev
       ? {
           asOf: ttmRev.asOf,
@@ -377,7 +415,7 @@ async function main() {
             cashAndEquivalents: latestObservation(facts, CONCEPTS.cashAndEquivalents, "USD", true)?.val ?? null,
             shortTermInvestments: latestObservation(facts, CONCEPTS.shortTermInvestments, "USD", true)?.val ?? null,
             longTermMarketable: latestObservation(facts, CONCEPTS.longTermMarketable, "USD", true)?.val ?? null,
-            totalDebt: ttmLtd != null || ttmCurDebt != null ? (ttmLtd || 0) + (ttmCurDebt || 0) : null,
+            totalDebt: maxDebt(ttmLtd != null || ttmCurDebt != null ? (ttmLtd || 0) + (ttmCurDebt || 0) : null, ttmAgg ?? null),
             sharesDiluted: latestObservation(facts, CONCEPTS.sharesDiluted, "shares", false)?.val ?? null,
             netInterestIncome: tf(CONCEPTS.netInterestIncome),
             noninterestIncome: tf(CONCEPTS.noninterestIncome),
@@ -401,7 +439,7 @@ async function main() {
 
     companies.push({
       ticker: ticker.toUpperCase(),
-      name,
+      name: displayName,
       cik,
       sic,
       sicDescription,
