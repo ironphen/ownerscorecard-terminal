@@ -1,0 +1,113 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { GROUPS, CONCEPTS, conceptById } from "../data/concepts.mjs";
+
+// The vocabulary of ownership, in one place. Each term is defined once, in plain
+// language, with why an owner cares and the honest limit of the measure. The company
+// pages link into it; this is where a reader learns the word for good.
+const byGroup = (key) => CONCEPTS.filter((c) => c.group === key);
+---
+
+<BaseLayout title="Concepts, Owner Scorecard">
+  <header class="hero">
+    <h1>The vocabulary of ownership</h1>
+    <p class="dek">
+      Every term the pages use, defined once and in plain language. Learn the word here and it
+      travels with you to any filing you open, in this catalog or not.
+    </p>
+  </header>
+
+  <section class="band intro">
+    <div class="prose">
+      <p>
+        The hard part of investing is not the arithmetic; it is knowing which few numbers matter and
+        what each one is honestly telling you. This page collects the handful of ideas the whole
+        method runs on, from owner earnings to the margin of safety, each with the reasoning behind it
+        and the place it can mislead you. None of it is secret, and none of it requires a terminal. Read
+        the entry, then go watch the idea at work on a real company.
+      </p>
+    </div>
+    <nav class="grpnav" aria-label="Sections">
+      {GROUPS.map((g) => <a href={`#grp-${g.key}`}>{g.title}</a>)}
+    </nav>
+  </section>
+
+  {GROUPS.map((g) => (
+    <section class="band" id={`grp-${g.key}`}>
+      <h2>{g.title}</h2>
+      <p class="sub">{g.blurb}</p>
+      <div class="concepts">
+        {byGroup(g.key).map((c) => (
+          <article class="concept" id={c.id}>
+            <h3><a class="anchor" href={`#${c.id}`}>{c.term}</a></h3>
+            <p class="short">{c.short}</p>
+            <p class="cbody">{c.body}</p>
+            {c.formula ? (
+              <p class="formula"><span class="flabel">How it is figured</span>{c.formula}</p>
+            ) : null}
+            {c.seeAlso && c.seeAlso.length ? (
+              <p class="see">
+                See also:{" "}
+                {c.seeAlso.map((sid, i) => (
+                  <>
+                    {i > 0 ? ", " : ""}
+                    <a href={`#${sid}`}>{conceptById[sid]?.term || sid}</a>
+                  </>
+                ))}
+              </p>
+            ) : null}
+          </article>
+        ))}
+      </div>
+    </section>
+  ))}
+
+  <section class="band closing">
+    <div class="prose">
+      <p>
+        These are tools for thinking, not a checklist to total up. No single number decides anything,
+        and the craft is in weighing one honest signal against another. The originals teach that craft
+        better than any page can: Graham's <em>Intelligent Investor</em>, the Berkshire letters, and a
+        long look at real businesses, like the ones in the <a href="/">catalog</a>. The
+        <a href="/method"> method</a> sets out the order to ask the questions in.
+      </p>
+    </div>
+  </section>
+
+  <style>
+    .hero h1 { margin: 0 0 8px; }
+    .dek { font-family: var(--serif); font-style: italic; font-size: clamp(17px, 2.6vw, 21px); line-height: 1.45; color: #34383f; margin: 0; max-width: 62ch; }
+
+    .band { margin: 34px 0; }
+    .band h2 { border-bottom: 1px solid var(--rule-strong); padding-bottom: 6px; scroll-margin-top: 12px; }
+    .sub { font-family: var(--serif); font-style: italic; color: var(--muted); margin: 10px 0 0; max-width: 66ch; }
+    .prose p { font-size: 16px; line-height: 1.65; color: #2c2f36; margin: 12px 0 0; max-width: 68ch; }
+
+    .intro { margin-top: 26px; }
+    .grpnav { display: flex; flex-wrap: wrap; gap: 6px 8px; margin: 18px 0 0; }
+    .grpnav a {
+      font-family: var(--sans); font-size: 11.5px; letter-spacing: 0.03em;
+      color: var(--muted); border: 1px solid var(--rule); padding: 4px 10px; border-radius: 2px;
+    }
+    .grpnav a:hover { color: var(--ink); border-color: var(--rule-strong); text-decoration: none; }
+
+    .concepts { margin: 12px 0 0; }
+    .concept { padding: 18px 0; border-bottom: 1px solid var(--rule); scroll-margin-top: 64px; }
+    .concept h3 { font-family: var(--sans); font-size: 16px; font-weight: 700; letter-spacing: 0; margin: 0; color: var(--ink); }
+    .concept h3 .anchor { color: var(--ink); }
+    .concept h3 .anchor:hover { color: var(--accent); text-decoration: none; }
+    .short { font-family: var(--serif); font-size: 16px; font-style: italic; line-height: 1.5; color: #2c2f36; margin: 7px 0 0; max-width: 74ch; }
+    .cbody { font-size: 15px; line-height: 1.62; color: #3a3e46; margin: 9px 0 0; max-width: 76ch; }
+    .formula {
+      font-family: var(--sans); font-size: 13px; color: var(--ink); margin: 10px 0 0;
+      background: var(--accent-tint); border-left: 2px solid var(--accent); padding: 7px 12px;
+      max-width: 74ch; font-variant-numeric: tabular-nums;
+    }
+    .flabel { display: block; font-size: 10.5px; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); margin-bottom: 2px; }
+    .see { font-size: 13px; color: var(--muted); margin: 9px 0 0; }
+
+    @media (max-width: 520px) {
+      .cbody, .short { max-width: none; }
+    }
+  </style>
+</BaseLayout>
