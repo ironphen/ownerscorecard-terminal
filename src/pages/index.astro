@@ -2,7 +2,7 @@
 import BaseLayout from "../layouts/BaseLayout.astro";
 import fundamentals from "../data/fundamentals.json";
 import { getCollection } from "astro:content";
-import { fmtUSD, roicValue, ownerEarningsMargin, operatingMargin, liquidAssets } from "../lib/fundamentals.mjs";
+import { fmtUSD, roicValue, ownerEarningsMargin, operatingMargin, liquidAssets, topLineRevenue } from "../lib/fundamentals.mjs";
 import { classify, financialKind } from "../lib/archetype.mjs";
 import { returnOnEquity, returnOnTangibleEquity, equityToAssets } from "../lib/financials.mjs";
 import { ffoMargin, ffoPayout, debtToAssets } from "../lib/reits.mjs";
@@ -46,7 +46,7 @@ const rows = [...(fundamentals.companies || [])]
       fy: c.fy,
       modelKey: cls.sector.key,
       industry: cls.industry.short,
-      revenue: L.revenue ?? null,
+      revenue: topLineRevenue(L, c),
       // industrial lens
       opMargin: isFin ? null : operatingMargin(L),
       roic: isFin ? null : roicValue(L),

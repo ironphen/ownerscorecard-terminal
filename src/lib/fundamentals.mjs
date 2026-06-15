@@ -1,6 +1,28 @@
 // Shared, framework-agnostic compute for the fundamentals tools.
 // Imported by both Astro pages (server) and React islands (client), so keep it
 // pure ESM with no Node or browser built-ins.
+import { financialKind } from "./archetype.mjs";
+
+// The headline top line. For most companies this is reported revenue, but banks and
+// insurers tag "Revenues" erratically (often a sliver, or not at all: Regions reports
+// $104M against $5B of net interest income, MetLife $2B against $50B of premiums), so we
+// reconstruct the real total from its components, a bank's net interest income plus fee
+// income, an insurer's premiums plus net investment income. We only ever correct upward,
+// when the reported tag clearly under-captures, so a cleanly-tagged filer is left alone.
+export function topLineRevenue(lines, company) {
+  const L = lines || {};
+  const rev = L.revenue ?? null;
+  const fk = financialKind(company);
+  if (fk === "bank") {
+    const recon = (L.netInterestIncome || 0) + (L.noninterestIncome || 0);
+    return recon > (rev || 0) ? recon : rev;
+  }
+  if (fk === "insurer" || fk === "managedCare") {
+    const recon = (L.premiumsEarned || 0) + (L.investmentIncome || 0);
+    return recon > (rev || 0) ? recon : rev;
+  }
+  return rev;
+}
 
 // Compact USD formatting: 123000000000 -> "$123.0B", 450000000 -> "$450M".
 export function fmtUSD(v) {

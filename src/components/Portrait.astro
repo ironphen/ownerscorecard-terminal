@@ -1,5 +1,5 @@
 ---
-import { fmtUSD, roicValue, operatingMargin, ownerEarningsMargin } from "../lib/fundamentals.mjs";
+import { fmtUSD, roicValue, operatingMargin, ownerEarningsMargin, topLineRevenue } from "../lib/fundamentals.mjs";
 import { returnOnEquity, returnOnTangibleEquity, efficiencyRatio, equityToAssets } from "../lib/financials.mjs";
 import { ffoMargin, ffoPayout, debtToAssets } from "../lib/reits.mjs";
 import { combinedRatio, lossRatio } from "../lib/insurers.mjs";
@@ -13,10 +13,10 @@ const fk = financialKind(company);
 const isReit = fk === "reit", isBank = fk === "bank", isInsurer = fk === "insurer";
 const isFee = fk === "fee", isManagedCare = fk === "managedCare";
 const L = company.lines || {};
-const rev = L.revenue;
+const rev = topLineRevenue(L, company);
 const hist = company.history || [];
 
-const revSeries = hist.map((h) => h.lines.revenue).filter((v) => v != null);
+const revSeries = hist.map((h) => topLineRevenue(h.lines, company)).filter((v) => v != null);
 const prevRev = revSeries.length >= 2 ? revSeries[revSeries.length - 2] : null;
 const revGrowth = prevRev ? (rev - prevRev) / prevRev : null;
 let cagr = null;

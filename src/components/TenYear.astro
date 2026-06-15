@@ -1,6 +1,6 @@
 ---
 import { classify, financialKind } from "../lib/archetype.mjs";
-import { fmtUSD, roicValue, liquidAssets } from "../lib/fundamentals.mjs";
+import { fmtUSD, roicValue, liquidAssets, topLineRevenue } from "../lib/fundamentals.mjs";
 import { returnOnEquity, returnOnTangibleEquity, efficiencyRatio, tangibleEquity } from "../lib/financials.mjs";
 import { ffo, ffoPerShare, ffoPayout, debtToAssets } from "../lib/reits.mjs";
 import { combinedRatio, lossRatio } from "../lib/insurers.mjs";
@@ -17,7 +17,7 @@ const perShare = (n, sh) => (n != null && sh ? `$${(n / sh).toFixed(2)}` : "—"
 
 // Row catalog, each reads one fiscal year's `lines`. `short` is the mobile label.
 const ROW = {
-  revenue: { label: "Revenue", short: "Revenue", get: (L) => money(L.revenue) },
+  revenue: { label: "Revenue", short: "Revenue", get: (L) => money(topLineRevenue(L, company)) },
   grossMargin: { label: "Gross margin", short: "Gross mgn", get: (L) => marginStr(L.revenue != null && L.costOfRevenue != null ? L.revenue - L.costOfRevenue : null, L.revenue, 0) },
   opMargin: { label: "Operating margin", short: "Op. mgn", get: (L) => marginStr(L.operatingIncome, L.revenue) },
   netIncome: { label: "Net income", short: "Net inc.", get: (L) => money(L.netIncome) },

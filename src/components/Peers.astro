@@ -1,7 +1,7 @@
 ---
 import fundamentals from "../data/fundamentals.json";
 import { classify } from "../lib/archetype.mjs";
-import { fmtUSD, roicValue } from "../lib/fundamentals.mjs";
+import { fmtUSD, roicValue, topLineRevenue } from "../lib/fundamentals.mjs";
 import { returnOnEquity, returnOnTangibleEquity, efficiencyRatio, netInterestMargin } from "../lib/financials.mjs";
 import { ffoMargin, ffoPayout, ffoOnAssets, debtToAssets } from "../lib/reits.mjs";
 import { combinedRatio, lossRatio } from "../lib/insurers.mjs";
@@ -42,7 +42,7 @@ const isFee = fk === "fee", isManagedCare = fk === "managedCare";
 const metricsOf = (c) => {
   const L = c.lines || {};
   return {
-    revenue: L.revenue,
+    revenue: topLineRevenue(L, c),
     grossMargin: L.revenue && L.costOfRevenue != null ? (L.revenue - L.costOfRevenue) / L.revenue : null,
     opMargin: L.operatingIncome != null && L.revenue ? L.operatingIncome / L.revenue : null,
     roic: roicValue(L),
