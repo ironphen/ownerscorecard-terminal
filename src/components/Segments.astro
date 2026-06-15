@@ -6,6 +6,7 @@
 import segmentsData from "../data/segments.json";
 import language from "../data/language.json";
 import { fmtUSD } from "../lib/fundamentals.mjs";
+import { pickPrimaryBreakdown } from "../lib/segments.mjs";
 
 const { company } = Astro.props;
 const S = segmentsData?.companies?.[company.ticker] || null;
@@ -34,10 +35,12 @@ function prep(items, cap = 6) {
 const GEO_RE = /America|Europe|Asia|China|Japan|Pacific|EMEA|United States|International|Africa|Latin|Middle East|Germany|Kingdom|Canada|India|Korea|Mexico|Brazil|Domestic|Foreign|Overseas/i;
 const isGeographic = (items) => items.filter((i) => GEO_RE.test(i.label)).length > items.length / 2;
 
-// Choose the primary breakdown: prefer reportable segments (the operating view, and
-// the one that can carry profit), then product, then geography.
-const primaryKind = S?.bySegment ? "segment" : S?.byProduct ? "product" : S?.byGeography ? "geography" : null;
-const primaryRaw = S?.bySegment || S?.byProduct || S?.byGeography || null;
+// Show a breakdown only when it actually teaches; the rule lives in lib/segments.mjs so
+// the brief's "what it is" line and this section can never disagree. Prefer the company's
+// own reportable segments, then product, then geography, promoting the first that informs.
+const chosen = pickPrimaryBreakdown(S);
+const primaryKind = chosen?.kind || null;
+const primaryRaw = chosen?.raw || null;
 const primary = primaryRaw ? { kind: primaryKind, hasOI: !!primaryRaw.hasOperatingIncome, items: prep(primaryRaw.items) } : null;
 
 // Show a geography strip only when geography isn't already the primary view and the
@@ -74,7 +77,11 @@ if (primary && total) {
       if (us) takeaway = `${pct(1 - us.revenue / total)}% of revenue comes from outside ${/United States/i.test(us.label) ? "the United States" : "its home market"}.`;
     }
     if (!takeaway) {
-      if (topRevPct >= 60) takeaway = `${topRev.label} is ${topRevPct}% of revenue, so this is largely a single-${kindNoun[primaryKind]} business.`;
+      const second = items[1];
+      const secondPct = second ? pct(second.revenue / total) : 0;
+      if (topRevPct >= 60 && secondPct >= 8 && primaryKind !== "geography")
+        takeaway = `${topRev.label} is ${topRevPct}% of revenue, with ${second.label} the other meaningful ${kindNoun[primaryKind]} at ${secondPct}%.`;
+      else if (topRevPct >= 60) takeaway = `${topRev.label} is ${topRevPct}% of revenue, so this is largely a single-${kindNoun[primaryKind]} business.`;
       else takeaway = `Revenue spreads across ${items.length} ${kindPlural[primaryKind]}, the largest ${topRev.label} at ${topRevPct}%.`;
     }
   }

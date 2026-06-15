@@ -6,6 +6,7 @@
 // company's own description and the industry sit in the page header above this.
 import language from "../data/language.json";
 import segmentsData from "../data/segments.json";
+import { pickPrimaryBreakdown } from "../lib/segments.mjs";
 import { classify } from "../lib/archetype.mjs";
 import { roicValue, ownerEarningsMargin, cashConversionCycle } from "../lib/fundamentals.mjs";
 import { financialQuality } from "../lib/financials.mjs";
@@ -35,8 +36,11 @@ const lever = businessLever(company);
 const cleanSeg = (s) => String(s || "").replace(/&amp;/gi, "&").replace(/\s+Segments?$/i, "").replace(/ And /g, " and ").trim();
 let leverExtra = "";
 const seg = segmentsData?.companies?.[company.ticker];
-if (seg?.bySegment?.hasOperatingIncome) {
-  const items = seg.bySegment.items;
+// Only when the segment breakdown actually informs (and so renders below), or the "see
+// the mix below" pointer would dangle at a section we suppressed.
+const segPick = pickPrimaryBreakdown(seg, ["segment"]);
+if (segPick?.raw?.hasOperatingIncome) {
+  const items = segPick.raw.items;
   const oiSum = items.filter((i) => (i.operatingIncome ?? 0) > 0).reduce((a, b) => a + b.operatingIncome, 0);
   const topRev = [...items].sort((a, b) => b.revenue - a.revenue)[0];
   const topOI = [...items].sort((a, b) => (b.operatingIncome ?? 0) - (a.operatingIncome ?? 0))[0];
@@ -54,13 +58,20 @@ const flagPointer = topFlag
   ? ` On its own account, the filing leans hardest on ${topFlag.lens.toLowerCase()}, set against the numbers in what the filing emphasizes, below.`
   : "";
 
-// What it is: the segment mix when disclosed (specific). The computed phrase lives in
+// What it is: the segment mix when it actually informs (same gate as the section below,
+// from lib/segments.mjs, so the two never disagree). Geography answers where, not what,
+// so the brief asks only for segments or product lines. The computed phrase lives in
 // lib/business.mjs and is shown only when the hero is carrying the filing's own words.
-const mix = seg?.byProduct || seg?.bySegment || null;
-const mixKind = seg?.byProduct ? "line" : "segment";
+const primaryComp = pickPrimaryBreakdown(seg, ["segment", "product"]);
+const mix = primaryComp?.raw || null;
+const mixKind = primaryComp?.kind === "product" ? "line" : "segment";
 let composition = "";
 if (mix && seg.revenueTotal) {
-  const items = [...mix.items].sort((a, b) => b.revenue - a.revenue);
+  // Drop slivers that round to nothing (Alphabet's Other Bets), which read like an error
+  // in a one-line "what it is," but keep at least the two leaders.
+  const sorted = [...mix.items].sort((a, b) => b.revenue - a.revenue);
+  const big = sorted.filter((it) => (100 * it.revenue) / seg.revenueTotal >= 1);
+  const items = big.length >= 2 ? big : sorted;
   const sh = (it) => Math.round((100 * it.revenue) / seg.revenueTotal);
   const fmtItem = (it) => `${cleanSeg(it.label)} (${sh(it)}%)`;
   const joinList = (arr) =>
