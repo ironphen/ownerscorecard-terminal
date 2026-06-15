@@ -166,11 +166,14 @@ const BIZ_SKIP = /(was|were)\s+incorporated|incorporated\s+(under|in)\b|reincorp
 // A weak subject: the sentence is about employees, customers or a side note, not the
 // company itself, so it is not a description of the business.
 const BIZ_WEAK = /^(we also\b|our (customers?|employees?|people|associates|team|more than|over\s|approximately|roughly|nearly))/i;
-const HEAD_TOKEN = /^(item\s*1[ab]?\b\.?|part\s*i+\b\.?|general development of (the )?business|business overview|company overview|our company|our business|the company|business|general|overview)\s*[:.\-–—]?\s+/i;
+const HEAD_TOKEN = /^(item\s*1[ab]?\b\.?|part\s*i+\b\.?|general development of (the )?business|business overview|company overview|our company|our business|the company|introduction|business|general|overview)\s*[:.\-–—]?\s+/i;
 const LEAD_VERB = /^(is|are|operates?|provides?|markets?|designs?|develops?|sells?|offers?|supplies|distributes?|delivers?|produces?|manufactures?|engages?)\b/i;
 // Signals a richer description: names products, markets, customers or segments rather
 // than a bare "we operate" line.
 const BIZ_RICH = /\b(products?|services?|segments?|brands?|markets?|customers?|solutions?|software|platforms?|stores?|technolog|devices?|equipment|systems?)/i;
+// Describes the company's structure, not what it does ("operates through five segments",
+// "conducts business through its subsidiaries"); a poor stand-in for a real description.
+const BIZ_STRUCTURAL = /\boperat\w*\b[^.]{0,40}\bthrough\b|operating segments?|reportable segments?|conduct\w*\s+(its\s+)?business through/i;
 
 // Pull the company's own one-line description from the top of Item 1. Rather than take
 // the first sentence that passes, we collect candidates from the opening and score
@@ -205,6 +208,7 @@ function businessDescription(sents, name) {
     if (isa) score += 3;                       // the canonical "is a/an <type>" form
     if (namedSubject && !weSubject) score += 2; // names the company, not a bare "we"
     if (rich) score += 1;                       // products, markets, segments
+    if (BIZ_STRUCTURAL.test(s)) score -= 3;     // org chart, not a description
     score -= i * 0.6;                           // the opener is usually the intended one
     if (s.length < 70) score -= 1;              // too terse to describe a business
     cands.push({ s, score });
