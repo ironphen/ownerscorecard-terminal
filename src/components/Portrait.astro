@@ -1,17 +1,22 @@
 ---
 import { fmtUSD, roicValue, operatingMargin, ownerEarningsMargin, topLineRevenue } from "../lib/fundamentals.mjs";
-import { returnOnEquity, returnOnTangibleEquity, efficiencyRatio, equityToAssets } from "../lib/financials.mjs";
+import { returnOnEquity, returnOnTangibleEquity, efficiencyRatio, equityToAssets, returnOnAssets } from "../lib/financials.mjs";
 import { ffoMargin, ffoPayout, debtToAssets } from "../lib/reits.mjs";
 import { combinedRatio, lossRatio } from "../lib/insurers.mjs";
 import { netMargin, feeReturnOnEquity } from "../lib/feeFinancials.mjs";
 import { medicalLossRatio } from "../lib/managedCare.mjs";
-import { financialKind } from "../lib/archetype.mjs";
+import { financialKind, financialSubtype } from "../lib/archetype.mjs";
 import Term from "./Term.astro";
 
 const { company } = Astro.props;
 const fk = financialKind(company);
-const isReit = fk === "reit", isBank = fk === "bank", isInsurer = fk === "insurer";
+// Life insurers sit inside the insurer kind but are read on the spread and book value,
+// not the combined ratio, so they get their own vital signs.
+const isLife = fk === "insurer" && financialSubtype(company) === "life-insurer";
+const isReit = fk === "reit", isBank = fk === "bank", isInsurer = fk === "insurer" && !isLife;
 const isFee = fk === "fee", isManagedCare = fk === "managedCare";
+// Net investment yield: what the float earns, the life insurer's engine.
+const investmentYield = (l) => (l && l.investmentIncome != null && l.lossReserves ? l.investmentIncome / l.lossReserves : null);
 const L = company.lines || {};
 const rev = topLineRevenue(L, company);
 const hist = company.history || [];
@@ -45,6 +50,12 @@ const vitals = (isReit
       { label: "FFO margin", concept: "ffo", value: ffoMargin(cur), avg: avgOf(ffoMargin), dp: 0 },
       { label: "Dividend payout (FFO)", concept: "ffo", value: ffoPayout(cur), avg: avgOf(ffoPayout), dp: 0 },
       { label: "Debt / assets", concept: "net-debt", value: debtToAssets(cur), avg: avgOf(debtToAssets), dp: 0 },
+    ]
+  : isLife
+  ? [
+      { label: "Return on equity", concept: "return-on-equity", value: returnOnEquity(cur), avg: avgOf(returnOnEquity), dp: 0 },
+      { label: "Investment yield on float", concept: "insurance-float", value: investmentYield(cur), avg: avgOf(investmentYield), dp: 1 },
+      { label: "Return on assets", concept: null, value: returnOnAssets(cur), avg: avgOf(returnOnAssets), dp: 1 },
     ]
   : isInsurer
   ? [

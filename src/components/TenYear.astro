@@ -1,5 +1,5 @@
 ---
-import { classify, financialKind } from "../lib/archetype.mjs";
+import { classify, financialKind, financialSubtype } from "../lib/archetype.mjs";
 import { fmtUSD, roicValue, liquidAssets, topLineRevenue } from "../lib/fundamentals.mjs";
 import { returnOnEquity, returnOnTangibleEquity, efficiencyRatio, tangibleEquity } from "../lib/financials.mjs";
 import { ffo, ffoPerShare, ffoPayout, debtToAssets } from "../lib/reits.mjs";
@@ -78,6 +78,8 @@ const SETS = {
   retail: [ROW.revenue, ROW.grossMargin, ROW.opMargin, ROW.netIncome, ROW.eps, ROW.ownerEarnings, ROW.oeMargin, ROW.roic, ROW.cash, ROW.netDebt],
   financial: [ROW.revenue, ROW.nii, ROW.netIncome, ROW.eps, ROW.roe, ROW.rotce, ROW.efficiency, ROW.deposits, ROW.bvps, ROW.tbvps, ROW.dps],
   insurer: [ROW.revenue, ROW.premiums, ROW.netIncome, ROW.combined, ROW.lossRatio, ROW.roe, ROW.invInc, ROW.float, ROW.bvps, ROW.dps],
+  // Life insurers: the spread-and-book-value story, no combined ratio (see insurers.mjs).
+  lifeInsurer: [ROW.revenue, ROW.premiums, ROW.invInc, ROW.netIncome, ROW.roe, ROW.float, ROW.bvps, ROW.dps],
   fee: [ROW.revenue, ROW.opMargin, ROW.netMargin, ROW.netIncome, ROW.eps, ROW.roe, ROW.cash, ROW.dps, ROW.bvps],
   managedCare: [ROW.revenue, ROW.premiums, ROW.mlr, ROW.opMargin, ROW.netIncome, ROW.eps, ROW.roe, ROW.bvps, ROW.dps],
   reit: [ROW.revenue, ROW.netIncome, ROW.ffo, ROW.ffoPS, ROW.payout, ROW.debtAssets, ROW.totalDebt, ROW.dps, ROW.bvps],
@@ -122,7 +124,7 @@ const lastI = cols.length - 1;
 // their own measures, so key off financialKind first (future-proof for any new
 // financial), and fall back to the economic-model sector for everything else.
 const fk = financialKind(company);
-const setKey = fk === "insurer" ? "insurer" : fk === "reit" ? "reit" : fk === "managedCare" ? "managedCare" : fk === "fee" ? "fee" : fk === "bank" ? "financial" : sector.key;
+const setKey = fk === "insurer" ? (financialSubtype(company) === "life-insurer" ? "lifeInsurer" : "insurer") : fk === "reit" ? "reit" : fk === "managedCare" ? "managedCare" : fk === "fee" ? "fee" : fk === "bank" ? "financial" : sector.key;
 const chosen = SETS[setKey] || SETS.general;
 
 // Link a row's label to its entry on the Concepts page, where the term is defined.

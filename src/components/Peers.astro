@@ -6,7 +6,7 @@ import { returnOnEquity, returnOnTangibleEquity, efficiencyRatio, netInterestMar
 import { ffoMargin, ffoPayout, ffoOnAssets, debtToAssets } from "../lib/reits.mjs";
 import { combinedRatio, lossRatio } from "../lib/insurers.mjs";
 import { medicalLossRatio } from "../lib/managedCare.mjs";
-import { financialKind } from "../lib/archetype.mjs";
+import { financialKind, financialSubtype } from "../lib/archetype.mjs";
 import Term from "./Term.astro";
 
 const { company } = Astro.props;
@@ -36,7 +36,8 @@ const cls = classify(company);
 
 const pr = (v, dp = 0) => (v == null ? "—" : `${(v * 100).toFixed(dp)}%`);
 const fk = financialKind(company);
-const isReit = fk === "reit", isBank = fk === "bank", isInsurer = fk === "insurer";
+const isLife = fk === "insurer" && financialSubtype(company) === "life-insurer";
+const isReit = fk === "reit", isBank = fk === "bank", isInsurer = fk === "insurer" && !isLife;
 const isFee = fk === "fee", isManagedCare = fk === "managedCare";
 
 const metricsOf = (c) => {
@@ -59,6 +60,8 @@ const metricsOf = (c) => {
     combined: combinedRatio(L),
     lossR: lossRatio(L),
     mlr: medicalLossRatio(L),
+    invYield: L.investmentIncome != null && L.lossReserves ? L.investmentIncome / L.lossReserves : null,
+    roa: L.netIncome != null && L.totalAssets ? L.netIncome / L.totalAssets : null,
   };
 };
 
@@ -70,6 +73,12 @@ const COLS = isReit
       { key: "ffoOnAssets", label: "FFO / assets", concept: "ffo", dp: 1, better: "high" },
       { key: "payout", label: "Payout (FFO)", concept: "ffo", dp: 0, better: "neutral" },
       { key: "debtToAssets", label: "Debt / assets", concept: "net-debt", dp: 0, better: "low" },
+    ]
+  : isLife
+  ? [
+      { key: "roe", label: "ROE", concept: "return-on-equity", dp: 0, better: "high" },
+      { key: "invYield", label: "Yield on float", concept: "insurance-float", dp: 1, better: "high" },
+      { key: "roa", label: "Return on assets", concept: null, dp: 1, better: "high" },
     ]
   : isInsurer
   ? [
@@ -112,7 +121,7 @@ for (const col of COLS) {
   best[col.key] = bt;
 }
 
-const lens = isReit ? "the REIT lens" : isInsurer ? "the underwriting lens" : isBank ? "the bank lens" : isManagedCare ? "the medical-loss-ratio lens" : isFee ? "fee margins" : "owner economics";
+const lens = isReit ? "the REIT lens" : isLife ? "the spread-and-book-value lens" : isInsurer ? "the underwriting lens" : isBank ? "the bank lens" : isManagedCare ? "the medical-loss-ratio lens" : isFee ? "fee margins" : "owner economics";
 const heading = basis === "model" ? "Peers, nearest by economic model" : `Peers, ${cls.industry.label}`;
 const intro = basis === "model"
   ? `No close industry peers in the catalog yet, so these are the nearest by economic model (${cls.sector.label.toLowerCase()}), compared on ${lens}. Don't rank by a single number.`
