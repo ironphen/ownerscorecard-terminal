@@ -81,37 +81,51 @@ export function industryOf(company) {
 }
 
 
-// SIC ranges → sector. Primary signal when we have it.
+// SIC ranges → sector. Primary signal when we have it. Carve-outs (asset-light,
+// consumer brands) come first; the rest of heavy manufacturing and extraction is
+// capital-intensive; genuinely ambiguous codes (most chemicals, paper, instruments)
+// fall through to the shape read below.
 function sectorFromSIC(sic) {
   const c = Number(sic);
   if (!c) return null;
+  // Finance / insurance / real estate
   if (c >= 6000 && c <= 6499) return "financial";
   if (c >= 6500 && c <= 6799) return "reit";
-  if (c >= 4000 && c <= 4991) return "capital";          // transport, comms, utilities
-  if (c >= 1000 && c <= 1499) return "capital";          // mining
-  if (c >= 1300 && c <= 1399) return "capital";          // oil & gas extraction
-  if (c >= 2900 && c <= 2999) return "capital";          // petroleum refining
-  if (c >= 7370 && c <= 7379) return "assetLight";       // software & IT services
-  if (c >= 3670 && c <= 3679) return "assetLight";       // semiconductors & components (fabless / IP-led)
+  // Asset-light: software & IT services, semiconductors (fabless / IP-led)
+  if (c >= 7370 && c <= 7379) return "assetLight";
+  if (c >= 3670 && c <= 3679) return "assetLight";
+  // Consumer brands & staples (the brand or the IP is the asset, not the plant)
+  if (c >= 3570 && c <= 3579) return "consumer";         // computer & office hardware
+  if (c >= 2000 && c <= 2399) return "consumer";         // food, beverage, tobacco, textiles, apparel
+  if (c >= 2830 && c <= 2836) return "consumer";         // pharma & biologics
+  if (c >= 2840 && c <= 2844) return "consumer";         // soap, cosmetics, personal care
+  if (c >= 3000 && c <= 3199) return "consumer";         // footwear, leather, rubber goods
+  if (c >= 3940 && c <= 3949) return "consumer";         // toys & games
+  // Retail
   if (c >= 5200 && c <= 5999) return "retail";
-  if (c >= 2000 && c <= 2199) return "consumer";         // food, beverage, tobacco
-  if (c >= 2300 && c <= 2399) return "consumer";         // apparel
-  if (c >= 2800 && c <= 2899) return "consumer";         // household / personal products
-  if (c >= 3570 && c <= 3579) return "consumer";         // computer/office hardware (brand-led); 3570 is the parent code
-  return null;
+  // Capital-intensive: extraction, heavy manufacturing, transport, utilities
+  if (c >= 1000 && c <= 1799) return "capital";          // mining, oil & gas, construction
+  if (c >= 2900 && c <= 2999) return "capital";          // petroleum refining
+  if (c >= 3200 && c <= 3569) return "capital";          // stone/glass, metals, fabricated, machinery (non-computer)
+  if (c >= 3580 && c <= 3669) return "capital";          // machinery, electrical equipment (non-semi)
+  if (c >= 3700 && c <= 3799) return "capital";          // transportation equipment (autos, aerospace)
+  if (c >= 4000 && c <= 4991) return "capital";          // transport, communications, utilities
+  return null;                                           // chemicals, paper, instruments, misc → shape
 }
 
-// Financial shape → sector. Fallback when SIC is missing or unmapped.
+// Financial shape → sector. Fallback when SIC is missing or unmapped. A business that
+// holds real inventory or spends real capex makes physical goods at scale, so it reads
+// capital-intensive, not retail; only fat-margin, inventory-light models are asset-light.
 function sectorFromShape(s) {
   if (s.rev == null) return "general";
-  const hiInv = s.invToRev != null && s.invToRev > 0.08;
-  const loInv = s.invToRev != null && s.invToRev < 0.04;
-  const hiGM = s.grossMargin != null && s.grossMargin >= 0.55;
-  const loGM = s.grossMargin != null && s.grossMargin < 0.35;
-  const hiCapex = s.capexToRev != null && s.capexToRev > 0.12;
-  if (hiInv && loGM) return "retail";
-  if (hiCapex && !hiGM) return "capital";
-  if (loInv && hiGM) return "assetLight";
+  const hiGM = s.grossMargin != null && s.grossMargin >= 0.5;
+  const loInv = s.invToRev != null && s.invToRev < 0.05;
+  const someInv = s.invToRev != null && s.invToRev >= 0.1;
+  const hiCapex = s.capexToRev != null && s.capexToRev >= 0.08;
+  if (hiCapex) return "capital";              // heavy fixed assets
+  if (loInv && hiGM) return "assetLight";     // IP-led, inventory-light, fat margins
+  if (hiGM) return "consumer";                // fat margins on modest capex → a brand
+  if (someInv) return "capital";              // makes physical goods at scale on thin margins
   return "consumer";
 }
 
