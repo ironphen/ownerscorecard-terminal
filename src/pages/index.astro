@@ -3,7 +3,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 import fundamentals from "../data/fundamentals.json";
 import { getCollection } from "astro:content";
 import { fmtUSD, roicValue, ownerEarningsMargin, operatingMargin, liquidAssets } from "../lib/fundamentals.mjs";
-import { classify } from "../lib/archetype.mjs";
+import { classify, financialKind } from "../lib/archetype.mjs";
 import { grahamTests } from "../lib/graham.mjs";
 import Term from "../components/Term.astro";
 
@@ -26,8 +26,11 @@ const rows = [...(fundamentals.companies || [])]
     // industrial Graham tests, so we leave those blank rather than print a number
     // that means nothing (or, worse, an absurd one). Their lens lives on their page.
     const isFin = ["financial", "reit"].includes(cls.sector.key);
+    // Net cash/(debt) isn't the lens for a bank or an insurer (their borrowings fund the
+    // business, not a leverage signal), so blank it there; keep it for REITs, where it is.
+    const fk = financialKind(c);
     const hasBal = L.totalDebt != null || L.cashAndEquivalents != null;
-    const netCash = hasBal ? (liquidAssets(L) || 0) - (L.totalDebt || 0) : null; // + = net cash
+    const netCash = (fk === "bank" || fk === "insurer") ? null : (hasBal ? (liquidAssets(L) || 0) - (L.totalDebt || 0) : null); // + = net cash
     const g = isFin ? { passes: null, testable: null } : grahamTests(c);
     return {
       ticker: c.ticker,

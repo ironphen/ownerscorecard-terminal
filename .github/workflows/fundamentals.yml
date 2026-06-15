@@ -39,6 +39,7 @@ jobs:
         if: ${{ github.event.inputs.segments_only != 'true' }}
         env:
           SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT }}
+          DEBT_DEBUG: ${{ github.event.inputs.debug }}
       - run: npm run fetch:filings
         if: ${{ github.event.inputs.segments_only != 'true' }}
         continue-on-error: true # qualitative layer; never fail the fundamentals refresh
