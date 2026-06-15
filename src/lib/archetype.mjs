@@ -40,12 +40,53 @@ const SIC_LABEL = {
   "6798": "Real estate", "6500": "Real estate",
 };
 const SIC3_LABEL = {
-  "357": "Computer hardware", "367": "Semiconductors", "737": "Software & internet", "596": "Online retail",
-  "208": "Beverages", "204": "Packaged food", "203": "Packaged food", "200": "Packaged food", "284": "Household & personal care",
-  "267": "Paper & packaging", "289": "Specialty chemicals", "531": "Department stores", "533": "Discount retail",
-  "521": "Home-improvement retail", "481": "Telecom", "451": "Airlines", "440": "Cruise & shipping",
-  "601": "Banks", "602": "Banks", "603": "Savings institutions", "612": "Mortgage finance", "621": "Brokerage",
-  "631": "Insurance", "633": "Insurance", "635": "Insurance", "655": "Real estate", "679": "Real estate", "291": "Oil & gas",
+  // technology & electronics
+  "357": "Computer hardware", "367": "Semiconductors", "737": "Software & internet",
+  "360": "Electrical equipment", "361": "Electrical equipment", "362": "Electrical equipment",
+  "363": "Appliances", "366": "Communications equipment", "369": "Electrical equipment",
+  "381": "Instruments", "382": "Instruments", "384": "Medical devices", "387": "Instruments",
+  // industrial machinery & transport equipment
+  "351": "Industrial machinery", "352": "Industrial machinery", "353": "Industrial machinery",
+  "354": "Industrial machinery", "355": "Industrial machinery", "356": "Industrial machinery",
+  "358": "Industrial machinery", "359": "Industrial machinery",
+  "371": "Autos & parts", "372": "Aerospace & defense", "373": "Shipbuilding", "376": "Aerospace & defense",
+  // materials, chemicals, energy
+  "280": "Chemicals", "281": "Chemicals", "282": "Chemicals", "283": "Pharma",
+  "285": "Paints & coatings", "286": "Chemicals", "287": "Agricultural chemicals", "289": "Chemicals",
+  "290": "Oil & gas", "291": "Oil & gas", "299": "Oil & gas",
+  "131": "Oil & gas", "138": "Oil & gas", "101": "Mining", "104": "Mining", "140": "Mining",
+  "331": "Steel & metals", "333": "Metals", "334": "Metals", "335": "Metals",
+  "320": "Building materials", "324": "Building materials", "327": "Building materials", "326": "Building materials",
+  "260": "Paper & packaging", "261": "Paper & packaging", "262": "Paper & packaging", "265": "Paper & packaging", "267": "Paper & packaging",
+  // consumer staples & brands
+  "200": "Packaged food", "201": "Packaged food", "202": "Packaged food", "203": "Packaged food",
+  "204": "Packaged food", "205": "Packaged food", "206": "Packaged food", "207": "Packaged food", "209": "Packaged food",
+  "208": "Beverages", "211": "Tobacco", "220": "Apparel", "230": "Apparel", "231": "Apparel", "232": "Apparel",
+  "284": "Household & personal care", "301": "Footwear & apparel", "302": "Footwear & apparel", "314": "Footwear & apparel",
+  "394": "Toys & leisure", "395": "Office & toys",
+  // transport, comms, utilities
+  "401": "Railroads", "421": "Trucking & logistics", "440": "Cruise & shipping", "441": "Cruise & shipping",
+  "451": "Airlines", "452": "Airlines", "470": "Logistics", "473": "Logistics",
+  "481": "Telecom", "482": "Telecom", "489": "Telecom", "483": "Media", "484": "Media",
+  "461": "Pipelines", "491": "Utilities", "492": "Gas utilities", "493": "Utilities", "494": "Water utilities", "495": "Waste services",
+  // retail & distribution
+  "520": "Home & building retail", "521": "Home & building retail", "523": "Home & building retail",
+  "531": "General retail", "533": "Discount retail", "540": "Grocery", "541": "Grocery",
+  "550": "Auto retail", "551": "Auto retail", "553": "Auto retail", "561": "Apparel retail", "565": "Apparel retail", "566": "Apparel retail",
+  "570": "Home furnishings", "571": "Home furnishings", "573": "Electronics retail", "581": "Restaurants", "591": "Drug stores", "596": "E-commerce", "599": "Specialty retail",
+  "501": "Distribution", "504": "Distribution", "511": "Distribution", "512": "Pharma distribution", "514": "Food distribution", "518": "Distribution",
+  // finance, insurance, real estate
+  "601": "Banks", "602": "Banks", "603": "Savings banks", "612": "Mortgage finance", "614": "Consumer finance",
+  "615": "Financial services", "616": "Mortgage finance", "619": "Financial services",
+  "620": "Capital markets", "621": "Capital markets", "622": "Capital markets", "623": "Capital markets", "628": "Asset management",
+  "631": "Insurance", "632": "Health insurance", "633": "Insurance", "635": "Insurance", "641": "Insurance brokers",
+  "651": "Real estate", "653": "Real estate", "655": "Real estate", "671": "Holding company", "679": "Real estate",
+  // services & healthcare
+  "700": "Hotels", "701": "Hotels", "730": "Business services", "731": "Business services", "732": "Business services",
+  "733": "Business services", "736": "Staffing", "738": "Business services",
+  "780": "Media & entertainment", "790": "Entertainment", "799": "Entertainment",
+  "800": "Healthcare services", "805": "Healthcare services", "806": "Healthcare services", "807": "Lab services", "808": "Healthcare services",
+  "873": "Research services", "874": "Professional services",
 };
 
 function cleanSicDescription(d) {
@@ -55,11 +96,19 @@ function cleanSicDescription(d) {
 
 // A compact label for tight spaces (the catalog table).
 const SHORT_IND = {
-  "Computers & devices": "Computers", "Enterprise software": "Software", "Internet platforms": "Internet",
-  "Online retail": "E-commerce", "Semiconductors": "Semis", "Household & personal care": "Household",
-  "Specialty chemicals": "Chemicals", "Discount & variety retail": "Big-box retail", "Department stores": "Dept. stores",
-  "Home-improvement retail": "Home improv.", "Wireless telecom": "Wireless", "Cruise lines": "Cruise",
-  "Packaged food": "Food", "Paper & packaging": "Paper",
+  "Computers & devices": "Computers", "Enterprise software": "Software", "Software & internet": "Software",
+  "Internet platforms": "Internet", "Online retail": "E-commerce", "Semiconductors": "Semis",
+  "Household & personal care": "Household", "Specialty chemicals": "Chemicals", "Discount & variety retail": "Big-box retail",
+  "Discount retail": "Big-box retail", "Department stores": "Dept. stores", "Home-improvement retail": "Home improv.",
+  "Home & building retail": "Home retail", "Wireless telecom": "Wireless", "Cruise lines": "Cruise", "Cruise & shipping": "Cruise",
+  "Packaged food": "Food", "Paper & packaging": "Paper", "Aerospace & defense": "Aerospace",
+  "Industrial machinery": "Machinery", "Autos & parts": "Autos", "Footwear & apparel": "Apparel",
+  "Healthcare services": "Healthcare", "Business services": "Services", "Agricultural chemicals": "Ag chemicals",
+  "Building materials": "Materials", "Communications equipment": "Comms equip.", "Electrical equipment": "Electrical",
+  "Medical devices": "Med devices", "Trucking & logistics": "Logistics", "Capital markets": "Capital mkts",
+  "Asset management": "Asset mgmt", "Pharma distribution": "Pharma dist.", "Food distribution": "Food dist.",
+  "Media & entertainment": "Media", "Toys & leisure": "Toys", "Steel & metals": "Steel", "Paints & coatings": "Coatings",
+  "Specialty retail": "Retail", "General retail": "Retail", "Apparel retail": "Apparel retail",
 };
 
 // Within the financial world, which kind: banks, insurers and REITs are read on
