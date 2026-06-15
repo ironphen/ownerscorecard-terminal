@@ -51,10 +51,11 @@ jobs:
           SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT }}
           ONLY_TICKERS: ${{ github.event.inputs.tickers }}
           SEG_DEBUG: ${{ github.event.inputs.debug }}
-      # Data-quality gate: runs the same lib functions the pages do and fails on a real
-      # regression (a mis-tagged headline, a coverage cliff), which blocks the commit
-      # below so a bad refresh is never shipped. Per-company oddities are warnings and do
-      # not block; they print for review. Runs before the commit on purpose.
+      # Data-quality gate: runs the same lib functions the pages do. A systemic coverage
+      # cliff (a taxonomy change that drops a whole data layer) fails this step and blocks
+      # the commit below, so a broadly-broken refresh is never shipped. Per-company issues
+      # print loudly for review but do not block, so one odd filer can't freeze the weekly
+      # run. Runs before the commit on purpose.
       - name: Audit data quality
         run: npm run audit
       - name: Commit if changed

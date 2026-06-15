@@ -95,7 +95,21 @@ const CONCEPTS = {
     "SecuredLongTermDebt",
     "SecuredDebt",
     "SeniorNotes",
+    "SeniorLongTermNotes",
+    "SeniorNotesNoncurrent",
     "NotesPayableNoncurrent",
+    "LongTermNotesPayable",
+    "NotesPayable",
+    // Convertible-note structures (Dexcom, ServiceNow, Cadence) that don't tag the
+    // standard long-term-debt concept.
+    "ConvertibleDebtNoncurrent",
+    "ConvertibleLongTermNotesPayable",
+    "ConvertibleNotesPayableNoncurrent",
+    // REIT and unsecured-borrower presentations that split debt outside the standard pair.
+    "UnsecuredDebt",
+    "UnsecuredLongTermDebt",
+    "LongTermLineOfCredit",
+    "OtherLongTermDebtNoncurrent",
   ],
   incomeTaxExpense: ["IncomeTaxExpenseBenefit"],
   costOfRevenue: ["CostOfGoodsAndServicesSold", "CostOfRevenue", "CostOfGoodsSold"],
@@ -318,7 +332,18 @@ async function main() {
     const aggSeriesByTag = CONCEPTS.debtTotal.map((t) => collectInstant(facts, [t]));
     const aggTTMVals = CONCEPTS.debtTotal.map((t) => latestObservation(facts, [t], "USD", true)?.val ?? null);
     const aggYear = (fy) => maxOf(...aggSeriesByTag.map((s) => s[fy] ?? null));
-    const totalDebt = maxOf(componentDebt, ...aggInstantVals);
+    // Secured + unsecured: many REITs split borrowings into these two buckets and tag no
+    // combined total. They are mutually exclusive, so their sum is a valid total estimate
+    // (max within each family first, in case a filer tags both a total and a long-term
+    // variant). Offered to the overall max alongside the component pair and the aggregates,
+    // so it lifts a split-tagged filer without ever inflating one already captured whole.
+    const SECURED = ["SecuredDebt", "SecuredLongTermDebt"], UNSECURED = ["UnsecuredDebt", "UnsecuredLongTermDebt"];
+    const famInstant = (tags) => maxOf(...tags.map((t) => pickInstant(facts, [t])?.val ?? null));
+    const famSeries = (tags) => { const o = {}; for (const t of tags) { const s = collectInstant(facts, [t]); for (const fy in s) o[fy] = Math.max(o[fy] ?? -Infinity, s[fy]); } return o; };
+    const splitInstant = (() => { const s = famInstant(SECURED), u = famInstant(UNSECURED); return s != null || u != null ? (s || 0) + (u || 0) : null; })();
+    const secSeries = famSeries(SECURED), unsecSeries = famSeries(UNSECURED);
+    const splitYear = (fy) => { const s = secSeries[fy], u = unsecSeries[fy]; return s != null || u != null ? (s || 0) + (u || 0) : null; };
+    const totalDebt = maxOf(componentDebt, splitInstant, ...aggInstantVals);
 
     // Diagnostic: DEBT_DEBUG=DPZ dumps every debt-like us-gaap tag and its latest annual
     // value, so a debt-capture problem can be diagnosed from the actual filings.
@@ -400,7 +425,7 @@ async function main() {
           operatingIncome: deriveOpInc(ha.operatingIncome[fy] ?? null, ha.revenue[fy] ?? null, ha.costsAndExpenses[fy] ?? null, ha.netIncome[fy] ?? null, ha.incomeTaxExpense[fy] ?? null, ha.interestExpense[fy] ?? null),
           incomeTaxExpense: ha.incomeTaxExpense[fy] ?? null,
           netIncome: ha.netIncome[fy] ?? null,
-          totalDebt: maxOf(hi.ltd[fy] != null || hi.cur[fy] != null ? (hi.ltd[fy] || 0) + (hi.cur[fy] || 0) : null, aggYear(fy)),
+          totalDebt: maxOf(hi.ltd[fy] != null || hi.cur[fy] != null ? (hi.ltd[fy] || 0) + (hi.cur[fy] || 0) : null, splitYear(fy), aggYear(fy)),
           stockholdersEquity: hi.equity[fy] ?? null,
           cashAndEquivalents: hi.cash[fy] ?? null,
           shortTermInvestments: hi.stInv[fy] ?? null,

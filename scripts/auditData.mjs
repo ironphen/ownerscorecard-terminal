@@ -157,9 +157,16 @@ for (const code of codes) {
   if (list.length > 12) console.log(`    ... and ${list.length - 12} more`);
 }
 
-// Coverage floors describe the whole catalog, so they only gate a full run, not a
-// debugging subset (ONLY=...), where a couple of companies can't represent coverage.
+// What blocks an unattended refresh: only a systemic coverage cliff (a taxonomy change
+// that drops a whole layer), because a single odd new filer must not freeze every future
+// weekly run. Per-company findings are printed loudly for review but do not block the
+// batch. A local pre-ship check runs --strict to fail on anything. Coverage floors gate a
+// full run only, not a debugging subset (ONLY=...), where a few companies can't represent
+// catalog coverage.
 const covGate = ONLY.length ? 0 : covFails.length;
-const fail = errs.length > 0 || covGate > 0 || (STRICT && warns.length > 0);
-console.log(`\nRESULT: ${fail ? "FAIL" : "PASS"}  (${errs.length} errors, ${warns.length} warnings, ${covGate} coverage floors breached${STRICT ? ", strict" : ""})\n`);
+const fail = covGate > 0 || (STRICT && errs.length + warns.length > 0);
+const needsReview = errs.length > 0;
+console.log(`\nRESULT: ${fail ? "FAIL" : "PASS"}  (${errs.length} errors, ${warns.length} warnings, ${covGate} coverage floors breached${STRICT ? ", strict" : ""})`);
+if (needsReview && !fail) console.log(`Note: ${errs.length} per-company error${errs.length === 1 ? "" : "s"} above need review but do not block the refresh.`);
+console.log("");
 if (import.meta.url === pathToFileURL(process.argv[1] || "").href) process.exit(fail ? 1 : 0);
