@@ -12,21 +12,26 @@ const { company } = Astro.props;
 const all = fundamentals.companies || [];
 
 // Peers: same 3-digit SIC (a tight industry group); broaden to the 2-digit group,
-// then to the economic model, if that is too thin. Free, just the data we pull.
+// then to the economic model, if that is too thin. We track which basis we used so
+// the heading stays honest: an industry group is named by its industry, while a model
+// fallback says so rather than claiming an industry the peers don't really share.
 function findPeers(co) {
   const sic = String(co.sic || "");
   const inSic = (n) => (sic.slice(0, n) ? all.filter((c) => c.ticker !== co.ticker && String(c.sic || "").slice(0, n) === sic.slice(0, n)) : []);
-  let p = inSic(3);
+  let p = inSic(3), basis = "industry";
   if (p.length < 2) p = inSic(2);
   if (p.length < 2) {
     const arch = classify(co).sector.key;
     p = all.filter((c) => c.ticker !== co.ticker && classify(c).sector.key === arch);
+    basis = "model";
   }
   const rev = co.lines?.revenue || 0;
-  return p.sort((a, b) => Math.abs((a.lines?.revenue || 0) - rev) - Math.abs((b.lines?.revenue || 0) - rev)).slice(0, 7);
+  return { peers: p.sort((a, b) => Math.abs((a.lines?.revenue || 0) - rev) - Math.abs((b.lines?.revenue || 0) - rev)).slice(0, 7), basis };
 }
 
-const group = [company, ...findPeers(company)].sort((a, b) => (b.lines?.revenue || 0) - (a.lines?.revenue || 0));
+const { peers, basis } = findPeers(company);
+const group = [company, ...peers].sort((a, b) => (b.lines?.revenue || 0) - (a.lines?.revenue || 0));
+const cls = classify(company);
 
 const pr = (v, dp = 0) => (v == null ? "—" : `${(v * 100).toFixed(dp)}%`);
 const fk = financialKind(company);
@@ -90,12 +95,18 @@ for (const col of COLS) {
   for (const r of rows) { const v = r.m[col.key]; if (v == null) continue; if (col.better === "low" ? v < bv : v > bv) { bv = v; bt = r.c.ticker; } }
   best[col.key] = bt;
 }
+
+const lens = isReit ? "the REIT lens" : isInsurer ? "the underwriting lens" : isBank ? "the bank lens" : "owner economics";
+const heading = basis === "model" ? "Peers, nearest by economic model" : `Peers, ${cls.industry.label}`;
+const intro = basis === "model"
+  ? `No close industry peers in the catalog yet, so these are the nearest by economic model (${cls.sector.label.toLowerCase()}), compared on ${lens}. Don't rank by a single number.`
+  : `The same industry, side by side on ${lens}, compare, don't rank by a single number.`;
 ---
 
 {group.length >= 2 ? (
   <section class="peers">
-    <h3 class="secHead">Peers, {classify(company).industry.label}</h3>
-    <p class="pNote">The same industry, side by side on {isReit ? "the REIT lens" : isInsurer ? "the underwriting lens" : isBank ? "the bank lens" : "owner economics"}, compare, don't rank by a single number. <span class="bestKey">●</span> marks best in the group.</p>
+    <h3 class="secHead">{heading}</h3>
+    <p class="pNote">{intro} <span class="bestKey">●</span> marks best in the group.</p>
     <div class="wrap">
       <table>
         <thead>
