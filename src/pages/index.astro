@@ -157,8 +157,7 @@ const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "
               data-graham={r.grahamPasses ?? ""}
             >
               <td class="c-name">
-                <a href={`/c/${r.ticker}`} class="tkr">{r.ticker}</a>
-                <span class="nm">{r.name}</span>
+                <a href={`/c/${r.ticker}`} class="tkr" title={r.name}>{r.ticker}</a>
               </td>
               <td class="c-model">
                 <span class="tag">{r.industry}</span>
@@ -307,8 +306,8 @@ const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "
         return '<td class="num">' + col.fmt(r[col.k]) + "</td>";
       }
       function rowHTML(r, cols) {
-        return '<tr><td class="c-name"><a href="/c/' + esc(r.t) + '" class="tkr">' + esc(r.t) + '</a><span class="nm">' + esc(r.n) +
-          '</span></td><td class="c-model"><span class="tag">' + esc(r.i) + "</span></td>" + cols.map((c) => cell(r, c)).join("") + "</tr>";
+        return '<tr><td class="c-name"><a href="/c/' + esc(r.t) + '" class="tkr" title="' + esc(r.n) + '">' + esc(r.t) +
+          '</a></td><td class="c-model"><span class="tag">' + esc(r.i) + "</span></td>" + cols.map((c) => cell(r, c)).join("") + "</tr>";
       }
       function headHTML(cols) {
         let h = '<tr><th class="c-name sortable" data-k="t">Company</th><th class="c-model">Sector</th>';

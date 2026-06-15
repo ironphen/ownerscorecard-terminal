@@ -102,7 +102,7 @@ const CONCEPTS = {
   stockBasedComp: ["ShareBasedCompensation"],
   dividendsPaid: ["PaymentsOfDividendsCommonStock", "PaymentsOfDividends"],
   buybacks: ["PaymentsForRepurchaseOfCommonStock"],
-  stockholdersEquity: ["StockholdersEquity"],
+  stockholdersEquity: ["StockholdersEquity", "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest"],
   cashAndEquivalents: [
     "CashAndCashEquivalentsAtCarryingValue",
     "CashCashEquivalentsAndShortTermInvestmentsAtCarryingValue",
