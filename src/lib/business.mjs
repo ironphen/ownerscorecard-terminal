@@ -146,8 +146,13 @@ const NOT_A_DESCRIPTION = new RegExp(
   ")",
   "i"
 );
+// Boilerplate or non-company sentences that occasionally lead the extraction: the
+// auditor's own statement (the PCAOB independence language from the audit report), a
+// named property standing in for the business, or a forward-looking / mission line. When
+// the hero is one of these, the computed industry phrase is the better opener.
+const LEAKED = /public accounting firm|registered with the pcaob|\bstudio lot\b|we expect to (continue|make|invest|incur|spend)\b|deliver value and|operates under a consistent business/i;
 export function weakLede(s) {
   if (!s || typeof s !== "string") return true;
   return /^we have entered\b/i.test(s) || WEAK_LEDE.test(s) ||
-    /\bvarious (facilities|services|agreements|arrangements)\b/i.test(s) || NOT_A_DESCRIPTION.test(s);
+    /\bvarious (facilities|services|agreements|arrangements)\b/i.test(s) || NOT_A_DESCRIPTION.test(s) || LEAKED.test(s);
 }
