@@ -35,6 +35,23 @@ const niH = (company.history || []).filter((h) => h?.lines?.netIncome != null).s
 const eps3 = niH.length >= 2 && shares ? niH.reduce((a, b) => a + b, 0) / niH.length / shares : null;
 const bvps = L.stockholdersEquity != null && shares ? L.stockholdersEquity / shares : null;
 
+// An honest base, on demand: a 3-year average of owner earnings (Graham's normalization,
+// to avoid anchoring on one noisy year) and the latest stock comp (so it can be treated as
+// the expense Munger insisted it is). Both are toggles in the tool.
+const oeHist = (company.history || []).map((h) => (h.lines.cashFromOps != null && h.lines.capex != null ? h.lines.cashFromOps - Math.abs(h.lines.capex) : null));
+const oe3vals = [...oeHist].reverse().filter((v) => v != null).slice(0, 3);
+const oe3 = oe3vals.length >= 2 ? oe3vals.reduce((a, b) => a + b, 0) / oe3vals.length : ownerEarnings;
+const sbcLatest = L.stockBasedComp ?? company.lines?.stockBasedComp ?? 0;
+// The owner-earnings growth the business actually delivered, as a number, to anchor a
+// reference value against (never a target): what the record would be worth on its own record.
+const oeSeries = oeHist.filter((v) => v != null);
+let gDeliv = null;
+if (oeSeries.length >= 4) {
+  const span = Math.min(7, oeSeries.length - 1);
+  const a = oeSeries[oeSeries.length - 1 - span], b = oeSeries[oeSeries.length - 1];
+  if (a > 0 && b > 0) gDeliv = Math.pow(b / a, 1 / span) - 1;
+}
+
 // Book-value valuation: a bank or an insurer is worth a multiple of tangible book set
 // by the return it earns on that book. Same math for both; only the wording differs,
 // since an insurer's cycle is underwriting, not credit. Normalize over the record.
@@ -176,7 +193,7 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
       <p class="note">A reverse-DCF needs positive owner earnings, or at least revenue, to anchor to, there's no clean base here. Judge this one on assets or normalized earnings, not a growth model.</p>
     )
   ) : (
-    <div id="valBox" data-oe={ownerEarnings} data-shares={shares} data-name={name} data-eps3={eps3 ?? ""} data-bvps={bvps ?? ""}>
+    <div id="valBox" data-oe={ownerEarnings} data-oe3={oe3 ?? ""} data-sbc={sbcLatest ?? ""} data-gdeliv={gDeliv ?? ""} data-netdebt={netDebt} data-shares={shares} data-name={name} data-eps3={eps3 ?? ""} data-bvps={bvps ?? ""}>
       <p class="intro">
         A price is the one input we don't pull, <b>you bring it</b>. Type today's close (read it off any
         broker or quote site) and see the owner-earnings growth you'd have to believe to justify it, set
@@ -189,12 +206,24 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
         <input id="px" type="number" inputmode="decimal" step="0.01" min="0" placeholder="e.g. 220.50" />
       </div>
 
+      <div class="bases" role="group" aria-label="Make the owner-earnings base honest">
+        <span class="basesLbl">Base</span>
+        <label class="tog"><input type="checkbox" id="oeNorm" /> Normalize · 3-yr average</label>
+        <label class="tog"><input type="checkbox" id="oeSbc" /> Net of stock comp</label>
+      </div>
+
       <p class="lede" id="lede">Enter a price above to run it.</p>
 
       <div class="compare">
         <div class="cmp"><span class="cl">Implied by the price</span><span class="cv hot" id="impG">—</span></div>
         <div class="cmp"><span class="cl">Delivered (record)</span><span class="cv">{oeGrowth ? `${oeGrowth.replace("/yr", "")}/yr` : "—"}</span></div>
         <div class="cmp"><span class="cl">Owner-earnings yield</span><span class="cv" id="oeY">—</span></div>
+      </div>
+
+      <div class="compare ref" id="refRow" hidden>
+        <div class="cmp"><span class="cl">On the growth it delivered</span><span class="cv" id="refG">—</span></div>
+        <div class="cmp"><span class="cl">Reference value / share</span><span class="cv hot" id="refV">—</span></div>
+        <div class="cmp"><span class="cl">…less a 30% margin of safety</span><span class="cv" id="refMos">—</span></div>
       </div>
 
       {eps3 != null && bvps != null ? (
@@ -218,8 +247,8 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
 
       <p class="foot">
         Owner earnings {fmtUSD(ownerEarnings)} on {(shares / 1e6).toFixed(0)}M diluted shares; net {netDebt >= 0 ? `debt ${fmtUSD(netDebt)}` : `cash ${fmtUSD(-netDebt)}`}.
-        This is a lens, not a price target, it says what you'd have to <em>believe</em>, not what the company
-        is <em>worth</em>, and it runs on one year of (noisy) owner earnings at assumptions you can see and change.
+        The base is the latest year by default; <b>Normalize</b> averages three to damp the noise, and <b>Net of stock comp</b> treats option pay as the expense it is.
+        The reference value extrapolates the owner-earnings growth the record actually delivered, netted against debt — a yardstick, never a price target. The tool says what you'd have to <em>believe</em>, not what the company is <em>worth</em>.
       </p>
     </div>
   )}
@@ -246,7 +275,12 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
   .cv.neg { color: var(--bad); }
   .lede .bad { color: var(--bad); }
 
+  .bases { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin: 12px 0 0; }
+  .basesLbl { font-size: 10px; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+  .tog { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--ink-dim); cursor: pointer; user-select: none; }
+  .tog input { accent-color: var(--accent); cursor: pointer; }
   .compare { display: flex; flex-wrap: wrap; gap: 10px 28px; margin: 16px 0 0; padding: 12px 0; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }
+  .compare.ref { border-top: 0; margin-top: 0; padding-top: 0; }
   .cmp { display: flex; flex-direction: column; }
   .cl { font-size: 11.5px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
   .cv { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; margin-top: 2px; }
@@ -267,11 +301,14 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
     const box = document.getElementById("valBox");
     if (!box) return;
     const OE = parseFloat(box.dataset.oe), SH = parseFloat(box.dataset.shares), NAME = box.dataset.name || "this company";
+    const OE3 = parseFloat(box.dataset.oe3), SBC = parseFloat(box.dataset.sbc) || 0, GDELIV = parseFloat(box.dataset.gdeliv), NETDEBT = parseFloat(box.dataset.netdebt) || 0;
     const px = document.getElementById("px");
     const r = document.getElementById("r"), n = document.getElementById("n"), g = document.getElementById("g");
     const rOut = document.getElementById("rOut"), nOut = document.getElementById("nOut"), gOut = document.getElementById("gOut");
     const lede = document.getElementById("lede"), impG = document.getElementById("impG"), oeY = document.getElementById("oeY");
     const pe = document.getElementById("pe"), pb = document.getElementById("pb"), ggate = document.getElementById("ggate");
+    const oeNorm = document.getElementById("oeNorm"), oeSbc = document.getElementById("oeSbc");
+    const refRow = document.getElementById("refRow"), refG = document.getElementById("refG"), refV = document.getElementById("refV"), refMos = document.getElementById("refMos");
     const EPS3 = parseFloat(box.dataset.eps3), BVPS = parseFloat(box.dataset.bvps);
 
     const pv = (gr, rr, N, gT) => { let p = 0, oe = 1; for (let y = 1; y <= N; y++) { oe *= 1 + gr; p += oe / Math.pow(1 + rr, y); } return p + (oe * (1 + gT)) / (rr - gT) / Math.pow(1 + rr, N); };
@@ -287,6 +324,14 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
     const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
     const pcs = (v) => (v < 0 ? "−" : "") + Math.abs(v * 100).toFixed(1) + "%";
 
+    // The base the whole tool runs on, made honest by the toggles: a 3-year average instead
+    // of one noisy year, and/or net of the stock comp that is a real cost to owners.
+    function effOE() {
+      let base = (oeNorm && oeNorm.checked && OE3 > 0) ? OE3 : OE;
+      if (oeSbc && oeSbc.checked && SBC > 0) base -= SBC;
+      return base;
+    }
+
     function dials() {
       const rr = parseFloat(r.value) / 100, N = parseInt(n.value, 10), gT = parseFloat(g.value) / 100;
       rOut.textContent = r.value + "%"; nOut.textContent = N; gOut.textContent = parseFloat(g.value) + "%";
@@ -296,14 +341,29 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
 
     function update() {
       const { rr, N, gT } = dials();
+      const base = effOE();
+
+      // Reference value: what the business is worth on the growth it actually delivered,
+      // valued at your dials. A reference to weigh your price against, never a target; shown
+      // only when the delivered growth is in a range it's honest to extrapolate.
+      if (refRow) {
+        if (!isNaN(GDELIV) && GDELIV >= -0.05 && GDELIV <= 0.30 && base > 0 && SH > 0 && rr > gT) {
+          const fairPx = (pv(GDELIV, rr, N, gT) * base - NETDEBT) / SH;
+          refRow.hidden = false;
+          refG.textContent = pcs(GDELIV) + "/yr";
+          refV.textContent = fairPx > 0 ? "$" + fairPx.toFixed(2) : "—";
+          refMos.textContent = fairPx > 0 ? "$" + (fairPx * 0.7).toFixed(2) : "—";
+        } else { refRow.hidden = true; }
+      }
+
       const price = parseFloat(px.value);
       if (!(price > 0)) {
         lede.textContent = "Enter a price above to run it."; impG.textContent = "—"; oeY.textContent = "—";
         if (pe) pe.textContent = "—"; if (pb) pb.textContent = "—"; if (ggate) { ggate.textContent = "—"; ggate.style.color = ""; }
         setURL(""); return;
       }
-      const mc = price * SH, res = solve(mc / OE, rr, N, gT);
-      oeY.textContent = pcs(OE / mc);
+      const mc = price * SH, res = solve(mc / base, rr, N, gT);
+      oeY.textContent = pcs(base / mc);
       if (pe || pb || ggate) {
         const peV = EPS3 > 0 ? price / EPS3 : null, pbV = BVPS > 0 ? price / BVPS : null;
         if (pe) pe.textContent = peV != null ? peV.toFixed(1) + "×" : "n/m";
@@ -322,6 +382,7 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
       setURL(px.value);
     }
     [px, r, n, g].forEach((el) => el.addEventListener("input", update));
+    [oeNorm, oeSbc].forEach((el) => el && el.addEventListener("change", update));
     try { const q = new URL(location.href).searchParams.get("px"); if (q) px.value = q; } catch (e) {}
     update();
   })();
