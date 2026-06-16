@@ -294,11 +294,14 @@ export function aiExposure(company) {
     inR(2800, 2999) ||                  // chemicals, pharma, refining
     inR(3300, 3999) ||                  // metals, machinery, hardware, semis, aerospace, defense
     inR(4000, 4999) ||                  // transport, rail, pipelines, utilities
-    inR(6000, 6799)                     // banks, insurers, real estate, REITs
+    inR(6020, 6199) ||                  // depository and credit institutions (deposit moat)
+    inR(6300, 6799)                     // insurers, real estate, REITs
   ) return {
     tier: "low", label: null,
     reason: "the moat is physical, regulated or balance-sheet-funded, the kind AI cuts costs within but does not contest",
   };
+  // Securities, exchanges, asset managers, ratings and financial-data businesses (6200–6299):
+  // network and regulatory moats on one side, an information product AI contests on the other.
   // Moderate: AI reshapes costs and some products without clearly contesting or sparing the moat.
   return {
     tier: "moderate", label: null,

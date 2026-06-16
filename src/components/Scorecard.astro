@@ -7,6 +7,7 @@ import { buildFeeScorecard } from "../lib/feeFinancials.mjs";
 import { buildManagedCareScorecard } from "../lib/managedCare.mjs";
 import { moatReport } from "../lib/durability.mjs";
 import { financialKind, financialSubtype } from "../lib/archetype.mjs";
+import MoatUnderAI from "./MoatUnderAI.astro";
 import Term from "./Term.astro";
 
 const { company, sample = false } = Astro.props;
@@ -81,6 +82,8 @@ const report = isFin ? null : moatReport(company);
       </ul>
     </div>
   ) : null}
+
+  <MoatUnderAI company={company} />
 
   <p class="foot">
     Solvent is not the same as cheap; growing is not the same as good. These are vital
