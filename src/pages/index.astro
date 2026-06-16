@@ -118,10 +118,11 @@ const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "
       <span id="count" class="count">{rows.length} companies</span>
     </div>
     <p class="method">
-      Every figure is the latest annual number from the company's own 10-K, click a
-      column to rank by it, filter by business model, or search. We don't score them.
-      Pick a company for its full Owner's Scorecard. New here? The <a href="/method">Method</a> shows
-      how to read these, and <a href="/concepts">Concepts</a> defines every term.
+      Every figure is the latest annual number from the company's own 10-K. Rank by any
+      column, filter by business model, search, or read the catalog through an owner's lens
+      below. We don't score them; a lens is a way to explore by one of Buffett's or Graham's
+      criteria, never a verdict. Pick a company for its full Owner's Scorecard. New here? The
+      <a href="/method">Method</a> shows how to read these, and <a href="/concepts">Concepts</a> defines every term.
     </p>
 
     <div class="controls">
@@ -131,6 +132,16 @@ const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "
         {chips.map((k) => <button class="chip" data-filter={k}>{MODEL[k]}</button>)}
       </div>
     </div>
+
+    <div class="lenses" role="group" aria-label="Read by an owner's lens">
+      <span class="lensLbl">An owner's lens</span>
+      <button class="lens active" data-lens="all">Everything</button>
+      <button class="lens" data-lens="durable">Durable returns</button>
+      <button class="lens" data-lens="cash">Cash machines</button>
+      <button class="lens" data-lens="fortress">Fortress balance sheet</button>
+      <button class="lens" data-lens="graham">Graham-defensive</button>
+    </div>
+    <p class="lensTeach" id="lensTeach" hidden></p>
 
     <noscript><p class="nojs">Showing the first {FALLBACK.length} of {rows.length} companies. Enable JavaScript for the full sortable, filterable catalog.</p></noscript>
 
@@ -210,6 +221,15 @@ const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "
     .chip { font-family: var(--sans); font-size: 11.5px; letter-spacing: 0.03em; padding: 6px 10px; border: 1px solid var(--rule-strong); background: #fff; color: var(--ink); cursor: pointer; text-transform: uppercase; }
     .chip:hover { background: var(--accent-tint); }
     .chip.active { background: var(--ink); color: #fff; border-color: var(--ink); }
+
+    /* The owner's lenses: a distinct dimension from the model chips, so a different shape
+       and the accent colour. Each teaches a value principle as you apply it. */
+    .lenses { display: flex; gap: 6px 8px; align-items: baseline; flex-wrap: wrap; margin: 11px 0 0; }
+    .lensLbl { font-family: var(--sans); font-size: 10.5px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); margin-right: 2px; }
+    .lens { font-family: var(--sans); font-size: 11.5px; letter-spacing: 0.02em; padding: 5px 12px; border: 1px solid var(--accent); background: #fff; color: var(--accent); cursor: pointer; border-radius: 999px; }
+    .lens:hover { background: var(--accent-tint); }
+    .lens.active { background: var(--accent); color: #fff; }
+    .lensTeach { font-family: var(--serif); font-size: 13.5px; line-height: 1.55; color: #2c2f36; background: var(--accent-tint); border-left: 2px solid var(--accent); padding: 10px 14px; margin: 11px 0 0; max-width: 80ch; }
 
     .scroll { overflow-x: auto; margin-top: 6px; }
     table.catalog { border-collapse: collapse; width: 100%; font-size: 13.5px; font-variant-numeric: tabular-nums; }
@@ -303,7 +323,31 @@ const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "
       const q = document.getElementById("q");
       const chips = Array.from(document.querySelectorAll(".chip"));
       const countEl = document.getElementById("count");
-      let term = "", filter = "all", sortKey = null, sortDir = -1;
+      let term = "", filter = "all", sortKey = null, sortDir = -1, lens = "all";
+
+      // The owner's lenses: each filters the catalog by one of Buffett's or Graham's
+      // criteria and teaches the principle, and its honest limit, in the same breath. A
+      // lens is a way to explore, never a ranking; clearing it is not a buy and passing it
+      // is not either. Computed on the same sourced figures the columns show.
+      const LENSES = {
+        all: { pass: () => true, teach: "" },
+        durable: {
+          pass: (r) => r.roic != null && r.roic >= 0.15,
+          teach: "Durable returns. A return on invested capital that stays above 15% year after year is Buffett's clearest moat signal, because over time a stock tracks the returns of the business beneath it. High alone is not a verdict: asset-light firms read high because their capital is expensed, and the top of a cycle flatters everyone, so read the record and the 10-K before you trust it.",
+        },
+        cash: {
+          pass: (r) => r.oe != null && r.oe >= 0.15,
+          teach: "Cash machines. More than fifteen cents of every revenue dollar reaches owners as cash, after the capital spending needed just to stand still. Owner earnings are the honest read where reported profit can flatter, but a fat margin earned on a fading business is still a fading business.",
+        },
+        fortress: {
+          pass: (r) => r.nd != null && r.nd > 0,
+          teach: "Fortress balance sheet. More cash than debt. A company that cannot be killed never has to be timed, and net cash is the option to buy when others are forced to sell. This is safety, not cheapness, and a fortress balance sheet can still sit inside a mediocre business.",
+        },
+        graham: {
+          pass: (r) => r.gp != null && r.gp >= 5,
+          teach: "Graham-defensive. Clears at least five of Graham's tests for a conservative buyer: adequate size, strong liquidity, conservative debt, a profit every year, an unbroken dividend, and real earnings growth. Failing one is no veto and passing all is no buy. Many fine modern compounders fail his strictest liquidity rules by design; he meant this as a discipline against overpaying, not a screen for greatness.",
+        },
+      };
 
       function cell(r, col) {
         if (col.kind === "graham") return '<td class="num gra">' + (r.gt ? r.gp + "/" + r.gt : "—") + "</td>";
@@ -328,7 +372,7 @@ const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "
       function render() {
         const cols = colsetFor(filter);
         thead.innerHTML = headHTML(cols);
-        let view = DATA.filter((r) => (!term || (r.t + " " + r.n).toLowerCase().indexOf(term) >= 0) && (filter === "all" || r.m === filter));
+        let view = DATA.filter((r) => (!term || (r.t + " " + r.n).toLowerCase().indexOf(term) >= 0) && (filter === "all" || r.m === filter) && LENSES[lens].pass(r));
         if (sortKey) {
           const k = sortKey, dir = sortDir;
           view = view.slice().sort(k === "t" ? (a, b) => a.t.localeCompare(b.t) * dir : (a, b) => (numv(a[k]) - numv(b[k])) * dir);
@@ -341,7 +385,17 @@ const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "
       chips.forEach((c) => c.addEventListener("click", () => {
         chips.forEach((x) => x.classList.remove("active"));
         c.classList.add("active");
-        filter = c.dataset.filter; sortKey = null; sortDir = -1; // a new lens, a fresh sort
+        filter = c.dataset.filter; sortKey = null; sortDir = -1; // a new model, a fresh sort
+        render();
+      }));
+      const lensBtns = Array.from(document.querySelectorAll(".lens"));
+      const lensTeachEl = document.getElementById("lensTeach");
+      lensBtns.forEach((b) => b.addEventListener("click", () => {
+        lensBtns.forEach((x) => x.classList.remove("active"));
+        b.classList.add("active");
+        lens = b.dataset.lens;
+        const t = LENSES[lens].teach;
+        if (lensTeachEl) { lensTeachEl.textContent = t; lensTeachEl.hidden = !t; }
         render();
       }));
       table.addEventListener("click", (e) => {
