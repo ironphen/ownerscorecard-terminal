@@ -132,7 +132,7 @@ function leadSentences(text) {
     .replace(/\d+\s+table of contents/gi, " ")
     .split(/(?<=[.!?])\s+(?=[A-Z(“"])/)
     .map((s) => s.trim())
-    .filter((s) => s.length >= 34 && s.length <= 780 && isProseLead(s))
+    .filter((s) => s.length >= 34 && s.length <= 600 && isProseLead(s))
     .slice(0, 45);
 }
 
@@ -278,7 +278,7 @@ function businessDescription(sents, name, ticker) {
     }
     if (LEAD_VERB.test(s) && name) s = `${name.trim()} ${s}`; // restore a subject split off entirely
     if (/^[a-z]/.test(s)) s = s.charAt(0).toUpperCase() + s.slice(1);
-    if (s.length < 34 || s.length > 820) continue;
+    if (s.length < 34 || s.length > 700) continue;
     if (BIZ_SKIP.test(s) || BIZ_WEAK.test(s)) continue;
     const isa = BIZ_ISA.test(s);
     if (!BIZ_DOING.test(s) && !isa && !BIZ_ENGAGED.test(s)) continue;
