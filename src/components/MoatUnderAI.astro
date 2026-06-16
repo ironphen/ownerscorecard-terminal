@@ -35,17 +35,26 @@ const cap = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
 let evidence = null;
 if (ai && ai.inRisk) {
   evidence = {
-    label: ai.newThisYear ? "Named as a risk — new this year" : "Named as a competitive risk",
+    label: ai.newThisYear ? "A competitive risk — new this year" : "Named as a competitive risk",
     tone: ai.newThisYear ? "warn" : "info",
     quote: ai.newQuote || ai.riskQuote,
-    note: `${fy ? `Its FY${fy} ` : "Its "}10-K names artificial intelligence among the things that could go wrong${ai.newThisYear ? ", and this language was not in the prior year's filing" : ""}.`,
+    note: `${fy ? `Its FY${fy} ` : "Its "}10-K names artificial intelligence as a competitive threat${ai.newThisYear ? ", in language that was not in the prior year's filing" : ""}.`,
+  };
+} else if (ai && ai.mentionsAIRisk) {
+  evidence = {
+    label: "Raised, but not as a competitor",
+    tone: "info",
+    quote: null,
+    note: `The filing raises AI among its risks, but in other terms — security, regulation, energy or the like — not as a competitor to its product${ai.asCapability ? "; it frames AI mainly as a capability" : ""}.`,
   };
 } else if (ai && exp.tier === "elevated") {
   evidence = {
-    label: "Not named as a risk",
+    label: ai.asCapability ? "Framed as a capability" : "Not named",
     tone: "info",
     quote: ai.asCapability ? ai.capabilityQuote : null,
-    note: `Despite the structural exposure, the latest 10-K does not flag AI among its competitive risks${ai.asCapability ? ", though it does position AI as a capability" : " — itself worth a question"}.`,
+    note: ai.asCapability
+      ? "Despite the structural exposure, the filing positions AI as something it uses, not a threat to its product."
+      : "Despite the structural exposure, the latest 10-K does not name AI as a competitive risk — itself worth a question.",
   };
 } else if (ai && ai.asCapability) {
   evidence = { label: "Framed as a capability", tone: "info", quote: ai.capabilityQuote, note: "The filing positions AI as something the company uses, not something it fears." };

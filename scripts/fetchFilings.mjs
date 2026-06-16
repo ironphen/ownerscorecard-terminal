@@ -409,23 +409,30 @@ function diff(curSents, priorSents) {
 const AI_WORDS = /\b(artificial intelligence|machine learning|generative a\.?i\.?|large language models?|\bllms?\b|deep learning|neural networks?|foundation models?|generative models?)\b/i;
 const AI_ACRONYM = /\bA\.?I\.?\b/; // the acronym, case-sensitive, so "again"/"said" don't match
 const hasAI = (s) => AI_WORDS.test(s) || AI_ACRONYM.test(s);
-const AI_THREAT = /\b(compet|disrupt|substitut|replac|obsolet|displac|erod|disintermediat|threaten|adversely|rapidly (chang|evolv)|emerging|new entrant|lower\w* (the )?(cost|barrier))/i;
+// A *competitive* AI risk: AI named alongside substitution, disruption or pricing framing —
+// the moat question. Deliberately narrow.
+const AI_COMPETE = /\b(compet|substitut|replac|disrupt|displac|obsolet|erod|disintermediat|new entrant|barrier to entry|lower\w* (the )?(cost|barrier|price)|open[- ]?source|free (or |and )?(low[- ]?cost|alternativ)|pricing (power|pressure)|commoditi|reduce\w* (the )?(demand|need|reliance)|less reliant)/i;
+// Not the moat question: cybersecurity, energy, ethics/bias, IP, privacy and regulation are
+// different AI risks; exclude them so the competitive signal stays clean.
+const AI_EXCLUDE = /\b(cyber|threat actor|malicious|phishing|breach|fraud|\benergy\b|power consumption|data cent|emission|climate|ethic|\bbias\b|discriminat|infring|copyright|hallucinat|privacy|misinformation|deepfake|workforce|reskill|talent)/i;
 
 function aiSignal(cur, prior) {
   const risk = cur?.risk?.sents || [];
   const opp = (cur?.business?.sents || []).concat(cur?.mdna?.sents || []);
-  const riskHits = risk.filter(hasAI);
+  const compHits = risk.filter((s) => hasAI(s) && AI_COMPETE.test(s) && !AI_EXCLUDE.test(s));
+  const anyAIrisk = risk.some(hasAI);
   const priorTok = (prior?.risk?.sents || []).map(tokenize);
   const isNew = (s) => { const t = tokenize(s); if (t.size < 6) return false; for (const pt of priorTok) if (jaccard(t, pt) >= 0.55) return false; return true; };
-  const pointed = riskHits.find((s) => AI_THREAT.test(s)) || riskHits[0] || null;
-  const newHit = prior ? riskHits.find((s) => isNew(s)) : null;
-  const capHits = opp.filter(hasAI);
+  const newComp = prior ? compHits.find((s) => isNew(s)) : null;
+  const pointed = newComp || compHits[0] || null;
+  const capHits = opp.filter((s) => hasAI(s) && !AI_EXCLUDE.test(s));
   return {
-    inRisk: riskHits.length > 0,
-    riskMentions: riskHits.length,
+    inRisk: compHits.length > 0,        // names AI specifically as a competitive risk
+    mentionsAIRisk: anyAIrisk,          // mentions AI anywhere in the risk factors
+    riskMentions: compHits.length,
     riskQuote: pointed ? cleanQuote(pointed).slice(0, 320) : null,
-    newThisYear: !!newHit,
-    newQuote: newHit ? cleanQuote(newHit).slice(0, 320) : null,
+    newThisYear: !!newComp,
+    newQuote: newComp ? cleanQuote(newComp).slice(0, 320) : null,
     asCapability: capHits.length > 0,
     capabilityQuote: capHits.length ? cleanQuote(capHits[0]).slice(0, 280) : null,
   };
