@@ -253,12 +253,15 @@ const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "
     .lens.active { background: var(--accent); color: var(--accent-ink); }
     .lensTeach { font-family: var(--serif); font-size: 13.5px; line-height: 1.55; color: var(--ink-soft); background: var(--accent-tint); border-left: 2px solid var(--accent); padding: 10px 14px; margin: 11px 0 0; max-width: 80ch; }
 
-    /* A fixed-height data panel so the column header (and the ticker column) stay frozen as
-       the 1,000-plus rows scroll — a plain horizontal-overflow wrapper would defeat sticky. */
-    .scroll { max-height: 78vh; overflow: auto; margin-top: 12px; border-bottom: 1px solid var(--rule); }
+    /* The catalog flows with the page, so the column headers freeze against the viewport as
+       you scroll: the header row pins just beneath the sticky toolbar, whose measured height
+       is carried in --tb-h. No fixed-height panel — a plain overflow wrapper would open its
+       own scrollport and defeat that. On a phone or tablet the catalog scrolls sideways in
+       its own track (see the narrow breakpoint below), keeping the page from shifting. */
+    .scroll { margin-top: 12px; border-bottom: 1px solid var(--rule); }
     .catalog td.empty { text-align: center; font-family: var(--serif); font-style: italic; color: var(--muted); padding: 26px 12px; }
     table.catalog { border-collapse: collapse; width: 100%; font-size: 13.5px; font-variant-numeric: tabular-nums; }
-    .catalog thead th { font-family: var(--sans); font-weight: 600; font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); text-align: right; padding: 9px 10px 7px; white-space: nowrap; position: sticky; top: 0; z-index: 6; background: var(--paper); box-shadow: inset 0 -1px 0 var(--rule-strong); }
+    .catalog thead th { font-family: var(--sans); font-weight: 600; font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); text-align: right; padding: 9px 10px 7px; white-space: nowrap; position: sticky; top: var(--tb-h, 0px); z-index: 6; background: var(--paper); box-shadow: inset 0 -1px 0 var(--rule-strong); }
     .catalog th.c-name, .catalog th.c-model { text-align: left; }
     .catalog thead th.c-name { left: 0; z-index: 7; }
     .catalog th.sortable { cursor: pointer; user-select: none; }
@@ -285,6 +288,14 @@ const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "
 
     .ls { display: none; }
 
+    /* Below the desktop width the eight columns outgrow the content column, so the catalog
+       gets its own sideways track. That track is its own scrollport, which trades the
+       vertically frozen header for a horizontally frozen ticker column — the better pairing
+       on a narrow screen. The page itself never scrolls sideways. */
+    @media (max-width: 760px) {
+      .scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    }
+
     @media (max-width: 640px) {
       .cards { grid-template-columns: 1fr; gap: 14px; }
       .cards li { border-left: 0; border-top: 1px solid var(--rule); padding: 10px 0 0; }
@@ -302,6 +313,20 @@ const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "
       .tag { padding: 1px 5px; }
     }
   </style>
+
+  <script is:inline>
+    /* Pin the column-header row directly beneath the sticky toolbar: publish the toolbar's
+       live height as --tb-h, which the header's `top` reads. The toolbar wraps at narrow
+       widths, so re-measure whenever its box changes. */
+    (function () {
+      const tb = document.getElementById("toolbar");
+      if (!tb) return;
+      const setH = () => document.documentElement.style.setProperty("--tb-h", tb.offsetHeight + "px");
+      setH();
+      if (window.ResizeObserver) new ResizeObserver(setH).observe(tb);
+      else window.addEventListener("resize", setH);
+    })();
+  </script>
 
   <script is:inline>
     (function () {

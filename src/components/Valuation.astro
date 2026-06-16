@@ -128,13 +128,17 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
           <div class="cmp"><span class="cl">Justified by growth</span><span class="cv" id="justpffo">—</span></div>
           <div class="cmp"><span class="cl">Dividend yield</span><span class="cv" id="dyR">—</span></div>
         </div>
+        <div class="compare ref">
+          <div class="cmp"><span class="cl">Reference value / share</span><span class="cv hot" id="refVR">—</span></div>
+          <div class="cmp"><span class="cl">…less a 30% margin of safety</span><span class="cv" id="refMosR">—</span></div>
+        </div>
         <div class="dials">
           <span class="dialsLbl">The assumptions, turn the dials</span>
           <label>Discount rate <output id="rOutR">8%</output><input id="rR" type="range" min="5" max="12" step="0.5" value="8" /></label>
           <label>FFO / share growth <output id="gOutR">{reitGrowthPct}%</output><input id="gR" type="range" min="0" max="8" step="0.5" value={reitGrowthPct} /></label>
         </div>
         <p class="dialsNote">The justified multiple is 1 ÷ (discount rate − growth), a perpetuity on FFO. At an 8% discount and 3% growth, a REIT is worth about 20× FFO. Raise the discount rate and the multiple falls: the same interest-rate gravity that pulls on every yield asset.</p>
-        <p class="foot">FFO about ${ffops.toFixed(2)} per share on {(shares / 1e6).toFixed(0)}M shares. A lens, not a target. FFO here adds back depreciation and removes property-sale gains, the NAREIT method; it does not net out maintenance capex (AFFO), occupancy or lease terms, which the 10-K does.</p>
+        <p class="foot">FFO about ${ffops.toFixed(2)} per share on {(shares / 1e6).toFixed(0)}M shares. The reference value applies the multiple the dials justify to FFO per share — a yardstick, not a price target. FFO here adds back depreciation and removes property-sale gains, the NAREIT method; it does not net out maintenance capex (AFFO), occupancy or lease terms, which the 10-K does.</p>
       </div>
     ) : bankRunnable ? (
       <div id="valBoxBank" data-tbvps={tbvps} data-bvps={bvpsB} data-rotce={rotceMed} data-eps={epsB ?? ""} data-name={name} data-cycle={isInsurer ? "underwriting cycle" : "credit cycle"}>
@@ -150,6 +154,10 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
           <div class="cmp"><span class="cl">Justified by the return</span><span class="cv" id="justptbv">—</span></div>
           <div class="cmp"><span class="cl">Normalized return on tangible equity</span><span class="cv">{pctS(rotceMed)}</span></div>
         </div>
+        <div class="compare ref">
+          <div class="cmp"><span class="cl">Reference value / share</span><span class="cv hot" id="refVB">—</span></div>
+          <div class="cmp"><span class="cl">…less a 30% margin of safety</span><span class="cv" id="refMosB">—</span></div>
+        </div>
         <div class="compare gate">
           <div class="cmp"><span class="cl">Price / book</span><span class="cv" id="pbBank">—</span></div>
           <div class="cmp"><span class="cl">Earnings yield</span><span class="cv" id="eyBank">—</span></div>
@@ -161,7 +169,7 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
           <label>Long-term growth <output id="gOutB">3%</output><input id="gB" type="range" min="0" max="6" step="0.5" value="3" /></label>
           <p class="dialsNote">The justified multiple is (return on tangible equity − growth) ÷ (cost of equity − growth). {isInsurer ? "An" : "A"} {finKind} earning exactly its cost of equity is worth about one times tangible book; every point of durable excess return above that is worth paying up for. Raise the cost of equity and the justified multiple falls: that is interest-rate gravity on {isInsurer ? "an" : "a"} {finKind}.</p>
         </div>
-        <p class="foot">Tangible book {fmtUSD(tEq)} on {(shares / 1e6).toFixed(0)}M shares, a {pctS(rotceMed)} normalized return on it. This is a lens, not a target. It assumes the {finKind} keeps earning that return; {bankRisk} changes it, which is what the record and the 10-K are for.</p>
+        <p class="foot">Tangible book {fmtUSD(tEq)} on {(shares / 1e6).toFixed(0)}M shares, a {pctS(rotceMed)} normalized return on it. The reference value applies the multiple that return justifies to tangible book — a yardstick to weigh the price against, never a target. It assumes the {finKind} keeps earning that return; {bankRisk} changes it, which is what the record and the 10-K are for.</p>
       </div>
     ) : (
       <p class="note">A {sector.label.toLowerCase()} isn't read on an owner-earnings DCF, its economics live on the balance sheet (book value, the return earned on it, and the cash the assets throw off). We don't force this lens where it doesn't belong.</p>
@@ -439,6 +447,7 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
     const coeOut = document.getElementById("coeOut"), gOutB = document.getElementById("gOutB");
     const lede = document.getElementById("ledeB"), ptbv = document.getElementById("ptbv"), just = document.getElementById("justptbv");
     const pbB = document.getElementById("pbBank"), eyB = document.getElementById("eyBank"), peB = document.getElementById("peBank");
+    const refVB = document.getElementById("refVB"), refMosB = document.getElementById("refMosB");
     const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
 
     function setURL(v) { try { const u = new URL(location.href); v ? u.searchParams.set("px", v) : u.searchParams.delete("px"); history.replaceState(null, "", u); } catch (e) {} }
@@ -446,12 +455,18 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
     function update() {
       const c = parseFloat(coe.value) / 100, g = parseFloat(gB.value) / 100;
       coeOut.textContent = coe.value + "%"; gOutB.textContent = gB.value + "%";
-      const price = parseFloat(px.value);
-      if (!(price > 0)) { lede.textContent = "Enter a price above to run it."; [ptbv, just, pbB, eyB, peB].forEach((e) => (e.textContent = "—")); setURL(""); return; }
-      const ptb = price / TBVPS;
+      // The justified multiple and the reference value it implies depend only on the dials and
+      // the normalized return, not on the price you type, so they stand on their own.
       const justified = c > g ? Math.max(0, (ROTCE - g) / (c - g)) : null;
-      ptbv.textContent = ptb.toFixed(2) + "×";
       just.textContent = justified != null ? justified.toFixed(2) + "×" : "—";
+      if (justified != null && TBVPS > 0) {
+        const fair = justified * TBVPS;
+        refVB.textContent = "$" + fair.toFixed(2); refMosB.textContent = "$" + (fair * 0.7).toFixed(2);
+      } else { refVB.textContent = "—"; refMosB.textContent = "—"; }
+      const price = parseFloat(px.value);
+      if (!(price > 0)) { lede.textContent = "Enter a price above to run it."; [ptbv, pbB, eyB, peB].forEach((e) => (e.textContent = "—")); setURL(""); return; }
+      const ptb = price / TBVPS;
+      ptbv.textContent = ptb.toFixed(2) + "×";
       pbB.textContent = (price / BVPS).toFixed(2) + "×";
       if (EPS > 0) { eyB.textContent = ((EPS / price) * 100).toFixed(1) + "%"; peB.textContent = (price / EPS).toFixed(1) + "×"; }
       else { eyB.textContent = "n/m"; peB.textContent = "n/m"; }
@@ -480,18 +495,24 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
     const r = document.getElementById("rR"), g = document.getElementById("gR");
     const rOut = document.getElementById("rOutR"), gOut = document.getElementById("gOutR");
     const lede = document.getElementById("ledeR"), pffo = document.getElementById("pffo"), just = document.getElementById("justpffo"), dyR = document.getElementById("dyR");
+    const refVR = document.getElementById("refVR"), refMosR = document.getElementById("refMosR");
     const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
     function setURL(v) { try { const u = new URL(location.href); v ? u.searchParams.set("px", v) : u.searchParams.delete("px"); history.replaceState(null, "", u); } catch (e) {} }
 
     function update() {
       const rr = parseFloat(r.value) / 100, gg = parseFloat(g.value) / 100;
       rOut.textContent = r.value + "%"; gOut.textContent = g.value + "%";
-      const price = parseFloat(px.value);
-      if (!(price > 0)) { lede.textContent = "Enter a price above to run it."; [pffo, just, dyR].forEach((e) => (e.textContent = "—")); setURL(""); return; }
-      const pf = price / FFOPS;
+      // The justified multiple and the reference value depend only on the dials, not the price.
       const justified = rr > gg ? 1 / (rr - gg) : null;
-      pffo.textContent = pf.toFixed(1) + "×";
       just.textContent = justified != null ? justified.toFixed(1) + "×" : "—";
+      if (justified != null && FFOPS > 0) {
+        const fair = justified * FFOPS;
+        refVR.textContent = "$" + fair.toFixed(2); refMosR.textContent = "$" + (fair * 0.7).toFixed(2);
+      } else { refVR.textContent = "—"; refMosR.textContent = "—"; }
+      const price = parseFloat(px.value);
+      if (!(price > 0)) { lede.textContent = "Enter a price above to run it."; [pffo, dyR].forEach((e) => (e.textContent = "—")); setURL(""); return; }
+      const pf = price / FFOPS;
+      pffo.textContent = pf.toFixed(1) + "×";
       const dy = DPS > 0 ? DPS / price : null;
       dyR.textContent = dy != null ? (dy * 100).toFixed(1) + "%" : "—";
       const P = "$" + price.toFixed(2);
