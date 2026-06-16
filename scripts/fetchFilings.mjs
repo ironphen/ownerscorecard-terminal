@@ -411,7 +411,7 @@ const AI_ACRONYM = /\bA\.?I\.?\b/; // the acronym, case-sensitive, so "again"/"s
 const hasAI = (s) => AI_WORDS.test(s) || AI_ACRONYM.test(s);
 // A *competitive* AI risk: AI named alongside substitution, disruption or pricing framing —
 // the moat question. Deliberately narrow.
-const AI_COMPETE = /\b(compet|substitut|replac|disrupt|displac|obsolet|erod|disintermediat|new entrant|barrier to entry|lower\w* (the )?(cost|barrier|price)|open[- ]?source|free (or |and )?(low[- ]?cost|alternativ)|pricing (power|pressure)|commoditi|reduce\w* (the )?(demand|need|reliance)|less reliant)/i;
+const AI_COMPETE = /\b(compet|substitut|replac|disrupt|displac|obsolet|erode|eroding|disintermediat|new entrant|barrier to entry|lower\w* (the )?(cost|barrier|price)|reduce\w* (the )?(cost|demand|need|reliance)|open[- ]?source|free (or |and )?(low[- ]?cost|alternativ)|pricing (power|pressure)|commoditi|less reliant|democrati|enable\w*[^.]{0,40}(anyone|customers|users|competitors|smaller|themselves|in-house)|without (the )?(need|specialized|expertise)|build\w*[^.]{0,25}(their own|in-house)|self[- ]?serv|alternativ\w* to (our|the)|render\w* (our|its))/i;
 // Not the moat question: cybersecurity, energy, ethics/bias, IP, privacy and regulation are
 // different AI risks; exclude them so the competitive signal stays clean.
 const AI_EXCLUDE = /\b(cyber|threat actor|malicious|phishing|breach|fraud|\benergy\b|power consumption|data cent|emission|climate|ethic|\bbias\b|discriminat|infring|copyright|hallucinat|privacy|misinformation|deepfake|workforce|reskill|talent)/i;
