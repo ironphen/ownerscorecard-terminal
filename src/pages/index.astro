@@ -118,32 +118,36 @@ const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "
   <section class="catalogWrap">
     <div class="bandHead">
       <h2>The Catalog</h2>
-      <span id="count" class="count">{rows.length} companies</span>
+      <a class="all" href="/method">How to read these →</a>
     </div>
     <p class="method">
-      Every figure is the latest annual number from the company's own 10-K. Rank by any
-      column, filter by business model, search, or read the catalog through an owner's lens
-      below. We don't score them; a lens is a way to explore by one of Buffett's or Graham's
-      criteria, never a verdict. Pick a company for its full Owner's Scorecard. New here? The
-      <a href="/method">Method</a> shows how to read these, and <a href="/concepts">Concepts</a> defines every term.
+      Every figure is the latest annual number from the company's own 10-K. Rank by any column,
+      filter by business model, or read the catalog through an owner's lens. We don't score them;
+      a lens explores by one of Buffett's or Graham's criteria, never a verdict. Pick a company
+      for its full Owner's Scorecard. New here? The <a href="/method">Method</a> shows how to read
+      these, and <a href="/concepts">Concepts</a> defines every term.
     </p>
 
-    <div class="controls">
-      <input id="q" type="search" placeholder="Search ticker or name…" class="search" autocomplete="off" />
-      <div class="filters">
+    <div class="toolbar" id="toolbar">
+      <div class="tbRow tbTop">
+        <input id="q" type="search" placeholder="Search ticker or name…" class="search" autocomplete="off" aria-label="Search by ticker or name" />
+        <span id="count" class="count">{rows.length} companies</span>
+        <button id="resetBtn" class="reset" type="button" hidden aria-label="Clear all filters">Clear</button>
+      </div>
+      <div class="tbRow tbScroll filters" role="group" aria-label="Filter by business model">
+        <span class="tbLbl">Model</span>
         <button class="chip active" data-filter="all">All</button>
         {chips.map((k) => <button class="chip" data-filter={k}>{MODEL[k]}</button>)}
       </div>
-    </div>
-
-    <div class="lenses" role="group" aria-label="Read by an owner's lens">
-      <span class="lensLbl">An owner's lens</span>
-      <button class="lens active" data-lens="all">Everything</button>
-      <button class="lens" data-lens="durable">Durable returns</button>
-      <button class="lens" data-lens="cash">Cash machines</button>
-      <button class="lens" data-lens="fortress">Fortress balance sheet</button>
-      <button class="lens" data-lens="fund">Customers fund it</button>
-      <button class="lens" data-lens="graham">Graham-defensive</button>
+      <div class="tbRow tbScroll lenses" role="group" aria-label="Read by an owner's lens">
+        <span class="tbLbl">Lens</span>
+        <button class="lens active" data-lens="all">Everything</button>
+        <button class="lens" data-lens="durable">Durable returns</button>
+        <button class="lens" data-lens="cash">Cash machines</button>
+        <button class="lens" data-lens="fortress">Fortress balance sheet</button>
+        <button class="lens" data-lens="fund">Customers fund it</button>
+        <button class="lens" data-lens="graham">Graham-defensive</button>
+      </div>
     </div>
     <p class="lensTeach" id="lensTeach" hidden></p>
 
@@ -218,28 +222,39 @@ const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "
     /* ---- catalog ---- */
     .method { font-family: var(--serif); font-style: italic; font-size: 13.5px; color: var(--muted); margin: 9px 0 0; max-width: 66ch; }
 
-    .controls { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin: 14px 0 0; position: sticky; top: 0; z-index: 5; background: var(--paper); padding: 8px 0; }
-    .search { flex: 1 1 220px; min-width: 180px; padding: 9px 11px; border: 1px solid var(--rule-strong); font-family: var(--sans); font-size: 14px; background: var(--surface); }
+    /* One sticky toolbar — search, business-model filters, the owner's lenses — so the
+       controls stay reachable while the catalog scrolls. Each filter row scrolls sideways
+       on its own rather than wrapping, keeping the toolbar a predictable height. */
+    .toolbar { position: sticky; top: 0; z-index: 20; background: var(--paper); margin: 14px 0 0; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule-strong); }
+    .tbRow { display: flex; align-items: center; gap: 8px; padding: 7px 0; }
+    .tbRow + .tbRow { border-top: 1px solid var(--rule-soft); }
+    .tbScroll { overflow-x: auto; white-space: nowrap; scrollbar-width: none; }
+    .tbScroll::-webkit-scrollbar { display: none; }
+    .tbTop { gap: 12px; }
+    .tbLbl { font-family: var(--sans); font-size: 10px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); flex: 0 0 auto; width: 40px; }
+    .search { flex: 1 1 200px; min-width: 140px; padding: 8px 11px; border: 1px solid var(--rule-strong); border-radius: 3px; font-family: var(--sans); font-size: 14px; background: var(--surface); color: var(--ink); }
     .search::placeholder { color: var(--faint); }
-    .filters { display: flex; gap: 6px; flex-wrap: wrap; }
-    .chip { font-family: var(--sans); font-size: 11.5px; letter-spacing: 0.03em; padding: 6px 10px; border: 1px solid var(--rule-strong); background: var(--surface); color: var(--ink); cursor: pointer; text-transform: uppercase; }
+    .count { font-size: 11.5px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); flex: 0 0 auto; font-variant-numeric: tabular-nums; }
+    .reset { font-family: var(--sans); font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); background: none; border: 1px solid var(--rule-strong); border-radius: 3px; padding: 5px 9px; cursor: pointer; flex: 0 0 auto; }
+    .reset:hover { color: var(--accent); border-color: var(--accent); }
+    .chip { font-family: var(--sans); font-size: 11.5px; letter-spacing: 0.03em; padding: 5px 10px; border: 1px solid var(--rule-strong); background: var(--surface); color: var(--ink); cursor: pointer; text-transform: uppercase; border-radius: 3px; flex: 0 0 auto; }
     .chip:hover { background: var(--accent-tint); }
     .chip.active { background: var(--solid); color: var(--solid-ink); border-color: var(--solid); }
-
-    /* The owner's lenses: a distinct dimension from the model chips, so a different shape
-       and the accent colour. Each teaches a value principle as you apply it. */
-    .lenses { display: flex; gap: 6px 8px; align-items: baseline; flex-wrap: wrap; margin: 11px 0 0; }
-    .lensLbl { font-family: var(--sans); font-size: 10.5px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); margin-right: 2px; }
-    .lens { font-family: var(--sans); font-size: 11.5px; letter-spacing: 0.02em; padding: 5px 12px; border: 1px solid var(--accent); background: var(--surface); color: var(--accent); cursor: pointer; border-radius: 999px; }
+    /* The owner's lenses: a distinct dimension from the model chips, so a pill shape and the
+       accent colour. Each teaches a value principle as you apply it. */
+    .lens { font-family: var(--sans); font-size: 11.5px; letter-spacing: 0.02em; padding: 5px 12px; border: 1px solid var(--accent); background: var(--surface); color: var(--accent); cursor: pointer; border-radius: 999px; flex: 0 0 auto; }
     .lens:hover { background: var(--accent-tint); }
     .lens.active { background: var(--accent); color: var(--accent-ink); }
     .lensTeach { font-family: var(--serif); font-size: 13.5px; line-height: 1.55; color: var(--ink-soft); background: var(--accent-tint); border-left: 2px solid var(--accent); padding: 10px 14px; margin: 11px 0 0; max-width: 80ch; }
 
-    .scroll { overflow-x: auto; margin-top: 6px; }
+    /* A fixed-height data panel so the column header (and the ticker column) stay frozen as
+       the 1,000-plus rows scroll — a plain horizontal-overflow wrapper would defeat sticky. */
+    .scroll { max-height: 78vh; overflow: auto; margin-top: 12px; border-bottom: 1px solid var(--rule); }
     .catalog td.empty { text-align: center; font-family: var(--serif); font-style: italic; color: var(--muted); padding: 26px 12px; }
     table.catalog { border-collapse: collapse; width: 100%; font-size: 13.5px; font-variant-numeric: tabular-nums; }
-    .catalog thead th { font-family: var(--sans); font-weight: 600; font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); text-align: right; padding: 9px 10px 7px; border-bottom: 1px solid var(--rule-strong); white-space: nowrap; }
+    .catalog thead th { font-family: var(--sans); font-weight: 600; font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); text-align: right; padding: 9px 10px 7px; white-space: nowrap; position: sticky; top: 0; z-index: 6; background: var(--paper); box-shadow: inset 0 -1px 0 var(--rule-strong); }
     .catalog th.c-name, .catalog th.c-model { text-align: left; }
+    .catalog thead th.c-name { left: 0; z-index: 7; }
     .catalog th.sortable { cursor: pointer; user-select: none; }
     .catalog th.sortable:hover { color: var(--ink); }
     .catalog th.sortable::after { content: "↕"; opacity: 0.35; margin-left: 4px; font-size: 10px; }
@@ -248,7 +263,7 @@ const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "
 
     .catalog td { padding: 9px 10px; border-bottom: 1px solid var(--rule); text-align: right; white-space: nowrap; }
     .catalog td.c-name, .catalog td.c-model { text-align: left; }
-    .c-name { position: sticky; left: 0; background: var(--paper); }
+    .c-name { position: sticky; left: 0; background: var(--paper); z-index: 4; }
     .tkr { font-weight: 700; font-variant-numeric: tabular-nums; }
     .tkr:hover { color: var(--accent); }
     .nm { display: block; font-size: 11.5px; color: var(--muted); max-width: 26ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 1px; }
@@ -392,30 +407,64 @@ const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "
         if (countEl) countEl.textContent = view.length + (view.length === 1 ? " company" : " companies");
       }
 
-      q && q.addEventListener("input", () => { term = (q.value || "").trim().toLowerCase(); render(); });
-      chips.forEach((c) => c.addEventListener("click", () => {
-        chips.forEach((x) => x.classList.remove("active"));
-        c.classList.add("active");
-        filter = c.dataset.filter; sortKey = null; sortDir = -1; // a new model, a fresh sort
-        render();
-      }));
       const lensBtns = Array.from(document.querySelectorAll(".lens"));
       const lensTeachEl = document.getElementById("lensTeach");
-      lensBtns.forEach((b) => b.addEventListener("click", () => {
-        lensBtns.forEach((x) => x.classList.remove("active"));
-        b.classList.add("active");
-        lens = b.dataset.lens;
-        const t = LENSES[lens].teach;
+      const resetBtn = document.getElementById("resetBtn");
+      const validModels = new Set(["all"].concat(chips.map((c) => c.dataset.filter)));
+
+      // Reflect the current state on the controls: which chip/lens reads active, the lens's
+      // teaching note, and whether anything is filtered (so Clear can appear).
+      function syncControls() {
+        chips.forEach((x) => x.classList.toggle("active", x.dataset.filter === filter));
+        lensBtns.forEach((x) => x.classList.toggle("active", x.dataset.lens === lens));
+        const t = LENSES[lens] ? LENSES[lens].teach : "";
         if (lensTeachEl) { lensTeachEl.textContent = t; lensTeachEl.hidden = !t; }
-        render();
-      }));
+        if (resetBtn) resetBtn.hidden = !(filter !== "all" || lens !== "all" || term || sortKey);
+      }
+
+      // Keep the URL in step with the view, so a filtered, sorted catalog is a shareable link.
+      function writeURL() {
+        try {
+          const u = new URL(location.href), p = u.searchParams;
+          filter !== "all" ? p.set("model", filter) : p.delete("model");
+          lens !== "all" ? p.set("lens", lens) : p.delete("lens");
+          term ? p.set("q", term) : p.delete("q");
+          sortKey ? p.set("sort", sortKey + (sortDir > 0 ? ".a" : ".d")) : p.delete("sort");
+          history.replaceState(null, "", u);
+        } catch (e) {}
+      }
+      function readURL() {
+        try {
+          const p = new URL(location.href).searchParams;
+          const m = p.get("model"); if (m && validModels.has(m)) filter = m;
+          const l = p.get("lens"); if (l && LENSES[l]) lens = l;
+          const qq = p.get("q"); if (qq) { term = qq.toLowerCase(); if (q) q.value = qq; }
+          const s = p.get("sort"); if (s) { const parts = s.split("."); sortKey = parts[0]; sortDir = parts[1] === "a" ? 1 : -1; }
+        } catch (e) {}
+      }
+
+      function apply() { syncControls(); render(); writeURL(); }
+
+      q && q.addEventListener("input", () => { term = (q.value || "").trim().toLowerCase(); apply(); });
+      chips.forEach((c) => c.addEventListener("click", () => { filter = c.dataset.filter; sortKey = null; sortDir = -1; apply(); }));
+      lensBtns.forEach((b) => b.addEventListener("click", () => { lens = b.dataset.lens; apply(); }));
       table.addEventListener("click", (e) => {
         const th = e.target.closest && e.target.closest("th.sortable"); if (!th) return;
         const k = th.dataset.k;
         if (sortKey === k) sortDir *= -1; else { sortKey = k; sortDir = k === "t" ? 1 : -1; }
-        render();
+        apply();
       });
-      render();
+      resetBtn && resetBtn.addEventListener("click", () => {
+        filter = "all"; lens = "all"; term = ""; sortKey = null; sortDir = -1; if (q) q.value = ""; apply();
+      });
+      // "/" jumps to the search box, the way a terminal would.
+      document.addEventListener("keydown", (e) => {
+        const tag = ((document.activeElement || {}).tagName || "").toLowerCase();
+        if (e.key === "/" && q && tag !== "input" && tag !== "textarea" && tag !== "select") { e.preventDefault(); q.focus(); }
+      });
+
+      readURL();
+      apply();
     })();
   </script>
 </BaseLayout>
