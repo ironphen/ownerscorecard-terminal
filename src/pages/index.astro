@@ -232,6 +232,7 @@ const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "
     .lensTeach { font-family: var(--serif); font-size: 13.5px; line-height: 1.55; color: #2c2f36; background: var(--accent-tint); border-left: 2px solid var(--accent); padding: 10px 14px; margin: 11px 0 0; max-width: 80ch; }
 
     .scroll { overflow-x: auto; margin-top: 6px; }
+    .catalog td.empty { text-align: center; font-family: var(--serif); font-style: italic; color: var(--muted); padding: 26px 12px; }
     table.catalog { border-collapse: collapse; width: 100%; font-size: 13.5px; font-variant-numeric: tabular-nums; }
     .catalog thead th { font-family: var(--sans); font-weight: 600; font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); text-align: right; padding: 9px 10px 7px; border-bottom: 1px solid var(--rule-strong); white-space: nowrap; }
     .catalog th.c-name, .catalog th.c-model { text-align: left; }
@@ -377,7 +378,9 @@ const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "
           const k = sortKey, dir = sortDir;
           view = view.slice().sort(k === "t" ? (a, b) => a.t.localeCompare(b.t) * dir : (a, b) => (numv(a[k]) - numv(b[k])) * dir);
         }
-        tbody.innerHTML = view.map((r) => rowHTML(r, cols)).join("");
+        tbody.innerHTML = view.length
+          ? view.map((r) => rowHTML(r, cols)).join("")
+          : '<tr><td class="empty" colspan="' + (cols.length + 2) + '">No companies match this lens and model together (a bank is not read on ROIC, for instance). Try one at a time.</td></tr>';
         if (countEl) countEl.textContent = view.length + (view.length === 1 ? " company" : " companies");
       }
 
