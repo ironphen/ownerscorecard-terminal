@@ -1,5 +1,5 @@
 ---
-import { fmtUSD, roicValue, operatingMargin, ownerEarningsMargin, topLineRevenue } from "../lib/fundamentals.mjs";
+import { fmtUSD, roicValue, operatingMargin, ownerEarningsMargin, topLineRevenue, debtReliable } from "../lib/fundamentals.mjs";
 import { returnOnEquity, returnOnTangibleEquity, efficiencyRatio, equityToAssets, returnOnAssets } from "../lib/financials.mjs";
 import { ffoMargin, ffoPayout, debtToAssets } from "../lib/reits.mjs";
 import { combinedRatio, lossRatio } from "../lib/insurers.mjs";
@@ -9,6 +9,8 @@ import { financialKind, financialSubtype } from "../lib/archetype.mjs";
 import Term from "./Term.astro";
 
 const { company } = Astro.props;
+// Trust the captured debt (for ROIC) only when interest does not prove it under-captured.
+const debtOk = debtReliable(company.lines || {}) && debtReliable(company.ttm?.lines || {});
 const fk = financialKind(company);
 // Life insurers sit inside the insurer kind but are read on the spread and book value,
 // not the combined ratio, so they get their own vital signs.
@@ -85,7 +87,7 @@ const vitals = (isReit
   : [
       { label: "Gross margin", concept: "gross-margin", value: grossM(cur), avg: avgOf(grossM), dp: 0 },
       { label: "Operating margin", concept: "operating-margin", value: operatingMargin(cur), avg: avgOf(operatingMargin), dp: 1 },
-      { label: "ROIC", concept: "roic", value: roicValue(cur), avg: avgOf(roicValue), dp: 0 },
+      { label: "ROIC", concept: "roic", value: debtOk ? roicValue(cur) : null, avg: debtOk ? avgOf(roicValue) : null, dp: 0 },
       { label: "Owner-earnings margin", concept: "owner-earnings", value: ownerEarningsMargin(cur), avg: avgOf(ownerEarningsMargin), dp: 0 },
     ]
 ).filter((v) => v.value != null);

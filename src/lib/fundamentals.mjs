@@ -218,6 +218,11 @@ export function capexVsDepreciation(c) {
 // Return on invested capital, Buffett's north star.
 export function roic(c) {
   const L = c?.lines || {};
+  if (!debtReliable(L))
+    return {
+      value: "—", formula: "", tone: "none", label: "Debt under-captured",
+      note: "This company's interest bill implies far more debt than its filings tag at the consolidated level (the rest sits under segment dimensions the data source strips), so invested capital, and the return on it, cannot be read honestly. Judge this one on Owner Earnings and the record instead.",
+    };
   const oi = L.operatingIncome, eq = L.stockholdersEquity, debt = L.totalDebt;
   if (oi == null || eq == null || debt == null) return null;
   const invested = debt + eq - (L.cashAndEquivalents || 0);
@@ -320,12 +325,29 @@ export function cashConversionCycle(c) {
 
 // Raw metric values from a single year's lines, reused for the time series.
 // Return null when not honestly computable.
+// Debt we can trust as a leverage read. When a company pays material interest but little
+// or no debt is tagged, the figure is grossly under-captured: Ford reports its ~$150B
+// only under segment dimensions the companyfacts API strips, and AES and Textron tag none
+// at all, so treating the gap as zero would paint a debt-laden company as net cash. In
+// that case its leverage is unknown, not low, and the reads that lean on it should show
+// nothing rather than an optimistic fiction. Immaterial interest (a small lease charge)
+// is left alone, so a genuinely debt-light compounder still reads as net cash.
+export function debtReliable(L) {
+  const ie = L?.interestExpense;
+  if (ie == null || ie <= 1e8) return true;
+  const td = L?.totalDebt;
+  if (td == null || td <= 0) return false;
+  return ie / td <= 0.5;
+}
+
 export function roicValue(L) {
   if (!L) return null;
   const oi = L.operatingIncome, eq = L.stockholdersEquity;
   if (oi == null || eq == null) return null;
-  // A company with no debt tags carries no debt (our debt capture is thorough), so a
-  // null reads as zero rather than disqualifying the whole ratio.
+  // A debt-light company carries little debt (our capture is thorough), so a null reads as
+  // zero rather than disqualifying the ratio, but when interest proves the debt is grossly
+  // under-captured the invested-capital base is unknowable, so we decline the figure.
+  if (!debtReliable(L)) return null;
   const debt = L.totalDebt || 0;
   const invested = debt + eq - (L.cashAndEquivalents || 0);
   if (invested <= 0) return null;

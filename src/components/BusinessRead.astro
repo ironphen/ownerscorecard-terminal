@@ -8,7 +8,7 @@ import language from "../data/language.json";
 import segmentsData from "../data/segments.json";
 import { pickPrimaryBreakdown } from "../lib/segments.mjs";
 import { classify } from "../lib/archetype.mjs";
-import { roicValue, ownerEarningsMargin, cashConversionCycle } from "../lib/fundamentals.mjs";
+import { roicValue, ownerEarningsMargin, cashConversionCycle, debtReliable } from "../lib/fundamentals.mjs";
 import { financialQuality } from "../lib/financials.mjs";
 import { reitQuality } from "../lib/reits.mjs";
 import { insurerQuality } from "../lib/insurers.mjs";
@@ -121,7 +121,8 @@ let moat = fk === "reit" ? reitQuality(company)
   : fk === "fee" ? feeQuality(company, financialSubtype(company))
   : fk === "bank" ? financialQuality(company)
   : null;
-if (!isFin && roicSeries.length >= 3 && roicMed != null) {
+const debtOk = debtReliable(company.lines || {}) && debtReliable(company.ttm?.lines || {});
+if (!isFin && debtOk && roicSeries.length >= 3 && roicMed != null) {
   const n = roicSeries.length;
   const band = roicMed >= 0.2 ? "high" : roicMed >= 0.13 ? "mid" : roicMed >= 0.07 ? "low" : "poor";
   const figs = `median ${pc(roicMed)}, above 15% in ${roicAbove} of ${n} years`;

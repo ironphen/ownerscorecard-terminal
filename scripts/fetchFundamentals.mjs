@@ -76,7 +76,7 @@ const CONCEPTS = {
   operatingIncome: ["OperatingIncomeLoss"],
   costsAndExpenses: ["CostsAndExpenses"], // total operating costs incl COGS; revenue − this = operating income
   interestExpense: ["InterestExpense", "InterestExpenseNonoperating", "InterestAndDebtExpense"],
-  revenue: ["RevenueFromContractWithCustomerExcludingAssessedTax", "Revenues", "RevenueFromContractWithCustomerIncludingAssessedTax"],
+  revenue: ["RevenueFromContractWithCustomerExcludingAssessedTax", "Revenues", "RevenueFromContractWithCustomerIncludingAssessedTax", "OilAndGasRevenue", "RevenueMineralSales"],
   netIncome: ["NetIncomeLoss", "NetIncomeLossAvailableToCommonStockholdersBasic", "ProfitLoss"],
   cashFromOps: ["NetCashProvidedByUsedInOperatingActivities"],
   depreciation: ["DepreciationDepletionAndAmortization", "DepreciationAmortizationAndAccretionNet", "DepreciationAndAmortization"],

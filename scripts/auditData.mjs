@@ -17,7 +17,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
-import { topLineRevenue, roicValue, fmtUSD } from "../src/lib/fundamentals.mjs";
+import { topLineRevenue, roicValue, fmtUSD, debtReliable } from "../src/lib/fundamentals.mjs";
 import { classify, financialProfile } from "../src/lib/archetype.mjs";
 import { returnOnEquity } from "../src/lib/financials.mjs";
 import { combinedRatio } from "../src/lib/insurers.mjs";
@@ -88,17 +88,16 @@ for (const c of companies) {
     WARN("mlr-untagged", t, "premiums under-tagged, so the medical loss ratio is suppressed");
   }
 
-  // Debt and its interest should be consistent, but only where borrowed debt is the
-  // funding. A bank pays most of its interest on deposits, which are not "debt," so the
-  // ratio is meaningless there; we check industrials and REITs. An implied rate far above
-  // market means the debt is under-captured (the Domino's case: $196M interest on a
-  // tagged $15M of debt; Ford's $150B of Ford Credit borrowings tagged as $471M).
+  // Debt under-capture, only where borrowed debt is the funding (a bank's interest is on
+  // deposits, not debt). debtReliable mirrors the pages: when it is false they already
+  // show leverage as unknown, so this just tracks the names that need a fundamentals fix
+  // (Ford reports its ~$150B only under segment dimensions the companyfacts API strips).
   const debtRelevant = kind == null || kind === "reit";
-  const ie = L.interestExpense, td = L.totalDebt;
-  if (debtRelevant && ie != null && ie > 25e6 && (td == null || td <= 0)) {
-    WARN("debt-missing", t, `pays ${fmtUSD(ie)} of interest but no debt is tagged`);
-  } else if (debtRelevant && ie != null && td != null && td > 0 && ie / td > 0.3) {
-    WARN("debt-implied-rate", t, `${fmtUSD(ie)} interest on ${fmtUSD(td)} debt implies a ${(100 * ie / td).toFixed(0)}% rate, debt is likely under-captured`);
+  if (debtRelevant && !debtReliable(L)) {
+    const ie = L.interestExpense, td = L.totalDebt;
+    WARN("debt-under-captured", t, td == null || td <= 0
+      ? `pays ${fmtUSD(ie)} of interest but no debt is tagged; leverage shown as unknown`
+      : `${fmtUSD(ie)} interest on ${fmtUSD(td)} debt implies a ${(100 * ie / td).toFixed(0)}% rate; leverage shown as unknown`);
   }
 
   // Segments: the gate should never let an aggregate subtotal lead the shown breakdown,
