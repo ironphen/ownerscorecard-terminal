@@ -267,6 +267,45 @@ function overlays(company, s) {
   return out;
 }
 
+// ---- AI exposure: structural contestability of the moat by artificial intelligence ----
+// Does cheap, capable AI contest the moat (software, information, advertising, the services
+// whose product AI can now produce) or barely touch it (regulated networks, physical assets,
+// deposit and float franchises, or hardware that AI is a tailwind for)? A lens on the
+// industry from its SIC code, never a verdict on the company; the filing's own words refine it.
+export function aiExposure(company) {
+  const sic = Number(company?.sic) || 0;
+  const inR = (a, b) => sic >= a && sic <= b;
+  // Elevated: AI lowers the cost of producing the very thing the business sells.
+  if (
+    inR(7370, 7379) || sic === 7389 ||  // software, data processing, IT & business services
+    inR(2700, 2799) ||                  // publishing and content
+    inR(7310, 7319) ||                  // advertising
+    inR(8740, 8749) ||                  // management and PR consulting
+    inR(7360, 7369)                     // staffing / help supply (labor automation)
+  ) return {
+    tier: "elevated", label: "AI-contestable",
+    reason: "the product is software or information, the very thing capable AI now produces more cheaply, so the moat is more contestable than the record alone implies",
+  };
+  // Low: a physical, regulated, deposit/float-funded moat AI streamlines costs within but
+  // does not contest, or hardware AI is a tailwind for.
+  if (
+    inR(1000, 1799) ||                  // mining, extraction, construction
+    inR(2000, 2199) ||                  // food and beverage
+    inR(2800, 2999) ||                  // chemicals, pharma, refining
+    inR(3300, 3999) ||                  // metals, machinery, hardware, semis, aerospace, defense
+    inR(4000, 4999) ||                  // transport, rail, pipelines, utilities
+    inR(6000, 6799)                     // banks, insurers, real estate, REITs
+  ) return {
+    tier: "low", label: null,
+    reason: "the moat is physical, regulated or balance-sheet-funded, the kind AI cuts costs within but does not contest",
+  };
+  // Moderate: AI reshapes costs and some products without clearly contesting or sparing the moat.
+  return {
+    tier: "moderate", label: null,
+    reason: "AI is likely to reshape costs and some products here without clearly contesting or sparing the core moat; how the company itself frames it is the tell",
+  };
+}
+
 // ---- shape + the public API ----
 
 function shapeOf(company) {

@@ -400,6 +400,37 @@ function diff(curSents, priorSents) {
   return { notableCount: notable.length, notable };
 }
 
+// ---- AI / "too-hard pile" signal ----
+// Classic NLP, no model. Two questions, answered from the filing's own words: does the
+// company name artificial intelligence as a competitive risk in its Item 1A (and is that
+// language new this year), and does it position AI as a capability in the Business/MD&A?
+// The verbatim is the evidence; the page pairs it with the structural AI-exposure of the
+// industry to ask whether a once-durable moat is becoming contestable. Never a verdict.
+const AI_WORDS = /\b(artificial intelligence|machine learning|generative a\.?i\.?|large language models?|\bllms?\b|deep learning|neural networks?|foundation models?|generative models?)\b/i;
+const AI_ACRONYM = /\bA\.?I\.?\b/; // the acronym, case-sensitive, so "again"/"said" don't match
+const hasAI = (s) => AI_WORDS.test(s) || AI_ACRONYM.test(s);
+const AI_THREAT = /\b(compet|disrupt|substitut|replac|obsolet|displac|erod|disintermediat|threaten|adversely|rapidly (chang|evolv)|emerging|new entrant|lower\w* (the )?(cost|barrier))/i;
+
+function aiSignal(cur, prior) {
+  const risk = cur?.risk?.sents || [];
+  const opp = (cur?.business?.sents || []).concat(cur?.mdna?.sents || []);
+  const riskHits = risk.filter(hasAI);
+  const priorTok = (prior?.risk?.sents || []).map(tokenize);
+  const isNew = (s) => { const t = tokenize(s); if (t.size < 6) return false; for (const pt of priorTok) if (jaccard(t, pt) >= 0.55) return false; return true; };
+  const pointed = riskHits.find((s) => AI_THREAT.test(s)) || riskHits[0] || null;
+  const newHit = prior ? riskHits.find((s) => isNew(s)) : null;
+  const capHits = opp.filter(hasAI);
+  return {
+    inRisk: riskHits.length > 0,
+    riskMentions: riskHits.length,
+    riskQuote: pointed ? cleanQuote(pointed).slice(0, 320) : null,
+    newThisYear: !!newHit,
+    newQuote: newHit ? cleanQuote(newHit).slice(0, 320) : null,
+    asCapability: capHits.length > 0,
+    capabilityQuote: capHits.length ? cleanQuote(capHits[0]).slice(0, 280) : null,
+  };
+}
+
 // ---- "What an owner would flag" ----
 // The timeless read, not the year-over-year diff: the handful of sentences in the
 // Business, MD&A and Risk Factors that Graham (solvency, stability) and Buffett
@@ -583,6 +614,7 @@ async function main() {
       risk: { words: cur.risk.words, wordsPrior: prior?.risk.words ?? null },
       mdnaChange: mdnaDiff,
       riskChange: riskDiff,
+      aiRead: aiSignal(cur, prior),
       comp,
     };
     ok++;
