@@ -78,6 +78,22 @@ const cases = [
     ["Huntington Ingalls is a global, all-domain defense partner, building and delivering the world's most powerful, survivable naval ships and technologies that defend freedom.",
      "Ingalls includes our non-nuclear ship design, construction, repair, and maintenance businesses."],
     /^Huntington Ingalls is a global, all-domain defense partner/i],
+  // A stock-listing / history line must lose to a real description.
+  ["ROL", "Rollins, Inc.",
+    ["In 1968, Rollins began trading on the New York Stock Exchange under the symbol \"ROL.\" Since then, we have grown to provide essential services.",
+     "We are a premier global consumer and commercial services company that provides pest and wildlife control services."],
+    /^We are a premier global consumer and commercial services company/i],
+  // A forward-looking risk fragment must lose to the holding-company description that
+  // sits deeper in the section behind the forward-looking preamble.
+  ["USB", "U.S. Bancorp",
+    ["Bancorp's loan portfolios or in the value of the collateral securing those loans; Changes in commercial real estate occupancy.",
+     "U.S. Bancorp is a financial services holding company headquartered in Minneapolis, Minnesota, serving millions of customers."],
+    /^(U\.S\. )?Bancorp is a financial services holding company/i],
+  // A long opener whose "is one of the largest" payload follows a subsidiary/parenthetical
+  // preamble must be kept (length) and cleaned (alias strip), not dropped.
+  ["EOG", "EOG Resources, Inc.",
+    ["EOG Resources, Inc., a Delaware corporation organized in 1985, together with its subsidiaries, is one of the largest independent crude oil and natural gas companies in the United States with proved reserves in the United States and Trinidad."],
+    /^EOG Resources, Inc\. is one of the largest independent crude oil and natural gas companies/i],
 ];
 
 let pass = 0, fail = 0;
