@@ -183,7 +183,7 @@ const BIZ_ENGAGED = /\b(engaged?|engages?)\s+(primarily\s+)?in\b|\b(principal|pr
 // them, so the canonical "<Company> is a <type> ..." form and richer, company-named
 // sentences win, with earliness as the tiebreaker (the opener is usually the intended
 // overview). Verbatim, lightly cleaned; null when nothing clean is found.
-function businessDescription(sents, name) {
+function businessDescription(sents, name, ticker) {
   if (!Array.isArray(sents)) return null;
   // Distinctive words from the company's name, for a robust subject match: handles
   // "Exxon Mobil" appearing as "ExxonMobil" in the filing, which a word-boundary on the
@@ -228,6 +228,15 @@ function businessDescription(sents, name) {
   }
   if (!cands.length) return null;
   cands.sort((a, b) => b.score - a.score);
+  // Diagnostic: BIZ_DEBUG=CAVA dumps the scored candidates and the raw opening sentences,
+  // so a hero that picked the wrong line (or found no canonical "<Company> is a <type>")
+  // can be diagnosed from the actual filing rather than guessed at.
+  if (ticker && process.env.BIZ_DEBUG && process.env.BIZ_DEBUG.toUpperCase().split(",").map((s) => s.trim()).includes(ticker.toUpperCase())) {
+    console.log(`\n=== BIZ_DEBUG ${ticker}: ${cands.length} candidates ===`);
+    cands.slice(0, 8).forEach((c) => console.log(`  [${c.score.toFixed(1)}] ${c.s.slice(0, 110)}`));
+    console.log(`  raw opening: ${sents.slice(0, 6).map((s) => String(s).slice(0, 55)).join(" | ")}`);
+    console.log("=== end BIZ_DEBUG ===\n");
+  }
   const best = cands[0].s;
   return best.length > 300 ? best.slice(0, 297).replace(/[\s,;]+\S*$/, "") + "…" : best;
 }
@@ -494,7 +503,7 @@ async function main() {
       fy: cur.reportDate?.slice(0, 4) || null,
       priorFy: prior?.reportDate?.slice(0, 4) || null,
       sourceUrl: cur.url,
-      business: businessDescription(cur.business.sents, c.name),
+      business: businessDescription(cur.business.sents, c.name, c.ticker),
       ownerFlags: flags,
       mdna: {
         words: cur.mdna.words, fog: cur.mdna.fog, hedgeDensity: Math.round(cur.mdna.hedgeDensity * 1e4) / 1e4,
