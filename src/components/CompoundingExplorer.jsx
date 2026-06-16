@@ -62,10 +62,10 @@ export default function CompoundingExplorer() {
 
       <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", height: "auto" }} role="img"
         aria-label="Portfolio value versus amount contributed over time">
-        <path d={contribPath} fill="none" stroke="var(--faint)" strokeWidth="1.2" strokeDasharray="4 3" />
-        <path d={path} fill="none" stroke="var(--ink)" strokeWidth="1.8" />
-        <text x={L} y={H - 6} fontSize="11" fill="var(--muted)">today</text>
-        <text x={W - R} y={H - 6} fontSize="11" fill="var(--muted)" textAnchor="end">{years} years</text>
+        <path d={contribPath} fill="none" style={{ stroke: "var(--faint)" }} strokeWidth="1.2" strokeDasharray="4 3" />
+        <path d={path} fill="none" style={{ stroke: "var(--ink)" }} strokeWidth="1.8" />
+        <text x={L} y={H - 6} fontSize="11" style={{ fill: "var(--muted)" }}>today</text>
+        <text x={W - R} y={H - 6} fontSize="11" style={{ fill: "var(--muted)" }} textAnchor="end">{years} years</text>
       </svg>
 
       <p style={{ fontSize: 14, margin: "8px 0 0" }}>
