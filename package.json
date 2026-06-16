@@ -12,7 +12,8 @@
     "fetch:filings": "node scripts/fetchFilings.mjs",
     "fetch:wire": "node scripts/fetchWire.mjs",
     "fetch:segments": "node scripts/fetchSegments.mjs",
-    "audit": "node scripts/auditData.mjs"
+    "audit": "node scripts/auditData.mjs",
+    "test": "node scripts/heroTest.mjs"
   },
   "dependencies": {
     "@astrojs/mdx": "^6.0.3",
