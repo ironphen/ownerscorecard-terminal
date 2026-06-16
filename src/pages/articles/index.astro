@@ -42,21 +42,21 @@ const fmtDate = (d) =>
     .hero h1 { margin: 0 0 10px; }
 
     .list { list-style: none; padding-left: 0; margin: 0; }
-    li { padding: 14px 0; border-bottom: 1px solid #f0f0f0; }
+    li { padding: 14px 0; border-bottom: 1px solid var(--rule); }
 
     .top { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; flex-wrap: wrap; }
     .title { font-weight: 700; font-size: 18px; }
-    .meta { color: #666; font-size: 13px; flex: 0 0 auto; }
+    .meta { color: var(--muted); font-size: 13px; flex: 0 0 auto; }
     .section {
-      border: 1px solid #ccc;
+      border: 1px solid var(--rule);
       padding: 1px 6px;
       margin-right: 8px;
       font-size: 11px;
       letter-spacing: 0.4px;
       text-transform: uppercase;
     }
-    .draft { color: #8b1a1a; margin-right: 8px; font-size: 11px; text-transform: uppercase; }
-    .desc { margin: 6px 0 0; color: #333; }
-    .empty { color: #555; }
+    .draft { color: var(--bad); margin-right: 8px; font-size: 11px; text-transform: uppercase; }
+    .desc { margin: 6px 0 0; color: var(--ink-soft); }
+    .empty { color: var(--ink-dim); }
   </style>
 </BaseLayout>

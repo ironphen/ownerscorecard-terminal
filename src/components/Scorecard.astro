@@ -89,13 +89,13 @@ const report = isFin ? null : moatReport(company);
 </section>
 
 <style>
-  .scorecard { border: 1px solid var(--rule-strong); padding: 20px 22px; margin: 20px 0; background: #fff; }
+  .scorecard { border: 1px solid var(--rule-strong); padding: 20px 22px; margin: 20px 0; background: var(--surface); }
   .head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
   .head h2 { margin: 0; }
   .src { font-size: 12px; color: var(--muted); }
   .src a { color: var(--accent); }
 
-  .sample { background: #fff7e6; border: 1px solid #e0c98a; padding: 6px 10px; font-size: 12px; color: #7a5b00; margin-top: 12px; }
+  .sample { background: var(--warn-bg); border: 1px solid var(--warn-border); padding: 6px 10px; font-size: 12px; color: var(--warn-ink); margin-top: 12px; }
 
   .section { margin-top: 18px; }
   .secHead {
@@ -114,7 +114,7 @@ const report = isFin ? null : moatReport(company);
 
   .label { font-weight: 600; font-size: 13px; margin-top: 2px; }
   .formula { font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; margin-top: 4px; }
-  .note { font-size: 13.5px; color: #3a3e46; margin: 6px 0 0; line-height: 1.5; }
+  .note { font-size: 13.5px; color: var(--ink-dim); margin: 6px 0 0; line-height: 1.5; }
 
   .durNote { font-family: var(--serif); font-style: italic; font-size: 13.5px; color: var(--muted); margin: 9px 0 6px; }
   .report { list-style: none; padding: 0; margin: 0; }
@@ -122,7 +122,7 @@ const report = isFin ? null : moatReport(company);
   .factRow { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
   .factLabel { font-weight: 600; font-size: 15px; }
   .factValue { font-weight: 700; font-size: 17px; font-variant-numeric: tabular-nums; flex: 0 0 auto; text-align: right; }
-  .factNote { font-size: 13px; color: #3a3e46; margin: 4px 0 0; line-height: 1.5; }
+  .factNote { font-size: 13px; color: var(--ink-dim); margin: 4px 0 0; line-height: 1.5; }
 
   .foot { font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--muted); border-top: 1px solid var(--rule-strong); margin-top: 16px; padding-top: 11px; }
 </style>

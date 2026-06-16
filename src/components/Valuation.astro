@@ -231,14 +231,14 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
   .head h2 { margin: 0; }
   .tag { font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); flex: 0 0 auto; }
 
-  .note { font-family: var(--serif); font-style: italic; font-size: 14px; color: #3a3e46; margin: 12px 0 0; line-height: 1.5; max-width: 66ch; }
+  .note { font-family: var(--serif); font-style: italic; font-size: 14px; color: var(--ink-dim); margin: 12px 0 0; line-height: 1.5; max-width: 66ch; }
   .intro { font-family: var(--serif); font-style: italic; font-size: 14px; color: var(--muted); margin: 12px 0 0; line-height: 1.55; max-width: 68ch; }
   .intro b { font-style: normal; color: var(--ink); }
 
   .priceRow { display: flex; align-items: center; gap: 8px; margin: 16px 0 0; }
   .priceRow label { font-size: 13px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
   .priceRow .dollar { font-size: 20px; font-weight: 700; color: var(--ink); }
-  .priceRow input { width: 140px; padding: 8px 10px; border: 1px solid var(--rule-strong); font-family: var(--sans); font-size: 18px; font-variant-numeric: tabular-nums; background: #fff; }
+  .priceRow input { width: 140px; padding: 8px 10px; border: 1px solid var(--rule-strong); font-family: var(--sans); font-size: 18px; font-variant-numeric: tabular-nums; background: var(--surface); }
 
   .lede { font-family: var(--serif); font-size: clamp(16px, 2.3vw, 18.5px); line-height: 1.5; margin: 14px 0 0; max-width: 66ch; min-height: 1.5em; }
   .lede b { font-weight: 600; }
@@ -253,7 +253,7 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
 
   .dials { margin: 16px 0 0; }
   .dialsLbl { font-size: 11.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
-  .dials label { display: flex; align-items: center; gap: 10px; margin: 9px 0 0; font-size: 13.5px; color: #3a3e46; }
+  .dials label { display: flex; align-items: center; gap: 10px; margin: 9px 0 0; font-size: 13.5px; color: var(--ink-dim); }
   .dials output { font-weight: 700; font-variant-numeric: tabular-nums; min-width: 44px; color: var(--ink); }
   .dials input[type="range"] { flex: 1 1 auto; max-width: 320px; accent-color: var(--accent); }
   .dialsNote { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); margin: 10px 0 0; line-height: 1.5; max-width: 70ch; }

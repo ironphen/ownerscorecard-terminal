@@ -211,7 +211,7 @@ const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "
     .cards li { border-left: 2px solid var(--rule); padding: 2px 0 2px 14px; }
     .cardTitle { font-family: var(--serif); font-weight: 600; font-size: 17px; line-height: 1.25; display: block; color: var(--ink); }
     .cardTitle:hover { color: var(--accent); }
-    .dek { font-size: 13.5px; color: #41454d; margin: 6px 0 8px; line-height: 1.45; }
+    .dek { font-size: 13.5px; color: var(--ink-dim); margin: 6px 0 8px; line-height: 1.45; }
     .cardMeta { font-size: 11.5px; color: var(--muted); letter-spacing: 0.02em; }
     .cardMeta .sec { text-transform: uppercase; letter-spacing: 0.06em; border: 1px solid var(--rule); padding: 1px 5px; margin-right: 6px; font-size: 10px; }
 
@@ -219,21 +219,21 @@ const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "
     .method { font-family: var(--serif); font-style: italic; font-size: 13.5px; color: var(--muted); margin: 9px 0 0; max-width: 66ch; }
 
     .controls { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin: 14px 0 0; position: sticky; top: 0; z-index: 5; background: var(--paper); padding: 8px 0; }
-    .search { flex: 1 1 220px; min-width: 180px; padding: 9px 11px; border: 1px solid var(--rule-strong); font-family: var(--sans); font-size: 14px; background: #fff; }
+    .search { flex: 1 1 220px; min-width: 180px; padding: 9px 11px; border: 1px solid var(--rule-strong); font-family: var(--sans); font-size: 14px; background: var(--surface); }
     .search::placeholder { color: var(--faint); }
     .filters { display: flex; gap: 6px; flex-wrap: wrap; }
-    .chip { font-family: var(--sans); font-size: 11.5px; letter-spacing: 0.03em; padding: 6px 10px; border: 1px solid var(--rule-strong); background: #fff; color: var(--ink); cursor: pointer; text-transform: uppercase; }
+    .chip { font-family: var(--sans); font-size: 11.5px; letter-spacing: 0.03em; padding: 6px 10px; border: 1px solid var(--rule-strong); background: var(--surface); color: var(--ink); cursor: pointer; text-transform: uppercase; }
     .chip:hover { background: var(--accent-tint); }
-    .chip.active { background: var(--ink); color: #fff; border-color: var(--ink); }
+    .chip.active { background: var(--solid); color: var(--solid-ink); border-color: var(--solid); }
 
     /* The owner's lenses: a distinct dimension from the model chips, so a different shape
        and the accent colour. Each teaches a value principle as you apply it. */
     .lenses { display: flex; gap: 6px 8px; align-items: baseline; flex-wrap: wrap; margin: 11px 0 0; }
     .lensLbl { font-family: var(--sans); font-size: 10.5px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); margin-right: 2px; }
-    .lens { font-family: var(--sans); font-size: 11.5px; letter-spacing: 0.02em; padding: 5px 12px; border: 1px solid var(--accent); background: #fff; color: var(--accent); cursor: pointer; border-radius: 999px; }
+    .lens { font-family: var(--sans); font-size: 11.5px; letter-spacing: 0.02em; padding: 5px 12px; border: 1px solid var(--accent); background: var(--surface); color: var(--accent); cursor: pointer; border-radius: 999px; }
     .lens:hover { background: var(--accent-tint); }
-    .lens.active { background: var(--accent); color: #fff; }
-    .lensTeach { font-family: var(--serif); font-size: 13.5px; line-height: 1.55; color: #2c2f36; background: var(--accent-tint); border-left: 2px solid var(--accent); padding: 10px 14px; margin: 11px 0 0; max-width: 80ch; }
+    .lens.active { background: var(--accent); color: var(--accent-ink); }
+    .lensTeach { font-family: var(--serif); font-size: 13.5px; line-height: 1.55; color: var(--ink-soft); background: var(--accent-tint); border-left: 2px solid var(--accent); padding: 10px 14px; margin: 11px 0 0; max-width: 80ch; }
 
     .scroll { overflow-x: auto; margin-top: 6px; }
     .catalog td.empty { text-align: center; font-family: var(--serif); font-style: italic; color: var(--muted); padding: 26px 12px; }
@@ -252,12 +252,12 @@ const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "
     .tkr { font-weight: 700; font-variant-numeric: tabular-nums; }
     .tkr:hover { color: var(--accent); }
     .nm { display: block; font-size: 11.5px; color: var(--muted); max-width: 26ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 1px; }
-    .tag { display: inline-block; font-size: 10.5px; letter-spacing: 0.02em; color: #565961; background: #f0efe9; border-radius: 3px; padding: 2px 8px; white-space: nowrap; }
-    .num { color: #2c2f36; }
+    .tag { display: inline-block; font-size: 10.5px; letter-spacing: 0.02em; color: var(--tag-ink); background: var(--tag-bg); border-radius: 3px; padding: 2px 8px; white-space: nowrap; }
+    .num { color: var(--ink-soft); }
     .gra { color: var(--muted); }
     .nd.pos { color: var(--good); }
-    tbody tr:hover td { background: #faf9f6; }
-    tbody tr:hover .c-name { background: #faf9f6; }
+    tbody tr:hover td { background: var(--surface-2); }
+    tbody tr:hover .c-name { background: var(--surface-2); }
 
     .legend { font-size: 11.5px; color: var(--faint); margin: 10px 0 0; line-height: 1.5; }
     .nojs { font-size: 12.5px; color: var(--warn); margin: 8px 0 0; }
