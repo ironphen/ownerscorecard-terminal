@@ -184,7 +184,13 @@ const days = (a, b) => Math.abs((new Date(b) - new Date(a)) / 86400000);
 // supplemented, not frozen). Within a tag, the latest filing wins, picking up
 // restatements and split adjustments. Keyed by PERIOD-end year, not filing fy.
 
-function annualByYear(facts, tags, unit = "USD") {
+// pickMax=true takes the largest value per year across the tags instead of the first
+// present. Used for REIT revenue, where rent may be the whole top line for one trust
+// (tagged under a lease concept) and only a slice for another that books the complete
+// total under "Revenues"; the largest is the real top line in both. Rent carries no
+// excise tax, so the size comparison is safe here in a way it would not be for a
+// product company whose gross "Revenues" includes excise.
+function annualByYear(facts, tags, unit = "USD", pickMax = false) {
   const out = {};
   for (const tag of tags) {
     const units = facts?.facts?.["us-gaap"]?.[tag]?.units?.[unit];
@@ -198,7 +204,7 @@ function annualByYear(facts, tags, unit = "USD") {
       if (!perTag[fy] || (u.filed || "") > (perTag[fy].filed || ""))
         perTag[fy] = { val: u.val, end: u.end, filed: u.filed || "", accn: u.accn, form: u.form };
     }
-    for (const fy in perTag) if (!(fy in out)) out[fy] = perTag[fy];
+    for (const fy in perTag) if (!(fy in out) || (pickMax && perTag[fy].val > out[fy].val)) out[fy] = perTag[fy];
   }
   return out;
 }
@@ -332,12 +338,17 @@ async function main() {
       ? name
       : (prettifyName(facts?.entityName) || name);
 
-    // REITs read their top line off lease and real-estate tags first (see REIT_REVENUE).
+    // A REIT's top line is rental income; we take the largest of the lease, real-estate
+    // and total-revenue tags (see REIT_REVENUE), which captures both the trust whose rent
+    // is the whole top line and the one that books a combined total under "Revenues".
     const sicN = Number(sic) || 0;
-    const revTags = sicN >= 6500 && sicN <= 6799 ? REIT_REVENUE : CONCEPTS.revenue;
+    const isReitCo = sicN >= 6500 && sicN <= 6799;
+    const revTags = isReitCo ? REIT_REVENUE : CONCEPTS.revenue;
+    const revAnnualBy = annualByYear(facts, revTags, "USD", isReitCo);
+    const revLatest = latestEntry(revAnnualBy)?.val ?? null;
 
     const oi = pickAnnual(facts, CONCEPTS.operatingIncome);
-    const anchor = oi || pickAnnual(facts, revTags); // for fy / period / filing link
+    const anchor = oi || latestEntry(revAnnualBy); // for fy / period / filing link
     const maxOf = (...vals) => { const xs = vals.filter((v) => v != null); return xs.length ? Math.max(...xs) : null; };
     // Total debt: long-term + current from the component tags, taken against the max of
     // every aggregate total-debt tag. We take the MAX across the tags (not a priority
@@ -386,6 +397,26 @@ async function main() {
 
     const pick = (tags) => pickAnnual(facts, tags)?.val ?? null;
     const inst = (tags) => pickInstant(facts, tags)?.val ?? null;
+
+    // Diagnostic: REVENUE_DEBUG=APA dumps every revenue-like us-gaap tag and its latest
+    // annual value, to find the concept a filer that reads no top line actually uses
+    // (Apache, some healthcare and warehouse REITs whose rent sits under an odd tag).
+    if (process.env.REVENUE_DEBUG && process.env.REVENUE_DEBUG.toUpperCase().split(",").map((s) => s.trim()).includes(ticker.toUpperCase())) {
+      const ug = facts?.facts?.["us-gaap"] || {};
+      console.log(`\n=== REVENUE_DEBUG ${ticker}: revenue=${pick(revTags)} (sic ${sic}) ===`);
+      for (const concept of Object.keys(ug)) {
+        if (!/revenue|sales|leaseincome|operatingleaselease|residentfee|interestandfee/i.test(concept)) continue;
+        const usd = ug[concept]?.units?.USD;
+        if (!usd) continue;
+        const byYear = {};
+        for (const o of usd) { if (o.form !== "10-K" || o.fp !== "FY" || o.fy == null) continue; if (!byYear[o.fy] || o.end > byYear[o.fy].end) byYear[o.fy] = o; }
+        const years = Object.keys(byYear).sort();
+        if (!years.length) continue;
+        const last = byYear[years[years.length - 1]];
+        console.log(`  ${concept.padEnd(58)} ${(last.val / 1e6).toFixed(0).padStart(10)}M  (FY${years[years.length - 1]})`);
+      }
+      console.log("=== end REVENUE_DEBUG ===\n");
+    }
     const accnNoDash = anchor?.accn ? anchor.accn.replace(/-/g, "") : null;
     const sourceUrl = accnNoDash
       ? `https://www.sec.gov/Archives/edgar/data/${Number(cik)}/${accnNoDash}/${anchor.accn}-index.htm`
@@ -393,7 +424,7 @@ async function main() {
 
     // Up to ~10 years of history for the durability strips.
     const ha = {
-      revenue: collectAnnual(facts, revTags),
+      revenue: valuesByYear(revAnnualBy),
       operatingIncome: collectAnnual(facts, CONCEPTS.operatingIncome),
       costsAndExpenses: collectAnnual(facts, CONCEPTS.costsAndExpenses),
       interestExpense: collectAnnual(facts, CONCEPTS.interestExpense),
@@ -534,9 +565,9 @@ async function main() {
       form: anchor?.form ?? "10-K",
       sourceUrl,
       lines: {
-        operatingIncome: deriveOpInc(oi?.val ?? null, pick(revTags), pick(CONCEPTS.costsAndExpenses), pick(CONCEPTS.netIncome), pick(CONCEPTS.incomeTaxExpense), pick(CONCEPTS.interestExpense)),
+        operatingIncome: deriveOpInc(oi?.val ?? null, revLatest, pick(CONCEPTS.costsAndExpenses), pick(CONCEPTS.netIncome), pick(CONCEPTS.incomeTaxExpense), pick(CONCEPTS.interestExpense)),
         interestExpense: pick(CONCEPTS.interestExpense),
-        revenue: pick(revTags),
+        revenue: revLatest,
         netIncome: pick(CONCEPTS.netIncome),
         totalDebt,
         cashFromOps: pick(CONCEPTS.cashFromOps),
