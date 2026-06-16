@@ -99,14 +99,32 @@ const items = flags.map((f) => {
   const fig = bearing(f.lens);
   return { ...f, fig, sp: fig?.series ? spark(fig.series) : null };
 });
+
+// What's new — the year-over-year language shift, folded in from the same filing so the
+// emphasis above carries its change beside it (rather than floating in a separate section
+// with no context). The stats are filing-wide; the lines are what appeared this year.
+const lenΔ = L && L.mdna && L.mdna.wordsPrior ? (L.mdna.words - L.mdna.wordsPrior) / L.mdna.wordsPrior : null;
+const fogΔ = L && L.mdna && L.mdna.fogPrior != null ? L.mdna.fog - L.mdna.fogPrior : null;
+const hedgeΔ = L && L.mdna && L.mdna.hedgePrior != null ? L.mdna.hedgeDensity - L.mdna.hedgePrior : null;
+const newLines = L ? [...(L.mdnaChange?.notable || []), ...(L.riskChange?.notable || [])].slice(0, 5) : [];
+const hasStats = lenΔ != null || fogΔ != null || hedgeΔ != null;
+const pctΔ = (v) => (v == null ? null : `${v >= 0 ? "+" : "−"}${Math.abs(v * 100).toFixed(0)}%`);
 ---
 
-{items.length ? (
+{(items.length || newLines.length || hasStats) ? (
   <section class="oread">
     <div class="head">
-      <h2>What the filing emphasizes{L.fy ? `, FY${L.fy}` : ""}</h2>
+      <h2>What the filing emphasizes{items.length && (newLines.length || hasStats) ? ", and what's new" : ""}{L.fy ? `, FY${L.fy}` : ""}</h2>
       {L.sourceUrl ? <a class="src" href={L.sourceUrl} target="_blank" rel="noopener">read the 10-K →</a> : null}
     </div>
+    {hasStats ? (
+      <div class="pulse">
+        {lenΔ != null ? <span class="stat">MD&amp;A length <b class={lenΔ > 0.1 ? "warn" : ""}>{pctΔ(lenΔ)}</b></span> : null}
+        {fogΔ != null ? <span class="stat">Readability <b class={fogΔ > 0.5 ? "warn" : ""}>{fogΔ >= 0 ? "harder" : "easier"}</b></span> : null}
+        {hedgeΔ != null ? <span class="stat">Hedging <b class={hedgeΔ > 0 ? "warn" : ""}>{hedgeΔ >= 0 ? "up" : "down"}</b></span> : null}
+      </div>
+    ) : null}
+    {items.length ? (<>
     <p class="intro">
       Each year a 10-K must name what could go wrong, in the company's own words. Here are the ones
       Graham and Buffett would stop on, each set against the figure from the same filings that bears on
@@ -140,6 +158,15 @@ const items = flags.map((f) => {
         </li>
       ))}
     </ul>
+    </>) : null}
+    {newLines.length ? (
+      <div class="whatsnew">
+        <h3 class="nhead">New language this year{L.priorFy ? `, vs FY${L.priorFy}` : ""}</h3>
+        <p class="nintro">Most of a 10-K is boilerplate carried over verbatim; the signal is in what's <em>new</em>. These lines appear this year and weren't there last, figure updates filtered out.</p>
+        <ul class="quotes">{newLines.map((q) => <li>“{q}{q.length >= 300 ? "…" : ""}”</li>)}</ul>
+      </div>
+    ) : null}
+    <p class="foot">Classic text analysis of the filing itself, no model wrote a word, and every quote is the company's own.</p>
   </section>
 ) : null}
 
@@ -169,4 +196,15 @@ const items = flags.map((f) => {
   .wspark .zero { stroke: var(--faint); stroke-width: 0.75; stroke-dasharray: 2 2; vector-effect: non-scaling-stroke; }
   .weld .fv { font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--ink); margin-left: auto; text-align: right; }
   .weld.judgment { font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--muted); display: block; }
+
+  .pulse { display: flex; flex-wrap: wrap; gap: 8px 22px; margin: 10px 0 0; font-size: 13px; color: var(--muted); }
+  .pulse .stat b { color: var(--ink); font-variant-numeric: tabular-nums; }
+  .pulse .stat b.warn { color: var(--warn); }
+
+  .whatsnew { margin: 16px 0 0; padding-top: 14px; border-top: 1px solid var(--rule); }
+  .nhead { font-family: var(--sans); font-weight: 700; font-size: 12px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--ink); margin: 0; }
+  .nintro { font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--muted); margin: 6px 0 0; max-width: 68ch; }
+  .quotes { list-style: none; padding: 0; margin: 10px 0 0; }
+  .quotes li { font-family: var(--serif); font-size: 14px; line-height: 1.5; color: var(--ink-soft); border-left: 2px solid var(--rule-strong); padding: 3px 0 3px 14px; margin: 9px 0; }
+  .foot { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--rule-strong); margin-top: 16px; padding-top: 10px; }
 </style>

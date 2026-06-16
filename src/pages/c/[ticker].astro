@@ -12,7 +12,6 @@ import Capital from "../../components/Capital.astro";
 import Comp from "../../components/Comp.astro";
 import Graham from "../../components/Graham.astro";
 import Valuation from "../../components/Valuation.astro";
-import Language from "../../components/Language.astro";
 import language from "../../data/language.json";
 import { classify } from "../../lib/archetype.mjs";
 import { businessPhrase, weakLede } from "../../lib/business.mjs";
@@ -114,7 +113,6 @@ const fmtDate = (d) =>
   {fund ? (
     <div id="sec-changes" class="sec">
       <OwnersRead company={fund} />
-      <Language company={fund} />
     </div>
   ) : null}
   {fund ? <div id="sec-peers" class="sec"><Peers company={fund} /></div> : null}
