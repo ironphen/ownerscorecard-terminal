@@ -161,7 +161,7 @@ function metrics(text) {
 // risk line or a heading as the description. Their words; our numbers elsewhere for
 // what they mean. Returns null when nothing clean is found, and the page falls back.
 const BIZ_DOING = /\b(designs?|manufactures?|manufacturing|develops?|markets?|provides?|providing|operates?|sells?|selling|distributes?|produces?|producing|delivers?|offers?|offering|supplies|supplying)\b/i;
-const BIZ_ISA = /\b(is|are)\s+(a|an|the)\b[^.]{0,60}?\b(compan|provider|manufacturer|producer|retailer|developer|operator|maker|supplier|distributor|platform|business|leader|corporation|holding|bank|insurer|airline|carrier|restaurant|brand|chain|franchis|network|marketplace|trust|utility|pharmaceutical|biopharmaceutical|biotechnolog|technolog|healthcare|energy|refiner|exchange|processor|grocer|wholesaler|broker|dealer|lender|integrator|miner|reit)\w*/i;
+const BIZ_ISA = /\b(is|are)\s+(a|an|the|one of)\b[^.]{0,60}?\b(compan|provider|manufacturer|producer|retailer|developer|operator|maker|supplier|distributor|platform|business|leader|corporation|holding|bank|insurer|airline|carrier|restaurant|brand|chain|franchis|network|marketplace|trust|utility|pharmaceutical|biopharmaceutical|biotechnolog|technolog|healthcare|energy|refiner|exchange|processor|grocer|wholesaler|broker|dealer|lender|integrator|miner|reit|firm|enterprise|agency)\w*/i;
 const BIZ_SKIP = /(was|were)\s+incorporated|incorporated\s+(under|in)\b|reincorporat|organized under the laws|founded in\s+\d|fiscal year|forward-looking|securities (act|exchange) of|report on form|unless the context|initial public offering|principal executive offices|market for (the )?registrant|common equity|equity securities|stockholder matters|\bmay\b|could\s+(adversely|result|harm|cause|materially|impair)|no assurance|our ability to|unsubstantiated|misleading|negative publicity|table of contents|\bcould\b|\bif (we|our|the company|a |an |adverse)|decline in (consumer|demand|sales)|reasonable basis for (our|the) opinion|provide a reasonable basis|standards of the public company accounting/i;
 // A weak subject: the sentence is about employees, customers or a side note, not the
 // company itself, so it is not a description of the business.
@@ -193,34 +193,41 @@ function businessDescription(sents, name, ticker) {
     .filter((w) => w.length >= 3 && !["the", "inc", "incorporated", "corp", "corporation", "company", "companies", "ltd", "plc", "llc", "holding", "holdings", "group", "and"].includes(w));
   const cands = [];
   const slice = sents.slice(0, 25);
+  const startsWithSubject = (t) => /^(we|our|us|the (company|registrant|firm|group))\b/i.test(t) ||
+    nameWords.some((w) => t.toLowerCase().replace(/[^a-z0-9]/g, "").startsWith(w));
   for (let i = 0; i < slice.length; i++) {
     let s = cleanQuote(String(slice[i] || ""));
     let prev;
     do { prev = s; s = s.replace(HEAD_TOKEN, "").trim(); } while (s !== prev); // strip stacked headings
-    // Strip a hedging "We believe (that)" opener so the description underneath is scored on
-    // its own merit (Chewy's "We believe that we are the preeminent online source ...").
-    s = s.replace(/^we believe\s+(that\s+)?/i, "");
+    // Clean the sentence BEFORE judging it, so a long parenthetical, a hedge, or a preamble
+    // can't push the real description past the length cap or trip the skip checks. Order
+    // matters: strip the noise, re-anchor at the company's name when it hides behind a
+    // "Founded in 1904, Coty Inc. is ..." preamble, then restore a subject that an
+    // abbreviation period or a parenthetical split off and left as a bare "is a ...".
+    s = s.replace(/^we believe\s+(that\s+)?/i, "")
+         .replace(/\s*\([^)]*\)/g, "")
+         .replace(/,?\s+and its (wholly[- ]owned )?subsidiaries\b/i, "")
+         .replace(/\s{2,}/g, " ").trim();
+    if (name && !startsWithSubject(s)) {
+      let at = -1;
+      for (const w of nameWords) { const idx = s.toLowerCase().indexOf(w); if (idx > 0 && (at < 0 || idx < at)) at = idx; }
+      if (at > 0 && at < 130) s = s.slice(at).trim();
+    }
+    if (LEAD_VERB.test(s) && name) s = `${name.trim()} ${s}`; // restore a subject split off entirely
     if (/^[a-z]/.test(s)) s = s.charAt(0).toUpperCase() + s.slice(1);
-    if (s.length < 40 || s.length > 380) continue;
+    if (s.length < 40 || s.length > 520) continue;
     if (BIZ_SKIP.test(s) || BIZ_WEAK.test(s)) continue;
     const isa = BIZ_ISA.test(s);
     if (!BIZ_DOING.test(s) && !isa && !BIZ_ENGAGED.test(s)) continue;
-    const rich = BIZ_RICH.test(s);
-    s = s
-      .replace(/\s*\([^)]*\)/g, "")
-      .replace(/,?\s+and its (wholly[- ]owned )?subsidiaries\b/i, "")
-      .replace(/\s{2,}/g, " ")
-      .trim();
-    if (LEAD_VERB.test(s) && name) s = `${name.trim()} ${s}`; // restore the lost subject
     const head = s.split(/\s+/).slice(0, 6).join(" ");
     const headNorm = head.toLowerCase().replace(/[^a-z0-9]/g, "");
     const weSubject = /^(we|our|the (company|registrant|firm|group)|us)\b/i.test(s);
     const namedSubject = nameWords.some((w) => headNorm.includes(w));
-    if ((!weSubject && !namedSubject) || !/^[A-Z]/.test(s) || s.length < 40) continue;
+    if ((!weSubject && !namedSubject) || !/^[A-Z]/.test(s)) continue;
     let score = 0;
-    if (isa) score += 3;                       // the canonical "is a/an <type>" form
+    if (isa) score += 3;                        // the canonical "is a/an/one of <type>" form
     if (namedSubject && !weSubject) score += 2; // names the company, not a bare "we"
-    if (rich) score += 1;                       // products, markets, segments
+    if (BIZ_RICH.test(s)) score += 1;           // products, markets, segments
     if (BIZ_STRUCTURAL.test(s)) score -= 3;     // org chart, not a description
     score -= i * 0.6;                           // the opener is usually the intended one
     if (s.length < 70) score -= 1;              // too terse to describe a business
