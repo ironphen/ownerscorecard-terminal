@@ -23,7 +23,10 @@ const cyclical = overlays.some((o) => o.key === "cyclical");
 const median = (xs) => { const s = [...xs].sort((a, b) => a - b); return s.length ? s[Math.floor((s.length - 1) / 2)] : null; };
 
 const L = company.ttm?.lines || company.lines || {};
-const shares = L.sharesDiluted;
+// Share count gates every mode; if a TTM block carries no diluted-share figure, fall
+// back to the latest annual so a usable tool (especially the negative-earnings one) isn't
+// silently withheld over a single missing field.
+const shares = L.sharesDiluted ?? company.lines?.sharesDiluted ?? null;
 const cfo = L.cashFromOps, capex = L.capex;
 const ownerEarnings = cfo != null && capex != null ? cfo - Math.abs(capex) : null;
 const netDebt = (L.totalDebt || 0) - (liquidAssets(L) || 0);
@@ -100,6 +103,12 @@ if (revH.length >= 3) {
 const negMode = !runnable && !offModel && rev != null && rev > 0 && shares != null && shares > 0;
 const gRevPct = gRevRaw == null ? 15 : Math.max(0, Math.min(45, Math.round((gRevRaw * 100) / 5) * 5));
 const oeMarginNow = ownerEarnings != null && rev ? ownerEarnings / rev : null;
+// Negative owner earnings come in two very different kinds: a genuine loss, and a
+// profitable business whose capital spending currently outruns its operating cash (a
+// build-out, common to utilities, railroads, telecoms). The tool must not call the second
+// a "loss"; net income sets which framing is honest.
+const niNow = L.netIncome ?? company.lines?.netIncome ?? null;
+const profitableNeg = niNow != null && niNow > 0;
 
 const report = moatReport(company);
 const oeGrowth = report?.facts.find((f) => f.label === "Owner earnings growth")?.value ?? null;
@@ -176,8 +185,12 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
     )
   ) : !runnable ? (
     negMode ? (
-      <div id="valBoxNeg" data-rev={rev} data-shares={shares} data-name={name} data-oem={oeMarginNow ?? ""}>
-        <p class="intro">Owner earnings are <b>negative</b> today, so the usual reverse-DCF has nothing to grow. But that's exactly when a price makes its boldest promise. So we flip the question: type a price, and see the future profitability you'd have to believe to justify it.</p>
+      <div id="valBoxNeg" data-rev={rev} data-shares={shares} data-netdebt={netDebt} data-name={name} data-oem={oeMarginNow ?? ""} data-profitable={profitableNeg ? "1" : "0"}>
+        {profitableNeg ? (
+          <p class="intro">{name} is <b>profitable</b>, but owner earnings are <b>negative</b> this year because capital spending currently outruns operating cash, a build-out, so the owner-earnings reverse-DCF has no positive base to grow. We read the price from both ends instead: type a price to see the steady-state profitability it <b>demands</b>, then set the mature margin you would actually <b>believe</b> for a reference value to weigh it against. Nothing is stored.</p>
+        ) : (
+          <p class="intro">Owner earnings are <b>negative</b> today, so the usual reverse-DCF has nothing to grow. That is exactly when a price makes its boldest promise, so we read it from both ends: type a price to see the future profitability it <b>demands</b>, then set the mature margin you would actually <b>believe</b> to get a reference value to weigh that price against. Nothing is stored.</p>
+        )}
         <div class="priceRow">
           <label for="pxn">Today&rsquo;s price</label>
           <span class="dollar">$</span>
@@ -186,16 +199,22 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
         <p class="lede" id="ledeN">Enter a price to run it.</p>
         <div class="compare">
           <div class="cmp"><span class="cl">Owner earnings it must reach</span><span class="cv hot" id="reqOE">—</span></div>
-          <div class="cmp"><span class="cl">Implied margin, on grown revenue</span><span class="cv hot" id="reqM">—</span></div>
+          <div class="cmp"><span class="cl">Margin the price demands</span><span class="cv hot" id="reqM">—</span></div>
           <div class="cmp"><span class="cl">Owner-earnings margin today</span><span class="cv neg">{pctS(oeMarginNow)}</span></div>
+        </div>
+        <div class="compare ref">
+          <div class="cmp"><span class="cl">On the margin you would believe</span><span class="cv" id="refMN">—</span></div>
+          <div class="cmp"><span class="cl">Reference value / share</span><span class="cv hot" id="refVN">—</span></div>
+          <div class="cmp"><span class="cl">…less a 30% margin of safety</span><span class="cv" id="refMosN">—</span></div>
         </div>
         <div class="dials">
           <span class="dialsLbl">The assumptions, turn the dials</span>
           <label>Discount rate <output id="rOutN">9%</output><input id="rN" type="range" min="4" max="15" step="0.5" value="9" /></label>
           <label>Years to get there <output id="nOutN">10</output><input id="nN" type="range" min="5" max="15" step="1" value="10" /></label>
           <label>Revenue growth <output id="grOutN">{gRevPct}%</output><input id="grN" type="range" min="0" max="45" step="5" value={gRevPct} /></label>
+          <label>Mature owner-earnings margin <output id="mmOutN">15%</output><input id="mmN" type="range" min="3" max="40" step="1" value="15" /></label>
         </div>
-        <p class="foot">It flips the reverse-DCF: the company must reach owner earnings that, valued at a mature multiple and discounted back at your rate, equal today's market cap, shown as the margin it must earn on revenue grown at your rate, from negative today. For a deep cyclical at a trough, normalized through-cycle earnings are the better lens; this is for the genuinely unprofitable.</p>
+        <p class="foot">Two reads of one future. From your price: the owner earnings the company must reach, valued at a mature multiple and discounted back at your rate, expressed as the margin it implies on revenue grown at your rate. From your belief: the mature margin you would credit, turned into a reference value per share and netted against {netDebt >= 0 ? `net debt ${fmtUSD(netDebt)}` : `net cash ${fmtUSD(-netDebt)}`} — a yardstick, never a target. When the margin the price demands runs above the one you would believe, you are paying for a future taken on faith. For a deep cyclical at a trough, normalized through-cycle earnings are the better lens; this mode is for the genuinely unprofitable, and for the profitable business whose capital spending currently outruns its cash.</p>
       </div>
     ) : (
       <p class="note">A reverse-DCF needs positive owner earnings, or at least revenue, to anchor to, there's no clean base here. Judge this one on assets or normalized earnings, not a growth model.</p>
@@ -401,37 +420,57 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
     const box = document.getElementById("valBoxNeg");
     if (!box) return;
     const REV = parseFloat(box.dataset.rev), SH = parseFloat(box.dataset.shares), NAME = box.dataset.name || "this company";
+    const NETDEBT = parseFloat(box.dataset.netdebt) || 0;
+    const PROFIT = box.dataset.profitable === "1";
+    const FROM = PROFIT ? "from negative free cash flow today" : "from a loss today";
     const px = document.getElementById("pxn");
-    const r = document.getElementById("rN"), n = document.getElementById("nN"), gr = document.getElementById("grN");
-    const rOut = document.getElementById("rOutN"), nOut = document.getElementById("nOutN"), grOut = document.getElementById("grOutN");
+    const r = document.getElementById("rN"), n = document.getElementById("nN"), gr = document.getElementById("grN"), mm = document.getElementById("mmN");
+    const rOut = document.getElementById("rOutN"), nOut = document.getElementById("nOutN"), grOut = document.getElementById("grOutN"), mmOut = document.getElementById("mmOutN");
     const lede = document.getElementById("ledeN"), reqOE = document.getElementById("reqOE"), reqM = document.getElementById("reqM");
+    const refMN = document.getElementById("refMN"), refVN = document.getElementById("refVN"), refMosN = document.getElementById("refMosN");
 
     const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
     const pcs = (v) => (v < 0 ? "−" : "") + Math.abs(v * 100).toFixed(0) + "%";
     const usd = (v) => { const a = Math.abs(v); const s = a >= 1e12 ? "$" + (a / 1e12).toFixed(2) + "T" : a >= 1e9 ? "$" + (a / 1e9).toFixed(1) + "B" : a >= 1e6 ? "$" + Math.round(a / 1e6) + "M" : "$" + Math.round(a); return v < 0 ? "(" + s + ")" : s; };
+    function setURL(v) { try { const u = new URL(location.href); v ? u.searchParams.set("px", v) : u.searchParams.delete("px"); history.replaceState(null, "", u); } catch (e) {} }
 
     function update() {
-      const rr = parseFloat(r.value) / 100, N = parseInt(n.value, 10), g = parseFloat(gr.value) / 100;
-      rOut.textContent = r.value + "%"; nOut.textContent = N; grOut.textContent = gr.value + "%";
-      const price = parseFloat(px.value);
-      if (!(price > 0)) { lede.textContent = "Enter a price to run it."; reqOE.textContent = "—"; reqM.textContent = "—"; return; }
-      const mc = price * SH;
+      const rr = parseFloat(r.value) / 100, N = parseInt(n.value, 10), g = parseFloat(gr.value) / 100, mgn = parseFloat(mm.value) / 100;
+      rOut.textContent = r.value + "%"; nOut.textContent = N; grOut.textContent = gr.value + "%"; mmOut.textContent = mm.value + "%";
       const M = 1 / (rr - 0.025);             // mature owner-earnings multiple at this discount rate (2.5% terminal)
-      const valN = mc * Math.pow(1 + rr, N);  // value it must reach in year N to return rr
+      const revN = REV * Math.pow(1 + g, N);  // revenue grown at your rate
+
+      // From your belief: the mature margin you would credit, turned into owner earnings on
+      // that grown revenue, valued at the mature multiple, discounted back, net of debt. A
+      // reference value to set the price against — the same yardstick the other modes show.
+      refMN.textContent = mm.value + "%";
+      if (M > 0 && SH > 0 && revN > 0) {
+        const pv = (revN * mgn * M) / Math.pow(1 + rr, N);
+        const refPS = (pv - NETDEBT) / SH;
+        refVN.textContent = refPS > 0 ? "$" + refPS.toFixed(2) : "—";
+        refMosN.textContent = refPS > 0 ? "$" + (refPS * 0.7).toFixed(2) : "—";
+      } else { refVN.textContent = "—"; refMosN.textContent = "—"; }
+
+      const price = parseFloat(px.value);
+      if (!(price > 0)) { lede.textContent = "Enter a price to run it."; reqOE.textContent = "—"; reqM.textContent = "—"; setURL(""); return; }
+      const mc = price * SH;
+      const valN = mc * Math.pow(1 + rr, N);  // equity value it must reach in year N to return rr
       const requiredOE = valN / M;
-      const revN = REV * Math.pow(1 + g, N);
-      const margin = requiredOE / revN;
+      const reqMargin = requiredOE / revN;
       reqOE.textContent = usd(requiredOE);
-      reqM.textContent = margin > 3 ? ">300%" : pcs(margin);
+      reqM.textContent = reqMargin > 3 ? ">300%" : pcs(reqMargin);
       const P = "$" + price.toFixed(2);
       let verdict;
-      if (margin > 1) verdict = `, <b class="bad">impossible</b>: more owner profit than it would have revenue.`;
-      else if (margin > 0.45) verdict = `, an <b class="bad">extraordinary</b> margin almost no business on earth sustains, from a loss today.`;
-      else if (margin > 0.3) verdict = `, a <b>top-tier</b> margin (the most profitable software), from a loss today.`;
-      else verdict = `, from a loss today.`;
-      lede.innerHTML = `At <b>${P}</b>, to earn you ${r.value}% a year, ${esc(NAME)} must be worth ${usd(valN)} in ${N} years. At ~${M.toFixed(0)}× owner earnings, that is <b class="hot">${usd(requiredOE)}</b> a year, and growing revenue ${g > 0 ? "at " + gr.value + "%/yr" : "flat"} to ${usd(revN)}, an owner-earnings margin of <b class="hot">${margin > 3 ? ">300%" : pcs(margin)}</b>${verdict}`;
+      if (reqMargin > 1) verdict = `, <b class="bad">impossible</b>: more owner profit than it would have revenue.`;
+      else if (reqMargin > 0.45) verdict = `, an <b class="bad">extraordinary</b> margin almost no business on earth sustains, ${FROM}.`;
+      else if (reqMargin > 0.3) verdict = `, a <b>top-tier</b> margin (the most profitable software), ${FROM}.`;
+      else if (reqMargin > mgn) verdict = `, <b>above the ${mm.value}%</b> you would credit — you are paying for more than you believe.`;
+      else verdict = `, at or below the ${mm.value}% you would credit, ${FROM}.`;
+      lede.innerHTML = `At <b>${P}</b>, to earn you ${r.value}% a year, ${esc(NAME)} must be worth ${usd(valN)} in ${N} years. At ~${M.toFixed(0)}× owner earnings, that is <b class="hot">${usd(requiredOE)}</b> a year, on revenue grown ${g > 0 ? "at " + gr.value + "%/yr" : "flat"} to ${usd(revN)}: an owner-earnings margin of <b class="hot">${reqMargin > 3 ? ">300%" : pcs(reqMargin)}</b>${verdict}`;
+      setURL(px.value);
     }
-    [px, r, n, gr].forEach((el) => el.addEventListener("input", update));
+    [px, r, n, gr, mm].forEach((el) => el.addEventListener("input", update));
+    try { const q = new URL(location.href).searchParams.get("px"); if (q) px.value = q; } catch (e) {}
     update();
   })();
 </script>
