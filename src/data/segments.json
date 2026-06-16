@@ -32347,6 +32347,30 @@
         ]
       }
     },
+    "VSCO": {
+      "fy": 2026,
+      "periodEnd": "2026-01-31",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1856437/000185643726000004/0001856437-26-000004-index.htm",
+      "revenueTotal": 6553000000,
+      "operatingIncomeTotal": 271000000,
+      "byGeography": {
+        "reconcile": 1,
+        "items": [
+          {
+            "label": "United States",
+            "qname": "country:US",
+            "revenue": 5391000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "International",
+            "qname": "us-gaap:NonUsMember",
+            "revenue": 1162000000,
+            "operatingIncome": null
+          }
+        ]
+      }
+    },
     "VTR": {
       "fy": 2025,
       "periodEnd": "2025-12-31",
