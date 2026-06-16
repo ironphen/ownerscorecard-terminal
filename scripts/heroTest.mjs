@@ -26,11 +26,13 @@ const cases = [
     ["Our Businesses and Industry Trends We are an energy delivery company with electric transmission, distribution, and natural gas operations.",
      "We serve millions of metered customers across several states."],
     /^We are an energy delivery company/i],
-  // The real opener sits behind a short tagline ("Fitness for everyone").
+  // A tagline that begins with the company's own name-word ("Fitness for everyone") is kept
+  // as part of the subject rather than risk dropping a real subject word; the franchisor
+  // description still carries.
   ["PLNT", "Planet Fitness, Inc.",
     ["Fitness for everyone We are one of the largest and fastest-growing franchisors and operators of fitness centers in the United States by number of members and locations.",
      "Our members enjoy a welcoming environment."],
-    /^We are one of the largest and fastest-growing franchisors/i],
+    /We are one of the largest and fastest-growing franchisors and operators of fitness centers/i],
   // A public benefit corporation that opens on its chartered purpose: skip it for the
   // line that says what the company actually does.
   ["UTHR", "United Therapeutics Corporation",
@@ -50,6 +52,32 @@ const cases = [
     ["We are a leading provider of cloud software and data analytics services to enterprises worldwide.",
      "Our platform is used by thousands of customers."],
     /^We are a leading provider of cloud software/i],
+  // A long alias / "together with subsidiaries" preamble must be stripped so the "is a
+  // <type>" payload is the hero, not corporate boilerplate truncated at the cap.
+  ["REXR", "Rexford Industrial Realty, Inc.",
+    ["Rexford Industrial Realty, Inc., a Maryland corporation, together with our consolidated subsidiaries, including Rexford Industrial Realty, L.P., a Maryland limited partnership, and its subsidiaries is a self-administered and self-managed full-service REIT focused on owning, operating and acquiring industrial properties in Southern California."],
+    /^Rexford Industrial Realty, Inc\. is a self-administered and self-managed full-service REIT/i],
+  ["WTRG", "Essential Utilities, Inc.",
+    ["Essential Utilities, Inc., referred to as \"Essential Utilities\", \"Essential\", the \"Company\", \"we\", \"us\", or \"our\", is a holding company that provides regulated water and wastewater services to customers."],
+    /^Essential Utilities, Inc\. is a holding company that provides regulated water/i],
+  // A leading temporal clause ("As of <date>, we operate …") is dropped so the operating
+  // line stands as the hero.
+  ["CAVA2", "CAVA Group, Inc.",
+    ["As of December 28, 2025, we operate 439 fast-casual CAVA restaurants in 27 states and the District of Columbia."],
+    /^We operate 439 fast-casual CAVA restaurants in 27 states/i],
+  // A mid-sentence brand mention must NOT be mistaken for the subject and left a fragment.
+  ["ALGN", "Align Technology, Inc.",
+    ["We design, manufacture and market the Invisalign system and Align clear aligners for the treatment of malocclusions, or the misalignment of teeth, by orthodontists and general dentists."],
+    /^We design, manufacture and market/i],
+  ["COIN", "Coinbase Global, Inc.",
+    ["We provide a trusted platform that makes it easy for our customers to engage with crypto assets on Coinbase, including stocks, commodity futures, perpetual futures, and prediction markets."],
+    /^We provide a trusted platform/i],
+  // The actual HII opener (a "global … partner" that the engaged-matcher must recognize,
+  // while "are the sole general partner" must not be mistaken for a description).
+  ["HII2", "Huntington Ingalls Industries, Inc.",
+    ["Huntington Ingalls is a global, all-domain defense partner, building and delivering the world's most powerful, survivable naval ships and technologies that defend freedom.",
+     "Ingalls includes our non-nuclear ship design, construction, repair, and maintenance businesses."],
+    /^Huntington Ingalls is a global, all-domain defense partner/i],
 ];
 
 let pass = 0, fail = 0;

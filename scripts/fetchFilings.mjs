@@ -183,8 +183,8 @@ function metrics(text) {
 // risk line or a heading as the description. Their words; our numbers elsewhere for
 // what they mean. Returns null when nothing clean is found, and the page falls back.
 const BIZ_DOING = /\b(designs?|manufactures?|manufacturing|develops?|markets?|provides?|providing|operates?|sells?|selling|distributes?|produces?|producing|delivers?|offers?|offering|supplies|supplying)\b/i;
-const BIZ_ISA = /\b(is|are)\s+(a|an|the|one of)\b[^.]{0,60}?\b(compan|provider|manufacturer|producer|retailer|developer|operator|maker|supplier|distributor|platform|business|leader|corporation|holding|bank|insurer|airline|carrier|restaurant|brand|chain|franchis|network|marketplace|trust|utility|pharmaceutical|biopharmaceutical|biotechnolog|technolog|healthcare|energy|refiner|exchange|processor|grocer|wholesaler|broker|dealer|lender|integrator|miner|reit|firm|enterprise|agency|partner|builder|contractor|franchisor|servicer|underwriter|reinsurer|conglomerate)\w*/i;
-const BIZ_SKIP = /(was|were)\s+incorporated|incorporated\s+(under|in)\b|reincorporat|organized under the laws|founded in\s+\d|fiscal year|forward-looking|securities (act|exchange) of|report on form|unless the context|initial public offering|principal executive offices|market for (the )?registrant|common equity|equity securities|stockholder matters|\bmay\b|could\s+(adversely|result|harm|cause|materially|impair)|no assurance|our ability to|unsubstantiated|misleading|negative publicity|table of contents|\bcould\b|\bif (we|our|the company|a |an |adverse)|decline in (consumer|demand|sales)|reasonable basis for (our|the) opinion|provide a reasonable basis|standards of the public company accounting|fair value\b|cost of capital|non-?gaap|balance sheets? (include|reflect)|internally generated cash|dividends are reinvested|consideration we expect|we expect to be entitled|notice letter|corporate headquarters|(listed|traded|trades|registered)\s+on (the )?(nasdaq|new york|nyse)|common stock (is|has)\s*(been\s*)?(listed|registered|traded)|in our (definitive )?proxy|responsive to this item|incorporated by reference|does not trade in the public market|\bis subject to\b|(reportable|reporting)\s+(business\s+)?segments?\s+are\b|represent(s|ed)\s+[^.]{0,28}\b(majority|\d+%)[^.]{0,18}\brevenue/i;
+const BIZ_ISA = /\b(is|are)\s+(a|an|the|one of)\b[^.]{0,60}?\b(compan|provider|manufacturer|producer|retailer|developer|operator|maker|supplier|distributor|platform|business|leader|corporation|holding|bank|insurer|airline|carrier|restaurant|brand|chain|franchis|network|marketplace|trust|utility|pharmaceutical|biopharmaceutical|biotechnolog|technolog|healthcare|energy|refiner|exchange|processor|grocer|wholesaler|broker|dealer|lender|integrator|miner|reit|firm|enterprise|agency|builder|contractor|franchisor|servicer|underwriter|reinsurer|conglomerate)\w*/i;
+const BIZ_SKIP = /(was|were)\s+incorporated|incorporated\s+(under|in)\b|reincorporat|organized under the laws|founded in\s+\d|fiscal year|forward-looking|securities (act|exchange) of|report on form|unless the context|initial public offering|principal executive offices|market for (the )?registrant|common equity|equity securities|stockholder matters|\bmay\b|could\s+(adversely|result|harm|cause|materially|impair)|no assurance|our ability to|unsubstantiated|misleading|negative publicity|table of contents|\bcould\b|\bif (we|our|the company|a |an |adverse)|decline in (consumer|demand|sales)|reasonable basis for (our|the) opinion|provide a reasonable basis|standards of the public company accounting|fair value\b|cost of capital|non-?gaap|balance sheets? (include|reflect)|internally generated cash|dividends are reinvested|consideration we expect|we expect to be entitled|notice letter|corporate headquarters|(listed|traded|trades|registered)\s+on (the )?(nasdaq|new york|nyse)|common stock (is|has)\s*(been\s*)?(listed|registered|traded)|in our (definitive )?proxy|responsive to this item|incorporated by reference|does not trade in the public market|\b(is|are) subject to\b|corporation (formed|organized)\b|(reportable|reporting)\s+(business\s+)?segments?\s+are\b|represent(s|ed)\s+[^.]{0,28}\b(majority|\d+%)[^.]{0,18}\brevenue/i;
 // A weak subject: the sentence is about employees, customers or a side note, not the
 // company itself, so it is not a description of the business.
 const BIZ_WEAK = /^(we also\b|when\s+we\b|founded\b|established\b|originally\b|since (our|its|we)\b|our (mission|vision|strateg|purpose|goals?|values|history|story|customers?|employees?|people|associates|team|more than|over\s|approximately|roughly|nearly)|our\b[^.]{0,40}\b(purpose|mission|vision)\b[^.]{0,120}\bis\s+to\b|we have (sharpened|built|been developing|also been|grown|expanded)|we strive|we seek\b|we aim\b|we (encounter|rely|depend|compete|consistently|correctly|pursue|understand|assess|estimate|disposed)\b|we have (entered|received)\b|[a-z][\w& .,'-]{0,38}'s\s+(vision|mission|purpose)\s+is\s+to\b|[a-z][\w& .,'-]{0,38}\b(strives?|aims?)\s+to\b|[a-z][\w& .,'-]{0,38}\bbelieves\b|[a-z][\w& .,'-]{0,30}'s\s+growth\b|[a-z][\w& .,'-]{0,30}\balso has\b)/i;
@@ -198,7 +198,7 @@ const BIZ_RICH = /\b(products?|services?|segments?|brands?|markets?|customers?|s
 const BIZ_STRUCTURAL = /\boperat\w*\b[^.]{0,40}\bthrough\b|operating segments?|reportable segments?|reporting segments?|conduct\w*\s+(its\s+)?business through|our\s+(former\s+)?[\w& ]{0,30}?\bsegment\b|\bsegment\s+(consists|includes|combined|develops?|is preserved)\b/i;
 // Additional descriptive forms beyond a plain verb or "is a <type>": "engaged in",
 // "principal business", "a leading provider/manufacturer of", "<noun> of".
-const BIZ_ENGAGED = /\b(engaged?|engages?)\s+(primarily\s+)?in\b|\b(principal|primary|core|main)\s+business\b|\b(leading|global|largest|world'?s)\b[^.]{0,32}\b(provider|manufacturer|producer|operator|supplier|distributor|retailer|developer|maker|company|leader|bank|insurer)s?\b|\b(provider|manufacturer|producer|operator|developer|maker|distributor)s?\s+of\b/i;
+const BIZ_ENGAGED = /\b(engaged?|engages?)\s+(primarily\s+)?in\b|\b(principal|primary|core|main)\s+business\b|\b(leading|global|largest|world'?s|premier|principal)\b[^.]{0,40}\b(provider|manufacturer|producer|operator|supplier|distributor|retailer|developer|maker|company|leader|bank|insurer|partner|builder|contractor|shipbuilder)s?\b|\b(provider|manufacturer|producer|operator|developer|maker|distributor)s?\s+of\b/i;
 
 // Pull the company's own one-line description from the top of Item 1. Rather than take
 // the first sentence that passes, we collect candidates from the opening and score
@@ -235,6 +235,12 @@ function businessDescription(sents, name, ticker) {
     // abbreviation period or a parenthetical split off and left as a bare "is a ...".
     s = s.replace(/^we believe\s+(that\s+)?/i, "")
          .replace(/\s*\([^)]*\)/g, "")
+         // Strip a comma appositive that sits between the name and its "is a <type>" payload
+         // ("Rexford Industrial Realty, Inc., a Maryland corporation, together with our
+         // subsidiaries, ... is a self-administered REIT"), so the description is not pushed
+         // past the output cap and left as corporate boilerplate. Only when a real payload
+         // ("is/are a/an/the …") follows, so a genuine appositive description is untouched.
+         .replace(/,\s+(?:a |an |the |together with |referred to |known as |collectively |including |doing business as |formerly ).{0,200}?,?(?=\s+(?:is|are)\s+(?:a|an|the|one of|engaged|primarily|now|currently|headquartered))/i, " ")
          .replace(/,?\s+and its (wholly[- ]owned )?subsidiaries\b/i, "")
          .replace(/\s{2,}/g, " ").trim();
     if (name && nameWords.length) {
@@ -243,8 +249,13 @@ function businessDescription(sents, name, ticker) {
       // jump to the company's name. Anchoring on the name (not the verb) keeps a multi-word
       // name whole.
       if (!startsWithSubject(s)) {
-        for (const w of nameWords) { const idx = s.toLowerCase().indexOf(w); if (idx > 0 && (at < 0 || idx < at)) at = idx; }
-        if (!(at > 0 && at < 160)) at = -1;
+        // Jump to the name only where it sits in subject position — followed by a verb or a
+        // ", a/an <type>" appositive — so a mid-sentence brand mention ("…fast-casual CAVA
+        // restaurants") is not mistaken for the subject and the line left a fragment.
+        const alt = nameWords.map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|");
+        const nameSubj = new RegExp(`\\b(?:${alt})\\b[\\w &.,'’-]{0,34}?(?:\\s+(?:is|are|was|were|provides?|operates?|designs?|develops?|manufactures?|makes?|markets?|sells?|offers?|supplies|distributes?|delivers?|produces?|serves?|engages?|owns?|builds?|creates?|enables?|helps?)\\b|,\\s+(?:a|an)\\s+[a-z])`, "i");
+        const m2 = s.match(nameSubj);
+        if (m2 && m2.index > 0 && m2.index < 160) at = m2.index;
       }
       // (b) The real opener is glued behind a heading or mission tagline with no period to
       // split on ("Our Mission … CAVA is a Mediterranean restaurant brand."): jump to the
@@ -256,8 +267,11 @@ function businessDescription(sents, name, ticker) {
         const m = s.match(subjVerb);
         if (m && m.index > 0 && m.index < 200) {
           const prefix = s.slice(0, m.index);
-          const headingish = /\b(mission|vision|overview|strateg|history|organization|introduction|purpose|founded|headquarter|business|general|company|incorporated|together with|referred to|first-person|notations|principal|trends?)\b/i;
-          if (!subjVerb.test(prefix) && (headingish.test(prefix) || (prefix.trim().length < 42 && !prefix.includes(",")))) at = m.index;
+          const headingish = /\b(mission|vision|overview|strateg|history|organization|introduction|purpose|founded|headquarter|business|general|company|incorporated|together with|referred to|first-person|notations|principal|trends?|as of|during|for the (year|fiscal|quarter|period|three|six|nine|twelve)|for fiscal)\b/i;
+          // Only when the name does not already appear in the prefix: if it does, the prefix
+          // is the real subject ("Huntington Ingalls is …"), not a heading to jump over.
+          if (!subjVerb.test(prefix) && !nameWords.some((w) => prefix.toLowerCase().includes(w)) &&
+              (headingish.test(prefix) || (prefix.trim().length < 42 && !prefix.includes(",")))) at = m.index;
         }
       }
       if (at > 0) s = s.slice(at).trim();
