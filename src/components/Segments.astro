@@ -15,7 +15,7 @@ const total = S?.revenueTotal ?? null;
 
 // Stable categorical palette: a segment keeps its colour across the revenue and the
 // profit bar, so the eye can see how the proportions shift between the two.
-const PALETTE = ["#2f3b47", "#5a6b7a", "#5f7355", "#9c8f6e", "#86949f", "#a86b52", "#b3b9c0"];
+const PALETTE = ["var(--viz-1)", "var(--viz-6)", "var(--viz-5)", "var(--viz-4)", "var(--viz-2)", "var(--viz-3)", "var(--viz-muted)"];
 const pct = (v) => Math.round(v * 100);
 
 // Trim the redundant "Segment" suffix some filers append to their member labels.
@@ -151,14 +151,14 @@ const sectionTitle = { segment: "by reportable segment", product: "by product li
   .head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; border-bottom: 1px solid var(--rule-strong); padding-bottom: 6px; }
   .head h2 { margin: 0; }
   .src { font-size: 12px; color: var(--accent); flex: 0 0 auto; }
-  .take { font-family: var(--serif); font-size: 15.5px; line-height: 1.5; color: #2c2f36; margin: 12px 0 0; max-width: 70ch; }
+  .take { font-family: var(--serif); font-size: 15.5px; line-height: 1.5; color: var(--ink-soft); margin: 12px 0 0; max-width: 70ch; }
 
   .block { margin: 14px 0 0; }
   .blabel { font-family: var(--sans); font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); margin-bottom: 5px; }
   .blabel .dim { font-weight: 500; text-transform: none; letter-spacing: 0; color: var(--faint); }
-  .bar { display: flex; width: 100%; height: 22px; background: #f0eee9; overflow: hidden; border: 1px solid var(--rule); }
+  .bar { display: flex; width: 100%; height: 22px; background: var(--surface-2); overflow: hidden; border: 1px solid var(--rule); }
   .seg { height: 100%; min-width: 1px; }
-  .seg + .seg { box-shadow: inset 1px 0 0 #fff; }
+  .seg + .seg { box-shadow: inset 1px 0 0 var(--paper); }
 
   .legend { list-style: none; padding: 0; margin: 14px 0 0; display: grid; gap: 7px; }
   .legend li { display: flex; align-items: baseline; gap: 9px; font-size: 13.5px; }
@@ -171,7 +171,7 @@ const sectionTitle = { segment: "by reportable segment", product: "by product li
 
   .geostrip { margin: 16px 0 0; padding-top: 10px; border-top: 1px solid var(--rule); display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; font-size: 13px; }
   .gtitle { font-family: var(--sans); font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
-  .gitem { color: #3a3e46; font-variant-numeric: tabular-nums; }
+  .gitem { color: var(--ink-dim); font-variant-numeric: tabular-nums; }
   .gitem b { color: var(--ink); font-weight: 600; }
 
   .foot { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--rule-strong); margin-top: 16px; padding-top: 10px; max-width: 72ch; }

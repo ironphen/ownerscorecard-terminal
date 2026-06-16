@@ -8,10 +8,10 @@ const pct = (v) => `${Math.round(v * 100)}%`;
 
 const segs = cap
   ? [
-      { label: "Reinvested", amt: cap.capex, pctCfo: cap.pReinvest, color: "#2c3038" },
+      { label: "Reinvested", amt: cap.capex, pctCfo: cap.pReinvest, color: "var(--viz-1)" },
       { label: "Dividends", amt: cap.div, pctCfo: cap.pDiv, color: "var(--accent)" },
-      { label: "Buybacks", amt: cap.bb, pctCfo: cap.pBB, color: "#2e7d6b" },
-      { label: cap.overspent ? "Funded by debt / cash" : "Retained (debt / cash)", amt: Math.max(0, cap.retained), pctCfo: cap.pRetained, color: "#cfcec8", muted: true },
+      { label: "Buybacks", amt: cap.bb, pctCfo: cap.pBB, color: "var(--viz-2)" },
+      { label: cap.overspent ? "Funded by debt / cash" : "Retained (debt / cash)", amt: Math.max(0, cap.retained), pctCfo: cap.pRetained, color: "var(--viz-muted)", muted: true },
     ].filter((s) => s.amt > 0)
   : [];
 const totalUse = segs.reduce((a, s) => a + s.amt, 0) || 1;
@@ -68,11 +68,11 @@ segs.forEach((s) => (s.w = (s.amt / totalUse) * 100));
 
   .legend { list-style: none; padding: 0; margin: 12px 0 0; display: flex; flex-wrap: wrap; gap: 8px 22px; }
   .legend li { display: flex; align-items: baseline; gap: 7px; font-size: 13px; }
-  .sw { width: 11px; height: 11px; flex: 0 0 auto; border: 1px solid rgba(0,0,0,0.15); transform: translateY(1px); }
+  .sw { width: 11px; height: 11px; flex: 0 0 auto; border: 1px solid rgba(128,128,128,0.35); transform: translateY(1px); }
   .ll { color: var(--ink); }
   .lv { color: var(--muted); font-variant-numeric: tabular-nums; }
 
-  .reads { font-size: 14px; color: #3a3e46; line-height: 1.55; margin: 14px 0 0; max-width: 72ch; }
+  .reads { font-size: 14px; color: var(--ink-dim); line-height: 1.55; margin: 14px 0 0; max-width: 72ch; }
   .reads b { font-weight: 600; }
   .foot { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--rule); margin-top: 14px; padding-top: 10px; max-width: 72ch; }
 </style>

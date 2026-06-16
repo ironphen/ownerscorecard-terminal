@@ -55,17 +55,17 @@ export default function CompoundingExplorer() {
   );
 
   return (
-    <div style={{ border: "1px solid #ddd", padding: "14px 16px", margin: "18px 0" }}>
+    <div style={{ border: "1px solid var(--rule)", padding: "14px 16px", margin: "18px 0" }}>
       {slider("Invested per month", monthly, setMonthly, 25, 2000, 25, usd)}
       {slider("Annual return", rate, setRate, 1, 15, 0.5, (v) => `${v}%`)}
       {slider("Years", years, setYears, 5, 50, 1, (v) => `${v}`)}
 
       <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", height: "auto" }} role="img"
         aria-label="Portfolio value versus amount contributed over time">
-        <path d={contribPath} fill="none" stroke="#999" strokeWidth="1.2" strokeDasharray="4 3" />
-        <path d={path} fill="none" stroke="#111" strokeWidth="1.8" />
-        <text x={L} y={H - 6} fontSize="11" fill="#777">today</text>
-        <text x={W - R} y={H - 6} fontSize="11" fill="#777" textAnchor="end">{years} years</text>
+        <path d={contribPath} fill="none" style={{ stroke: "var(--faint)" }} strokeWidth="1.2" strokeDasharray="4 3" />
+        <path d={path} fill="none" style={{ stroke: "var(--ink)" }} strokeWidth="1.8" />
+        <text x={L} y={H - 6} fontSize="11" style={{ fill: "var(--muted)" }}>today</text>
+        <text x={W - R} y={H - 6} fontSize="11" style={{ fill: "var(--muted)" }} textAnchor="end">{years} years</text>
       </svg>
 
       <p style={{ fontSize: 14, margin: "8px 0 0" }}>

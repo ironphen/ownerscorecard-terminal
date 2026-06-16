@@ -89,13 +89,15 @@ export function coverageVerdict(result) {
   };
 }
 
+// Theme-aware tones: each resolves to a CSS variable so the same value reads correctly
+// in both light and dark (defined in BaseLayout). Applied as inline color styles.
 export const TONE_COLOR = {
-  good: "#1a7a3c",
-  ok: "#555",
-  warn: "#9a6a00",
-  bad: "#8b1a1a",
-  info: "#33597a",
-  none: "#777",
+  good: "var(--good)",
+  ok: "var(--muted)",
+  warn: "var(--warn)",
+  bad: "var(--bad)",
+  info: "var(--info)",
+  none: "var(--faint)",
 };
 
 const fmtX = (v, dp = 1) => (v == null ? "—" : `${v.toFixed(dp)}×`);
