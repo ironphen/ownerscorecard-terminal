@@ -3,7 +3,7 @@
 // the tests is a floor of safety, not a buy signal, and failing one is not a veto,// many fine modern businesses fail his strictest liquidity tests by design. Every
 // number is sourced and findable in the record. Modernized thresholds are flagged.
 
-import { fmtUSD } from "./fundamentals.mjs";
+import { fmtUSD, debtReliable } from "./fundamentals.mjs";
 
 const mean = (xs) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null);
 
@@ -31,7 +31,10 @@ export function grahamTests(company) {
   }
 
   // 3, Conservative debt: total debt ≤ working capital (Graham's industrial test, using total debt as the stricter proxy for long-term debt)
-  if (ca != null && cl != null && L.totalDebt != null) {
+  if (ca != null && cl != null && !debtReliable(L)) {
+    add("Conservative debt", "Debt ≤ working capital", "—", "na",
+      "The filings tag only a fraction of the debt this company's interest bill implies (much of it sits under segment dimensions the data source strips), so this test can't be run honestly.");
+  } else if (ca != null && cl != null && L.totalDebt != null) {
     const wc = ca - cl;
     add("Conservative debt", "Debt ≤ working capital", `${fmtUSD(L.totalDebt)} vs ${fmtUSD(wc)} WC`,
       wc > 0 && L.totalDebt <= wc ? "pass" : wc > 0 && L.totalDebt <= 1.5 * wc ? "near" : "fail",

@@ -17,7 +17,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
-import { topLineRevenue, roicValue, fmtUSD } from "../src/lib/fundamentals.mjs";
+import { topLineRevenue, roicValue, fmtUSD, debtReliable } from "../src/lib/fundamentals.mjs";
 import { classify, financialProfile } from "../src/lib/archetype.mjs";
 import { returnOnEquity } from "../src/lib/financials.mjs";
 import { combinedRatio } from "../src/lib/insurers.mjs";
@@ -60,7 +60,9 @@ for (const c of companies) {
   } else if (kind === "insurer" || kind === "managedCare") {
     const comp = (L.premiumsEarned || 0) + (L.investmentIncome || 0);
     if (comp > 0 && rev < comp * 0.8) ERR("revenue-recon-failed", t, `insurer top line ${fmtUSD(rev)} still below premiums + investment income ${fmtUSD(comp)}`);
-  } else if (rev < 50e6 && (Math.abs(L.netIncome || 0) > 100e6 || (L.totalAssets || 0) > 2e9) && sector !== "reit") {
+  } else if (kind === "reit" && L.totalAssets && rev < 0.03 * L.totalAssets) {
+    WARN("reit-revenue-low", t, `top line ${fmtUSD(rev)} is under 3% of ${fmtUSD(L.totalAssets)} in assets; rental revenue is likely under-captured`);
+  } else if (kind == null && rev < 50e6 && (Math.abs(L.netIncome || 0) > 100e6 || (L.totalAssets || 0) > 2e9)) {
     WARN("revenue-tiny", t, `top line ${fmtUSD(rev)} looks too small for a business this size (net income ${fmtUSD(L.netIncome)}, assets ${fmtUSD(L.totalAssets)})`);
   }
 
@@ -88,17 +90,16 @@ for (const c of companies) {
     WARN("mlr-untagged", t, "premiums under-tagged, so the medical loss ratio is suppressed");
   }
 
-  // Debt and its interest should be consistent, but only where borrowed debt is the
-  // funding. A bank pays most of its interest on deposits, which are not "debt," so the
-  // ratio is meaningless there; we check industrials and REITs. An implied rate far above
-  // market means the debt is under-captured (the Domino's case: $196M interest on a
-  // tagged $15M of debt; Ford's $150B of Ford Credit borrowings tagged as $471M).
+  // Debt under-capture, only where borrowed debt is the funding (a bank's interest is on
+  // deposits, not debt). debtReliable mirrors the pages: when it is false they already
+  // show leverage as unknown, so this just tracks the names that need a fundamentals fix
+  // (Ford reports its ~$150B only under segment dimensions the companyfacts API strips).
   const debtRelevant = kind == null || kind === "reit";
-  const ie = L.interestExpense, td = L.totalDebt;
-  if (debtRelevant && ie != null && ie > 25e6 && (td == null || td <= 0)) {
-    WARN("debt-missing", t, `pays ${fmtUSD(ie)} of interest but no debt is tagged`);
-  } else if (debtRelevant && ie != null && td != null && td > 0 && ie / td > 0.3) {
-    WARN("debt-implied-rate", t, `${fmtUSD(ie)} interest on ${fmtUSD(td)} debt implies a ${(100 * ie / td).toFixed(0)}% rate, debt is likely under-captured`);
+  if (debtRelevant && !debtReliable(L)) {
+    const ie = L.interestExpense, td = L.totalDebt;
+    WARN("debt-under-captured", t, td == null || td <= 0
+      ? `pays ${fmtUSD(ie)} of interest but no debt is tagged; leverage shown as unknown`
+      : `${fmtUSD(ie)} interest on ${fmtUSD(td)} debt implies a ${(100 * ie / td).toFixed(0)}% rate; leverage shown as unknown`);
   }
 
   // Segments: the gate should never let an aggregate subtotal lead the shown breakdown,
@@ -116,19 +117,23 @@ for (const c of companies) {
   }
 }
 
-// ---- coverage scorecard: a regression in the pipeline shows up as a coverage cliff
-// (a taxonomy change that silently drops debt for 50 companies, say), so we hold each
-// layer to a floor and fail the run if it falls through. ----
+// ---- coverage scorecard: a pipeline regression shows up as a coverage cliff (a taxonomy
+// change that silently drops debt or segments for a whole swath of filers), so we hold
+// each layer to a floor. The floors are deliberately set to catastrophe levels, well
+// below the normal numbers, not as quality targets: they must catch a layer cratering
+// while tolerating the ordinary dilution of adding companies (a batch of recent IPOs
+// genuinely lacks eight years of history). A real quality target is a different job; this
+// is the smoke alarm. ----
 const inds = companies.filter((c) => !financialProfile(c).kind);
 const frac = (n, d) => (d ? n / d : 1);
 const coverage = [
-  ["top-line revenue > 0", frac(companies.filter((c) => topLineRevenue(c.lines || {}, c) > 0).length, companies.length), 1.0],
-  ["operating income (industrials)", frac(inds.filter((c) => c.lines?.operatingIncome != null).length, inds.length), 0.99],
-  ["ROIC (industrials)", frac(inds.filter((c) => roicValue(c.lines || {}) != null).length, inds.length), 0.95],
-  ["8+ years of history", frac(companies.filter((c) => (c.history || []).length >= 8).length, companies.length), 0.9],
-  ["fresh quarter (TTM)", frac(companies.filter((c) => c.ttm?.lines).length, companies.length), 0.9],
-  ["owner flags (what the filing emphasizes)", frac(companies.filter((c) => lang[c.ticker]?.ownerFlags?.length).length, companies.length), 0.85],
-  ["segment breakdown (any axis)", frac(companies.filter((c) => { const S = seg[c.ticker]; return S && (S.bySegment || S.byProduct || S.byGeography); }).length, companies.length), 0.65],
+  ["top-line revenue > 0", frac(companies.filter((c) => topLineRevenue(c.lines || {}, c) > 0).length, companies.length), 0.95],
+  ["operating income (industrials)", frac(inds.filter((c) => c.lines?.operatingIncome != null).length, inds.length), 0.9],
+  ["ROIC (industrials)", frac(inds.filter((c) => roicValue(c.lines || {}) != null).length, inds.length), 0.85],
+  ["8+ years of history", frac(companies.filter((c) => (c.history || []).length >= 8).length, companies.length), 0.7],
+  ["fresh quarter (TTM)", frac(companies.filter((c) => c.ttm?.lines).length, companies.length), 0.8],
+  ["owner flags (what the filing emphasizes)", frac(companies.filter((c) => lang[c.ticker]?.ownerFlags?.length).length, companies.length), 0.7],
+  ["segment breakdown (any axis)", frac(companies.filter((c) => { const S = seg[c.ticker]; return S && (S.bySegment || S.byProduct || S.byGeography); }).length, companies.length), 0.5],
 ];
 const covFails = coverage.filter(([, v, min]) => v < min);
 
@@ -157,9 +162,16 @@ for (const code of codes) {
   if (list.length > 12) console.log(`    ... and ${list.length - 12} more`);
 }
 
-// Coverage floors describe the whole catalog, so they only gate a full run, not a
-// debugging subset (ONLY=...), where a couple of companies can't represent coverage.
+// What blocks an unattended refresh: only a systemic coverage cliff (a taxonomy change
+// that drops a whole layer), because a single odd new filer must not freeze every future
+// weekly run. Per-company findings are printed loudly for review but do not block the
+// batch. A local pre-ship check runs --strict to fail on anything. Coverage floors gate a
+// full run only, not a debugging subset (ONLY=...), where a few companies can't represent
+// catalog coverage.
 const covGate = ONLY.length ? 0 : covFails.length;
-const fail = errs.length > 0 || covGate > 0 || (STRICT && warns.length > 0);
-console.log(`\nRESULT: ${fail ? "FAIL" : "PASS"}  (${errs.length} errors, ${warns.length} warnings, ${covGate} coverage floors breached${STRICT ? ", strict" : ""})\n`);
+const fail = covGate > 0 || (STRICT && errs.length + warns.length > 0);
+const needsReview = errs.length > 0;
+console.log(`\nRESULT: ${fail ? "FAIL" : "PASS"}  (${errs.length} errors, ${warns.length} warnings, ${covGate} coverage floors breached${STRICT ? ", strict" : ""})`);
+if (needsReview && !fail) console.log(`Note: ${errs.length} per-company error${errs.length === 1 ? "" : "s"} above need review but do not block the refresh.`);
+console.log("");
 if (import.meta.url === pathToFileURL(process.argv[1] || "").href) process.exit(fail ? 1 : 0);

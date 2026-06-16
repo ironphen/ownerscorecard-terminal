@@ -5,6 +5,8 @@
 // the capital the business plowed back, which separates a compounding moat from
 // one that's merely being milked.
 
+import { debtReliable } from "./fundamentals.mjs";
+
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 const firstN = (arr, n) => arr.filter((x) => x != null).slice(0, n);
 const lastN = (arr, n) => arr.filter((x) => x != null).slice(-n);
@@ -33,6 +35,9 @@ export function moatReport(company) {
   const L = H.map((h) => h.lines);
   const years = H.map((h) => h.fy);
   const span = years[years.length - 1] - years[0];
+  // Skip the invested-capital facts when the debt is under-captured (Ford), or invested
+  // capital and the return on it would read off a fraction of the real borrowings.
+  const debtOk = debtReliable(company.lines || {}) && debtReliable(company.ttm?.lines || {});
   const facts = [];
   const add = (label, value, tone, note) => facts.push({ label, value, tone, note });
 
@@ -47,7 +52,7 @@ export function moatReport(company) {
 
   // 2, Moat: does the return on capital persist?
   const roics = L.map((x) => { const iv = invested(x), np = nopat(x); return iv && np != null ? np / iv : null; }).filter((r) => r != null);
-  if (roics.length >= 3) {
+  if (debtOk && roics.length >= 3) {
     const above = roics.filter((r) => r >= 0.15).length;
     add("Return on capital ≥ 15%", `${above} of ${roics.length} yrs`,
       above >= roics.length - 1 ? "good" : above >= roics.length * 0.5 ? "ok" : "warn",
@@ -71,7 +76,7 @@ export function moatReport(company) {
   // 4, The centerpiece: incremental ROIC (what reinvested capital earned).
   const npE = avgFirst(L.map(nopat), 3), npL = avgLast(L.map(nopat), 3);
   const ivE = avgFirst(L.map(invested), 3), ivL = avgLast(L.map(invested), 3);
-  if (npE != null && npL != null && ivE != null && ivL != null) {
+  if (debtOk && npE != null && npL != null && ivE != null && ivL != null) {
     const dNop = npL - npE, dInv = ivL - ivE;
     if (dInv > ivE * 0.1) {
       const inc = dNop / dInv;

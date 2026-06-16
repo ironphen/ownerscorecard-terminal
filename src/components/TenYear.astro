@@ -1,6 +1,6 @@
 ---
 import { classify, financialKind, financialSubtype } from "../lib/archetype.mjs";
-import { fmtUSD, roicValue, liquidAssets, topLineRevenue } from "../lib/fundamentals.mjs";
+import { fmtUSD, roicValue, liquidAssets, topLineRevenue, debtReliable } from "../lib/fundamentals.mjs";
 import { returnOnEquity, returnOnTangibleEquity, efficiencyRatio, tangibleEquity } from "../lib/financials.mjs";
 import { ffo, ffoPerShare, ffoPayout, debtToAssets } from "../lib/reits.mjs";
 import { combinedRatio, lossRatio } from "../lib/insurers.mjs";
@@ -10,6 +10,13 @@ import Term from "./Term.astro";
 const { company } = Astro.props;
 const hist = (company.history || []).filter((h) => h?.lines?.revenue != null);
 const { sector } = classify(company);
+
+// Whether the captured debt can be trusted is a structural property of the filer (Ford
+// reports its real debt only under segment dimensions the data source strips), so we
+// decide it once and apply it to the whole record. The signal (a material interest bill
+// against little tagged debt) lives in the latest annual, since history and TTM rows
+// often omit the interest tag; an under-capture in either marks the whole record unknown.
+const debtOk = debtReliable(company.lines || {}) && debtReliable(company.ttm?.lines || {});
 
 const money = (v) => (v == null ? "—" : fmtUSD(v));
 const marginStr = (n, d, dp = 1) => (n != null && d ? `${(n / d) * 100 < 0 ? "−" : ""}${(Math.abs((n / d) * 100)).toFixed(dp)}%` : "—");
@@ -24,11 +31,11 @@ const ROW = {
   eps: { label: "EPS (diluted)", short: "EPS", get: (L) => perShare(L.netIncome, L.sharesDiluted) },
   ownerEarnings: { label: "Owner earnings", short: "Owner earn.", get: (L) => (L.cashFromOps != null && L.capex != null ? money(L.cashFromOps - Math.abs(L.capex)) : "—") },
   oeMargin: { label: "Owner earnings margin", short: "OE mgn", get: (L) => marginStr(L.cashFromOps != null && L.capex != null ? L.cashFromOps - Math.abs(L.capex) : null, L.revenue) },
-  roic: { label: "ROIC", short: "ROIC", get: (L) => { const r = roicValue(L); return r == null ? "—" : `${(r * 100).toFixed(0)}%`; } },
+  roic: { label: "ROIC", short: "ROIC", get: (L) => { if (!debtOk) return "—"; const r = roicValue(L); return r == null ? "—" : `${(r * 100).toFixed(0)}%`; } },
   capex: { label: "Capex", short: "Capex", get: (L) => (L.capex != null ? money(Math.abs(L.capex)) : "—") },
   capexToRev: { label: "Capex / revenue", short: "Capex/rev", get: (L) => marginStr(L.capex != null ? Math.abs(L.capex) : null, L.revenue) },
   capexToDep: { label: "Capex vs depreciation", short: "Capex/dep", get: (L) => (L.capex != null && L.depreciation ? `${(Math.abs(L.capex) / L.depreciation).toFixed(2)}×` : "—") },
-  totalDebt: { label: "Total debt", short: "Debt", get: (L) => money(L.totalDebt) },
+  totalDebt: { label: "Total debt", short: "Debt", get: (L) => (debtOk ? money(L.totalDebt) : "—") },
   cash: {
     label: "Cash & investments",
     short: "Cash+inv",
@@ -42,6 +49,7 @@ const ROW = {
     short: "Net debt",
     kind: "netdebt",
     get: (L) => {
+      if (!debtOk) return "—"; // material interest proves the debt is under-captured for this filer
       if (L.totalDebt == null && L.cashAndEquivalents == null) return "—";
       return money((L.totalDebt || 0) - (liquidAssets(L) || 0));
     },
