@@ -1,0 +1,114 @@
+---
+// "Moat under AI" — the Munger too-hard-pile read. Three primary-source inputs, no model:
+// the structural exposure of the industry (from its SIC code), the company's own words on
+// AI in its 10-K (named as a competitive risk? new this year? framed as a capability?), and
+// what the record says the moat was. The question it poses, never answers: does a moat that
+// was durable on the record outlast a technology that lowers the cost of what the firm sells?
+import language from "../data/language.json";
+import { classify, aiExposure } from "../lib/archetype.mjs";
+import { roicValue } from "../lib/fundamentals.mjs";
+import { TONE_COLOR } from "../lib/fundamentals.mjs";
+
+const { company } = Astro.props;
+const exp = aiExposure(company);
+const ai = language?.companies?.[company.ticker]?.aiRead || null;
+const fy = language?.companies?.[company.ticker]?.fy || company.fy;
+const cls = classify(company);
+const assetLight = cls.sector.key === "assetLight";
+
+// Was the moat durable on the record? (high, persistent return on capital) — the very thing
+// AI now tests for software and information businesses.
+const H = (company.history || []).filter((h) => h?.lines?.revenue != null);
+const roics = H.map((h) => roicValue(h.lines)).filter((v) => v != null);
+const above = roics.filter((v) => v >= 0.15).length;
+const wasDurable = roics.length >= 4 && above >= Math.ceil(roics.length * 0.6);
+
+const TIER = {
+  elevated: { label: "Elevated", tone: "warn" },
+  moderate: { label: "Moderate", tone: "info" },
+  low: { label: "Low", tone: "good" },
+};
+const tier = TIER[exp.tier] || TIER.moderate;
+const cap = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
+
+// The filing-evidence line, when the refreshed data carries it.
+let evidence = null;
+if (ai && ai.inRisk) {
+  evidence = {
+    label: ai.newThisYear ? "A competitive risk — new this year" : "Named as a competitive risk",
+    tone: ai.newThisYear ? "warn" : "info",
+    quote: ai.newQuote || ai.riskQuote,
+    note: `${fy ? `Its FY${fy} ` : "Its "}10-K names artificial intelligence as a competitive threat${ai.newThisYear ? ", in language that was not in the prior year's filing" : ""}.`,
+  };
+} else if (ai && ai.mentionsAIRisk) {
+  evidence = {
+    label: "Raised, but not as a competitor",
+    tone: "info",
+    quote: null,
+    note: `The filing raises AI among its risks, but in other terms — security, regulation, energy or the like — not as a competitor to its product${ai.asCapability ? "; it frames AI mainly as a capability" : ""}.`,
+  };
+} else if (ai && exp.tier === "elevated") {
+  evidence = {
+    label: ai.asCapability ? "Framed as a capability" : "Not named",
+    tone: "info",
+    quote: ai.asCapability ? ai.capabilityQuote : null,
+    note: ai.asCapability
+      ? "Despite the structural exposure, the filing positions AI as something it uses, not a threat to its product."
+      : "Despite the structural exposure, the latest 10-K does not name AI as a competitive risk — itself worth a question.",
+  };
+} else if (ai && ai.asCapability) {
+  evidence = { label: "Framed as a capability", tone: "info", quote: ai.capabilityQuote, note: "The filing positions AI as something the company uses, not something it fears." };
+}
+
+// The synthesis: the question, posed, never answered.
+let verdict;
+if (exp.tier === "elevated" && (assetLight || wasDurable)) {
+  verdict = `${wasDurable ? "The moat the record shows — a high return on capital held across years — was earned before AI collapsed the cost of building a capable substitute for the very thing this business sells. " : "AI has collapsed the cost of building a capable substitute for the very thing this business sells. "}When a credible alternative can be assembled for a fraction of the incumbent's price, it is pricing power that erodes first, not revenue tomorrow. A candidate for Munger's “too-hard pile”: the live question is whether the moat survives that, not whether it held in the past.`;
+} else if (exp.tier === "elevated") {
+  verdict = "The product is the kind capable AI most directly contests: when a substitute can be built cheaply, the incumbent's pricing power is the first thing at risk. The record cannot tell you whether the moat outlasts that, so treat past durability as a starting point, not a promise.";
+} else if (exp.tier === "low") {
+  verdict = `AI is unlikely to contest a moat that is physical, regulated or balance-sheet-funded; here it reads more as a cost tool than a threat${ai && ai.asCapability ? ", and the company is using it that way" : ""}.`;
+} else {
+  verdict = "AI will reshape costs and some products here without clearly contesting or sparing the core moat; how management frames it is the tell, not the industry label.";
+}
+---
+
+<section class="aimoat">
+  <div class="head">
+    <h3 class="secHead">Moat under AI</h3>
+    <span class="tierBadge" style={`color:${TONE_COLOR[tier.tone]}; border-color:${TONE_COLOR[tier.tone]}`}>{tier.label} contestability</span>
+  </div>
+  <p class="lead">{cap(exp.reason)}.</p>
+
+  {evidence ? (
+    <div class="ev">
+      <div class="evRow">
+        <span class="evLabel">In its own filing</span>
+        <span class="evVal" style={`color:${TONE_COLOR[evidence.tone]}`}>{evidence.label}</span>
+      </div>
+      <p class="evNote">{evidence.note}</p>
+      {evidence.quote ? <blockquote>“{evidence.quote}{evidence.quote.length >= 280 ? "…" : ""}”</blockquote> : null}
+    </div>
+  ) : null}
+
+  <p class="verdict">{verdict}</p>
+  <p class="foot">Classic text analysis of the filing's own risk factors, paired with the industry's structure from its SIC code. A lens on whether the moat is contestable, never a verdict on the company; the durability is read above, the price below.</p>
+</section>
+
+<style>
+  .aimoat { margin: 18px 0 0; padding-top: 16px; border-top: 1px solid var(--rule-strong); }
+  .head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .secHead { font-family: var(--sans); font-weight: 600; margin: 0; font-size: 11.5px; letter-spacing: 0.09em; text-transform: uppercase; color: var(--ink); }
+  .tierBadge { font-family: var(--sans); font-size: 10.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; border: 1px solid; border-radius: 2px; padding: 2px 8px; flex: 0 0 auto; }
+  .lead { font-size: 14px; line-height: 1.55; color: var(--ink-soft); margin: 10px 0 0; max-width: 74ch; }
+
+  .ev { margin: 12px 0 0; padding: 10px 13px; background: var(--accent-tint); border-left: 2px solid var(--accent); }
+  .evRow { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+  .evLabel { font-size: 10px; letter-spacing: 0.07em; text-transform: uppercase; color: var(--accent); font-weight: 700; }
+  .evVal { font-family: var(--sans); font-weight: 700; font-size: 13.5px; text-align: right; }
+  .evNote { font-size: 13px; color: var(--ink-dim); margin: 6px 0 0; line-height: 1.5; }
+  .ev blockquote { font-family: var(--serif); font-size: 14px; line-height: 1.5; color: var(--ink-soft); border-left: 2px solid var(--accent); padding: 2px 0 2px 12px; margin: 9px 0 0; }
+
+  .verdict { font-size: 14px; line-height: 1.6; color: var(--ink-soft); margin: 12px 0 0; max-width: 74ch; }
+  .foot { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); margin: 10px 0 0; line-height: 1.5; max-width: 74ch; }
+</style>

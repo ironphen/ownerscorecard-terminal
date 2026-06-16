@@ -400,6 +400,44 @@ function diff(curSents, priorSents) {
   return { notableCount: notable.length, notable };
 }
 
+// ---- AI / "too-hard pile" signal ----
+// Classic NLP, no model. Two questions, answered from the filing's own words: does the
+// company name artificial intelligence as a competitive risk in its Item 1A (and is that
+// language new this year), and does it position AI as a capability in the Business/MD&A?
+// The verbatim is the evidence; the page pairs it with the structural AI-exposure of the
+// industry to ask whether a once-durable moat is becoming contestable. Never a verdict.
+const AI_WORDS = /\b(artificial intelligence|machine learning|generative a\.?i\.?|large language models?|\bllms?\b|deep learning|neural networks?|foundation models?|generative models?)\b/i;
+const AI_ACRONYM = /\bA\.?I\.?\b/; // the acronym, case-sensitive, so "again"/"said" don't match
+const hasAI = (s) => AI_WORDS.test(s) || AI_ACRONYM.test(s);
+// A *competitive* AI risk: AI named alongside substitution, disruption or pricing framing —
+// the moat question. Deliberately narrow.
+const AI_COMPETE = /\b(compet|substitut|replac|disrupt|displac|obsolet|erode|eroding|disintermediat|new entrant|barrier to entry|lower\w* (the )?(cost|barrier|price)|reduce\w* (the )?(cost|demand|need|reliance)|open[- ]?source|free (or |and )?(low[- ]?cost|alternativ)|pricing (power|pressure)|commoditi|less reliant|democrati|enable\w*[^.]{0,40}(anyone|customers|users|competitors|smaller|themselves|in-house)|without (the )?(need|specialized|expertise)|build\w*[^.]{0,25}(their own|in-house)|self[- ]?serv|alternativ\w* to (our|the)|render\w* (our|its))/i;
+// Not the moat question: cybersecurity, energy, ethics/bias, IP, privacy and regulation are
+// different AI risks; exclude them so the competitive signal stays clean.
+const AI_EXCLUDE = /\b(cyber|threat actor|malicious|phishing|breach|fraud|\benergy\b|power consumption|data cent|emission|climate|ethic|\bbias\b|discriminat|infring|copyright|hallucinat|privacy|misinformation|deepfake|workforce|reskill|talent)/i;
+
+function aiSignal(cur, prior) {
+  const risk = cur?.risk?.sents || [];
+  const opp = (cur?.business?.sents || []).concat(cur?.mdna?.sents || []);
+  const compHits = risk.filter((s) => hasAI(s) && AI_COMPETE.test(s) && !AI_EXCLUDE.test(s));
+  const anyAIrisk = risk.some(hasAI);
+  const priorTok = (prior?.risk?.sents || []).map(tokenize);
+  const isNew = (s) => { const t = tokenize(s); if (t.size < 6) return false; for (const pt of priorTok) if (jaccard(t, pt) >= 0.55) return false; return true; };
+  const newComp = prior ? compHits.find((s) => isNew(s)) : null;
+  const pointed = newComp || compHits[0] || null;
+  const capHits = opp.filter((s) => hasAI(s) && !AI_EXCLUDE.test(s));
+  return {
+    inRisk: compHits.length > 0,        // names AI specifically as a competitive risk
+    mentionsAIRisk: anyAIrisk,          // mentions AI anywhere in the risk factors
+    riskMentions: compHits.length,
+    riskQuote: pointed ? cleanQuote(pointed).slice(0, 320) : null,
+    newThisYear: !!newComp,
+    newQuote: newComp ? cleanQuote(newComp).slice(0, 320) : null,
+    asCapability: capHits.length > 0,
+    capabilityQuote: capHits.length ? cleanQuote(capHits[0]).slice(0, 280) : null,
+  };
+}
+
 // ---- "What an owner would flag" ----
 // The timeless read, not the year-over-year diff: the handful of sentences in the
 // Business, MD&A and Risk Factors that Graham (solvency, stability) and Buffett
@@ -583,6 +621,7 @@ async function main() {
       risk: { words: cur.risk.words, wordsPrior: prior?.risk.words ?? null },
       mdnaChange: mdnaDiff,
       riskChange: riskDiff,
+      aiRead: aiSignal(cur, prior),
       comp,
     };
     ok++;
