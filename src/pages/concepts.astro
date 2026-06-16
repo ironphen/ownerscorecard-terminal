@@ -1,11 +1,39 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
 import { GROUPS, CONCEPTS, conceptById } from "../data/concepts.mjs";
+import fundamentals from "../data/fundamentals.json";
+import { roicValue, ownerEarningsMargin, liquidAssets, cashConversionCycle, debtReliable, topLineRevenue } from "../lib/fundamentals.mjs";
+import { financialKind, classify } from "../lib/archetype.mjs";
 
 // The vocabulary of ownership, in one place. Each term is defined once, in plain
 // language, with why an owner cares and the honest limit of the measure. The company
 // pages link into it; this is where a reader learns the word for good.
 const byGroup = (key) => CONCEPTS.filter((c) => c.group === key);
+
+// Bridge each measurable idea to reality: the catalog companies where it shows up most
+// plainly, so a reader can leave the definition and go watch it at work. Same sourced
+// figures, recognizable names only (a revenue floor), never a recommendation, just where
+// the number runs high (or, for dilution, where it runs the wrong way).
+const big = (fundamentals.companies || []).filter((c) => (topLineRevenue(c.lines, c) || 0) > 3e9);
+const ind = big.filter((c) => !financialKind(c));
+const median = (xs) => { const s = [...xs].sort((a, b) => a - b); return s.length ? s[Math.floor((s.length - 1) / 2)] : null; };
+const medianRoic = (c) => { const v = (c.history || []).map((h) => roicValue(h.lines)).filter((x) => x != null); return v.length >= 4 ? median(v) : null; };
+const grossM = (c) => { const L = c.lines || {}; return L.revenue && L.costOfRevenue != null ? 1 - L.costOfRevenue / L.revenue : null; };
+const netCashOf = (c) => { const L = c.lines || {}; return debtReliable(L) ? (liquidAssets(L) || 0) - (L.totalDebt || 0) : null; };
+const topBy = (pool, metric, n = 6, asc = false) =>
+  pool.map((c) => ({ t: c.ticker, v: metric(c) })).filter((x) => x.v != null).sort((a, b) => (asc ? a.v - b.v : b.v - a.v)).slice(0, n).map((x) => x.t);
+// Gross margin is only a clean pricing-power read where cost of revenue is tagged the
+// usual way; utilities and heavy industrials tag it erratically and read artificially
+// wide, so we draw the examples from consumer brands and asset-light businesses, which is
+// also exactly where a wide gross margin means pricing power.
+const brandLike = ind.filter((c) => ["consumer", "assetLight"].includes(classify(c).sector.key));
+const EXEMPLARS = {
+  roic: { label: "Returns that have held highest across the record", tickers: topBy(ind, medianRoic) },
+  "owner-earnings": { label: "Most cash reaching owners", tickers: topBy(ind, (c) => ownerEarningsMargin(c.lines)) },
+  "gross-margin": { label: "Widest gross margins (brands and asset-light)", tickers: topBy(brandLike, grossM) },
+  "net-debt": { label: "Deepest net-cash balance sheets", tickers: topBy(ind, netCashOf) },
+  "cash-conversion-cycle": { label: "Funded by customers and suppliers", tickers: big.filter((c) => cashConversionCycle(c)?.tone === "good").sort((a, b) => (topLineRevenue(b.lines, b) || 0) - (topLineRevenue(a.lines, a) || 0)).slice(0, 6).map((c) => c.ticker) },
+};
 ---
 
 <BaseLayout title="Concepts, Owner Scorecard">
@@ -44,6 +72,14 @@ const byGroup = (key) => CONCEPTS.filter((c) => c.group === key);
             <p class="cbody">{c.body}</p>
             {c.formula ? (
               <p class="formula"><span class="flabel">How it is figured</span>{c.formula}</p>
+            ) : null}
+            {EXEMPLARS[c.id] && EXEMPLARS[c.id].tickers.length ? (
+              <p class="examples">
+                <span class="exlabel">{EXEMPLARS[c.id].label}</span>
+                {EXEMPLARS[c.id].tickers.map((t, i) => (
+                  <>{i > 0 ? <span class="dot"> · </span> : ""}<a href={`/c/${t}`}>{t}</a></>
+                ))}
+              </p>
             ) : null}
             {c.seeAlso && c.seeAlso.length ? (
               <p class="see">
@@ -104,6 +140,11 @@ const byGroup = (key) => CONCEPTS.filter((c) => c.group === key);
       max-width: 74ch; font-variant-numeric: tabular-nums;
     }
     .flabel { display: block; font-size: 10.5px; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); margin-bottom: 2px; }
+    .examples { font-size: 13.5px; margin: 10px 0 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 7px; }
+    .examples .exlabel { font-family: var(--sans); font-size: 10.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); margin-right: 3px; }
+    .examples a { font-family: var(--sans); font-weight: 600; color: var(--ink); }
+    .examples a:hover { color: var(--accent); }
+    .examples .dot { color: var(--faint); }
     .see { font-size: 13px; color: var(--muted); margin: 9px 0 0; }
 
     @media (max-width: 520px) {
