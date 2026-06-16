@@ -2,7 +2,7 @@
 import BaseLayout from "../layouts/BaseLayout.astro";
 import fundamentals from "../data/fundamentals.json";
 import { getCollection } from "astro:content";
-import { fmtUSD, roicValue, ownerEarningsMargin, operatingMargin, liquidAssets, topLineRevenue, debtReliable } from "../lib/fundamentals.mjs";
+import { fmtUSD, roicValue, ownerEarningsMargin, operatingMargin, liquidAssets, topLineRevenue, debtReliable, cashConversionCycle } from "../lib/fundamentals.mjs";
 import { classify, financialKind } from "../lib/archetype.mjs";
 import { returnOnEquity, returnOnTangibleEquity, equityToAssets } from "../lib/financials.mjs";
 import { ffoMargin, ffoPayout, debtToAssets } from "../lib/reits.mjs";
@@ -47,6 +47,8 @@ const rows = [...(fundamentals.companies || [])]
       modelKey: cls.sector.key,
       industry: cls.industry.short,
       revenue: topLineRevenue(L, c),
+      // Negative cash-conversion cycle: customers and suppliers fund the operation.
+      negCycle: cashConversionCycle(c)?.tone === "good",
       // industrial lens
       opMargin: isFin ? null : operatingMargin(L),
       roic: isFin ? null : roicValue(L),
@@ -80,6 +82,7 @@ const slim = rows.map((r) => ({
   op: r4(r.opMargin), roic: r4(r.roic), oe: r4(r.oeMargin), nd: r.netCash, gp: r.grahamPasses, gt: r.grahamTestable,
   roe: r4(r.roe), rotce: r4(r.rotce), nm: r4(r.netMargin), ea: r4(r.equityAssets),
   ffoM: r4(r.ffoM), payout: r4(r.payout), dta: r4(r.dta),
+  nwc: r.negCycle ? 1 : 0,
 }));
 const FALLBACK = rows.slice(0, 50);
 const slimJSON = JSON.stringify(slim).replace(/</g, "\\u003c");
@@ -139,6 +142,7 @@ const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "
       <button class="lens" data-lens="durable">Durable returns</button>
       <button class="lens" data-lens="cash">Cash machines</button>
       <button class="lens" data-lens="fortress">Fortress balance sheet</button>
+      <button class="lens" data-lens="fund">Customers fund it</button>
       <button class="lens" data-lens="graham">Graham-defensive</button>
     </div>
     <p class="lensTeach" id="lensTeach" hidden></p>
@@ -343,6 +347,10 @@ const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "
         fortress: {
           pass: (r) => r.nd != null && r.nd > 0,
           teach: "Fortress balance sheet. More cash than debt. A company that cannot be killed never has to be timed, and net cash is the option to buy when others are forced to sell. This is safety, not cheapness, and a fortress balance sheet can still sit inside a mediocre business.",
+        },
+        fund: {
+          pass: (r) => r.nwc === 1,
+          teach: "Customers fund it. A negative cash-conversion cycle: the company collects from customers before it pays suppliers, so it grows on other people's money, the same float Buffett prized in insurance. It needs no owner capital to expand its working capital, a quiet structural edge that the biggest retailers and platforms compound on, though the edge is in the funding, not by itself in the quality of the business.",
         },
         graham: {
           pass: (r) => r.gp != null && r.gp >= 5,

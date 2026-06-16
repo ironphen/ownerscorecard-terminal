@@ -46,6 +46,7 @@ jobs:
         continue-on-error: true # qualitative layer; never fail the fundamentals refresh
         env:
           SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT }}
+          BIZ_DEBUG: ${{ github.event.inputs.debug }}
       - run: npm run fetch:segments
         continue-on-error: true # where-the-money-comes-from layer; never fail the refresh
         env:

@@ -47,6 +47,8 @@ const _semis = { p: "A semiconductor business, riding a brutal capacity cycle on
 const _software = { p: "A software business, earning high margins on code once it is written.", l: "Retention and the cost of growth. What decides it: whether customers expand rather than churn, how much of revenue is spent winning the next one, and whether software's gross margin holds as it scales." };
 const _telecom = { p: "A telecom carrier, renting access to a network that must be constantly rebuilt.", l: "Subscribers, revenue per user, and network capex. What decides it: net adds against churn, ARPU, and the relentless capital to keep the network competitive." };
 const _restaurant = { p: "A restaurant business, earning on traffic through its doors and the returns on each new unit.", l: "Same-store sales and unit economics. What decides it: traffic and check at existing locations, the return on each new unit, and whether the model is franchised, an asset-light royalty stream, or company-owned." };
+const _hotel = { p: "A hotel and lodging business, earning on rooms filled and the brand that fills them.", l: "Occupancy and revenue per available room, and the model. What decides it: how full the rooms run and at what rate (RevPAR), the shift toward asset-light franchising and management fees over owning the real estate, and how demand holds when travel softens." };
+const _ship = { p: "A shipbuilder and defense contractor, working a multi-year backlog of large naval programs.", l: "The backlog and program execution. What decides it: the order book of naval and commercial vessels, whether large multi-year programs are delivered on cost, and the balance between budget-driven defense work and the cycle in commercial shipping." };
 const _findata = { p: "A financial-data and analytics business, selling the information, ratings and benchmarks the markets run on.", l: "Recurring subscriptions and the data moat. What decides it: how much revenue renews each year against the share that rides the cycle of new debt issuance on the ratings side, the pricing power of being embedded in customers' workflows and benchmarks, and the operating leverage as the same data is sold again at almost no extra cost." };
 // Finer than the eight economic models where a financial subtype earns its own lens: an
 // asset manager, an exchange, an insurance broker and a health plan are each read on
@@ -78,13 +80,14 @@ const IND = {
   "491": _util, "492": _util, "493": _util, "494": _util,
   "131": _energy, "132": _energy, "290": _energy, "291": _energy, "299": _energy, "138": _energy, "461": _midstream,
   "451": _airline, "452": _airline, "401": _rail, "470": _logistics, "473": _logistics, "421": _logistics,
-  "371": _auto, "372": _aero, "376": _aero,
+  "371": _auto, "372": _aero, "376": _aero, "373": _ship,
   "351": _machinery, "352": _machinery, "353": _machinery, "354": _machinery, "355": _machinery, "356": _machinery, "358": _machinery, "359": _machinery,
   "280": _chem, "281": _chem, "282": _chem, "285": _chem, "286": _chem, "287": _chem, "289": _chem,
   "101": _metals, "104": _metals, "140": _metals, "331": _metals, "332": _metals, "333": _metals, "334": _metals, "335": _metals,
   "283": _pharma, "384": _meddev, "381": _instr, "382": _instr,
   "800": _health, "805": _health, "806": _health, "807": _health, "808": _health,
   "367": _semis, "737": _software, "481": _telecom, "482": _telecom, "489": _telecom, "581": _restaurant,
+  "700": _hotel, "701": _hotel,
 };
 // A few four-digit overrides where the three-digit group is too coarse: credit-reporting
 // and ratings/data firms (S&P Global, Moody's) sit in a generic "business services" SIC.
@@ -127,7 +130,24 @@ export function businessPhrase(company) {
 // A weak lede: the extracted Item 1 sentence is about the company's contracts or
 // structure, not what it does, so the hero should fall back to the computed phrase.
 const WEAK_LEDE = /\b(entered into|agreements?|arrangements?)\b[^.]{0,50}\b(contractor|third part|provider|supplier|vendor|counterpart)/i;
+// A sentence that the ranking surfaced but that does not actually say what the business
+// is: a strategy or aspiration, a governance note, a production or sales-channel detail,
+// or one named segment standing in for the whole. When the hero is one of these, the
+// computed industry phrase is the better opener, so we treat the verbatim as weak.
+const NOT_A_DESCRIPTION = new RegExp(
+  "^(" +
+    "we are (leveraging|committed to|pursuing|executing|positioned|transforming|dedicated to|focused on (being|delivering|creating))|" +
+    "we (strive|seek|aim|intend|plan|continue to|are confident)|" +
+    "our (public benefit |corporate )?(purpose|mission|vision|strateg|goals?|values|history|story|charter|culture)|" +
+    "we (centrally )?produce our|" +
+    "we (currently )?(market|sell)\\b[^.]{0,70}\\b(directly through|in (more than|over|excess of)|across (the )?(globe|world|\\d))|" +
+    "we operate (our|the) business through|" +
+    "[A-Z][a-z]+ includes our\\b" +
+  ")",
+  "i"
+);
 export function weakLede(s) {
   if (!s || typeof s !== "string") return true;
-  return /^we have entered\b/i.test(s) || WEAK_LEDE.test(s) || /\bvarious (facilities|services|agreements|arrangements)\b/i.test(s);
+  return /^we have entered\b/i.test(s) || WEAK_LEDE.test(s) ||
+    /\bvarious (facilities|services|agreements|arrangements)\b/i.test(s) || NOT_A_DESCRIPTION.test(s);
 }

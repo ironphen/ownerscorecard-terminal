@@ -161,11 +161,11 @@ function metrics(text) {
 // risk line or a heading as the description. Their words; our numbers elsewhere for
 // what they mean. Returns null when nothing clean is found, and the page falls back.
 const BIZ_DOING = /\b(designs?|manufactures?|manufacturing|develops?|markets?|provides?|providing|operates?|sells?|selling|distributes?|produces?|producing|delivers?|offers?|offering|supplies|supplying)\b/i;
-const BIZ_ISA = /\b(is|are)\s+(a|an|the)\b[^.]{0,60}?\b(compan|provider|manufacturer|producer|retailer|developer|operator|maker|supplier|distributor|platform|business|leader|corporation|holding|bank|insurer|airline|carrier)\w*/i;
-const BIZ_SKIP = /(was|were)\s+incorporated|incorporated\s+(under|in)\b|reincorporat|organized under the laws|founded in\s+\d|fiscal year|forward-looking|securities (act|exchange) of|report on form|unless the context|initial public offering|principal executive offices|market for (the )?registrant|common equity|equity securities|stockholder matters|\bmay\b|could\s+(adversely|result|harm|cause|materially|impair)|no assurance|our ability to|unsubstantiated|misleading|negative publicity|table of contents|\bcould\b|\bif (we|our|the company|a |an |adverse)|decline in (consumer|demand|sales)/i;
+const BIZ_ISA = /\b(is|are)\s+(a|an|the)\b[^.]{0,60}?\b(compan|provider|manufacturer|producer|retailer|developer|operator|maker|supplier|distributor|platform|business|leader|corporation|holding|bank|insurer|airline|carrier|restaurant|brand|chain|franchis|network|marketplace|trust|utility|pharmaceutical|biopharmaceutical|biotechnolog|technolog|healthcare|energy|refiner|exchange|processor|grocer|wholesaler|broker|dealer|lender|integrator|miner|reit)\w*/i;
+const BIZ_SKIP = /(was|were)\s+incorporated|incorporated\s+(under|in)\b|reincorporat|organized under the laws|founded in\s+\d|fiscal year|forward-looking|securities (act|exchange) of|report on form|unless the context|initial public offering|principal executive offices|market for (the )?registrant|common equity|equity securities|stockholder matters|\bmay\b|could\s+(adversely|result|harm|cause|materially|impair)|no assurance|our ability to|unsubstantiated|misleading|negative publicity|table of contents|\bcould\b|\bif (we|our|the company|a |an |adverse)|decline in (consumer|demand|sales)|reasonable basis for (our|the) opinion|provide a reasonable basis|standards of the public company accounting/i;
 // A weak subject: the sentence is about employees, customers or a side note, not the
 // company itself, so it is not a description of the business.
-const BIZ_WEAK = /^(we also\b|when\s+we\b|founded\b|established\b|originally\b|since (our|its|we)\b|our (customers?|employees?|people|associates|team|more than|over\s|approximately|roughly|nearly))/i;
+const BIZ_WEAK = /^(we also\b|when\s+we\b|founded\b|established\b|originally\b|since (our|its|we)\b|our (mission|vision|strateg|purpose|goals?|values|history|story|customers?|employees?|people|associates|team|more than|over\s|approximately|roughly|nearly)|we have (sharpened|built|been developing|also been|grown|expanded)|we strive|we seek\b|we aim\b)/i;
 const HEAD_TOKEN = /^(item\s*1[ab]?\b\.?|part\s*i+\b\.?|general development of (the )?business|business overview|company overview|our company|our business|the company|introduction|business|general|overview)\s*[:.\-–—]?\s+/i;
 const LEAD_VERB = /^(is|are|operates?|provides?|markets?|designs?|develops?|sells?|offers?|supplies|distributes?|delivers?|produces?|manufactures?|engages?)\b/i;
 // Signals a richer description: names products, markets, customers or segments rather
@@ -183,7 +183,7 @@ const BIZ_ENGAGED = /\b(engaged?|engages?)\s+(primarily\s+)?in\b|\b(principal|pr
 // them, so the canonical "<Company> is a <type> ..." form and richer, company-named
 // sentences win, with earliness as the tiebreaker (the opener is usually the intended
 // overview). Verbatim, lightly cleaned; null when nothing clean is found.
-function businessDescription(sents, name) {
+function businessDescription(sents, name, ticker) {
   if (!Array.isArray(sents)) return null;
   // Distinctive words from the company's name, for a robust subject match: handles
   // "Exxon Mobil" appearing as "ExxonMobil" in the filing, which a word-boundary on the
@@ -197,6 +197,10 @@ function businessDescription(sents, name) {
     let s = cleanQuote(String(slice[i] || ""));
     let prev;
     do { prev = s; s = s.replace(HEAD_TOKEN, "").trim(); } while (s !== prev); // strip stacked headings
+    // Strip a hedging "We believe (that)" opener so the description underneath is scored on
+    // its own merit (Chewy's "We believe that we are the preeminent online source ...").
+    s = s.replace(/^we believe\s+(that\s+)?/i, "");
+    if (/^[a-z]/.test(s)) s = s.charAt(0).toUpperCase() + s.slice(1);
     if (s.length < 40 || s.length > 380) continue;
     if (BIZ_SKIP.test(s) || BIZ_WEAK.test(s)) continue;
     const isa = BIZ_ISA.test(s);
@@ -224,6 +228,15 @@ function businessDescription(sents, name) {
   }
   if (!cands.length) return null;
   cands.sort((a, b) => b.score - a.score);
+  // Diagnostic: BIZ_DEBUG=CAVA dumps the scored candidates and the raw opening sentences,
+  // so a hero that picked the wrong line (or found no canonical "<Company> is a <type>")
+  // can be diagnosed from the actual filing rather than guessed at.
+  if (ticker && process.env.BIZ_DEBUG && process.env.BIZ_DEBUG.toUpperCase().split(",").map((s) => s.trim()).includes(ticker.toUpperCase())) {
+    console.log(`\n=== BIZ_DEBUG ${ticker}: ${cands.length} candidates ===`);
+    cands.slice(0, 8).forEach((c) => console.log(`  [${c.score.toFixed(1)}] ${c.s.slice(0, 110)}`));
+    console.log(`  raw opening: ${sents.slice(0, 6).map((s) => String(s).slice(0, 55)).join(" | ")}`);
+    console.log("=== end BIZ_DEBUG ===\n");
+  }
   const best = cands[0].s;
   return best.length > 300 ? best.slice(0, 297).replace(/[\s,;]+\S*$/, "") + "…" : best;
 }
@@ -490,7 +503,7 @@ async function main() {
       fy: cur.reportDate?.slice(0, 4) || null,
       priorFy: prior?.reportDate?.slice(0, 4) || null,
       sourceUrl: cur.url,
-      business: businessDescription(cur.business.sents, c.name),
+      business: businessDescription(cur.business.sents, c.name, c.ticker),
       ownerFlags: flags,
       mdna: {
         words: cur.mdna.words, fog: cur.mdna.fog, hedgeDensity: Math.round(cur.mdna.hedgeDensity * 1e4) / 1e4,
