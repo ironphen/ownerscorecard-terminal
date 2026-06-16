@@ -6,7 +6,7 @@
 //
 //   node scripts/edinetTest.mjs
 
-import { parseFacts, buildRecord } from "./fetchEdinetFundamentals.mjs";
+import { parseFacts, buildRecord, decodeCsv } from "./fetchEdinetFundamentals.mjs";
 
 // Tab-separated, header first (skipped by the parser). Columns:
 // element, item, context, relYear, consolidated, period, unit, unitName, value
@@ -63,6 +63,19 @@ eq("market", rec.market, "JP");
 eq("history length (current + 2 prior reached)", rec.history.length, 3);
 eq("history oldest fy (five-year-summary reach)", rec.history[0].fy, 2022);
 eq("history oldest revenue (from summary)", rec.history[0].lines.revenue, 800000);
+
+// Encoding detection: EDINET ships UTF-16; a wrong assumption parses nothing, so decodeCsv
+// must recover the text from a UTF-16LE buffer (with BOM), UTF-16BE, and plain UTF-8.
+const jp = "売上高\tNetSales\t連結";
+const u16le = Buffer.concat([Buffer.from([0xff, 0xfe]), Buffer.from(jp, "utf16le")]);
+const u16be = (() => { const b = Buffer.from(jp, "utf16le"); b.swap16(); return Buffer.concat([Buffer.from([0xfe, 0xff]), b]); })();
+const u8 = Buffer.from(jp, "utf8");
+eq("decodeCsv UTF-16LE (BOM)", decodeCsv(u16le), jp);
+eq("decodeCsv UTF-16BE (BOM)", decodeCsv(u16be), jp);
+eq("decodeCsv UTF-8", decodeCsv(u8), jp);
+// Full roundtrip through the real decode path (UTF-16LE buffer the parser will actually see).
+const recFromBuf = buildRecord(parseFacts(decodeCsv(Buffer.concat([Buffer.from([0xff, 0xfe]), Buffer.from(tsv, "utf16le")]))), { fy: 2024 }, { ticker: "9999", name: "Test KK" });
+eq("revenue survives a UTF-16LE decode roundtrip", recFromBuf.lines.revenue, 1000000);
 
 if (failed) { console.error(`\n❌ ${failed} check(s) failed`); process.exit(1); }
 console.log("\n✅ All EDINET parser checks passed");

@@ -68,6 +68,20 @@ export function unzip(buf) {
   return out;
 }
 
+// Decode an EDINET CSV buffer to text, auto-detecting the encoding rather than assuming
+// one: a UTF-16 BOM (either endianness), a UTF-8 BOM, or, lacking a BOM, a NUL-byte census
+// that tells UTF-16 from UTF-8. EDINET ships these as UTF-16, but detecting keeps the
+// pipeline from silently parsing nothing if that ever changes.
+export function decodeCsv(buf) {
+  if (buf.length >= 2 && buf[0] === 0xff && buf[1] === 0xfe) return buf.toString("utf16le", 2);
+  if (buf.length >= 2 && buf[0] === 0xfe && buf[1] === 0xff) { const b = Buffer.from(buf.subarray(2)); b.swap16(); return b.toString("utf16le"); }
+  if (buf.length >= 3 && buf[0] === 0xef && buf[1] === 0xbb && buf[2] === 0xbf) return buf.toString("utf8", 3);
+  let nul = 0;
+  const lim = Math.min(buf.length, 4096);
+  for (let i = 0; i < lim; i++) if (buf[i] === 0) nul++;
+  return nul > lim / 4 ? buf.toString("utf16le") : buf.toString("utf8");
+}
+
 // ---- CSV (TSV) parse ----------------------------------------------------------------
 // EDINET type=5 files are UTF-16LE, tab-separated, with a Japanese header row. We parse
 // by column position (stable across the language): element id, item name, context id,
@@ -346,22 +360,30 @@ async function main() {
       console.warn(`  ! ${entry.ticker}: unzip failed (${err.message})`);
       continue;
     }
+    const isDbg = DEBUG.includes(entry.ticker);
+    if (isDbg) console.log(`\n=== EDINET_DEBUG ${entry.ticker} ${entry.name}: ${entries.length} zip entries, doc ${hit.docId} ===`);
+    let rawLines = 0;
     for (const f of entries) {
-      if (!/\.csv$/i.test(f.name)) continue;
-      // EDINET CSVs are UTF-16LE; strip the BOM and parse.
-      const text = f.data.toString("utf16le").replace(/^﻿/, "");
+      if (!/\.csv$/i.test(f.name)) { if (isDbg) console.log(`  skip ${f.name}`); continue; }
+      const text = decodeCsv(f.data);
+      const lines = text.split(/\r?\n/);
+      rawLines += lines.length;
+      if (isDbg) {
+        console.log(`  csv ${f.name}: ${lines.length} lines`);
+        for (let k = 0; k <= 3 && k < lines.length; k++) console.log(`     ${k === 0 ? "hdr" : "r" + k}: ${JSON.stringify(lines[k].slice(0, 220))}`);
+      }
       parseFacts(text, store);
     }
     const fy = hit.periodEnd ? Number(hit.periodEnd.slice(0, 4)) : (hit.submit ? Number(hit.submit.slice(0, 4)) : null);
     const meta = { fy, periodEnd: hit.periodEnd, edinetCode: hit.edinetCode, secCode: hit.secCode, docId: hit.docId };
 
-    if (DEBUG.includes(entry.ticker)) {
-      console.log(`\n=== EDINET_DEBUG ${entry.ticker} ${entry.name} (fy${fy}, doc ${hit.docId}) ===`);
+    if (isDbg) {
       const names = Object.keys(store).sort();
-      console.log(`  ${names.length} elements with clean primary-statement contexts. Sample current-year values:`);
-      for (const n of names) {
+      console.log(`  parsed ${rawLines} raw lines -> ${names.length} elements with clean primary-statement contexts`);
+      console.log(`  current-year values (first 70 elements):`);
+      for (const n of names.slice(0, 70)) {
         const cur = store[n]["0|d"] || store[n]["0|i"];
-        if (cur) console.log(`    ${n.padEnd(64)} ${cur.val}`);
+        if (cur) console.log(`    ${n.padEnd(70)} ${cur.val}`);
       }
       console.log("=== end EDINET_DEBUG ===\n");
     }
