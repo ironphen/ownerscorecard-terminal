@@ -194,6 +194,15 @@ export const CONCEPTS = [
     seeAlso: ["tangible-book", "return-on-equity"],
   },
   {
+    id: "return-on-assets",
+    term: "Return on assets (ROA)",
+    group: "financial",
+    short: "The profit a business earns on every dollar of assets it carries. For a bank, the cleanest read on how well it runs the balance sheet itself.",
+    body: "Where return on equity can be flattered by leverage, return on assets cannot: it measures the profit wrung from the whole balance sheet before borrowing is counted. For a bank the two are linked by exactly that leverage, return on equity is return on assets multiplied by how many times assets exceed equity, so a high return on equity built on a thin return on assets is really a bet on leverage. Around 1% is a solid bank; durably above it, earned without reaching for risk, is the mark of a well-run one.",
+    formula: "Net income ÷ total assets",
+    seeAlso: ["return-on-equity", "rotce"],
+  },
+  {
     id: "net-interest-margin",
     term: "Net interest margin",
     group: "financial",

@@ -57,7 +57,7 @@ const vitals = (isReit
   ? [
       { label: "Return on equity", concept: "return-on-equity", value: returnOnEquity(cur), avg: avgOf(returnOnEquity), dp: 0 },
       { label: "Investment yield on float", concept: "insurance-float", value: investmentYield(cur), avg: avgOf(investmentYield), dp: 1 },
-      { label: "Return on assets", concept: null, value: returnOnAssets(cur), avg: avgOf(returnOnAssets), dp: 1 },
+      { label: "Return on assets", concept: "return-on-assets", value: returnOnAssets(cur), avg: avgOf(returnOnAssets), dp: 1 },
     ]
   : isInsurer
   ? [
