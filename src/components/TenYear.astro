@@ -1,7 +1,7 @@
 ---
 import { classify, financialKind, financialSubtype } from "../lib/archetype.mjs";
 import { fmtUSD, roicValue, liquidAssets, topLineRevenue, debtReliable } from "../lib/fundamentals.mjs";
-import { returnOnEquity, returnOnTangibleEquity, efficiencyRatio, tangibleEquity } from "../lib/financials.mjs";
+import { returnOnEquity, returnOnTangibleEquity, returnOnAssets, efficiencyRatio, tangibleEquity } from "../lib/financials.mjs";
 import { ffo, ffoPerShare, ffoPayout, debtToAssets } from "../lib/reits.mjs";
 import { combinedRatio, lossRatio } from "../lib/insurers.mjs";
 import { medicalLossRatio } from "../lib/managedCare.mjs";
@@ -21,77 +21,97 @@ const debtOk = debtReliable(company.lines || {}) && debtReliable(company.ttm?.li
 const money = (v) => (v == null ? "—" : fmtUSD(v));
 const marginStr = (n, d, dp = 1) => (n != null && d ? `${(n / d) * 100 < 0 ? "−" : ""}${(Math.abs((n / d) * 100)).toFixed(dp)}%` : "—");
 const perShare = (n, sh) => (n != null && sh ? `$${(n / sh).toFixed(2)}` : "—");
+// A plain count (shares), so the buyback-or-dilution record reads across the row.
+const fmtCount = (v) => {
+  if (v == null) return "—";
+  const a = Math.abs(v);
+  if (a >= 1e9) return `${(v / 1e9).toFixed(2)}B`;
+  if (a >= 1e8) return `${Math.round(v / 1e6)}M`;
+  if (a >= 1e6) return `${(v / 1e6).toFixed(1)}M`;
+  return `${Math.round(v / 1e3)}K`;
+};
+const xStr = (v, dp = 1) => (v == null ? "—" : `${v.toFixed(dp)}×`);
 
-// Row catalog, each reads one fiscal year's `lines`. `short` is the mobile label.
+// Row catalog, each reads one fiscal year's `lines`. `short` is the mobile label;
+// `g` groups the row for the banded layout (1 earnings, 2 returns & cash, 3 balance
+// sheet & capital), mirroring the order an owner reads a Value Line page.
 const ROW = {
-  revenue: { label: "Revenue", short: "Revenue", get: (L) => money(topLineRevenue(L, company)) },
-  grossMargin: { label: "Gross margin", short: "Gross mgn", get: (L) => marginStr(L.revenue != null && L.costOfRevenue != null ? L.revenue - L.costOfRevenue : null, L.revenue, 0) },
-  opMargin: { label: "Operating margin", short: "Op. mgn", get: (L) => marginStr(L.operatingIncome, L.revenue) },
-  netIncome: { label: "Net income", short: "Net inc.", get: (L) => money(L.netIncome) },
-  eps: { label: "EPS (diluted)", short: "EPS", get: (L) => perShare(L.netIncome, L.sharesDiluted) },
-  ownerEarnings: { label: "Owner earnings", short: "Owner earn.", get: (L) => (L.cashFromOps != null && L.capex != null ? money(L.cashFromOps - Math.abs(L.capex)) : "—") },
-  oeMargin: { label: "Owner earnings margin", short: "OE mgn", get: (L) => marginStr(L.cashFromOps != null && L.capex != null ? L.cashFromOps - Math.abs(L.capex) : null, L.revenue) },
-  roic: { label: "ROIC", short: "ROIC", get: (L) => { if (!debtOk) return "—"; const r = roicValue(L); return r == null ? "—" : `${(r * 100).toFixed(0)}%`; } },
-  capex: { label: "Capex", short: "Capex", get: (L) => (L.capex != null ? money(Math.abs(L.capex)) : "—") },
-  capexToRev: { label: "Capex / revenue", short: "Capex/rev", get: (L) => marginStr(L.capex != null ? Math.abs(L.capex) : null, L.revenue) },
-  capexToDep: { label: "Capex vs depreciation", short: "Capex/dep", get: (L) => (L.capex != null && L.depreciation ? `${(Math.abs(L.capex) / L.depreciation).toFixed(2)}×` : "—") },
-  totalDebt: { label: "Total debt", short: "Debt", get: (L) => (debtOk ? money(L.totalDebt) : "—") },
-  cash: {
-    label: "Cash & investments",
-    short: "Cash+inv",
-    get: (L) => {
-      const v = liquidAssets(L);
-      return v == null ? "—" : money(v);
-    },
-  },
+  // --- group 1: what it earned ---
+  revenue: { label: "Revenue", short: "Revenue", g: 1, get: (L) => money(topLineRevenue(L, company)) },
+  grossMargin: { label: "Gross margin", short: "Gross mgn", g: 1, get: (L) => marginStr(L.revenue != null && L.costOfRevenue != null ? L.revenue - L.costOfRevenue : null, L.revenue, 0) },
+  opMargin: { label: "Operating margin", short: "Op. mgn", g: 1, get: (L) => marginStr(L.operatingIncome, L.revenue) },
+  nii: { label: "Net interest income", short: "Net int.", g: 1, get: (L) => money(L.netInterestIncome) },
+  premiums: { label: "Premiums earned", short: "Premiums", g: 1, get: (L) => money(L.premiumsEarned) },
+  invInc: { label: "Investment income", short: "Inv. inc.", g: 1, get: (L) => money(L.investmentIncome) },
+  provision: { label: "Credit-loss provision", short: "Provision", g: 1, kind: "neutral", get: (L) => money(L.provisionForCreditLosses) },
+  netIncome: { label: "Net income", short: "Net inc.", g: 1, get: (L) => money(L.netIncome) },
+  netMargin: { label: "Net margin", short: "Net mgn", g: 1, get: (L) => marginStr(L.netIncome, L.revenue) },
+  eps: { label: "EPS (diluted)", short: "EPS", g: 1, get: (L) => perShare(L.netIncome, L.sharesDiluted) },
+  // --- group 2: returns and the cash an owner can take ---
+  ownerEarnings: { label: "Owner earnings", short: "Owner earn.", g: 2, get: (L) => (L.cashFromOps != null && L.capex != null ? money(L.cashFromOps - Math.abs(L.capex)) : "—") },
+  oeMargin: { label: "Owner earnings margin", short: "OE mgn", g: 2, get: (L) => marginStr(L.cashFromOps != null && L.capex != null ? L.cashFromOps - Math.abs(L.capex) : null, L.revenue) },
+  roic: { label: "ROIC", short: "ROIC", g: 2, get: (L) => { if (!debtOk) return "—"; const r = roicValue(L); return r == null ? "—" : `${(r * 100).toFixed(0)}%`; } },
+  roe: { label: "Return on equity", short: "ROE", g: 2, get: (L) => { const r = returnOnEquity(L); return r == null || !(L.stockholdersEquity > 0) ? "—" : `${(r * 100).toFixed(0)}%`; } },
+  roa: { label: "Return on assets", short: "ROA", g: 2, get: (L) => { const r = returnOnAssets(L); return r == null ? "—" : `${(r * 100).toFixed(1)}%`; } },
+  rotce: { label: "Return on tangible equity", short: "ROTCE", g: 2, get: (L) => { const r = returnOnTangibleEquity(L); return r == null ? "—" : `${(r * 100).toFixed(0)}%`; } },
+  efficiency: { label: "Efficiency ratio", short: "Effic.", g: 2, get: (L) => { const r = efficiencyRatio(L); return r == null ? "—" : `${(r * 100).toFixed(0)}%`; } },
+  combined: { label: "Combined ratio", short: "Combined", g: 2, get: (L) => { const c = combinedRatio(L); return c == null ? "—" : `≈ ${(c * 100).toFixed(0)}%`; } },
+  lossRatio: { label: "Loss ratio", short: "Loss", g: 2, get: (L) => { const r = lossRatio(L); return r == null ? "—" : `${(r * 100).toFixed(0)}%`; } },
+  mlr: { label: "Medical loss ratio", short: "MLR", g: 1, get: (L) => { const r = medicalLossRatio(L); return r == null ? "—" : `${(r * 100).toFixed(0)}%`; } },
+  ffo: { label: "Funds from operations", short: "FFO", g: 2, get: (L) => money(ffo(L)) },
+  ffoPS: { label: "FFO / share", short: "FFO/sh", g: 2, get: (L) => { const f = ffoPerShare(L); return f == null ? "—" : `$${f.toFixed(2)}`; } },
+  // --- group 3: what it owns and owes, and what owners get ---
+  capex: { label: "Capex", short: "Capex", g: 3, get: (L) => (L.capex != null ? money(Math.abs(L.capex)) : "—") },
+  capexToRev: { label: "Capex / revenue", short: "Capex/rev", g: 3, get: (L) => marginStr(L.capex != null ? Math.abs(L.capex) : null, L.revenue) },
+  capexToDep: { label: "Capex vs depreciation", short: "Capex/dep", g: 3, get: (L) => (L.capex != null && L.depreciation ? `${(Math.abs(L.capex) / L.depreciation).toFixed(2)}×` : "—") },
+  sbcToRev: { label: "Stock comp / revenue", short: "SBC/rev", g: 3, get: (L) => marginStr(L.stockBasedComp, L.revenue) },
+  shares: { label: "Shares out (diluted)", short: "Shares", g: 3, get: (L) => fmtCount(L.sharesDiluted) },
+  totalDebt: { label: "Total debt", short: "Debt", g: 3, get: (L) => (debtOk ? money(L.totalDebt) : "—") },
+  deposits: { label: "Deposits", short: "Deposits", g: 3, get: (L) => money(L.deposits) },
+  cash: { label: "Cash & investments", short: "Cash+inv", g: 3, get: (L) => { const v = liquidAssets(L); return v == null ? "—" : money(v); } },
   netDebt: {
-    label: "Net debt / (cash)",
-    short: "Net debt",
-    kind: "netdebt",
+    label: "Net debt / (cash)", short: "Net debt", g: 3, kind: "netdebt",
     get: (L) => {
       if (!debtOk) return "—"; // material interest proves the debt is under-captured for this filer
       if (L.totalDebt == null && L.cashAndEquivalents == null) return "—";
       return money((L.totalDebt || 0) - (liquidAssets(L) || 0));
     },
   },
-  dps: { label: "Dividends / share", short: "Div/sh", get: (L) => perShare(L.dividendsPaid != null ? Math.abs(L.dividendsPaid) : null, L.sharesDiluted) },
-  bvps: { label: "Book value / share", short: "BVPS", get: (L) => perShare(L.stockholdersEquity, L.sharesDiluted) },
-  // --- financials (banks): a bank's record is read on these, not on margins/owner earnings ---
-  nii: { label: "Net interest income", short: "Net int.", get: (L) => money(L.netInterestIncome) },
-  roe: { label: "Return on equity", short: "ROE", get: (L) => { const r = returnOnEquity(L); return r == null ? "—" : `${(r * 100).toFixed(0)}%`; } },
-  rotce: { label: "Return on tangible equity", short: "ROTCE", get: (L) => { const r = returnOnTangibleEquity(L); return r == null ? "—" : `${(r * 100).toFixed(0)}%`; } },
-  efficiency: { label: "Efficiency ratio", short: "Effic.", get: (L) => { const r = efficiencyRatio(L); return r == null ? "—" : `${(r * 100).toFixed(0)}%`; } },
-  deposits: { label: "Deposits", short: "Deposits", get: (L) => money(L.deposits) },
-  tbvps: { label: "Tangible book / share", short: "TBVPS", get: (L) => perShare(tangibleEquity(L), L.sharesDiluted) },
-  // --- REITs: read on funds from operations, not GAAP earnings ---
-  ffo: { label: "Funds from operations", short: "FFO", get: (L) => money(ffo(L)) },
-  ffoPS: { label: "FFO / share", short: "FFO/sh", get: (L) => { const f = ffoPerShare(L); return f == null ? "—" : `$${f.toFixed(2)}`; } },
-  payout: { label: "Dividend payout (FFO)", short: "Payout", get: (L) => { const p = ffoPayout(L); return p == null ? "—" : `${(p * 100).toFixed(0)}%`; } },
-  debtAssets: { label: "Debt / assets", short: "Debt/assets", get: (L) => { const d = debtToAssets(L); return d == null ? "—" : `${(d * 100).toFixed(0)}%`; } },
-  // --- insurers: read on underwriting (combined ratio), the float, and book value ---
-  premiums: { label: "Premiums earned", short: "Premiums", get: (L) => money(L.premiumsEarned) },
-  combined: { label: "Combined ratio", short: "Combined", get: (L) => { const c = combinedRatio(L); return c == null ? "—" : `≈ ${(c * 100).toFixed(0)}%`; } },
-  lossRatio: { label: "Loss ratio", short: "Loss", get: (L) => { const r = lossRatio(L); return r == null ? "—" : `${(r * 100).toFixed(0)}%`; } },
-  invInc: { label: "Investment income", short: "Inv. inc.", get: (L) => money(L.investmentIncome) },
-  float: { label: "Float (reserves)", short: "Float", get: (L) => money(L.lossReserves) },
-  // --- fee financials (asset managers, exchanges, brokers) and managed care ---
-  netMargin: { label: "Net margin", short: "Net mgn", get: (L) => marginStr(L.netIncome, L.revenue) },
-  mlr: { label: "Medical loss ratio", short: "MLR", get: (L) => { const r = medicalLossRatio(L); return r == null ? "—" : `${(r * 100).toFixed(0)}%`; } },
+  intCov: { label: "Interest coverage", short: "Int. cov.", g: 3, get: (L) => (L.operatingIncome != null && L.interestExpense != null && L.interestExpense > 0 ? xStr(L.operatingIncome / L.interestExpense) : "—") },
+  ndEbitda: {
+    label: "Net debt / EBITDA", short: "ND/EBITDA", g: 3, kind: "leverage",
+    get: (L) => {
+      if (!debtOk) return "—";
+      const ebitda = L.operatingIncome != null && L.depreciation != null ? L.operatingIncome + L.depreciation : null;
+      if (!ebitda || ebitda <= 0) return "—";
+      const nd = (L.totalDebt || 0) - (liquidAssets(L) || 0);
+      return nd <= 0 ? "net cash" : xStr(nd / ebitda);
+    },
+  },
+  debtAssets: { label: "Debt / assets", short: "Debt/assets", g: 3, get: (L) => { const d = debtToAssets(L); return d == null ? "—" : `${(d * 100).toFixed(0)}%`; } },
+  float: { label: "Float (reserves)", short: "Float", g: 3, get: (L) => money(L.lossReserves) },
+  dps: { label: "Dividends / share", short: "Div/sh", g: 3, get: (L) => perShare(L.dividendsPaid != null ? Math.abs(L.dividendsPaid) : null, L.sharesDiluted) },
+  payoutNI: { label: "Dividend payout", short: "Payout", g: 3, get: (L) => marginStr(L.dividendsPaid != null ? Math.abs(L.dividendsPaid) : null, L.netIncome > 0 ? L.netIncome : null, 0) },
+  payout: { label: "Dividend payout (FFO)", short: "Payout", g: 3, get: (L) => { const p = ffoPayout(L); return p == null ? "—" : `${(p * 100).toFixed(0)}%`; } },
+  bvps: { label: "Book value / share", short: "BVPS", g: 3, get: (L) => perShare(L.stockholdersEquity, L.sharesDiluted) },
+  tbvps: { label: "Tangible book / share", short: "TBVPS", g: 3, get: (L) => perShare(tangibleEquity(L), L.sharesDiluted) },
 };
 
+// The row-set follows the business model, and carries as many lines as that business is
+// honestly read on. Rows the data can't fill drop out below, so a set can be generous.
 const SETS = {
-  assetLight: [ROW.revenue, ROW.grossMargin, ROW.opMargin, ROW.netIncome, ROW.eps, ROW.ownerEarnings, ROW.oeMargin, ROW.roic, ROW.cash, ROW.netDebt, ROW.bvps],
-  consumer: [ROW.revenue, ROW.grossMargin, ROW.opMargin, ROW.netIncome, ROW.eps, ROW.ownerEarnings, ROW.roic, ROW.cash, ROW.netDebt, ROW.dps, ROW.bvps],
-  capital: [ROW.revenue, ROW.opMargin, ROW.netIncome, ROW.eps, ROW.ownerEarnings, ROW.roic, ROW.capex, ROW.capexToRev, ROW.capexToDep, ROW.totalDebt, ROW.cash, ROW.netDebt],
-  retail: [ROW.revenue, ROW.grossMargin, ROW.opMargin, ROW.netIncome, ROW.eps, ROW.ownerEarnings, ROW.oeMargin, ROW.roic, ROW.cash, ROW.netDebt],
-  financial: [ROW.revenue, ROW.nii, ROW.netIncome, ROW.eps, ROW.roe, ROW.rotce, ROW.efficiency, ROW.deposits, ROW.bvps, ROW.tbvps, ROW.dps],
-  insurer: [ROW.revenue, ROW.premiums, ROW.netIncome, ROW.combined, ROW.lossRatio, ROW.roe, ROW.invInc, ROW.float, ROW.bvps, ROW.dps],
+  assetLight: [ROW.revenue, ROW.grossMargin, ROW.opMargin, ROW.netIncome, ROW.eps, ROW.ownerEarnings, ROW.oeMargin, ROW.roic, ROW.roe, ROW.sbcToRev, ROW.shares, ROW.cash, ROW.netDebt, ROW.dps, ROW.bvps],
+  consumer: [ROW.revenue, ROW.grossMargin, ROW.opMargin, ROW.netIncome, ROW.eps, ROW.ownerEarnings, ROW.oeMargin, ROW.roic, ROW.roe, ROW.shares, ROW.cash, ROW.netDebt, ROW.dps, ROW.payoutNI, ROW.bvps],
+  capital: [ROW.revenue, ROW.opMargin, ROW.netIncome, ROW.eps, ROW.ownerEarnings, ROW.roic, ROW.roe, ROW.capex, ROW.capexToRev, ROW.capexToDep, ROW.shares, ROW.totalDebt, ROW.netDebt, ROW.intCov, ROW.ndEbitda, ROW.dps],
+  retail: [ROW.revenue, ROW.grossMargin, ROW.opMargin, ROW.netIncome, ROW.eps, ROW.ownerEarnings, ROW.oeMargin, ROW.roic, ROW.roe, ROW.shares, ROW.cash, ROW.netDebt, ROW.dps, ROW.bvps],
+  financial: [ROW.revenue, ROW.nii, ROW.provision, ROW.netIncome, ROW.eps, ROW.roa, ROW.roe, ROW.rotce, ROW.efficiency, ROW.deposits, ROW.shares, ROW.bvps, ROW.tbvps, ROW.dps],
+  insurer: [ROW.revenue, ROW.premiums, ROW.invInc, ROW.netIncome, ROW.combined, ROW.lossRatio, ROW.roe, ROW.float, ROW.shares, ROW.bvps, ROW.dps],
   // Life insurers: the spread-and-book-value story, no combined ratio (see insurers.mjs).
-  lifeInsurer: [ROW.revenue, ROW.premiums, ROW.invInc, ROW.netIncome, ROW.roe, ROW.float, ROW.bvps, ROW.dps],
-  fee: [ROW.revenue, ROW.opMargin, ROW.netMargin, ROW.netIncome, ROW.eps, ROW.roe, ROW.cash, ROW.dps, ROW.bvps],
-  managedCare: [ROW.revenue, ROW.premiums, ROW.mlr, ROW.opMargin, ROW.netIncome, ROW.eps, ROW.roe, ROW.bvps, ROW.dps],
-  reit: [ROW.revenue, ROW.netIncome, ROW.ffo, ROW.ffoPS, ROW.payout, ROW.debtAssets, ROW.totalDebt, ROW.dps, ROW.bvps],
-  general: [ROW.revenue, ROW.opMargin, ROW.netIncome, ROW.eps, ROW.ownerEarnings, ROW.oeMargin, ROW.roic, ROW.totalDebt, ROW.cash, ROW.netDebt],
+  lifeInsurer: [ROW.revenue, ROW.premiums, ROW.invInc, ROW.netIncome, ROW.roe, ROW.float, ROW.shares, ROW.bvps, ROW.dps],
+  fee: [ROW.revenue, ROW.opMargin, ROW.netMargin, ROW.netIncome, ROW.eps, ROW.ownerEarnings, ROW.roe, ROW.shares, ROW.cash, ROW.dps, ROW.bvps],
+  managedCare: [ROW.revenue, ROW.premiums, ROW.mlr, ROW.opMargin, ROW.netIncome, ROW.eps, ROW.roe, ROW.shares, ROW.bvps, ROW.dps],
+  reit: [ROW.revenue, ROW.netIncome, ROW.ffo, ROW.ffoPS, ROW.payout, ROW.debtAssets, ROW.totalDebt, ROW.shares, ROW.dps, ROW.bvps],
+  general: [ROW.revenue, ROW.opMargin, ROW.netIncome, ROW.eps, ROW.ownerEarnings, ROW.oeMargin, ROW.roic, ROW.roe, ROW.shares, ROW.totalDebt, ROW.cash, ROW.netDebt, ROW.intCov, ROW.dps],
 };
 
 // Columns: each fiscal year, plus a trailing-twelve-months column when present
@@ -139,8 +159,11 @@ const chosen = SETS[setKey] || SETS.general;
 const ROW_CONCEPT = {
   "Gross margin": "gross-margin", "Operating margin": "operating-margin",
   "Owner earnings": "owner-earnings", "Owner earnings margin": "owner-earnings", "ROIC": "roic",
-  "Total debt": "net-debt", "Net debt / (cash)": "net-debt",
+  "Total debt": "net-debt", "Net debt / (cash)": "net-debt", "Net debt / EBITDA": "net-debt",
+  "Interest coverage": "interest-coverage",
+  "Shares out (diluted)": "dilution", "Stock comp / revenue": "dilution",
   "Net interest income": "net-interest-margin", "Return on equity": "return-on-equity",
+  "Return on assets": "return-on-assets",
   "Return on tangible equity": "rotce", "Efficiency ratio": "efficiency-ratio",
   "Tangible book / share": "tangible-book",
   "Funds from operations": "ffo", "FFO / share": "ffo", "Dividend payout (FFO)": "ffo", "Debt / assets": "net-debt",
@@ -148,10 +171,12 @@ const ROW_CONCEPT = {
   "Investment income": "insurance-float", "Float (reserves)": "insurance-float",
   "Medical loss ratio": "medical-loss-ratio",
 };
-// Drop any row the data can't fill across the whole record.
+// Drop any row the data can't fill across the whole record, then mark where each band
+// (earnings → returns → balance sheet) begins so the table reads in sections.
 const rows = chosen
-  .map((r) => ({ label: r.label, short: r.short || r.label, kind: r.kind || "plain", concept: ROW_CONCEPT[r.label] || null, cells: cols.map((c) => r.get(c.lines)) }))
+  .map((r) => ({ label: r.label, short: r.short || r.label, kind: r.kind || "plain", g: r.g || 1, concept: ROW_CONCEPT[r.label] || null, cells: cols.map((c) => r.get(c.lines)) }))
   .filter((r) => r.cells.some((c) => c !== "—"));
+rows.forEach((r, i) => { r.gtop = i > 0 && r.g !== rows[i - 1].g; });
 
 // Abbreviated year for narrow screens: 2017 → ’17, TTM stays.
 const yShort = (lbl) => (lbl.length === 4 && /^\d{4}$/.test(lbl) ? "’" + lbl.slice(2) : lbl);
@@ -159,8 +184,10 @@ const yShort = (lbl) => (lbl.length === 4 && /^\d{4}$/.test(lbl) ? "’" + lbl.s
 // A parenthesised/minus cell is a loss in most rows (red), but in the net-debt
 // row it means net cash, which is a good thing (green).
 const cellClass = (kind, c) => {
+  if (c === "net cash") return "pos"; // net-debt/EBITDA showing a net-cash balance sheet
   const neg = c.startsWith("(") || c.startsWith("−");
   if (kind === "netdebt") return neg ? "pos" : "";
+  if (kind === "neutral" || kind === "leverage") return ""; // a provision or leverage figure isn't a loss
   return neg ? "neg" : "";
 };
 ---
@@ -186,7 +213,7 @@ const cellClass = (kind, c) => {
         </thead>
         <tbody>
           {rows.map((r) => (
-            <tr>
+            <tr class={r.gtop ? "gtop" : ""}>
               <th class="rowlabel"><span class="lf">{r.concept ? <Term id={r.concept}>{r.label}</Term> : r.label}</span><span class="ls">{r.short}</span></th>
               {r.cells.map((c, i) => (
                 <td class={`${i === lastI ? "last" : ""} ${cols[i].ttm ? "ttm" : ""} ${cellClass(r.kind, c)}`}>{c}</td>
@@ -212,6 +239,8 @@ const cellClass = (kind, c) => {
   thead th.rowlabel { position: sticky; left: 0; background: var(--paper); }
   td { text-align: right; padding: 7px 10px; border-bottom: 1px solid var(--rule); color: var(--ink); }
   td.last, thead th.last { font-weight: 700; }
+  /* A band divider where the table moves from earnings to returns to the balance sheet. */
+  tr.gtop td, tr.gtop th.rowlabel { border-top: 2px solid var(--rule-strong); padding-top: 11px; }
   th.ttm, td.ttm { background: var(--accent-tint); }
   .sub { display: block; font-weight: 400; font-size: 10px; letter-spacing: 0.02em; color: var(--muted); text-transform: none; }
   td.neg { color: var(--bad); }
