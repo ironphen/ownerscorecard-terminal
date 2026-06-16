@@ -1857,10 +1857,10 @@
       "fy": 2025,
       "periodEnd": "2025-12-31",
       "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1035443/000103544326000013/0001035443-26-000013-index.htm",
-      "revenueTotal": 2889721000,
-      "operatingIncomeTotal": -1930032000,
+      "revenueTotal": 3026556000,
+      "operatingIncomeTotal": -1793197000,
       "byProduct": {
-        "reconcile": 1.047,
+        "reconcile": 1,
         "items": [
           {
             "label": "Income from rentals",
@@ -4280,6 +4280,71 @@
             "label": "International",
             "qname": "us-gaap:NonUsMember",
             "revenue": 1170718000,
+            "operatingIncome": null
+          }
+        ]
+      }
+    },
+    "COLD": {
+      "fy": 2025,
+      "periodEnd": "2025-12-31",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1455863/000162828026012274/0001628280-26-012274-index.htm",
+      "revenueTotal": 2601846000,
+      "operatingIncomeTotal": 7234000,
+      "byGeography": {
+        "reconcile": 0.977,
+        "items": [
+          {
+            "label": "North America",
+            "qname": "srt:NorthAmericaMember",
+            "revenue": 1981978000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Asia Pacific",
+            "qname": "srt:AsiaPacificMember",
+            "revenue": 309700000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Europe",
+            "qname": "srt:EuropeMember",
+            "revenue": 233136000,
+            "operatingIncome": null
+          },
+          {
+            "label": "South America",
+            "qname": "srt:SouthAmericaMember",
+            "revenue": 16092000,
+            "operatingIncome": null
+          }
+        ]
+      },
+      "byProduct": {
+        "reconcile": 0.977,
+        "items": [
+          {
+            "label": "Warehouse services",
+            "qname": "art:WarehouseServicesMember",
+            "revenue": 1345629000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Warehouse rent and storage",
+            "qname": "art:WarehouseRentAndStorageMember",
+            "revenue": 970547000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Transportation",
+            "qname": "art:TransportationMember",
+            "revenue": 188230000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Third-party managed",
+            "qname": "art:ThirdPartyManagedMember",
+            "revenue": 36500000,
             "operatingIncome": null
           }
         ]
@@ -17049,10 +17114,10 @@
       "fy": 2025,
       "periodEnd": "2025-12-31",
       "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1034054/000103405426000002/0001034054-26-000002-index.htm",
-      "revenueTotal": 2570641000,
+      "revenueTotal": 2815139000,
       "operatingIncomeTotal": 1342786000,
       "bySegment": {
-        "reconcile": 1.095,
+        "reconcile": 1,
         "hasOperatingIncome": true,
         "items": [
           {
@@ -20055,6 +20120,36 @@
             "label": "Other revenues",
             "qname": "vrtx:CollaborativeandRoyaltyMember",
             "revenue": 30700000,
+            "operatingIncome": null
+          }
+        ]
+      }
+    },
+    "VTR": {
+      "fy": 2025,
+      "periodEnd": "2025-12-31",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/740260/000074026026000006/0000740260-26-000006-index.htm",
+      "revenueTotal": 5833980000,
+      "operatingIncomeTotal": 204321000,
+      "byGeography": {
+        "reconcile": 1,
+        "items": [
+          {
+            "label": "United States",
+            "qname": "country:US",
+            "revenue": 5209830000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Canada",
+            "qname": "country:CA",
+            "revenue": 552924000,
+            "operatingIncome": null
+          },
+          {
+            "label": "United Kingdom",
+            "qname": "country:GB",
+            "revenue": 71226000,
             "operatingIncome": null
           }
         ]
