@@ -1,9 +1,10 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
 import fundamentals from "../data/fundamentals.json";
+import language from "../data/language.json";
 import { getCollection } from "astro:content";
 import { fmtUSD, roicValue, ownerEarningsMargin, operatingMargin, liquidAssets, topLineRevenue, debtReliable, cashConversionCycle } from "../lib/fundamentals.mjs";
-import { classify, financialKind } from "../lib/archetype.mjs";
+import { classify, financialKind, aiExposure } from "../lib/archetype.mjs";
 import { returnOnEquity, returnOnTangibleEquity, equityToAssets } from "../lib/financials.mjs";
 import { ffoMargin, ffoPayout, debtToAssets } from "../lib/reits.mjs";
 import { grahamTests } from "../lib/graham.mjs";
@@ -66,6 +67,10 @@ const rows = [...(fundamentals.companies || [])]
       ffoM: isReit ? ffoMargin(L) : null,
       payout: isReit ? ffoPayout(L) : null,
       dta: isReit ? debtToAssets(L) : null,
+      // AI contestability: structural exposure tier (from SIC) and whether the company's
+      // own 10-K names AI as a competitive risk (from the filing NLP). The too-hard lens.
+      aiTier: { low: 0, moderate: 1, elevated: 2 }[aiExposure(c).tier] ?? 1,
+      aiRisk: !!language?.companies?.[c.ticker]?.aiRead?.inRisk,
     };
   });
 
@@ -82,7 +87,7 @@ const slim = rows.map((r) => ({
   op: r4(r.opMargin), roic: r4(r.roic), oe: r4(r.oeMargin), nd: r.netCash, gp: r.grahamPasses, gt: r.grahamTestable,
   roe: r4(r.roe), rotce: r4(r.rotce), nm: r4(r.netMargin), ea: r4(r.equityAssets),
   ffoM: r4(r.ffoM), payout: r4(r.payout), dta: r4(r.dta),
-  nwc: r.negCycle ? 1 : 0,
+  nwc: r.negCycle ? 1 : 0, ax: r.aiTier, air: r.aiRisk ? 1 : 0,
 }));
 const FALLBACK = rows.slice(0, 50);
 const slimJSON = JSON.stringify(slim).replace(/</g, "\\u003c");
@@ -118,14 +123,14 @@ const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "
   <section class="catalogWrap">
     <div class="bandHead">
       <h2>The Catalog</h2>
-      <a class="all" href="/method">How to read these →</a>
+      <a class="all" href="/concepts">What the terms mean →</a>
     </div>
     <p class="method">
       Every figure is the latest annual number from the company's own 10-K. Rank by any column,
       filter by business model, or read the catalog through an owner's lens. We don't score them;
       a lens explores by one of Buffett's or Graham's criteria, never a verdict. Pick a company
-      for its full Owner's Scorecard. New here? The <a href="/method">Method</a> shows how to read
-      these, and <a href="/concepts">Concepts</a> defines every term.
+      for its full Owner's Scorecard. New here? Each company page reads top to bottom in an owner's
+      order, and <a href="/concepts">Concepts</a> defines every term.
     </p>
 
     <div class="toolbar" id="toolbar">
@@ -147,6 +152,7 @@ const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "
         <button class="lens" data-lens="fortress">Fortress balance sheet</button>
         <button class="lens" data-lens="fund">Customers fund it</button>
         <button class="lens" data-lens="graham">Graham-defensive</button>
+        <button class="lens" data-lens="ai">Moat under AI</button>
       </div>
     </div>
     <p class="lensTeach" id="lensTeach" hidden></p>
@@ -370,6 +376,10 @@ const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "
         graham: {
           pass: (r) => r.gp != null && r.gp >= 5,
           teach: "Graham-defensive. Clears at least five of Graham's tests for a conservative buyer: adequate size, strong liquidity, conservative debt, a profit every year, an unbroken dividend, and real earnings growth. Failing one is no veto and passing all is no buy. Many fine modern compounders fail his strictest liquidity rules by design; he meant this as a discipline against overpaying, not a screen for greatness.",
+        },
+        ai: {
+          pass: (r) => r.ax === 2,
+          teach: "Moat under AI. The businesses whose product is software or information — the very thing capable AI now produces more cheaply — so a moat that looked durable on the record is more contestable going forward. This is Munger's “too-hard pile,” surfaced: when a credible substitute can be built for a fraction of the incumbent's price, pricing power erodes first. A lens for what to scrutinize, not a verdict; some of these moats endure on network effects, switching costs or regulation. Each company's page shows whether its own 10-K names AI as a competitive risk, and whether the moat was durable to begin with. Cross it with a model filter (Asset-light especially) to sharpen the screen.",
         },
       };
 

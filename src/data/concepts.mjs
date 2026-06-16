@@ -50,6 +50,14 @@ export const CONCEPTS = [
     body: "Buffett's discipline of staying inside what you can actually evaluate. The point is not to understand everything but to be honest about the boundary, because the costly errors come from operating just outside it while feeling sure of yourself. If you cannot explain in a sentence how a business turns effort into cash and why its customers keep coming back, it sits outside your circle, and no valuation model rescues a business you do not understand.",
   },
   {
+    id: "too-hard-pile",
+    term: "The too-hard pile (and AI)",
+    group: "business",
+    short: "Munger's discipline of setting aside what you cannot confidently judge — increasingly, the businesses whose software or information moat a cheap, capable AI may contest.",
+    body: "Charlie Munger sorted opportunities into three trays: yes, no, and too hard, and put most things in the last one. The discipline is not laziness but honesty about the edge of your competence; you only have to be right about the few you can actually judge. Artificial intelligence has widened that pile. When the cost of building a capable substitute for software or information collapses, a moat that looked durable on the record, years of high returns, can quietly become contestable, and it is pricing power that erodes first, before revenue. A high return earned before the shift is not a promise that it survives the shift. Some moats endure on network effects, switching costs or regulation; the rest belong in the tray Munger reached for most. Each company page flags the structural exposure of its industry and reads the company's own words on AI from its 10-K; whether a particular moat holds is the judgment, and the honest answer is often that it is too hard.",
+    seeAlso: ["moat", "circle-of-competence", "roic"],
+  },
+  {
     id: "gross-margin",
     term: "Gross margin",
     group: "business",

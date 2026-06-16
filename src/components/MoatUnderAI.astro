@@ -8,6 +8,7 @@ import language from "../data/language.json";
 import { classify, aiExposure } from "../lib/archetype.mjs";
 import { roicValue } from "../lib/fundamentals.mjs";
 import { TONE_COLOR } from "../lib/fundamentals.mjs";
+import Term from "./Term.astro";
 
 const { company } = Astro.props;
 const exp = aiExposure(company);
@@ -75,7 +76,7 @@ if (exp.tier === "elevated" && (assetLight || wasDurable)) {
 
 <section class="aimoat">
   <div class="head">
-    <h3 class="secHead">Moat under AI</h3>
+    <h3 class="secHead"><Term id="too-hard-pile">Moat under AI</Term></h3>
     <span class="tierBadge" style={`color:${TONE_COLOR[tier.tone]}; border-color:${TONE_COLOR[tier.tone]}`}>{tier.label} contestability</span>
   </div>
   <p class="lead">{cap(exp.reason)}.</p>
