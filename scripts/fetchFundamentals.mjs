@@ -160,6 +160,21 @@ const CONCEPTS = {
   lossReserves: ["LiabilityForClaimsAndClaimsAdjustmentExpense", "LiabilityForFuturePolicyBenefits"],
 };
 
+// A REIT's top line is rental income, which many tag under a lease or real-estate concept
+// rather than the contract-revenue line a product company uses. With the generic order, a
+// REIT that also tags a small fee line first (Extra Space reads $129M against ~$3.3B of
+// rent, American Tower $936M against ~$11B) loses its real revenue, so for REITs we look
+// at the lease and real-estate tags first. Used only for SIC 6500-6799, so an excise-heavy
+// filer's gross "Revenues" tag never displaces a product company's net contract revenue.
+const REIT_REVENUE = [
+  "RealEstateRevenueNet",
+  "OperatingLeaseLeaseIncome",
+  "OperatingLeasesIncomeStatementLeaseRevenue",
+  "Revenues",
+  "RevenueFromContractWithCustomerExcludingAssessedTax",
+  "RevenueFromContractWithCustomerIncludingAssessedTax",
+];
+
 const days = (a, b) => Math.abs((new Date(b) - new Date(a)) / 86400000);
 
 // ---- value extraction (tag-merged) ----
@@ -317,8 +332,12 @@ async function main() {
       ? name
       : (prettifyName(facts?.entityName) || name);
 
+    // REITs read their top line off lease and real-estate tags first (see REIT_REVENUE).
+    const sicN = Number(sic) || 0;
+    const revTags = sicN >= 6500 && sicN <= 6799 ? REIT_REVENUE : CONCEPTS.revenue;
+
     const oi = pickAnnual(facts, CONCEPTS.operatingIncome);
-    const anchor = oi || pickAnnual(facts, CONCEPTS.revenue); // for fy / period / filing link
+    const anchor = oi || pickAnnual(facts, revTags); // for fy / period / filing link
     const maxOf = (...vals) => { const xs = vals.filter((v) => v != null); return xs.length ? Math.max(...xs) : null; };
     // Total debt: long-term + current from the component tags, taken against the max of
     // every aggregate total-debt tag. We take the MAX across the tags (not a priority
@@ -374,7 +393,7 @@ async function main() {
 
     // Up to ~10 years of history for the durability strips.
     const ha = {
-      revenue: collectAnnual(facts, CONCEPTS.revenue),
+      revenue: collectAnnual(facts, revTags),
       operatingIncome: collectAnnual(facts, CONCEPTS.operatingIncome),
       costsAndExpenses: collectAnnual(facts, CONCEPTS.costsAndExpenses),
       interestExpense: collectAnnual(facts, CONCEPTS.interestExpense),
@@ -462,7 +481,7 @@ async function main() {
     // quarter filed since the last 10-K. Flows are TTM-summed; balance sheet and
     // share count are taken at the latest quarter.
     const tf = (tags, unit = "USD") => ttmFlow(facts, tags, unit)?.val ?? null;
-    const ttmRev = ttmFlow(facts, CONCEPTS.revenue);
+    const ttmRev = ttmFlow(facts, revTags);
     const ttmLtd = latestObservation(facts, CONCEPTS.longTermDebt, "USD", true)?.val;
     const ttmCurDebt = latestObservation(facts, CONCEPTS.currentDebt, "USD", true)?.val;
     const ttm = ttmRev
@@ -515,9 +534,9 @@ async function main() {
       form: anchor?.form ?? "10-K",
       sourceUrl,
       lines: {
-        operatingIncome: deriveOpInc(oi?.val ?? null, pick(CONCEPTS.revenue), pick(CONCEPTS.costsAndExpenses), pick(CONCEPTS.netIncome), pick(CONCEPTS.incomeTaxExpense), pick(CONCEPTS.interestExpense)),
+        operatingIncome: deriveOpInc(oi?.val ?? null, pick(revTags), pick(CONCEPTS.costsAndExpenses), pick(CONCEPTS.netIncome), pick(CONCEPTS.incomeTaxExpense), pick(CONCEPTS.interestExpense)),
         interestExpense: pick(CONCEPTS.interestExpense),
-        revenue: pick(CONCEPTS.revenue),
+        revenue: pick(revTags),
         netIncome: pick(CONCEPTS.netIncome),
         totalDebt,
         cashFromOps: pick(CONCEPTS.cashFromOps),
@@ -566,15 +585,34 @@ async function main() {
     process.exit(1);
   }
 
+  // Preserve a company's prior data when it failed to fetch this run. A momentary SEC
+  // error (a 429 under load, a timeout) must not drop a company that was fine last week,
+  // and as the universe grows those blips become routine. We key on the current universe,
+  // so a ticker genuinely removed from the list is dropped, while a transient failure is
+  // carried over from the last good file.
+  let prior = {};
+  try {
+    const priorCos = JSON.parse(fs.readFileSync(path.join(dataDir, "fundamentals.json"), "utf8")).companies || [];
+    prior = Object.fromEntries(priorCos.map((c) => [String(c.ticker).toUpperCase(), c]));
+  } catch {}
+  const fresh = Object.fromEntries(companies.map((c) => [String(c.ticker).toUpperCase(), c]));
+  const merged = [];
+  let carried = 0;
+  for (const u of universe.tickers) {
+    const T = u.ticker.toUpperCase();
+    if (fresh[T]) merged.push(fresh[T]);
+    else if (prior[T]) { merged.push(prior[T]); carried++; }
+  }
+
   const out = {
     asOf: new Date().toISOString().slice(0, 10),
     source: "SEC EDGAR XBRL (companyfacts)",
     sample: false,
     note: "Latest annual (10-K) figures pulled from EDGAR. Values are raw USD.",
-    companies,
+    companies: merged,
   };
   fs.writeFileSync(path.join(dataDir, "fundamentals.json"), JSON.stringify(out, null, 2) + "\n");
-  console.log(`\n✅ Wrote ${companies.length} companies to src/data/fundamentals.json`);
+  console.log(`\n✅ Wrote ${merged.length} companies (${companies.length} fetched, ${carried} carried over from the last good file)`);
 }
 
 main().catch((err) => {

@@ -60,7 +60,9 @@ for (const c of companies) {
   } else if (kind === "insurer" || kind === "managedCare") {
     const comp = (L.premiumsEarned || 0) + (L.investmentIncome || 0);
     if (comp > 0 && rev < comp * 0.8) ERR("revenue-recon-failed", t, `insurer top line ${fmtUSD(rev)} still below premiums + investment income ${fmtUSD(comp)}`);
-  } else if (rev < 50e6 && (Math.abs(L.netIncome || 0) > 100e6 || (L.totalAssets || 0) > 2e9) && sector !== "reit") {
+  } else if (kind === "reit" && L.totalAssets && rev < 0.03 * L.totalAssets) {
+    WARN("reit-revenue-low", t, `top line ${fmtUSD(rev)} is under 3% of ${fmtUSD(L.totalAssets)} in assets; rental revenue is likely under-captured`);
+  } else if (kind == null && rev < 50e6 && (Math.abs(L.netIncome || 0) > 100e6 || (L.totalAssets || 0) > 2e9)) {
     WARN("revenue-tiny", t, `top line ${fmtUSD(rev)} looks too small for a business this size (net income ${fmtUSD(L.netIncome)}, assets ${fmtUSD(L.totalAssets)})`);
   }
 
