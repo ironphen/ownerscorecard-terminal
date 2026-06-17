@@ -73,6 +73,14 @@ const EXEMPLARS = {
             {c.formula ? (
               <p class="formula"><span class="flabel">How it is figured</span>{c.formula}</p>
             ) : null}
+            {c.forms && c.forms.length ? (
+              <ul class="forms">
+                <li class="formsHead">The same question, a different form in each business:</li>
+                {c.forms.map((f) => (
+                  <li><span class="formKind">{f.kind}</span> <span class="formRead">{f.read}</span></li>
+                ))}
+              </ul>
+            ) : null}
             {EXEMPLARS[c.id] && EXEMPLARS[c.id].tickers.length ? (
               <p class="examples">
                 <span class="exlabel">{EXEMPLARS[c.id].label}</span>
@@ -140,6 +148,11 @@ const EXEMPLARS = {
       max-width: 74ch; font-variant-numeric: tabular-nums;
     }
     .flabel { display: block; font-size: 10.5px; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); margin-bottom: 2px; }
+    .forms { list-style: none; padding: 0; margin: 12px 0 0; }
+    .forms .formsHead { font-family: var(--sans); font-size: 10.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); margin-bottom: 6px; }
+    .forms li { font-size: 14px; line-height: 1.55; color: var(--ink-dim); padding: 5px 0; border-top: 1px solid var(--rule); max-width: 78ch; }
+    .forms li.formsHead { border-top: 0; padding: 0; }
+    .formKind { font-weight: 600; color: var(--ink); }
     .examples { font-size: 13.5px; margin: 10px 0 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 7px; }
     .examples .exlabel { font-family: var(--sans); font-size: 10.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); margin-right: 3px; }
     .examples a { font-family: var(--sans); font-weight: 600; color: var(--ink); }

@@ -50,6 +50,18 @@ const oeHist = (company.history || []).map((h) => (h.lines.cashFromOps != null &
 const oe3vals = [...oeHist].reverse().filter((v) => v != null).slice(0, 3);
 const oe3 = oe3vals.length >= 2 ? oe3vals.reduce((a, b) => a + b, 0) / oe3vals.length : ownerEarnings;
 const sbcLatest = L.stockBasedComp ?? company.lines?.stockBasedComp ?? 0;
+// Steady-state owner earnings: Buffett's definition subtracts maintenance capex, not total
+// capex. For a business in a build-out (the AI capex wave most of all) total capex understates
+// the cash it would throw off at rest, so we offer a base that swaps capex for depreciation,
+// the standard maintenance-capex proxy. Offered only when it differs enough to matter.
+const dep = L.depreciation;
+const ownerEarningsMaint = cfo != null && dep != null ? cfo - dep : null;
+const oeHistMaint = (company.history || []).map((h) => (h.lines.cashFromOps != null && h.lines.depreciation != null ? h.lines.cashFromOps - h.lines.depreciation : null));
+const oem3vals = [...oeHistMaint].reverse().filter((v) => v != null).slice(0, 3);
+const oe3Maint = oem3vals.length >= 2 ? oem3vals.reduce((a, b) => a + b, 0) / oem3vals.length : ownerEarningsMaint;
+// Show the steady-state toggle only where capex runs meaningfully above depreciation (a real
+// build-out); when they are close it changes nothing and would just be a dial for its own sake.
+const offerMaint = ownerEarningsMaint != null && ownerEarnings != null && capex != null && dep != null && Math.abs(capex) > dep * 1.25;
 // The owner-earnings growth the business actually delivered, as a number, to anchor a
 // reference value against (never a target): what the record would be worth on its own record.
 const oeSeries = oeHist.filter((v) => v != null);
@@ -225,7 +237,7 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
       <p class="note">A reverse-DCF needs positive owner earnings, or at least revenue, to anchor to, there's no clean base here. Judge this one on assets or normalized earnings, not a growth model.</p>
     )
   ) : (
-    <div id="valBox" data-oe={ownerEarnings} data-oe3={oe3 ?? ""} data-sbc={sbcLatest ?? ""} data-gdeliv={gDeliv ?? ""} data-netdebt={netDebt} data-shares={shares} data-name={name} data-eps3={eps3 ?? ""} data-bvps={bvps ?? ""} data-sym={sym}>
+    <div id="valBox" data-oe={ownerEarnings} data-oe3={oe3 ?? ""} data-oemaint={ownerEarningsMaint ?? ""} data-oemaint3={oe3Maint ?? ""} data-sbc={sbcLatest ?? ""} data-gdeliv={gDeliv ?? ""} data-netdebt={netDebt} data-shares={shares} data-name={name} data-eps3={eps3 ?? ""} data-bvps={bvps ?? ""} data-sym={sym}>
       <p class="intro">
         A price is the one input we don't pull, <b>you bring it</b>. Type today's close (read it off any
         broker or quote site) and see the owner-earnings growth you'd have to believe to justify it, set
@@ -234,7 +246,7 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
 
       <div class="priceRow">
         <label for="px">Today&rsquo;s price</label>
-        <span class="dollar">$</span>
+        <span class="dollar">{sym}</span>
         <input id="px" type="number" inputmode="decimal" step="0.01" min="0" placeholder="e.g. 220.50" />
       </div>
 
@@ -242,6 +254,7 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
         <span class="basesLbl">Base</span>
         <label class="tog"><input type="checkbox" id="oeNorm" /> Normalize · 3-yr average</label>
         <label class="tog"><input type="checkbox" id="oeSbc" /> Net of stock comp</label>
+        {offerMaint ? <label class="tog"><input type="checkbox" id="oeMaint" /> Steady-state · maintenance capex</label> : null}
       </div>
 
       <p class="lede" id="lede">Enter a price above to run it.</p>
@@ -279,7 +292,7 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
 
       <p class="foot">
         Owner earnings {$(ownerEarnings)} on {(shares / 1e6).toFixed(0)}M diluted shares; net {netDebt >= 0 ? `debt ${$(netDebt)}` : `cash ${$(-netDebt)}`}.
-        The base is the latest year by default; <b>Normalize</b> averages three to damp the noise, and <b>Net of stock comp</b> treats option pay as the expense it is.
+        The base is the latest year by default; <b>Normalize</b> averages three to damp the noise, and <b>Net of stock comp</b> treats option pay as the expense it is.{offerMaint ? (<> Capex ({$(Math.abs(capex))}) runs well above depreciation ({$(dep)}), so this is a build-out; <b>Steady-state</b> swaps total capex for maintenance (≈ depreciation), lifting the base to about {$(ownerEarningsMaint)}, the cash it would throw off if it stopped expanding.</>) : null}
         The reference value extrapolates the owner-earnings growth the record actually delivered, netted against debt — a yardstick, never a price target. The tool says what you'd have to <em>believe</em>, not what the company is <em>worth</em>.
       </p>
     </div>
@@ -335,12 +348,13 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
     const OE = parseFloat(box.dataset.oe), SH = parseFloat(box.dataset.shares), NAME = box.dataset.name || "this company";
     const SYM = box.dataset.sym || "$";
     const OE3 = parseFloat(box.dataset.oe3), SBC = parseFloat(box.dataset.sbc) || 0, GDELIV = parseFloat(box.dataset.gdeliv), NETDEBT = parseFloat(box.dataset.netdebt) || 0;
+    const OEM = parseFloat(box.dataset.oemaint), OEM3 = parseFloat(box.dataset.oemaint3);
     const px = document.getElementById("px");
     const r = document.getElementById("r"), n = document.getElementById("n"), g = document.getElementById("g");
     const rOut = document.getElementById("rOut"), nOut = document.getElementById("nOut"), gOut = document.getElementById("gOut");
     const lede = document.getElementById("lede"), impG = document.getElementById("impG"), oeY = document.getElementById("oeY");
     const pe = document.getElementById("pe"), pb = document.getElementById("pb"), ggate = document.getElementById("ggate");
-    const oeNorm = document.getElementById("oeNorm"), oeSbc = document.getElementById("oeSbc");
+    const oeNorm = document.getElementById("oeNorm"), oeSbc = document.getElementById("oeSbc"), oeMaint = document.getElementById("oeMaint");
     const refRow = document.getElementById("refRow"), refG = document.getElementById("refG"), refV = document.getElementById("refV"), refMos = document.getElementById("refMos");
     const EPS3 = parseFloat(box.dataset.eps3), BVPS = parseFloat(box.dataset.bvps);
 
@@ -357,10 +371,14 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
     const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
     const pcs = (v) => (v < 0 ? "−" : "") + Math.abs(v * 100).toFixed(1) + "%";
 
-    // The base the whole tool runs on, made honest by the toggles: a 3-year average instead
-    // of one noisy year, and/or net of the stock comp that is a real cost to owners.
+    // The base the whole tool runs on, made honest by the toggles: a 3-year average instead of
+    // one noisy year; the steady-state base that subtracts maintenance capex (≈ depreciation)
+    // instead of total capex, for a business mid-build-out; and/or net of the stock comp that
+    // is a real cost to owners.
     function effOE() {
-      let base = (oeNorm && oeNorm.checked && OE3 > 0) ? OE3 : OE;
+      const maint = oeMaint && oeMaint.checked && !isNaN(OEM);
+      const norm = oeNorm && oeNorm.checked;
+      let base = maint ? ((norm && OEM3 > 0) ? OEM3 : OEM) : ((norm && OE3 > 0) ? OE3 : OE);
       if (oeSbc && oeSbc.checked && SBC > 0) base -= SBC;
       return base;
     }
@@ -415,7 +433,7 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
       setURL(px.value);
     }
     [px, r, n, g].forEach((el) => el.addEventListener("input", update));
-    [oeNorm, oeSbc].forEach((el) => el && el.addEventListener("change", update));
+    [oeNorm, oeSbc, oeMaint].forEach((el) => el && el.addEventListener("change", update));
     try { const q = new URL(location.href).searchParams.get("px"); if (q) px.value = q; } catch (e) {}
     update();
   })();
