@@ -59,6 +59,7 @@ jobs:
         run: node scripts/buildUniverse.mjs
         env:
           UNIVERSE_DRYRUN: ${{ github.event.inputs.rebuild_universe == 'dryrun' && '1' || '' }}
+          SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT }}
       - run: npm run fetch:fundamentals
         if: ${{ github.event.inputs.segments_only != 'true' && github.event.inputs.filings_only != 'true' && github.event.inputs.rebuild_universe != 'dryrun' }}
         env:

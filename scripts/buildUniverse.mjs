@@ -59,6 +59,35 @@ export function splitCsv(line) {
 
 const cleanName = (s) => { const t = (s || "").trim(); return t && t.length <= 40 ? t : null; };
 
+// Reconnaissance only: iShares serves GitHub runners a block page, so probe which alternative
+// constituent sources are actually reachable from CI before committing to a parser. Reports the
+// status, content-type, size, and which expected markers each body contains, then exits. Runs in
+// dryrun, removed once a source is chosen. No writes.
+async function probeSources() {
+  const CHROME = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+  const tests = [
+    ["Nasdaq screener", "https://api.nasdaq.com/api/screener/stocks?tableonly=true&limit=6000&download=true",
+      { "User-Agent": CHROME, Accept: "application/json, text/plain, */*", "Accept-Language": "en-US,en;q=0.9", Referer: "https://www.nasdaq.com/" }],
+    ["SEC exchange list", "https://www.sec.gov/files/company_tickers_exchange.json",
+      { "User-Agent": process.env.SEC_USER_AGENT || UA, Accept: "application/json,*/*" }],
+    ["Wikipedia S&P 500", "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies",
+      { "User-Agent": UA, Accept: "text/html,*/*" }],
+  ];
+  console.log("  Probing alternative constituent sources (recon, no write):");
+  for (const [label, url, headers] of tests) {
+    try {
+      const res = await fetch(url, { headers });
+      const body = await res.text();
+      const type = res.headers.get("content-type") || "no content-type";
+      const html = /^\s*(<!doctype html|<html)/i.test(body);
+      const markers = ["AAPL", "MSFT", "marketCap", "cik_str", "constituents"].filter((m) => body.includes(m));
+      console.log(`    [${label}] HTTP ${res.status}, ${type}; ${body.length} bytes; html=${html}; markers=${markers.join(",") || "none"}`);
+    } catch (err) {
+      console.log(`    [${label}] FETCH FAILED: ${err.message}`);
+    }
+  }
+}
+
 // Parse the iShares holdings CSV: a preamble, a header row that begins with "Ticker", then the
 // rows. Equity holdings only (drops the cash/derivatives line), ticker normalized to the SEC's
 // dash form (BRK.B -> BRK-B), and anything that isn't a plain symbol dropped.
@@ -87,6 +116,8 @@ async function main() {
   const existing = JSON.parse(fs.readFileSync(universePath, "utf8"));
   const curated = new Map((existing.tickers || []).map((t) => [String(t.ticker).toUpperCase(), t.name || null]));
   console.log(`Building US universe (existing: ${curated.size} tickers)…`);
+
+  if (DRYRUN) { await probeSources(); return; }
 
   let holdings = [];
   let raw = "";
