@@ -401,7 +401,7 @@ async function main() {
       // Show the revenue / income / balance-sheet elements (whatever their alphabetical
       // position), with current-year value, so the concept map can be pinned per accounting
       // standard without guessing — IFRS filers name these lines differently from J-GAAP.
-      const REL = /revenue|sales|operating|profit|income|asset|equit|cash|loan|bond|borrow|debt|lease|shares|dividend/i;
+      const REL = /revenue|sales|operating|profit|income|asset|equit|cash|loan|bond|borrow|debt|lease|shares|dividend|propert|plant|equipment|purchase|payments|acqui|invest|intangib|depreci|amorti|capital/i;
       console.log(`  parsed ${rawLines} raw lines -> ${names.length} elements; revenue/income/balance candidates (current year):`);
       for (const n of names) {
         if (!REL.test(n)) continue;

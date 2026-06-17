@@ -45,6 +45,8 @@ jobs:
           EDINET_API_KEY: ${{ secrets.EDINET_API_KEY }}
           EDINET_DEBUG: ${{ github.event.inputs.debug }}
           EDINET_LOOKBACK_DAYS: ${{ github.event.inputs.lookback }}
+      - name: Audit JP data quality
+        run: npm run audit:jp
       - name: Commit if changed
         run: |
           git config user.name "github-actions[bot]"
