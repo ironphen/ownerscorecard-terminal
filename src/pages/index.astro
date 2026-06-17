@@ -376,6 +376,15 @@ const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "
       let DATA = [];
       try { DATA = JSON.parse(dataEl.textContent || "[]"); } catch (e) { return; }
 
+      // Astro scopes this component's CSS with a data-astro-cid-* attribute stamped on every
+      // element of the template. The header and rows below are rebuilt with innerHTML, so their
+      // elements are created without that attribute and the scoped rules — the sticky frozen
+      // header, the long/short label swap, the sector pill, the column alignment — silently do
+      // not apply (the bug that left the header doubled and unfrozen). Re-stamp the scope on
+      // every generated element so the styling and the frozen header hold.
+      const SCOPE = (table.getAttributeNames ? table.getAttributeNames() : []).filter((n) => n.indexOf("data-astro-cid-") === 0);
+      const stamp = (root) => { if (SCOPE.length) for (const el of root.querySelectorAll("*")) for (const a of SCOPE) el.setAttribute(a, ""); };
+
       const esc = (s) => String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
       function usd(v) { if (v == null) return "—"; const neg = v < 0, a = Math.abs(v); let s; if (a >= 1e9) s = "$" + (a / 1e9).toFixed(1) + "B"; else if (a >= 1e6) s = "$" + Math.round(a / 1e6) + "M"; else if (a >= 1e3) s = "$" + Math.round(a / 1e3) + "K"; else s = "$" + Math.round(a); return neg ? "(" + s + ")" : s; }
       const pct = (v) => (v == null ? "—" : (v < 0 ? "−" : "") + Math.abs(v * 100).toFixed(0) + "%");
@@ -470,6 +479,7 @@ const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "
       function render() {
         const cols = colsetFor(filter);
         thead.innerHTML = headHTML(cols);
+        stamp(thead);
         let view = DATA.filter((r) => (!term || (r.t + " " + r.n).toLowerCase().indexOf(term) >= 0) && (filter === "all" || r.m === filter) && LENSES[lens].pass(r));
         if (sortKey) {
           const k = sortKey, dir = sortDir;
@@ -478,6 +488,7 @@ const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "
         tbody.innerHTML = view.length
           ? view.map((r) => rowHTML(r, cols)).join("")
           : '<tr><td class="empty" colspan="' + (cols.length + 2) + '">No companies match this lens and model together (a bank is not read on ROIC, for instance). Try one at a time.</td></tr>';
+        stamp(tbody);
         if (countEl) countEl.textContent = view.length + (view.length === 1 ? " company" : " companies");
       }
 
