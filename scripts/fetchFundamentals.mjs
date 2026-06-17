@@ -123,7 +123,7 @@ const CONCEPTS = {
   // Shares actually repurchased in the year (a count, not cash), so the average price paid
   // can be deduced as buyback cash ÷ shares. Not every filer tags it (some retire shares
   // straight off), so it fills the price read where present and is silent where not.
-  repurchasedShares: ["StockRepurchasedDuringPeriodShares", "TreasuryStockSharesAcquired"],
+  repurchasedShares: ["StockRepurchasedDuringPeriodShares", "StockRepurchasedAndRetiredDuringPeriodShares", "TreasuryStockSharesAcquired"],
   stockholdersEquity: ["StockholdersEquity", "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest"],
   cashAndEquivalents: [
     "CashAndCashEquivalentsAtCarryingValue",
