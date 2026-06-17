@@ -135,6 +135,11 @@ const today = new Date().toLocaleDateString("en-US", { year: "numeric", month: "
       h2 { font-size: clamp(22px, 3.4vw, 27px); }
       h3 { font-size: 20px; }
 
+      /* In-act section heading: one consistent level below the act titles (the act h2s), so a
+         company page reads act → section → detail. Components apply it to their main heading
+         instead of styling a bare h2, which used to render as large as the act above it. */
+      .secTitle { font-size: clamp(18px, 2.3vw, 21px); font-weight: 600; line-height: 1.2; margin: 0; }
+
       p { margin: 0 0 14px; }
 
       a { color: var(--accent); text-decoration: none; }
