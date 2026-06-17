@@ -10,6 +10,8 @@ import { ffoMargin, ffoPayout, debtToAssets } from "../lib/reits.mjs";
 import { grahamTests } from "../lib/graham.mjs";
 import Term from "../components/Term.astro";
 import JapanCatalog from "../components/JapanCatalog.astro";
+import jpData from "../data/fundamentals.jp.json";
+const jpCount = (jpData.companies || []).length;
 
 // ---- the catalog rows: every company reduced to the few sourced facts that
 // decide quality and survival. No rank, no score, the reader sorts by what they
@@ -121,20 +123,21 @@ const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "
     </section>
   ) : null}
 
-  <section class="catalogWrap">
+  <div class="poolTabs" role="tablist" aria-label="Choose a market">
+    <button class="poolTab" data-pool="us" role="tab" aria-selected="true" id="tab-us">United States<span class="ct">{rows.length}</span></button>
+    <button class="poolTab" data-pool="jp" role="tab" aria-selected="false" id="tab-jp">Japan<span class="ct">{jpCount}</span></button>
+  </div>
+
+  <section class="catalogWrap" id="pool-us" role="tabpanel" aria-labelledby="tab-us">
     <div class="bandHead">
       <h2>The Catalog</h2>
-      <div class="bandLinks">
-        <a class="pool" href="#japan">Japan, a separate pool →</a>
-        <a class="all" href="/concepts">What the terms mean →</a>
-      </div>
+      <a class="all" href="/concepts">What the terms mean →</a>
     </div>
     <p class="method">
-      US filers, every figure the latest annual number from the company's own 10-K. Rank by any
-      column, filter by business model, or read the catalog through an owner's lens. We don't score
-      them; a lens explores by one of Buffett's or Graham's criteria, never a verdict. Japanese
-      names live in their own <a href="#japan">Japan</a> pool, read from EDINET in yen. Pick a
-      company for its full Owner's Scorecard; <a href="/concepts">Concepts</a> defines every term.
+      Every figure is the latest annual number from the company's own 10-K. Rank by any column,
+      filter by business model, or read the catalog through an owner's lens. We don't score them;
+      a lens explores by one of Buffett's or Graham's criteria, never a verdict. Pick a company for
+      its full Owner's Scorecard; <a href="/concepts">Concepts</a> defines every term.
     </p>
 
     <div class="toolbar" id="toolbar">
@@ -213,15 +216,23 @@ const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "
     <p class="legend"><Term id="owner-earnings">Owner-earnings margin</Term> = (operating cash − capex) ÷ revenue. <Term id="net-debt">Net cash</Term> nets debt against cash and marketable securities; parentheses are net debt. Graham = how many of his defensive-investor tests the filings clear (of those computable), a floor of safety, not a buy signal; sort by it to screen.</p>
   </section>
 
-  <JapanCatalog />
+  <div id="pool-jp" role="tabpanel" aria-labelledby="tab-jp" hidden>
+    <JapanCatalog />
+  </div>
 
   <style>
     .bandHead { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--rule-strong); padding-bottom: 6px; }
     .bandHead h2 { margin: 0; }
-    .bandLinks { display: flex; align-items: baseline; gap: 16px; flex: 0 0 auto; flex-wrap: wrap; justify-content: flex-end; }
     .all { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; flex: 0 0 auto; }
-    .pool { font-family: var(--sans); font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); border: 1px solid var(--accent); border-radius: 999px; padding: 3px 11px; flex: 0 0 auto; }
-    .pool:hover { background: var(--accent-tint); text-decoration: none; }
+
+    /* One catalog, two pools (United States, Japan): a segmented switch is the single way in,
+       so there is no separate route or stray link. Touch-friendly; stretches full width on a phone. */
+    .poolTabs { display: inline-flex; margin: 22px 0 0; border: 1px solid var(--rule-strong); border-radius: 999px; padding: 3px; background: var(--surface); gap: 2px; }
+    .poolTab { font-family: var(--sans); font-size: 13.5px; font-weight: 600; letter-spacing: 0.02em; color: var(--muted); background: none; border: 0; border-radius: 999px; padding: 7px 18px; cursor: pointer; display: inline-flex; align-items: baseline; gap: 7px; white-space: nowrap; }
+    .poolTab:hover { color: var(--ink); }
+    .poolTab[aria-selected="true"] { background: var(--solid); color: var(--solid-ink); }
+    .poolTab .ct { font-size: 11px; font-weight: 500; opacity: 0.7; font-variant-numeric: tabular-nums; }
+    @media (max-width: 480px) { .poolTabs { display: flex; } .poolTab { flex: 1 1 0; justify-content: center; } }
     .count { font-size: 11.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); flex: 0 0 auto; }
 
     /* ---- writing band ---- */
@@ -322,6 +333,25 @@ const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "
       .tag { padding: 1px 5px; }
     }
   </style>
+
+  <script is:inline>
+    /* The market switch: one catalog, two pools, one shown at a time. The toolbar's
+       ResizeObserver (below) re-measures --tb-h when the US pool reappears, so the frozen
+       header keeps working after a switch. A /#japan deep link opens the Japan pool. */
+    (function () {
+      const tabs = Array.from(document.querySelectorAll(".poolTab"));
+      const panels = { us: document.getElementById("pool-us"), jp: document.getElementById("pool-jp") };
+      if (!tabs.length || !panels.us || !panels.jp) return;
+      function show(p) {
+        if (!panels[p]) p = "us";
+        Object.keys(panels).forEach((k) => { panels[k].hidden = k !== p; });
+        tabs.forEach((t) => t.setAttribute("aria-selected", String(t.dataset.pool === p)));
+        try { history.replaceState(null, "", p === "jp" ? "#japan" : location.pathname + location.search); } catch (e) {}
+      }
+      tabs.forEach((t) => t.addEventListener("click", () => show(t.dataset.pool)));
+      show(location.hash === "#japan" ? "jp" : "us");
+    })();
+  </script>
 
   <script is:inline>
     /* Pin the column-header row directly beneath the sticky toolbar: publish the toolbar's
