@@ -28,10 +28,12 @@ const IWV =
 const SANITY = ["AAPL", "MSFT", "AMZN", "JPM", "XOM", "JNJ"];
 const MIN_TICKERS = 2500;
 
+let LAST_META = null;
 async function fetchText(url) {
   for (let a = 1; a <= 4; a++) {
     try {
       const res = await fetch(url, { headers: { "User-Agent": UA, Accept: "text/csv,*/*" } });
+      LAST_META = { status: res.status, type: res.headers.get("content-type") || "" };
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       return await res.text();
     } catch (err) {
@@ -87,8 +89,10 @@ async function main() {
   console.log(`Building US universe (existing: ${curated.size} tickers)…`);
 
   let holdings = [];
+  let raw = "";
   try {
-    holdings = parseHoldings(await fetchText(IWV));
+    raw = await fetchText(IWV);
+    holdings = parseHoldings(raw);
     console.log(`  iShares IWV: parsed ${holdings.length} equity holdings`);
   } catch (err) {
     console.warn(`  ! IWV fetch/parse failed: ${err.message}`);
@@ -98,6 +102,12 @@ async function main() {
   const sane = SANITY.every((s) => set.has(s));
   if (holdings.length < MIN_TICKERS || !sane) {
     console.warn(`  ! constituent list rejected (${holdings.length} tickers, min ${MIN_TICKERS}; sanity ${sane ? "ok" : "FAILED, missing " + SANITY.filter((s) => !set.has(s)).join("/")}).`);
+    // Tell a format drift or a datacenter-IP block page apart from a genuine empty list
+    // by reporting what the endpoint actually returned, rather than guessing.
+    const meta = LAST_META ? `HTTP ${LAST_META.status}, ${LAST_META.type || "no content-type"}` : "no response";
+    const head = raw.slice(0, 300).replace(/\s+/g, " ").trim();
+    console.warn(`    response: ${meta}; ${raw.length} bytes; has "Ticker"=${raw.includes("Ticker")}, "AAPL"=${raw.includes("AAPL")}`);
+    console.warn(`    head: ${head || "(empty body)"}`);
     console.warn(`    Keeping the existing universe of ${curated.size} untouched; the pipeline runs on it.`);
     process.exit(0); // non-fatal
   }
