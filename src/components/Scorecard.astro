@@ -6,11 +6,18 @@ import { buildInsurerScorecard } from "../lib/insurers.mjs";
 import { buildFeeScorecard } from "../lib/feeFinancials.mjs";
 import { buildManagedCareScorecard } from "../lib/managedCare.mjs";
 import { moatReport } from "../lib/durability.mjs";
+import { grahamTests } from "../lib/graham.mjs";
 import { financialKind, financialSubtype } from "../lib/archetype.mjs";
 import MoatUnderAI from "./MoatUnderAI.astro";
 import Term from "./Term.astro";
 
 const { company, sample = false } = Astro.props;
+// Graham's defensive tests live inside the scorecard, so "is it safe" reads in one place
+// instead of split across a separate section. US-only and not for financials (the tests and
+// their thresholds, a $2B revenue floor and an industrial current ratio, are dollar- and
+// industrial-shaped); the Japanese pool and the banks/insurers/REITs skip them.
+const GTONE = { pass: "good", near: "warn", fail: "bad", na: "none" };
+const GLABEL = { pass: "Pass", near: "Near", fail: "Miss", na: "—" };
 // Each financial kind is read on different statements, so each gets its own scorecard
 // and skips the ROIC-based durability block, which applies to none of them: a lender on
 // return on equity and credit cost, an insurer on the combined ratio and float, a REIT
@@ -26,6 +33,7 @@ const { sections } =
   : fk === "bank" ? buildFinancialScorecard(company)
   : buildScorecard(company);
 const report = isFin ? null : moatReport(company);
+const graham = company.market !== "JP" && !isFin ? grahamTests(company) : null;
 ---
 
 <section class="scorecard">
@@ -64,6 +72,25 @@ const report = isFin ? null : moatReport(company);
       </ul>
     </div>
   ))}
+
+  {graham ? (
+    <div class="section">
+      <h3 class="secHead">Graham’s defensive tests{graham.testable ? ` · ${graham.passes} of ${graham.testable} met` : ""}</h3>
+      <p class="durNote">Graham’s numerical criteria for the defensive investor (<em>The Intelligent Investor</em>, ch. 14), run on the filings. A floor of safety, not a buy signal; many fine modern businesses fail his strictest liquidity rules by design.</p>
+      <ul class="report">
+        {graham.tests.map((t) => (
+          <li>
+            <div class="factRow">
+              <span class="factLabel">{t.name}</span>
+              <span class="gbadge" style={`color:${TONE_COLOR[GTONE[t.status]]}; border-color:${TONE_COLOR[GTONE[t.status]]}`}>{GLABEL[t.status]}</span>
+            </div>
+            <div class="gcrit">{t.criterion} · <b>{t.value}</b></div>
+            <p class="factNote">{t.note}</p>
+          </li>
+        ))}
+      </ul>
+    </div>
+  ) : null}
 
   {report ? (
     <div class="section">
@@ -126,6 +153,10 @@ const report = isFin ? null : moatReport(company);
   .factLabel { font-weight: 600; font-size: 15px; }
   .factValue { font-weight: 700; font-size: 17px; font-variant-numeric: tabular-nums; flex: 0 0 auto; text-align: right; }
   .factNote { font-size: 13px; color: var(--ink-dim); margin: 4px 0 0; line-height: 1.5; }
+
+  .gbadge { font-family: var(--sans); font-size: 10.5px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; border: 1px solid; border-radius: 2px; padding: 1px 7px; flex: 0 0 auto; }
+  .gcrit { font-size: 13px; color: var(--muted); margin-top: 3px; font-variant-numeric: tabular-nums; }
+  .gcrit b { color: var(--ink); font-weight: 700; }
 
   .foot { font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--muted); border-top: 1px solid var(--rule-strong); margin-top: 16px; padding-top: 11px; }
 </style>

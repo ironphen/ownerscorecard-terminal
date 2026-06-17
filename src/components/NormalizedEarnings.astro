@@ -26,7 +26,7 @@ const cyclical = ep && ep.swing != null && ep.swing > 1.2;
 
 {ep ? (
   <section class="norm">
-    <div class="head"><h2>Earnings power, through the cycle</h2></div>
+    <div class="head"><h3>Earnings power, through the cycle</h3><span class="coda">a read of the record above</span></div>
     <p class="lede">
       Graham warned against paying for a peak year or fleeing a trough. Here is what {company.name || company.ticker}
       earns on its <b>through-cycle</b> margin across {ep.span}, applied to this year's revenue, set beside the latest reported figure.
@@ -63,9 +63,13 @@ const cyclical = ep && ep.swing != null && ep.swing > 1.2;
 ) : null}
 
 <style>
-  .norm { margin: 24px 0; }
-  .head { border-bottom: 1px solid var(--rule-strong); padding-bottom: 6px; }
-  .head h2 { margin: 0; }
+  /* A coda to the record above, not a peer section: it hugs the table it reads from and wears
+     a subordinate heading (smaller than the record's), so the eye treats it as the record's
+     conclusion rather than a fresh topic. */
+  .norm { margin: 8px 0 24px; }
+  .head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; border-bottom: 1px solid var(--rule); padding-bottom: 6px; }
+  .head h3 { margin: 0; font-family: var(--serif); font-weight: 600; font-size: clamp(17px, 2.6vw, 20px); letter-spacing: -0.01em; color: var(--ink); line-height: 1.2; }
+  .coda { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); flex: 0 0 auto; }
   .lede { font-family: var(--serif); font-size: clamp(15px, 2.3vw, 17px); line-height: 1.5; margin: 12px 0 0; max-width: 72ch; }
   .lede b { font-weight: 600; }
 

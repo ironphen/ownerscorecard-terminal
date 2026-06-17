@@ -27,8 +27,16 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 const API = "https://api.edinet-fsa.go.jp/api/v2";
 const KEY = process.env.EDINET_API_KEY || "";
 const THROTTLE_MS = Number(process.env.EDINET_THROTTLE_MS || 350);
-const LOOKBACK_DAYS = Number(process.env.EDINET_LOOKBACK_DAYS || 430);
+// ~3.3 years, enough to reach each company's FY-3 annual report, whose cash-flow statement
+// carries FY-3 and FY-4 capex. With the latest filing (FY, FY-1) and the FY-1 and FY-2 reports
+// in between, that fills the whole five-year window the summary covers for everything else.
+const LOOKBACK_DAYS = Number(process.env.EDINET_LOOKBACK_DAYS || 1200);
+// How many older annual reports to pull per company for the deeper capex history (each carries
+// two years), beyond the latest. Three covers the five-year window.
+const CAPEX_BACKFILL = Number(process.env.EDINET_CAPEX_BACKFILL || 3);
 const DEBUG = (process.env.EDINET_DEBUG || "").split(",").map((s) => s.trim()).filter(Boolean);
+// Limit the run to a few tickers (comma-separated) for a fast, cheap test; blank = all.
+const ONLY_JP = (process.env.ONLY_JP || "").split(",").map((s) => s.trim()).filter(Boolean);
 
 const dataDir = path.join(process.cwd(), "src", "data");
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -311,43 +319,105 @@ async function getBuffer(url) {
 const withKey = (u) => u + (u.includes("?") ? "&" : "?") + "Subscription-Key=" + encodeURIComponent(KEY);
 const ymd = (d) => d.toISOString().slice(0, 10);
 
+// Fetch one filing's type=5 CSV bundle and parse it into a fact store, the same parse the
+// latest filing gets. Used to read capex (and depreciation) from a company's older annual
+// reports for the deeper history.
+async function loadStore(docId) {
+  const zipBuf = await getBuffer(withKey(`${API}/documents/${docId}?type=5`));
+  const store = {};
+  for (const f of unzip(zipBuf)) if (/\.csv$/i.test(f.name)) parseFacts(decodeCsv(f.data), store);
+  return store;
+}
+
+// Pull the deeper capex/depreciation history for one company by walking its older annual
+// reports (each carries two years), filling the years the latest filing's five-year summary
+// leaves blank. Cached per docId in cache.cf so an unchanged older filing is parsed once.
+async function deepenCashFlow(rec, reports, cache) {
+  const missing = rec.history.filter((h) => h.lines.capex == null).map((h) => h.fy);
+  if (!missing.length || reports.length < 2) return 0;
+  cache.cf ||= {};
+  const capexByFy = {}, depByFy = {};
+  for (let ri = 1; ri < reports.length && ri <= CAPEX_BACKFILL; ri++) {
+    const r = reports[ri];
+    let cf = cache.cf[r.docId];
+    if (!cf) {
+      cf = {};
+      try {
+        await sleep(THROTTLE_MS);
+        const { first } = picker(await loadStore(r.docId));
+        const rfy = r.periodEnd ? Number(r.periodEnd.slice(0, 4)) : null;
+        if (rfy != null) for (const rel of [0, -1]) {
+          const cx = first(DUR.capex, rel, false), dp = first(DUR.depreciation, rel, false);
+          if (cx != null || dp != null) cf[rfy + rel] = { capex: cx != null ? Math.abs(cx) : null, dep: dp };
+        }
+      } catch (err) { console.warn(`    ! older filing ${r.docId}: ${err.message}`); }
+      cache.cf[r.docId] = cf;
+    }
+    for (const fy in cf) {
+      if (capexByFy[fy] == null && cf[fy].capex != null) capexByFy[fy] = cf[fy].capex;
+      if (depByFy[fy] == null && cf[fy].dep != null) depByFy[fy] = cf[fy].dep;
+    }
+  }
+  let patched = 0;
+  for (const h of rec.history) {
+    if (h.lines.capex == null && capexByFy[h.fy] != null) { h.lines.capex = capexByFy[h.fy]; patched++; }
+    if (h.lines.depreciation == null && depByFy[h.fy] != null) h.lines.depreciation = depByFy[h.fy];
+  }
+  return patched;
+}
+
 // Crawl the daily document index back LOOKBACK_DAYS (incrementally, using the cached
 // last-crawled date) and record each universe company's latest annual securities report
 // (docTypeCode 120), matched by securities code. EDINET has no per-issuer endpoint, so a
 // dated crawl is the way in; the cache means only the first run pays the full backfill.
 async function discover(secToTicker, cache) {
   const today = new Date();
-  const earliest = new Date(today.getTime() - LOOKBACK_DAYS * 86400000);
-  const from = cache.lastDate ? new Date(Math.max(new Date(cache.lastDate).getTime() + 86400000, earliest.getTime())) : earliest;
-  const found = cache.byTicker || {};
-  let day = new Date(from);
+  const targetEarliest = new Date(today.getTime() - LOOKBACK_DAYS * 86400000);
+  // Migrate a pre-deepening cache (one latest report per ticker) to the array format by
+  // starting the crawl fresh; the backfill below then rebuilds the full window once.
+  const probe = cache.byTicker && Object.values(cache.byTicker)[0];
+  if (probe && !Array.isArray(probe)) { cache.byTicker = {}; cache.lastDate = null; cache.crawledFrom = null; }
+  const byTicker = cache.byTicker || {};
+
+  const record = (ticker, r, ds) => {
+    const list = (byTicker[ticker] ||= []);
+    const periodEnd = r.periodEnd || r.submitDateTime || ds;
+    const meta = { docId: r.docID, edinetCode: r.edinetCode, secCode: String(r.secCode), periodEnd: r.periodEnd || null, submit: r.submitDateTime || null };
+    const ex = list.find((x) => (x.periodEnd || "") === periodEnd);
+    if (!ex) list.push(meta);
+    else if ((r.submitDateTime || "") > (ex.submit || "")) Object.assign(ex, meta); // an amendment supersedes
+  };
   let crawled = 0;
-  while (day <= today) {
-    const ds = ymd(day);
+  const crawlDay = async (ds) => {
     try {
       const list = await getJSON(withKey(`${API}/documents.json?date=${ds}&type=2`));
       for (const r of list.results || []) {
-        if (r.docTypeCode !== "120") continue;          // annual securities report only
-        if (r.secCode == null) continue;
+        if (r.docTypeCode !== "120" || r.secCode == null) continue; // annual securities report only
         const ticker = secToTicker[String(r.secCode)];
-        if (!ticker) continue;
-        const prev = found[ticker];
-        const pend = r.periodEnd || r.submitDateTime || ds;
-        if (!prev || pend > (prev.periodEnd || "")) {
-          found[ticker] = { docId: r.docID, edinetCode: r.edinetCode, secCode: String(r.secCode), periodEnd: r.periodEnd || null, submit: r.submitDateTime || null };
-        }
+        if (ticker) record(ticker, r, ds);
       }
       crawled++;
-    } catch (err) {
-      console.warn(`  ! ${ds}: ${err.message}`);
-    }
+    } catch (err) { console.warn(`  ! ${ds}: ${err.message}`); }
     await sleep(THROTTLE_MS);
-    day = new Date(day.getTime() + 86400000);
+  };
+
+  // The cache tracks the crawled date range [crawledFrom, lastDate]. Crawl forward to today,
+  // then backfill the gap down to targetEarliest once (the deep history a single run pays for).
+  const haveFrom = cache.crawledFrom ? new Date(cache.crawledFrom) : null;
+  const haveTo = cache.lastDate ? new Date(cache.lastDate) : null;
+  for (let day = new Date(haveTo ? haveTo.getTime() + 86400000 : targetEarliest.getTime()); day <= today; day = new Date(day.getTime() + 86400000)) await crawlDay(ymd(day));
+  const backStop = haveFrom || haveTo; // the earliest date crawled so far, if any
+  if (backStop && targetEarliest < backStop) {
+    for (let day = new Date(backStop.getTime() - 86400000); day >= targetEarliest; day = new Date(day.getTime() - 86400000)) await crawlDay(ymd(day));
   }
-  cache.byTicker = found;
+
+  for (const t in byTicker) byTicker[t].sort((a, b) => ((a.periodEnd || "") < (b.periodEnd || "") ? 1 : (a.periodEnd || "") > (b.periodEnd || "") ? -1 : 0));
+  cache.byTicker = byTicker;
   cache.lastDate = ymd(today);
-  console.log(`  crawled ${crawled} day(s); have annual reports for ${Object.keys(found).length}/${Object.keys(secToTicker).length} companies`);
-  return found;
+  cache.crawledFrom = ymd(haveFrom && haveFrom < targetEarliest ? haveFrom : targetEarliest);
+  const reports = Object.values(byTicker).reduce((a, l) => a + l.length, 0);
+  console.log(`  crawled ${crawled} day(s); ${reports} annual reports for ${Object.keys(byTicker).length}/${Object.keys(secToTicker).length} companies`);
+  return byTicker;
 }
 
 async function main() {
@@ -368,7 +438,9 @@ async function main() {
 
   const companies = [];
   for (const entry of universe.tickers) {
-    const hit = found[entry.ticker];
+    if (ONLY_JP.length && !ONLY_JP.includes(entry.ticker)) continue;
+    const reports = found[entry.ticker];
+    const hit = reports && reports[0];
     if (!hit) { console.warn(`  ! ${entry.ticker} ${entry.name}: no annual report found in window`); continue; }
     await sleep(THROTTLE_MS);
     let zipBuf;
@@ -420,9 +492,14 @@ async function main() {
     }
 
     const rec = buildRecord(store, meta, byTickerEntry[entry.ticker]);
+    const deepened = await deepenCashFlow(rec, reports, cache);
     companies.push(rec);
-    console.log(`  ✓ ${entry.ticker} ${entry.name} (FY${fy ?? "?"}, rev ${rec.lines.revenue ?? "—"})`);
+    console.log(`  ✓ ${entry.ticker} ${entry.name} (FY${fy ?? "?"}, rev ${rec.lines.revenue ?? "—"}${deepened ? `, +${deepened}yr capex` : ""})`);
   }
+
+  // Persist the index and the per-filing capex cache filled during the loop, so the next run
+  // reuses parsed older filings instead of re-fetching them.
+  fs.writeFileSync(cachePath, JSON.stringify(cache, null, 2) + "\n");
 
   if (!companies.length) {
     console.error("\n❌ No Japanese companies resolved; preserving the prior file.\n");

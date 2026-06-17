@@ -10,8 +10,8 @@ import Segments from "../../components/Segments.astro";
 import OwnersRead from "../../components/OwnersRead.astro";
 import Capital from "../../components/Capital.astro";
 import Inversion from "../../components/Inversion.astro";
+import ActHeader from "../../components/ActHeader.astro";
 import Comp from "../../components/Comp.astro";
-import Graham from "../../components/Graham.astro";
 import Valuation from "../../components/Valuation.astro";
 import NormalizedEarnings from "../../components/NormalizedEarnings.astro";
 import language from "../../data/language.json";
@@ -74,11 +74,11 @@ const fmtDate = (d) =>
 
   {fund ? (
     <p class="readguide">
-      Read top to bottom, the owner's questions in the order an owner asks them:
-      <a href="#sec-business">what the business is</a>,
-      <a href="#sec-record">whether the record holds</a>,
-      <a href="#sec-scorecard">whether it survives and is any good</a>, and
-      <a href="#sec-price">what you would be paying</a>.
+      Read top to bottom, in five acts, the owner's questions in the order an owner asks them:
+      <a href="#act-what">what the business is</a>,
+      <a href="#act-record">whether the record holds</a>,
+      <a href="#act-quality">whether it survives and is run for owners</a>, and
+      <a href="#act-price">what you would be paying</a>.
       New to the terms? <a href="/concepts">Concepts</a> defines every one in plain language.
     </p>
   ) : null}
@@ -87,54 +87,68 @@ const fmtDate = (d) =>
     <div class="cbar">
       <a class="cbar-id" href="#top">{ticker}<span class="cbar-nm">{name ? ` · ${name}` : ""}</span></a>
       <nav class="secnav" aria-label="Sections">
-        <a href="#sec-snapshot">Snapshot</a>
-        <a href="#sec-business">Business</a>
-        <a href="#sec-mix">Mix</a>
-        <a href="#sec-record">Record</a>
-        <a href="#sec-power">Power</a>
-        <a href="#sec-scorecard">Scorecard</a>
-        <a href="#sec-capital">Capital</a>
-        <a href="#sec-inversion">Inversion</a>
-        <a href="#sec-pay">Pay</a>
-        <a href="#sec-graham">Graham</a>
-        <a href="#sec-price">Price</a>
-        <a href="#sec-changes">Changes</a>
-        <a href="#sec-peers">Peers</a>
-        <a href="#sec-writing">Writing</a>
+        <a href="#act-what">What it is</a>
+        <a href="#act-record">The record</a>
+        <a href="#act-quality">Quality</a>
+        <a href="#act-price">Price</a>
+        <a href="#act-context">Context</a>
       </nav>
     </div>
   ) : null}
 
-  {fund ? <div id="sec-snapshot" class="sec"><Portrait company={fund} /></div> : null}
-  {fund ? <div id="sec-business" class="sec"><BusinessRead company={fund} /></div> : null}
-  {fund ? <div id="sec-mix" class="sec"><Segments company={fund} /></div> : null}
-  {fund ? <div id="sec-record" class="sec"><TenYear company={fund} /></div> : null}
-  {fund && !isFin ? <div id="sec-power" class="sec"><NormalizedEarnings company={fund} /></div> : null}
-  {fund ? <div id="sec-scorecard" class="sec"><Scorecard company={fund} sample={fundamentals.sample} /></div> : null}
-  {fund && !isFin ? <div id="sec-capital" class="sec"><Capital company={fund} /></div> : null}
-  {fund && !isFin ? <div id="sec-inversion" class="sec"><Inversion company={fund} /></div> : null}
-  {fund ? <div id="sec-pay" class="sec"><Comp company={fund} /></div> : null}
-  {fund && !isFin ? <div id="sec-graham" class="sec"><Graham company={fund} /></div> : null}
-  {fund ? <div id="sec-price" class="sec"><Valuation company={fund} /></div> : null}
   {fund ? (
-    <div id="sec-changes" class="sec">
-      <OwnersRead company={fund} />
-    </div>
+    <section id="act-what" class="actGroup">
+      <ActHeader n="I" title="What it is" lede="Start where an owner starts: what the business sells, where the money comes from, and what kind of company it is." />
+      <div id="sec-snapshot" class="sec"><Portrait company={fund} /></div>
+      <div id="sec-business" class="sec"><BusinessRead company={fund} /></div>
+      <div id="sec-mix" class="sec"><Segments company={fund} /></div>
+    </section>
   ) : null}
-  {fund ? <div id="sec-peers" class="sec"><Peers company={fund} /></div> : null}
 
-  {related.length ? (
-    <div id="sec-writing" class="sec">
-      <h2>Writing</h2>
-      <ul class="history">
-        {related.map((a) => (
-          <li>
-            <span class="hDate">{fmtDate(a.data.date)}</span>
-            <span class="hLinks"><a href={`/articles/${a.id}`}>{a.data.title}</a></span>
-          </li>
-        ))}
-      </ul>
-    </div>
+  {fund ? (
+    <section id="act-record" class="actGroup">
+      <ActHeader n="II" title="The record" lede="A business is what it has done across a cycle, not what it did last quarter. Here is the ten-year arithmetic, read for durability." />
+      <div id="sec-record" class="sec"><TenYear company={fund} /></div>
+      {!isFin ? <div id="sec-power" class="sec"><NormalizedEarnings company={fund} /></div> : null}
+    </section>
+  ) : null}
+
+  {fund ? (
+    <section id="act-quality" class="actGroup">
+      <ActHeader n="III" title="Quality &amp; stewardship" lede="Is it a good business, will it survive, and is it run for the owners? The checks that answer each, set beside how management is paid." />
+      <div id="sec-scorecard" class="sec"><Scorecard company={fund} sample={fundamentals.sample} /></div>
+      {!isFin ? <div id="sec-capital" class="sec"><Capital company={fund} /></div> : null}
+      <div id="sec-pay" class="sec"><Comp company={fund} /></div>
+      {!isFin ? <div id="sec-inversion" class="sec"><Inversion company={fund} /></div> : null}
+    </section>
+  ) : null}
+
+  {fund ? (
+    <section id="act-price" class="actGroup">
+      <ActHeader n="IV" title="The price" lede="Only now, the price. What you would be paying, and what a price would have to assume to make sense, set against the record above." />
+      <div id="sec-price" class="sec"><Valuation company={fund} /></div>
+    </section>
+  ) : null}
+
+  {fund ? (
+    <section id="act-context" class="actGroup">
+      <ActHeader n="V" title="Context" lede="The supporting record: what changed in the latest filing, how it stands against peers, and anything written about it here." />
+      <div id="sec-changes" class="sec"><OwnersRead company={fund} /></div>
+      <div id="sec-peers" class="sec"><Peers company={fund} /></div>
+      {related.length ? (
+        <div id="sec-writing" class="sec">
+          <h2>Writing</h2>
+          <ul class="history">
+            {related.map((a) => (
+              <li>
+                <span class="hDate">{fmtDate(a.data.date)}</span>
+                <span class="hLinks"><a href={`/articles/${a.id}`}>{a.data.title}</a></span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+    </section>
   ) : null}
 
   {!fund && !related.length ? <p>Nothing here for {ticker} yet.</p> : null}
@@ -169,6 +183,10 @@ const fmtDate = (d) =>
     .secnav a:hover { color: var(--ink); text-decoration: none; }
     .secnav a.active { color: var(--ink); border-bottom-color: var(--accent); }
     .sec { scroll-margin-top: 52px; }
+    .actGroup { scroll-margin-top: 46px; }
+    /* The first act follows the sticky bar directly, so it needs no big top gap; later acts
+       keep the divider the component draws. */
+    .actGroup:first-of-type :global(.actHead) { margin-top: 14px; }
 
     h2 { border-bottom: 1px solid var(--rule); padding-bottom: 4px; margin-top: 24px; }
     .history { list-style: none; padding-left: 0; margin: 0; }
