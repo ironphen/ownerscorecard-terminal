@@ -389,11 +389,16 @@ async function main() {
 
     if (isDbg) {
       const names = Object.keys(store).sort();
-      console.log(`  parsed ${rawLines} raw lines -> ${names.length} elements with clean primary-statement contexts`);
-      console.log(`  current-year values (first 70 elements):`);
-      for (const n of names.slice(0, 70)) {
-        const cur = store[n]["0|d"] || store[n]["0|i"];
-        if (cur) console.log(`    ${n.padEnd(70)} ${cur.val}`);
+      // Show the revenue / income / balance-sheet elements (whatever their alphabetical
+      // position), with current-year value, so the concept map can be pinned per accounting
+      // standard without guessing — IFRS filers name these lines differently from J-GAAP.
+      const REL = /revenue|sales|operating|profit|income|asset|equit|cash|loan|bond|borrow|debt|lease|shares|dividend/i;
+      console.log(`  parsed ${rawLines} raw lines -> ${names.length} elements; revenue/income/balance candidates (current year):`);
+      for (const n of names) {
+        if (!REL.test(n)) continue;
+        const d0 = store[n]["0|d"], i0 = store[n]["0|i"];
+        const v = d0 ? d0.val : i0 ? i0.val : null;
+        if (v != null) console.log(`    ${n.padEnd(74)} ${v}`);
       }
       console.log("=== end EDINET_DEBUG ===\n");
     }
