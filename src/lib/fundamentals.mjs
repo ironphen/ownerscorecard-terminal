@@ -24,6 +24,20 @@ export function topLineRevenue(lines, company) {
   return rev;
 }
 
+// The minimum a company must clear to earn a page. Coverage is worth pushing toward the whole
+// investable universe, but only with clean data: a page with a blank headline, or a husk with a
+// top line and nothing to read it against, damages trust more than a missing name costs. So the
+// pipeline withholds a company that can't clear this floor, rather than ship a broken page. A
+// usable headline (a positive top line after the bank/insurer reconstruction) plus at least one
+// earnings figure is the bar. Used by the fetch to exclude and by the audit to flag.
+export function passesQualityFloor(company) {
+  const L = company.ttm?.lines || company.lines || {};
+  const rev = topLineRevenue(L, company);
+  if (!(rev != null && rev > 0)) return false;
+  if (L.netIncome == null && L.cashFromOps == null) return false;
+  return true;
+}
+
 // Compact money formatting, currency-aware so the same compute serves the US pool (USD)
 // and the Japanese pool (JPY, which reaches trillions): 123e9 -> "$123.0B", 50.7e12 ->
 // "¥50.7T". The symbol is chosen by currency code; everything else is identical.
