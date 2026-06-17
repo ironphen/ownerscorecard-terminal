@@ -174,7 +174,7 @@ const INST = {
 // Interest-bearing debt is split across many accounts and differs by standard, so total
 // debt sums one family or the other, never both: an IFRS filer also carries its parent
 // J-GAAP loan accounts, and adding both would double-count.
-const DEBT_IFRS = ["BondsAndBorrowingsCLIFRS", "BondsAndBorrowingsNCLIFRS", "BondsAndBorrowingsIFRS", "ShortTermBorrowingsIFRS", "LongTermBorrowingsIFRS", "CurrentPortionOfBondsAndBorrowingsIFRS", "LeaseLiabilitiesCLIFRS", "LeaseLiabilitiesNCLIFRS", "BorrowingsCurrentIFRS", "BorrowingsNonCurrentIFRS"];
+const DEBT_IFRS = ["BondsAndBorrowingsCLIFRS", "BondsAndBorrowingsNCLIFRS", "BondsAndBorrowingsIFRS", "BondsAndLoansPayableCLIFRS", "BondsAndLoansPayableNCLIFRS", "BorrowingsCurrentIFRS", "BorrowingsNonCurrentIFRS", "ShortTermBorrowingsIFRS", "LongTermBorrowingsIFRS", "ShortTermDebtIFRS", "LongTermDebtIFRS", "CurrentPortionOfBondsAndBorrowingsIFRS", "CurrentPortionOfLongTermDebtIFRS", "BondsPayableIFRS", "CommercialPapersIFRS", "LeaseLiabilitiesCLIFRS", "LeaseLiabilitiesNCLIFRS"];
 const DEBT_JGAAP = ["ShortTermLoansPayable", "CurrentPortionOfLongTermLoansPayable", "CurrentPortionOfBonds", "CommercialPapersLiabilities", "ShortTermBondsPayable", "LongTermLoansPayable", "BondsPayable", "LeaseObligationsCL", "LeaseObligationsNCL"];
 const SHARES = ["NumberOfIssuedAndOutstandingSharesAtTheEndOfFiscalYearIssuedSharesTotalNumberOfSharesEtc", "TotalNumberOfIssuedSharesSummaryOfBusinessResults"];
 const EPS = ["BasicEarningsPerShareIFRSSummaryOfBusinessResults", "BasicEarningsLossPerShareSummaryOfBusinessResults", "BasicEarningsPerShareIFRS", "BasicEarningsLossPerShare"];
@@ -191,12 +191,15 @@ function picker(store) {
 
 function debtForYear(store, relYear, isIFRS) {
   const { get } = picker(store);
-  let sum = 0, any = false;
-  for (const part of (isIFRS ? DEBT_IFRS : DEBT_JGAAP)) {
-    const v = get(part, relYear, true);
-    if (v != null) { sum += v; any = true; }
-  }
-  return any ? sum : null;
+  const sumOf = (parts) => {
+    let sum = 0, any = false;
+    for (const p of parts) { const v = get(p, relYear, true); if (v != null) { sum += v; any = true; } }
+    return any ? sum : null;
+  };
+  // IFRS filers report borrowings under the IFRS family; some, though, still tag the
+  // J-GAAP-named loan accounts (Hitachi), so fall back to those when the IFRS family is
+  // absent. One family or the other, never summed together, so nothing double-counts.
+  return isIFRS ? (sumOf(DEBT_IFRS) ?? sumOf(DEBT_JGAAP)) : sumOf(DEBT_JGAAP);
 }
 
 // Assemble one company's record (latest lines + up to five years of history) from the
