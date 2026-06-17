@@ -79,11 +79,16 @@ const CONCEPTS = {
   revenue: ["RevenueFromContractWithCustomerExcludingAssessedTax", "Revenues", "RevenueFromContractWithCustomerIncludingAssessedTax", "OilAndGasRevenue", "RevenueMineralSales"],
   netIncome: ["NetIncomeLoss", "NetIncomeLossAvailableToCommonStockholdersBasic", "ProfitLoss"],
   cashFromOps: ["NetCashProvidedByUsedInOperatingActivities"],
-  // The cash-flow depreciation+amortization add-back. The big tech filers (Microsoft, Alphabet)
-  // tag it as "...AndOther", which the standard three miss, so they read null and the
-  // maintenance-capex (steady-state owner earnings) lens cannot run on the very names the AI
-  // build-out makes it matter for. Include those variants.
-  depreciation: ["DepreciationDepletionAndAmortization", "DepreciationAmortizationAndAccretionNet", "DepreciationAndAmortization", "DepreciationAmortizationAndOther", "DepreciationDepletionAndAmortizationNonproduction", "CostOfGoodsAndServicesSoldDepreciationAndAmortization"],
+  // The cash-flow depreciation (+amortization) add-back, the maintenance-capex proxy the
+  // steady-state owner-earnings lens subtracts from operating cash flow. Most filers report a
+  // combined depreciation-and-amortization line (the leading tags). Microsoft and Alphabet
+  // report no combined add-back at all, only plain "Depreciation" (of property and equipment:
+  // $22.0B and $21.1B in FY2025), so they read null and the steady-state lens could not run on
+  // the very names the AI build-out makes it matter for. "Depreciation" is listed last as a
+  // fallback: it fills those names without changing any filer that already reports a combined
+  // figure, and property-and-equipment depreciation is the right match for capex, which buys
+  // exactly that.
+  depreciation: ["DepreciationDepletionAndAmortization", "DepreciationAmortizationAndAccretionNet", "DepreciationAndAmortization", "DepreciationAmortizationAndOther", "DepreciationDepletionAndAmortizationNonproduction", "CostOfGoodsAndServicesSoldDepreciationAndAmortization", "Depreciation"],
   capex: ["PaymentsToAcquirePropertyPlantAndEquipment", "PaymentsToAcquireProductiveAssets"],
   longTermDebt: ["LongTermDebtNoncurrent", "LongTermDebt"],
   currentDebt: ["LongTermDebtCurrent", "DebtCurrent"],
