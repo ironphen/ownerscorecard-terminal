@@ -149,7 +149,16 @@ const CONCEPTS = {
     "WeightedAverageNumberOfDilutedSharesOutstanding",
     "WeightedAverageNumberOfShareOutstandingBasicAndDiluted",
     "WeightedAverageNumberOfSharesOutstandingBasic",
+    // Partnerships and former partnerships (Blackstone, KKR before its 2018 conversion) report
+    // weighted-average units, not shares.
+    "WeightedAverageLimitedPartnershipUnitsOutstandingDiluted",
+    "WeightedAverageLimitedPartnershipUnitsOutstanding",
   ],
+  // Period-end share count, an instant fallback for filers that report no weighted average:
+  // asset managers and former partnerships (KKR, Brookfield) tag only shares outstanding, so
+  // they read null otherwise. Used only where the weighted-average series is empty for a year,
+  // so a clean filer is unaffected.
+  sharesOutstanding: ["CommonStockSharesOutstanding", "CommonStockSharesIssued"],
   // --- banking & insurance (the financials archetype; null for industrials) ---
   netInterestIncome: ["InterestIncomeExpenseNet"],
   noninterestIncome: ["NoninterestIncome"],
@@ -246,6 +255,28 @@ const latestEntry = (by) => {
   const fy = Math.max(...fys);
   return { ...by[fy], fy };
 };
+
+// A few filers tag weighted-average share counts in millions in some years (the value reads
+// ~700 instead of ~700,000,000, McDonald's from 2023 on), a units artifact that silently
+// corrupts every per-share figure. A real share count varies by well under a power of ten
+// across a decade, so a value short of the series' dominant scale by a factor of 1000 or more
+// is mis-tagged: climb it back up in 1000x steps until it sits within an order of magnitude of
+// the reference. Self-anchored to the largest (correct-scale) value in the series, so a
+// dual-class filer whose count is genuinely small (Berkshire's A-share basis) is never scaled,
+// having no larger sibling to anchor against.
+function fixShareScale(v, ref) {
+  if (v == null || v <= 0 || ref == null || ref <= 0) return v;
+  while (v * 1000 <= ref) v *= 1000;
+  return v;
+}
+function normalizeShareScale(byYear) {
+  const vals = Object.values(byYear).filter((v) => v != null && v > 0);
+  if (vals.length < 2) return byYear; // no reference scale to compare against
+  const ref = Math.max(...vals);
+  const out = {};
+  for (const fy in byYear) out[fy] = fixShareScale(byYear[fy], ref);
+  return out;
+}
 
 const pickAnnual = (facts, tags, unit = "USD") => latestEntry(annualByYear(facts, tags, unit));
 const pickInstant = (facts, tags, unit = "USD") => latestEntry(instantByYear(facts, tags, unit));
@@ -511,6 +542,16 @@ async function main() {
       investmentIncome: collectAnnual(facts, CONCEPTS.investmentIncome),
       stockBasedComp: collectAnnual(facts, CONCEPTS.stockBasedComp),
     };
+    // Fill any year with no weighted-average share count using the period-end count (asset
+    // managers and former partnerships like KKR report only shares outstanding), then correct
+    // any year a filer tagged its counts in millions rather than units, so per-share figures
+    // stay honest across the whole record (see normalizeShareScale). shareRef is the record's
+    // correct scale, applied to the latest-annual and TTM counts captured separately below.
+    const sharesInstant = collectInstant(facts, CONCEPTS.sharesOutstanding, "shares");
+    for (const fy in sharesInstant) if (ha.sharesDiluted[fy] == null) ha.sharesDiluted[fy] = sharesInstant[fy];
+    ha.sharesDiluted = normalizeShareScale(ha.sharesDiluted);
+    ha.repurchasedShares = normalizeShareScale(ha.repurchasedShares);
+    const shareRef = Math.max(0, ...Object.values(ha.sharesDiluted).filter((v) => v != null));
     const hi = {
       equity: collectInstant(facts, CONCEPTS.stockholdersEquity),
       cash: collectInstant(facts, CONCEPTS.cashAndEquivalents),
@@ -610,7 +651,7 @@ async function main() {
             inventory: latestObservation(facts, CONCEPTS.inventory, "USD", true)?.val ?? null,
             accountsPayable: latestObservation(facts, CONCEPTS.accountsPayable, "USD", true)?.val ?? null,
             totalDebt: maxOf(ttmLtd != null || ttmCurDebt != null ? (ttmLtd || 0) + (ttmCurDebt || 0) : null, ...aggTTMVals),
-            sharesDiluted: latestObservation(facts, CONCEPTS.sharesDiluted, "shares", false)?.val ?? null,
+            sharesDiluted: fixShareScale(latestObservation(facts, CONCEPTS.sharesDiluted, "shares", false)?.val ?? pickInstant(facts, CONCEPTS.sharesOutstanding, "shares")?.val ?? null, shareRef),
             netInterestIncome: tf(CONCEPTS.netInterestIncome),
             noninterestIncome: tf(CONCEPTS.noninterestIncome),
             noninterestExpense: tf(CONCEPTS.noninterestExpense),
@@ -655,7 +696,7 @@ async function main() {
         stockBasedComp: pick(CONCEPTS.stockBasedComp),
         dividendsPaid: pick(CONCEPTS.dividendsPaid),
         buybacks: pick(CONCEPTS.buybacks),
-        repurchasedShares: pickAnnual(facts, CONCEPTS.repurchasedShares, "shares")?.val ?? null,
+        repurchasedShares: fixShareScale(pickAnnual(facts, CONCEPTS.repurchasedShares, "shares")?.val ?? null, shareRef),
         stockholdersEquity: inst(CONCEPTS.stockholdersEquity),
         cashAndEquivalents: inst(CONCEPTS.cashAndEquivalents),
         shortTermInvestments: inst(CONCEPTS.shortTermInvestments),
@@ -665,7 +706,7 @@ async function main() {
         accountsPayable: inst(CONCEPTS.accountsPayable),
         currentAssets: inst(CONCEPTS.currentAssets),
         currentLiabilities: inst(CONCEPTS.currentLiabilities),
-        sharesDiluted: pickAnnual(facts, CONCEPTS.sharesDiluted, "shares")?.val ?? null,
+        sharesDiluted: fixShareScale(pickAnnual(facts, CONCEPTS.sharesDiluted, "shares")?.val ?? pickInstant(facts, CONCEPTS.sharesOutstanding, "shares")?.val ?? null, shareRef),
         netInterestIncome: pick(CONCEPTS.netInterestIncome),
         noninterestIncome: pick(CONCEPTS.noninterestIncome),
         noninterestExpense: pick(CONCEPTS.noninterestExpense),
