@@ -28,6 +28,14 @@ on:
         description: "Dump raw XBRL axes for these tickers (comma-separated; diagnostic only)"
         type: string
         default: ""
+      rebuild_universe:
+        description: "Rebuild the US universe from the Russell 3000 (dryrun = test the source only; write = rebuild then refetch all)"
+        type: choice
+        options:
+          - "off"
+          - "dryrun"
+          - "write"
+        default: "off"
   schedule:
     - cron: "0 7 * * 1" # Mondays 07:00 UTC — self-refresh, no manual upkeep
 
@@ -43,8 +51,16 @@ jobs:
         with:
           node-version: 22
       - run: npm ci
+      # Optionally rebuild the US universe from the Russell 3000 index first. dryrun fetches and
+      # reports only (the fetch step below is skipped); write overwrites universe.json, which the
+      # fetch then reads. A failed or implausible constituent fetch leaves the universe untouched.
+      - name: Rebuild universe
+        if: ${{ github.event.inputs.rebuild_universe == 'dryrun' || github.event.inputs.rebuild_universe == 'write' }}
+        run: node scripts/buildUniverse.mjs
+        env:
+          UNIVERSE_DRYRUN: ${{ github.event.inputs.rebuild_universe == 'dryrun' && '1' || '' }}
       - run: npm run fetch:fundamentals
-        if: ${{ github.event.inputs.segments_only != 'true' && github.event.inputs.filings_only != 'true' }}
+        if: ${{ github.event.inputs.segments_only != 'true' && github.event.inputs.filings_only != 'true' && github.event.inputs.rebuild_universe != 'dryrun' }}
         env:
           SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT }}
           DEBT_DEBUG: ${{ github.event.inputs.debug }}
@@ -76,10 +92,10 @@ jobs:
       - name: Commit if changed
         if: ${{ github.event.inputs.debug == '' }}
         run: |
-          if ! git diff --quiet -- src/data/fundamentals.json src/data/language.json src/data/segments.json; then
+          if ! git diff --quiet -- src/data/fundamentals.json src/data/language.json src/data/segments.json src/data/universe.json; then
             git config user.name "github-actions[bot]"
             git config user.email "github-actions[bot]@users.noreply.github.com"
-            git add src/data/fundamentals.json src/data/language.json src/data/segments.json
+            git add src/data/fundamentals.json src/data/language.json src/data/segments.json src/data/universe.json
             git commit -m "Refresh fundamentals + filing language + segments"
             # Rebase-and-retry so a concurrent push can't silently drop the data refresh.
             for i in 1 2 3 4 5; do
