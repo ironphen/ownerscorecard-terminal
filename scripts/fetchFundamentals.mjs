@@ -149,7 +149,17 @@ const CONCEPTS = {
     "WeightedAverageNumberOfDilutedSharesOutstanding",
     "WeightedAverageNumberOfShareOutstandingBasicAndDiluted",
     "WeightedAverageNumberOfSharesOutstandingBasic",
+    // Partnerships and former partnerships (Blackstone, KKR before its 2018 conversion) report
+    // weighted-average units, not shares.
+    "WeightedAverageLimitedPartnershipUnitsOutstandingDiluted",
+    "WeightedAverageLimitedPartnershipUnitsOutstanding",
   ],
+  // Period-end share count, an instant fallback for filers that report no weighted average:
+  // asset managers and former partnerships (KKR, Brookfield) tag only shares outstanding, so
+  // they read null otherwise. Used only where the weighted-average series is empty for a year,
+  // so a clean filer is unaffected. Outstanding only, never "issued" (which includes treasury
+  // stock and so overstates the real count).
+  sharesOutstanding: ["CommonStockSharesOutstanding"],
   // --- banking & insurance (the financials archetype; null for industrials) ---
   netInterestIncome: ["InterestIncomeExpenseNet"],
   noninterestIncome: ["NoninterestIncome"],
@@ -245,6 +255,40 @@ const latestEntry = (by) => {
   if (!fys.length) return null;
   const fy = Math.max(...fys);
   return { ...by[fy], fy };
+};
+
+// A few filers tag weighted-average share counts in millions in some years (the value reads
+// ~700 instead of ~700,000,000, McDonald's from 2023 on), a units artifact that silently
+// corrupts every per-share figure. A real share count varies by well under a power of ten
+// across a decade, so a value short of the series' dominant scale by a factor of 1000 or more
+// is mis-tagged: climb it back up in 1000x steps until it sits within an order of magnitude of
+// the reference. Self-anchored to the largest (correct-scale) value in the series, so a
+// dual-class filer whose count is genuinely small (Berkshire's A-share basis) is never scaled,
+// having no larger sibling to anchor against.
+function fixShareScale(v, ref) {
+  if (v == null || v <= 0 || ref == null || ref <= 0) return v;
+  while (v * 1000 <= ref) v *= 1000;
+  return v;
+}
+function normalizeShareScale(byYear) {
+  const vals = Object.values(byYear).filter((v) => v != null && v > 0);
+  if (vals.length < 2) return byYear; // no reference scale to compare against
+  const ref = Math.max(...vals);
+  const out = {};
+  for (const fy in byYear) out[fy] = fixShareScale(byYear[fy], ref);
+  return out;
+}
+
+// Of two share-count observations, the one whose period ends latest (ties go to the first,
+// the weighted average, which is the right per-share denominator). Lets a fresh period-end
+// count override a weighted average that went stale when a partnership converted: KKR stops
+// tagging units in 2017 but keeps reporting shares outstanding, so the stale 2017 figure must
+// not win over the current count.
+const freshestShare = (a, b) => {
+  const xs = [a, b].filter((o) => o && o.val != null);
+  if (!xs.length) return null;
+  xs.sort((x, y) => (x.end < y.end ? 1 : x.end > y.end ? -1 : 0));
+  return xs[0].val;
 };
 
 const pickAnnual = (facts, tags, unit = "USD") => latestEntry(annualByYear(facts, tags, unit));
@@ -458,6 +502,26 @@ async function main() {
       }
       console.log("=== end DEP_DEBUG ===\n");
     }
+
+    // Diagnostic: SHARES_DEBUG=MCD dumps every share-count us-gaap tag and its annual values,
+    // to find the concept a filer that reads null uses (asset managers, partnerships) and to
+    // spot a units artifact (a filer tagging weighted-average shares in millions, so the value
+    // reads ~700 instead of ~700,000,000).
+    if (process.env.SHARES_DEBUG && process.env.SHARES_DEBUG.toUpperCase().split(",").map((s) => s.trim()).includes(ticker.toUpperCase())) {
+      const ug = facts?.facts?.["us-gaap"] || {};
+      console.log(`\n=== SHARES_DEBUG ${ticker}: sharesDiluted=${pickAnnual(facts, CONCEPTS.sharesDiluted, "shares")?.val ?? null} ===`);
+      for (const concept of Object.keys(ug)) {
+        if (!/shares?outstanding|weightedaverage|commonstock|commonunit|partnership|limitedpartner|sharesissued/i.test(concept)) continue;
+        const sh = ug[concept]?.units?.shares;
+        if (!sh) continue;
+        const byYear = {};
+        for (const o of sh) { if (o.form !== "10-K" || o.fp !== "FY" || o.fy == null) continue; if (!byYear[o.fy] || o.end > byYear[o.fy].end) byYear[o.fy] = o; }
+        const years = Object.keys(byYear).sort();
+        if (!years.length) continue;
+        console.log(`  ${concept.padEnd(56)} ${years.map((y) => `${y}=${byYear[y].val}`).join(" ")}`);
+      }
+      console.log("=== end SHARES_DEBUG ===\n");
+    }
     const accnNoDash = anchor?.accn ? anchor.accn.replace(/-/g, "") : null;
     const sourceUrl = accnNoDash
       ? `https://www.sec.gov/Archives/edgar/data/${Number(cik)}/${accnNoDash}/${anchor.accn}-index.htm`
@@ -491,6 +555,16 @@ async function main() {
       investmentIncome: collectAnnual(facts, CONCEPTS.investmentIncome),
       stockBasedComp: collectAnnual(facts, CONCEPTS.stockBasedComp),
     };
+    // Fill any year with no weighted-average share count using the period-end count (asset
+    // managers and former partnerships like KKR report only shares outstanding), then correct
+    // any year a filer tagged its counts in millions rather than units, so per-share figures
+    // stay honest across the whole record (see normalizeShareScale). shareRef is the record's
+    // correct scale, applied to the latest-annual and TTM counts captured separately below.
+    const sharesInstant = collectInstant(facts, CONCEPTS.sharesOutstanding, "shares");
+    for (const fy in sharesInstant) if (ha.sharesDiluted[fy] == null) ha.sharesDiluted[fy] = sharesInstant[fy];
+    ha.sharesDiluted = normalizeShareScale(ha.sharesDiluted);
+    ha.repurchasedShares = normalizeShareScale(ha.repurchasedShares);
+    const shareRef = Math.max(0, ...Object.values(ha.sharesDiluted).filter((v) => v != null));
     const hi = {
       equity: collectInstant(facts, CONCEPTS.stockholdersEquity),
       cash: collectInstant(facts, CONCEPTS.cashAndEquivalents),
@@ -590,7 +664,7 @@ async function main() {
             inventory: latestObservation(facts, CONCEPTS.inventory, "USD", true)?.val ?? null,
             accountsPayable: latestObservation(facts, CONCEPTS.accountsPayable, "USD", true)?.val ?? null,
             totalDebt: maxOf(ttmLtd != null || ttmCurDebt != null ? (ttmLtd || 0) + (ttmCurDebt || 0) : null, ...aggTTMVals),
-            sharesDiluted: latestObservation(facts, CONCEPTS.sharesDiluted, "shares", false)?.val ?? null,
+            sharesDiluted: fixShareScale(freshestShare(latestObservation(facts, CONCEPTS.sharesDiluted, "shares", false), pickInstant(facts, CONCEPTS.sharesOutstanding, "shares")), shareRef),
             netInterestIncome: tf(CONCEPTS.netInterestIncome),
             noninterestIncome: tf(CONCEPTS.noninterestIncome),
             noninterestExpense: tf(CONCEPTS.noninterestExpense),
@@ -635,7 +709,7 @@ async function main() {
         stockBasedComp: pick(CONCEPTS.stockBasedComp),
         dividendsPaid: pick(CONCEPTS.dividendsPaid),
         buybacks: pick(CONCEPTS.buybacks),
-        repurchasedShares: pickAnnual(facts, CONCEPTS.repurchasedShares, "shares")?.val ?? null,
+        repurchasedShares: fixShareScale(pickAnnual(facts, CONCEPTS.repurchasedShares, "shares")?.val ?? null, shareRef),
         stockholdersEquity: inst(CONCEPTS.stockholdersEquity),
         cashAndEquivalents: inst(CONCEPTS.cashAndEquivalents),
         shortTermInvestments: inst(CONCEPTS.shortTermInvestments),
@@ -645,7 +719,7 @@ async function main() {
         accountsPayable: inst(CONCEPTS.accountsPayable),
         currentAssets: inst(CONCEPTS.currentAssets),
         currentLiabilities: inst(CONCEPTS.currentLiabilities),
-        sharesDiluted: pickAnnual(facts, CONCEPTS.sharesDiluted, "shares")?.val ?? null,
+        sharesDiluted: fixShareScale(freshestShare(pickAnnual(facts, CONCEPTS.sharesDiluted, "shares"), pickInstant(facts, CONCEPTS.sharesOutstanding, "shares")), shareRef),
         netInterestIncome: pick(CONCEPTS.netInterestIncome),
         noninterestIncome: pick(CONCEPTS.noninterestIncome),
         noninterestExpense: pick(CONCEPTS.noninterestExpense),

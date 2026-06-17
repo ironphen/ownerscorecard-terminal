@@ -1,0 +1,30 @@
+---
+// A tiny inline trace of a historical series, rendered server-side (the record is known at
+// build time, so it needs no client JS). Normalized to its own min and max: a shape, not a
+// scale. Withholds when the series is too short to read.
+const { series = [], w = 88, h = 20, klass = "" } = Astro.props;
+const xs = (series || []).filter((v) => v != null);
+let points = null;
+if (xs.length >= 3) {
+  const min = Math.min(...xs);
+  const max = Math.max(...xs);
+  const range = max - min || Math.abs(max) || 1;
+  points = xs
+    .map((v, i) => {
+      const x = (i / (xs.length - 1)) * (w - 2) + 1;
+      const y = h - 2 - ((v - min) / range) * (h - 4) + 1;
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    })
+    .join(" ");
+}
+---
+
+{points ? (
+  <svg class:list={["spark", klass]} viewBox={`0 0 ${w} ${h}`} width={w} height={h} preserveAspectRatio="none" aria-hidden="true">
+    <polyline points={points} fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round" />
+  </svg>
+) : null}
+
+<style>
+  .spark { color: var(--accent); display: inline-block; vertical-align: middle; flex: 0 0 auto; }
+</style>

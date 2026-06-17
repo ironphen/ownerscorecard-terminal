@@ -120,9 +120,13 @@ const SETS = {
   capital: [ROW.revenue, ROW.opMargin, ROW.netIncome, ROW.eps, ROW.cashFromOps, ROW.capex, ROW.ownerEarnings, ROW.oeMargin, ROW.capexToRev, ROW.capexToDep, ROW.roic, ROW.roe, ROW.shares, ROW.totalDebt, ROW.netDebt, ROW.intCov, ROW.ndEbitda, ROW.dps],
   retail: [ROW.revenue, ROW.grossMargin, ROW.opMargin, ROW.netIncome, ROW.eps, ROW.cashFromOps, ROW.capex, ROW.ownerEarnings, ROW.oeMargin, ROW.capexToRev, ROW.roic, ROW.roe, ROW.shares, ROW.cash, ROW.netDebt, ROW.dps, ROW.bvps],
   financial: [ROW.revenue, ROW.nii, ROW.provision, ROW.netIncome, ROW.eps, ROW.roa, ROW.roe, ROW.rotce, ROW.efficiency, ROW.deposits, ROW.shares, ROW.bvps, ROW.tbvps, ROW.dps],
-  insurer: [ROW.revenue, ROW.premiums, ROW.invInc, ROW.netIncome, ROW.combined, ROW.lossRatio, ROW.roe, ROW.float, ROW.shares, ROW.bvps, ROW.dps],
+  // Insurers read on the combined ratio and float, but they also generate cash, and a group
+  // that owns operating businesses under an insurance SIC (a conglomerate, say) is read on its
+  // owner economics too. So the owner-earnings bridge and cash sit beside the underwriting
+  // measures; the sparse-row prune drops whichever a given filer doesn't support.
+  insurer: [ROW.revenue, ROW.premiums, ROW.invInc, ROW.netIncome, ROW.cashFromOps, ROW.capex, ROW.ownerEarnings, ROW.combined, ROW.lossRatio, ROW.roe, ROW.float, ROW.cash, ROW.shares, ROW.bvps, ROW.dps],
   // Life insurers: the spread-and-book-value story, no combined ratio (see insurers.mjs).
-  lifeInsurer: [ROW.revenue, ROW.premiums, ROW.invInc, ROW.netIncome, ROW.roe, ROW.float, ROW.shares, ROW.bvps, ROW.dps],
+  lifeInsurer: [ROW.revenue, ROW.premiums, ROW.invInc, ROW.netIncome, ROW.cashFromOps, ROW.capex, ROW.ownerEarnings, ROW.roe, ROW.float, ROW.cash, ROW.shares, ROW.bvps, ROW.dps],
   fee: [ROW.revenue, ROW.opMargin, ROW.netMargin, ROW.netIncome, ROW.eps, ROW.ownerEarnings, ROW.roe, ROW.shares, ROW.cash, ROW.dps, ROW.bvps],
   managedCare: [ROW.revenue, ROW.premiums, ROW.mlr, ROW.opMargin, ROW.netIncome, ROW.eps, ROW.roe, ROW.shares, ROW.bvps, ROW.dps],
   reit: [ROW.revenue, ROW.netIncome, ROW.ffo, ROW.ffoPS, ROW.payout, ROW.debtAssets, ROW.totalDebt, ROW.shares, ROW.dps, ROW.bvps],
@@ -188,11 +192,16 @@ const ROW_CONCEPT = {
   "Investment income": "insurance-float", "Float (reserves)": "insurance-float",
   "Medical loss ratio": "medical-loss-ratio",
 };
-// Drop any row the data can't fill across the whole record, then mark where each band
-// (earnings → returns → balance sheet) begins so the table reads in sections.
+// Drop a row the data fills in too few years, then mark where each band (earnings → returns →
+// balance sheet) begins so the table reads in sections. A lone value beside a row of dashes is
+// noise, not a record (a conglomerate filing under an insurance SIC tags premiums in its latest
+// year only, say), so require a row populated in a fair share of the columns, at least three of
+// a long record, rather than merely non-empty. Every table then reads as a record, and the
+// genuinely populated core stands out instead of being lost among sparse specialist rows.
+const minFill = cols.length >= 6 ? 3 : 2;
 const rows = chosen
   .map((r) => ({ label: r.label, short: r.short || r.label, kind: r.kind || "plain", g: r.g || 1, concept: ROW_CONCEPT[r.label] || null, cells: cols.map((c) => r.get(c.lines)) }))
-  .filter((r) => r.cells.some((c) => c !== "—"));
+  .filter((r) => r.cells.filter((c) => c !== "—").length >= minFill);
 rows.forEach((r, i) => { r.gtop = i > 0 && r.g !== rows[i - 1].g; });
 
 // Abbreviated year for narrow screens: 2017 → ’17, TTM stays.
