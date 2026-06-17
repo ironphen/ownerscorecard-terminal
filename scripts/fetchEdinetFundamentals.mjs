@@ -141,41 +141,43 @@ export function parseFacts(text, store = {}) {
 // Candidates in priority order, local names only (prefix stripped). Covers J-GAAP
 // (jppfs/jpcrp), IFRS (…IFRS), and the standardised five-year summary (…SummaryOfBusinessResults),
 // which is how we reach back five years from a single annual report.
+// IFRS variants come first in every list. An IFRS filer also reports its parent-company
+// J-GAAP statements (NetSales, OperatingIncome, Assets…) at a small fraction of the
+// consolidated figure, so the consolidated IFRS line must win the pick. A J-GAAP filer
+// simply lacks the IFRS elements and falls through to them. The …SummaryOfBusinessResults
+// elements carry the five-year history.
 const DUR = {
-  revenue: ["NetSales", "NetSalesIFRS", "RevenueIFRS", "Revenue", "RevenuesIFRS", "OperatingRevenue1", "OperatingRevenue2", "GrossOperatingRevenueIFRS", "NetSalesSummaryOfBusinessResults", "RevenueIFRSSummaryOfBusinessResults", "NetSalesIFRSSummaryOfBusinessResults", "RevenuesIFRSSummaryOfBusinessResults", "OperatingRevenuesSummaryOfBusinessResults", "RevenueSummaryOfBusinessResults"],
-  operatingIncome: ["OperatingIncome", "OperatingIncomeLoss", "OperatingProfitLossIFRS", "OperatingProfitIFRS", "OperatingIncomeIFRS"],
-  ordinaryIncome: ["OrdinaryIncome", "OrdinaryIncomeLoss", "OrdinaryIncomeLossSummaryOfBusinessResults", "ProfitLossBeforeTaxIFRS", "ProfitBeforeTaxIFRS", "ProfitLossBeforeTaxIFRSSummaryOfBusinessResults"],
-  netIncome: ["ProfitLossAttributableToOwnersOfParent", "ProfitLossAttributableToOwnersOfParentIFRS", "ProfitLoss", "ProfitLossIFRS", "NetIncomeLossSummaryOfBusinessResults", "ProfitLossAttributableToOwnersOfParentIFRSSummaryOfBusinessResults", "ProfitLossAttributableToOwnersOfParentSummaryOfBusinessResults"],
-  costOfRevenue: ["CostOfSales", "CostOfSalesIFRS"],
-  grossProfit: ["GrossProfit", "GrossProfitIFRS"],
-  interestExpense: ["InterestExpensesNOE", "InterestExpenses", "InterestExpensesFinancialExpensesIFRS", "FinanceCostsIFRS"],
-  cashFromOps: ["NetCashProvidedByUsedInOperatingActivities", "NetCashProvidedByUsedInOperatingActivitiesIFRS", "CashFlowsFromUsedInOperatingActivitiesIFRS", "NetCashProvidedByUsedInOperatingActivitiesSummaryOfBusinessResults", "CashFlowsFromOperatingActivitiesIFRSSummaryOfBusinessResults"],
-  capex: ["PurchaseOfPropertyPlantAndEquipment", "PurchaseOfPropertyPlantAndEquipmentInvestmentActivities", "PaymentsForPurchaseOfPropertyPlantAndEquipmentIFRS", "PurchaseOfPropertyPlantAndEquipmentIFRS", "AcquisitionOfPropertyPlantAndEquipmentIFRS"],
-  depreciation: ["DepreciationAndAmortizationOpeCF", "DepreciationAndAmortization", "DepreciationAndAmortizationIFRS"],
-  dividendsPaid: ["DividendsPaidFinCF", "CashDividendsPaidFinCF", "DividendsPaidIFRS"],
-  sbc: ["ShareBasedCompensationExpensesSGA"],
+  revenue: ["RevenueIFRS", "RevenueIFRSSummaryOfBusinessResults", "NetSalesIFRS", "NetSalesIFRSSummaryOfBusinessResults", "SalesRevenuesIFRS", "RevenuesIFRS", "OperatingRevenuesSummaryOfBusinessResults", "OperatingRevenue1", "OperatingRevenue2", "NetSales", "NetSalesSummaryOfBusinessResults", "Revenue", "RevenueSummaryOfBusinessResults"],
+  operatingIncome: ["OperatingProfitLossIFRS", "OperatingIncomeIFRS", "OperatingProfitIFRS", "OperatingIncome", "OperatingIncomeLoss"],
+  ordinaryIncome: ["ProfitLossBeforeTaxIFRS", "ProfitLossBeforeTaxIFRSSummaryOfBusinessResults", "OrdinaryIncome", "OrdinaryIncomeLossSummaryOfBusinessResults", "OrdinaryIncomeLoss"],
+  netIncome: ["ProfitLossAttributableToOwnersOfParentIFRS", "ProfitLossAttributableToOwnersOfParentIFRSSummaryOfBusinessResults", "ProfitLossAttributableToOwnersOfParent", "ProfitLossAttributableToOwnersOfParentSummaryOfBusinessResults", "NetIncomeLossSummaryOfBusinessResults", "ProfitLossIFRS", "ProfitLoss"],
+  costOfRevenue: ["CostOfSalesIFRS", "CostOfSales"],
+  grossProfit: ["GrossProfitIFRS", "GrossProfit"],
+  interestExpense: ["InterestExpenseOnFinancialDebtInterestExpenseIFRS", "InterestExpensesIFRS", "FinanceCostsIFRS", "InterestExpensesAndInterestOnBondsNOE", "InterestExpensesNOE", "InterestExpenses"],
+  cashFromOps: ["NetCashProvidedByUsedInOperatingActivitiesIFRS", "CashFlowsFromUsedInOperatingActivitiesIFRSSummaryOfBusinessResults", "CashFlowsFromUsedInOperatingActivitiesIFRS", "NetCashProvidedByUsedInOperatingActivities", "NetCashProvidedByUsedInOperatingActivitiesSummaryOfBusinessResults"],
+  capex: ["PurchaseOfPropertyPlantAndEquipmentInvCFIFRS", "PaymentsForPurchaseOfPropertyPlantAndEquipmentIFRS", "PurchaseOfPropertyPlantAndEquipmentIFRS", "PurchaseOfPropertyPlantAndEquipment", "PurchaseOfPropertyPlantAndEquipmentInvestmentActivities"],
+  depreciation: ["DepreciationAndAmortizationOpeCFIFRS", "DepreciationAndAmortisationOpeCFIFRS", "DepreciationAndAmortizationOpeCF", "DepreciationAndAmortization"],
+  dividendsPaid: ["DividendsPaidFinCFIFRS", "DividendsPaidFinCF", "CashDividendsPaidFinCF", "DividendsFromSurplus"],
+  sbc: ["ShareBasedPaymentsOpeCFIFRS", "ShareBasedCompensationExpensesSGA"],
 };
 const INST = {
-  stockholdersEquity: ["EquityAttributableToOwnersOfParent", "EquityAttributableToOwnersOfParentIFRS", "ShareholdersEquity", "NetAssets", "TotalNetAssets", "NetAssetsSummaryOfBusinessResults", "EquityAttributableToOwnersOfParentIFRSSummaryOfBusinessResults", "ShareholdersEquitySummaryOfBusinessResults"],
-  netAssets: ["NetAssets", "TotalNetAssets", "NetAssetsSummaryOfBusinessResults"],
-  totalAssets: ["Assets", "TotalAssets", "AssetsIFRS", "TotalAssetsSummaryOfBusinessResults", "AssetsIFRSSummaryOfBusinessResults"],
-  cashAndEquivalents: ["CashAndCashEquivalents", "CashAndCashEquivalentsIFRS", "CashAndDeposits"],
+  stockholdersEquity: ["EquityAttributableToOwnersOfParentIFRS", "EquityAttributableToOwnersOfParentIFRSSummaryOfBusinessResults", "EquityAttributableToOwnersOfParent", "ShareholdersEquity", "NetAssets", "TotalNetAssets", "NetAssetsSummaryOfBusinessResults"],
+  totalAssets: ["AssetsIFRS", "TotalAssetsIFRSSummaryOfBusinessResults", "Assets", "TotalAssetsSummaryOfBusinessResults"],
+  cashAndEquivalents: ["CashAndCashEquivalentsIFRS", "CashAndCashEquivalents", "CashAndDeposits"],
   shortTermInvestments: ["ShortTermInvestmentSecurities", "SecuritiesCA", "MarketableSecurities"],
-  currentAssets: ["CurrentAssets", "CurrentAssetsIFRS"],
-  currentLiabilities: ["CurrentLiabilities", "CurrentLiabilitiesIFRS"],
-  receivables: ["NotesAndAccountsReceivableTrade", "TradeAndOtherReceivablesIFRS", "NotesAndAccountsReceivableTradeAndContractAssets"],
-  inventory: ["MerchandiseAndFinishedGoods", "Inventories", "InventoriesIFRS"],
-  accountsPayable: ["NotesAndAccountsPayableTrade", "TradeAndOtherPayablesIFRS"],
+  currentAssets: ["CurrentAssetsIFRS", "CurrentAssets"],
+  currentLiabilities: ["CurrentLiabilitiesIFRS", "CurrentLiabilities"],
+  receivables: ["TradeAndOtherReceivablesCAIFRS", "TradeAndOtherReceivablesIFRS", "NotesAndAccountsReceivableTrade", "NotesAndAccountsReceivableTradeAndContractAssets"],
+  inventory: ["InventoriesIFRS", "Inventories", "MerchandiseAndFinishedGoods"],
+  accountsPayable: ["TradeAndOtherPayablesCLIFRS", "TradeAndOtherPayablesIFRS", "NotesAndAccountsPayableTrade"],
 };
-// Interest-bearing debt is spread across many Japanese accounts; total debt sums the
-// components present (current and non-current loans, bonds, commercial paper, leases).
-const DEBT_PARTS = [
-  "ShortTermLoansPayable", "CurrentPortionOfLongTermLoansPayable", "CurrentPortionOfBonds", "CommercialPapersLiabilities", "ShortTermBondsPayable",
-  "LongTermLoansPayable", "BondsPayable", "LongTermLoansPayableNCL", "ShortTermBorrowingsIFRS", "LongTermBorrowingsIFRS", "BondsAndBorrowingsIFRS",
-  "LeaseObligationsCL", "LeaseObligationsNCL", "LeaseLiabilitiesCLIFRS", "LeaseLiabilitiesNCLIFRS",
-];
+// Interest-bearing debt is split across many accounts and differs by standard, so total
+// debt sums one family or the other, never both: an IFRS filer also carries its parent
+// J-GAAP loan accounts, and adding both would double-count.
+const DEBT_IFRS = ["BondsAndBorrowingsCLIFRS", "BondsAndBorrowingsNCLIFRS", "BondsAndBorrowingsIFRS", "ShortTermBorrowingsIFRS", "LongTermBorrowingsIFRS", "CurrentPortionOfBondsAndBorrowingsIFRS", "LeaseLiabilitiesCLIFRS", "LeaseLiabilitiesNCLIFRS", "BorrowingsCurrentIFRS", "BorrowingsNonCurrentIFRS"];
+const DEBT_JGAAP = ["ShortTermLoansPayable", "CurrentPortionOfLongTermLoansPayable", "CurrentPortionOfBonds", "CommercialPapersLiabilities", "ShortTermBondsPayable", "LongTermLoansPayable", "BondsPayable", "LeaseObligationsCL", "LeaseObligationsNCL"];
 const SHARES = ["NumberOfIssuedAndOutstandingSharesAtTheEndOfFiscalYearIssuedSharesTotalNumberOfSharesEtc", "TotalNumberOfIssuedSharesSummaryOfBusinessResults"];
-const EPS = ["BasicEarningsLossPerShareSummaryOfBusinessResults", "BasicEarningsPerShareIFRSSummaryOfBusinessResults", "BasicEarningsLossPerShare", "BasicEarningsPerShareIFRS"];
+const EPS = ["BasicEarningsPerShareIFRSSummaryOfBusinessResults", "BasicEarningsLossPerShareSummaryOfBusinessResults", "BasicEarningsPerShareIFRS", "BasicEarningsLossPerShare"];
 
 // Pick the first candidate with a value for the given relative year and instant/duration.
 function picker(store) {
@@ -187,10 +189,10 @@ function picker(store) {
   return { get, first };
 }
 
-function debtForYear(store, relYear) {
+function debtForYear(store, relYear, isIFRS) {
   const { get } = picker(store);
   let sum = 0, any = false;
-  for (const part of DEBT_PARTS) {
+  for (const part of (isIFRS ? DEBT_IFRS : DEBT_JGAAP)) {
     const v = get(part, relYear, true);
     if (v != null) { sum += v; any = true; }
   }
@@ -203,6 +205,9 @@ function debtForYear(store, relYear) {
 export function buildRecord(store, meta, entry) {
   const { first } = picker(store);
   const fy = meta.fy;
+  // An IFRS filer is one carrying the IFRS consolidated elements; this selects the IFRS
+  // debt family and is surfaced on the record so the page can name the standard.
+  const isIFRS = !!(store.RevenueIFRS || store.AssetsIFRS || store.OperatingProfitLossIFRS || store.EquityAttributableToOwnersOfParentIFRS);
   const linesFor = (relYear) => {
     const d = (k) => first(DUR[k], relYear, false);
     const i = (k) => first(INST[k], relYear, true);
@@ -232,7 +237,7 @@ export function buildRecord(store, meta, entry) {
       receivables: i("receivables"),
       inventory: i("inventory"),
       accountsPayable: i("accountsPayable"),
-      totalDebt: debtForYear(store, relYear),
+      totalDebt: debtForYear(store, relYear, isIFRS),
       sharesDiluted: shares,
       epsBasic: eps,
     };
@@ -255,6 +260,7 @@ export function buildRecord(store, meta, entry) {
     docId: meta.docId || null,
     sector: entry.sector || null,
     industry: entry.industry || null,
+    accountingStandard: isIFRS ? "IFRS" : "J-GAAP",
     fy,
     periodEnd: meta.periodEnd || null,
     form: "Annual securities report",

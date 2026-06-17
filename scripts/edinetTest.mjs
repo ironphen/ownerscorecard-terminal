@@ -87,5 +87,27 @@ const quoted = [
 const qrec = buildRecord(parseFacts(quoted), { fy: 2026 }, { ticker: "9697", name: "Capcom" });
 eq("quoted EDINET cells: revenue unquoted and parsed", qrec.lines.revenue, 152384000000);
 
+// IFRS filers also carry their parent-company J-GAAP statements at a fraction of the
+// consolidated figure. The consolidated IFRS line must win, and debt must sum the IFRS
+// family only (the parent J-GAAP loan accounts would double-count). Modelled on Takeda.
+const ifrsRows = [
+  ["要素ID", "項目名", "コンテキストID", "相対年度", "連結・個別", "期間・時点", "ユニットID", "単位", "値"],
+  ["jppfs_cor:NetSales", "売上高", "CurrentYearDuration", "当期", "個別", "期間", "JPY", "円", "580360000000"],
+  ["jpigp_cor:RevenueIFRS", "売上収益", "CurrentYearDuration", "当期", "連結", "期間", "JPY", "円", "4581551000000"],
+  ["jppfs_cor:OperatingIncome", "営業利益", "CurrentYearDuration", "当期", "個別", "期間", "JPY", "円", "36897000000"],
+  ["jpigp_cor:OperatingProfitLossIFRS", "営業利益、IFRS", "CurrentYearDuration", "当期", "連結", "期間", "JPY", "円", "342586000000"],
+  ["jppfs_cor:Assets", "資産", "CurrentYearInstant", "当期末", "個別", "時点", "JPY", "円", "9489375000000"],
+  ["jpigp_cor:AssetsIFRS", "資産、IFRS", "CurrentYearInstant", "当期末", "連結", "時点", "JPY", "円", "14248344000000"],
+  ["jppfs_cor:ShortTermLoansPayable", "短期借入金", "CurrentYearInstant", "当期末", "個別", "時点", "JPY", "円", "1042099000000"],
+  ["jpigp_cor:BondsAndBorrowingsCLIFRS", "社債及び借入金、流動、IFRS", "CurrentYearInstant", "当期末", "連結", "時点", "JPY", "円", "548939000000"],
+  ["jpigp_cor:BondsAndBorrowingsNCLIFRS", "社債及び借入金、非流動、IFRS", "CurrentYearInstant", "当期末", "連結", "時点", "JPY", "円", "3966326000000"],
+].map((r) => r.join("\t")).join("\r\n");
+const irec = buildRecord(parseFacts(ifrsRows), { fy: 2025 }, { ticker: "4502", name: "Takeda" });
+eq("IFRS revenue beats parent NetSales", irec.lines.revenue, 4581551000000);
+eq("IFRS operating income beats parent", irec.lines.operatingIncome, 342586000000);
+eq("IFRS total assets beats parent", irec.lines.totalAssets, 14248344000000);
+eq("IFRS debt sums the IFRS family only", irec.lines.totalDebt, 548939000000 + 3966326000000);
+eq("accountingStandard detected as IFRS", irec.accountingStandard, "IFRS");
+
 if (failed) { console.error(`\n❌ ${failed} check(s) failed`); process.exit(1); }
 console.log("\n✅ All EDINET parser checks passed");
