@@ -16,6 +16,10 @@ on:
         description: "Run only the filing-language fetch (skip fundamentals/segments)"
         type: boolean
         default: false
+      fundamentals_only:
+        description: "Run only the fundamentals fetch (skip filings/segments) — the light refresh"
+        type: boolean
+        default: false
       tickers:
         description: "Limit the segment fetch to these tickers (comma-separated; blank = all)"
         type: string
@@ -46,13 +50,13 @@ jobs:
           DEBT_DEBUG: ${{ github.event.inputs.debug }}
           REVENUE_DEBUG: ${{ github.event.inputs.debug }}
       - run: npm run fetch:filings
-        if: ${{ github.event.inputs.segments_only != 'true' }}
+        if: ${{ github.event.inputs.segments_only != 'true' && github.event.inputs.fundamentals_only != 'true' }}
         continue-on-error: true # qualitative layer; never fail the fundamentals refresh
         env:
           SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT }}
           BIZ_DEBUG: ${{ github.event.inputs.debug }}
       - run: npm run fetch:segments
-        if: ${{ github.event.inputs.filings_only != 'true' }}
+        if: ${{ github.event.inputs.filings_only != 'true' && github.event.inputs.fundamentals_only != 'true' }}
         continue-on-error: true # where-the-money-comes-from layer; never fail the refresh
         env:
           SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT }}

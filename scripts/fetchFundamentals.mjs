@@ -116,6 +116,10 @@ const CONCEPTS = {
   stockBasedComp: ["ShareBasedCompensation"],
   dividendsPaid: ["PaymentsOfDividendsCommonStock", "PaymentsOfDividends"],
   buybacks: ["PaymentsForRepurchaseOfCommonStock"],
+  // Shares actually repurchased in the year (a count, not cash), so the average price paid
+  // can be deduced as buyback cash ÷ shares. Not every filer tags it (some retire shares
+  // straight off), so it fills the price read where present and is silent where not.
+  repurchasedShares: ["StockRepurchasedDuringPeriodShares", "TreasuryStockSharesAcquired"],
   stockholdersEquity: ["StockholdersEquity", "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest"],
   cashAndEquivalents: [
     "CashAndCashEquivalentsAtCarryingValue",
@@ -436,6 +440,7 @@ async function main() {
       depreciation: collectAnnual(facts, CONCEPTS.depreciation),
       dividendsPaid: collectAnnual(facts, CONCEPTS.dividendsPaid),
       buybacks: collectAnnual(facts, CONCEPTS.buybacks),
+      repurchasedShares: collectAnnual(facts, CONCEPTS.repurchasedShares, "shares"),
       sharesDiluted: collectAnnual(facts, CONCEPTS.sharesDiluted, "shares"),
       netInterestIncome: collectAnnual(facts, CONCEPTS.netInterestIncome),
       noninterestIncome: collectAnnual(facts, CONCEPTS.noninterestIncome),
@@ -497,6 +502,7 @@ async function main() {
           depreciation: ha.depreciation[fy] ?? null,
           dividendsPaid: ha.dividendsPaid[fy] ?? null,
           buybacks: ha.buybacks[fy] ?? null,
+          repurchasedShares: ha.repurchasedShares[fy] ?? null,
           sharesDiluted: ha.sharesDiluted[fy] ?? null,
           netInterestIncome: ha.netInterestIncome[fy] ?? null,
           noninterestIncome: ha.noninterestIncome[fy] ?? null,
@@ -592,6 +598,7 @@ async function main() {
         stockBasedComp: pick(CONCEPTS.stockBasedComp),
         dividendsPaid: pick(CONCEPTS.dividendsPaid),
         buybacks: pick(CONCEPTS.buybacks),
+        repurchasedShares: pickAnnual(facts, CONCEPTS.repurchasedShares, "shares")?.val ?? null,
         stockholdersEquity: inst(CONCEPTS.stockholdersEquity),
         cashAndEquivalents: inst(CONCEPTS.cashAndEquivalents),
         shortTermInvestments: inst(CONCEPTS.shortTermInvestments),

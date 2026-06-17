@@ -453,6 +453,13 @@ export function buildScorecard(company) {
       ? { title, concept, ...result }
       : { title, concept, value: "—", formula: "", tone: "none", label: "Not enough data", note: "The filing data didn't include the inputs for this check." };
 
+  // Capex is always shown: the AI build-out is turning historically asset-light names (cloud,
+  // search, social) into heavy spenders, and that shift is exactly what an owner must see.
+  const cashUseChecks = [
+    wrap("Where do the earnings go?", "incremental-roic", capitalAllocation(company)),
+    wrap("Investing or harvesting?", null, capexVsDepreciation(company)),
+  ];
+
   return {
     sections: [
       {
@@ -474,10 +481,7 @@ export function buildScorecard(company) {
       },
       {
         heading: "How is the cash used?",
-        checks: [
-          wrap("Where do the earnings go?", "incremental-roic", capitalAllocation(company)),
-          wrap("Investing or harvesting?", null, capexVsDepreciation(company)),
-        ],
+        checks: cashUseChecks,
       },
     ],
   };

@@ -162,6 +162,8 @@ const DUR = {
   capex: ["PurchaseOfPropertyPlantAndEquipmentInvCFIFRS", "PaymentsForPurchaseOfPropertyPlantAndEquipmentIFRS", "PaymentsForPropertyPlantAndEquipmentIFRS", "PaymentsToAcquirePropertyPlantAndEquipmentIFRS", "AcquisitionOfPropertyPlantAndEquipmentInvCFIFRS", "PurchaseOfPropertyPlantAndEquipmentIFRS", "PurchaseOfPropertyPlantAndEquipmentInvCF", "PurchaseOfPropertyPlantAndEquipment", "PurchaseOfPropertyPlantAndEquipmentInvestmentActivities", "PurchaseOfPropertyPlantAndEquipmentAndIntangibleAssetsInvCFIFRS", "PaymentsForAcquisitionOfPropertyPlantAndEquipmentAndIntangibleAssetsIFRS", "PurchaseOfPropertyPlantAndEquipmentAndIntangibleAssetsInvCF", "AdditionsToFixedAssetsExcludingEquipmentLeasedToOthersInvCFIFRS", "PaymentsForAdditionsToFixedAssetsExcludingEquipmentLeasedToOthersIFRS", "AdditionsToPropertyPlantAndEquipmentInvCFIFRS", "PaymentsForAdditionsToPropertyPlantAndEquipmentIFRS", "PurchaseOfFixedAssetsInvCF"],
   depreciation: ["DepreciationAndAmortizationOpeCFIFRS", "DepreciationAndAmortisationOpeCFIFRS", "DepreciationAndAmortizationOpeCF", "DepreciationAndAmortization"],
   dividendsPaid: ["DividendsPaidFinCFIFRS", "DividendsPaidFinCF", "CashDividendsPaidFinCF", "DividendsFromSurplus"],
+  // Buyback cash (the trading houses return heavily this way, part of the Berkshire thesis).
+  buybacks: ["PaymentsForPurchaseOfTreasurySharesFinCFIFRS", "PurchaseOfTreasurySharesSSIFRS", "PurchaseOfTreasuryStockFinCF", "PurchaseOfTreasuryStock"],
   sbc: ["ShareBasedPaymentsOpeCFIFRS", "ShareBasedCompensationExpensesSGA"],
 };
 const INST = {
@@ -234,6 +236,7 @@ export function buildRecord(store, meta, entry) {
       capex: capex != null ? Math.abs(capex) : null,
       depreciation: d("depreciation"),
       dividendsPaid: d("dividendsPaid"),
+      buybacks: (() => { const v = d("buybacks"); return v != null ? Math.abs(v) : null; })(),
       stockBasedComp: d("sbc"),
       stockholdersEquity: i("stockholdersEquity"),
       totalAssets: i("totalAssets"),
