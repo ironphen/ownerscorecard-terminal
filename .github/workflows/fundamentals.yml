@@ -70,8 +70,10 @@ jobs:
       # print loudly for review but do not block, so one odd filer can't freeze the weekly
       # run. Runs before the commit on purpose.
       - name: Audit data quality
+        if: ${{ github.event.inputs.debug == '' }}
         run: npm run audit
       - name: Commit if changed
+        if: ${{ github.event.inputs.debug == '' }}
         run: |
           if ! git diff --quiet -- src/data/fundamentals.json src/data/language.json src/data/segments.json; then
             git config user.name "github-actions[bot]"
