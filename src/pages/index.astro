@@ -9,6 +9,7 @@ import { returnOnEquity, returnOnTangibleEquity, equityToAssets } from "../lib/f
 import { ffoMargin, ffoPayout, debtToAssets } from "../lib/reits.mjs";
 import { grahamTests } from "../lib/graham.mjs";
 import Term from "../components/Term.astro";
+import JapanCatalog from "../components/JapanCatalog.astro";
 
 // ---- the catalog rows: every company reduced to the few sourced facts that
 // decide quality and survival. No rank, no score, the reader sorts by what they
@@ -124,7 +125,7 @@ const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "
     <div class="bandHead">
       <h2>The Catalog</h2>
       <div class="bandLinks">
-        <a class="pool" href="/japan">Japan, a separate pool →</a>
+        <a class="pool" href="#japan">Japan, a separate pool →</a>
         <a class="all" href="/concepts">What the terms mean →</a>
       </div>
     </div>
@@ -132,7 +133,7 @@ const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "
       US filers, every figure the latest annual number from the company's own 10-K. Rank by any
       column, filter by business model, or read the catalog through an owner's lens. We don't score
       them; a lens explores by one of Buffett's or Graham's criteria, never a verdict. Japanese
-      names live in their own <a href="/japan">Japan</a> pool, read from EDINET in yen. Pick a
+      names live in their own <a href="#japan">Japan</a> pool, read from EDINET in yen. Pick a
       company for its full Owner's Scorecard; <a href="/concepts">Concepts</a> defines every term.
     </p>
 
@@ -211,6 +212,8 @@ const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "
 
     <p class="legend"><Term id="owner-earnings">Owner-earnings margin</Term> = (operating cash − capex) ÷ revenue. <Term id="net-debt">Net cash</Term> nets debt against cash and marketable securities; parentheses are net debt. Graham = how many of his defensive-investor tests the filings clear (of those computable), a floor of safety, not a buy signal; sort by it to screen.</p>
   </section>
+
+  <JapanCatalog />
 
   <style>
     .bandHead { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--rule-strong); padding-bottom: 6px; }
