@@ -108,10 +108,10 @@ const ROW = {
 // The row-set follows the business model, and carries as many lines as that business is
 // honestly read on. Rows the data can't fill drop out below, so a set can be generous.
 const SETS = {
-  assetLight: [ROW.revenue, ROW.grossMargin, ROW.opMargin, ROW.netIncome, ROW.eps, ROW.ownerEarnings, ROW.oeMargin, ROW.roic, ROW.roe, ROW.sbcToRev, ROW.shares, ROW.cash, ROW.netDebt, ROW.dps, ROW.bvps],
-  consumer: [ROW.revenue, ROW.grossMargin, ROW.opMargin, ROW.netIncome, ROW.eps, ROW.ownerEarnings, ROW.oeMargin, ROW.roic, ROW.roe, ROW.shares, ROW.cash, ROW.netDebt, ROW.dps, ROW.payoutNI, ROW.bvps],
+  assetLight: [ROW.revenue, ROW.grossMargin, ROW.opMargin, ROW.netIncome, ROW.eps, ROW.ownerEarnings, ROW.oeMargin, ROW.roic, ROW.roe, ROW.capex, ROW.capexToRev, ROW.capexToDep, ROW.sbcToRev, ROW.shares, ROW.cash, ROW.netDebt, ROW.dps, ROW.bvps],
+  consumer: [ROW.revenue, ROW.grossMargin, ROW.opMargin, ROW.netIncome, ROW.eps, ROW.ownerEarnings, ROW.oeMargin, ROW.roic, ROW.roe, ROW.capex, ROW.capexToRev, ROW.capexToDep, ROW.shares, ROW.cash, ROW.netDebt, ROW.dps, ROW.payoutNI, ROW.bvps],
   capital: [ROW.revenue, ROW.opMargin, ROW.netIncome, ROW.eps, ROW.ownerEarnings, ROW.roic, ROW.roe, ROW.capex, ROW.capexToRev, ROW.capexToDep, ROW.shares, ROW.totalDebt, ROW.netDebt, ROW.intCov, ROW.ndEbitda, ROW.dps],
-  retail: [ROW.revenue, ROW.grossMargin, ROW.opMargin, ROW.netIncome, ROW.eps, ROW.ownerEarnings, ROW.oeMargin, ROW.roic, ROW.roe, ROW.shares, ROW.cash, ROW.netDebt, ROW.dps, ROW.bvps],
+  retail: [ROW.revenue, ROW.grossMargin, ROW.opMargin, ROW.netIncome, ROW.eps, ROW.ownerEarnings, ROW.oeMargin, ROW.roic, ROW.roe, ROW.capex, ROW.capexToRev, ROW.shares, ROW.cash, ROW.netDebt, ROW.dps, ROW.bvps],
   financial: [ROW.revenue, ROW.nii, ROW.provision, ROW.netIncome, ROW.eps, ROW.roa, ROW.roe, ROW.rotce, ROW.efficiency, ROW.deposits, ROW.shares, ROW.bvps, ROW.tbvps, ROW.dps],
   insurer: [ROW.revenue, ROW.premiums, ROW.invInc, ROW.netIncome, ROW.combined, ROW.lossRatio, ROW.roe, ROW.float, ROW.shares, ROW.bvps, ROW.dps],
   // Life insurers: the spread-and-book-value story, no combined ratio (see insurers.mjs).
@@ -119,7 +119,7 @@ const SETS = {
   fee: [ROW.revenue, ROW.opMargin, ROW.netMargin, ROW.netIncome, ROW.eps, ROW.ownerEarnings, ROW.roe, ROW.shares, ROW.cash, ROW.dps, ROW.bvps],
   managedCare: [ROW.revenue, ROW.premiums, ROW.mlr, ROW.opMargin, ROW.netIncome, ROW.eps, ROW.roe, ROW.shares, ROW.bvps, ROW.dps],
   reit: [ROW.revenue, ROW.netIncome, ROW.ffo, ROW.ffoPS, ROW.payout, ROW.debtAssets, ROW.totalDebt, ROW.shares, ROW.dps, ROW.bvps],
-  general: [ROW.revenue, ROW.opMargin, ROW.netIncome, ROW.eps, ROW.ownerEarnings, ROW.oeMargin, ROW.roic, ROW.roe, ROW.shares, ROW.totalDebt, ROW.cash, ROW.netDebt, ROW.intCov, ROW.dps],
+  general: [ROW.revenue, ROW.opMargin, ROW.netIncome, ROW.eps, ROW.ownerEarnings, ROW.oeMargin, ROW.roic, ROW.roe, ROW.capex, ROW.capexToRev, ROW.capexToDep, ROW.shares, ROW.totalDebt, ROW.cash, ROW.netDebt, ROW.intCov, ROW.dps],
 };
 
 // Columns: each fiscal year, plus a trailing-twelve-months column when present

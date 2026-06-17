@@ -1,7 +1,7 @@
 // Shared, framework-agnostic compute for the fundamentals tools.
 // Imported by both Astro pages (server) and React islands (client), so keep it
 // pure ESM with no Node or browser built-ins.
-import { financialKind, classify } from "./archetype.mjs";
+import { financialKind } from "./archetype.mjs";
 
 // The headline top line. For most companies this is reported revenue, but banks and
 // insurers tag "Revenues" erratically (often a sliver, or not at all: Regions reports
@@ -453,12 +453,12 @@ export function buildScorecard(company) {
       ? { title, concept, ...result }
       : { title, concept, value: "—", formula: "", tone: "none", label: "Not enough data", note: "The filing data didn't include the inputs for this check." };
 
-  // Capex vs depreciation is a capital-intensity read; for an asset-light compounder, whose
-  // capital is IP and people rather than plant, it is noise (Buffett would not weigh Capcom on
-  // it), so it is shown only where physical capital actually drives the business.
-  const sectorKey = (company?.market === "JP" && company?.sector) ? company.sector : classify(company).sector.key;
-  const cashUseChecks = [wrap("Where do the earnings go?", "incremental-roic", capitalAllocation(company))];
-  if (sectorKey !== "assetLight") cashUseChecks.push(wrap("Investing or harvesting?", null, capexVsDepreciation(company)));
+  // Capex is always shown: the AI build-out is turning historically asset-light names (cloud,
+  // search, social) into heavy spenders, and that shift is exactly what an owner must see.
+  const cashUseChecks = [
+    wrap("Where do the earnings go?", "incremental-roic", capitalAllocation(company)),
+    wrap("Investing or harvesting?", null, capexVsDepreciation(company)),
+  ];
 
   return {
     sections: [
