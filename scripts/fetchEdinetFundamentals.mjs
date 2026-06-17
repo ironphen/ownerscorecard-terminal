@@ -30,7 +30,7 @@ const THROTTLE_MS = Number(process.env.EDINET_THROTTLE_MS || 350);
 // ~3.3 years, enough to reach each company's FY-3 annual report, whose cash-flow statement
 // carries FY-3 and FY-4 capex. With the latest filing (FY, FY-1) and the FY-1 and FY-2 reports
 // in between, that fills the whole five-year window the summary covers for everything else.
-const LOOKBACK_DAYS = Number(process.env.EDINET_LOOKBACK_DAYS || 1200);
+const LOOKBACK_DAYS = Number(process.env.EDINET_LOOKBACK_DAYS || 2300);
 // How many older annual reports to pull per company for the deeper capex history (each carries
 // two years), beyond the latest. Three covers the five-year window.
 const CAPEX_BACKFILL = Number(process.env.EDINET_CAPEX_BACKFILL || 3);
@@ -229,58 +229,66 @@ function debtForYear(store, relYear, isIFRS) {
   return isIFRS ? (sumOf(DEBT_IFRS) ?? sumOf(DEBT_JGAAP)) : sumOf(DEBT_JGAAP);
 }
 
+// An IFRS filer carries the IFRS consolidated elements; this selects the IFRS debt and revenue
+// families and is surfaced on the record so the page can name the standard.
+function isIFRSStore(store) {
+  return !!(store.RevenueIFRS || store.AssetsIFRS || store.OperatingProfitLossIFRS || store.EquityAttributableToOwnersOfParentIFRS);
+}
+
+// One fiscal year's lines from a fact store, picking by the filer's standard. Standalone so older
+// annual reports can be read with the very same logic to deepen the history — each report carries
+// its own five-year summary, and its own current year is the cleanest read of that year.
+function linesFromStore(store, relYear) {
+  const { first } = picker(store);
+  const isIFRS = isIFRSStore(store);
+  const d = (k) => first(DUR[k], relYear, false);
+  const i = (k) => first(INST[k], relYear, true);
+  const capex = d("capex");
+  const eps = first(EPS, relYear, false);
+  const ni = d("netIncome");
+  const sharesDirect = first(SHARES, relYear, true) ?? first(SHARES, relYear, false);
+  const shares = sharesDirect ?? (eps && ni != null ? Math.round(ni / eps) : null);
+  return {
+    revenue: first(isIFRS ? REVENUE_IFRS : REVENUE_JGAAP, relYear, false),
+    operatingIncome: d("operatingIncome"),
+    ordinaryIncome: d("ordinaryIncome"),
+    netIncome: ni,
+    costOfRevenue: d("costOfRevenue"),
+    sgaExpense: d("sga"),
+    researchDevelopment: d("researchDevelopment"),
+    goodwillImpairment: d("goodwillImpairment"),
+    interestExpense: d("interestExpense"),
+    cashFromOps: d("cashFromOps"),
+    capex: capex != null ? Math.abs(capex) : null,
+    depreciation: d("depreciation"),
+    dividendsPaid: d("dividendsPaid"),
+    buybacks: (() => { const v = d("buybacks"); return v != null ? Math.abs(v) : null; })(),
+    stockBasedComp: d("sbc"),
+    stockholdersEquity: i("stockholdersEquity"),
+    totalAssets: i("totalAssets"),
+    goodwill: i("goodwill"),
+    cashAndEquivalents: i("cashAndEquivalents"),
+    shortTermInvestments: i("shortTermInvestments"),
+    currentAssets: i("currentAssets"),
+    currentLiabilities: i("currentLiabilities"),
+    receivables: i("receivables"),
+    inventory: i("inventory"),
+    accountsPayable: i("accountsPayable"),
+    totalDebt: debtForYear(store, relYear, isIFRS),
+    sharesDiluted: shares,
+    epsBasic: eps,
+  };
+}
+
 // Assemble one company's record (latest lines + up to five years of history) from the
 // fact store. currentFy comes from the filing's period end. Same shape as the US pipeline,
 // so the shared compute and components read it unchanged; extra JP-only fields are ignored.
 export function buildRecord(store, meta, entry) {
-  const { first } = picker(store);
   const fy = meta.fy;
-  // An IFRS filer is one carrying the IFRS consolidated elements; this selects the IFRS
-  // debt family and is surfaced on the record so the page can name the standard.
-  const isIFRS = !!(store.RevenueIFRS || store.AssetsIFRS || store.OperatingProfitLossIFRS || store.EquityAttributableToOwnersOfParentIFRS);
-  const linesFor = (relYear) => {
-    const d = (k) => first(DUR[k], relYear, false);
-    const i = (k) => first(INST[k], relYear, true);
-    const capex = d("capex");
-    const eps = first(EPS, relYear, false);
-    const ni = d("netIncome");
-    const sharesDirect = first(SHARES, relYear, true) ?? first(SHARES, relYear, false);
-    const shares = sharesDirect ?? (eps && ni != null ? Math.round(ni / eps) : null);
-    return {
-      revenue: first(isIFRS ? REVENUE_IFRS : REVENUE_JGAAP, relYear, false),
-      operatingIncome: d("operatingIncome"),
-      ordinaryIncome: d("ordinaryIncome"),
-      netIncome: ni,
-      costOfRevenue: d("costOfRevenue"),
-      sgaExpense: d("sga"),
-      researchDevelopment: d("researchDevelopment"),
-      goodwillImpairment: d("goodwillImpairment"),
-      interestExpense: d("interestExpense"),
-      cashFromOps: d("cashFromOps"),
-      capex: capex != null ? Math.abs(capex) : null,
-      depreciation: d("depreciation"),
-      dividendsPaid: d("dividendsPaid"),
-      buybacks: (() => { const v = d("buybacks"); return v != null ? Math.abs(v) : null; })(),
-      stockBasedComp: d("sbc"),
-      stockholdersEquity: i("stockholdersEquity"),
-      totalAssets: i("totalAssets"),
-      goodwill: i("goodwill"),
-      cashAndEquivalents: i("cashAndEquivalents"),
-      shortTermInvestments: i("shortTermInvestments"),
-      currentAssets: i("currentAssets"),
-      currentLiabilities: i("currentLiabilities"),
-      receivables: i("receivables"),
-      inventory: i("inventory"),
-      accountsPayable: i("accountsPayable"),
-      totalDebt: debtForYear(store, relYear, isIFRS),
-      sharesDiluted: shares,
-      epsBasic: eps,
-    };
-  };
-
+  const isIFRS = isIFRSStore(store);
   const history = [];
   for (let r = -4; r <= 0; r++) {
-    const L = linesFor(r);
+    const L = linesFromStore(store, r);
     if (L.revenue == null && L.netIncome == null && L.totalAssets == null) continue;
     history.push({ fy: fy + r, lines: L });
   }
@@ -300,7 +308,7 @@ export function buildRecord(store, meta, entry) {
     periodEnd: meta.periodEnd || null,
     form: "Annual securities report",
     sourceUrl: "https://disclosure2.edinet-fsa.go.jp/WEEK0010.aspx",
-    lines: linesFor(0),
+    lines: linesFromStore(store, 0),
     history,
     ttm: null,
   };
@@ -403,6 +411,42 @@ async function deepenCashFlow(rec, reports, cache) {
     }
   }
   return patched;
+}
+
+// Deepen the history beyond the five years a single filing's summary reaches. Each older annual
+// report carries its own five-year summary, so the oldest reports in the window extend the record
+// toward ten years — and an older filing's own current year is the clean consolidated read, so this
+// also fills the early years the standard-aware revenue pick had to leave blank (an IFRS filer whose
+// older summary lacked an IFRS revenue element). Fetches at most HISTORY_BACKFILL of the oldest
+// reports; a year already held in full is kept, a revenue-blank year is upgraded.
+const HISTORY_TARGET = Number(process.env.EDINET_HISTORY_YEARS || 10);
+const HISTORY_BACKFILL = Number(process.env.EDINET_HISTORY_BACKFILL || 3);
+async function deepenHistory(rec, reports, cache) {
+  if (reports.length < 2) return 0;
+  const byFy = new Map(rec.history.map((h) => [h.fy, h]));
+  const oldestWanted = rec.fy - (HISTORY_TARGET - 1);
+  // The oldest few non-latest reports, oldest first, so the deepest summaries fill first.
+  const olders = reports.slice(1).sort((a, b) => ((a.periodEnd || "") < (b.periodEnd || "") ? -1 : 1)).slice(0, HISTORY_BACKFILL);
+  let added = 0;
+  for (const r of olders) {
+    const rfy = r.periodEnd ? Number(r.periodEnd.slice(0, 4)) : null;
+    if (rfy == null || rfy < oldestWanted - 4) continue; // nothing this old filing covers is wanted
+    let store;
+    try { await sleep(THROTTLE_MS); store = await loadStore(r.docId); } catch (err) { console.warn(`    ! older filing ${r.docId}: ${err.message}`); continue; }
+    for (let rel = 0; rel >= -4; rel--) {
+      const y = rfy + rel;
+      if (y < oldestWanted) continue;
+      const ex = byFy.get(y);
+      if (ex && ex.lines.revenue != null) continue; // a year already held in full wins
+      const L = linesFromStore(store, rel);
+      if (L.revenue == null && L.netIncome == null && L.totalAssets == null) continue;
+      if (ex) ex.lines = L; // upgrade a revenue-blank year to a complete one
+      else { const h = { fy: y, lines: L }; rec.history.push(h); byFy.set(y, h); }
+      added++;
+    }
+  }
+  if (added) { rec.history.sort((a, b) => a.fy - b.fy); rec.history = rec.history.slice(-HISTORY_TARGET); }
+  return added;
 }
 
 // Crawl the daily document index back LOOKBACK_DAYS (incrementally, using the cached
@@ -522,7 +566,7 @@ async function main() {
       // Show the revenue / income / balance-sheet elements (whatever their alphabetical
       // position), with current-year value, so the concept map can be pinned per accounting
       // standard without guessing — IFRS filers name these lines differently from J-GAAP.
-      const REL = /revenue|sales|operating|profit|income|asset|equit|cash|loan|bond|borrow|debt|lease|shares|dividend|propert|plant|equipment|purchase|payments|acqui|invest|intangib|depreci|amorti|capital/i;
+      const REL = /revenue|sales|operating|profit|income|asset|equit|cash|loan|bond|borrow|debt|lease|shares|dividend|propert|plant|equipment|purchase|payments|acqui|invest|intangib|depreci|amorti|capital|research|develop|impair|goodwill|selling|administrative/i;
       console.log(`  parsed ${rawLines} raw lines -> ${names.length} elements; revenue/income/balance candidates (current year):`);
       for (const n of names) {
         if (!REL.test(n)) continue;
@@ -535,8 +579,9 @@ async function main() {
 
     const rec = buildRecord(store, meta, byTickerEntry[entry.ticker]);
     const deepened = await deepenCashFlow(rec, reports, cache);
+    const deepHist = await deepenHistory(rec, reports, cache);
     companies.push(rec);
-    console.log(`  ✓ ${entry.ticker} ${entry.name} (FY${fy ?? "?"}, rev ${rec.lines.revenue ?? "—"}${deepened ? `, +${deepened}yr capex` : ""})`);
+    console.log(`  ✓ ${entry.ticker} ${entry.name} (FY${fy ?? "?"}, ${rec.history.length}yr, rev ${rec.lines.revenue ?? "—"}${deepened ? `, +${deepened}yr cf` : ""}${deepHist ? `, +${deepHist}yr hist` : ""})`);
   }
 
   // Persist the index and the per-filing capex cache filled during the loop, so the next run
