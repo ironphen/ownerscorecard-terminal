@@ -1,7 +1,10 @@
 # Refreshes the deep data (fundamentals.json + language.json + segments.json) from
-# SEC EDGAR and commits any change, which redeploys the site. Runs on its own every
-# Monday — no manual upkeep — and can be kicked by hand from the Actions tab. The
-# lighter Filing Wire (wire.yml) refreshes daily; this heavier data weekly.
+# SEC EDGAR and commits any change, which redeploys the site. Self-maintaining on two
+# schedules, no manual upkeep: fundamentals (the quarterly-changing figures) refresh
+# weekly on Mondays, while the heavier filing-language and segment fetches plus a fresh
+# Nasdaq universe rebuild run monthly on the 1st — so new names enter on their own and
+# the weekly run stays light. Either can be kicked by hand from the Actions tab. The
+# lighter Filing Wire (wire.yml) refreshes daily.
 # Set an Actions variable SEC_USER_AGENT with a contact string (SEC requests one).
 name: Fundamentals
 
@@ -37,7 +40,8 @@ on:
           - "write"
         default: "off"
   schedule:
-    - cron: "0 7 * * 1" # Mondays 07:00 UTC — self-refresh, no manual upkeep
+    - cron: "0 7 * * 1" # Mondays 07:00 UTC — weekly: fundamentals only (quarterly-changing figures)
+    - cron: "0 8 1 * *" # 1st 08:00 UTC — monthly: rebuild universe + fundamentals + filings + segments
 
 permissions:
   contents: write
@@ -51,11 +55,12 @@ jobs:
         with:
           node-version: 22
       - run: npm ci
-      # Optionally rebuild the US universe from the Nasdaq screener (top names by market cap)
-      # first. dryrun fetches and reports only (the fetch step below is skipped); write overwrites
-      # universe.json, which the fetch then reads. A failed/implausible fetch leaves it untouched.
+      # Rebuild the US universe from the Nasdaq screener (top names by market cap): every month
+      # on the schedule, and on demand. dryrun fetches and reports only (the fetch step below is
+      # skipped); write/monthly overwrites universe.json, which the fetch then reads. A failed or
+      # implausible fetch leaves the existing universe untouched, so it can never corrupt the input.
       - name: Rebuild universe
-        if: ${{ github.event.inputs.rebuild_universe == 'dryrun' || github.event.inputs.rebuild_universe == 'write' }}
+        if: ${{ github.event.inputs.rebuild_universe == 'dryrun' || github.event.inputs.rebuild_universe == 'write' || github.event.schedule == '0 8 1 * *' }}
         run: node scripts/buildUniverse.mjs
         env:
           UNIVERSE_DRYRUN: ${{ github.event.inputs.rebuild_universe == 'dryrun' && '1' || '' }}
@@ -69,14 +74,16 @@ jobs:
           DEP_DEBUG: ${{ github.event.inputs.debug }}
           SHARES_DEBUG: ${{ github.event.inputs.debug }}
           ONLY_FUND: ${{ github.event.inputs.tickers }}
+      # Filing language and segments only change when a company files a new annual report, so the
+      # weekly Monday cron skips them; they refresh on the monthly cron and on demand.
       - run: npm run fetch:filings
-        if: ${{ github.event.inputs.segments_only != 'true' && github.event.inputs.fundamentals_only != 'true' }}
+        if: ${{ github.event.inputs.segments_only != 'true' && github.event.inputs.fundamentals_only != 'true' && github.event.schedule != '0 7 * * 1' }}
         continue-on-error: true # qualitative layer; never fail the fundamentals refresh
         env:
           SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT }}
           BIZ_DEBUG: ${{ github.event.inputs.debug }}
       - run: npm run fetch:segments
-        if: ${{ github.event.inputs.filings_only != 'true' && github.event.inputs.fundamentals_only != 'true' }}
+        if: ${{ github.event.inputs.filings_only != 'true' && github.event.inputs.fundamentals_only != 'true' && github.event.schedule != '0 7 * * 1' }}
         continue-on-error: true # where-the-money-comes-from layer; never fail the refresh
         env:
           SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT }}
