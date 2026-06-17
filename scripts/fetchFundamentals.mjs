@@ -79,11 +79,16 @@ const CONCEPTS = {
   revenue: ["RevenueFromContractWithCustomerExcludingAssessedTax", "Revenues", "RevenueFromContractWithCustomerIncludingAssessedTax", "OilAndGasRevenue", "RevenueMineralSales"],
   netIncome: ["NetIncomeLoss", "NetIncomeLossAvailableToCommonStockholdersBasic", "ProfitLoss"],
   cashFromOps: ["NetCashProvidedByUsedInOperatingActivities"],
-  // The cash-flow depreciation+amortization add-back. The big tech filers (Microsoft, Alphabet)
-  // tag it as "...AndOther", which the standard three miss, so they read null and the
-  // maintenance-capex (steady-state owner earnings) lens cannot run on the very names the AI
-  // build-out makes it matter for. Include those variants.
-  depreciation: ["DepreciationDepletionAndAmortization", "DepreciationAmortizationAndAccretionNet", "DepreciationAndAmortization", "DepreciationAmortizationAndOther", "DepreciationDepletionAndAmortizationNonproduction", "CostOfGoodsAndServicesSoldDepreciationAndAmortization"],
+  // The cash-flow depreciation (+amortization) add-back, the maintenance-capex proxy the
+  // steady-state owner-earnings lens subtracts from operating cash flow. Most filers report a
+  // combined depreciation-and-amortization line (the leading tags). Microsoft and Alphabet
+  // report no combined add-back at all, only plain "Depreciation" (of property and equipment:
+  // $22.0B and $21.1B in FY2025), so they read null and the steady-state lens could not run on
+  // the very names the AI build-out makes it matter for. "Depreciation" is listed last as a
+  // fallback: it fills those names without changing any filer that already reports a combined
+  // figure, and property-and-equipment depreciation is the right match for capex, which buys
+  // exactly that.
+  depreciation: ["DepreciationDepletionAndAmortization", "DepreciationAmortizationAndAccretionNet", "DepreciationAndAmortization", "DepreciationAmortizationAndOther", "DepreciationDepletionAndAmortizationNonproduction", "CostOfGoodsAndServicesSoldDepreciationAndAmortization", "Depreciation"],
   capex: ["PaymentsToAcquirePropertyPlantAndEquipment", "PaymentsToAcquireProductiveAssets"],
   longTermDebt: ["LongTermDebtNoncurrent", "LongTermDebt"],
   currentDebt: ["LongTermDebtCurrent", "DebtCurrent"],
@@ -314,7 +319,13 @@ async function main() {
   console.log("done.");
 
   const companies = [];
+  // ONLY_FUND limits the per-company fetch to a few tickers for a fast, cheap debug run
+  // (the full universe is several hundred names). Safe on a real refresh too: the merge
+  // below carries every other company over from the last good file, so the catalog is
+  // never truncated, only the named tickers are re-fetched. Blank = the whole universe.
+  const onlyFund = (process.env.ONLY_FUND || "").toUpperCase().split(",").map((s) => s.trim()).filter(Boolean);
   for (const { ticker, name } of universe.tickers) {
+    if (onlyFund.length && !onlyFund.includes(ticker.toUpperCase())) continue;
     const cik = cikByTicker[ticker.toUpperCase()];
     if (!cik) {
       console.warn(`  ! ${ticker}: no CIK in SEC map, skipping`);
@@ -424,6 +435,28 @@ async function main() {
         console.log(`  ${concept.padEnd(58)} ${(last.val / 1e6).toFixed(0).padStart(10)}M  (FY${years[years.length - 1]})`);
       }
       console.log("=== end REVENUE_DEBUG ===\n");
+    }
+
+    // Diagnostic: DEP_DEBUG=MSFT dumps every depreciation/amortization us-gaap tag and its
+    // latest annual value, to find the cash-flow add-back concept a filer actually uses.
+    // Microsoft and Alphabet tag it outside the standard three, so they read null and the
+    // maintenance-capex (steady-state owner earnings) lens cannot run on the very names the
+    // AI build-out makes it matter for; this names the real tag so it can be mapped.
+    if (process.env.DEP_DEBUG && process.env.DEP_DEBUG.toUpperCase().split(",").map((s) => s.trim()).includes(ticker.toUpperCase())) {
+      const ug = facts?.facts?.["us-gaap"] || {};
+      console.log(`\n=== DEP_DEBUG ${ticker}: depreciation=${pick(CONCEPTS.depreciation)} ===`);
+      for (const concept of Object.keys(ug)) {
+        if (!/depreciat|amorti|accretion/i.test(concept)) continue;
+        const usd = ug[concept]?.units?.USD;
+        if (!usd) continue;
+        const byYear = {};
+        for (const o of usd) { if (o.form !== "10-K" || o.fp !== "FY" || o.fy == null) continue; if (!byYear[o.fy] || o.end > byYear[o.fy].end) byYear[o.fy] = o; }
+        const years = Object.keys(byYear).sort();
+        if (!years.length) continue;
+        const last = byYear[years[years.length - 1]];
+        console.log(`  ${concept.padEnd(58)} ${(last.val / 1e6).toFixed(0).padStart(10)}M  (FY${years[years.length - 1]})`);
+      }
+      console.log("=== end DEP_DEBUG ===\n");
     }
     const accnNoDash = anchor?.accn ? anchor.accn.replace(/-/g, "") : null;
     const sourceUrl = accnNoDash

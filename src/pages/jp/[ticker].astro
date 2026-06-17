@@ -2,6 +2,7 @@
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import jp from "../../data/fundamentals.jp.json";
 import TenYear from "../../components/TenYear.astro";
+import NormalizedEarnings from "../../components/NormalizedEarnings.astro";
 import Scorecard from "../../components/Scorecard.astro";
 import Valuation from "../../components/Valuation.astro";
 
@@ -56,6 +57,7 @@ const sectorLabel = fund ? SECTOR_LABEL[fund.sector] || "Diversified" : null;
       </section>
 
       <div id="sec-record" class="sec"><TenYear company={fund} /></div>
+      <div id="sec-power" class="sec"><NormalizedEarnings company={fund} /></div>
       <div id="sec-scorecard" class="sec"><Scorecard company={fund} /></div>
       <div id="sec-price" class="sec"><Valuation company={fund} /></div>
 

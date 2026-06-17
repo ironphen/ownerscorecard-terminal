@@ -12,6 +12,7 @@ import Capital from "../../components/Capital.astro";
 import Comp from "../../components/Comp.astro";
 import Graham from "../../components/Graham.astro";
 import Valuation from "../../components/Valuation.astro";
+import NormalizedEarnings from "../../components/NormalizedEarnings.astro";
 import language from "../../data/language.json";
 import { classify } from "../../lib/archetype.mjs";
 import { businessPhrase, weakLede } from "../../lib/business.mjs";
@@ -89,6 +90,7 @@ const fmtDate = (d) =>
         <a href="#sec-business">Business</a>
         <a href="#sec-mix">Mix</a>
         <a href="#sec-record">Record</a>
+        <a href="#sec-power">Power</a>
         <a href="#sec-scorecard">Scorecard</a>
         <a href="#sec-capital">Capital</a>
         <a href="#sec-pay">Pay</a>
@@ -105,6 +107,7 @@ const fmtDate = (d) =>
   {fund ? <div id="sec-business" class="sec"><BusinessRead company={fund} /></div> : null}
   {fund ? <div id="sec-mix" class="sec"><Segments company={fund} /></div> : null}
   {fund ? <div id="sec-record" class="sec"><TenYear company={fund} /></div> : null}
+  {fund && !isFin ? <div id="sec-power" class="sec"><NormalizedEarnings company={fund} /></div> : null}
   {fund ? <div id="sec-scorecard" class="sec"><Scorecard company={fund} sample={fundamentals.sample} /></div> : null}
   {fund && !isFin ? <div id="sec-capital" class="sec"><Capital company={fund} /></div> : null}
   {fund ? <div id="sec-pay" class="sec"><Comp company={fund} /></div> : null}
