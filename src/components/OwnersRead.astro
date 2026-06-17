@@ -114,7 +114,7 @@ const pctΔ = (v) => (v == null ? null : `${v >= 0 ? "+" : "−"}${Math.abs(v * 
 {(items.length || newLines.length || hasStats) ? (
   <section class="oread">
     <div class="head">
-      <h2>What the filing emphasizes{items.length && (newLines.length || hasStats) ? ", and what's new" : ""}{L.fy ? `, FY${L.fy}` : ""}</h2>
+      <h3 class="secTitle">What the filing emphasizes{items.length && (newLines.length || hasStats) ? ", and what's new" : ""}{L.fy ? `, FY${L.fy}` : ""}</h3>
       {L.sourceUrl ? <a class="src" href={L.sourceUrl} target="_blank" rel="noopener">read the 10-K →</a> : null}
     </div>
     {hasStats ? (

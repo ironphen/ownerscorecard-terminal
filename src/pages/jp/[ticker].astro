@@ -7,6 +7,7 @@ import Scorecard from "../../components/Scorecard.astro";
 import Capital from "../../components/Capital.astro";
 import Inversion from "../../components/Inversion.astro";
 import Valuation from "../../components/Valuation.astro";
+import ActHeader from "../../components/ActHeader.astro";
 
 // The Japanese pool, a separate route and a separate dataset from the US catalog. These
 // pages are quantitative by design: the figures are read straight from each company's
@@ -60,12 +61,23 @@ const sectorLabel = fund ? SECTOR_LABEL[fund.sector] || "Diversified" : null;
         </p>
       </section>
 
-      <div id="sec-record" class="sec"><TenYear company={fund} /></div>
-      <div id="sec-power" class="sec"><NormalizedEarnings company={fund} /></div>
-      <div id="sec-scorecard" class="sec"><Scorecard company={fund} /></div>
-      <div id="sec-capital" class="sec"><Capital company={fund} /></div>
-      <div id="sec-inversion" class="sec"><Inversion company={fund} /></div>
-      <div id="sec-price" class="sec"><Valuation company={fund} /></div>
+      <section class="actGroup">
+        <ActHeader n="I" title="The record" lede="What the business has done across the cycle, read straight from the EDINET filing: the multi-year record and, where the history allows, what it earns at mid-cycle." />
+        <div id="sec-record" class="sec"><TenYear company={fund} /></div>
+        <div id="sec-power" class="sec"><NormalizedEarnings company={fund} /></div>
+      </section>
+
+      <section class="actGroup">
+        <ActHeader n="II" title="Quality &amp; stewardship" lede="Is it a good business, will it survive, and is it run for the owners? The same checks the US pages run, in yen." />
+        <div id="sec-scorecard" class="sec"><Scorecard company={fund} /></div>
+        <div id="sec-capital" class="sec"><Capital company={fund} /></div>
+        <div id="sec-inversion" class="sec"><Inversion company={fund} /></div>
+      </section>
+
+      <section class="actGroup">
+        <ActHeader n="III" title="The price" lede="What you would be paying, and what a price would have to assume to make sense, set against the record above." />
+        <div id="sec-price" class="sec"><Valuation company={fund} /></div>
+      </section>
 
       <p class="foot">
         Figures from EDINET, the Financial Services Agency&rsquo;s disclosure system, the

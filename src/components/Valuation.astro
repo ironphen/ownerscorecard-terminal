@@ -168,7 +168,7 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
 
 <section class="val">
   <div class="head">
-    <h2>What the price implies</h2>
+    <h3 class="secTitle">What the price implies</h3>
     <span class="tag">{bankRunnable ? "price / tangible book" : reitRunnable ? "price / FFO" : "reverse-DCF"}</span>
   </div>
 
@@ -345,7 +345,7 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
   .intro { font-family: var(--serif); font-style: italic; font-size: 14px; color: var(--muted); margin: 12px 0 0; line-height: 1.55; max-width: 68ch; }
   .intro b { font-style: normal; color: var(--ink); }
 
-  .priceRow { display: flex; align-items: center; gap: 8px; margin: 16px 0 0; }
+  .priceRow { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 16px 0 0; }
   .priceRow label { font-size: 13px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
   .priceRow .dollar { font-size: 20px; font-weight: 700; color: var(--ink); }
   .priceRow input { width: 140px; padding: 8px 10px; border: 1px solid var(--rule-strong); font-family: var(--sans); font-size: 18px; font-variant-numeric: tabular-nums; background: var(--surface); }
@@ -376,6 +376,13 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
 
   .gatenote { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); margin: 8px 0 0; line-height: 1.5; max-width: 70ch; }
   .foot { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); margin: 14px 0 0; line-height: 1.5; max-width: 70ch; }
+
+  /* On a phone the price input wraps under its label rather than overflowing, and each dial's
+     slider takes the full width below its label instead of being squeezed beside a long one. */
+  @media (max-width: 520px) {
+    .dials label { flex-wrap: wrap; }
+    .dials input[type="range"] { flex-basis: 100%; max-width: none; }
+  }
 </style>
 
 <script is:inline>

@@ -130,7 +130,7 @@ const intro = basis === "model"
 
 {group.length >= 2 ? (
   <section class="peers">
-    <h3 class="secHead">{heading}</h3>
+    <h3 class="secTitle pHead">{heading}</h3>
     <p class="pNote">{intro} <span class="bestKey">●</span> marks best in the group.</p>
     <div class="wrap">
       <table>
@@ -156,7 +156,7 @@ const intro = basis === "model"
 
 <style>
   .peers { margin: 22px 0; }
-  .secHead { font-family: var(--serif); font-weight: 600; margin: 0; font-size: clamp(22px, 3.4vw, 27px); letter-spacing: -0.01em; line-height: 1.15; color: var(--ink); border-bottom: 1px solid var(--rule-strong); padding-bottom: 6px; }
+  .pHead { border-bottom: 1px solid var(--rule-strong); padding-bottom: 6px; display: block; }
   .pNote { font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--muted); margin: 9px 0 6px; }
   .bestKey { color: var(--good); font-style: normal; }
 
