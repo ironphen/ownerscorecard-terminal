@@ -123,14 +123,17 @@ const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "
   <section class="catalogWrap">
     <div class="bandHead">
       <h2>The Catalog</h2>
-      <a class="all" href="/concepts">What the terms mean →</a>
+      <div class="bandLinks">
+        <a class="pool" href="/japan">Japan, a separate pool →</a>
+        <a class="all" href="/concepts">What the terms mean →</a>
+      </div>
     </div>
     <p class="method">
-      Every figure is the latest annual number from the company's own 10-K. Rank by any column,
-      filter by business model, or read the catalog through an owner's lens. We don't score them;
-      a lens explores by one of Buffett's or Graham's criteria, never a verdict. Pick a company
-      for its full Owner's Scorecard. New here? Each company page reads top to bottom in an owner's
-      order, and <a href="/concepts">Concepts</a> defines every term.
+      US filers, every figure the latest annual number from the company's own 10-K. Rank by any
+      column, filter by business model, or read the catalog through an owner's lens. We don't score
+      them; a lens explores by one of Buffett's or Graham's criteria, never a verdict. Japanese
+      names live in their own <a href="/japan">Japan</a> pool, read from EDINET in yen. Pick a
+      company for its full Owner's Scorecard; <a href="/concepts">Concepts</a> defines every term.
     </p>
 
     <div class="toolbar" id="toolbar">
@@ -212,7 +215,10 @@ const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "
   <style>
     .bandHead { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--rule-strong); padding-bottom: 6px; }
     .bandHead h2 { margin: 0; }
+    .bandLinks { display: flex; align-items: baseline; gap: 16px; flex: 0 0 auto; flex-wrap: wrap; justify-content: flex-end; }
     .all { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; flex: 0 0 auto; }
+    .pool { font-family: var(--sans); font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); border: 1px solid var(--accent); border-radius: 999px; padding: 3px 11px; flex: 0 0 auto; }
+    .pool:hover { background: var(--accent-tint); text-decoration: none; }
     .count { font-size: 11.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); flex: 0 0 auto; }
 
     /* ---- writing band ---- */

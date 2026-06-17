@@ -24,18 +24,26 @@ export function topLineRevenue(lines, company) {
   return rev;
 }
 
-// Compact USD formatting: 123000000000 -> "$123.0B", 450000000 -> "$450M".
-export function fmtUSD(v) {
+// Compact money formatting, currency-aware so the same compute serves the US pool (USD)
+// and the Japanese pool (JPY, which reaches trillions): 123e9 -> "$123.0B", 50.7e12 ->
+// "¥50.7T". The symbol is chosen by currency code; everything else is identical.
+const CCY_SYMBOL = { USD: "$", JPY: "¥" };
+export function currencySymbol(ccy) { return CCY_SYMBOL[ccy] || "$"; }
+export function fmtMoney(v, ccy = "USD") {
   if (v == null) return "—";
+  const sym = currencySymbol(ccy);
   const neg = v < 0;
   const a = Math.abs(v);
   let s;
-  if (a >= 1e9) s = `$${(a / 1e9).toFixed(1)}B`;
-  else if (a >= 1e6) s = `$${Math.round(a / 1e6)}M`;
-  else if (a >= 1e3) s = `$${Math.round(a / 1e3)}K`;
-  else s = `$${Math.round(a)}`;
+  if (a >= 1e12) s = `${sym}${(a / 1e12).toFixed(2)}T`;
+  else if (a >= 1e9) s = `${sym}${(a / 1e9).toFixed(1)}B`;
+  else if (a >= 1e6) s = `${sym}${Math.round(a / 1e6)}M`;
+  else if (a >= 1e3) s = `${sym}${Math.round(a / 1e3)}K`;
+  else s = `${sym}${Math.round(a)}`;
   return neg ? `(${s})` : s;
 }
+// Back-compat: the US pages call fmtUSD directly. New, currency-bearing code uses fmtMoney.
+export function fmtUSD(v) { return fmtMoney(v, "USD"); }
 
 // Interest coverage = operating income (EBIT) / interest expense.
 // Returns null when it can't be computed honestly (missing EBIT, or no
@@ -106,13 +114,14 @@ const fmtX = (v, dp = 1) => (v == null ? "—" : `${v.toFixed(dp)}×`);
 
 // Earnings quality: does reported profit show up as cash?
 export function earningsQuality(c) {
+  const $ = (v) => fmtMoney(v, c?.currency || "USD");
   const ni = c?.lines?.netIncome;
   const cfo = c?.lines?.cashFromOps;
   if (ni == null || cfo == null) return null;
   if (ni <= 0) {
     return {
-      value: fmtUSD(cfo),
-      formula: `Net income ${fmtUSD(ni)} · cash from operations ${fmtUSD(cfo)}`,
+      value: $(cfo),
+      formula: `Net income ${$(ni)} · cash from operations ${$(cfo)}`,
       tone: cfo > 0 ? "warn" : "bad",
       label: cfo > 0 ? "Loss, but cash-generative" : "Loss, and burning cash",
       note:
@@ -125,7 +134,7 @@ export function earningsQuality(c) {
   const label = ratio >= 1 ? "Cash-backed" : ratio >= 0.6 ? "Mostly cash-backed" : "Thinly cash-backed";
   return {
     value: fmtX(ratio, 2),
-    formula: `Cash from ops ${fmtUSD(cfo)} ÷ net income ${fmtUSD(ni)}`,
+    formula: `Cash from ops ${$(cfo)} ÷ net income ${$(ni)}`,
     tone,
     label,
     note: "How much of reported profit showed up as operating cash. Above 1× is reassuring; well below suggests earnings lean on accruals. One year is noisy, growth and working-capital swings distort it, and this is operating cash, not free cash. Watch the multi-year trend.",
@@ -134,19 +143,20 @@ export function earningsQuality(c) {
 
 // Leverage: how many years of operating profit would repay the debt?
 export function leverage(c) {
+  const $ = (v) => fmtMoney(v, c?.currency || "USD");
   const debt = c?.lines?.totalDebt;
   const oi = c?.lines?.operatingIncome;
   if (debt == null || oi == null) return null;
   if (debt === 0)
     return { value: "0×", formula: "No interest-bearing debt reported", tone: "good", label: "Debt-free", note: "The business doesn't depend on lenders, the strongest position to negotiate, wait, or weather a bad year from." };
   if (oi <= 0)
-    return { value: "—", formula: `Total debt ${fmtUSD(debt)} · operating income ${fmtUSD(oi)}`, tone: "bad", label: "Debt against an operating loss", note: "There's debt but no operating profit to measure it against, understand that combination before anything else about the company." };
+    return { value: "—", formula: `Total debt ${$(debt)} · operating income ${$(oi)}`, tone: "bad", label: "Debt against an operating loss", note: "There's debt but no operating profit to measure it against, understand that combination before anything else about the company." };
   const years = debt / oi;
   const tone = years < 2 ? "good" : years < 4 ? "ok" : years < 6 ? "warn" : "bad";
   const label = years < 2 ? "Conservative" : years < 4 ? "Moderate" : years < 6 ? "Heavy" : "High";
   return {
     value: `${years.toFixed(1)}×`,
-    formula: `Total debt ${fmtUSD(debt)} ÷ operating income ${fmtUSD(oi)}`,
+    formula: `Total debt ${$(debt)} ÷ operating income ${$(oi)}`,
     tone,
     label,
     note: "Years of operating profit it would take to repay all debt. A first read, not a credit rating: it's gross debt (not netted against cash) over EBIT (not EBITDA), and a cyclical year distorts it.",
@@ -166,6 +176,7 @@ export function liquidAssets(L) {
 // net cash. Longer-dated marketable securities are surfaced in the note, not the
 // headline, to keep the definition conventional.
 export function cashPosition(c) {
+  const $ = (v) => fmtMoney(v, c?.currency || "USD");
   const L = c?.lines || {};
   const cash = L.cashAndEquivalents, debt = L.totalDebt;
   if (cash == null && debt == null) return null;
@@ -186,16 +197,16 @@ export function cashPosition(c) {
   else if (years != null) { tone = "bad"; label = "Heavy net debt"; }
   else { tone = "warn"; label = "Net debt"; }
 
-  const value = netCash ? `+${fmtUSD(-net)}` : fmtUSD(net);
+  const value = netCash ? `+${$(-net)}` : $(net);
   const formula =
-    `Cash ${fmtUSD(cash || 0)}` + (st ? ` + ST investments ${fmtUSD(st)}` : "") + ` − debt ${fmtUSD(gross)}`;
+    `Cash ${$(cash || 0)}` + (st ? ` + ST investments ${$(st)}` : "") + ` − debt ${$(gross)}`;
 
   let note = netCash
-    ? `Cash and short-term investments exceed every dollar of debt by ${fmtUSD(-net)}, on net the company owes nothing, and can act from strength when others can't.`
-    : `Netting ${fmtUSD(liquid)} of cash and short-term investments against ${fmtUSD(gross)} of debt leaves ${fmtUSD(net)} owed${years != null ? `, about ${years.toFixed(1)}× a year's operating profit, versus the gross figure above` : ""}.`;
+    ? `Cash and short-term investments exceed every dollar of debt by ${$(-net)}, on net the company owes nothing, and can act from strength when others can't.`
+    : `Netting ${$(liquid)} of cash and short-term investments against ${$(gross)} of debt leaves ${$(net)} owed${years != null ? `, about ${years.toFixed(1)}× a year's operating profit, versus the gross figure above` : ""}.`;
   if (lt) {
     const full = net - lt;
-    note += ` It also holds ${fmtUSD(lt)} in longer-dated marketable securities; counting those, it sits at ${full < 0 ? `net cash of ${fmtUSD(-full)}` : `${fmtUSD(full)} of net debt`}.`;
+    note += ` It also holds ${$(lt)} in longer-dated marketable securities; counting those, it sits at ${full < 0 ? `net cash of ${$(-full)}` : `${$(full)} of net debt`}.`;
   }
   note += " Net debt is the leverage figure that matters; the gross ratio above ignores the cash already set against it. Strategic or illiquid investments aren't counted here.";
   return { value, formula, tone, label, note };
@@ -203,6 +214,7 @@ export function cashPosition(c) {
 
 // Capex vs. depreciation: a lens, not a grade.
 export function capexVsDepreciation(c) {
+  const $ = (v) => fmtMoney(v, c?.currency || "USD");
   const capex = c?.lines?.capex;
   const dep = c?.lines?.depreciation;
   if (capex == null || dep == null || dep === 0) return null;
@@ -210,7 +222,7 @@ export function capexVsDepreciation(c) {
   const label = ratio < 0.8 ? "Harvesting" : ratio <= 1.2 ? "Maintaining" : "Expanding";
   return {
     value: fmtX(ratio, 2),
-    formula: `Capex ${fmtUSD(capex)} ÷ depreciation ${fmtUSD(dep)}`,
+    formula: `Capex ${$(capex)} ÷ depreciation ${$(dep)}`,
     tone: "info",
     label,
     note: "Descriptive, not a grade. Above ~1× means investing faster than assets wear out (growth, or, sustained for years, today's earnings carrying less depreciation than tomorrow's will). Below means spending less than it's wearing out (efficiency, or a melting asset base). The ratio won't tell you which; the filings will.",
@@ -219,6 +231,7 @@ export function capexVsDepreciation(c) {
 
 // Return on invested capital, Buffett's north star.
 export function roic(c) {
+  const $ = (v) => fmtMoney(v, c?.currency || "USD");
   const L = c?.lines || {};
   if (!debtReliable(L))
     return {
@@ -231,7 +244,7 @@ export function roic(c) {
   if (invested <= 0)
     return {
       value: "—",
-      formula: `Invested capital ${fmtUSD(invested)} = debt ${fmtUSD(debt)} + equity ${fmtUSD(eq)} − cash`,
+      formula: `Invested capital ${$(invested)} = debt ${$(debt)} + equity ${$(eq)} − cash`,
       tone: "none",
       label: "Not meaningful here",
       note: "Invested capital is near zero or negative, usually years of buybacks pulling equity down. ROIC explodes or flips sign and stops meaning anything. Judge this one on Owner Earnings instead.",
@@ -246,7 +259,7 @@ export function roic(c) {
   const label = r < 0.08 ? "Below average" : r < 0.15 ? "Solid" : r < 0.25 ? "High" : "Exceptional";
   return {
     value: `${(r * 100).toFixed(0)}%`,
-    formula: `NOPAT ${fmtUSD(nopat)} ÷ invested capital ${fmtUSD(invested)} (debt + equity − cash)`,
+    formula: `NOPAT ${$(nopat)} ÷ invested capital ${$(invested)} (debt + equity − cash)`,
     tone,
     label,
     note: "The rate the business earns on the money tied up in it, Buffett's north star, because over time a stock tracks the ROIC beneath it. Above ~15% sustained hints at a moat; below ~8% the company may destroy value as it grows. Asset-light businesses (R&D expensed, little capital) read artificially high, pair this with Owner Earnings.",
@@ -255,6 +268,7 @@ export function roic(c) {
 
 // Owner Earnings (owner earnings): operating cash minus capex, what an owner can take out.
 export function ownerCash(c) {
+  const $ = (v) => fmtMoney(v, c?.currency || "USD");
   const L = c?.lines || {};
   const cfo = L.cashFromOps, capex = L.capex;
   if (cfo == null || capex == null) return null;
@@ -265,19 +279,20 @@ export function ownerCash(c) {
   const tone = oc <= 0 ? "bad" : margin == null ? "ok" : margin < 0.05 ? "warn" : margin < 0.15 ? "ok" : "good";
   const label = oc <= 0 ? "Consumes cash" : margin == null ? "Positive" : margin < 0.05 ? "Thin" : margin < 0.15 ? "Solid" : "Cash machine";
   return {
-    value: margin != null ? `${(margin * 100).toFixed(0)}%` : fmtUSD(oc),
-    formula: `Owner Earnings ${fmtUSD(oc)} = operating cash ${fmtUSD(cfo)} − capex ${fmtUSD(Math.abs(capex))}`,
+    value: margin != null ? `${(margin * 100).toFixed(0)}%` : $(oc),
+    formula: `Owner Earnings ${$(oc)} = operating cash ${$(cfo)} − capex ${$(Math.abs(capex))}`,
     tone,
     label,
     note:
       `What an owner could take out without starving the business.${margin != null ? ` That's ${(margin * 100).toFixed(0)}% of revenue.` : ""}` +
-      `${ocSbc != null ? ` Treating stock comp as the real expense it is (less ${fmtUSD(sbc)} of SBC) leaves ${fmtUSD(ocSbc)}.` : ""}` +
+      `${ocSbc != null ? ` Treating stock comp as the real expense it is (less ${$(sbc)} of SBC) leaves ${$(ocSbc)}.` : ""}` +
       " Honest caveat: capex here blends maintenance and growth, so steady-state Owner Earnings may run higher (see capex vs. depreciation).",
   };
 }
 
 // Capital allocation: of the Owner Earnings, how much was returned, and was it real?
 export function capitalAllocation(c) {
+  const $ = (v) => fmtMoney(v, c?.currency || "USD");
   const L = c?.lines || {};
   const cfo = L.cashFromOps, capex = L.capex, div = L.dividendsPaid, bb = L.buybacks;
   if (cfo == null || capex == null || (div == null && bb == null)) return null;
@@ -288,13 +303,13 @@ export function capitalAllocation(c) {
   const returned = dividends + buybacks;
   const payout = returned / oc;
   const label = payout >= 0.9 ? "Returns most of it" : payout >= 0.4 ? "Returns about half" : "Reinvests most of it";
-  let note = `Of ${fmtUSD(oc)} Owner Earnings, ${fmtUSD(returned)} (${(payout * 100).toFixed(0)}%) went back to shareholders, ${fmtUSD(dividends)} dividends, ${fmtUSD(buybacks)} buybacks.`;
+  let note = `Of ${$(oc)} Owner Earnings, ${$(returned)} (${(payout * 100).toFixed(0)}%) went back to shareholders, ${$(dividends)} dividends, ${$(buybacks)} buybacks.`;
   if (buybacks > 0 && sbc != null)
     note += buybacks - sbc <= 0
-      ? ` But the buybacks barely exceed stock issued to employees (${fmtUSD(sbc)} SBC), net of dilution, little was truly returned.`
-      : ` Net of ${fmtUSD(sbc)} stock comp, the real buyback was about ${fmtUSD(buybacks - sbc)}.`;
+      ? ` But the buybacks barely exceed stock issued to employees (${$(sbc)} SBC), net of dilution, little was truly returned.`
+      : ` Net of ${$(sbc)} stock comp, the real buyback was about ${$(buybacks - sbc)}.`;
   note += " Returning most of it signals a mature cash machine; reinvesting most could mean a long runway, or empire-building. The split doesn't say which; the return earned on it (see ROIC) does.";
-  return { value: `${(payout * 100).toFixed(0)}%`, formula: `Dividends + buybacks ${fmtUSD(returned)} ÷ Owner Earnings ${fmtUSD(oc)}`, tone: "info", label, note };
+  return { value: `${(payout * 100).toFixed(0)}%`, formula: `Dividends + buybacks ${$(returned)} ÷ Owner Earnings ${$(oc)}`, tone: "info", label, note };
 }
 
 // Cash-conversion cycle: DSO + DIO − DPO (days). A liquidity check that doubles
@@ -393,13 +408,14 @@ export function durability(company) {
 
 // Assemble the panel, grouped into the two questions Graham and Buffett asked.
 export function buildScorecard(company) {
+  const $ = (v) => fmtMoney(v, company?.currency || "USD");
   const cov = coverage(company);
   const covV = coverageVerdict(cov);
   const coverageCheck = {
     title: "Can it pay its interest?",
     concept: "interest-coverage",
     value: cov?.ratio != null ? `${cov.ratio.toFixed(1)}×` : "—",
-    formula: cov && !cov.noBurden ? `Operating income ${fmtUSD(cov.oi)} ÷ interest expense ${fmtUSD(cov.interest)}` : "Little or no interest expense reported",
+    formula: cov && !cov.noBurden ? `Operating income ${$(cov.oi)} ÷ interest expense ${$(cov.interest)}` : "Little or no interest expense reported",
     tone: covV.tone,
     label: covV.label,
     note: covV.note,
