@@ -4,6 +4,41 @@
 // price), or to the balance sheet. Pure arithmetic on figures the pipeline pulls; the
 // report lays the facts in a row and never grades, the owner judges.
 
+// Diluted share counts come straight from each filing, and a stock split restates them: the
+// years a later 10-K still covers are reported on the new basis, while older years (no later
+// filing reaches back to restate them) stay on the old one, leaving a 4x or 20x cliff in the
+// raw series. Left uncorrected it reads as enormous dilution (Apple's 5.5B in 2016 beside its
+// 15B in 2025) when the count actually fell by a third. This rescales the series across any
+// split-sized jump, snapping the jump to the nearest clean split ratio, so the whole series
+// sits on the latest year's basis. Organic change (buybacks, stock pay) passes through.
+const SPLIT_RATIOS = [1.5, 2, 3, 4, 5, 6, 7, 8, 10, 15, 20];
+function snapSplit(ratio) {
+  let best = 1, bestErr = Infinity;
+  for (const s of SPLIT_RATIOS) {
+    const err = Math.abs(ratio - s) / s;
+    if (err < bestErr) { bestErr = err; best = s; }
+  }
+  return bestErr <= 0.12 ? best : 1; // within 12% of a clean split ratio, else treat as organic
+}
+// Per-year split factor: walk the diluted-share series and carry the cumulative multiple that
+// puts each earlier year onto the latest year's basis. Returned as a Map keyed by fiscal year,
+// so one factor serves every per-share quantity the section uses, the share count, the shares
+// repurchased, and the dividend per share, and a split distorts none of them.
+export function splitFactorsByFy(points) {
+  const pts = points.filter((p) => p.shares != null && p.shares > 0);
+  const m = new Map();
+  if (!pts.length) return m;
+  let factor = 1;
+  m.set(pts[pts.length - 1].fy, 1);
+  for (let i = pts.length - 2; i >= 0; i--) {
+    const ratio = pts[i + 1].shares / pts[i].shares;
+    if (ratio >= 1.4) factor *= snapSplit(ratio); // forward split between year i and i+1
+    else if (ratio <= 1 / 1.4) factor *= 1 / snapSplit(1 / ratio); // reverse split
+    m.set(pts[i].fy, factor);
+  }
+  return m;
+}
+
 export function capitalHistory(company) {
   // Require both operating cash and capex each year, so the sources-and-uses split is over a
   // consistent window. The Japanese pool carries operating cash for five years but capex for
@@ -51,22 +86,39 @@ export function capitalHistory(company) {
   // ---- the report-card facts ----
   const oeTotal = per.reduce((a, q) => a + (q.oe || 0), 0);
 
-  // Buybacks at what price: align cash with count, summing only the years that report both,
-  // so the blended average is cash ÷ shares actually bought. A close approximation (a year of
-  // purchases, any accelerated repurchase), not a tick-by-tick figure.
+  // One split-adjustment basis for the whole section. Build the diluted-share series (the
+  // per-year counts plus the latest TTM count as the most-trusted final point) and derive a
+  // factor per year, so a stock split never distorts the buyback price, the share-count change,
+  // or the dividend-per-share trajectory that follow.
+  const endShares = endL.sharesDiluted && endL.sharesDiluted > 0 ? endL.sharesDiluted : null;
+  const sharePoints = per.filter((q) => q.shares != null).map((q) => ({ fy: q.fy, shares: q.shares }));
+  const lastHistFy = sharePoints.length ? sharePoints[sharePoints.length - 1].fy : 0;
+  if (endShares != null && (!sharePoints.length || endShares !== sharePoints[sharePoints.length - 1].shares))
+    sharePoints.push({ fy: lastHistFy + 0.5, shares: endShares });
+  const splitFac = splitFactorsByFy(sharePoints);
+  const fac = (fy) => splitFac.get(fy) ?? 1;
+
+  // Buybacks at what price: align cash with count, summing only the years that report both, on
+  // one split-adjusted basis, so the blended average is cash ÷ shares actually bought stated in
+  // today's shares. A close approximation (a year of purchases, any accelerated repurchase),
+  // not a tick-by-tick figure.
   const bbYears = per.filter((q) => q.bb > 0 && q.repShares != null);
   const bbSpentPriced = bbYears.reduce((a, q) => a + q.bb, 0);
-  const bbSharesPriced = bbYears.reduce((a, q) => a + q.repShares, 0);
+  const bbSharesPriced = bbYears.reduce((a, q) => a + q.repShares * fac(q.fy), 0);
   const avgBuybackPrice = bbSharesPriced > 0 ? bbSpentPriced / bbSharesPriced : null;
 
-  // Did the diluted share count actually fall? The real test, net of stock issued to staff.
-  const firstShares = per.find((q) => q.shares != null)?.shares ?? null;
-  const lastShares = (endL.sharesDiluted && endL.sharesDiluted > 0 ? endL.sharesDiluted : null) ?? [...per].reverse().find((q) => q.shares != null)?.shares ?? null;
-  const shareChange = firstShares != null && lastShares != null ? lastShares / firstShares - 1 : null;
+  // Did the diluted share count actually fall? The real test, net of stock issued to staff,
+  // on the split-adjusted basis above so a split can't masquerade as dilution (or hide it).
+  const firstShareYear = per.find((q) => q.shares != null);
+  const lastShareYear = [...per].reverse().find((q) => q.shares != null);
+  const firstShares = firstShareYear ? firstShareYear.shares * fac(firstShareYear.fy) : null;
+  const lastShares = endShares != null ? endShares : (lastShareYear ? lastShareYear.shares * fac(lastShareYear.fy) : null);
+  const shareChange = firstShares != null && lastShares != null && firstShares > 0 ? lastShares / firstShares - 1 : null;
 
   // Dividend record: years paid, the trajectory of the per-share dividend, and whether it
   // was ever cut (the fact a dividend investor cares about most).
-  const dpsSeries = per.map((q) => q.dps).filter((v) => v != null);
+  // Per-share dividend on the split-adjusted basis, so a split is not misread as a dividend cut.
+  const dpsSeries = per.map((q) => (q.dps != null ? q.dps / fac(q.fy) : null)).filter((v) => v != null);
   const dpsFirst = dpsSeries.length ? dpsSeries[0] : null;
   const dpsLast = dpsSeries.length ? dpsSeries[dpsSeries.length - 1] : null;
   let everCut = false;
