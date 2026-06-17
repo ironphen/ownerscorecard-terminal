@@ -1,6 +1,6 @@
 ---
 import { classify, financialKind, financialSubtype } from "../lib/archetype.mjs";
-import { fmtUSD, roicValue, liquidAssets, topLineRevenue, debtReliable } from "../lib/fundamentals.mjs";
+import { fmtMoney, currencySymbol, roicValue, liquidAssets, topLineRevenue, debtReliable } from "../lib/fundamentals.mjs";
 import { returnOnEquity, returnOnTangibleEquity, returnOnAssets, efficiencyRatio, tangibleEquity } from "../lib/financials.mjs";
 import { ffo, ffoPerShare, ffoPayout, debtToAssets } from "../lib/reits.mjs";
 import { combinedRatio, lossRatio } from "../lib/insurers.mjs";
@@ -18,9 +18,13 @@ const { sector } = classify(company);
 // often omit the interest tag; an under-capture in either marks the whole record unknown.
 const debtOk = debtReliable(company.lines || {}) && debtReliable(company.ttm?.lines || {});
 
-const money = (v) => (v == null ? "—" : fmtUSD(v));
+// Currency-aware: the same record-table serves the US pool (USD) and the Japanese pool
+// (JPY), with the symbol chosen by the company's currency. Ratios and counts are unitless.
+const ccy = company.currency || "USD";
+const sym = currencySymbol(ccy);
+const money = (v) => (v == null ? "—" : fmtMoney(v, ccy));
 const marginStr = (n, d, dp = 1) => (n != null && d ? `${(n / d) * 100 < 0 ? "−" : ""}${(Math.abs((n / d) * 100)).toFixed(dp)}%` : "—");
-const perShare = (n, sh) => (n != null && sh ? `$${(n / sh).toFixed(2)}` : "—");
+const perShare = (n, sh) => (n != null && sh ? `${sym}${(n / sh).toFixed(2)}` : "—");
 // A plain count (shares), so the buyback-or-dilution record reads across the row.
 const fmtCount = (v) => {
   if (v == null) return "—";
@@ -59,7 +63,7 @@ const ROW = {
   lossRatio: { label: "Loss ratio", short: "Loss", g: 2, get: (L) => { const r = lossRatio(L); return r == null ? "—" : `${(r * 100).toFixed(0)}%`; } },
   mlr: { label: "Medical loss ratio", short: "MLR", g: 1, get: (L) => { const r = medicalLossRatio(L); return r == null ? "—" : `${(r * 100).toFixed(0)}%`; } },
   ffo: { label: "Funds from operations", short: "FFO", g: 2, get: (L) => money(ffo(L)) },
-  ffoPS: { label: "FFO / share", short: "FFO/sh", g: 2, get: (L) => { const f = ffoPerShare(L); return f == null ? "—" : `$${f.toFixed(2)}`; } },
+  ffoPS: { label: "FFO / share", short: "FFO/sh", g: 2, get: (L) => { const f = ffoPerShare(L); return f == null ? "—" : `${sym}${f.toFixed(2)}`; } },
   // --- group 3: what it owns and owes, and what owners get ---
   capex: { label: "Capex", short: "Capex", g: 3, get: (L) => (L.capex != null ? money(Math.abs(L.capex)) : "—") },
   capexToRev: { label: "Capex / revenue", short: "Capex/rev", g: 3, get: (L) => marginStr(L.capex != null ? Math.abs(L.capex) : null, L.revenue) },
@@ -151,8 +155,10 @@ const lastI = cols.length - 1;
 // The row-set follows the business model. Banks, insurers and REITs each read on
 // their own measures, so key off financialKind first (future-proof for any new
 // financial), and fall back to the economic-model sector for everything else.
+// The Japanese pool carries a curated sector and never passes through the SIC engine, so
+// prefer it; the US pool resolves the model from the financial kind, then the shape.
 const fk = financialKind(company);
-const setKey = fk === "insurer" ? (financialSubtype(company) === "life-insurer" ? "lifeInsurer" : "insurer") : fk === "reit" ? "reit" : fk === "managedCare" ? "managedCare" : fk === "fee" ? "fee" : fk === "bank" ? "financial" : sector.key;
+const setKey = company.sector || (fk === "insurer" ? (financialSubtype(company) === "life-insurer" ? "lifeInsurer" : "insurer") : fk === "reit" ? "reit" : fk === "managedCare" ? "managedCare" : fk === "fee" ? "fee" : fk === "bank" ? "financial" : sector.key);
 const chosen = SETS[setKey] || SETS.general;
 
 // Link a row's label to its entry on the Concepts page, where the term is defined.

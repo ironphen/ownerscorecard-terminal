@@ -1,0 +1,169 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import jp from "../data/fundamentals.jp.json";
+import { fmtMoney, liquidAssets, operatingMargin, ownerEarningsMargin } from "../lib/fundamentals.mjs";
+
+// The Japanese pool, presented as its own catalog (a separate pool from the US table, by
+// design). Figures are in yen, read from EDINET annual securities reports. Anchored by the
+// five trading houses Berkshire holds, plus the marquee compounders.
+const yen = (v) => fmtMoney(v, "JPY");
+const pct = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.abs(v * 100).toFixed(dp)}%`);
+
+const SECTOR_LABEL = { assetLight: "Asset-light", consumer: "Consumer", capital: "Capital-int.", retail: "Trading/dist.", general: "Diversified" };
+
+const rows = (jp.companies || []).map((c) => {
+  const L = c.lines || {};
+  const roe = L.netIncome != null && L.stockholdersEquity > 0 ? L.netIncome / L.stockholdersEquity : null;
+  const netCash = L.totalDebt != null || L.cashAndEquivalents != null ? (liquidAssets(L) || 0) - (L.totalDebt || 0) : null;
+  return {
+    ticker: c.ticker,
+    name: c.name,
+    industry: c.industry,
+    sector: SECTOR_LABEL[c.sector] || "—",
+    std: c.accountingStandard || "",
+    revenue: L.revenue ?? null,
+    opMargin: operatingMargin(L),
+    roe,
+    oeMargin: ownerEarningsMargin(L),
+    netCash,
+  };
+}).sort((a, b) => (b.revenue ?? 0) - (a.revenue ?? 0));
+
+// Slim payload for the client-side sort: ratios and the raw figures, keyed to each row.
+const sortData = rows.map((r) => ({ t: r.ticker, rev: r.revenue, opm: r.opMargin, roe: r.roe, oem: r.oeMargin, nc: r.netCash }));
+---
+
+<BaseLayout title="Japan, Owner Scorecard">
+  <header class="hero">
+    <h1>Japan</h1>
+    <p class="dek">
+      A separate pool. The same owner&rsquo;s questions, asked of Japanese companies straight
+      from their EDINET filings, in yen. It begins where the most famous living value investor
+      went hunting outside America: the five trading houses Berkshire bought, and keeps buying.
+    </p>
+  </header>
+
+  <section class="band intro">
+    <p>
+      These pages are quantitative by design. Japanese filings are in Japanese, so the
+      narrative is left to the filing; the figures, ten years of them, the scorecard, and the
+      reverse-DCF in yen, are read the same way the US catalog reads EDGAR. The classifier that
+      sorts US companies by model never touches these; each carries a curated industry instead.
+      Pick a company for its full scorecard.
+    </p>
+  </section>
+
+  <div class="scroll">
+    <table class="cat" id="jcat">
+      <thead>
+        <tr>
+          <th class="c-name sortable" data-k="t">Company</th>
+          <th class="c-ind">Industry</th>
+          <th class="num sortable desc" data-k="rev">Revenue</th>
+          <th class="num sortable" data-k="opm">Op. margin</th>
+          <th class="num sortable" data-k="roe">ROE</th>
+          <th class="num sortable" data-k="oem"><span class="lf">Owner-earn.</span><span class="ls">OE</span></th>
+          <th class="num sortable" data-k="nc"><span class="lf">Net cash / (debt)</span><span class="ls">Net cash</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((r) => (
+          <tr data-ticker={r.ticker}>
+            <td class="c-name">
+              <a href={`/jp/${r.ticker}`} class="tkr" title={r.name}>{r.ticker}</a>
+              <span class="nm">{r.name}</span>
+            </td>
+            <td class="c-ind"><span class="tag">{r.industry}</span><span class="sec">{r.sector}{r.std ? ` · ${r.std}` : ""}</span></td>
+            <td class="num">{yen(r.revenue)}</td>
+            <td class="num">{pct(r.opMargin)}</td>
+            <td class="num">{pct(r.roe)}</td>
+            <td class="num">{pct(r.oeMargin)}</td>
+            <td class={`num ${r.netCash != null && r.netCash >= 0 ? "pos" : ""}`}>{r.netCash == null ? "—" : (r.netCash >= 0 ? "+" : "") + yen(r.netCash)}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+
+  <p class="legend">
+    {rows.length} companies. Revenue, operating margin, return on equity, owner-earnings margin and
+    net cash, all from the latest EDINET annual report, in yen. Operating margin is unreliable for
+    the trading houses, which earn through equity-method affiliates rather than an operating line;
+    read those on ROE. A lens, never a verdict.
+  </p>
+
+  <script type="application/json" id="jcat-data" is:inline set:html={JSON.stringify(sortData)}></script>
+
+  <style>
+    .hero h1 { margin: 0 0 8px; }
+    .dek { font-family: var(--serif); font-style: italic; font-size: clamp(17px, 2.6vw, 21px); line-height: 1.45; color: var(--ink-soft); margin: 0; max-width: 64ch; }
+    .intro { margin: 22px 0 0; }
+    .intro p { font-size: 15px; line-height: 1.6; color: var(--ink-dim); margin: 0; max-width: 76ch; }
+
+    .scroll { margin-top: 18px; border-bottom: 1px solid var(--rule); }
+    table.cat { border-collapse: collapse; width: 100%; font-size: 13.5px; font-variant-numeric: tabular-nums; }
+    .cat thead th { font-family: var(--sans); font-weight: 600; font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); text-align: right; padding: 9px 10px 7px; white-space: nowrap; position: sticky; top: 0; z-index: 6; background: var(--paper); box-shadow: inset 0 -1px 0 var(--rule-strong); }
+    .cat th.c-name, .cat th.c-ind { text-align: left; }
+    .cat thead th.c-name { left: 0; z-index: 7; }
+    .cat th.sortable { cursor: pointer; user-select: none; }
+    .cat th.sortable:hover { color: var(--ink); }
+    .cat th.sortable::after { content: "↕"; opacity: 0.35; margin-left: 4px; font-size: 10px; }
+    .cat th.sortable.asc::after { content: "↑"; opacity: 1; }
+    .cat th.sortable.desc::after { content: "↓"; opacity: 1; }
+
+    .cat td { padding: 9px 10px; border-bottom: 1px solid var(--rule); text-align: right; white-space: nowrap; }
+    .cat td.c-name, .cat td.c-ind { text-align: left; }
+    .c-name { position: sticky; left: 0; background: var(--paper); z-index: 4; }
+    .tkr { font-weight: 700; }
+    .tkr:hover { color: var(--accent); }
+    .nm { display: block; font-size: 11.5px; color: var(--muted); max-width: 24ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 1px; }
+    .tag { display: inline-block; font-size: 10.5px; letter-spacing: 0.02em; color: var(--tag-ink); background: var(--tag-bg); border-radius: 3px; padding: 2px 8px; white-space: nowrap; }
+    .sec { display: block; font-size: 10.5px; color: var(--faint); letter-spacing: 0.03em; margin-top: 2px; text-transform: uppercase; }
+    .num { color: var(--ink-soft); }
+    .num.pos { color: var(--good); }
+    tbody tr:hover td { background: var(--surface-2); }
+    tbody tr:hover .c-name { background: var(--surface-2); }
+    .legend { font-size: 12px; color: var(--muted); margin: 12px 0 0; line-height: 1.55; max-width: 80ch; }
+    .ls { display: none; }
+
+    @media (max-width: 640px) {
+      .scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+      .lf { display: none; } .ls { display: inline; }
+      .nm { max-width: 18ch; }
+    }
+  </style>
+
+  <script is:inline>
+    (function () {
+      const table = document.getElementById("jcat");
+      const dataEl = document.getElementById("jcat-data");
+      if (!table || !dataEl) return;
+      let DATA = [];
+      try { DATA = JSON.parse(dataEl.textContent || "[]"); } catch (e) { return; }
+      const byT = Object.fromEntries(DATA.map((d) => [d.t, d]));
+      const tbody = table.tBodies[0];
+      const heads = Array.from(table.tHead.querySelectorAll("th.sortable"));
+      let curKey = "rev", curDir = -1; // revenue, descending, matches the server order
+
+      function sort(key, dir) {
+        const rows = Array.from(tbody.rows);
+        rows.sort((ra, rb) => {
+          const a = byT[ra.dataset.ticker] || {}, b = byT[rb.dataset.ticker] || {};
+          if (key === "t") return dir * String(ra.dataset.ticker).localeCompare(String(rb.dataset.ticker));
+          const av = a[key], bv = b[key];
+          if (av == null && bv == null) return 0;
+          if (av == null) return 1;       // missing always sorts to the bottom
+          if (bv == null) return -1;
+          return dir * (av - bv);
+        });
+        rows.forEach((r) => tbody.appendChild(r));
+        heads.forEach((h) => { h.classList.remove("asc", "desc"); if (h.dataset.k === key) h.classList.add(dir > 0 ? "asc" : "desc"); });
+      }
+      heads.forEach((h) => h.addEventListener("click", () => {
+        const key = h.dataset.k;
+        const dir = key === curKey ? -curDir : (key === "t" ? 1 : -1);
+        curKey = key; curDir = dir; sort(key, dir);
+      }));
+    })();
+  </script>
+</BaseLayout>
