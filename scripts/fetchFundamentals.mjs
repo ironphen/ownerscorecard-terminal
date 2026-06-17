@@ -79,7 +79,11 @@ const CONCEPTS = {
   revenue: ["RevenueFromContractWithCustomerExcludingAssessedTax", "Revenues", "RevenueFromContractWithCustomerIncludingAssessedTax", "OilAndGasRevenue", "RevenueMineralSales"],
   netIncome: ["NetIncomeLoss", "NetIncomeLossAvailableToCommonStockholdersBasic", "ProfitLoss"],
   cashFromOps: ["NetCashProvidedByUsedInOperatingActivities"],
-  depreciation: ["DepreciationDepletionAndAmortization", "DepreciationAmortizationAndAccretionNet", "DepreciationAndAmortization"],
+  // The cash-flow depreciation+amortization add-back. The big tech filers (Microsoft, Alphabet)
+  // tag it as "...AndOther", which the standard three miss, so they read null and the
+  // maintenance-capex (steady-state owner earnings) lens cannot run on the very names the AI
+  // build-out makes it matter for. Include those variants.
+  depreciation: ["DepreciationDepletionAndAmortization", "DepreciationAmortizationAndAccretionNet", "DepreciationAndAmortization", "DepreciationAmortizationAndOther", "DepreciationDepletionAndAmortizationNonproduction", "CostOfGoodsAndServicesSoldDepreciationAndAmortization"],
   capex: ["PaymentsToAcquirePropertyPlantAndEquipment", "PaymentsToAcquireProductiveAssets"],
   longTermDebt: ["LongTermDebtNoncurrent", "LongTermDebt"],
   currentDebt: ["LongTermDebtCurrent", "DebtCurrent"],
@@ -119,7 +123,7 @@ const CONCEPTS = {
   // Shares actually repurchased in the year (a count, not cash), so the average price paid
   // can be deduced as buyback cash ÷ shares. Not every filer tags it (some retire shares
   // straight off), so it fills the price read where present and is silent where not.
-  repurchasedShares: ["StockRepurchasedDuringPeriodShares", "TreasuryStockSharesAcquired"],
+  repurchasedShares: ["StockRepurchasedDuringPeriodShares", "StockRepurchasedAndRetiredDuringPeriodShares", "TreasuryStockSharesAcquired"],
   stockholdersEquity: ["StockholdersEquity", "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest"],
   cashAndEquivalents: [
     "CashAndCashEquivalentsAtCarryingValue",
