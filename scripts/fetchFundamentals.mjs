@@ -14,6 +14,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
+import { passesQualityFloor } from "../src/lib/fundamentals.mjs";
 
 const UA =
   process.env.SEC_USER_AGENT ||
@@ -363,6 +364,10 @@ async function main() {
   console.log("done.");
 
   const companies = [];
+  // Companies fetched but withheld for failing the data-quality floor (a blank headline or a
+  // husk with no earnings). Tracked so the merge below drops them rather than carrying stale
+  // data, and so the run can report how many the expansion shed.
+  const withheld = new Set();
   // ONLY_FUND limits the per-company fetch to a few tickers for a fast, cheap debug run
   // (the full universe is several hundred names). Safe on a real refresh too: the merge
   // below carries every other company over from the last good file, so the catalog is
@@ -685,7 +690,7 @@ async function main() {
         }
       : null;
 
-    companies.push({
+    const rec = {
       ticker: ticker.toUpperCase(),
       name: displayName,
       cik,
@@ -739,8 +744,16 @@ async function main() {
       },
       history,
       ttm,
-    });
-    console.log(`  ✓ ${ticker} (CIK ${cik}, FY${anchor?.fy ?? "?"})`);
+    };
+    // The quality floor: a company that can't render a non-broken page is withheld rather than
+    // shipped, the condition for pushing coverage toward the whole universe without losing trust.
+    if (passesQualityFloor(rec)) {
+      companies.push(rec);
+      console.log(`  ✓ ${ticker} (CIK ${cik}, FY${anchor?.fy ?? "?"})`);
+    } else {
+      withheld.add(ticker.toUpperCase());
+      console.log(`  ⊘ ${ticker}: withheld (below the data-quality floor — no usable top line or no earnings)`);
+    }
   }
 
   if (!companies.length) {
@@ -764,6 +777,7 @@ async function main() {
   for (const u of universe.tickers) {
     const T = u.ticker.toUpperCase();
     if (fresh[T]) merged.push(fresh[T]);
+    else if (withheld.has(T)) continue; // fetched but failed the quality floor → no page, no stale carry-over
     else if (prior[T]) { merged.push(prior[T]); carried++; }
   }
 
@@ -775,7 +789,8 @@ async function main() {
     companies: merged,
   };
   fs.writeFileSync(path.join(dataDir, "fundamentals.json"), JSON.stringify(out, null, 2) + "\n");
-  console.log(`\n✅ Wrote ${merged.length} companies (${companies.length} fetched, ${carried} carried over from the last good file)`);
+  console.log(`\n✅ Wrote ${merged.length} companies (${companies.length} passed, ${withheld.size} withheld below the quality floor, ${carried} carried over from the last good file)`);
+  if (withheld.size) console.log(`   withheld: ${[...withheld].sort().join(", ")}`);
 }
 
 main().catch((err) => {

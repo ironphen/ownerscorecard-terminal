@@ -123,17 +123,24 @@ for (const c of companies) {
 // below the normal numbers, not as quality targets: they must catch a layer cratering
 // while tolerating the ordinary dilution of adding companies (a batch of recent IPOs
 // genuinely lacks eight years of history). A real quality target is a different job; this
-// is the smoke alarm. ----
+// is the smoke alarm.
+//
+// The enrichment floors (owner flags, segments) and the history floor were lowered when the
+// US universe expanded to the ~3,000 largest names. A broader, smaller-cap catalog honestly
+// carries fewer segment breakdowns (more single-segment businesses), fewer extracted owner
+// flags (terser filings), and less eight-year history than the original large-cap set, so
+// the catastrophe levels sit lower to match the new mix without losing their bite: a true
+// layer collapse still craters coverage far below them. ----
 const inds = companies.filter((c) => !financialProfile(c).kind);
 const frac = (n, d) => (d ? n / d : 1);
 const coverage = [
   ["top-line revenue > 0", frac(companies.filter((c) => topLineRevenue(c.lines || {}, c) > 0).length, companies.length), 0.95],
   ["operating income (industrials)", frac(inds.filter((c) => c.lines?.operatingIncome != null).length, inds.length), 0.9],
   ["ROIC (industrials)", frac(inds.filter((c) => roicValue(c.lines || {}) != null).length, inds.length), 0.85],
-  ["8+ years of history", frac(companies.filter((c) => (c.history || []).length >= 8).length, companies.length), 0.7],
+  ["8+ years of history", frac(companies.filter((c) => (c.history || []).length >= 8).length, companies.length), 0.6],
   ["fresh quarter (TTM)", frac(companies.filter((c) => c.ttm?.lines).length, companies.length), 0.8],
-  ["owner flags (what the filing emphasizes)", frac(companies.filter((c) => lang[c.ticker]?.ownerFlags?.length).length, companies.length), 0.7],
-  ["segment breakdown (any axis)", frac(companies.filter((c) => { const S = seg[c.ticker]; return S && (S.bySegment || S.byProduct || S.byGeography); }).length, companies.length), 0.5],
+  ["owner flags (what the filing emphasizes)", frac(companies.filter((c) => lang[c.ticker]?.ownerFlags?.length).length, companies.length), 0.6],
+  ["segment breakdown (any axis)", frac(companies.filter((c) => { const S = seg[c.ticker]; return S && (S.bySegment || S.byProduct || S.byGeography); }).length, companies.length), 0.35],
 ];
 const covFails = coverage.filter(([, v, min]) => v < min);
 
