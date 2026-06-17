@@ -458,6 +458,26 @@ async function main() {
       }
       console.log("=== end DEP_DEBUG ===\n");
     }
+
+    // Diagnostic: SHARES_DEBUG=MCD dumps every share-count us-gaap tag and its annual values,
+    // to find the concept a filer that reads null uses (asset managers, partnerships) and to
+    // spot a units artifact (a filer tagging weighted-average shares in millions, so the value
+    // reads ~700 instead of ~700,000,000).
+    if (process.env.SHARES_DEBUG && process.env.SHARES_DEBUG.toUpperCase().split(",").map((s) => s.trim()).includes(ticker.toUpperCase())) {
+      const ug = facts?.facts?.["us-gaap"] || {};
+      console.log(`\n=== SHARES_DEBUG ${ticker}: sharesDiluted=${pickAnnual(facts, CONCEPTS.sharesDiluted, "shares")?.val ?? null} ===`);
+      for (const concept of Object.keys(ug)) {
+        if (!/shares?outstanding|weightedaverage|commonstock|commonunit|partnership|limitedpartner|sharesissued/i.test(concept)) continue;
+        const sh = ug[concept]?.units?.shares;
+        if (!sh) continue;
+        const byYear = {};
+        for (const o of sh) { if (o.form !== "10-K" || o.fp !== "FY" || o.fy == null) continue; if (!byYear[o.fy] || o.end > byYear[o.fy].end) byYear[o.fy] = o; }
+        const years = Object.keys(byYear).sort();
+        if (!years.length) continue;
+        console.log(`  ${concept.padEnd(56)} ${years.map((y) => `${y}=${byYear[y].val}`).join(" ")}`);
+      }
+      console.log("=== end SHARES_DEBUG ===\n");
+    }
     const accnNoDash = anchor?.accn ? anchor.accn.replace(/-/g, "") : null;
     const sourceUrl = accnNoDash
       ? `https://www.sec.gov/Archives/edgar/data/${Number(cik)}/${accnNoDash}/${anchor.accn}-index.htm`

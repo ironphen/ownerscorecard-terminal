@@ -50,6 +50,7 @@ jobs:
           DEBT_DEBUG: ${{ github.event.inputs.debug }}
           REVENUE_DEBUG: ${{ github.event.inputs.debug }}
           DEP_DEBUG: ${{ github.event.inputs.debug }}
+          SHARES_DEBUG: ${{ github.event.inputs.debug }}
           ONLY_FUND: ${{ github.event.inputs.tickers }}
       - run: npm run fetch:filings
         if: ${{ github.event.inputs.segments_only != 'true' && github.event.inputs.fundamentals_only != 'true' }}
