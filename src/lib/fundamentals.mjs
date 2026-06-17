@@ -52,6 +52,7 @@ export function coverage(company) {
   const oi = company?.lines?.operatingIncome;
   const interest = company?.lines?.interestExpense;
   if (oi == null) return null;
+  if (!oiReliable(company)) return { ratio: null, oi, interest, notMeaningful: true };
   if (interest == null) return { ratio: null, oi, interest: null, noBurden: true };
   if (interest <= 0) return { ratio: null, oi, interest, noBurden: true };
   return { ratio: oi / interest, oi, interest, noBurden: false };
@@ -65,6 +66,8 @@ export const GRAHAM_REFERENCE = 5;
 
 export function coverageVerdict(result) {
   if (!result) return { tone: "none", label: "Not enough data", note: "Operating income wasn't found in the filing data." };
+  if (result.notMeaningful)
+    return { tone: "none", label: "Not the right lens here", note: "This business earns through equity-method affiliates, so interest coverage on its operating line isn't meaningful. Read its solvency on net debt against equity instead." };
   if (result.noBurden)
     return {
       tone: "good",
@@ -147,6 +150,8 @@ export function leverage(c) {
   const debt = c?.lines?.totalDebt;
   const oi = c?.lines?.operatingIncome;
   if (debt == null || oi == null) return null;
+  if (!oiReliable(c))
+    return { value: "—", formula: "", tone: "none", label: "Read on equity, not operating income", note: "Years of operating profit to repay debt is not the right leverage read for a holding or trading company, whose earnings flow through affiliates rather than an operating line. Look at net debt and the return on equity instead." };
   if (debt === 0)
     return { value: "0×", formula: "No interest-bearing debt reported", tone: "good", label: "Debt-free", note: "The business doesn't depend on lenders, the strongest position to negotiate, wait, or weather a bad year from." };
   if (oi <= 0)
@@ -237,6 +242,11 @@ export function roic(c) {
     return {
       value: "—", formula: "", tone: "none", label: "Debt under-captured",
       note: "This company's interest bill implies far more debt than its filings tag at the consolidated level (the rest sits under segment dimensions the data source strips), so invested capital, and the return on it, cannot be read honestly. Judge this one on Owner Earnings and the record instead.",
+    };
+  if (!oiReliable(c))
+    return {
+      value: "—", formula: "", tone: "none", label: "Operating income not meaningful here",
+      note: "This business earns mostly through equity-method affiliates, so its operating line understates its earning power and a ROIC built on it would mislead. Read it on return on equity and the record instead.",
     };
   const oi = L.operatingIncome, eq = L.stockholdersEquity, debt = L.totalDebt;
   if (oi == null || eq == null || debt == null) return null;
@@ -357,6 +367,23 @@ export function debtReliable(L) {
   return ie / td <= 0.5;
 }
 
+// Whether the operating-income line is a meaningful read of earning power. The US pool
+// always reports one, so it is trusted there. The Japanese pool includes the trading
+// houses and other holding companies that earn mostly through equity-method affiliates:
+// their operating line sits far below net income (or runs negative against a solid profit),
+// so an operating margin, ROIC or interest-coverage built on it would mislead. We detect
+// that signature and route those names to return on equity instead, never inventing a
+// number. Scoped to JP so it can never misfire on a US name (Berkshire's operating income
+// is the figure Buffett says to trust; its net income is the noisy one).
+export function oiReliable(c) {
+  if (c?.market !== "JP") return true;
+  const L = c?.lines || {};
+  const oi = L.operatingIncome, ni = L.netIncome;
+  if (oi == null) return false;
+  if (ni != null && ni > 0 && oi < ni * 0.4) return false; // affiliates dwarf the operating line
+  return true;
+}
+
 export function roicValue(L) {
   if (!L) return null;
   const oi = L.operatingIncome, eq = L.stockholdersEquity;
@@ -415,7 +442,7 @@ export function buildScorecard(company) {
     title: "Can it pay its interest?",
     concept: "interest-coverage",
     value: cov?.ratio != null ? `${cov.ratio.toFixed(1)}×` : "—",
-    formula: cov && !cov.noBurden ? `Operating income ${$(cov.oi)} ÷ interest expense ${$(cov.interest)}` : "Little or no interest expense reported",
+    formula: cov && cov.notMeaningful ? "" : cov && !cov.noBurden ? `Operating income ${$(cov.oi)} ÷ interest expense ${$(cov.interest)}` : "Little or no interest expense reported",
     tone: covV.tone,
     label: covV.label,
     note: covV.note,

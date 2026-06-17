@@ -14,6 +14,7 @@
     "fetch:wire": "node scripts/fetchWire.mjs",
     "fetch:segments": "node scripts/fetchSegments.mjs",
     "audit": "node scripts/auditData.mjs",
+    "audit:jp": "node scripts/auditJp.mjs",
     "test": "node scripts/heroTest.mjs && node scripts/edinetTest.mjs"
   },
   "dependencies": {

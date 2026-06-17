@@ -155,7 +155,11 @@ const DUR = {
   grossProfit: ["GrossProfitIFRS", "GrossProfit"],
   interestExpense: ["InterestExpenseOnFinancialDebtInterestExpenseIFRS", "InterestExpensesIFRS", "FinanceCostsIFRS", "InterestExpensesAndInterestOnBondsNOE", "InterestExpensesNOE", "InterestExpenses"],
   cashFromOps: ["NetCashProvidedByUsedInOperatingActivitiesIFRS", "CashFlowsFromUsedInOperatingActivitiesIFRSSummaryOfBusinessResults", "CashFlowsFromUsedInOperatingActivitiesIFRS", "NetCashProvidedByUsedInOperatingActivities", "NetCashProvidedByUsedInOperatingActivitiesSummaryOfBusinessResults"],
-  capex: ["PurchaseOfPropertyPlantAndEquipmentInvCFIFRS", "PaymentsForPurchaseOfPropertyPlantAndEquipmentIFRS", "PurchaseOfPropertyPlantAndEquipmentIFRS", "PurchaseOfPropertyPlantAndEquipment", "PurchaseOfPropertyPlantAndEquipmentInvestmentActivities"],
+  // Capex is the investing-cashflow purchase of PP&E. J-GAAP filers tag it with the InvCF
+  // suffix and split between PP&E-only (PurchaseOfPropertyPlantAndEquipmentInvCF, Capcom)
+  // and a combined PP&E + intangibles line (…AndIntangibleAssetsInvCF, Nintendo); IFRS
+  // filers use the IFRS variants. PP&E-only names come first so they win where both exist.
+  capex: ["PurchaseOfPropertyPlantAndEquipmentInvCFIFRS", "PaymentsForPurchaseOfPropertyPlantAndEquipmentIFRS", "PaymentsForPropertyPlantAndEquipmentIFRS", "PaymentsToAcquirePropertyPlantAndEquipmentIFRS", "AcquisitionOfPropertyPlantAndEquipmentInvCFIFRS", "PurchaseOfPropertyPlantAndEquipmentIFRS", "PurchaseOfPropertyPlantAndEquipmentInvCF", "PurchaseOfPropertyPlantAndEquipment", "PurchaseOfPropertyPlantAndEquipmentInvestmentActivities", "PurchaseOfPropertyPlantAndEquipmentAndIntangibleAssetsInvCFIFRS", "PaymentsForAcquisitionOfPropertyPlantAndEquipmentAndIntangibleAssetsIFRS", "PurchaseOfPropertyPlantAndEquipmentAndIntangibleAssetsInvCF", "AdditionsToFixedAssetsExcludingEquipmentLeasedToOthersInvCFIFRS", "PaymentsForAdditionsToFixedAssetsExcludingEquipmentLeasedToOthersIFRS", "AdditionsToPropertyPlantAndEquipmentInvCFIFRS", "PaymentsForAdditionsToPropertyPlantAndEquipmentIFRS", "PurchaseOfFixedAssetsInvCF"],
   depreciation: ["DepreciationAndAmortizationOpeCFIFRS", "DepreciationAndAmortisationOpeCFIFRS", "DepreciationAndAmortizationOpeCF", "DepreciationAndAmortization"],
   dividendsPaid: ["DividendsPaidFinCFIFRS", "DividendsPaidFinCF", "CashDividendsPaidFinCF", "DividendsFromSurplus"],
   sbc: ["ShareBasedPaymentsOpeCFIFRS", "ShareBasedCompensationExpensesSGA"],
@@ -401,7 +405,7 @@ async function main() {
       // Show the revenue / income / balance-sheet elements (whatever their alphabetical
       // position), with current-year value, so the concept map can be pinned per accounting
       // standard without guessing — IFRS filers name these lines differently from J-GAAP.
-      const REL = /revenue|sales|operating|profit|income|asset|equit|cash|loan|bond|borrow|debt|lease|shares|dividend/i;
+      const REL = /revenue|sales|operating|profit|income|asset|equit|cash|loan|bond|borrow|debt|lease|shares|dividend|propert|plant|equipment|purchase|payments|acqui|invest|intangib|depreci|amorti|capital/i;
       console.log(`  parsed ${rawLines} raw lines -> ${names.length} elements; revenue/income/balance candidates (current year):`);
       for (const n of names) {
         if (!REL.test(n)) continue;
