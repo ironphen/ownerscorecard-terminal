@@ -21,7 +21,7 @@ on:
         type: boolean
         default: false
       tickers:
-        description: "Limit the segment fetch to these tickers (comma-separated; blank = all)"
+        description: "Limit the segment AND fundamentals fetch to these tickers (comma-separated; blank = all). The rest carry over from the last good file."
         type: string
         default: ""
       debug:
@@ -49,6 +49,8 @@ jobs:
           SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT }}
           DEBT_DEBUG: ${{ github.event.inputs.debug }}
           REVENUE_DEBUG: ${{ github.event.inputs.debug }}
+          DEP_DEBUG: ${{ github.event.inputs.debug }}
+          ONLY_FUND: ${{ github.event.inputs.tickers }}
       - run: npm run fetch:filings
         if: ${{ github.event.inputs.segments_only != 'true' && github.event.inputs.fundamentals_only != 'true' }}
         continue-on-error: true # qualitative layer; never fail the fundamentals refresh
