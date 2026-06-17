@@ -1,0 +1,85 @@
+---
+// "Inverting the record" — Munger's invert-always-invert turned into a checklist. Instead of
+// asking why this is a good business, it asks what would make owning it a mistake, and looks
+// for those marks in the record the pipeline already holds. Each test is flagged (the
+// fingerprint is present, a question to put to the filing) or clear (one fewer way to be
+// wrong). No score on the business, only the count of which disconfirming tests fired.
+import { inversionChecks } from "../lib/inversion.mjs";
+
+const { company } = Astro.props;
+const inv = inversionChecks(company);
+
+// A plain, descriptive read of the tally, never a grade: it counts which tests fired, not
+// how good or bad the stock is.
+let tally = null;
+if (inv) {
+  const f = inv.flaggedCount, n = inv.total;
+  if (f === 0) tally = `None of the ${n} tests turned up a mark; each came back clean. That is not a verdict that the business is cheap or safe, only that these particular ways of being wrong are not written into the record.`;
+  else if (f === n) tally = `All ${n} tests turned up something to look into. Each is a question for the filing, not an answer, but a record that trips every wire is one to understand slowly.`;
+  else tally = `${f} of the ${n} tests turned up something to look into; the other ${n - f} came back clean. A flag is a question to put to the filing, not a verdict.`;
+}
+---
+
+{inv ? (
+  <section class="inv">
+    <div class="head"><h2>Inverting the record</h2></div>
+    <p class="lede">
+      Munger's rule was to <b>invert</b>: don't ask why {company.name || company.ticker} is a good business,
+      ask what would make owning it a mistake, then look for those marks in the record. These are the
+      disconfirming tests across {inv.span}. A flag points at a question; it is never a verdict.
+    </p>
+
+    <p class="tally">{tally}</p>
+
+    <ul class="checks">
+      {inv.checks.map((c) => (
+        <li class={c.flagged ? "flag" : "clear"}>
+          <div class="crow">
+            <span class="chip">{c.flagged ? "Look here" : "Clear"}</span>
+            <span class="clabel">{c.label}</span>
+            <span class="cvalue">{c.value}</span>
+          </div>
+          <p class="cnote">{c.note}</p>
+        </li>
+      ))}
+    </ul>
+
+    <p class="foot">
+      Each test is read straight from the filings and is noisy on its own; a single flag can be a cyclical
+      trough, a year of heavy investment, or a one-off as easily as a problem, which is why each sends you to
+      the filing rather than answering for it. None of this scores the business or the price. A clean panel is
+      not a reason to buy, and a flagged one is not a reason to sell; both are just the record, inverted.
+    </p>
+  </section>
+) : null}
+
+<style>
+  .inv { margin: 24px 0; }
+  .head { border-bottom: 1px solid var(--rule-strong); padding-bottom: 6px; }
+  .head h2 { margin: 0; }
+  .lede { font-family: var(--serif); font-size: clamp(15px, 2.3vw, 17px); line-height: 1.5; margin: 12px 0 0; max-width: 72ch; }
+  .lede b { font-weight: 600; }
+  .tally { font-size: 13.5px; color: var(--ink-soft); margin: 10px 0 0; max-width: 74ch; line-height: 1.55; }
+
+  .checks { list-style: none; padding: 0; margin: 16px 0 0; }
+  .checks li { padding: 13px 0 13px 12px; border-bottom: 1px solid var(--rule); border-left: 2px solid transparent; }
+  .checks li:first-child { border-top: 1px solid var(--rule); }
+  .checks li.flag { border-left-color: var(--warn); }
+  .checks li.clear { border-left-color: var(--rule-strong); }
+
+  .crow { display: flex; align-items: baseline; gap: 12px; }
+  .chip { flex: 0 0 auto; font-family: var(--sans); font-size: 10px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; padding: 2px 7px; border: 1px solid currentColor; }
+  .flag .chip { color: var(--warn); }
+  .clear .chip { color: var(--muted); }
+  .clabel { font-weight: 600; font-size: 15px; color: var(--ink); flex: 1 1 auto; }
+  .cvalue { font-size: 17px; font-weight: 700; font-variant-numeric: tabular-nums; flex: 0 0 auto; letter-spacing: -0.01em; color: var(--ink); }
+
+  .cnote { font-size: 13.5px; color: var(--ink-dim); margin: 6px 0 0; line-height: 1.55; max-width: 78ch; }
+
+  .foot { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--rule-strong); margin-top: 14px; padding-top: 11px; max-width: 74ch; line-height: 1.5; }
+
+  @media (max-width: 520px) {
+    .crow { flex-wrap: wrap; }
+    .cvalue { order: 3; flex-basis: 100%; }
+  }
+</style>
