@@ -157,8 +157,9 @@ const CONCEPTS = {
   // Period-end share count, an instant fallback for filers that report no weighted average:
   // asset managers and former partnerships (KKR, Brookfield) tag only shares outstanding, so
   // they read null otherwise. Used only where the weighted-average series is empty for a year,
-  // so a clean filer is unaffected.
-  sharesOutstanding: ["CommonStockSharesOutstanding", "CommonStockSharesIssued"],
+  // so a clean filer is unaffected. Outstanding only, never "issued" (which includes treasury
+  // stock and so overstates the real count).
+  sharesOutstanding: ["CommonStockSharesOutstanding"],
   // --- banking & insurance (the financials archetype; null for industrials) ---
   netInterestIncome: ["InterestIncomeExpenseNet"],
   noninterestIncome: ["NoninterestIncome"],
@@ -277,6 +278,18 @@ function normalizeShareScale(byYear) {
   for (const fy in byYear) out[fy] = fixShareScale(byYear[fy], ref);
   return out;
 }
+
+// Of two share-count observations, the one whose period ends latest (ties go to the first,
+// the weighted average, which is the right per-share denominator). Lets a fresh period-end
+// count override a weighted average that went stale when a partnership converted: KKR stops
+// tagging units in 2017 but keeps reporting shares outstanding, so the stale 2017 figure must
+// not win over the current count.
+const freshestShare = (a, b) => {
+  const xs = [a, b].filter((o) => o && o.val != null);
+  if (!xs.length) return null;
+  xs.sort((x, y) => (x.end < y.end ? 1 : x.end > y.end ? -1 : 0));
+  return xs[0].val;
+};
 
 const pickAnnual = (facts, tags, unit = "USD") => latestEntry(annualByYear(facts, tags, unit));
 const pickInstant = (facts, tags, unit = "USD") => latestEntry(instantByYear(facts, tags, unit));
@@ -651,7 +664,7 @@ async function main() {
             inventory: latestObservation(facts, CONCEPTS.inventory, "USD", true)?.val ?? null,
             accountsPayable: latestObservation(facts, CONCEPTS.accountsPayable, "USD", true)?.val ?? null,
             totalDebt: maxOf(ttmLtd != null || ttmCurDebt != null ? (ttmLtd || 0) + (ttmCurDebt || 0) : null, ...aggTTMVals),
-            sharesDiluted: fixShareScale(latestObservation(facts, CONCEPTS.sharesDiluted, "shares", false)?.val ?? pickInstant(facts, CONCEPTS.sharesOutstanding, "shares")?.val ?? null, shareRef),
+            sharesDiluted: fixShareScale(freshestShare(latestObservation(facts, CONCEPTS.sharesDiluted, "shares", false), pickInstant(facts, CONCEPTS.sharesOutstanding, "shares")), shareRef),
             netInterestIncome: tf(CONCEPTS.netInterestIncome),
             noninterestIncome: tf(CONCEPTS.noninterestIncome),
             noninterestExpense: tf(CONCEPTS.noninterestExpense),
@@ -706,7 +719,7 @@ async function main() {
         accountsPayable: inst(CONCEPTS.accountsPayable),
         currentAssets: inst(CONCEPTS.currentAssets),
         currentLiabilities: inst(CONCEPTS.currentLiabilities),
-        sharesDiluted: fixShareScale(pickAnnual(facts, CONCEPTS.sharesDiluted, "shares")?.val ?? pickInstant(facts, CONCEPTS.sharesOutstanding, "shares")?.val ?? null, shareRef),
+        sharesDiluted: fixShareScale(freshestShare(pickAnnual(facts, CONCEPTS.sharesDiluted, "shares"), pickInstant(facts, CONCEPTS.sharesOutstanding, "shares")), shareRef),
         netInterestIncome: pick(CONCEPTS.netInterestIncome),
         noninterestIncome: pick(CONCEPTS.noninterestIncome),
         noninterestExpense: pick(CONCEPTS.noninterestExpense),
