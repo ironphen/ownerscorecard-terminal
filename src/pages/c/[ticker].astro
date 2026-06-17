@@ -12,7 +12,6 @@ import Capital from "../../components/Capital.astro";
 import Inversion from "../../components/Inversion.astro";
 import ActHeader from "../../components/ActHeader.astro";
 import Comp from "../../components/Comp.astro";
-import Graham from "../../components/Graham.astro";
 import Valuation from "../../components/Valuation.astro";
 import NormalizedEarnings from "../../components/NormalizedEarnings.astro";
 import language from "../../data/language.json";
@@ -127,7 +126,6 @@ const fmtDate = (d) =>
   {fund ? (
     <section id="act-price" class="actGroup">
       <ActHeader n="IV" title="The price" lede="Only now, the price. What you would be paying, and what a price would have to assume to make sense, set against the record above." />
-      {!isFin ? <div id="sec-graham" class="sec"><Graham company={fund} /></div> : null}
       <div id="sec-price" class="sec"><Valuation company={fund} /></div>
     </section>
   ) : null}
