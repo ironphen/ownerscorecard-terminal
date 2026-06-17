@@ -29,7 +29,7 @@ on:
         type: string
         default: ""
       rebuild_universe:
-        description: "Rebuild the US universe from the Russell 3000 (dryrun = test the source only; write = rebuild then refetch all)"
+        description: "Rebuild the US universe from the Nasdaq screener, top names by market cap (dryrun = test the source only; write = rebuild then refetch all)"
         type: choice
         options:
           - "off"
@@ -51,9 +51,9 @@ jobs:
         with:
           node-version: 22
       - run: npm ci
-      # Optionally rebuild the US universe from the Russell 3000 index first. dryrun fetches and
-      # reports only (the fetch step below is skipped); write overwrites universe.json, which the
-      # fetch then reads. A failed or implausible constituent fetch leaves the universe untouched.
+      # Optionally rebuild the US universe from the Nasdaq screener (top names by market cap)
+      # first. dryrun fetches and reports only (the fetch step below is skipped); write overwrites
+      # universe.json, which the fetch then reads. A failed/implausible fetch leaves it untouched.
       - name: Rebuild universe
         if: ${{ github.event.inputs.rebuild_universe == 'dryrun' || github.event.inputs.rebuild_universe == 'write' }}
         run: node scripts/buildUniverse.mjs

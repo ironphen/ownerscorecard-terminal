@@ -1,15 +1,22 @@
 #!/usr/bin/env node
-// Expands the US universe (src/data/universe.json) toward the investable Russell 3000, sourced
-// from the iShares Russell 3000 ETF (IWV) holdings — the canonical constituent list, free. With
-// no price feed of our own, index membership is how we define "investable" without market cap.
+// Expands the US universe (src/data/universe.json) to the largest investable US companies,
+// sourced from the Nasdaq stock screener — the canonical free listing that carries market cap.
+// With no price feed of our own, "investable" is defined as the top N by market value, which is
+// both more principled and more honest than borrowing a third-party index: as companies list,
+// grow, shrink, or delist, the top-N set follows on its own, so the universe self-maintains.
+//
+// (iShares/BlackRock answers GitHub runners with a datacenter-IP block page — a 200 labelled
+// text/csv whose body is marketing HTML — so it cannot be used from CI. The Nasdaq screener
+// answers with real JSON, and the SEC's own list is the reachable fallback if it ever stops.)
 //
 // Safety first: the fetched list is validated before it is allowed to overwrite anything (a
-// minimum count and a set of sanity anchors that must be present), and a failed or implausible
-// fetch leaves the existing universe untouched and exits 0, so the weekly data refresh still
-// runs on the last good universe. It can never corrupt the pipeline's input.
+// minimum count and a set of mega-cap sanity anchors that must be present), and a failed or
+// implausible fetch leaves the existing universe untouched and exits 0, so the weekly data
+// refresh still runs on the last good universe. It can never corrupt the pipeline's input.
 //
 //   node scripts/buildUniverse.mjs                     # fetch, validate, write
 //   UNIVERSE_DRYRUN=1 node scripts/buildUniverse.mjs   # fetch + report only, no write
+//   UNIVERSE_MAX=3000 node scripts/buildUniverse.mjs   # how many top names to keep (default 3000)
 
 import fs from "node:fs";
 import path from "node:path";
@@ -18,24 +25,30 @@ import { pathToFileURL } from "node:url";
 const dataDir = path.join(process.cwd(), "src", "data");
 const universePath = path.join(dataDir, "universe.json");
 const DRYRUN = !!process.env.UNIVERSE_DRYRUN;
-const UA = process.env.UNIVERSE_USER_AGENT ||
-  "Mozilla/5.0 (compatible; OwnerScorecardBot/1.0; +https://ownerscorecard.com)";
+const MAX = Math.max(500, parseInt(process.env.UNIVERSE_MAX || "3000", 10) || 3000);
+const UA =
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 
-// iShares Russell 3000 (IWV) holdings CSV — ~3,000 constituents.
-const IWV =
-  "https://www.ishares.com/us/products/239714/ishares-russell-3000-etf/1467271812596.ajax?fileType=csv&fileName=IWV_holdings&dataType=fund";
+// The Nasdaq screener: every US-listed common stock with market cap, in one JSON download.
+const NASDAQ =
+  "https://api.nasdaq.com/api/screener/stocks?tableonly=true&limit=10000&download=true";
 // A parsed list missing any of these mega-caps is malformed and is rejected outright.
 const SANITY = ["AAPL", "MSFT", "AMZN", "JPM", "XOM", "JNJ"];
 const MIN_TICKERS = 2500;
 
-let LAST_META = null;
-async function fetchText(url) {
+async function fetchJson(url) {
   for (let a = 1; a <= 4; a++) {
     try {
-      const res = await fetch(url, { headers: { "User-Agent": UA, Accept: "text/csv,*/*" } });
-      LAST_META = { status: res.status, type: res.headers.get("content-type") || "" };
+      const res = await fetch(url, {
+        headers: {
+          "User-Agent": UA,
+          Accept: "application/json, text/plain, */*",
+          "Accept-Language": "en-US,en;q=0.9",
+          Referer: "https://www.nasdaq.com/",
+        },
+      });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return await res.text();
+      return await res.json();
     } catch (err) {
       if (a === 4) throw err;
       await new Promise((r) => setTimeout(r, 600 * a));
@@ -43,122 +56,85 @@ async function fetchText(url) {
   }
 }
 
-// A minimal RFC-4180-ish field splitter (the holdings CSV quotes fields containing commas).
-export function splitCsv(line) {
+// The screener appends a security descriptor to the issuer name ("Apple Inc. Common Stock");
+// strip it for a clean display name, and drop anything implausibly long.
+const cleanName = (s) => {
+  const t = String(s || "")
+    .replace(/\s+(common stock|common shares|ordinary shares|class [a-z] (common stock|ordinary shares)|american depositary shares.*|depositary shares.*|warrant.*|unit.*)$/i, "")
+    .trim();
+  return t && t.length <= 40 ? t : null;
+};
+
+// Parse the screener payload into ranked US common-stock rows. Tickers are normalized to the
+// SEC's dash form (BRK/B or BRK.B -> BRK-B); preferred/warrant/unit/when-issued symbols and
+// explicitly non-US rows are dropped; unpriced rows are dropped (they can't be ranked); the
+// result is sorted by descending market cap so the caller can keep the top N.
+export function parseScreener(json) {
+  const rows = json?.data?.rows || json?.data?.table?.rows || [];
   const out = [];
-  let cur = "", q = false;
-  for (let i = 0; i < line.length; i++) {
-    const c = line[i];
-    if (c === '"') { if (q && line[i + 1] === '"') { cur += '"'; i++; } else q = !q; }
-    else if (c === "," && !q) { out.push(cur); cur = ""; }
-    else cur += c;
+  for (const r of rows) {
+    let tk = String(r.symbol || "").trim().toUpperCase().replace(/[./]/g, "-");
+    if (!/^[A-Z][A-Z-]{0,6}$/.test(tk)) continue; // a plain equity symbol (drops ^ = etc.)
+    const country = String(r.country || "").trim();
+    if (country && country !== "United States") continue; // keep the US universe US
+    const cap = parseFloat(String(r.marketCap || "").replace(/[^0-9.]/g, ""));
+    if (!(cap > 0)) continue; // unpriced rows can't be ranked
+    out.push({ ticker: tk, name: cleanName(r.name), cap });
   }
-  out.push(cur);
-  return out;
-}
-
-const cleanName = (s) => { const t = (s || "").trim(); return t && t.length <= 40 ? t : null; };
-
-// Reconnaissance only: iShares serves GitHub runners a block page, so probe which alternative
-// constituent sources are actually reachable from CI before committing to a parser. Reports the
-// status, content-type, size, and which expected markers each body contains, then exits. Runs in
-// dryrun, removed once a source is chosen. No writes.
-async function probeSources() {
-  const CHROME = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
-  const tests = [
-    ["Nasdaq screener", "https://api.nasdaq.com/api/screener/stocks?tableonly=true&limit=6000&download=true",
-      { "User-Agent": CHROME, Accept: "application/json, text/plain, */*", "Accept-Language": "en-US,en;q=0.9", Referer: "https://www.nasdaq.com/" }],
-    ["SEC exchange list", "https://www.sec.gov/files/company_tickers_exchange.json",
-      { "User-Agent": process.env.SEC_USER_AGENT || UA, Accept: "application/json,*/*" }],
-    ["Wikipedia S&P 500", "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies",
-      { "User-Agent": UA, Accept: "text/html,*/*" }],
-  ];
-  console.log("  Probing alternative constituent sources (recon, no write):");
-  for (const [label, url, headers] of tests) {
-    try {
-      const res = await fetch(url, { headers });
-      const body = await res.text();
-      const type = res.headers.get("content-type") || "no content-type";
-      const html = /^\s*(<!doctype html|<html)/i.test(body);
-      const markers = ["AAPL", "MSFT", "marketCap", "cik_str", "constituents"].filter((m) => body.includes(m));
-      console.log(`    [${label}] HTTP ${res.status}, ${type}; ${body.length} bytes; html=${html}; markers=${markers.join(",") || "none"}`);
-    } catch (err) {
-      console.log(`    [${label}] FETCH FAILED: ${err.message}`);
-    }
-  }
-}
-
-// Parse the iShares holdings CSV: a preamble, a header row that begins with "Ticker", then the
-// rows. Equity holdings only (drops the cash/derivatives line), ticker normalized to the SEC's
-// dash form (BRK.B -> BRK-B), and anything that isn't a plain symbol dropped.
-export function parseHoldings(csv) {
-  const rows = csv.split(/\r?\n/);
-  const h = rows.findIndex((r) => /^"?Ticker"?\s*,/.test(r));
-  if (h < 0) return [];
-  const header = splitCsv(rows[h]).map((s) => s.replace(/"/g, "").trim().toLowerCase());
-  const iTicker = header.indexOf("ticker");
-  const iName = header.indexOf("name");
-  const iClass = header.findIndex((s) => s.includes("asset class"));
-  if (iTicker < 0) return [];
-  const out = [];
-  for (let i = h + 1; i < rows.length; i++) {
-    if (!rows[i].trim()) continue;
-    const cells = splitCsv(rows[i]).map((c) => c.replace(/^"|"$/g, ""));
-    const tk = (cells[iTicker] || "").trim().toUpperCase();
-    if (!/^[A-Z][A-Z.\-]{0,6}$/.test(tk)) continue; // a plain equity symbol
-    if (iClass >= 0) { const cls = (cells[iClass] || "").trim().toLowerCase(); if (cls && cls !== "equity") continue; }
-    out.push({ ticker: tk.replace(/\./g, "-"), name: iName >= 0 ? cleanName(cells[iName]) : null });
-  }
-  return out;
+  out.sort((a, b) => b.cap - a.cap);
+  // De-dupe (dual classes can collide after normalization), keeping the larger cap.
+  const seen = new Set();
+  return out.filter((r) => (seen.has(r.ticker) ? false : (seen.add(r.ticker), true)));
 }
 
 async function main() {
   const existing = JSON.parse(fs.readFileSync(universePath, "utf8"));
   const curated = new Map((existing.tickers || []).map((t) => [String(t.ticker).toUpperCase(), t.name || null]));
-  console.log(`Building US universe (existing: ${curated.size} tickers)…`);
+  console.log(`Building US universe (existing: ${curated.size} tickers; target top ${MAX})…`);
 
-  if (DRYRUN) { await probeSources(); return; }
-
-  let holdings = [];
-  let raw = "";
+  let ranked = [];
+  let raw = null;
   try {
-    raw = await fetchText(IWV);
-    holdings = parseHoldings(raw);
-    console.log(`  iShares IWV: parsed ${holdings.length} equity holdings`);
+    raw = await fetchJson(NASDAQ);
+    ranked = parseScreener(raw);
+    console.log(`  Nasdaq screener: ${ranked.length} ranked US common stocks`);
   } catch (err) {
-    console.warn(`  ! IWV fetch/parse failed: ${err.message}`);
+    console.warn(`  ! Nasdaq fetch/parse failed: ${err.message}`);
   }
 
-  const set = new Set(holdings.map((h) => h.ticker));
+  const set = new Set(ranked.map((r) => r.ticker));
   const sane = SANITY.every((s) => set.has(s));
-  if (holdings.length < MIN_TICKERS || !sane) {
-    console.warn(`  ! constituent list rejected (${holdings.length} tickers, min ${MIN_TICKERS}; sanity ${sane ? "ok" : "FAILED, missing " + SANITY.filter((s) => !set.has(s)).join("/")}).`);
-    // Tell a format drift or a datacenter-IP block page apart from a genuine empty list
-    // by reporting what the endpoint actually returned, rather than guessing.
-    const meta = LAST_META ? `HTTP ${LAST_META.status}, ${LAST_META.type || "no content-type"}` : "no response";
-    const head = raw.slice(0, 300).replace(/\s+/g, " ").trim();
-    console.warn(`    response: ${meta}; ${raw.length} bytes; has "Ticker"=${raw.includes("Ticker")}, "AAPL"=${raw.includes("AAPL")}`);
-    console.warn(`    head: ${head || "(empty body)"}`);
+  if (ranked.length < MIN_TICKERS || !sane) {
+    console.warn(`  ! constituent list rejected (${ranked.length} tickers, min ${MIN_TICKERS}; sanity ${sane ? "ok" : "FAILED, missing " + SANITY.filter((s) => !set.has(s)).join("/")}).`);
+    // If a payload arrived but didn't parse, surface its shape so a format drift is self-evident.
+    if (raw) {
+      const rows = raw?.data?.rows || raw?.data?.table?.rows || [];
+      console.warn(`    payload: data keys=[${Object.keys(raw.data || {}).join(",")}], rows=${rows.length}; sample=${JSON.stringify(rows[0] || {}).slice(0, 180)}`);
+    }
     console.warn(`    Keeping the existing universe of ${curated.size} untouched; the pipeline runs on it.`);
     process.exit(0); // non-fatal
   }
 
-  // Union: every index member, plus any curated name not in the index (so curated extras are
-  // never dropped). Keep the curated display name where we have one; otherwise carry no name, so
-  // the fetch falls back to EDGAR's entity name title-cased (nicer than the index's ALL-CAPS).
+  const top = ranked.slice(0, MAX);
+  const floor = top[top.length - 1];
+
+  // Union: the top N by market cap, plus any curated name not in that set (so curated additions
+  // are never dropped). Keep a curated display name where we have one; otherwise carry the
+  // screener's cleaned name, falling back at fetch time to EDGAR's title-cased entity name.
   const merged = new Map();
-  for (const h of holdings) merged.set(h.ticker, curated.get(h.ticker) ?? null);
+  for (const r of top) merged.set(r.ticker, curated.get(r.ticker) ?? r.name ?? null);
   let extras = 0;
   for (const [tk, nm] of curated) if (!merged.has(tk)) { merged.set(tk, nm); extras++; }
   const list = [...merged.entries()]
     .sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0))
     .map(([ticker, name]) => (name ? { ticker, name } : { ticker }));
 
-  console.log(`  merged universe: ${list.length} tickers (${holdings.length} from the index, ${extras} curated extras kept)`);
+  console.log(`  merged universe: ${list.length} tickers (top ${top.length} by market cap, ${extras} curated extras kept)`);
+  console.log(`  market-cap floor at rank ${top.length}: ${floor.ticker} ~$${(floor.cap / 1e9).toFixed(2)}B`);
   if (DRYRUN) { console.log("  DRYRUN: not writing universe.json."); return; }
 
   const out = {
-    note: "US universe: investable names (iShares Russell 3000 / IWV holdings) merged with curated additions. Display names from EDGAR where not curated. Rebuilt via scripts/buildUniverse.mjs.",
+    note: `US universe: the largest investable US companies by market cap (Nasdaq screener, top ${MAX}) merged with curated additions. Display names from EDGAR where not curated. Rebuilt via scripts/buildUniverse.mjs.`,
     tickers: list,
   };
   fs.writeFileSync(universePath, JSON.stringify(out, null, 2) + "\n");
