@@ -156,9 +156,10 @@ const DUR = {
   interestExpense: ["InterestExpenseOnFinancialDebtInterestExpenseIFRS", "InterestExpensesIFRS", "FinanceCostsIFRS", "InterestExpensesAndInterestOnBondsNOE", "InterestExpensesNOE", "InterestExpenses"],
   cashFromOps: ["NetCashProvidedByUsedInOperatingActivitiesIFRS", "CashFlowsFromUsedInOperatingActivitiesIFRSSummaryOfBusinessResults", "CashFlowsFromUsedInOperatingActivitiesIFRS", "NetCashProvidedByUsedInOperatingActivities", "NetCashProvidedByUsedInOperatingActivitiesSummaryOfBusinessResults"],
   // Capex is the investing-cashflow purchase of PP&E. J-GAAP filers tag it with the InvCF
-  // suffix (PurchaseOfPropertyPlantAndEquipmentInvCF, Capcom and the other ten), which was
-  // the missing name; IFRS filers use the IFRS variants.
-  capex: ["PurchaseOfPropertyPlantAndEquipmentInvCFIFRS", "PaymentsForPurchaseOfPropertyPlantAndEquipmentIFRS", "PaymentsForPropertyPlantAndEquipmentIFRS", "AcquisitionOfPropertyPlantAndEquipmentInvCFIFRS", "PurchaseOfPropertyPlantAndEquipmentIFRS", "PurchaseOfPropertyPlantAndEquipmentInvCF", "PurchaseOfPropertyPlantAndEquipment", "PurchaseOfPropertyPlantAndEquipmentInvestmentActivities"],
+  // suffix and split between PP&E-only (PurchaseOfPropertyPlantAndEquipmentInvCF, Capcom)
+  // and a combined PP&E + intangibles line (…AndIntangibleAssetsInvCF, Nintendo); IFRS
+  // filers use the IFRS variants. PP&E-only names come first so they win where both exist.
+  capex: ["PurchaseOfPropertyPlantAndEquipmentInvCFIFRS", "PaymentsForPurchaseOfPropertyPlantAndEquipmentIFRS", "PaymentsForPropertyPlantAndEquipmentIFRS", "PaymentsToAcquirePropertyPlantAndEquipmentIFRS", "AcquisitionOfPropertyPlantAndEquipmentInvCFIFRS", "PurchaseOfPropertyPlantAndEquipmentIFRS", "PurchaseOfPropertyPlantAndEquipmentInvCF", "PurchaseOfPropertyPlantAndEquipment", "PurchaseOfPropertyPlantAndEquipmentInvestmentActivities", "PurchaseOfPropertyPlantAndEquipmentAndIntangibleAssetsInvCFIFRS", "PaymentsForAcquisitionOfPropertyPlantAndEquipmentAndIntangibleAssetsIFRS", "PurchaseOfPropertyPlantAndEquipmentAndIntangibleAssetsInvCF"],
   depreciation: ["DepreciationAndAmortizationOpeCFIFRS", "DepreciationAndAmortisationOpeCFIFRS", "DepreciationAndAmortizationOpeCF", "DepreciationAndAmortization"],
   dividendsPaid: ["DividendsPaidFinCFIFRS", "DividendsPaidFinCF", "CashDividendsPaidFinCF", "DividendsFromSurplus"],
   sbc: ["ShareBasedPaymentsOpeCFIFRS", "ShareBasedCompensationExpensesSGA"],
