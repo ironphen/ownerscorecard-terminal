@@ -55,7 +55,12 @@ const ROW = {
   netIncome: { label: "Net income", short: "Net inc.", g: 1, get: (L) => money(L.netIncome) },
   netMargin: { label: "Net margin", short: "Net mgn", g: 1, get: (L) => marginStr(L.netIncome, L.revenue) },
   eps: { label: "EPS (diluted)", short: "EPS", g: 1, get: (L) => perShare(L.netIncome, L.sharesDiluted) },
-  // --- group 2: returns and the cash an owner can take ---
+  // --- group 2: the cash an owner can take, shown as Buffett's bridge so the figure is
+  // transparent, operating cash flow, less capex, equals owner earnings. Capex is never
+  // hidden: it is half the definition, and in the AI build-out increasingly the half that
+  // moves (Capcom's capex nearly halves its owner earnings; Microsoft's capex/revenue has
+  // tripled). Then the returns earned on the capital tied up. ---
+  cashFromOps: { label: "Operating cash flow", short: "Op. cash", g: 2, get: (L) => money(L.cashFromOps) },
   ownerEarnings: { label: "Owner earnings", short: "Owner earn.", g: 2, get: (L) => (L.cashFromOps != null && L.capex != null ? money(L.cashFromOps - Math.abs(L.capex)) : "—") },
   oeMargin: { label: "Owner earnings margin", short: "OE mgn", g: 2, get: (L) => marginStr(L.cashFromOps != null && L.capex != null ? L.cashFromOps - Math.abs(L.capex) : null, L.revenue) },
   roic: { label: "ROIC", short: "ROIC", g: 2, get: (L) => { if (!debtOk || !oiOk) return "—"; const r = roicValue(L); return r == null ? "—" : `${(r * 100).toFixed(0)}%`; } },
@@ -68,10 +73,12 @@ const ROW = {
   mlr: { label: "Medical loss ratio", short: "MLR", g: 1, get: (L) => { const r = medicalLossRatio(L); return r == null ? "—" : `${(r * 100).toFixed(0)}%`; } },
   ffo: { label: "Funds from operations", short: "FFO", g: 2, get: (L) => money(ffo(L)) },
   ffoPS: { label: "FFO / share", short: "FFO/sh", g: 2, get: (L) => { const f = ffoPerShare(L); return f == null ? "—" : `${sym}${f.toFixed(2)}`; } },
+  // Capex sits in group 2, inside the owner-earnings bridge above, because it is a direct
+  // subtraction from the cash an owner can take, not a balance-sheet afterthought.
+  capex: { label: "Capex", short: "Capex", g: 2, get: (L) => (L.capex != null ? money(Math.abs(L.capex)) : "—") },
+  capexToRev: { label: "Capex / revenue", short: "Capex/rev", g: 2, get: (L) => marginStr(L.capex != null ? Math.abs(L.capex) : null, L.revenue) },
+  capexToDep: { label: "Capex vs depreciation", short: "Capex/dep", g: 2, get: (L) => (L.capex != null && L.depreciation ? `${(Math.abs(L.capex) / L.depreciation).toFixed(2)}×` : "—") },
   // --- group 3: what it owns and owes, and what owners get ---
-  capex: { label: "Capex", short: "Capex", g: 3, get: (L) => (L.capex != null ? money(Math.abs(L.capex)) : "—") },
-  capexToRev: { label: "Capex / revenue", short: "Capex/rev", g: 3, get: (L) => marginStr(L.capex != null ? Math.abs(L.capex) : null, L.revenue) },
-  capexToDep: { label: "Capex vs depreciation", short: "Capex/dep", g: 3, get: (L) => (L.capex != null && L.depreciation ? `${(Math.abs(L.capex) / L.depreciation).toFixed(2)}×` : "—") },
   sbcToRev: { label: "Stock comp / revenue", short: "SBC/rev", g: 3, get: (L) => marginStr(L.stockBasedComp, L.revenue) },
   shares: { label: "Shares out (diluted)", short: "Shares", g: 3, get: (L) => fmtCount(L.sharesDiluted) },
   totalDebt: { label: "Total debt", short: "Debt", g: 3, get: (L) => (debtOk ? money(L.totalDebt) : "—") },
@@ -108,10 +115,10 @@ const ROW = {
 // The row-set follows the business model, and carries as many lines as that business is
 // honestly read on. Rows the data can't fill drop out below, so a set can be generous.
 const SETS = {
-  assetLight: [ROW.revenue, ROW.grossMargin, ROW.opMargin, ROW.netIncome, ROW.eps, ROW.ownerEarnings, ROW.oeMargin, ROW.roic, ROW.roe, ROW.capex, ROW.capexToRev, ROW.capexToDep, ROW.sbcToRev, ROW.shares, ROW.cash, ROW.netDebt, ROW.dps, ROW.bvps],
-  consumer: [ROW.revenue, ROW.grossMargin, ROW.opMargin, ROW.netIncome, ROW.eps, ROW.ownerEarnings, ROW.oeMargin, ROW.roic, ROW.roe, ROW.capex, ROW.capexToRev, ROW.capexToDep, ROW.shares, ROW.cash, ROW.netDebt, ROW.dps, ROW.payoutNI, ROW.bvps],
-  capital: [ROW.revenue, ROW.opMargin, ROW.netIncome, ROW.eps, ROW.ownerEarnings, ROW.roic, ROW.roe, ROW.capex, ROW.capexToRev, ROW.capexToDep, ROW.shares, ROW.totalDebt, ROW.netDebt, ROW.intCov, ROW.ndEbitda, ROW.dps],
-  retail: [ROW.revenue, ROW.grossMargin, ROW.opMargin, ROW.netIncome, ROW.eps, ROW.ownerEarnings, ROW.oeMargin, ROW.roic, ROW.roe, ROW.capex, ROW.capexToRev, ROW.shares, ROW.cash, ROW.netDebt, ROW.dps, ROW.bvps],
+  assetLight: [ROW.revenue, ROW.grossMargin, ROW.opMargin, ROW.netIncome, ROW.eps, ROW.cashFromOps, ROW.capex, ROW.ownerEarnings, ROW.oeMargin, ROW.capexToRev, ROW.capexToDep, ROW.roic, ROW.roe, ROW.sbcToRev, ROW.shares, ROW.cash, ROW.netDebt, ROW.dps, ROW.bvps],
+  consumer: [ROW.revenue, ROW.grossMargin, ROW.opMargin, ROW.netIncome, ROW.eps, ROW.cashFromOps, ROW.capex, ROW.ownerEarnings, ROW.oeMargin, ROW.capexToRev, ROW.capexToDep, ROW.roic, ROW.roe, ROW.shares, ROW.cash, ROW.netDebt, ROW.dps, ROW.payoutNI, ROW.bvps],
+  capital: [ROW.revenue, ROW.opMargin, ROW.netIncome, ROW.eps, ROW.cashFromOps, ROW.capex, ROW.ownerEarnings, ROW.oeMargin, ROW.capexToRev, ROW.capexToDep, ROW.roic, ROW.roe, ROW.shares, ROW.totalDebt, ROW.netDebt, ROW.intCov, ROW.ndEbitda, ROW.dps],
+  retail: [ROW.revenue, ROW.grossMargin, ROW.opMargin, ROW.netIncome, ROW.eps, ROW.cashFromOps, ROW.capex, ROW.ownerEarnings, ROW.oeMargin, ROW.capexToRev, ROW.roic, ROW.roe, ROW.shares, ROW.cash, ROW.netDebt, ROW.dps, ROW.bvps],
   financial: [ROW.revenue, ROW.nii, ROW.provision, ROW.netIncome, ROW.eps, ROW.roa, ROW.roe, ROW.rotce, ROW.efficiency, ROW.deposits, ROW.shares, ROW.bvps, ROW.tbvps, ROW.dps],
   insurer: [ROW.revenue, ROW.premiums, ROW.invInc, ROW.netIncome, ROW.combined, ROW.lossRatio, ROW.roe, ROW.float, ROW.shares, ROW.bvps, ROW.dps],
   // Life insurers: the spread-and-book-value story, no combined ratio (see insurers.mjs).
@@ -119,7 +126,7 @@ const SETS = {
   fee: [ROW.revenue, ROW.opMargin, ROW.netMargin, ROW.netIncome, ROW.eps, ROW.ownerEarnings, ROW.roe, ROW.shares, ROW.cash, ROW.dps, ROW.bvps],
   managedCare: [ROW.revenue, ROW.premiums, ROW.mlr, ROW.opMargin, ROW.netIncome, ROW.eps, ROW.roe, ROW.shares, ROW.bvps, ROW.dps],
   reit: [ROW.revenue, ROW.netIncome, ROW.ffo, ROW.ffoPS, ROW.payout, ROW.debtAssets, ROW.totalDebt, ROW.shares, ROW.dps, ROW.bvps],
-  general: [ROW.revenue, ROW.opMargin, ROW.netIncome, ROW.eps, ROW.ownerEarnings, ROW.oeMargin, ROW.roic, ROW.roe, ROW.capex, ROW.capexToRev, ROW.capexToDep, ROW.shares, ROW.totalDebt, ROW.cash, ROW.netDebt, ROW.intCov, ROW.dps],
+  general: [ROW.revenue, ROW.opMargin, ROW.netIncome, ROW.eps, ROW.cashFromOps, ROW.capex, ROW.ownerEarnings, ROW.oeMargin, ROW.capexToRev, ROW.capexToDep, ROW.roic, ROW.roe, ROW.shares, ROW.totalDebt, ROW.cash, ROW.netDebt, ROW.intCov, ROW.dps],
 };
 
 // Columns: each fiscal year, plus a trailing-twelve-months column when present
