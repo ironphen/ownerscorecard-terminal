@@ -155,7 +155,13 @@ export function parseFacts(text, store = {}) {
 // simply lacks the IFRS elements and falls through to them. The …SummaryOfBusinessResults
 // elements carry the five-year history.
 const DUR = {
-  revenue: ["RevenueIFRS", "RevenueIFRSSummaryOfBusinessResults", "NetSalesIFRS", "NetSalesIFRSSummaryOfBusinessResults", "SalesRevenuesIFRS", "RevenuesIFRS", "OperatingRevenuesSummaryOfBusinessResults", "OperatingRevenue1", "OperatingRevenue2", "NetSales", "NetSalesSummaryOfBusinessResults", "Revenue", "RevenueSummaryOfBusinessResults"],
+  // Revenue is picked standard-aware (see REVENUE_IFRS / REVENUE_JGAAP below), not from one blended
+  // list: an IFRS filer's J-GAAP NetSales is its parent-only figure, a fraction of consolidated, so
+  // it must never fill an IFRS filer's revenue — the bug that made Toyota's older years read a third
+  // of actual while net income and assets stayed consolidated and correct.
+  sga: ["SellingGeneralAndAdministrativeExpensesIFRS", "SellingGeneralAndAdministrativeExpenses"],
+  researchDevelopment: ["ResearchAndDevelopmentExpensesIFRS", "ResearchAndDevelopmentExpenses", "ResearchAndDevelopmentExpensesSGA"],
+  goodwillImpairment: ["ImpairmentLossesOfGoodwillIFRS", "ImpairmentLossOfGoodwill", "ImpairmentLossesIFRS", "ImpairmentLossIFRS", "ImpairmentLoss", "LossOnImpairmentOfFixedAssets"],
   operatingIncome: ["OperatingProfitLossIFRS", "OperatingIncomeIFRS", "OperatingProfitIFRS", "OperatingIncome", "OperatingIncomeLoss"],
   ordinaryIncome: ["ProfitLossBeforeTaxIFRS", "ProfitLossBeforeTaxIFRSSummaryOfBusinessResults", "OrdinaryIncome", "OrdinaryIncomeLossSummaryOfBusinessResults", "OrdinaryIncomeLoss"],
   netIncome: ["ProfitLossAttributableToOwnersOfParentIFRS", "ProfitLossAttributableToOwnersOfParentIFRSSummaryOfBusinessResults", "ProfitLossAttributableToOwnersOfParent", "ProfitLossAttributableToOwnersOfParentSummaryOfBusinessResults", "NetIncomeLossSummaryOfBusinessResults", "ProfitLossIFRS", "ProfitLoss"],
@@ -184,6 +190,7 @@ const INST = {
   receivables: ["TradeAndOtherReceivablesCAIFRS", "TradeAndOtherReceivablesIFRS", "NotesAndAccountsReceivableTrade", "NotesAndAccountsReceivableTradeAndContractAssets"],
   inventory: ["InventoriesIFRS", "Inventories", "MerchandiseAndFinishedGoods"],
   accountsPayable: ["TradeAndOtherPayablesCLIFRS", "TradeAndOtherPayablesIFRS", "NotesAndAccountsPayableTrade"],
+  goodwill: ["GoodwillIFRS", "Goodwill"],
 };
 // Interest-bearing debt is split across many accounts and differs by standard, so total
 // debt sums one family or the other, never both: an IFRS filer also carries its parent
@@ -192,6 +199,12 @@ const DEBT_IFRS = ["BondsAndBorrowingsCLIFRS", "BondsAndBorrowingsNCLIFRS", "Bon
 const DEBT_JGAAP = ["ShortTermLoansPayable", "CurrentPortionOfLongTermLoansPayable", "CurrentPortionOfBonds", "CommercialPapersLiabilities", "ShortTermBondsPayable", "LongTermLoansPayable", "BondsPayable", "LeaseObligationsCL", "LeaseObligationsNCL"];
 const SHARES = ["NumberOfIssuedAndOutstandingSharesAtTheEndOfFiscalYearIssuedSharesTotalNumberOfSharesEtc", "TotalNumberOfIssuedSharesSummaryOfBusinessResults"];
 const EPS = ["BasicEarningsPerShareIFRSSummaryOfBusinessResults", "BasicEarningsLossPerShareSummaryOfBusinessResults", "BasicEarningsPerShareIFRS", "BasicEarningsLossPerShare"];
+// Revenue, standard-aware. An IFRS filer reports consolidated revenue under the IFRS elements and
+// also carries parent-only J-GAAP NetSales at a fraction of it; a J-GAAP filer has only the latter
+// (consolidated, resolved by CONSOL_RANK). Picking by the filer's standard stops the parent-only
+// line ever standing in for the consolidated one — what corrupted older years for IFRS names.
+const REVENUE_IFRS = ["RevenueIFRS", "RevenueIFRSSummaryOfBusinessResults", "NetSalesIFRS", "NetSalesIFRSSummaryOfBusinessResults", "SalesRevenuesIFRS", "RevenuesIFRS"];
+const REVENUE_JGAAP = ["NetSales", "NetSalesSummaryOfBusinessResults", "OperatingRevenuesSummaryOfBusinessResults", "OperatingRevenue1", "OperatingRevenue2", "Revenue", "RevenueSummaryOfBusinessResults"];
 
 // Pick the first candidate with a value for the given relative year and instant/duration.
 function picker(store) {
@@ -234,11 +247,14 @@ export function buildRecord(store, meta, entry) {
     const sharesDirect = first(SHARES, relYear, true) ?? first(SHARES, relYear, false);
     const shares = sharesDirect ?? (eps && ni != null ? Math.round(ni / eps) : null);
     return {
-      revenue: d("revenue"),
+      revenue: first(isIFRS ? REVENUE_IFRS : REVENUE_JGAAP, relYear, false),
       operatingIncome: d("operatingIncome"),
       ordinaryIncome: d("ordinaryIncome"),
       netIncome: ni,
       costOfRevenue: d("costOfRevenue"),
+      sgaExpense: d("sga"),
+      researchDevelopment: d("researchDevelopment"),
+      goodwillImpairment: d("goodwillImpairment"),
       interestExpense: d("interestExpense"),
       cashFromOps: d("cashFromOps"),
       capex: capex != null ? Math.abs(capex) : null,
@@ -248,6 +264,7 @@ export function buildRecord(store, meta, entry) {
       stockBasedComp: d("sbc"),
       stockholdersEquity: i("stockholdersEquity"),
       totalAssets: i("totalAssets"),
+      goodwill: i("goodwill"),
       cashAndEquivalents: i("cashAndEquivalents"),
       shortTermInvestments: i("shortTermInvestments"),
       currentAssets: i("currentAssets"),
