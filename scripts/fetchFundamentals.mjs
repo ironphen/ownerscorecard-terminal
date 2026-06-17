@@ -123,9 +123,19 @@ const CONCEPTS = {
   ],
   incomeTaxExpense: ["IncomeTaxExpenseBenefit"],
   costOfRevenue: ["CostOfGoodsAndServicesSold", "CostOfRevenue", "CostOfGoodsSold"],
+  // Operating cost drivers below the gross-margin line: the buckets between gross profit and
+  // operating income, surfaced so a reader can see where each revenue dollar goes. Overhead (SG&A)
+  // and the research a business plows back in; R&D intensity is itself a moat tell, a durable
+  // investment for some, a treadmill others must run just to stand still.
+  sgaExpense: ["SellingGeneralAndAdministrativeExpense", "GeneralAndAdministrativeExpense"],
+  researchDevelopment: ["ResearchAndDevelopmentExpense", "ResearchAndDevelopmentExpenseExcludingAcquiredInProcessCost"],
   stockBasedComp: ["ShareBasedCompensation"],
   dividendsPaid: ["PaymentsOfDividendsCommonStock", "PaymentsOfDividends"],
   buybacks: ["PaymentsForRepurchaseOfCommonStock"],
+  // Cash actually spent buying other businesses, the direct measure of how acquisitive a company
+  // is. Paired with goodwill on the balance sheet and impairments on the income statement, it tells
+  // the whole M&A story: what was spent, what still sits on the books, and what was written off.
+  acquisitionSpend: ["PaymentsToAcquireBusinessesNetOfCashAcquired", "PaymentsToAcquireBusinessesAndInterestInAffiliates", "PaymentsToAcquireBusinessesGross"],
   // Shares actually repurchased in the year (a count, not cash), so the average price paid
   // can be deduced as buyback cash ÷ shares. Not every filer tags it (some retire shares
   // straight off), so it fills the price read where present and is silent where not.
@@ -170,6 +180,13 @@ const CONCEPTS = {
   deposits: ["Deposits"],
   goodwill: ["Goodwill"],
   intangibleAssets: ["IntangibleAssetsNetExcludingGoodwill", "FiniteLivedIntangibleAssetsNet"],
+  // Impairment write-downs (a flow, not a balance): the year a company admits an asset is worth
+  // less than its carrying value. A goodwill or acquired-intangible write-off is the cleanest tell
+  // that management overpaid for a past acquisition — Buffett's economic-versus-accounting-goodwill
+  // point, where the write-down is the admission. Other asset impairments are the broader version.
+  // Lumpy and usually zero; captured to show the pattern across the record, not for precision.
+  goodwillImpairment: ["GoodwillImpairmentLoss", "GoodwillAndIntangibleAssetImpairment"],
+  assetImpairment: ["AssetImpairmentCharges", "ImpairmentOfLongLivedAssetsHeldForUse", "ImpairmentOfIntangibleAssetsExcludingGoodwill", "ImpairmentOfIntangibleAssetsFinitelived", "TangibleAssetImpairmentCharges"],
   // --- REITs (the reit archetype): FFO = net income + real-estate D&A − gains on sale ---
   gainOnSaleRealEstate: ["GainLossOnSaleOfPropertiesNetOfApplicableIncomeTaxes", "GainLossOnDispositionOfRealEstate", "GainsLossesOnSalesOfInvestmentRealEstate", "GainLossOnSaleOfProperties", "GainLossOnDispositionOfAssets1"],
   realEstateGross: ["RealEstateInvestmentPropertyAtCost", "RealEstateGrossAtCarryingValue"],
@@ -559,6 +576,11 @@ async function main() {
       lossesAndExpenses: collectAnnual(facts, CONCEPTS.lossesAndExpenses),
       investmentIncome: collectAnnual(facts, CONCEPTS.investmentIncome),
       stockBasedComp: collectAnnual(facts, CONCEPTS.stockBasedComp),
+      sgaExpense: collectAnnual(facts, CONCEPTS.sgaExpense),
+      researchDevelopment: collectAnnual(facts, CONCEPTS.researchDevelopment),
+      acquisitionSpend: collectAnnual(facts, CONCEPTS.acquisitionSpend),
+      goodwillImpairment: collectAnnual(facts, CONCEPTS.goodwillImpairment),
+      assetImpairment: collectAnnual(facts, CONCEPTS.assetImpairment),
     };
     // Fill any year with no weighted-average share count using the period-end count (asset
     // managers and former partnerships like KKR report only shares outstanding), then correct
@@ -602,6 +624,11 @@ async function main() {
           incomeTaxExpense: ha.incomeTaxExpense[fy] ?? null,
           netIncome: ha.netIncome[fy] ?? null,
           stockBasedComp: ha.stockBasedComp[fy] ?? null,
+          sgaExpense: ha.sgaExpense[fy] ?? null,
+          researchDevelopment: ha.researchDevelopment[fy] ?? null,
+          acquisitionSpend: ha.acquisitionSpend[fy] ?? null,
+          goodwillImpairment: ha.goodwillImpairment[fy] ?? null,
+          assetImpairment: ha.assetImpairment[fy] ?? null,
           totalDebt: maxOf(hi.ltd[fy] != null || hi.cur[fy] != null ? (hi.ltd[fy] || 0) + (hi.cur[fy] || 0) : null, splitYear(fy), aggYear(fy)),
           stockholdersEquity: hi.equity[fy] ?? null,
           cashAndEquivalents: hi.cash[fy] ?? null,
@@ -661,6 +688,11 @@ async function main() {
             costOfRevenue: tf(CONCEPTS.costOfRevenue),
             depreciation: tf(CONCEPTS.depreciation),
             stockBasedComp: tf(CONCEPTS.stockBasedComp),
+            sgaExpense: tf(CONCEPTS.sgaExpense),
+            researchDevelopment: tf(CONCEPTS.researchDevelopment),
+            acquisitionSpend: tf(CONCEPTS.acquisitionSpend),
+            goodwillImpairment: tf(CONCEPTS.goodwillImpairment),
+            assetImpairment: tf(CONCEPTS.assetImpairment),
             stockholdersEquity: latestObservation(facts, CONCEPTS.stockholdersEquity, "USD", true)?.val ?? null,
             cashAndEquivalents: latestObservation(facts, CONCEPTS.cashAndEquivalents, "USD", true)?.val ?? null,
             shortTermInvestments: latestObservation(facts, CONCEPTS.shortTermInvestments, "USD", true)?.val ?? null,
@@ -712,6 +744,11 @@ async function main() {
         incomeTaxExpense: pick(CONCEPTS.incomeTaxExpense),
         costOfRevenue: pick(CONCEPTS.costOfRevenue),
         stockBasedComp: pick(CONCEPTS.stockBasedComp),
+        sgaExpense: pick(CONCEPTS.sgaExpense),
+        researchDevelopment: pick(CONCEPTS.researchDevelopment),
+        acquisitionSpend: pick(CONCEPTS.acquisitionSpend),
+        goodwillImpairment: pick(CONCEPTS.goodwillImpairment),
+        assetImpairment: pick(CONCEPTS.assetImpairment),
         dividendsPaid: pick(CONCEPTS.dividendsPaid),
         buybacks: pick(CONCEPTS.buybacks),
         repurchasedShares: fixShareScale(pickAnnual(facts, CONCEPTS.repurchasedShares, "shares")?.val ?? null, shareRef),
