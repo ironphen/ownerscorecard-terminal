@@ -12,10 +12,14 @@ on:
         description: "Dump parsed EDINET elements for these tickers (comma-separated)"
         type: string
         default: ""
-      lookback:
-        description: "Days of EDINET document index to crawl (first run needs the full window)"
+      tickers:
+        description: "Limit the run to these tickers (comma-separated; blank = all). The rest carry over."
         type: string
-        default: "430"
+        default: ""
+      lookback:
+        description: "Days of EDINET document index to crawl (the deep capex backfill reaches ~1200; cached after the first run)"
+        type: string
+        default: "1200"
   push:
     branches: [claude/jolly-ride-nae81r]
     paths:
@@ -45,6 +49,7 @@ jobs:
           EDINET_API_KEY: ${{ secrets.EDINET_API_KEY }}
           EDINET_DEBUG: ${{ github.event.inputs.debug }}
           EDINET_LOOKBACK_DAYS: ${{ github.event.inputs.lookback }}
+          ONLY_JP: ${{ github.event.inputs.tickers }}
       - name: Audit JP data quality
         run: npm run audit:jp
       - name: Commit if changed
