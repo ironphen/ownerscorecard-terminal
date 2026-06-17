@@ -4,14 +4,18 @@ import jp from "../../data/fundamentals.jp.json";
 import TenYear from "../../components/TenYear.astro";
 import NormalizedEarnings from "../../components/NormalizedEarnings.astro";
 import Scorecard from "../../components/Scorecard.astro";
+import Capital from "../../components/Capital.astro";
+import Inversion from "../../components/Inversion.astro";
 import Valuation from "../../components/Valuation.astro";
 
 // The Japanese pool, a separate route and a separate dataset from the US catalog. These
 // pages are quantitative by design: the figures are read straight from each company's
 // EDINET annual securities report, but the Japanese-language narrative (the business
 // description, the risk factors, what changed) is not parsed, so the page says so plainly
-// rather than guess. Everything else, the ten-year record, the scorecard and the
-// reverse-DCF, is the same machinery the US pages use, run in yen.
+// rather than guess. Everything quantitative, the record, normalized earnings, the
+// scorecard, capital allocation, the inversion checks and the reverse-DCF, is the same
+// machinery the US pages use, run in yen, and lights up now that the deeper EDINET capex
+// history gives the Japanese names a full owner-earnings record.
 export function getStaticPaths() {
   return (jp.companies || []).map((c) => ({ params: { ticker: String(c.ticker) } }));
 }
@@ -59,6 +63,8 @@ const sectorLabel = fund ? SECTOR_LABEL[fund.sector] || "Diversified" : null;
       <div id="sec-record" class="sec"><TenYear company={fund} /></div>
       <div id="sec-power" class="sec"><NormalizedEarnings company={fund} /></div>
       <div id="sec-scorecard" class="sec"><Scorecard company={fund} /></div>
+      <div id="sec-capital" class="sec"><Capital company={fund} /></div>
+      <div id="sec-inversion" class="sec"><Inversion company={fund} /></div>
       <div id="sec-price" class="sec"><Valuation company={fund} /></div>
 
       <p class="foot">
