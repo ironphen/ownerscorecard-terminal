@@ -329,14 +329,27 @@ async function loadStore(docId) {
   return store;
 }
 
-// Pull the deeper capex/depreciation history for one company by walking its older annual
-// reports (each carries two years), filling the years the latest filing's five-year summary
-// leaves blank. Cached per docId in cache.cf so an unchanged older filing is parsed once.
+// The detailed cash-flow lines the five-year summary omits, so they are filled from the older
+// filings, two years at a time. CF_KEYS pairs each with its concept list; bump CF_VERSION when
+// the set changes so the per-filing cache is rebuilt.
+const CF_KEYS = [
+  ["capex", "capex", true],          // [history field, DUR concept, take absolute]
+  ["depreciation", "depreciation", false],
+  ["dividendsPaid", "dividendsPaid", false],
+  ["buybacks", "buybacks", true],
+];
+const CF_VERSION = 2;
+
+// Pull the deeper cash-flow history for one company by walking its older annual reports (each
+// carries two years), filling the years the latest filing's five-year summary leaves blank:
+// capex and depreciation (so owner earnings run deep), and dividends and buybacks (so the
+// capital-allocation record is not read off only the latest two years). Cached per docId in
+// cache.cf so an unchanged older filing is parsed once.
 async function deepenCashFlow(rec, reports, cache) {
-  const missing = rec.history.filter((h) => h.lines.capex == null).map((h) => h.fy);
+  const missing = rec.history.filter((h) => h.lines.capex == null || h.lines.dividendsPaid == null);
   if (!missing.length || reports.length < 2) return 0;
   cache.cf ||= {};
-  const capexByFy = {}, depByFy = {};
+  const byFy = {}; // fy -> { capex, depreciation, dividendsPaid, buybacks }
   for (let ri = 1; ri < reports.length && ri <= CAPEX_BACKFILL; ri++) {
     const r = reports[ri];
     let cf = cache.cf[r.docId];
@@ -347,21 +360,30 @@ async function deepenCashFlow(rec, reports, cache) {
         const { first } = picker(await loadStore(r.docId));
         const rfy = r.periodEnd ? Number(r.periodEnd.slice(0, 4)) : null;
         if (rfy != null) for (const rel of [0, -1]) {
-          const cx = first(DUR.capex, rel, false), dp = first(DUR.depreciation, rel, false);
-          if (cx != null || dp != null) cf[rfy + rel] = { capex: cx != null ? Math.abs(cx) : null, dep: dp };
+          const row = {};
+          let any = false;
+          for (const [field, concept, abs] of CF_KEYS) {
+            const v = first(DUR[concept], rel, false);
+            row[field] = v != null ? (abs ? Math.abs(v) : v) : null;
+            if (v != null) any = true;
+          }
+          if (any) cf[rfy + rel] = row;
         }
       } catch (err) { console.warn(`    ! older filing ${r.docId}: ${err.message}`); }
       cache.cf[r.docId] = cf;
     }
     for (const fy in cf) {
-      if (capexByFy[fy] == null && cf[fy].capex != null) capexByFy[fy] = cf[fy].capex;
-      if (depByFy[fy] == null && cf[fy].dep != null) depByFy[fy] = cf[fy].dep;
+      const o = (byFy[fy] ||= {});
+      for (const [field] of CF_KEYS) if (o[field] == null && cf[fy][field] != null) o[field] = cf[fy][field];
     }
   }
   let patched = 0;
   for (const h of rec.history) {
-    if (h.lines.capex == null && capexByFy[h.fy] != null) { h.lines.capex = capexByFy[h.fy]; patched++; }
-    if (h.lines.depreciation == null && depByFy[h.fy] != null) h.lines.depreciation = depByFy[h.fy];
+    const o = byFy[h.fy];
+    if (!o) continue;
+    for (const [field] of CF_KEYS) {
+      if (h.lines[field] == null && o[field] != null) { h.lines[field] = o[field]; if (field === "capex") patched++; }
+    }
   }
   return patched;
 }
@@ -431,6 +453,9 @@ async function main() {
   const cachePath = path.join(dataDir, "edinet-index.json");
   let cache = {};
   try { cache = JSON.parse(fs.readFileSync(cachePath, "utf8")); } catch {}
+  // Rebuild the per-filing cash-flow cache when the set of lines we pull from older filings
+  // changes (here: dividends and buybacks were added), so the older filings are re-parsed once.
+  if (cache.cfV !== CF_VERSION) { cache.cf = {}; cache.cfV = CF_VERSION; }
 
   console.log("Discovering latest annual reports on EDINET…");
   const found = await discover(secToTicker, cache);

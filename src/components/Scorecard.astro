@@ -159,4 +159,12 @@ const graham = company.market !== "JP" && !isFin ? grahamTests(company) : null;
   .gcrit b { color: var(--ink); font-weight: 700; }
 
   .foot { font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--muted); border-top: 1px solid var(--rule-strong); margin-top: 16px; padding-top: 11px; }
+
+  /* On a phone a long descriptive value (a margin trajectory like "28% (FY2016) → 32%
+     (FY2025)") can't sit beside its label without pushing the page wide, so the row wraps and
+     the value drops to its own line, left-aligned, rather than overflowing. */
+  @media (max-width: 480px) {
+    .row, .factRow { flex-wrap: wrap; }
+    .value, .factValue { text-align: left; }
+  }
 </style>
