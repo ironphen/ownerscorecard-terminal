@@ -1,10 +1,15 @@
 ---
 import { capitalHistory } from "../lib/capital.mjs";
-import { fmtUSD } from "../lib/fundamentals.mjs";
+import { fmtMoney, currencySymbol } from "../lib/fundamentals.mjs";
 
 const { company } = Astro.props;
 const cap = capitalHistory(company);
-const pct = (v) => `${Math.round(v * 100)}%`;
+
+const ccy = company.currency || "USD";
+const sym = currencySymbol(ccy);
+const $ = (v) => fmtMoney(v, ccy);
+const pct = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.abs(v * 100).toFixed(dp)}%`);
+const per = (v) => (v == null ? "—" : `${sym}${v.toFixed(2)}`);
 
 const segs = cap
   ? [
@@ -16,6 +21,61 @@ const segs = cap
   : [];
 const totalUse = segs.reduce((a, s) => a + s.amt, 0) || 1;
 segs.forEach((s) => (s.w = (s.amt / totalUse) * 100));
+
+// The report-card facts, each a value and one plain line of context. No grade: the row
+// states what happened and stops. Rows the data can't fill drop out.
+const facts = cap
+  ? [
+      {
+        key: "returned",
+        label: "Returned to owners",
+        value: $(cap.returned),
+        note: `${cap.oeTotal > 0 ? `${pct(cap.returnedOfOE)} of the owner earnings the business produced over the span, ` : ""}${$(cap.div)} as dividends and ${$(cap.bb)} as buybacks.`,
+        show: cap.returned > 0,
+      },
+      {
+        key: "bbprice",
+        label: "Average price paid for buybacks",
+        value: cap.avgBuybackPrice != null ? per(cap.avgBuybackPrice) : "—",
+        note: cap.avgBuybackPrice != null
+          ? `Across the years the filing reports a share count, ${(cap.bbSharesPriced / 1e6).toFixed(0)}M shares were bought for ${$(cap.bbSpentPriced)}, about ${per(cap.avgBuybackPrice)} each. Compare that to the price you bring and to the per-share figures above.`
+          : `Buybacks ran ${$(cap.bb)} over the span, but the filings don't tag the share count needed to deduce the average price paid.`,
+        show: cap.bb > 0,
+      },
+      {
+        key: "sharecount",
+        label: "Did the share count actually fall?",
+        value: cap.shareChange != null ? pct(cap.shareChange, 1) : "—",
+        cls: cap.shareChange != null ? (cap.shareChange <= 0 ? "good" : "warn") : "",
+        note: cap.shareChange == null
+          ? "No continuous share count across the span."
+          : cap.shareChange <= -0.01
+          ? `The diluted count fell from ${(cap.firstShares / 1e6).toFixed(0)}M to ${(cap.lastShares / 1e6).toFixed(0)}M, so the buybacks outran the stock issued to staff: each remaining share owns more of the business.`
+          : cap.shareChange >= 0.01
+          ? `The diluted count rose from ${(cap.firstShares / 1e6).toFixed(0)}M to ${(cap.lastShares / 1e6).toFixed(0)}M: issuance (stock pay, deals) outran any buybacks, so owners were diluted on net.`
+          : `The diluted count barely moved (${(cap.firstShares / 1e6).toFixed(0)}M to ${(cap.lastShares / 1e6).toFixed(0)}M): buybacks roughly offset the stock issued to staff.`,
+        show: true,
+      },
+      {
+        key: "dividends",
+        label: "Dividend record",
+        value: cap.dpsLast != null ? `${per(cap.dpsLast)}/sh` : (cap.divYears > 0 ? "Pays" : "None"),
+        note: cap.divYears === 0
+          ? "Paid no dividend over the span; it returns cash through buybacks or retains it."
+          : `Paid in ${cap.divYears} of the years on record${cap.dpsGrowth != null ? `, the per-share dividend ${cap.dpsGrowth >= 0 ? "growing" : "shrinking"} about ${pct(Math.abs(cap.dpsGrowth))} a year` : ""}. ${cap.everCut ? "It was cut at least once along the way." : "It was never cut over the span."}`,
+        show: true,
+      },
+      {
+        key: "retained",
+        label: "Return on what it retained",
+        value: cap.returnOnRetained != null ? pct(cap.returnOnRetained) : "—",
+        note: cap.returnOnRetained != null
+          ? `Of the earnings it kept rather than paid out (${$(cap.retainedEarnings)} over the span), annual owner earnings grew ${$(cap.incrementalOE)}, so each retained ${sym}1 added about ${(cap.returnOnRetained).toFixed(2)} of yearly owner earnings. Buffett's test, run on owner earnings instead of market value.`
+          : "Not computable here (owner earnings or retained earnings are negative over the span).",
+        show: cap.returnOnRetained != null || cap.retainedEarnings > 0,
+      },
+    ].filter((f) => f.show)
+  : [];
 ---
 
 {cap ? (
@@ -25,33 +85,40 @@ segs.forEach((s) => (s.w = (s.amt / totalUse) * 100));
     </div>
 
     <p class="lede">
-      Over the record, the business generated <b>{fmtUSD(cap.cfo)}</b> of operating cash, and how management
+      Over the record, the business generated <b>{$(cap.cfo)}</b> of operating cash, and how management
       split it is, as Buffett insists, the job that matters most. Here it reads as <b>{cap.character}</b>.
     </p>
 
     <div class="bar" role="img" aria-label="Allocation of operating cash">
-      {segs.map((s) => <span class="seg" style={`width:${s.w}%;background:${s.color}`} title={`${s.label} ${fmtUSD(s.amt)}`}></span>)}
+      {segs.map((s) => <span class="seg" style={`width:${s.w}%;background:${s.color}`} title={`${s.label} ${$(s.amt)}`}></span>)}
     </div>
     <ul class="legend">
       {segs.map((s) => (
         <li>
           <span class="sw" style={`background:${s.color}`}></span>
           <span class="ll">{s.label}</span>
-          <span class="lv">{fmtUSD(s.amt)} · {pct(s.pctCfo)}</span>
+          <span class="lv">{$(s.amt)} · {pct(s.pctCfo)}</span>
         </li>
       ))}
     </ul>
 
-    <p class="reads">
-      It reinvested <b>{fmtUSD(cap.capex)}</b> ({pct(cap.pReinvest)}) back into the business and returned
-      <b> {fmtUSD(cap.returned)}</b> ({pct(cap.pReturn)}) to owners, {fmtUSD(cap.div)} in dividends, {fmtUSD(cap.bb)} in buybacks.
-      {cap.debtChange != null ? ` Total debt ${cap.debtChange >= 0 ? "rose" : "fell"} ${fmtUSD(Math.abs(cap.debtChange))} across the span.` : ""}
-      {cap.overspent ? " It returned and reinvested more than it generated, the gap was covered by debt or existing cash." : ""}
-    </p>
+    <ul class="facts">
+      {facts.map((f) => (
+        <li>
+          <div class="frow">
+            <span class="flabel">{f.label}</span>
+            <span class={`fvalue ${f.cls || ""}`}>{f.value}</span>
+          </div>
+          <p class="fnote">{f.note}</p>
+        </li>
+      ))}
+    </ul>
 
     <p class="foot">
-      Buybacks are gross of stock issued to employees; net of that, the real return to owners is lower (see Management &amp; pay).
-      And the mix alone doesn't grade management, what matters is the return earned on the dollars reinvested (see incremental ROIC in the durability report).
+      Buybacks are gross of stock issued to staff; the share-count line above is the net of that, the figure that
+      actually decides whether owners gained. The average price paid blends a year of purchases (and any accelerated
+      repurchase), so read it as close, not exact. None of this is a grade, only the record of where the cash went and
+      on what terms; the return earned on the dollars reinvested is the durability question above.
     </p>
   </section>
 ) : null}
@@ -72,7 +139,15 @@ segs.forEach((s) => (s.w = (s.amt / totalUse) * 100));
   .ll { color: var(--ink); }
   .lv { color: var(--muted); font-variant-numeric: tabular-nums; }
 
-  .reads { font-size: 14px; color: var(--ink-dim); line-height: 1.55; margin: 14px 0 0; max-width: 72ch; }
-  .reads b { font-weight: 600; }
-  .foot { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--rule); margin-top: 14px; padding-top: 10px; max-width: 72ch; }
+  .facts { list-style: none; padding: 0; margin: 18px 0 0; }
+  .facts li { padding: 13px 0; border-bottom: 1px solid var(--rule); }
+  .facts li:first-child { border-top: 1px solid var(--rule); }
+  .frow { display: flex; align-items: baseline; justify-content: space-between; gap: 14px; }
+  .flabel { font-weight: 600; font-size: 15px; color: var(--ink); }
+  .fvalue { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; flex: 0 0 auto; letter-spacing: -0.01em; }
+  .fvalue.good { color: var(--good); }
+  .fvalue.warn { color: var(--warn); }
+  .fnote { font-size: 13.5px; color: var(--ink-dim); margin: 5px 0 0; line-height: 1.55; max-width: 76ch; }
+
+  .foot { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--rule-strong); margin-top: 14px; padding-top: 11px; max-width: 74ch; line-height: 1.5; }
 </style>
