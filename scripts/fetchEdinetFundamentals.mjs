@@ -105,7 +105,17 @@ const num = (s) => {
   const v = Number(t);
   return Number.isFinite(v) ? v : null;
 };
-const CONSOL_RANK = { "連結": 3, "": 2, "個別": 1, "非連結": 1 };
+// EDINET wraps every CSV field in double quotes ("110054000000", "CurrentYearDuration"),
+// so each cell must be unquoted before use, or numbers parse as NaN and contexts never match.
+const cell = (s) => {
+  if (s == null) return "";
+  let t = s.trim();
+  if (t.length >= 2 && t.charCodeAt(0) === 34 && t.charCodeAt(t.length - 1) === 34) t = t.slice(1, -1).replace(/""/g, '"');
+  return t;
+};
+// The consolidated/individual column: 連結 (consolidated) is preferred; the five-year summary
+// and entity-info elements carry その他 (other), which is the only flavour they come in.
+const CONSOL_RANK = { "連結": 3, "その他": 2, "": 2, "個別": 1, "非連結": 1 };
 
 // Parse one filing's CSV text into a fact store: localName → "relYear|instant" → { val, rank }.
 // Consolidated figures win over individual; the latest filing's own CSV is self-consistent.
@@ -114,12 +124,12 @@ export function parseFacts(text, store = {}) {
   for (let i = 1; i < lines.length; i++) {
     const row = lines[i].split("\t");
     if (row.length <= COL.value) continue;
-    const ctx = readContext(row[COL.context]);
+    const ctx = readContext(cell(row[COL.context]));
     if (!ctx) continue;
-    const val = num(row[COL.value]);
+    const val = num(cell(row[COL.value]));
     if (val == null) continue;
-    const local = String(row[COL.element]).split(":").pop();
-    const rank = CONSOL_RANK[row[COL.consol]] ?? 0;
+    const local = cell(row[COL.element]).split(":").pop();
+    const rank = CONSOL_RANK[cell(row[COL.consol])] ?? 0;
     const key = `${ctx.relYear}|${ctx.instant ? "i" : "d"}`;
     const slot = (store[local] ||= {});
     if (!slot[key] || rank > slot[key].rank) slot[key] = { val, rank };

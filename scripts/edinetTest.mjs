@@ -77,5 +77,15 @@ eq("decodeCsv UTF-8", decodeCsv(u8), jp);
 const recFromBuf = buildRecord(parseFacts(decodeCsv(Buffer.concat([Buffer.from([0xff, 0xfe]), Buffer.from(tsv, "utf16le")]))), { fy: 2024 }, { ticker: "9999", name: "Test KK" });
 eq("revenue survives a UTF-16LE decode roundtrip", recFromBuf.lines.revenue, 1000000);
 
+// EDINET wraps every field in double quotes (and tags the five-year summary as その他, not
+// 連結). The real shape, to lock in the quote-stripping fix: revenue must unquote and parse.
+const quoted = [
+  ['"要素ID"', '"項目名"', '"コンテキストID"', '"相対年度"', '"連結・個別"', '"期間・時点"', '"ユニットID"', '"単位"', '"値"'],
+  ['"jpcrp_cor:NetSalesSummaryOfBusinessResults"', '"売上高、経営指標等"', '"CurrentYearDuration"', '"当期"', '"その他"', '"期間"', '"JPY"', '"円"', '"152384000000"'],
+  ['"jppfs_cor:OperatingIncome"', '"営業利益"', '"CurrentYearInstant"', '"当期末"', '"連結"', '"時点"', '"JPY"', '"円"', '"50000000000"'],
+].map((r) => r.join("\t")).join("\r\n");
+const qrec = buildRecord(parseFacts(quoted), { fy: 2026 }, { ticker: "9697", name: "Capcom" });
+eq("quoted EDINET cells: revenue unquoted and parsed", qrec.lines.revenue, 152384000000);
+
 if (failed) { console.error(`\n❌ ${failed} check(s) failed`); process.exit(1); }
 console.log("\n✅ All EDINET parser checks passed");
