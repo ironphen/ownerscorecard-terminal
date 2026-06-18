@@ -187,9 +187,13 @@ const PROMO = /\b(world[\s-]?class|best[\s-]?in[\s-]?class|best[\s-]?of[\s-]?bre
 const ADJUSTED = /\b(non[\s-]?GAAP|adjusted (EBITDA|earnings|net income|operating income|operating|diluted|results|EPS|margin)|pro[\s-]?forma|constant currency|excluding (certain|the impact|special|one[\s-]?time|the effect)|core (earnings|operating)|normalized (earnings|EBITDA|results)|one[\s-]?time (item|charge|cost)s?|special items)/gi;
 // A management owning a miss, in the first person and past tense, the rarest and most prized tell.
 // The conditional/hypothetical guard keeps a forward-looking risk factor ("our results could fall
-// short if…") out; genuine candor is declarative about what already happened.
-const ADMIT = /\b(were wrong|made (a |several |some )?mistakes?|misjudged|overpaid|over[\s-]?estimated|too optimistic|fell short of|did not meet (our|the)|failed to (meet|deliver|achieve|execute)|were disappointed|disappointing (results|performance|year|quarter)|underperformed|below our expectations|in hindsight|should have)\b/i;
+// short if…") out; genuine candor is declarative about what already happened. "should have" must be
+// the regretful kind ("we should have acted sooner"), not "investors should have access."
+const ADMIT = /\b(were wrong|made (a |several |some )?mistakes?|misjudged|overpaid|over[\s-]?estimated|too optimistic|fell short of|did not meet (our|the)|failed to (meet|deliver|achieve|execute)|were disappointed|disappointing (results|performance|year|quarter)|underperformed|below (our )?expectations|in hindsight|should have (done|known|anticipated|recognized|acted|been|moved|invested|exited|sold|reduced|avoided|foreseen|started|focused))\b/i;
 const NOT_ADMIT = /\b(may|might|could|would|if\s|risk that|in the event|to the extent|no assurance|cannot assure|future)\b/i;
+// Owning a miss means OWNING it. When the failure is pinned on someone else — a supplier, a partner,
+// a customer who "failed to meet its obligations" — it is the opposite of candor, so it is excluded.
+const BLAME_OTHERS = /\b(supplier|vendor|manufacturer|co-?manufacturer|co-?packer|partner|customer|client|counterparty|contractor|subcontractor|licensee|licensor|third[- ]party|distributor|borrower|tenant|reseller|franchisee|joint venture|other party)\b[\s\S]{0,30}\b(failed to|did not (meet|deliver|perform|pay|complete)|fell short|breached|defaulted|was unable)/i;
 function candorSignals(text, sents) {
   if (!text) return null;
   sents = sents || sentences(text);
@@ -197,7 +201,7 @@ function candorSignals(text, sents) {
   const per1k = (re) => Math.round(((text.match(re) || []).length / n) * 1000 * 10) / 10;
   const admissions = sents
     .map((s) => cleanQuote(String(s || "")).trim())
-    .filter((s) => s.length >= 30 && s.length < 300 && /\b(we|our|management)\b/i.test(s) && ADMIT.test(s) && !NOT_ADMIT.test(s))
+    .filter((s) => s.length >= 30 && s.length < 300 && /\b(we|our|management)\b/i.test(s) && ADMIT.test(s) && !NOT_ADMIT.test(s) && !BLAME_OTHERS.test(s))
     .filter((s, i, a) => a.indexOf(s) === i)
     .slice(0, 3);
   return { owner: per1k(OWNER_TALK), promo: per1k(PROMO), adjusted: per1k(ADJUSTED), admissions };
@@ -654,6 +658,14 @@ const RESULT_ATTR = /\b(due to|driven by|reflect\w*|result\w* (of|from)|attribut
 // The conditional / hypothetical guard: a forward-looking "if we cannot raise prices…" is not the
 // company telling you it has pricing power, it is the company naming a risk. Keep those out.
 const HYPO = /\b(if\s|may not|might not|unable to|cannot|could not|risk that|no assurance|whether (we|the)|to the extent|should we|were we to|in the event|inability to)\b/i;
+// A commodity or market price the company merely TAKES is not pricing power — Alcoa's "higher prices
+// for aluminum" is the market moving, not a moat. Exclude price language tied to a commodity, or to a
+// market/spot/benchmark/realized price, so the pricing-power read is about a company setting its own.
+const PRICE_COMMODITY = /\b(aluminum|alumina|copper|steel|iron ore|crude|\boil\b|natural gas|gas prices?|propane|ethane|ethylene|polyethylene|coal|nickel|zinc|lithium|cobalt|\bgold\b|silver|platinum|palladium|uranium|wheat|corn|soybean|grain|lumber|pulp|\bresin\b|petrochemical|feedstock|hydrocarbon|metal)\b[\s\S]{0,18}pric|pric[a-z]*\b[\s\S]{0,18}\b(aluminum|copper|steel|crude|\boil\b|natural gas|nickel|zinc|\bgold\b|silver|commodit|metal|barrel)\b|\b(market|spot|index|benchmark) prices?\b|average realized price|commodity prices?/i;
+// The strongest form of pricing power: a price increase that did NOT cost volume — Buffett's "if you
+// can raise prices without losing business to a competitor, you've got a very good business." Volume,
+// demand, traffic or comparable sales holding or growing, or an explicit "despite price increases."
+const VOLUME_HELD = /\b(volumes?|unit sales|\bunits\b|demand|traffic|transactions?|comparable (store )?sales|same[- ]store sales|shipments?)\b[\s\S]{0,45}\b(grew|increased|rose|higher|\bup\b|strong|robust|resilient|stable|steady|\bflat\b|held|remained|growth|positive)\b|\b(despite|even with|notwithstanding)\b[\s\S]{0,30}\b(price increases?|higher pric|pricing)\b|price increases? more than offset|without (a |any )?(meaningful |material |significant )?(loss|decline|reduction) in (volume|demand|unit)/i;
 
 // The grave accounting-integrity admissions. These are rare in truth, but the risk factors are full
 // of hypothetical mentions — "a FAILURE to maintain controls COULD result in a material weakness",
@@ -742,13 +754,30 @@ function buffettRead(cur) {
   const risk = cur?.risk?.sents || [];
   const sales = [...mdna, ...biz]; // declarative results-of-operations + business prose
 
-  // 1. Pricing & costs.
-  const power = bestSentence(sales, PRICE_UP, [PRICE_DOWN, HYPO], [RESULT_ATTR]);
-  const powerCount = sales.filter((raw) => { const c = cleanQuote(String(raw || "")); return PRICE_UP.test(c) && !PRICE_DOWN.test(c) && !HYPO.test(c); }).length;
+  // 1. Pricing & costs — Buffett's margin-durability read. Pricing power is the surest moat mark, so
+  // the positive case is read carefully: a price the company SET and tied to a result, not a commodity
+  // or market price it merely takes. The strongest form — raising price without losing volume — is
+  // marked apart. The cost facet only surfaces when the filing takes a stance on whether rising costs
+  // were passed through, since a bare "costs rose" is in almost every MD&A and says nothing.
+  const cq = (raw) => cleanQuote(String(raw || ""));
+  const isPower = (s) => PRICE_UP.test(s) && !PRICE_DOWN.test(s) && !HYPO.test(s) && !PRICE_COMMODITY.test(s);
+  const power = bestSentence(sales, PRICE_UP, [PRICE_DOWN, HYPO, PRICE_COMMODITY], [RESULT_ATTR, VOLUME_HELD]);
+  const powerCount = sales.filter((raw) => isPower(cq(raw))).length;
+  // Raised price AND volume/demand held or grew — the textbook moat, in one sentence.
+  const powerStrong = sales.some((raw) => { const s = cq(raw); return isPower(s) && VOLUME_HELD.test(s); });
   const pressure = bestSentence(mdna, PRICE_DOWN, [HYPO]);
-  const costSent = bestSentence(mdna, COST_UP, [COST_HYPO], [COST_OFFSET]);
-  const pricing = (power || pressure || costSent)
-    ? { power: power || null, powerCount, pressure: pressure || null, costInflation: costSent || null, passedThrough: costSent ? COST_OFFSET.test(costSent) && !OFFSET_NEG.test(costSent) : null }
+  // The cost sentence must itself resolve the question — pass-through (COST_OFFSET) or squeeze
+  // (OFFSET_NEG) — not merely name inflation. Prefer a quantified one.
+  const costStance = mdna
+    .map(cq)
+    .filter((s) => s.length >= 45 && s.length <= 300 && COST_UP.test(s) && !COST_HYPO.test(s) && (COST_OFFSET.test(s) || OFFSET_NEG.test(s)))
+    .sort((a, b) => (/\d/.test(b) ? 1 : 0) - (/\d/.test(a) ? 1 : 0))[0] || null;
+  const pricing = (power || pressure || costStance)
+    ? {
+        power: power || null, powerStrong: power ? powerStrong : false, powerCount,
+        pressure: pressure || null,
+        costInflation: costStance, passedThrough: costStance ? COST_OFFSET.test(costStance) && !OFFSET_NEG.test(costStance) : null,
+      }
     : null;
 
   // 2. Where the numbers are soft.

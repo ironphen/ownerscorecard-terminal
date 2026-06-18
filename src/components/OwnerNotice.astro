@@ -22,15 +22,16 @@ if (b?.pricing) {
   // the company demonstrated it; when it also names pricing pressure, the tension is shown honestly.
   if (p.power) {
     const contested = !!p.pressure;
-    items.push({
-      key: "pricing",
-      label: contested ? "Raises price, but not unopposed" : "Sets its price",
-      tone: contested ? "info" : "good",
-      quote: p.power,
-      note: contested
+    // The strongest form Buffett names: raising price without losing volume. When the filing shows
+    // it, say so plainly; when it merely raised price, note that and send the reader to the volume.
+    const label = p.powerStrong ? "Raises price without losing customers" : contested ? "Raises price, but not unopposed" : "Sets its price";
+    const tone = p.powerStrong ? "good" : contested ? "info" : "good";
+    const note = p.powerStrong
+      ? "The strongest form of a moat, in Buffett's words: the company raised prices and volume held or grew with them — pricing power a competitor could not punish. The surest sign you are looking at a very good business; the record above shows whether the margin followed."
+      : contested
         ? "In its results discussion the company attributes gains to higher pricing — yet the same filing names price competition too. Pricing power that must be defended is still worth more than none; read the two together, and watch the margin in the record above."
-        : "Buffett's surest mark of a moat: in its own results discussion the company raised prices and tied the gain to them, not to volume alone. Whether that holds is the question to carry forward — the record above shows whether the margin held with it.",
-    });
+        : "Buffett's surest mark of a moat: in its own results discussion the company raised prices and tied the gain to them, not to volume alone. Whether that holds is the question to carry forward — the record above shows whether the margin held with it.";
+    items.push({ key: "pricing", label, tone, quote: p.power, note });
   } else if (p.pressure) {
     items.push({
       key: "pricing",

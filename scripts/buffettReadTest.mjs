@@ -56,6 +56,24 @@ const cases = [
     ],
   }), (r) => r?.pricing?.costInflation && r.pricing.passedThrough === false],
 
+  // 4a. A BARE cost mention with no stance on pass-through is in nearly every MD&A — it must NOT
+  // surface (no costInflation), so a near-universal phrase isn't dressed up as a signal.
+  ["cost-bare", mk({
+    mdna: ["Cost of revenue increased during the period due to higher commodity and freight costs."],
+  }), (r) => !(r?.pricing?.costInflation)],
+
+  // 4b. Commodity price-TAKING is not pricing power: "higher prices for aluminum" is the market
+  // moving, not a moat. Power must be null.
+  ["pricing-commodity", mk({
+    mdna: ["In 2025, the Company generated higher profitability due to higher prices for aluminum and steady demand for its products."],
+  }), (r) => !(r?.pricing?.power)],
+
+  // 4c. The STRONGEST form: raised price AND volume held/grew — Buffett's "raise prices without
+  // losing business." power set and powerStrong true.
+  ["pricing-strong", mk({
+    mdna: ["We implemented price increases across our portfolio, and unit volumes grew despite the higher prices, reflecting the strength of our brands."],
+  }), (r) => r?.pricing?.power && r.pricing.powerStrong === true],
+
   // 5. Critical accounting estimates: four judgment-heavy topics named in the section. Topics + count.
   ["critical-estimates", mk({ mdna: critBlock }),
     (r) => r?.judgment && r.judgment.count >= 4 &&
