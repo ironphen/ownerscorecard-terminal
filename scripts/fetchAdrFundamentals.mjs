@@ -399,12 +399,21 @@ async function main() {
       series: quarterSeries(facts),
     } : null;
 
+    // The current-snapshot `lines` the page reads. The latest fiscal year's flows are right, but its
+    // balance-sheet instants can lag — a 20-F filed with the income statement before the year-end
+    // balance sheet is tagged, leaving equity/assets null for that year (Santander). The ttm block
+    // already resolves each instant to its freshest observation, so overlay ttm's non-null values on
+    // the latest year: every field gets the most recent figure it has, none get nulled. Mirrors the
+    // way the US fetcher assembles `lines` from latest annual flows plus latest instants.
+    const latestLines = history.length ? { ...history[history.length - 1].lines } : {};
+    if (ttm?.lines) for (const [k, v] of Object.entries(ttm.lines)) if (v != null) latestLines[k] = v;
+
     const rec = {
       ticker, name: meta.name || facts.entityName || ticker, cik, sic, sicDescription,
       market: "ADR", currency: ccy, country: meta.country || null, accountingStandard: standard,
       fy: anchor?.fy ?? null, periodEnd: anchor?.end ?? null, form: anchor?.form || "20-F",
       sourceUrl: `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${cik}&type=20-F`,
-      lines: history.length ? history[history.length - 1].lines : {},
+      lines: latestLines,
       history, ttm, quarterly,
     };
     if (passesQualityFloor(rec)) { companies.push(rec); console.log(`  ✓ ${ticker} (${ccy}, ${standard}, FY${rec.fy ?? "?"})`); }
