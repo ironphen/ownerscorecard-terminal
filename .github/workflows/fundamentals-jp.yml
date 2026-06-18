@@ -17,9 +17,9 @@ on:
         type: string
         default: ""
       lookback:
-        description: "Days of EDINET document index to crawl (~3400 reaches face-statement values for the full ~10-year history; cached after the first run)"
+        description: "Days of EDINET document index to crawl (~2300 reaches the ~10-year history; cached after the first run)"
         type: string
-        default: "3400"
+        default: "2300"
   push:
     branches: [claude/jolly-ride-nae81r]
     paths:

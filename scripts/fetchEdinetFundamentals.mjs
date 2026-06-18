@@ -30,7 +30,7 @@ const THROTTLE_MS = Number(process.env.EDINET_THROTTLE_MS || 350);
 // ~3.3 years, enough to reach each company's FY-3 annual report, whose cash-flow statement
 // carries FY-3 and FY-4 capex. With the latest filing (FY, FY-1) and the FY-1 and FY-2 reports
 // in between, that fills the whole five-year window the summary covers for everything else.
-const LOOKBACK_DAYS = Number(process.env.EDINET_LOOKBACK_DAYS || 3400);
+const LOOKBACK_DAYS = Number(process.env.EDINET_LOOKBACK_DAYS || 2300);
 // How many older annual reports to pull per company for the deeper capex history (each carries
 // two years), beyond the latest. Three covers the five-year window.
 const CAPEX_BACKFILL = Number(process.env.EDINET_CAPEX_BACKFILL || 3);
@@ -420,39 +420,31 @@ async function deepenCashFlow(rec, reports, cache) {
 // older summary lacked an IFRS revenue element). Fetches at most HISTORY_BACKFILL of the oldest
 // reports; a year already held in full is kept, a revenue-blank year is upgraded.
 const HISTORY_TARGET = Number(process.env.EDINET_HISTORY_YEARS || 10);
-const HISTORY_FETCH_MAX = Number(process.env.EDINET_HISTORY_FETCH_MAX || 8);
+const HISTORY_BACKFILL = Number(process.env.EDINET_HISTORY_BACKFILL || 3);
 async function deepenHistory(rec, reports, cache) {
   if (reports.length < 2) return 0;
   const byFy = new Map(rec.history.map((h) => [h.fy, h]));
   const oldestWanted = rec.fy - (HISTORY_TARGET - 1);
-  const wantFull = (y) => y >= oldestWanted && y <= rec.fy && !(byFy.get(y)?.lines.revenue != null);
-  // Load the in-window older filings (newest first, bounded). Each filing's own current and prior
-  // years are face-statement figures, consolidated and reliable, unlike the deep years of a
-  // five-year summary, which some filers (an IFRS adopter before its transition, a conglomerate)
-  // tag parent-only or not at all. So fill from current years first, then prior, then the summary
-  // as a last resort, newest filing winning. This both reaches ~ten years and repairs the years the
-  // latest filing's summary left wrong or blank.
-  const stores = [];
-  for (const r of reports) {
-    if (stores.length >= HISTORY_FETCH_MAX) break;
-    if (r.docId === rec.docId) continue; // the latest filing is already built into rec
-    const rfy = r.periodEnd ? Number(r.periodEnd.slice(0, 4)) : null;
-    if (rfy == null || rfy < oldestWanted) continue; // too old to even be a current year we want
-    if (![0, -1, -2, -3, -4].some((rel) => wantFull(rfy + rel))) continue;
-    try { await sleep(THROTTLE_MS); stores.push({ rfy, store: await loadStore(r.docId) }); }
-    catch (err) { console.warn(`    ! older filing ${r.docId}: ${err.message}`); }
-  }
+  // The oldest few non-latest reports, oldest first, so the deepest summaries fill first.
+  const olders = reports.slice(1).sort((a, b) => ((a.periodEnd || "") < (b.periodEnd || "") ? -1 : 1)).slice(0, HISTORY_BACKFILL);
   let added = 0;
-  const fill = (rfy, store, rel) => {
-    const y = rfy + rel;
-    if (!wantFull(y)) return;
-    const L = linesFromStore(store, rel);
-    if (L.revenue == null && L.netIncome == null && L.totalAssets == null) return;
-    const ex = byFy.get(y);
-    if (ex) ex.lines = L; else { const h = { fy: y, lines: L }; rec.history.push(h); byFy.set(y, h); }
-    added++;
-  };
-  for (const rel of [0, -1, -2, -3, -4]) for (const { rfy, store } of stores) fill(rfy, store, rel);
+  for (const r of olders) {
+    const rfy = r.periodEnd ? Number(r.periodEnd.slice(0, 4)) : null;
+    if (rfy == null || rfy < oldestWanted - 4) continue; // nothing this old filing covers is wanted
+    let store;
+    try { await sleep(THROTTLE_MS); store = await loadStore(r.docId); } catch (err) { console.warn(`    ! older filing ${r.docId}: ${err.message}`); continue; }
+    for (let rel = 0; rel >= -4; rel--) {
+      const y = rfy + rel;
+      if (y < oldestWanted) continue;
+      const ex = byFy.get(y);
+      if (ex && ex.lines.revenue != null) continue; // a year already held in full wins
+      const L = linesFromStore(store, rel);
+      if (L.revenue == null && L.netIncome == null && L.totalAssets == null) continue;
+      if (ex) ex.lines = L; // upgrade a revenue-blank year to a complete one
+      else { const h = { fy: y, lines: L }; rec.history.push(h); byFy.set(y, h); }
+      added++;
+    }
+  }
   if (added) { rec.history.sort((a, b) => a.fy - b.fy); rec.history = rec.history.slice(-HISTORY_TARGET); }
   return added;
 }
