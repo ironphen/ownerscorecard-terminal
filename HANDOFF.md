@@ -28,6 +28,61 @@ something good.
   `Claude-Session: https://claude.ai/code/session_013UFmHVtesZ34bMojnBg9NB`.
   Never put the model identifier in commits/PRs/code.
 
+## CURRENT STATE — read this first (supersedes the dated detail below)
+**Constraint change:** repo is now **public** → GitHub Actions minutes are **unlimited** (fetch/iterate
+freely). The only ceiling now is **Cloudflare 500 builds/month**, and Cloudflare builds **`main` only** —
+so branch pushes are free; only `main` pushes count (data schedules on main are ~36/mo, comfortable).
+Still **$0 total**, still no LLM, still deterministic.
+
+**A comprehensive re-fetch is RUNNING** (run `27740336418`, dispatched ~06:08 UTC 2026-06-18 on commit
+`0310675`, `rebuild_universe=write` + `fetch_adr=true`, ~2.5–3 h). It lands, in ONE pass: US Current
+Position fundamentals + receivables/inventory tag fills, the regenerated `language.json` with every NLP
+fix (integrity 505→106, commodity exclusion, strong-pricing, admissions, bank-pricing withheld, the CVS
+lede-dup fix), segments, the rebuilt universe, AND the **first real ADR data**. A background watcher
+(`/tmp/watch3.sh`) wakes the session when the "Refresh fundamentals…" commit appears. **Note:** this run
+predates the `extract` diagnostic (commit `f3a2dd1`) and the floor-based ADR cutoff (`0bd160e`), so a
+*follow-up* filings re-fetch is needed to populate `extract` (and a rebuild to apply the ADR floor).
+
+**Shipped on the branch this session (all verified, NOT merged):**
+- **Current Position** (`lib/currentPosition.mjs` + `CurrentPosition.astro`, coda to Act II): Value Line's
+  liquidity box but *read* — liquidity ladder, current/quick/cash ratios vs Graham's 2×, debt-due-vs-cash,
+  cash runway for burners, quarter trend, recent-revenue momentum, deeper floors (tangible book, NCAV,
+  debt-incl-leases, deferred revenue), and the float-teaching note for a sub-1 ratio. Pipeline now captures
+  the full latest-quarter balance sheet + 8-quarter series + deferred revenue + leases (raw, derive in code,
+  never re-fetch for a metric). Withheld for financials. Verified on Costco/Rivian/Apple.
+- **ADR pool** (the "ADRs" tab): `fetchAdrFundamentals.mjs` reads EDGAR companyfacts in **IFRS *or*
+  US-GAAP** (dual-namespace, one concept list) and **detects home currency** (EUR/TWD/…); same record shape
+  so the existing components render it. `buildUniverse.mjs` routes the screener's non-US rows into
+  `universe.adr.json`, gated to **≥ the US universe's market-cap floor**. Pages merge ADRs into `/c/[ticker]`.
+  Currency map fixed (was USD+JPY only → every major + ISO-code fallback). Verified on synthetic ASML (EUR).
+  Tests: `fundamentalsAdrTest.mjs`, `universeTest.mjs`. Data files are empty placeholders until the run lands.
+- **NLP sharpening** (all replayed against real output): integrity guard, commodity-price exclusion,
+  strongest-pricing flag (`powerStrong`), cost-facet needs-a-stance, admissions third-party guard, bank
+  pricing withheld (financial SIC), pricing-pressure non-product guard, brief heading-strip + lede fragment
+  rejection, **CVS brief-no-lede-repeat** (jaccard vs lede).
+
+## THE LIVE PRIORITY — qualitative re-architecture (5 pillars)
+The founder flagged that **NVDA/AAPL/AMZN/META show no business description** (computed fallback). The audit
+(`scripts/auditLanguage.mjs`, `npm run audit:lang`, Pillar 4 — DONE) quantified it: **20% (505) no lede**
+incl. the giants; **151 collapsed MD&A** (XOM, JPMorgan, IBM, Pfizer), **149 collapsed risk** (Microsoft 12w).
+It's an **extraction**+**scorer** problem, not data. The pipeline now records `extract` (per-section words +
+`ledeFromFiling`) so the **next re-fetch splits extraction-failure from scorer-failure** — that data aims the fix.
+Pillars: **1** robust extraction (TOC anchors, incorporation-by-reference → fetch Exhibit 13, no-collapse),
+**2** business *profile* not one fragile sentence, **3** fuse with segment numbers, **4** audit (done),
+**5** richer/hardened detectors (+ moat-language read). **Do NOT hack extraction blind** — measure → fix on
+synthetic HTML → re-fetch → re-audit. Loop is cheap now (free minutes).
+
+### NEXT ACTIONS when the running re-fetch lands
+1. Verify US: `npm run audit:lang` (lede/section deltas), Current Position on real names, CVS/giants ledes,
+   integrity count (~106), bank pages (no pricing flag).
+2. Verify ADR: real names (TSMC in TWD, a EUR filer, a US-GAAP electing one) render record + Current Position
+   in home currency; check the floor-based pool count on the next rebuild.
+3. Fire a **filings_only re-fetch** (now on the latest code w/ `extract`) → `audit:lang` → the extraction-vs-
+   scorer split → build Pillar 1 fixes (synthetic-HTML tested) → re-fetch → re-audit.
+4. Then **scorecard normalization** (founder's standing ask, no re-fetch, page-wide judgment change in
+   `buildScorecard`/`graham`/`inversion` — do with fresh context, render-verify cyclicals, don't break tones).
+5. When a coherent batch verifies, **ASK then merge branch → `main`** (direct merge, no PR).
+
 ## Where things stand
 **Merged to `main` (live-eligible):** US coverage expanded to the Nasdaq top ~3,000 by market cap
 (~2,626 render-ready after the per-company quality gate); self-maintaining schedule (fundamentals
