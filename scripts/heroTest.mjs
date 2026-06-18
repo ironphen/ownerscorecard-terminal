@@ -98,6 +98,16 @@ const cases = [
   // back to the computed phrase rather than printing a mangled hero. (KMI and WAL shipped these.)
   ["KMI", "Kinder Morgan, Inc.", ["We provide, found in Items 1 and 2."], null],
   ["WAL", "Western Alliance Bancorporation", ["We operate and in the U.S. as a whole."], null],
+  // The real Apple Item-1 form: a sub-heading glued before "The Company <verb>" — the subject is a
+  // generic self-reference, not the name or "we", which the heading-jump must still strip. This blind
+  // spot (recognizing only name+"we") was the dominant cause of the 427 null-lede SCORER failures
+  // (AAPL/NVDA among them). Must resolve to a real description, not the computed fallback.
+  ["AAPL-glued", "Apple Inc.",
+    ["Company Background The Company designs, manufactures and markets smartphones, personal computers, tablets, wearables and accessories, and sells a variety of related services."],
+    /designs, manufactures and markets smartphones/i],
+  ["GEN-registrant", "Generic Co",
+    ["Overview The Registrant is a leading provider of cloud software and data analytics services to enterprises worldwide."],
+    /is a leading provider of cloud software/i],
 ];
 
 let pass = 0, fail = 0;

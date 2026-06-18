@@ -304,7 +304,10 @@ function businessDescription(sents, name, ticker) {
       // first "<Name>/We <verb>" when what precedes it is a heading or short tagline rather
       // than a real clause, so we never truncate a genuine sentence.
       if (at < 0) {
-        const subj = `(?:${[...nameWords, "we"].map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")})`;
+        // The subject after the heading may be the company name, "we", OR a generic self-reference
+        // ("The Company / The Registrant / The Group designs…") — Apple and many filers write the
+        // last, and recognizing only name+"we" left their description stranded behind the heading.
+        const subj = `(?:${[...nameWords, "we"].map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")}|the\\s+(?:company|registrant|group|firm|corporation|business|partnership))`;
         const subjVerb = new RegExp(`\\b${subj}\\s+(?:is|are|provides?|designs?|develops?|operates?|manufactures?|makes?|markets?|sells?|offers?|supplies|distributes?|delivers?|produces?|serves?|engages?|builds?|creates?|owns?|enables?|helps?)\\b`, "i");
         const m = s.match(subjVerb);
         if (m && m.index > 0 && m.index < 200) {
