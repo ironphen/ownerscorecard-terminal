@@ -1,99 +1,33 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
 import fundamentals from "../data/fundamentals.json";
-import language from "../data/language.json";
 import { getCollection } from "astro:content";
-import { fmtUSD, roicValue, ownerEarningsMargin, operatingMargin, liquidAssets, topLineRevenue, debtReliable, cashConversionCycle } from "../lib/fundamentals.mjs";
-import { classify, financialKind, aiExposure } from "../lib/archetype.mjs";
-import { returnOnEquity, returnOnTangibleEquity, equityToAssets } from "../lib/financials.mjs";
-import { ffoMargin, ffoPayout, debtToAssets } from "../lib/reits.mjs";
-import { grahamTests } from "../lib/graham.mjs";
-import Term from "../components/Term.astro";
 import JapanCatalog from "../components/JapanCatalog.astro";
 import jpData from "../data/fundamentals.jp.json";
 const jpCount = (jpData.companies || []).length;
 
-// ---- the catalog rows: every company reduced to the few sourced facts that
-// decide quality and survival. No rank, no score, the reader sorts by what they
-// value, which is the judgment we refuse to make for them. ----
-// The column shows the industry (the concrete identity); the chips filter by the
-// economic model (the broader lens), which groups the catalog more usefully.
-const MODEL = { assetLight: "Asset-light", consumer: "Consumer", capital: "Capital", retail: "Retail", financial: "Financial", reit: "REIT", general: "Other" };
-const CHIP_ORDER = ["assetLight", "consumer", "capital", "retail", "financial", "reit", "general"];
-
-const pct = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.abs(v * 100).toFixed(dp)}%`);
-
+// The front door is an index, not a screener. A screener pulls toward a verdict — filter to "the
+// ones that pass" and you have implied they are the good ones, the one thing we never do. So this
+// presents every business we cover the way Buffett said he'd look for ideas starting over: open the
+// manuals and start with the A's, one company at a time. We sort and group by company NAME (his
+// manuals were alphabetical by name), each a door to its own full Owner Scorecard.
+// A leading "The" doesn't decide the letter (The Coca-Cola Company files under C); a name that opens
+// on a number or symbol lands under "#".
+const sortKey = (s) => s.replace(/^the\s+/i, "").replace(/^[^a-z0-9]+/i, "").trim().toLowerCase();
 const rows = [...(fundamentals.companies || [])]
-  .sort((a, b) => String(a.ticker).localeCompare(String(b.ticker)))
-  .map((c) => {
-    const L = c.lines || {};
-    const cls = classify(c);
-    // Banks and REITs are not read on operating margin, ROIC, owner earnings or the
-    // industrial Graham tests, so we leave those blank rather than print a number
-    // that means nothing (or, worse, an absurd one). Their lens lives on their page.
-    const isFin = ["financial", "reit"].includes(cls.sector.key);
-    // Net cash/(debt) isn't the lens for any non-REIT financial (their borrowings fund the
-    // business, not a leverage signal), so blank it for banks, insurers, asset managers,
-    // exchanges and health plans; keep it for REITs, where it is real, and industrials.
-    const fk = financialKind(c);
-    const isBankIns = fk === "bank" || fk === "insurer";
-    const isFee = fk === "fee", isManagedCare = fk === "managedCare";
-    const isReit = fk === "reit";
-    // Read on return on equity and net margin: every financial except a REIT.
-    const onEquity = isBankIns || isFee || isManagedCare;
-    const hasBal = L.totalDebt != null || L.cashAndEquivalents != null;
-    const netCash = onEquity || !debtReliable(L) ? null : (hasBal ? (liquidAssets(L) || 0) - (L.totalDebt || 0) : null); // + = net cash
-    const g = isFin ? { passes: null, testable: null } : grahamTests(c);
-    return {
-      ticker: c.ticker,
-      name: c.name || "",
-      fy: c.fy,
-      modelKey: cls.sector.key,
-      industry: cls.industry.short,
-      revenue: topLineRevenue(L, c),
-      // Negative cash-conversion cycle: customers and suppliers fund the operation.
-      negCycle: cashConversionCycle(c)?.tone === "good",
-      // industrial lens
-      opMargin: isFin ? null : operatingMargin(L),
-      roic: isFin ? null : roicValue(L),
-      oeMargin: isFin ? null : ownerEarningsMargin(L),
-      netCash,
-      grahamPasses: g.passes,
-      grahamTestable: g.testable,
-      // financial lens: ROE and net margin read across every financial; tangible-equity
-      // and equity/assets are the bank and insurer measures, blank for the fee businesses.
-      roe: onEquity ? returnOnEquity(L) : null,
-      rotce: isBankIns ? returnOnTangibleEquity(L) : null,
-      netMargin: onEquity && L.netIncome != null && L.revenue ? L.netIncome / L.revenue : null,
-      equityAssets: isBankIns ? equityToAssets(L) : null,
-      // REIT lens
-      ffoM: isReit ? ffoMargin(L) : null,
-      payout: isReit ? ffoPayout(L) : null,
-      dta: isReit ? debtToAssets(L) : null,
-      // AI contestability: structural exposure tier (from SIC) and whether the company's
-      // own 10-K names AI as a competitive risk (from the filing NLP). The too-hard lens.
-      aiTier: { low: 0, moderate: 1, elevated: 2 }[aiExposure(c).tier] ?? 1,
-      aiRisk: !!language?.companies?.[c.ticker]?.aiRead?.inRisk,
-    };
-  });
+  .map((c) => { const ticker = String(c.ticker || ""); const name = c.name || ticker; return { ticker, name, key: sortKey(name) || ticker.toLowerCase() }; })
+  .filter((r) => r.ticker)
+  .sort((a, b) => a.key.localeCompare(b.key) || a.ticker.localeCompare(b.ticker));
 
-const present = new Set(rows.map((r) => r.modelKey));
-const chips = CHIP_ORDER.filter((k) => present.has(k));
-const ndCell = (v) => (v == null ? "—" : v >= 0 ? `+${fmtUSD(v)}` : fmtUSD(v));
-
-// The catalog scales by shipping a slim index (a few sourced numbers per company)
-// and building the table on the client, rather than server-rendering every row. The
-// first 50 are rendered server-side as a no-JS fallback and for instant first paint.
-const r4 = (v) => (v == null ? null : Math.round(v * 1e4) / 1e4); // ratios need no more than 4 dp
-const slim = rows.map((r) => ({
-  t: r.ticker, n: r.name, m: r.modelKey, i: r.industry, rev: r.revenue,
-  op: r4(r.opMargin), roic: r4(r.roic), oe: r4(r.oeMargin), nd: r.netCash, gp: r.grahamPasses, gt: r.grahamTestable,
-  roe: r4(r.roe), rotce: r4(r.rotce), nm: r4(r.netMargin), ea: r4(r.equityAssets),
-  ffoM: r4(r.ffoM), payout: r4(r.payout), dta: r4(r.dta),
-  nwc: r.negCycle ? 1 : 0, ax: r.aiTier, air: r.aiRisk ? 1 : 0,
-}));
-const FALLBACK = rows.slice(0, 50);
-const slimJSON = JSON.stringify(slim).replace(/</g, "\\u003c");
+const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+const letterOf = (key) => { const ch = (key[0] || "#").toUpperCase(); return /[A-Z]/.test(ch) ? ch : "#"; };
+const groups = new Map();
+for (const r of rows) {
+  const k = letterOf(r.key);
+  if (!groups.has(k)) groups.set(k, []);
+  groups.get(k).push(r);
+}
+const order = [...LETTERS.filter((l) => groups.has(l)), ...(groups.has("#") ? ["#"] : [])];
 
 const articles = (
   await getCollection("articles", ({ data }) => (import.meta.env.PROD ? !data.draft : true))
@@ -134,86 +68,42 @@ const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "
       <a class="all" href="/concepts">What the terms mean →</a>
     </div>
     <p class="method">
-      Every figure is the latest annual number from the company's own 10-K. Rank by any column,
-      filter by business model, or read the catalog through an owner's lens. We don't score them;
-      a lens explores by one of Buffett's or Graham's criteria, never a verdict. Pick a company for
-      its full Owner's Scorecard; <a href="/concepts">Concepts</a> defines every term.
+      Asked how he'd find ideas if he were starting over with little money, Buffett said he'd open the
+      manuals and start with the A's — reading every company, one by one. So here they all are,
+      alphabetically by name, each a door to its full Owner Scorecard. Search for one, or do as he did
+      and start at the top.
     </p>
 
-    <div class="toolbar" id="toolbar">
-      <div class="tbRow tbTop">
-        <input id="q" type="search" placeholder="Search ticker or name…" class="search" autocomplete="off" aria-label="Search by ticker or name" />
-        <span id="count" class="count">{rows.length} companies</span>
-        <button id="resetBtn" class="reset" type="button" hidden aria-label="Clear all filters">Clear</button>
-      </div>
-      <div class="tbRow tbScroll filters" role="group" aria-label="Filter by business model">
-        <span class="tbLbl">Model</span>
-        <button class="chip active" data-filter="all">All</button>
-        {chips.map((k) => <button class="chip" data-filter={k}>{MODEL[k]}</button>)}
-      </div>
-      <div class="tbRow tbScroll lenses" role="group" aria-label="Read by an owner's lens">
-        <span class="tbLbl">Lens</span>
-        <button class="lens active" data-lens="all">Everything</button>
-        <button class="lens" data-lens="durable">Durable returns</button>
-        <button class="lens" data-lens="cash">Cash machines</button>
-        <button class="lens" data-lens="fortress">Fortress balance sheet</button>
-        <button class="lens" data-lens="fund">Customers fund it</button>
-        <button class="lens" data-lens="graham">Graham-defensive</button>
-        <button class="lens" data-lens="ai">Moat under AI</button>
-      </div>
-    </div>
-    <p class="lensTeach" id="lensTeach" hidden></p>
-
-    <noscript><p class="nojs">Showing the first {FALLBACK.length} of {rows.length} companies. Enable JavaScript for the full sortable, filterable catalog.</p></noscript>
-
-    <div class="scroll">
-      <table class="catalog" id="catalog">
-        <thead>
-          <tr>
-            <th class="c-name sortable" data-sort="ticker">Company</th>
-            <th class="c-model">Sector</th>
-            <th class="num sortable" data-sort="revenue">Revenue</th>
-            <th class="num sortable" data-sort="opmargin"><span class="lf">Op. margin</span><span class="ls">Op.</span></th>
-            <th class="num sortable" data-sort="roic">ROIC</th>
-            <th class="num sortable" data-sort="oemargin"><span class="lf">Owner-earn.</span><span class="ls">OE</span></th>
-            <th class="num sortable" data-sort="netdebt"><span class="lf">Net cash / (debt)</span><span class="ls">Net cash</span></th>
-            <th class="num sortable" data-sort="graham">Graham</th>
-          </tr>
-        </thead>
-        <tbody>
-          {FALLBACK.map((r) => (
-            <tr
-              data-search={`${r.ticker} ${r.name}`.toLowerCase()}
-              data-model={r.modelKey}
-              data-ticker={r.ticker}
-              data-revenue={r.revenue ?? ""}
-              data-opmargin={r.opMargin ?? ""}
-              data-roic={r.roic ?? ""}
-              data-oemargin={r.oeMargin ?? ""}
-              data-netdebt={r.netCash ?? ""}
-              data-graham={r.grahamPasses ?? ""}
-            >
-              <td class="c-name">
-                <a href={`/c/${r.ticker}`} class="tkr" title={r.name}>{r.ticker}</a>
-              </td>
-              <td class="c-model">
-                <span class="tag">{r.industry}</span>
-              </td>
-              <td class="num">{r.revenue == null ? "—" : fmtUSD(r.revenue)}</td>
-              <td class="num">{pct(r.opMargin)}</td>
-              <td class="num">{pct(r.roic)}</td>
-              <td class="num">{pct(r.oeMargin)}</td>
-              <td class={`num nd ${r.netCash != null && r.netCash >= 0 ? "pos" : ""}`}>{ndCell(r.netCash)}</td>
-              <td class="num gra">{r.grahamTestable ? `${r.grahamPasses}/${r.grahamTestable}` : "—"}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <div class="toolbar">
+      <input id="q" type="search" placeholder="Search ticker or name…" class="search" autocomplete="off" aria-label="Search by ticker or name" />
+      <span id="count" class="count">{rows.length} companies</span>
     </div>
 
-    <script type="application/json" id="catalog-data" is:inline set:html={slimJSON}></script>
+    <nav class="azbar" aria-label="Jump to letter">
+      {LETTERS.map((l) => (groups.has(l)
+        ? <a href={`#L-${l}`}>{l}</a>
+        : <span class="off">{l}</span>))}
+      {groups.has("#") ? <a href="#L-num">#</a> : null}
+    </nav>
 
-    <p class="legend"><Term id="owner-earnings">Owner-earnings margin</Term> = (operating cash − capex) ÷ revenue. <Term id="net-debt">Net cash</Term> nets debt against cash and marketable securities; parentheses are net debt. Graham = how many of his defensive-investor tests the filings clear (of those computable), a floor of safety, not a buy signal; sort by it to screen.</p>
+    <div id="index">
+      {order.map((l) => (
+        <section class="let" id={l === "#" ? "L-num" : `L-${l}`}>
+          <h3 class="letH" aria-hidden="true">{l}</h3>
+          <ul class="ents">
+            {groups.get(l).map((r) => (
+              <li class="ent" data-s={`${r.name} ${r.ticker}`.toLowerCase()}>
+                <a class="entLink" href={`/c/${r.ticker}`}>
+                  <span class="n">{r.name}</span>
+                  <span class="t">{r.ticker}</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ))}
+      <p class="empty" id="empty" hidden>No company matches that. Try a ticker or part of a name.</p>
+    </div>
   </section>
 
   <div id="pool-jp" role="tabpanel" aria-labelledby="tab-jp" hidden>
@@ -225,15 +115,13 @@ const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "
     .bandHead h2 { margin: 0; }
     .all { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; flex: 0 0 auto; }
 
-    /* One catalog, two pools (United States, Japan): a segmented switch is the single way in,
-       so there is no separate route or stray link. Touch-friendly; stretches full width on a phone. */
+    /* One catalog, two pools (United States, Japan): a segmented switch is the single way in. */
     .poolTabs { display: inline-flex; margin: 22px 0 0; border: 1px solid var(--rule-strong); border-radius: 999px; padding: 3px; background: var(--surface); gap: 2px; }
     .poolTab { font-family: var(--sans); font-size: 13.5px; font-weight: 600; letter-spacing: 0.02em; color: var(--muted); background: none; border: 0; border-radius: 999px; padding: 7px 18px; cursor: pointer; display: inline-flex; align-items: baseline; gap: 7px; white-space: nowrap; }
     .poolTab:hover { color: var(--ink); }
     .poolTab[aria-selected="true"] { background: var(--solid); color: var(--solid-ink); }
     .poolTab .ct { font-size: 11px; font-weight: 500; opacity: 0.7; font-variant-numeric: tabular-nums; }
     @media (max-width: 480px) { .poolTabs { display: flex; } .poolTab { flex: 1 1 0; justify-content: center; } }
-    .count { font-size: 11.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); flex: 0 0 auto; }
 
     /* ---- writing band ---- */
     .writing { margin: 0 0 36px; }
@@ -248,94 +136,39 @@ const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "
     /* ---- catalog ---- */
     .method { font-family: var(--serif); font-style: italic; font-size: 13.5px; color: var(--muted); margin: 9px 0 0; max-width: 66ch; }
 
-    /* One sticky toolbar — search, business-model filters, the owner's lenses — so the
-       controls stay reachable while the catalog scrolls. Each filter row scrolls sideways
-       on its own rather than wrapping, keeping the toolbar a predictable height. */
-    .toolbar { position: sticky; top: 0; z-index: 20; background: var(--paper); margin: 14px 0 0; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule-strong); }
-    .tbRow { display: flex; align-items: center; gap: 8px; padding: 7px 0; }
-    .tbRow + .tbRow { border-top: 1px solid var(--rule-soft); }
-    .tbScroll { overflow-x: auto; white-space: nowrap; scrollbar-width: none; }
-    .tbScroll::-webkit-scrollbar { display: none; }
-    .tbTop { gap: 12px; }
-    .tbLbl { font-family: var(--sans); font-size: 10px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); flex: 0 0 auto; width: 40px; }
-    .search { flex: 1 1 200px; min-width: 140px; padding: 8px 11px; border: 1px solid var(--rule-strong); border-radius: 3px; font-family: var(--sans); font-size: 14px; background: var(--surface); color: var(--ink); }
+    /* Search + count, sticky so they stay reachable as the index scrolls. */
+    .toolbar { position: sticky; top: 0; z-index: 20; background: var(--paper); display: flex; align-items: center; gap: 12px; margin: 14px 0 0; padding: 8px 0; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule-strong); }
+    .search { flex: 1 1 220px; min-width: 140px; padding: 9px 12px; border: 1px solid var(--rule-strong); border-radius: 3px; font-family: var(--sans); font-size: 14px; background: var(--surface); color: var(--ink); }
     .search::placeholder { color: var(--faint); }
     .count { font-size: 11.5px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); flex: 0 0 auto; font-variant-numeric: tabular-nums; }
-    .reset { font-family: var(--sans); font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); background: none; border: 1px solid var(--rule-strong); border-radius: 3px; padding: 5px 9px; cursor: pointer; flex: 0 0 auto; }
-    .reset:hover { color: var(--accent); border-color: var(--accent); }
-    .chip { font-family: var(--sans); font-size: 11.5px; letter-spacing: 0.03em; padding: 5px 10px; border: 1px solid var(--rule-strong); background: var(--surface); color: var(--ink); cursor: pointer; text-transform: uppercase; border-radius: 3px; flex: 0 0 auto; }
-    .chip:hover { background: var(--accent-tint); }
-    .chip.active { background: var(--solid); color: var(--solid-ink); border-color: var(--solid); }
-    /* The owner's lenses: a distinct dimension from the model chips, so a pill shape and the
-       accent colour. Each teaches a value principle as you apply it. */
-    .lens { font-family: var(--sans); font-size: 11.5px; letter-spacing: 0.02em; padding: 5px 12px; border: 1px solid var(--accent); background: var(--surface); color: var(--accent); cursor: pointer; border-radius: 999px; flex: 0 0 auto; }
-    .lens:hover { background: var(--accent-tint); }
-    .lens.active { background: var(--accent); color: var(--accent-ink); }
-    .lensTeach { font-family: var(--serif); font-size: 13.5px; line-height: 1.55; color: var(--ink-soft); background: var(--accent-tint); border-left: 2px solid var(--accent); padding: 10px 14px; margin: 11px 0 0; max-width: 80ch; }
 
-    /* The column headers scroll with the table. A header frozen to the viewport proved
-       fragile inside the phone's horizontal-scroll track (it pinned mid-page), and the row is
-       not worth that, so the toolbar above carries the persistent controls instead: it stays
-       sticky so search and the filters are always reachable. The ticker column stays frozen to
-       the left, so a row keeps its name as the figures scroll sideways on a narrow screen. */
-    .scroll { margin-top: 12px; border-bottom: 1px solid var(--rule); }
-    .catalog td.empty { text-align: center; font-family: var(--serif); font-style: italic; color: var(--muted); padding: 26px 12px; }
-    table.catalog { border-collapse: collapse; width: 100%; font-size: 13.5px; font-variant-numeric: tabular-nums; }
-    .catalog thead th { font-family: var(--sans); font-weight: 600; font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); text-align: right; padding: 9px 10px 7px; white-space: nowrap; background: var(--paper); box-shadow: inset 0 -1px 0 var(--rule-strong); }
-    .catalog th.c-name, .catalog th.c-model { text-align: left; }
-    .catalog thead th.c-name { left: 0; z-index: 7; }
-    .catalog th.sortable { cursor: pointer; user-select: none; }
-    .catalog th.sortable:hover { color: var(--ink); }
-    .catalog th.sortable::after { content: "↕"; opacity: 0.35; margin-left: 4px; font-size: 10px; }
-    .catalog th.sortable.asc::after { content: "↑"; opacity: 1; }
-    .catalog th.sortable.desc::after { content: "↓"; opacity: 1; }
+    /* The A–Z rail: a quick jump to any letter; letters with no names are dimmed and dead. */
+    .azbar { display: flex; flex-wrap: wrap; gap: 1px 2px; margin: 12px 0 0; position: sticky; top: 49px; z-index: 19; background: var(--paper); padding: 6px 0; border-bottom: 1px solid var(--rule); }
+    .azbar a, .azbar span { font-family: var(--sans); font-size: 12px; font-weight: 600; letter-spacing: 0.02em; padding: 3px 7px; border-radius: 3px; min-width: 22px; text-align: center; }
+    .azbar a { color: var(--accent); }
+    .azbar a:hover { background: var(--accent-tint); text-decoration: none; }
+    .azbar .off { color: var(--faint); }
 
-    .catalog td { padding: 9px 10px; border-bottom: 1px solid var(--rule); text-align: right; white-space: nowrap; }
-    .catalog td.c-name, .catalog td.c-model { text-align: left; }
-    .c-name { position: sticky; left: 0; background: var(--paper); z-index: 4; }
-    .tkr { font-weight: 700; font-variant-numeric: tabular-nums; }
-    .tkr:hover { color: var(--accent); }
-    .nm { display: block; font-size: 11.5px; color: var(--muted); max-width: 26ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 1px; }
-    .tag { display: inline-block; font-size: 10.5px; letter-spacing: 0.02em; color: var(--tag-ink); background: var(--tag-bg); border-radius: 3px; padding: 2px 8px; white-space: nowrap; }
-    .num { color: var(--ink-soft); }
-    .gra { color: var(--muted); }
-    .nd.pos { color: var(--good); }
-    tbody tr:hover td { background: var(--surface-2); }
-    tbody tr:hover .c-name { background: var(--surface-2); }
-
-    .legend { font-size: 11.5px; color: var(--faint); margin: 10px 0 0; line-height: 1.5; }
-    .nojs { font-size: 12.5px; color: var(--warn); margin: 8px 0 0; }
-
-    .ls { display: none; }
-
-    /* Below the desktop width the eight columns outgrow the content column, so the catalog
-       gets its own sideways track, with the ticker column frozen to the left. The page itself
-       never scrolls sideways. */
-    @media (max-width: 760px) {
-      .scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-    }
+    .let { margin: 0; scroll-margin-top: 92px; }
+    .letH { font-family: var(--sans); font-weight: 800; font-size: 13px; letter-spacing: 0.08em; color: var(--muted); margin: 22px 0 0; padding-bottom: 5px; border-bottom: 1px solid var(--rule-strong); }
+    .ents { list-style: none; padding: 0; margin: 6px 0 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 0 24px; }
+    .ent { padding: 8px 2px; border-bottom: 1px solid var(--rule); }
+    .entLink { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; min-width: 0; }
+    .entLink:hover { text-decoration: none; }
+    .entLink:hover .n { color: var(--accent); }
+    .n { font-size: 14px; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+    .t { font-family: var(--sans); font-weight: 700; font-variant-numeric: tabular-nums; font-size: 11px; letter-spacing: 0.03em; color: var(--muted); flex: 0 0 auto; }
+    .entLink:hover .t { color: var(--accent); }
+    .empty { font-family: var(--serif); font-style: italic; color: var(--muted); padding: 26px 2px; }
 
     @media (max-width: 640px) {
       .cards { grid-template-columns: 1fr; gap: 14px; }
       .cards li { border-left: 0; border-top: 1px solid var(--rule); padding: 10px 0 0; }
     }
-
-    /* Tighten the catalog on a phone so more columns fit before it scrolls, and
-       swap the long headers for short ones. The ticker column stays sticky. */
-    @media (max-width: 560px) {
-      table.catalog { font-size: 12.5px; }
-      .catalog thead th { padding: 8px 7px 6px; font-size: 10px; letter-spacing: 0.03em; }
-      .catalog td { padding: 8px 7px; }
-      .lf { display: none; }
-      .ls { display: inline; }
-      .nm { max-width: 20ch; font-size: 10.5px; }
-      .tag { padding: 1px 5px; }
-    }
   </style>
 
   <script is:inline>
-    /* The market switch: one catalog, two pools, one shown at a time. A /#japan deep link
-       opens the Japan pool. */
+    /* The market switch: one catalog, two pools, one shown at a time. A /#japan deep link opens Japan. */
     (function () {
       const tabs = Array.from(document.querySelectorAll(".poolTab"));
       const panels = { us: document.getElementById("pool-us"), jp: document.getElementById("pool-jp") };
@@ -352,188 +185,54 @@ const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "
   </script>
 
   <script is:inline>
+    /* Search filters the index in place: hide the names that don't match, hide any letter that
+       empties out, and dim the A–Z rail to what's left. No rebuild, so it works on the
+       server-rendered list and degrades to a plain A–Z directory with JS off. */
     (function () {
-      const table = document.getElementById("catalog");
-      const dataEl = document.getElementById("catalog-data");
-      if (!table || !dataEl || !table.tHead) return;
-      const tbody = table.tBodies[0], thead = table.tHead;
-      let DATA = [];
-      try { DATA = JSON.parse(dataEl.textContent || "[]"); } catch (e) { return; }
-
-      // Astro scopes this component's CSS with a data-astro-cid-* attribute stamped on every
-      // element of the template. The header and rows below are rebuilt with innerHTML, so their
-      // elements are created without that attribute and the scoped rules — the sticky frozen
-      // header, the long/short label swap, the sector pill, the column alignment — silently do
-      // not apply (the bug that left the header doubled and unfrozen). Re-stamp the scope on
-      // every generated element so the styling and the frozen header hold.
-      const SCOPE = (table.getAttributeNames ? table.getAttributeNames() : []).filter((n) => n.indexOf("data-astro-cid-") === 0);
-      const stamp = (root) => { if (SCOPE.length) for (const el of root.querySelectorAll("*")) for (const a of SCOPE) el.setAttribute(a, ""); };
-
-      const esc = (s) => String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-      function usd(v) { if (v == null) return "—"; const neg = v < 0, a = Math.abs(v); let s; if (a >= 1e9) s = "$" + (a / 1e9).toFixed(1) + "B"; else if (a >= 1e6) s = "$" + Math.round(a / 1e6) + "M"; else if (a >= 1e3) s = "$" + Math.round(a / 1e3) + "K"; else s = "$" + Math.round(a); return neg ? "(" + s + ")" : s; }
-      const pct = (v) => (v == null ? "—" : (v < 0 ? "−" : "") + Math.abs(v * 100).toFixed(0) + "%");
-      const pct1 = (v) => (v == null ? "—" : Math.abs(v * 100).toFixed(1) + "%");
-      const ndCell = (v) => (v == null ? "—" : v >= 0 ? "+" + usd(v) : usd(v));
-
-      // Column sets adapt to the model you filter to: a bank or insurer reads on return
-      // on equity, a REIT on FFO, an industrial on owner economics. Company and sector
-      // are always shown; this is why a financial isn't a row of dashes.
-      const COLSETS = {
-        industrial: [
-          { k: "rev", label: "Revenue", fmt: usd },
-          { k: "op", label: "Op. margin", short: "Op.", fmt: pct },
-          { k: "roic", label: "ROIC", fmt: pct },
-          { k: "oe", label: "Owner-earn.", short: "OE", fmt: pct },
-          { k: "nd", label: "Net cash / (debt)", short: "Net cash", kind: "nd" },
-          { k: "gp", label: "Graham", kind: "graham" },
-        ],
-        financial: [
-          { k: "rev", label: "Revenue", fmt: usd },
-          { k: "roe", label: "ROE", fmt: pct },
-          { k: "nm", label: "Net margin", short: "Net mgn", fmt: pct },
-          { k: "rotce", label: "ROTCE", fmt: pct },
-          { k: "ea", label: "Equity / assets", short: "Eq/assets", fmt: pct1 },
-        ],
-        reit: [
-          { k: "rev", label: "Revenue", fmt: usd },
-          { k: "ffoM", label: "FFO margin", fmt: pct },
-          { k: "payout", label: "Payout (FFO)", short: "Payout", fmt: pct },
-          { k: "dta", label: "Debt / assets", short: "Debt/assets", fmt: pct },
-        ],
-      };
-      const colsetFor = (f) => (f === "financial" ? COLSETS.financial : f === "reit" ? COLSETS.reit : COLSETS.industrial);
-
       const q = document.getElementById("q");
-      const chips = Array.from(document.querySelectorAll(".chip"));
       const countEl = document.getElementById("count");
-      let term = "", filter = "all", sortKey = null, sortDir = -1, lens = "all";
+      const emptyEl = document.getElementById("empty");
+      const azbar = document.querySelector(".azbar");
+      if (!q) return;
+      const sections = Array.from(document.querySelectorAll(".let"));
+      const ents = Array.from(document.querySelectorAll(".ent"));
+      const total = ents.length;
 
-      // The owner's lenses: each filters the catalog by one of Buffett's or Graham's
-      // criteria and teaches the principle, and its honest limit, in the same breath. A
-      // lens is a way to explore, never a ranking; clearing it is not a buy and passing it
-      // is not either. Computed on the same sourced figures the columns show.
-      const LENSES = {
-        all: { pass: () => true, teach: "" },
-        durable: {
-          pass: (r) => r.roic != null && r.roic >= 0.15,
-          teach: "Durable returns. A return on invested capital that stays above 15% year after year is Buffett's clearest moat signal, because over time a stock tracks the returns of the business beneath it. High alone is not a verdict: asset-light firms read high because their capital is expensed, and the top of a cycle flatters everyone, so read the record and the 10-K before you trust it.",
-        },
-        cash: {
-          pass: (r) => r.oe != null && r.oe >= 0.15,
-          teach: "Cash machines. More than fifteen cents of every revenue dollar reaches owners as cash, after the capital spending needed just to stand still. Owner earnings are the honest read where reported profit can flatter, but a fat margin earned on a fading business is still a fading business.",
-        },
-        fortress: {
-          pass: (r) => r.nd != null && r.nd > 0,
-          teach: "Fortress balance sheet. More cash than debt. A company that cannot be killed never has to be timed, and net cash is the option to buy when others are forced to sell. This is safety, not cheapness, and a fortress balance sheet can still sit inside a mediocre business.",
-        },
-        fund: {
-          pass: (r) => r.nwc === 1,
-          teach: "Customers fund it. A negative cash-conversion cycle: the company collects from customers before it pays suppliers, so it grows on other people's money, the same float Buffett prized in insurance. It needs no owner capital to expand its working capital, a quiet structural edge that the biggest retailers and platforms compound on, though the edge is in the funding, not by itself in the quality of the business.",
-        },
-        graham: {
-          pass: (r) => r.gp != null && r.gp >= 5,
-          teach: "Graham-defensive. Clears at least five of Graham's tests for a conservative buyer: adequate size, strong liquidity, conservative debt, a profit every year, an unbroken dividend, and real earnings growth. Failing one is no veto and passing all is no buy. Many fine modern compounders fail his strictest liquidity rules by design; he meant this as a discipline against overpaying, not a screen for greatness.",
-        },
-        ai: {
-          pass: (r) => r.ax === 2,
-          teach: "Moat under AI. The businesses whose product is software or information — the very thing capable AI now produces more cheaply — so a moat that looked durable on the record is more contestable going forward. This is Munger's “too-hard pile,” surfaced: when a credible substitute can be built for a fraction of the incumbent's price, pricing power erodes first. A lens for what to scrutinize, not a verdict; some of these moats endure on network effects, switching costs or regulation. Each company's page shows whether its own 10-K names AI as a competitive risk, and whether the moat was durable to begin with. Cross it with a model filter (Asset-light especially) to sharpen the screen.",
-        },
-      };
-
-      function cell(r, col) {
-        if (col.kind === "graham") return '<td class="num gra">' + (r.gt ? r.gp + "/" + r.gt : "—") + "</td>";
-        if (col.kind === "nd") { const v = r.nd; return '<td class="num nd' + (v != null && v >= 0 ? " pos" : "") + '">' + ndCell(v) + "</td>"; }
-        return '<td class="num">' + col.fmt(r[col.k]) + "</td>";
-      }
-      function rowHTML(r, cols) {
-        return '<tr><td class="c-name"><a href="/c/' + esc(r.t) + '" class="tkr" title="' + esc(r.n) + '">' + esc(r.t) +
-          '</a></td><td class="c-model"><span class="tag">' + esc(r.i) + "</span></td>" + cols.map((c) => cell(r, c)).join("") + "</tr>";
-      }
-      function headHTML(cols) {
-        let h = '<tr><th class="c-name sortable" data-k="t">Company</th><th class="c-model">Sector</th>';
-        for (const c of cols) {
-          const on = sortKey === c.k ? (sortDir > 0 ? " asc" : " desc") : "";
-          const lbl = c.short ? '<span class="lf">' + c.label + '</span><span class="ls">' + c.short + "</span>" : c.label;
-          h += '<th class="num sortable' + on + '" data-k="' + c.k + '">' + lbl + "</th>";
+      function apply() {
+        const term = (q.value || "").trim().toLowerCase();
+        let shown = 0;
+        const live = new Set();
+        if (!term) {
+          ents.forEach((e) => (e.hidden = false));
+          sections.forEach((s) => { s.hidden = false; live.add(s.id); });
+          shown = total;
+        } else {
+          sections.forEach((s) => {
+            let any = false;
+            s.querySelectorAll(".ent").forEach((e) => {
+              const m = e.dataset.s.indexOf(term) >= 0;
+              e.hidden = !m;
+              if (m) { any = true; shown++; }
+            });
+            s.hidden = !any;
+            if (any) live.add(s.id);
+          });
         }
-        return h + "</tr>";
-      }
-      const numv = (v) => (v == null || v === "" ? -Infinity : v);
-
-      function render() {
-        const cols = colsetFor(filter);
-        thead.innerHTML = headHTML(cols);
-        stamp(thead);
-        let view = DATA.filter((r) => (!term || (r.t + " " + r.n).toLowerCase().indexOf(term) >= 0) && (filter === "all" || r.m === filter) && LENSES[lens].pass(r));
-        if (sortKey) {
-          const k = sortKey, dir = sortDir;
-          view = view.slice().sort(k === "t" ? (a, b) => a.t.localeCompare(b.t) * dir : (a, b) => (numv(a[k]) - numv(b[k])) * dir);
-        }
-        tbody.innerHTML = view.length
-          ? view.map((r) => rowHTML(r, cols)).join("")
-          : '<tr><td class="empty" colspan="' + (cols.length + 2) + '">No companies match this lens and model together (a bank is not read on ROIC, for instance). Try one at a time.</td></tr>';
-        stamp(tbody);
-        if (countEl) countEl.textContent = view.length + (view.length === 1 ? " company" : " companies");
+        if (emptyEl) emptyEl.hidden = shown !== 0;
+        if (countEl) countEl.textContent = shown + (shown === 1 ? " company" : " companies");
+        if (azbar) azbar.querySelectorAll("a").forEach((a) => {
+          const on = live.has((a.getAttribute("href") || "").slice(1));
+          a.style.opacity = on ? "" : "0.3";
+          a.style.pointerEvents = on ? "" : "none";
+        });
       }
 
-      const lensBtns = Array.from(document.querySelectorAll(".lens"));
-      const lensTeachEl = document.getElementById("lensTeach");
-      const resetBtn = document.getElementById("resetBtn");
-      const validModels = new Set(["all"].concat(chips.map((c) => c.dataset.filter)));
-
-      // Reflect the current state on the controls: which chip/lens reads active, the lens's
-      // teaching note, and whether anything is filtered (so Clear can appear).
-      function syncControls() {
-        chips.forEach((x) => x.classList.toggle("active", x.dataset.filter === filter));
-        lensBtns.forEach((x) => x.classList.toggle("active", x.dataset.lens === lens));
-        const t = LENSES[lens] ? LENSES[lens].teach : "";
-        if (lensTeachEl) { lensTeachEl.textContent = t; lensTeachEl.hidden = !t; }
-        if (resetBtn) resetBtn.hidden = !(filter !== "all" || lens !== "all" || term || sortKey);
-      }
-
-      // Keep the URL in step with the view, so a filtered, sorted catalog is a shareable link.
-      function writeURL() {
-        try {
-          const u = new URL(location.href), p = u.searchParams;
-          filter !== "all" ? p.set("model", filter) : p.delete("model");
-          lens !== "all" ? p.set("lens", lens) : p.delete("lens");
-          term ? p.set("q", term) : p.delete("q");
-          sortKey ? p.set("sort", sortKey + (sortDir > 0 ? ".a" : ".d")) : p.delete("sort");
-          history.replaceState(null, "", u);
-        } catch (e) {}
-      }
-      function readURL() {
-        try {
-          const p = new URL(location.href).searchParams;
-          const m = p.get("model"); if (m && validModels.has(m)) filter = m;
-          const l = p.get("lens"); if (l && LENSES[l]) lens = l;
-          const qq = p.get("q"); if (qq) { term = qq.toLowerCase(); if (q) q.value = qq; }
-          const s = p.get("sort"); if (s) { const parts = s.split("."); sortKey = parts[0]; sortDir = parts[1] === "a" ? 1 : -1; }
-        } catch (e) {}
-      }
-
-      function apply() { syncControls(); render(); writeURL(); }
-
-      q && q.addEventListener("input", () => { term = (q.value || "").trim().toLowerCase(); apply(); });
-      chips.forEach((c) => c.addEventListener("click", () => { filter = c.dataset.filter; sortKey = null; sortDir = -1; apply(); }));
-      lensBtns.forEach((b) => b.addEventListener("click", () => { lens = b.dataset.lens; apply(); }));
-      table.addEventListener("click", (e) => {
-        const th = e.target.closest && e.target.closest("th.sortable"); if (!th) return;
-        const k = th.dataset.k;
-        if (sortKey === k) sortDir *= -1; else { sortKey = k; sortDir = k === "t" ? 1 : -1; }
-        apply();
-      });
-      resetBtn && resetBtn.addEventListener("click", () => {
-        filter = "all"; lens = "all"; term = ""; sortKey = null; sortDir = -1; if (q) q.value = ""; apply();
-      });
+      q.addEventListener("input", apply);
       // "/" jumps to the search box, the way a terminal would.
       document.addEventListener("keydown", (e) => {
         const tag = ((document.activeElement || {}).tagName || "").toLowerCase();
-        if (e.key === "/" && q && tag !== "input" && tag !== "textarea" && tag !== "select") { e.preventDefault(); q.focus(); }
+        if (e.key === "/" && tag !== "input" && tag !== "textarea" && tag !== "select") { e.preventDefault(); q.focus(); }
       });
-
-      readURL();
-      apply();
     })();
   </script>
 </BaseLayout>
