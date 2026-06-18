@@ -227,6 +227,11 @@ const HEAD_TOKEN = /^(item\s*1[ab]?\b\.?|part\s*i+\b\.?|general development of (
 // lead verb jammed into a preposition by bad splitting ("We provide, found in…", "We operate and in
 // the U.S. as a whole"). KMI and WAL slipped a mangled hero through on these; reject them.
 const BIZ_FRAGMENT = /\b(found|described|set forth|referred to|listed|contained|incorporated)\s+in\s+(items?|parts?|notes?|exhibits?)\b|\b(provide|operate|offer|sell|develop|design|market|supply|engage)s?\s*,\s*(found|described|in\b)|\b(operate|provide|offer|sell|develop|design|market|supply)s?\s+and\s+(in|to|with|as|the)\b/i;
+// An MD&A results-of-operations sentence, not a description: a year-over-year change discussion
+// ("Increases in operating income primarily result from…", "Gentex sales were $2.27 billion", "revenues
+// increased 17.3% compared to…", "order backlog decreased"). These read as the business when a short
+// name fragment ("com" in "income") false-matches the subject; reject them outright.
+const BIZ_RESULTS = /\b(increases?|decreases?)\s+(in|of)\b[^.]{0,40}\b(result|primarily|compared|were|was)\b|\bprimarily (result(ed|s)? from|due to|driven by|attributable)|\bcompared (to|with)\s+(the\s+)?(prior|fiscal|preceding|last|\d{4})|\b(net sales|net revenues?|revenues?|sales|net income|operating (income|expenses?|profit)|gross (profit|margin)|order backlog|backlog|earnings|cash flows?)\s+(of\s+\$|were\s+\$|was\s+\$|increased|decreased|grew|declined|rose|fell|totaled|improved)|\b\d{1,2}(\.\d+)?\s?%\s+(increase|decrease|decline|growth|higher|lower)|\byear[-\s]over[-\s]year\b/i;
 // A leading section heading glued to a brief sentence by the extraction ("Overview Archer is…",
 // "Business Overview Aramark is…"). Stripped so the brief reads from the real subject; if a sentence
 // is ONLY a heading/cross-reference, the BIZ_RICH check downstream still drops it.
@@ -327,7 +332,7 @@ function businessDescription(sents, name, ticker) {
     if (LEAD_VERB.test(s) && name) s = `${name.trim()} ${s}`; // restore a subject split off entirely
     if (/^[a-z]/.test(s)) s = s.charAt(0).toUpperCase() + s.slice(1);
     if (s.length < 34 || s.length > 700) continue;
-    if (BIZ_SKIP.test(s) || BIZ_WEAK.test(s) || BIZ_FRAGMENT.test(s)) continue;
+    if (BIZ_SKIP.test(s) || BIZ_WEAK.test(s) || BIZ_FRAGMENT.test(s) || BIZ_RESULTS.test(s)) continue;
     const isa = BIZ_ISA.test(s);
     if (!BIZ_DOING.test(s) && !isa && !BIZ_ENGAGED.test(s)) continue;
     const head = s.split(/\s+/).slice(0, 6).join(" ");

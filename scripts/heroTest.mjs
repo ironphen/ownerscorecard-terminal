@@ -113,6 +113,12 @@ const cases = [
   ["NVDA-pioneered", "NVIDIA Corporation",
     ["Our Businesses NVIDIA pioneered accelerated computing to help solve the most challenging computational problems."],
     /NVIDIA pioneered accelerated computing/i],
+  // An MD&A results-of-operations sentence must be rejected, not shown as the business — a wrong
+  // description is worse than the honest computed fallback (Amazon slipped one through when "com" in
+  // "income" false-matched the subject).
+  ["AMZN-results", "Amazon.com, Inc.",
+    ["Increases in operating income primarily result from increases in sales of products and services and efficiently managing our operating costs."],
+    null],
 ];
 
 let pass = 0, fail = 0;
