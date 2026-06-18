@@ -888,6 +888,10 @@ async function main() {
         // computed industry phrase when none is a real description, so adding candidates only helps.
         business: bizLede,
         brief: businessBrief(bizSents, bizLede, c.name),
+        // Extraction diagnostics for the qualitative audit: the word count of each parsed section, so
+        // a missing lede can be read as an EXTRACTION failure (Item 1 came up empty) versus a SCORER
+        // failure (Item 1 is full but no sentence was accepted) — the distinction that drives the fix.
+        extract: { business: cur.business.words, mdna: cur.mdna.words, risk: cur.risk.words, ledeFromFiling: !!bizLede },
         ownerFlags: flags,
         mdna: {
           words: cur.mdna.words, fog: cur.mdna.fog, hedgeDensity: Math.round(cur.mdna.hedgeDensity * 1e4) / 1e4,
