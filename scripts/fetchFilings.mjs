@@ -894,17 +894,21 @@ async function main() {
     // is wrapped so a single odd filing that trips one of the text detectors logs and is skipped
     // rather than aborting a long run mid-way and losing every company parsed before it.
     try {
-      const bizSents = [...(cur.mdna?.lead || []), ...(cur.business.lead?.length ? cur.business.lead : (cur.business.sents || []))];
+      // Item 1 (Business) is the SEC-required description of the business, so it leads the candidate
+      // pool and earns the earliness bonus; the MD&A Overview follows only as a fallback for names
+      // whose Item 1 is thin or incorporated by reference. (Prepending MD&A, as before, let its
+      // heading and boilerplate — "Management's Discussion and Analysis…" — drown the real Item 1
+      // opener for J&J, Disney, UPS, FedEx, AT&T, Marathon and dozens like them.)
+      const bizLead = cur.business.lead?.length ? cur.business.lead : (cur.business.sents || []);
+      const bizSents = [...bizLead, ...(cur.mdna?.lead || [])];
       const bizLede = businessDescription(bizSents, c.name, c.ticker);
       out[tk] = {
         fy: cur.reportDate?.slice(0, 4) || null,
         priorFy: prior?.reportDate?.slice(0, 4) || null,
         sourceUrl: cur.url,
-        // Offer the MD&A Overview opening first, then the Item 1 Business lead: the Overview is
-        // often the cleanest plain-language statement of what the company does ("We operate a leading
-        // online marketplace…"), where Item 1 can open on corporate structure or boilerplate.
-        // businessDescription scores every candidate and picks the strongest, falling back to the
-        // computed industry phrase when none is a real description, so adding candidates only helps.
+        // Item 1 Business leads, MD&A Overview follows as a fallback: businessDescription scores every
+        // candidate and picks the strongest, falling back to the computed industry phrase when none is
+        // a real description, so keeping the Overview as a backup only helps a thin Item 1.
         business: bizLede,
         brief: businessBrief(bizSents, bizLede, c.name),
         // Extraction diagnostics for the qualitative audit: the word count of each parsed section, so
