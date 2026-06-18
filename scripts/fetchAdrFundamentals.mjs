@@ -77,6 +77,20 @@ const CONCEPTS = {
   // shares (unit "shares")
   sharesDiluted: ["WeightedAverageShares", "AdjustedWeightedAverageShares", "WeightedAverageNumberOfOrdinarySharesOutstandingDiluted", "WeightedAverageNumberOfDilutedSharesOutstanding", "WeightedAverageNumberOfShareOutstandingBasicAndDiluted"],
   sharesOutstanding: ["NumberOfSharesOutstanding", "CommonStockSharesOutstanding"],
+  // --- banks & insurers, so a Shinhan or an Aegon reads on its own statements like a US financial.
+  // IFRS first, US-GAAP fallback; null for non-financials. The insurance lines span the IFRS 17
+  // transition (InsuranceRevenue/ServiceExpenses) and the older presentation (PremiumsRevenue), so
+  // both are listed. Net interest income is income less expense for most IFRS banks, so interest
+  // income is captured and the bank lens nets it against InterestExpense (already above).
+  netInterestIncome: ["InterestIncomeExpenseNet", "RevenueFromInterest", "InterestRevenueCalculatedUsingEffectiveInterestMethod", "InterestIncome", "InterestAndSimilarIncome"],
+  noninterestIncome: ["RevenueFromFeeAndCommissionIncome", "FeeAndCommissionIncome", "NoninterestIncome", "RevenueFromDividends"],
+  noninterestExpense: ["NoninterestExpense", "AdministrativeExpense"],
+  provisionForCreditLosses: ["ImpairmentLossRecognisedInProfitOrLossLoansAndAdvances", "ImpairmentLossOnFinancialAssetsNet", "AllowanceForCreditLossesFinancialAssets", "ProvisionForLoanLeaseAndOtherLosses", "ProvisionForLoanAndLeaseLosses", "ProvisionForCreditLossExpenseReversal"],
+  deposits: ["DepositsFromCustomers", "DepositsFromBanks", "Deposits"],
+  premiumsEarned: ["InsuranceRevenue", "PremiumsRevenue", "RevenueFromInsuranceContractsIssued", "PremiumsEarnedNet", "PremiumsEarnedNetPropertyAndCasualty"],
+  claimsIncurred: ["InsuranceServiceExpensesFromInsuranceContractsIssued", "InsuranceClaimsAndBenefitsPaidNetOfReinsuranceRecoveries", "InsuranceClaimsAndBenefitsPaid", "PolicyholderBenefitsAndClaimsIncurredNet", "IncurredClaimsPropertyCasualtyAndLiability"],
+  investmentIncome: ["NetInvestmentIncome", "InvestmentIncome", "InvestmentRevenue"],
+  lossReserves: ["LiabilitiesUnderInsuranceContractsAndReinsuranceContractsIssued", "InsuranceContractLiabilities", "LiabilityForClaimsAndClaimsAdjustmentExpense", "LiabilityForFuturePolicyBenefits"],
 };
 
 async function getJSON(url) {
@@ -272,7 +286,7 @@ async function main() {
     const inst = (tags) => latestObservation(facts, tags, ccy, true)?.val ?? null;
 
     const ha = Object.fromEntries(Object.keys(CONCEPTS).map((k) => [k, collectAnnual(facts, CONCEPTS[k], ccy)]));
-    const hi = Object.fromEntries(["totalAssets", "currentAssets", "currentLiabilities", "totalLiabilities", "cashAndEquivalents", "shortTermInvestments", "receivables", "inventory", "accountsPayable", "equity", "goodwill", "intangibleAssets", "longTermDebt", "currentDebt"].map((k) => [k, collectInstant(facts, CONCEPTS[k], ccy)]));
+    const hi = Object.fromEntries(["totalAssets", "currentAssets", "currentLiabilities", "totalLiabilities", "cashAndEquivalents", "shortTermInvestments", "receivables", "inventory", "accountsPayable", "equity", "goodwill", "intangibleAssets", "longTermDebt", "currentDebt", "deposits", "lossReserves"].map((k) => [k, collectInstant(facts, CONCEPTS[k], ccy)]));
     const shAnnual = collectAnnual(facts, CONCEPTS.sharesDiluted, "shares");
     const shInstant = collectInstant(facts, CONCEPTS.sharesOutstanding, "shares");
 
@@ -305,6 +319,17 @@ async function main() {
         totalAssets: hi.totalAssets[fy] ?? null,
         goodwill: hi.goodwill[fy] ?? null,
         intangibleAssets: hi.intangibleAssets[fy] ?? null,
+        // financial (banks/insurers) lines — null for industrials, so the financialKind-routed
+        // scorecards read a foreign bank or insurer on its own statements.
+        netInterestIncome: ha.netInterestIncome[fy] ?? null,
+        noninterestIncome: ha.noninterestIncome[fy] ?? null,
+        noninterestExpense: ha.noninterestExpense[fy] ?? null,
+        provisionForCreditLosses: ha.provisionForCreditLosses[fy] ?? null,
+        deposits: hi.deposits[fy] ?? null,
+        premiumsEarned: ha.premiumsEarned[fy] ?? null,
+        claimsIncurred: ha.claimsIncurred[fy] ?? null,
+        investmentIncome: ha.investmentIncome[fy] ?? null,
+        lossReserves: hi.lossReserves[fy] ?? null,
         sharesDiluted: shAnnual[fy] ?? shInstant[fy] ?? null,
       },
     }));
@@ -323,6 +348,9 @@ async function main() {
         stockholdersEquity: inst(CONCEPTS.equity), cashAndEquivalents: inst(CONCEPTS.cashAndEquivalents), shortTermInvestments: inst(CONCEPTS.shortTermInvestments),
         receivables: inst(CONCEPTS.receivables), inventory: inst(CONCEPTS.inventory), accountsPayable: inst(CONCEPTS.accountsPayable),
         totalAssets: inst(CONCEPTS.totalAssets), goodwill: inst(CONCEPTS.goodwill), intangibleAssets: inst(CONCEPTS.intangibleAssets),
+        netInterestIncome: tf(CONCEPTS.netInterestIncome), noninterestIncome: tf(CONCEPTS.noninterestIncome), noninterestExpense: tf(CONCEPTS.noninterestExpense),
+        provisionForCreditLosses: tf(CONCEPTS.provisionForCreditLosses), deposits: inst(CONCEPTS.deposits),
+        premiumsEarned: tf(CONCEPTS.premiumsEarned), claimsIncurred: tf(CONCEPTS.claimsIncurred), investmentIncome: tf(CONCEPTS.investmentIncome), lossReserves: inst(CONCEPTS.lossReserves),
         sharesDiluted: pickInstant(facts, CONCEPTS.sharesOutstanding, "shares")?.val ?? latestObservation(facts, CONCEPTS.sharesDiluted, "shares", false)?.val ?? null,
       },
     } : null;
