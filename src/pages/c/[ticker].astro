@@ -9,6 +9,7 @@ import BusinessRead from "../../components/BusinessRead.astro";
 import Segments from "../../components/Segments.astro";
 import OwnersRead from "../../components/OwnersRead.astro";
 import OwnerNotice from "../../components/OwnerNotice.astro";
+import CandorRead from "../../components/CandorRead.astro";
 import Capital from "../../components/Capital.astro";
 import Inversion from "../../components/Inversion.astro";
 import ActHeader from "../../components/ActHeader.astro";
@@ -136,6 +137,7 @@ const fmtDate = (d) =>
       <ActHeader n="V" title="Context" lede="The supporting record: what changed in the latest filing, how it stands against peers, and anything written about it here." />
       <div id="sec-changes" class="sec"><OwnersRead company={fund} /></div>
       <div id="sec-notice" class="sec"><OwnerNotice company={fund} /></div>
+      <div id="sec-candor" class="sec"><CandorRead company={fund} /></div>
       <div id="sec-peers" class="sec"><Peers company={fund} /></div>
       {related.length ? (
         <div id="sec-writing" class="sec">
