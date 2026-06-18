@@ -473,12 +473,13 @@ export function ownerEarningsMargin(L) {
   return (L.cashFromOps - Math.abs(L.capex)) / L.revenue;
 }
 
-// The through-cycle reading of a per-year metric: its median across the most recent n fiscal years
-// in the record. Graham and Buffett judge a business on its normalized record, not one peak or
-// trough year ("average out the good and bad years"), so the returns checks tone on this when the
-// history is there. Median, not mean, so a single freak year doesn't drag the read. Null when there
-// are fewer than three years to normalize, in which case the caller falls back to the latest year.
-export function throughCycle(company, metricFn, n = 5) {
+// The through-cycle reading of a per-year metric: its median across the record (up to the ~10 years
+// of history we hold). Graham and Buffett judge a business on its normalized record, not one peak or
+// trough year ("average out the good and bad years"), and a full cycle for a cyclical runs longer
+// than five years, so we take the whole record — the same window the durability read and the
+// business brief already use, so the page agrees with itself. Median, not mean, so a single freak
+// year doesn't drag the read. Null below three years, where the caller falls back to the latest year.
+export function throughCycle(company, metricFn, n = 12) {
   const hist = Array.isArray(company?.history) ? company.history : [];
   const vals = hist.map((h) => metricFn(h?.lines)).filter((v) => v != null && Number.isFinite(v));
   if (vals.length < 3) return null;
