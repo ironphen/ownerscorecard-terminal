@@ -1,0 +1,207 @@
+---
+// "Current Position" — Value Line's near-term-health box, but read rather than listed. The freshest
+// balance sheet (latest quarter), the liquidity ladder by quality of asset, the three ratios as a
+// ladder of strictness, the survival reads Value Line skips (debt due vs. cash, runway for a burner),
+// and the teaching that makes a sub-1 ratio honest. Derivation lives in lib/currentPosition.mjs; this
+// presents and never grades. Withheld for financials (no current/non-current split).
+import { currentPosition } from "../lib/currentPosition.mjs";
+import { fmtUSD } from "../lib/fundamentals.mjs";
+
+const { company } = Astro.props;
+const cp = currentPosition(company);
+
+const x1 = (v, dp = 2) => (v == null ? "—" : `${v.toFixed(dp)}×`);
+const pc = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.abs(v * 100).toFixed(dp)}%`);
+const fmtDate = (s) => { try { return new Date(s + "T00:00:00Z").toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric", timeZone: "UTC" }); } catch { return s; } };
+
+// The ladders: current assets most- to least-liquid, current liabilities led by debt due, with the
+// residual "other" so the parts sum to the total the filing reports.
+let assetRows = [], liabRows = [];
+if (cp) {
+  const c = cp.components;
+  const otherA = cp.currentAssets - ((c.cash ?? 0) + (c.shortTermInvestments ?? 0) + (c.receivables ?? 0) + (c.inventory ?? 0));
+  assetRows = [
+    ["Cash & short-term investments", (c.cash ?? 0) + (c.shortTermInvestments ?? 0)],
+    ["Receivables", c.receivables],
+    ["Inventory", c.inventory],
+    ["Other current assets", otherA > 1e5 ? otherA : null],
+  ].filter((r) => r[1] != null && r[1] !== 0);
+  const otherL = cp.currentLiabilities - ((c.debtDue ?? 0) + (c.accountsPayable ?? 0));
+  liabRows = [
+    ["Debt due within a year", c.debtDue],
+    ["Accounts payable", c.accountsPayable],
+    ["Other current liabilities", otherL > 1e5 ? otherL : null],
+  ].filter((r) => r[1] != null && r[1] !== 0);
+}
+
+// Current-ratio sparkline across the recent quarters.
+function spark(vals, w = 120, h = 24) {
+  const vs = vals.filter((v) => v != null);
+  if (vs.length < 3) return null;
+  const min = Math.min(...vs), max = Math.max(...vs), span = max - min || 1;
+  const x = (i) => (w * i) / (vals.length - 1);
+  const y = (v) => h - 2 - (h - 4) * ((v - min) / span);
+  let d = "", started = false;
+  vals.forEach((v, i) => { if (v == null) return; d += `${started ? "L" : "M"}${x(i).toFixed(1)},${y(v).toFixed(1)}`; started = true; });
+  const oneY = min < 1 && max > 1 ? y(1) : null; // a reference line at 1.0× where the series crosses it
+  return { d, w, h, oneY };
+}
+const sp = cp ? spark(cp.series.map((s) => s.cr)) : null;
+const trendFirst = cp && cp.series.length >= 3 ? cp.series[0] : null;
+---
+
+{cp ? (
+  <section class="cpos">
+    <div class="head">
+      <h3 class="secTitle">Current Position</h3>
+      <span class="asof">{cp.fresh ? "as of the latest quarter" : "as of fiscal year-end"}{cp.asOf ? `, ${fmtDate(cp.asOf)}` : ""}</span>
+    </div>
+    <p class="intro">
+      The near-term survival question, off the freshest balance sheet: can the business pay what it owes
+      this year? Value Line lists these; we read them — the quality of the assets, the debt actually
+      coming due, and what a low ratio really means here.
+    </p>
+
+    <div class="ladders">
+      <div class="lad">
+        <div class="ladHead"><span>Current assets</span><b>{fmtUSD(cp.currentAssets)}</b></div>
+        <ul>{assetRows.map((r) => <li><span>{r[0]}</span><span class="v">{fmtUSD(r[1])}</span></li>)}</ul>
+      </div>
+      <div class="lad">
+        <div class="ladHead"><span>Current liabilities</span><b>{fmtUSD(cp.currentLiabilities)}</b></div>
+        <ul>{liabRows.map((r) => <li><span>{r[0]}</span><span class="v">{fmtUSD(r[1])}</span></li>)}</ul>
+      </div>
+    </div>
+
+    <div class="ratios">
+      <div class="rat">
+        <span class="rlab">Current ratio</span>
+        <span class="rval">{x1(cp.currentRatio)}</span>
+        <span class="rnote">all current assets ÷ what's due · Graham looked for 2×</span>
+      </div>
+      <div class="rat">
+        <span class="rlab">Quick ratio</span>
+        <span class="rval">{x1(cp.quickRatio)}</span>
+        <span class="rnote">stricter — drops inventory, which may not sell</span>
+      </div>
+      <div class="rat">
+        <span class="rlab">Cash ratio</span>
+        <span class="rval">{x1(cp.cashRatio)}</span>
+        <span class="rnote">strictest — cash alone against what's due</span>
+      </div>
+      <div class="rat">
+        <span class="rlab">Working capital</span>
+        <span class="rval">{fmtUSD(cp.workingCapital)}</span>
+        <span class="rnote">the cushion left after near-term bills</span>
+      </div>
+    </div>
+
+    {cp.floatKind ? (
+      <p class="teach">
+        Its current ratio is below 1, which usually reads as strain — but here it is likely structural
+        strength. {cp.floatKind === "cycle"
+          ? "This business collects from customers before it pays suppliers (a negative cash-conversion cycle), so the balance sheet is funded by that float"
+          : "What it owes in the near term is money to suppliers and customers — payables and deferred revenue — not to lenders, so the balance sheet is funded by operating float"}, the way Costco's and Amazon's are. The low ratio can be the edge, not the risk; read it beside the cash-conversion cycle and the debt due above.
+      </p>
+    ) : null}
+
+    <div class="survival">
+      {cp.debtDue != null && cp.debtDue > 0 ? (
+        <div class="sv">
+          <span class="svlab">Debt due this year vs. cash</span>
+          <span class="svval" style={cp.debtDueCovered ? "color:var(--good)" : "color:var(--warn)"}>
+            {fmtUSD(cp.debtDue)} due · {fmtUSD(cp.cashLike)} cash
+          </span>
+          <span class="svnote">{cp.debtDueCovered ? "covered by cash on hand, no refinancing forced" : "cash alone won't cover the maturities — it leans on refinancing or operating cash"}</span>
+        </div>
+      ) : null}
+      {cp.runwayYears != null ? (
+        <div class="sv">
+          <span class="svlab">Cash runway</span>
+          <span class="svval" style={cp.runwayYears < 1 ? "color:var(--warn)" : ""}>{cp.runwayYears.toFixed(1)} yrs</span>
+          <span class="svnote">the business is consuming cash; this is how long the cash on hand lasts at that rate</span>
+        </div>
+      ) : null}
+      {cp.revMomentum ? (
+        <div class="sv">
+          <span class="svlab">Revenue, latest quarter vs. a year ago</span>
+          <span class="svval" style={cp.revMomentum.yoY >= 0 ? "color:var(--good)" : "color:var(--warn)"}>{cp.revMomentum.yoY >= 0 ? "+" : ""}{pc(cp.revMomentum.yoY, 1)}</span>
+          <span class="svnote">the freshest read on whether the business is still growing</span>
+        </div>
+      ) : null}
+    </div>
+
+    {sp ? (
+      <div class="trend">
+        <span class="tlab">Current ratio, recent quarters</span>
+        <svg class="spk" viewBox={`0 0 ${sp.w} ${sp.h}`} preserveAspectRatio="none" aria-hidden="true">
+          {sp.oneY != null ? <line x1="0" x2={sp.w} y1={sp.oneY} y2={sp.oneY} class="one" /> : null}
+          <path d={sp.d} />
+        </svg>
+        <span class="tval">{trendFirst ? `${x1(trendFirst.cr, 1)} → ${x1(cp.currentRatio, 1)}` : x1(cp.currentRatio, 1)}</span>
+      </div>
+    ) : null}
+
+    <div class="deeper">
+      <span class="deyebrow">Deeper floors</span>
+      <div class="dgrid">
+        {cp.tangibleBook != null ? <div class="d"><span>Tangible book value</span><b>{fmtUSD(cp.tangibleBook)}</b><i>equity stripped of goodwill & intangibles</i></div> : null}
+        {cp.ncav != null ? <div class="d"><span>Net current asset value</span><b>{fmtUSD(cp.ncav)}</b><i>Graham's net-net: current assets less all debt</i></div> : null}
+        {cp.debtPlusLeases != null && cp.debtPlusLeases > 0 ? <div class="d"><span>Debt incl. leases</span><b>{fmtUSD(cp.debtPlusLeases)}</b><i>{cp.leases ? `${fmtUSD(cp.leases)} of it operating leases` : "true obligation, leases added back"}</i></div> : null}
+        {cp.deferredRevenue != null && cp.deferredRevenue > 0 ? <div class="d"><span>Deferred revenue</span><b>{fmtUSD(cp.deferredRevenue)}</b><i>paid in advance — float, and a sign customers pre-pay</i></div> : null}
+      </div>
+    </div>
+
+    <p class="foot">Arithmetic on the company's own latest filing; nothing here is stored or scored. The figures above are the record; this is where it stands today.</p>
+  </section>
+) : null}
+
+<style>
+  .cpos { margin: 24px 0; }
+  .head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; border-bottom: 1px solid var(--rule-strong); padding-bottom: 6px; }
+  .secTitle { margin: 0; }
+  .asof { font-size: 11.5px; letter-spacing: 0.03em; text-transform: uppercase; color: var(--muted); flex: 0 0 auto; }
+  .intro { font-family: var(--serif); font-style: italic; font-size: 13.5px; color: var(--muted); margin: 9px 0 0; max-width: 72ch; line-height: 1.6; }
+
+  .ladders { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; margin: 14px 0 0; }
+  .ladHead { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; border-bottom: 1px solid var(--rule-strong); padding-bottom: 4px; font-family: var(--sans); font-weight: 700; font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink); }
+  .ladHead b { font-variant-numeric: tabular-nums; }
+  .lad ul { list-style: none; padding: 0; margin: 4px 0 0; }
+  .lad li { display: flex; justify-content: space-between; gap: 10px; padding: 5px 0; border-bottom: 1px solid var(--rule); font-size: 13px; color: var(--ink-soft); }
+  .lad .v { font-variant-numeric: tabular-nums; color: var(--ink); flex: 0 0 auto; }
+
+  .ratios { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 16px 0 0; }
+  .rat { border-left: 2px solid var(--rule-strong); padding: 2px 0 2px 11px; }
+  .rlab { display: block; font-family: var(--sans); font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+  .rval { display: block; font-size: 20px; font-variant-numeric: tabular-nums; color: var(--ink); margin: 3px 0; }
+  .rnote { display: block; font-size: 11.5px; color: var(--ink-dim); line-height: 1.4; }
+
+  .teach { font-family: var(--serif); font-size: 13.5px; line-height: 1.6; color: var(--ink-soft); background: var(--accent-tint); border-left: 2px solid var(--accent); padding: 10px 14px; margin: 14px 0 0; max-width: 80ch; }
+
+  .survival { margin: 16px 0 0; display: grid; gap: 10px; }
+  .sv { display: grid; grid-template-columns: 1fr auto; align-items: baseline; gap: 4px 12px; padding: 9px 0; border-bottom: 1px solid var(--rule); }
+  .svlab { font-family: var(--sans); font-weight: 600; font-size: 13px; color: var(--ink); }
+  .svval { font-variant-numeric: tabular-nums; font-weight: 700; font-size: 14px; text-align: right; }
+  .svnote { grid-column: 1 / -1; font-size: 12px; color: var(--ink-dim); line-height: 1.45; }
+
+  .trend { display: flex; align-items: center; gap: 12px; margin: 14px 0 0; }
+  .tlab { font-size: 11.5px; letter-spacing: 0.03em; text-transform: uppercase; color: var(--muted); }
+  .spk { width: 120px; height: 24px; overflow: visible; }
+  .spk path { fill: none; stroke: var(--ink); stroke-width: 1.4; vector-effect: non-scaling-stroke; }
+  .spk .one { stroke: var(--faint); stroke-width: 0.75; stroke-dasharray: 2 2; vector-effect: non-scaling-stroke; }
+  .tval { font-variant-numeric: tabular-nums; font-size: 13px; color: var(--ink-soft); }
+
+  .deeper { margin: 18px 0 0; padding-top: 12px; border-top: 1px solid var(--rule); }
+  .deyebrow { font-size: 10px; letter-spacing: 0.07em; text-transform: uppercase; color: var(--accent); font-weight: 700; }
+  .dgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; margin: 8px 0 0; }
+  .d span { display: block; font-family: var(--sans); font-size: 11.5px; color: var(--muted); }
+  .d b { display: block; font-size: 16px; font-variant-numeric: tabular-nums; color: var(--ink); margin: 2px 0; }
+  .d i { display: block; font-style: normal; font-size: 11.5px; color: var(--ink-dim); line-height: 1.4; }
+
+  .foot { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--rule-strong); margin-top: 16px; padding-top: 10px; max-width: 74ch; }
+
+  @media (max-width: 620px) {
+    .ladders { grid-template-columns: 1fr; gap: 14px; }
+    .ratios { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>

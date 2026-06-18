@@ -4,6 +4,7 @@ import fundamentals from "../../data/fundamentals.json";
 import Scorecard from "../../components/Scorecard.astro";
 import Portrait from "../../components/Portrait.astro";
 import TenYear from "../../components/TenYear.astro";
+import CurrentPosition from "../../components/CurrentPosition.astro";
 import Peers from "../../components/Peers.astro";
 import BusinessRead from "../../components/BusinessRead.astro";
 import Segments from "../../components/Segments.astro";
@@ -116,6 +117,7 @@ const fmtDate = (d) =>
     <section id="act-record" class="actGroup">
       <ActHeader n="II" title="The record" lede="A business is what it has done across a cycle, not what it did last quarter. Here is the ten-year arithmetic, read for durability." />
       <div id="sec-record" class="sec"><TenYear company={fund} /></div>
+      <div id="sec-current" class="sec"><CurrentPosition company={fund} /></div>
       {!isFin ? <div id="sec-power" class="sec"><NormalizedEarnings company={fund} /></div> : null}
     </section>
   ) : null}

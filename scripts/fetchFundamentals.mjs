@@ -14,6 +14,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 import { passesQualityFloor } from "../src/lib/fundamentals.mjs";
 
 const UA =
@@ -151,11 +152,28 @@ const CONCEPTS = {
   // "cash"). Marketable-securities tags only, so strategic/illiquid stakes stay out.
   shortTermInvestments: ["ShortTermInvestments", "MarketableSecuritiesCurrent", "AvailableForSaleSecuritiesCurrent", "OtherShortTermInvestments"],
   longTermMarketable: ["MarketableSecuritiesNoncurrent", "AvailableForSaleSecuritiesNoncurrent"],
-  receivables: ["AccountsReceivableNetCurrent"],
-  inventory: ["InventoryNet"],
+  // Receivables: the primary tag alone left ~235 large operating businesses (Albertsons, Alaska Air,
+  // AMETEK) reading null, which then broke their quick ratio and cash-conversion cycle. Fallbacks are
+  // net, current trade-receivable concepts only — never a gross or long-term tag that would distort.
+  receivables: ["AccountsReceivableNetCurrent", "ReceivablesNetCurrent", "AccountsReceivableNet"],
+  // Inventory: the primary tag missed retailers (AutoZone, Gap, Dollar Tree) and aerospace (Boeing),
+  // which tag the SAME total under a presentation-specific concept. Fallbacks each represent the
+  // company's whole net inventory, so a fallback only fills a name the primary missed.
+  inventory: ["InventoryNet", "RetailRelatedInventory", "InventoryNetOfAllowancesCustomerAdvancesAndProgressBillings", "InventoryFinishedGoodsNetOfReserves"],
   accountsPayable: ["AccountsPayableCurrent", "AccountsPayableTradeCurrent", "AccountsPayableAndAccruedLiabilitiesCurrent"],
   currentAssets: ["AssetsCurrent"],
   currentLiabilities: ["LiabilitiesCurrent"],
+  totalLiabilities: ["Liabilities"],
+  // Deferred revenue / contract liabilities: cash customers paid IN ADVANCE of delivery. A growing
+  // balance is float and a pricing-power tell — people pre-pay for a business they trust (subscriptions,
+  // memberships, SaaS). The post-2018 tag is ContractWithCustomerLiability; older filers use DeferredRevenue.
+  deferredRevenueCurrent: ["ContractWithCustomerLiabilityCurrent", "DeferredRevenueCurrent", "DeferredRevenueAndCreditsCurrent"],
+  deferredRevenueNoncurrent: ["ContractWithCustomerLiabilityNoncurrent", "DeferredRevenueNoncurrent", "DeferredRevenueAndCreditsNoncurrent"],
+  // Operating-lease liabilities (on the balance sheet since ASC 842, 2019): the real obligation a
+  // retailer, airline or restaurant carries that pre-842 sat off-balance-sheet. Buffett mentally adds
+  // leases to debt; captured so true leverage (debt + leases) can be shown.
+  operatingLeaseCurrent: ["OperatingLeaseLiabilityCurrent"],
+  operatingLeaseNoncurrent: ["OperatingLeaseLiabilityNoncurrent"],
   sharesDiluted: [
     "WeightedAverageNumberOfDilutedSharesOutstanding",
     "WeightedAverageNumberOfShareOutstandingBasicAndDiluted",
@@ -355,7 +373,8 @@ function ttmFlow(facts, tags, unit = "USD") {
 }
 
 // Latest period value across 10-K and 10-Q, for the freshest share count (flow)
-// and balance-sheet items (instant).
+// and balance-sheet items (instant). Carries the source form so the caller can say
+// whether "current" is a fresh quarter (10-Q) or the fiscal year-end (10-K).
 function latestObservation(facts, tags, unit = "USD", instant = false) {
   let best = null;
   for (const tag of tags) {
@@ -365,10 +384,67 @@ function latestObservation(facts, tags, unit = "USD", instant = false) {
       if (!u.form || !u.end || (instant ? !!u.start : !u.start)) continue;
       if (!(u.form.startsWith("10-K") || u.form.startsWith("10-Q"))) continue;
       if (!best || new Date(u.end) > new Date(best.end) || (u.end === best.end && (u.filed || "") > best.filed))
-        best = { val: u.val, end: u.end, filed: u.filed || "" };
+        best = { val: u.val, end: u.end, filed: u.filed || "", form: u.form };
     }
   }
   return best;
+}
+
+// ---- quarterly series (for the Current Position trend + recent-quarter momentum) ----
+// A balance-sheet line over the recent quarter-ends: every instant observation (10-K + 10-Q),
+// keyed by period end, latest filing winning a restatement. Map of end-date -> value.
+function instantMap(facts, tags, unit = "USD") {
+  const out = {}, filed = {};
+  for (const tag of tags) {
+    const units = facts?.facts?.["us-gaap"]?.[tag]?.units?.[unit];
+    if (!units) continue;
+    for (const u of units) {
+      if (!u.form || !u.end || u.start) continue;
+      if (!(u.form.startsWith("10-K") || u.form.startsWith("10-Q"))) continue;
+      const f = u.filed || "";
+      if (!(u.end in out) || f >= (filed[u.end] || "")) { out[u.end] = u.val; filed[u.end] = f; }
+    }
+  }
+  return out;
+}
+// An income line as a true three-month quarterly flow: 10-Qs report both a 3-month and a cumulative
+// year-to-date duration, so we keep only the ~90-day observations. (Cash flow is YTD-only and so is
+// not read this way — burn comes from the TTM figure instead.) Map of end-date -> quarterly value.
+function quarterFlowMap(facts, tags, unit = "USD") {
+  const out = {}, filed = {};
+  for (const tag of tags) {
+    const units = facts?.facts?.["us-gaap"]?.[tag]?.units?.[unit];
+    if (!units) continue;
+    for (const u of units) {
+      if (!u.form || !u.start || !u.end) continue;
+      if (!(u.form.startsWith("10-K") || u.form.startsWith("10-Q"))) continue;
+      const dur = days(u.start, u.end);
+      if (dur < 80 || dur > 100) continue; // a single quarter, not a YTD or annual span
+      const f = u.filed || "";
+      if (!(u.end in out) || f >= (filed[u.end] || "")) { out[u.end] = u.val; filed[u.end] = f; }
+    }
+  }
+  return out;
+}
+// The last n quarters: liquidity (current assets/liabilities, cash) as instants, and revenue/earnings
+// as three-month flows, merged on the period end. Drives the trend and the recent-quarter momentum;
+// every figure raw, so the ratios are derived in page code and never need re-fetching.
+function quarterSeries(facts, revTags, n = 8) {
+  const ca = instantMap(facts, CONCEPTS.currentAssets);
+  const cl = instantMap(facts, CONCEPTS.currentLiabilities);
+  const cash = instantMap(facts, CONCEPTS.cashAndEquivalents);
+  const rev = quarterFlowMap(facts, revTags);
+  const ni = quarterFlowMap(facts, CONCEPTS.netIncome);
+  const oi = quarterFlowMap(facts, CONCEPTS.operatingIncome);
+  const ends = [...new Set([...Object.keys(ca), ...Object.keys(rev)])].sort();
+  return ends
+    .map((end) => ({
+      end,
+      currentAssets: ca[end] ?? null, currentLiabilities: cl[end] ?? null, cash: cash[end] ?? null,
+      revenue: rev[end] ?? null, netIncome: ni[end] ?? null, operatingIncome: oi[end] ?? null,
+    }))
+    .filter((q) => q.currentAssets != null || q.revenue != null)
+    .slice(-n);
 }
 
 async function main() {
@@ -700,6 +776,9 @@ async function main() {
             receivables: latestObservation(facts, CONCEPTS.receivables, "USD", true)?.val ?? null,
             inventory: latestObservation(facts, CONCEPTS.inventory, "USD", true)?.val ?? null,
             accountsPayable: latestObservation(facts, CONCEPTS.accountsPayable, "USD", true)?.val ?? null,
+            currentAssets: latestObservation(facts, CONCEPTS.currentAssets, "USD", true)?.val ?? null,
+            currentLiabilities: latestObservation(facts, CONCEPTS.currentLiabilities, "USD", true)?.val ?? null,
+            currentDebt: ttmCurDebt ?? null,
             totalDebt: maxOf(ttmLtd != null || ttmCurDebt != null ? (ttmLtd || 0) + (ttmCurDebt || 0) : null, ...aggTTMVals),
             sharesDiluted: fixShareScale(freshestShare(latestObservation(facts, CONCEPTS.sharesDiluted, "shares", false), pickInstant(facts, CONCEPTS.sharesOutstanding, "shares")), shareRef),
             netInterestIncome: tf(CONCEPTS.netInterestIncome),
@@ -719,6 +798,43 @@ async function main() {
             investmentIncome: tf(CONCEPTS.investmentIncome),
             lossReserves: latestObservation(facts, CONCEPTS.lossReserves, "USD", true)?.val ?? null,
           },
+        }
+      : null;
+
+    // ---- the freshest balance sheet, captured raw (the Current Position section, and future reads) ----
+    // The whole latest-quarter balance sheet plus the Buffett-relevant extras (deferred revenue as
+    // float, leases as true debt, total liabilities for net-net), the recent-quarter series for the
+    // liquidity trend and earnings momentum, and provenance so we always know how fresh "current" is.
+    // Stored raw; every ratio (current, quick, cash, NCAV, runway, momentum) is derived in page code.
+    const lq = latestObservation(facts, CONCEPTS.currentAssets, "USD", true)
+      || latestObservation(facts, CONCEPTS.totalAssets, "USD", true);
+    const instq = (tags) => latestObservation(facts, tags, "USD", true)?.val ?? null;
+    const quarterly = lq
+      ? {
+          asOf: lq.end,
+          form: lq.form && lq.form.startsWith("10-K") ? "10-K" : "10-Q",
+          balance: {
+            cash: instq(CONCEPTS.cashAndEquivalents),
+            shortTermInvestments: instq(CONCEPTS.shortTermInvestments),
+            receivables: instq(CONCEPTS.receivables),
+            inventory: instq(CONCEPTS.inventory),
+            currentAssets: instq(CONCEPTS.currentAssets),
+            accountsPayable: instq(CONCEPTS.accountsPayable),
+            currentDebt: instq(CONCEPTS.currentDebt),
+            deferredRevenueCurrent: instq(CONCEPTS.deferredRevenueCurrent),
+            operatingLeaseCurrent: instq(CONCEPTS.operatingLeaseCurrent),
+            currentLiabilities: instq(CONCEPTS.currentLiabilities),
+            longTermDebt: instq(CONCEPTS.longTermDebt),
+            deferredRevenueNoncurrent: instq(CONCEPTS.deferredRevenueNoncurrent),
+            operatingLeaseNoncurrent: instq(CONCEPTS.operatingLeaseNoncurrent),
+            totalLiabilities: instq(CONCEPTS.totalLiabilities),
+            totalAssets: instq(CONCEPTS.totalAssets),
+            stockholdersEquity: instq(CONCEPTS.stockholdersEquity),
+            goodwill: instq(CONCEPTS.goodwill),
+            intangibleAssets: instq(CONCEPTS.intangibleAssets),
+            sharesOutstanding: fixShareScale(pickInstant(facts, CONCEPTS.sharesOutstanding, "shares")?.val ?? null, shareRef),
+          },
+          series: quarterSeries(facts, revTags),
         }
       : null;
 
@@ -781,6 +897,7 @@ async function main() {
       },
       history,
       ttm,
+      quarterly,
     };
     // The quality floor: a company that can't render a non-broken page is withheld rather than
     // shipped, the condition for pushing coverage toward the whole universe without losing trust.
@@ -830,7 +947,12 @@ async function main() {
   if (withheld.size) console.log(`   withheld: ${[...withheld].sort().join(", ")}`);
 }
 
-main().catch((err) => {
-  console.error(`\n❌ ${err.message}\n`);
-  process.exit(1);
-});
+// Exported for the offline extraction test; only hit EDGAR when run directly.
+export { instantMap, quarterFlowMap, quarterSeries, latestObservation, CONCEPTS };
+
+if (import.meta.url === pathToFileURL(process.argv[1] || "").href) {
+  main().catch((err) => {
+    console.error(`\n❌ ${err.message}\n`);
+    process.exit(1);
+  });
+}

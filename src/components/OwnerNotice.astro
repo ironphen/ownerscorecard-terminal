@@ -7,16 +7,24 @@
 // and never grades. Present, never pronounce.
 import language from "../data/language.json";
 import { TONE_COLOR } from "../lib/fundamentals.mjs";
+import { classify } from "../lib/archetype.mjs";
 
 const { company } = Astro.props;
 const L = language?.companies?.[company.ticker] || null;
 const b = L?.buffettRead || null;
 const fy = L?.fy || company.fy;
 
+// Pricing power and input-cost pass-through are industrial concepts. A bank's MD&A speaks of funding
+// costs and deposit mix ("higher-cost brokered deposits"), which the detector can misread as rising
+// input costs, so the pricing facet is withheld for financials here as well as in the pipeline — the
+// guard catches the stale data already on the branch, before the next re-fetch reflects it.
+const cls = company ? classify(company) : null;
+const isFinancial = !!cls && ["financial", "reit"].includes(cls.sector.key);
+
 // Build the items in the order an owner reads them: the moat question (pricing) first, then the
 // grave integrity admissions, then — as context for all of it — where the numbers rest on judgment.
 const items = [];
-if (b?.pricing) {
+if (b?.pricing && !isFinancial) {
   const p = b.pricing;
   // Pricing power: the single fact Buffett calls most important in judging a business. Shown when
   // the company demonstrated it; when it also names pricing pressure, the tension is shown honestly.

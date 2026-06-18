@@ -94,12 +94,16 @@ const cases = [
   ["EOG", "EOG Resources, Inc.",
     ["EOG Resources, Inc., a Delaware corporation organized in 1985, together with its subsidiaries, is one of the largest independent crude oil and natural gas companies in the United States with proved reserves in the United States and Trinidad."],
     /^EOG Resources, Inc\. is one of the largest independent crude oil and natural gas companies/i],
+  // Broken sentence fragments from bad splitting must be rejected (want === null), so the page falls
+  // back to the computed phrase rather than printing a mangled hero. (KMI and WAL shipped these.)
+  ["KMI", "Kinder Morgan, Inc.", ["We provide, found in Items 1 and 2."], null],
+  ["WAL", "Western Alliance Bancorporation", ["We operate and in the U.S. as a whole."], null],
 ];
 
 let pass = 0, fail = 0;
 for (const [tk, name, sents, want] of cases) {
   const got = businessDescription(sents, name, tk);
-  const ok = got && want.test(got);
+  const ok = want === null ? !got : (got && want.test(got));
   console.log((ok ? "ok   " : "FAIL ") + tk + " -> " + JSON.stringify(got));
   ok ? pass++ : fail++;
 }

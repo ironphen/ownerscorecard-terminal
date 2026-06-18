@@ -220,6 +220,15 @@ const BIZ_SKIP = /(was|were)\s+incorporated|incorporated\s+(under|in)\b|reincorp
 // company itself, so it is not a description of the business.
 const BIZ_WEAK = /^(we also\b|when\s+we\b|founded\b|established\b|originally\b|since (our|its|we)\b|our (mission|vision|strateg|purpose|goals?|values|history|story|customers?|employees?|people|associates|team|more than|over\s|approximately|roughly|nearly)|our\b[^.]{0,40}\b(purpose|mission|vision)\b[^.]{0,120}\bis\s+to\b|we have (sharpened|built|been developing|also been|grown|expanded)|we strive|we seek\b|we aim\b|we (encounter|rely|depend|compete|consistently|correctly|pursue|understand|assess|estimate|disposed)\b|we have (entered|received)\b|[a-z][\w& .,'-]{0,38}'s\s+(vision|mission|purpose)\s+is\s+to\b|[a-z][\w& .,'-]{0,38}\b(strives?|aims?)\s+to\b|[a-z][\w& .,'-]{0,38}\bbelieves\b|[a-z][\w& .,'-]{0,30}'s\s+growth\b|[a-z][\w& .,'-]{0,30}\balso has\b)/i;
 const HEAD_TOKEN = /^(item\s*1[ab]?\b\.?|part\s*i+\b\.?|general development of (the )?business|business overview|company overview|our company|our business|the company|introduction|business|general|overview)\s*[:.\-–—]?\s+/i;
+// A broken sentence fragment, not a description: a cross-reference ("found in Items 1 and 2"), or a
+// lead verb jammed into a preposition by bad splitting ("We provide, found in…", "We operate and in
+// the U.S. as a whole"). KMI and WAL slipped a mangled hero through on these; reject them.
+const BIZ_FRAGMENT = /\b(found|described|set forth|referred to|listed|contained|incorporated)\s+in\s+(items?|parts?|notes?|exhibits?)\b|\b(provide|operate|offer|sell|develop|design|market|supply|engage)s?\s*,\s*(found|described|in\b)|\b(operate|provide|offer|sell|develop|design|market|supply)s?\s+and\s+(in|to|with|as|the)\b/i;
+// A leading section heading glued to a brief sentence by the extraction ("Overview Archer is…",
+// "Business Overview Aramark is…"). Stripped so the brief reads from the real subject; if a sentence
+// is ONLY a heading/cross-reference, the BIZ_RICH check downstream still drops it.
+const LEAD_HEADING = /^(business\s+overview|company\s+overview|business\s+update|recent\s+developments|results\s+of\s+operations|general\s+development\s+of\s+(the\s+)?business|business\s+factors[\w\s]{0,45}?operations|segment\s+reporting|our\s+business|our\s+company|the\s+(business|company)|overview|introduction|business|general|properties)\b[\s:.\-–—]+/i;
+const stripLeadingHeading = (s) => { let o = String(s || ""); for (let k = 0; k < 2 && LEAD_HEADING.test(o); k++) o = o.replace(LEAD_HEADING, ""); return o ? o.charAt(0).toUpperCase() + o.slice(1) : o; };
 const LEAD_VERB = /^(is|are|operates?|provides?|markets?|designs?|develops?|sells?|offers?|supplies|distributes?|delivers?|produces?|manufactures?|engages?)\b/i;
 // Signals a richer description: names products, markets, customers or segments rather
 // than a bare "we operate" line.
@@ -310,7 +319,7 @@ function businessDescription(sents, name, ticker) {
     if (LEAD_VERB.test(s) && name) s = `${name.trim()} ${s}`; // restore a subject split off entirely
     if (/^[a-z]/.test(s)) s = s.charAt(0).toUpperCase() + s.slice(1);
     if (s.length < 34 || s.length > 700) continue;
-    if (BIZ_SKIP.test(s) || BIZ_WEAK.test(s)) continue;
+    if (BIZ_SKIP.test(s) || BIZ_WEAK.test(s) || BIZ_FRAGMENT.test(s)) continue;
     const isa = BIZ_ISA.test(s);
     if (!BIZ_DOING.test(s) && !isa && !BIZ_ENGAGED.test(s)) continue;
     const head = s.split(/\s+/).slice(0, 6).join(" ");
@@ -352,7 +361,7 @@ function businessBrief(sents, lede, name) {
   const ledeNorm = normalize(lede);
   const extras = [];
   for (let i = 0; i < Math.min(sents.length, 25) && extras.length < 2; i++) {
-    let s = cleanQuote(String(sents[i] || ""));
+    let s = stripLeadingHeading(cleanQuote(String(sents[i] || "")));
     if (LEAD_VERB.test(s) && name) s = `${name.trim()} ${s}`;
     if (/^[a-z]/.test(s)) s = s.charAt(0).toUpperCase() + s.slice(1);
     if (s.length < 60 || s.length > 340) continue;
@@ -666,6 +675,11 @@ const PRICE_COMMODITY = /\b(aluminum|alumina|copper|steel|iron ore|crude|\boil\b
 // can raise prices without losing business to a competitor, you've got a very good business." Volume,
 // demand, traffic or comparable sales holding or growing, or an explicit "despite price increases."
 const VOLUME_HELD = /\b(volumes?|unit sales|\bunits\b|demand|traffic|transactions?|comparable (store )?sales|same[- ]store sales|shipments?)\b[\s\S]{0,45}\b(grew|increased|rose|higher|\bup\b|strong|robust|resilient|stable|steady|\bflat\b|held|remained|growth|positive)\b|\b(despite|even with|notwithstanding)\b[\s\S]{0,30}\b(price increases?|higher pric|pricing)\b|price increases? more than offset|without (a |any )?(meaningful |material |significant )?(loss|decline|reduction) in (volume|demand|unit)/i;
+// "Discount", "reduction" and "lower" live outside product pricing too — a bond sold at a discount to
+// par, a present-value/fair-value calculation, a license valuation. Those are not pricing pressure, so
+// a sentence anchored in that vocabulary is kept out of the pressure read (Alcoa's note discount, A's
+// license valuation slipped through on it).
+const PRICE_NONPRODUCT = /\b(initial purchasers?|notes?|bonds?|debentures?|senior|subordinated|convertible|principal amount|par value|present value|discount rate|fair value|carrying value|warrants?|issuance|aggregate proceeds|license agreements?|amortiz|impair|goodwill|intangible|interest rate|yield to|maturit)\b/i;
 
 // The grave accounting-integrity admissions. These are rare in truth, but the risk factors are full
 // of hypothetical mentions — "a FAILURE to maintain controls COULD result in a material weakness",
@@ -748,7 +762,12 @@ function criticalEstimates(mdnaSents) {
   return { topics, count: topics.length, quote: cleanQuote(String(quote)).slice(0, 280) };
 }
 
-function buffettRead(cur) {
+// The financial SIC band (6000–6799): banks, thrifts, brokers, insurers, REITs, holding and
+// investment offices. Their MD&As speak of funding costs, deposit mix and credit costs, which the
+// industrial input-cost/pricing-power regexes misread, so the pricing facet is withheld for them.
+const isFinancialSic = (sic) => { const n = Number(sic); return n >= 6000 && n <= 6799; };
+
+function buffettRead(cur, isFinancial) {
   const mdna = cur?.mdna?.sents || [];
   const biz = cur?.business?.sents || [];
   const risk = cur?.risk?.sents || [];
@@ -759,26 +778,32 @@ function buffettRead(cur) {
   // or market price it merely takes. The strongest form — raising price without losing volume — is
   // marked apart. The cost facet only surfaces when the filing takes a stance on whether rising costs
   // were passed through, since a bare "costs rose" is in almost every MD&A and says nothing.
+  // Skipped entirely for banks, insurers and REITs: "input costs" and product pricing power are
+  // industrial concepts, and the regexes misread a bank's funding-mix language ("lower-cost deposits
+  // increased") as rising input costs. Financials are read on their own terms elsewhere.
   const cq = (raw) => cleanQuote(String(raw || ""));
-  const isPower = (s) => PRICE_UP.test(s) && !PRICE_DOWN.test(s) && !HYPO.test(s) && !PRICE_COMMODITY.test(s);
-  const power = bestSentence(sales, PRICE_UP, [PRICE_DOWN, HYPO, PRICE_COMMODITY], [RESULT_ATTR, VOLUME_HELD]);
-  const powerCount = sales.filter((raw) => isPower(cq(raw))).length;
-  // Raised price AND volume/demand held or grew — the textbook moat, in one sentence.
-  const powerStrong = sales.some((raw) => { const s = cq(raw); return isPower(s) && VOLUME_HELD.test(s); });
-  const pressure = bestSentence(mdna, PRICE_DOWN, [HYPO]);
-  // The cost sentence must itself resolve the question — pass-through (COST_OFFSET) or squeeze
-  // (OFFSET_NEG) — not merely name inflation. Prefer a quantified one.
-  const costStance = mdna
-    .map(cq)
-    .filter((s) => s.length >= 45 && s.length <= 300 && COST_UP.test(s) && !COST_HYPO.test(s) && (COST_OFFSET.test(s) || OFFSET_NEG.test(s)))
-    .sort((a, b) => (/\d/.test(b) ? 1 : 0) - (/\d/.test(a) ? 1 : 0))[0] || null;
-  const pricing = (power || pressure || costStance)
-    ? {
-        power: power || null, powerStrong: power ? powerStrong : false, powerCount,
-        pressure: pressure || null,
-        costInflation: costStance, passedThrough: costStance ? COST_OFFSET.test(costStance) && !OFFSET_NEG.test(costStance) : null,
-      }
-    : null;
+  let pricing = null;
+  if (!isFinancial) {
+    const isPower = (s) => PRICE_UP.test(s) && !PRICE_DOWN.test(s) && !HYPO.test(s) && !PRICE_COMMODITY.test(s);
+    const power = bestSentence(sales, PRICE_UP, [PRICE_DOWN, HYPO, PRICE_COMMODITY], [RESULT_ATTR, VOLUME_HELD]);
+    const powerCount = sales.filter((raw) => isPower(cq(raw))).length;
+    // Raised price AND volume/demand held or grew — the textbook moat, in one sentence.
+    const powerStrong = sales.some((raw) => { const s = cq(raw); return isPower(s) && VOLUME_HELD.test(s); });
+    const pressure = bestSentence(mdna, PRICE_DOWN, [HYPO, PRICE_NONPRODUCT]);
+    // The cost sentence must itself resolve the question — pass-through (COST_OFFSET) or squeeze
+    // (OFFSET_NEG) — not merely name inflation. Prefer a quantified one.
+    const costStance = mdna
+      .map(cq)
+      .filter((s) => s.length >= 45 && s.length <= 300 && COST_UP.test(s) && !COST_HYPO.test(s) && (COST_OFFSET.test(s) || OFFSET_NEG.test(s)))
+      .sort((a, b) => (/\d/.test(b) ? 1 : 0) - (/\d/.test(a) ? 1 : 0))[0] || null;
+    pricing = (power || pressure || costStance)
+      ? {
+          power: power || null, powerStrong: power ? powerStrong : false, powerCount,
+          pressure: pressure || null,
+          costInflation: costStance, passedThrough: costStance ? COST_OFFSET.test(costStance) && !OFFSET_NEG.test(costStance) : null,
+        }
+      : null;
+  }
 
   // 2. Where the numbers are soft.
   const judgment = criticalEstimates(mdna);
@@ -867,7 +892,7 @@ async function main() {
         mdnaChange: mdnaDiff,
         riskChange: riskDiff,
         aiRead: aiSignal(cur, prior),
-        buffettRead: buffettRead(cur),
+        buffettRead: buffettRead(cur, isFinancialSic(c.sic)),
         comp,
       };
       ok++;

@@ -133,11 +133,19 @@ const cases = [
     mdna: ["The company operates in a single reportable segment and serves customers in North America."],
     biz: ["We provide logistics services to commercial customers."],
   }), (r) => r === null],
+
+  // 12. Financials get NO pricing facet: a bank's funding-mix language ("higher-cost brokered
+  // deposits", "lower-cost deposits increased") is not industrial input-cost inflation. With the
+  // financial flag set, the pricing read is withheld even though the cost regex would otherwise trip.
+  // (4th tuple element = isFinancial.)
+  ["bank-no-pricing", mk({
+    mdna: ["Average deposits increased $1.2 billion compared to the prior year, driven primarily by growth in the Private Bank, partially offset by a reduction in higher-cost brokered deposits."],
+  }), (r) => !r?.pricing, true],
 ];
 
 let pass = 0, fail = 0;
-for (const [name, cur, want] of cases) {
-  const got = buffettRead(cur);
+for (const [name, cur, want, fin] of cases) {
+  const got = buffettRead(cur, fin);
   const ok = !!want(got);
   console.log((ok ? "ok   " : "FAIL ") + name + (ok ? "" : " -> " + JSON.stringify(got)));
   ok ? pass++ : fail++;
