@@ -151,8 +151,14 @@ const NOT_A_DESCRIPTION = new RegExp(
 // named property standing in for the business, or a forward-looking / mission line. When
 // the hero is one of these, the computed industry phrase is the better opener.
 const LEAKED = /public accounting firm|registered with the pcaob|\bstudio lot\b|we expect to (continue|make|invest|incur|spend)\b|deliver value and|operates under a consistent business/i;
+// A leaked all-caps heading or banner the extraction mistook for a sentence: a long run of
+// uppercase before any lowercase (Kroger's "OUR VALUE CREATION MODEL…", a stray "MANAGEMENT'S
+// DISCUSSION AND ANALYSIS…", an "MD&A ABOUT…" prefix). Not a description, so the hero falls back to
+// the segment mix or the computed phrase. Measured against every stored lede: matches only genuine
+// headings, no real description.
+const ALLCAPS_HEADING = /^[A-Z0-9][A-Z0-9 ,&'’.\/-]{17,}/;
 export function weakLede(s) {
   if (!s || typeof s !== "string") return true;
-  return /^we have entered\b/i.test(s) || WEAK_LEDE.test(s) ||
+  return /^we have entered\b/i.test(s) || WEAK_LEDE.test(s) || ALLCAPS_HEADING.test(s) ||
     /\bvarious (facilities|services|agreements|arrangements)\b/i.test(s) || NOT_A_DESCRIPTION.test(s) || LEAKED.test(s);
 }
