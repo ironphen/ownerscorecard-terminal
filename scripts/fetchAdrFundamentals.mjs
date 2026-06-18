@@ -50,6 +50,10 @@ const CONCEPTS = {
   netIncome: ["ProfitLossAttributableToOwnersOfParent", "ProfitLoss", "NetIncomeLoss", "NetIncomeLossAvailableToCommonStockholdersBasic"],
   incomeTaxExpense: ["IncomeTaxExpenseContinuingOperations", "IncomeTaxExpenseBenefit"],
   interestExpense: ["FinanceCosts", "InterestExpense", "InterestExpenseNonoperating", "InterestAndDebtExpense"],
+  // A bank's interest expense on deposits and borrowings, the cost side of net interest income.
+  // Kept separate from the industrial interestExpense above (whose FinanceCosts-first order suits
+  // a borrower) so the bank lens nets gross interest income against the right line.
+  bankInterestExpense: ["InterestExpense", "InterestAndSimilarExpense", "InterestExpenseOperating", "InterestAndDebtExpense", "FinanceCosts"],
   // cash flow
   cashFromOps: ["CashFlowsFromUsedInOperatingActivities", "NetCashFlowsFromUsedInOperatingActivities", "NetCashProvidedByUsedInOperatingActivities"],
   capex: ["PurchaseOfPropertyPlantAndEquipmentClassifiedAsInvestingActivities", "PurchaseOfPropertyPlantAndEquipmentIntangibleAssetsAndOtherNoncurrentAssets", "PaymentsToAcquirePropertyPlantAndEquipment", "PaymentsToAcquireProductiveAssets"],
@@ -80,17 +84,28 @@ const CONCEPTS = {
   // --- banks & insurers, so a Shinhan or an Aegon reads on its own statements like a US financial.
   // IFRS first, US-GAAP fallback; null for non-financials. The insurance lines span the IFRS 17
   // transition (InsuranceRevenue/ServiceExpenses) and the older presentation (PremiumsRevenue), so
-  // both are listed. Net interest income is income less expense for most IFRS banks, so interest
-  // income is captured and the bank lens nets it against InterestExpense (already above).
-  netInterestIncome: ["InterestIncomeExpenseNet", "RevenueFromInterest", "InterestRevenueCalculatedUsingEffectiveInterestMethod", "InterestIncome", "InterestAndSimilarIncome"],
+  // both are listed.
+  //
+  // Net interest income is the crux. US-GAAP banks tag it net directly (InterestIncomeExpenseNet);
+  // IFRS banks almost never do — they tag gross interest income (InterestRevenueCalculatedUsing…)
+  // and interest expense as separate lines. So we take the true-net tag when present, otherwise
+  // net it ourselves (gross income − bank interest expense, in the line assembly below). Picking
+  // the gross figure and calling it "net", as before, doubled the net interest margin for every
+  // higher-rate IFRS bank (Santander, BBVA, ING, the Canadians); netting fixes it, and where the
+  // expense leg isn't standard-tagged we publish nothing rather than a wrong, inflated number.
+  netInterestIncome: ["InterestIncomeExpenseNet"],
+  interestIncomeGross: ["InterestRevenueCalculatedUsingEffectiveInterestMethod", "RevenueFromInterest", "InterestAndSimilarIncome", "InterestAndDividendIncomeOperating", "InterestIncome"],
   noninterestIncome: ["RevenueFromFeeAndCommissionIncome", "FeeAndCommissionIncome", "NoninterestIncome", "RevenueFromDividends"],
   noninterestExpense: ["NoninterestExpense", "AdministrativeExpense"],
   provisionForCreditLosses: ["ImpairmentLossRecognisedInProfitOrLossLoansAndAdvances", "ImpairmentLossOnFinancialAssetsNet", "AllowanceForCreditLossesFinancialAssets", "ProvisionForLoanLeaseAndOtherLosses", "ProvisionForLoanAndLeaseLosses", "ProvisionForCreditLossExpenseReversal"],
-  deposits: ["DepositsFromCustomers", "DepositsFromBanks", "Deposits"],
+  // Customer deposits first (the IFRS primary and the moat), then any all-in total; DepositsFromBanks
+  // is interbank borrowing, a small sub-line, so it ranks last and a guard in depositFunding drops it
+  // when it's implausibly small against assets (a sub-component mistaken for the whole deposit base).
+  deposits: ["DepositsFromCustomers", "Deposits", "DepositLiabilities", "DepositsFromBanks"],
   premiumsEarned: ["InsuranceRevenue", "PremiumsRevenue", "RevenueFromInsuranceContractsIssued", "PremiumsEarnedNet", "PremiumsEarnedNetPropertyAndCasualty"],
   claimsIncurred: ["InsuranceServiceExpensesFromInsuranceContractsIssued", "InsuranceClaimsAndBenefitsPaidNetOfReinsuranceRecoveries", "InsuranceClaimsAndBenefitsPaid", "PolicyholderBenefitsAndClaimsIncurredNet", "IncurredClaimsPropertyCasualtyAndLiability"],
   investmentIncome: ["NetInvestmentIncome", "InvestmentIncome", "InvestmentRevenue"],
-  lossReserves: ["LiabilitiesUnderInsuranceContractsAndReinsuranceContractsIssued", "InsuranceContractLiabilities", "LiabilityForClaimsAndClaimsAdjustmentExpense", "LiabilityForFuturePolicyBenefits"],
+  lossReserves: ["InsuranceContractLiabilities", "LiabilitiesUnderInsuranceContractsAndReinsuranceContractsIssued", "InsuranceContractsIssuedThatAreLiabilities", "LiabilitiesForInsuranceContracts", "NetInsuranceContractLiabilities", "LiabilityForClaimsAndClaimsAdjustmentExpense", "LiabilityForFuturePolicyBenefits"],
 };
 
 async function getJSON(url) {
@@ -245,6 +260,11 @@ function quarterSeries(facts, n = 8) {
 }
 
 const maxOf = (...xs) => { const v = xs.filter((x) => x != null && isFinite(x)); return v.length ? Math.max(...v) : null; };
+// Net interest income: the true-net tag if the filer reports one (US-GAAP banks do), else gross
+// interest income less interest expense (the IFRS presentation). Null — never the gross figure
+// alone — when the expense leg is missing, so a bank's net interest margin is right or absent,
+// not silently doubled.
+const netInterest = (net, gross, exp) => (net != null ? net : (gross != null && exp != null ? gross - Math.abs(exp) : null));
 // revenue − total operating costs, or the reported operating line; mirrors the US deriveOpInc intent.
 function deriveOpInc(opInc, rev, ni, tax, interest) {
   if (opInc != null) return opInc;
@@ -331,7 +351,7 @@ async function main() {
         intangibleAssets: hi.intangibleAssets[fy] ?? null,
         // financial (banks/insurers) lines — null for industrials, so the financialKind-routed
         // scorecards read a foreign bank or insurer on its own statements.
-        netInterestIncome: ha.netInterestIncome[fy] ?? null,
+        netInterestIncome: netInterest(ha.netInterestIncome[fy], ha.interestIncomeGross[fy], ha.bankInterestExpense[fy]),
         noninterestIncome: ha.noninterestIncome[fy] ?? null,
         noninterestExpense: ha.noninterestExpense[fy] ?? null,
         provisionForCreditLosses: ha.provisionForCreditLosses[fy] ?? null,
@@ -358,7 +378,7 @@ async function main() {
         stockholdersEquity: inst(CONCEPTS.equity), cashAndEquivalents: inst(CONCEPTS.cashAndEquivalents), shortTermInvestments: inst(CONCEPTS.shortTermInvestments),
         receivables: inst(CONCEPTS.receivables), inventory: inst(CONCEPTS.inventory), accountsPayable: inst(CONCEPTS.accountsPayable),
         totalAssets: inst(CONCEPTS.totalAssets), goodwill: inst(CONCEPTS.goodwill), intangibleAssets: inst(CONCEPTS.intangibleAssets),
-        netInterestIncome: tf(CONCEPTS.netInterestIncome), noninterestIncome: tf(CONCEPTS.noninterestIncome), noninterestExpense: tf(CONCEPTS.noninterestExpense),
+        netInterestIncome: netInterest(tf(CONCEPTS.netInterestIncome), tf(CONCEPTS.interestIncomeGross), tf(CONCEPTS.bankInterestExpense)), noninterestIncome: tf(CONCEPTS.noninterestIncome), noninterestExpense: tf(CONCEPTS.noninterestExpense),
         provisionForCreditLosses: tf(CONCEPTS.provisionForCreditLosses), deposits: inst(CONCEPTS.deposits),
         premiumsEarned: tf(CONCEPTS.premiumsEarned), claimsIncurred: tf(CONCEPTS.claimsIncurred), investmentIncome: tf(CONCEPTS.investmentIncome), lossReserves: inst(CONCEPTS.lossReserves),
         sharesDiluted: pickInstant(facts, CONCEPTS.sharesOutstanding, "shares")?.val ?? latestObservation(facts, CONCEPTS.sharesDiluted, "shares", false)?.val ?? null,

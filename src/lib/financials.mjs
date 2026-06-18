@@ -33,7 +33,13 @@ export function efficiencyRatio(L) {
   return rev > 0 ? L.noninterestExpense / rev : null;
 }
 export function depositFunding(L) {
-  return L && L.deposits != null && L.totalAssets ? L.deposits / L.totalAssets : null;
+  if (!(L && L.deposits != null && L.totalAssets)) return null;
+  const r = L.deposits / L.totalAssets;
+  // Below ~10% of assets the standard deposit tag has almost always captured an interbank
+  // sub-line, not the customer deposit base — foreign banks tag the real total in a company
+  // extension the SEC facts API doesn't expose. Publishing that would paint a deposit-rich bank
+  // (a TD, a Royal Bank) as wholesale-funded, so we show nothing rather than a wrong funding mix.
+  return r >= 0.1 ? r : null;
 }
 export function equityToAssets(L) {
   return L && L.stockholdersEquity != null && L.totalAssets ? L.stockholdersEquity / L.totalAssets : null;
