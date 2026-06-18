@@ -413,42 +413,6 @@ async function deepenCashFlow(rec, reports, cache) {
   return patched;
 }
 
-// Deepen the history beyond the five years a single filing's summary reaches. Each older annual
-// report carries its own five-year summary, so the oldest reports in the window extend the record
-// toward ten years — and an older filing's own current year is the clean consolidated read, so this
-// also fills the early years the standard-aware revenue pick had to leave blank (an IFRS filer whose
-// older summary lacked an IFRS revenue element). Fetches at most HISTORY_BACKFILL of the oldest
-// reports; a year already held in full is kept, a revenue-blank year is upgraded.
-const HISTORY_TARGET = Number(process.env.EDINET_HISTORY_YEARS || 10);
-const HISTORY_BACKFILL = Number(process.env.EDINET_HISTORY_BACKFILL || 3);
-async function deepenHistory(rec, reports, cache) {
-  if (reports.length < 2) return 0;
-  const byFy = new Map(rec.history.map((h) => [h.fy, h]));
-  const oldestWanted = rec.fy - (HISTORY_TARGET - 1);
-  // The oldest few non-latest reports, oldest first, so the deepest summaries fill first.
-  const olders = reports.slice(1).sort((a, b) => ((a.periodEnd || "") < (b.periodEnd || "") ? -1 : 1)).slice(0, HISTORY_BACKFILL);
-  let added = 0;
-  for (const r of olders) {
-    const rfy = r.periodEnd ? Number(r.periodEnd.slice(0, 4)) : null;
-    if (rfy == null || rfy < oldestWanted - 4) continue; // nothing this old filing covers is wanted
-    let store;
-    try { await sleep(THROTTLE_MS); store = await loadStore(r.docId); } catch (err) { console.warn(`    ! older filing ${r.docId}: ${err.message}`); continue; }
-    for (let rel = 0; rel >= -4; rel--) {
-      const y = rfy + rel;
-      if (y < oldestWanted) continue;
-      const ex = byFy.get(y);
-      if (ex && ex.lines.revenue != null) continue; // a year already held in full wins
-      const L = linesFromStore(store, rel);
-      if (L.revenue == null && L.netIncome == null && L.totalAssets == null) continue;
-      if (ex) ex.lines = L; // upgrade a revenue-blank year to a complete one
-      else { const h = { fy: y, lines: L }; rec.history.push(h); byFy.set(y, h); }
-      added++;
-    }
-  }
-  if (added) { rec.history.sort((a, b) => a.fy - b.fy); rec.history = rec.history.slice(-HISTORY_TARGET); }
-  return added;
-}
-
 // Crawl the daily document index back LOOKBACK_DAYS (incrementally, using the cached
 // last-crawled date) and record each universe company's latest annual securities report
 // (docTypeCode 120), matched by securities code. EDINET has no per-issuer endpoint, so a
@@ -579,9 +543,8 @@ async function main() {
 
     const rec = buildRecord(store, meta, byTickerEntry[entry.ticker]);
     const deepened = await deepenCashFlow(rec, reports, cache);
-    const deepHist = await deepenHistory(rec, reports, cache);
     companies.push(rec);
-    console.log(`  ✓ ${entry.ticker} ${entry.name} (FY${fy ?? "?"}, ${rec.history.length}yr, rev ${rec.lines.revenue ?? "—"}${deepened ? `, +${deepened}yr cf` : ""}${deepHist ? `, +${deepHist}yr hist` : ""})`);
+    console.log(`  ✓ ${entry.ticker} ${entry.name} (FY${fy ?? "?"}, ${rec.history.length}yr, rev ${rec.lines.revenue ?? "—"}${deepened ? `, +${deepened}yr cf` : ""})`);
   }
 
   // Persist the index and the per-filing capex cache filled during the loop, so the next run
