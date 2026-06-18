@@ -139,7 +139,18 @@ export function financialProfile(company) {
     if (sic >= 6210 && sic <= 6219)
       return deposits ? { kind: "bank", subtype: "broker-dealer" } : { kind: "fee", subtype: "asset-manager" };
     if (sic >= 6200 && sic <= 6299) return { kind: "fee", subtype: "exchange" };
-    return { kind: "bank", subtype: "bank" };
+    // Depository institutions — commercial banks, savings institutions, credit unions (6020–6062) —
+    // are banks outright.
+    if (sic >= 6020 && sic <= 6062) return { kind: "bank", subtype: "bank" };
+    // The nondepository and catch-all "finance services" codes (the rest of 6000–6199, especially
+    // 6199) are a grab-bag: genuine lenders, but also crypto miners, fintechs and shells that
+    // register here. Read as a bank only when the data shows a lending balance sheet — material
+    // deposits or real net interest income — so an Argo Blockchain doesn't get a bank scorecard and
+    // a meaningless net interest margin just for carrying a finance SIC. Otherwise it reads as the
+    // operating business it actually is. (Same data-tiebreak spirit as the broker-dealer line above.)
+    const matDeposits = L.deposits != null && L.totalAssets && L.deposits / L.totalAssets >= 0.1;
+    const realNII = L.netInterestIncome != null && L.netInterestIncome > 0;
+    return matDeposits || realNII ? { kind: "bank", subtype: "bank" } : { kind: null, subtype: null };
   }
   return { kind: null, subtype: null };
 }
@@ -350,6 +361,10 @@ export function classify(company) {
   const s = shapeOf(company);
   let key = sectorFromSIC(company?.sic);
   let bySic = key != null;
+  // A catch-all finance SIC that the financial-profile tiebreak rejected (a crypto miner or fintech
+  // with no lending balance sheet) is not actually a financial; reading it as one would label it a
+  // "lender's balance sheet" while showing the industrial scorecard. Recompute its model from shape.
+  if (key === "financial" && !financialKind(company)) { key = null; bySic = false; }
   if (!key) key = sectorFromShape(s);
   // The distress, build-out and cyclical overlays are industrial heuristics (built on
   // operating cash flow, capex and operating margin) that misfire on a bank, whose
