@@ -153,6 +153,28 @@ export function inversionChecks(company) {
     }
   }
 
+  // 7. Serial "one-time" charges: impairments and write-downs taken year after year. Munger's
+  // tell — when the charge management keeps calling one-time recurs across the record, the
+  // "one-time" is the business: past deals coming due, an admission the assets were worth less
+  // than their price. Only the US pool carries the impairment lines, and the test is shown only
+  // where there has been at least one write-down, so it is a read, not noise on a clean filer.
+  if (company.market !== "JP") {
+    const impYears = lines.filter((L) => (L.goodwillImpairment || 0) > 0 || (L.assetImpairment || 0) > 0).length;
+    const cum = lines.reduce((a, L) => a + (L.goodwillImpairment || 0) + (L.assetImpairment || 0), 0);
+    if (impYears >= 1) {
+      const flagged = impYears >= 3;
+      checks.push({
+        key: "writeoffs",
+        label: `Are "one-time" charges a yearly habit?`,
+        value: `${impYears} of ${H.length} years`,
+        flagged,
+        note: flagged
+          ? `Management took an impairment or write-down in ${impYears} of the last ${H.length} years, ${$(cum)} in all. A charge that keeps recurring is not one-time; it is past deals coming due, and an admission the assets were worth less than what was paid. Munger's rule: when the "one-time" keeps happening, it is the business. Read it beside the goodwill the company still carries.`
+          : `Impairments hit ${impYears} of the last ${H.length} years (${$(cum)} in all) — a real write-down to read in the record, but not the yearly habit that turns a "one-time" charge into the business.`,
+      });
+    }
+  }
+
   if (checks.length < 3) return null;
 
   // Flagged tests first, so the questions worth asking surface to the top; clear tests follow
