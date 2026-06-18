@@ -90,6 +90,18 @@ Pillars: **1** robust extraction (TOC anchors, incorporation-by-reference → fe
 **5** richer/hardened detectors (+ moat-language read). **Do NOT hack extraction blind** — measure → fix on
 synthetic HTML → re-fetch → re-audit. Loop is cheap now (free minutes).
 
+**Pillar 3 — DONE (HEAD `77c5f4b`, no re-fetch).** When the filing's lede is weak/null, the hero now reads the
+company's own revenue mix: `compositionSentence()` in `lib/segments.mjs` (shared by the hero in `c/[ticker].astro`
+and the brief in `BusinessRead.astro`, so they agree and complement — mix beside the filing's words, or the
+industry lens beside the mix, never a repeat). Lede priority: filing's words → segment mix → computed phrase.
+**244 companies fixed** (Amazon = North America 59% / International 23% / AWS 18%; Apple by product; Meta = Family
+of Apps 99% / Reality Labs 1%; Costco, Dell, Marathon, Kroger…), 1,361 good ledes untouched. `weakLede` also now
+catches a leaked all-caps heading (Kroger's banner) — measured to hit only the 3 real headings, no good lede.
+Test: `scripts/segmentTest.mjs` (8 cases). **Still open:** ~136 weak-lede names with NO informative segments
+(Berkshire, Chevron, Humana — geography-only or single-segment) still fall to the computed phrase, and some
+non-null *garbage* ledes survive where extraction grabbed an MD&A/competition sentence — both need **Pillar 1
+extraction work** (reject MD&A/headings in `businessDescription`, fetch Exhibit 13), which needs a re-fetch.
+
 ### NEXT ACTIONS when the running re-fetch lands
 1. Verify US: `npm run audit:lang` (lede/section deltas), Current Position on real names, CVS/giants ledes,
    integrity count (~106), bank pages (no pricing flag).
