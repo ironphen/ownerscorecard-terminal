@@ -51,27 +51,49 @@ weekly, filings+segments+universe-rebuild monthly).
 - **Qualitative NLP** (`fetchFilings.mjs`): Overview-preferred lede; **Candor Read** (`candorSignals`:
   owner/promo/adjusted densities + verbatim mistake-admissions); **business-in-brief** (`businessBrief`:
   2–3 substance sentences); **serial "one-time" charge** Munger test (`inversion.mjs`, no re-fetch).
+- **The Buffett read** (`buffettRead` in `fetchFilings.mjs`; tested in `buffettReadTest.mjs`, 11 cases,
+  wired into `npm test`): three text-tells from Business/MD&A/Risk — (1) pricing & costs (demonstrated
+  pricing power vs. price-taking; input-cost pass-through), (2) critical-accounting-estimates topics
+  (where the numbers rest on judgment), (3) integrity (material weakness / restatement). May surface a
+  *strength*, unlike owner-flags. Guards: `HYPO` (conditional), `OFFSET_NEG` (negated pass-through).
+- **Qualitative DISPLAYS** — all built, render-verified by synthetic injection (good/warn/bad tones,
+  missing-prior + no-admission paths), full site builds clean: `OwnerNotice.astro` ("What an owner would
+  notice" = the Buffett read), `CandorRead.astro` ("How management talks to owners" = bars + admissions),
+  business-in-brief beneath the hero lede in `c/[ticker].astro`. Context act, except the brief.
+  **Dark until the re-fetch populates `buffettRead`/`candor`/`brief`** (`mdnaChange` already shows via
+  `OwnersRead.astro`'s "New language this year", so the "what changed" ask was already live).
+- **Run-safety**: the per-company record assembly in `fetchFilings.mjs` is now `try/catch`-wrapped, so
+  one odd filing logs and is skipped instead of aborting the ~65-min run.
 
 ## The plan (next bites, in priority)
-### A. Qualitative re-fetch batch — build ALL, then ONE `filings_only` re-fetch (~65 min)
-Done in pipeline (awaiting re-fetch to populate): Overview lede, Candor Read, business-in-brief.
-**TODO before firing the fetch:**
-- **Context framing**: extract competitive position / geographic + customer mix / moat language from
-  Item 1 (new detector in `fetchFilings`, same shape as `candorSignals`/`businessBrief`, unit-tested).
+### A. Qualitative re-fetch — FIRED, in progress
+**The `filings_only=true` re-fetch is RUNNING (run `27733067944`, dispatched on the branch ~02:38 UTC
+2026-06-18, ~65 min).** It populates the overview lede, Candor Read, business-in-brief AND the Buffett
+read across ~2,538 companies, and the CI commits `language.json` to the branch (rebase-and-retry).
+**When it lands, VERIFY real output (the documented method — detectors were only unit-tested on synthetic
+text):**
+- **EVERCORE (EVR)** lede — the founder's example: should now be the overview opening, not the
+  cookie-cutter description.
+- **Candor Read** across varied names; **calibrate `SCALE` (=8) and the bar feel in `CandorRead.astro`
+  against the REAL density distribution** (compute owner/promo/adjusted quartiles over `language.json`).
+- **Buffett read** on varied names: pricing power (look at a consumer staple / strong brand), price-taker
+  (a commodity/retail name), integrity (rare — most trip nothing, which is correct). Spot-check that
+  `criticalEstimates` finds the section on real MD&As (the section heading varies; widen `CRIT_HEAD`/the
+  back-half window if hit-rate is low).
+- **business-in-brief** beneath the hero on a few names (distinct from the lede, no boilerplate).
+If a detector misfires on real text, refine the regex/guards and re-fetch.
+
+**Still TODO in a LATER re-fetch batch (refinements, NOT explicit asks — build then fire once):**
+- **Context framing**: competitive position / geographic + customer mix / moat language from Item 1
+  (new detector, same shape as `candorSignals`, unit-tested).
 - **Owner-flag tightening**: sharpen `ownerFlags`/`FLAG_THEMES` (capital-allocation / owner-orientation).
-- **"What an owner would notice" — the Buffett 10-K text-tells**: footnote-deferral language ("see Note
-  X" for material items), pricing power ("we raised prices"/"pricing actions"), pension return
-  assumptions, related-party transactions, auditor/accounting changes. Each a deterministic detector
-  stored in `language.json`.
-Then: trigger `fundamentals.yml` with `filings_only=true`; verify EVER + varied names; **then** build
-the displays (need populated data): Candor panel, business-in-brief section, "what changed" surfacing,
-the unified "What an owner would notice" Buffett-lens section — all in the **Context act (Act V)** of
-`src/pages/c/[ticker].astro`. Calibrate Candor thresholds against the real density distribution.
+- **Pension & related-party tells**: live mostly in Item 8 notes / proxy, which the pipeline does NOT
+  parse yet — would need extraction work first; deferred on purpose (don't ship a 3%-hit-rate detector).
 
 ### B. No-re-fetch work (independent — good for visible progress now)
-- **"What changed" display**: `mdnaChange`/`riskChange.notable` already hold up to 4 genuinely-new,
-  risk-bearing sentences — **display-only**, no fetch.
-- **Scorecard normalization** (founder's explicit ask): make the Graham/Munger/Scorecard *checks*
+- ~~**"What changed" display**~~ — ALREADY LIVE in `OwnersRead.astro` ("New language this year", reads
+  `mdnaChange`/`riskChange.notable`). Nothing to build.
+- **Scorecard normalization** (founder's explicit ask — the biggest remaining no-fetch item): make the Graham/Munger/Scorecard *checks*
   default to a **3–5yr average** (fewer if less history), not a single year — "average out the good and
   bad years." Touches the judgment logic in `fundamentals.mjs`, `graham.mjs`, `inversion.mjs`,
   `Scorecard.astro` (it already *displays* a 5-yr avg; make the *judgments* use it). PAGE-WIDE — build
