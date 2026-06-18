@@ -152,8 +152,14 @@ const CONCEPTS = {
   // "cash"). Marketable-securities tags only, so strategic/illiquid stakes stay out.
   shortTermInvestments: ["ShortTermInvestments", "MarketableSecuritiesCurrent", "AvailableForSaleSecuritiesCurrent", "OtherShortTermInvestments"],
   longTermMarketable: ["MarketableSecuritiesNoncurrent", "AvailableForSaleSecuritiesNoncurrent"],
-  receivables: ["AccountsReceivableNetCurrent"],
-  inventory: ["InventoryNet"],
+  // Receivables: the primary tag alone left ~235 large operating businesses (Albertsons, Alaska Air,
+  // AMETEK) reading null, which then broke their quick ratio and cash-conversion cycle. Fallbacks are
+  // net, current trade-receivable concepts only — never a gross or long-term tag that would distort.
+  receivables: ["AccountsReceivableNetCurrent", "ReceivablesNetCurrent", "AccountsReceivableNet"],
+  // Inventory: the primary tag missed retailers (AutoZone, Gap, Dollar Tree) and aerospace (Boeing),
+  // which tag the SAME total under a presentation-specific concept. Fallbacks each represent the
+  // company's whole net inventory, so a fallback only fills a name the primary missed.
+  inventory: ["InventoryNet", "RetailRelatedInventory", "InventoryNetOfAllowancesCustomerAdvancesAndProgressBillings", "InventoryFinishedGoodsNetOfReserves"],
   accountsPayable: ["AccountsPayableCurrent", "AccountsPayableTradeCurrent", "AccountsPayableAndAccruedLiabilitiesCurrent"],
   currentAssets: ["AssetsCurrent"],
   currentLiabilities: ["LiabilitiesCurrent"],
