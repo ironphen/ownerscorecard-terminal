@@ -285,14 +285,24 @@ export function roic(c) {
   if (tax != null && ni != null && ni + tax > 0) t = Math.min(Math.max(tax / (ni + tax), 0), 0.5);
   const nopat = oi * (1 - t);
   const r = nopat / invested;
-  const tone = r < 0.08 ? "warn" : r < 0.15 ? "ok" : "good";
-  const label = r < 0.08 ? "Below average" : r < 0.15 ? "Solid" : r < 0.25 ? "High" : "Exceptional";
+  // Judge on the through-cycle median, not this one year: the same franchise reads "exceptional"
+  // at the peak and "below average" at the trough. The headline becomes the normalized rate when
+  // the record allows; the latest year moves to the formula and note.
+  const tc = throughCycle(c, roicValue);
+  const j = tc ? tc.median : r;
+  const pct = (x) => `${(x * 100).toFixed(0)}%`;
+  const tone = j < 0.08 ? "warn" : j < 0.15 ? "ok" : "good";
+  const label = (j < 0.08 ? "Below average" : j < 0.15 ? "Solid" : j < 0.25 ? "High" : "Exceptional") + (tc ? " through the cycle" : "");
   return {
-    value: `${(r * 100).toFixed(0)}%`,
-    formula: `NOPAT ${$(nopat)} ÷ invested capital ${$(invested)} (debt + equity − cash)`,
+    value: tc ? pct(j) : pct(r),
+    formula: tc
+      ? `${tc.n}-yr median, range ${pct(tc.lo)}–${pct(tc.hi)}; ${pct(r)} latest = NOPAT ${$(nopat)} ÷ invested capital ${$(invested)}`
+      : `NOPAT ${$(nopat)} ÷ invested capital ${$(invested)} (debt + equity − cash)`,
     tone,
     label,
-    note: "The rate the business earns on the money tied up in it, Buffett's north star, because over time a stock tracks the ROIC beneath it. Above ~15% sustained hints at a moat; below ~8% the company may destroy value as it grows. Asset-light businesses (R&D expensed, little capital) read artificially high, pair this with Owner Earnings.",
+    note: "The rate the business earns on the money tied up in it, Buffett's north star, because over time a stock tracks the ROIC beneath it. Above ~15% sustained hints at a moat; below ~8% the company may destroy value as it grows."
+      + (tc ? ` The headline is the median of the last ${tc.n} years (it ran ${pct(r)} most recently), so one peak or trough year doesn't set the verdict.` : "")
+      + " Asset-light businesses (R&D expensed, little capital) read artificially high, pair this with Owner Earnings.",
   };
 }
 
@@ -306,15 +316,22 @@ export function ownerCash(c) {
   const rev = L.revenue, sbc = L.stockBasedComp;
   const margin = rev ? oc / rev : null;
   const ocSbc = sbc != null ? oc - sbc : null;
-  const tone = oc <= 0 ? "bad" : margin == null ? "ok" : margin < 0.05 ? "warn" : margin < 0.15 ? "ok" : "good";
-  const label = oc <= 0 ? "Consumes cash" : margin == null ? "Positive" : margin < 0.05 ? "Thin" : margin < 0.15 ? "Solid" : "Cash machine";
+  const pct = (x) => `${(x * 100).toFixed(0)}%`;
+  // Judge on the through-cycle median margin, so a heavy build-out year (or a one-off cash year)
+  // doesn't set the verdict on a business that earns well across the record.
+  const tc = throughCycle(c, ownerEarningsMargin);
+  const j = tc ? tc.median : margin;
+  const tone = j == null ? (oc <= 0 ? "bad" : "ok") : j <= 0 ? "bad" : j < 0.05 ? "warn" : j < 0.15 ? "ok" : "good";
+  const base = j == null ? (oc <= 0 ? "Consumes cash" : "Positive") : j <= 0 ? "Consumes cash" : j < 0.05 ? "Thin" : j < 0.15 ? "Solid" : "Cash machine";
   return {
-    value: margin != null ? `${(margin * 100).toFixed(0)}%` : $(oc),
-    formula: `Owner Earnings ${$(oc)} = operating cash ${$(cfo)} − capex ${$(Math.abs(capex))}`,
+    value: tc ? pct(j) : margin != null ? pct(margin) : $(oc),
+    formula: tc
+      ? `${tc.n}-yr median margin, range ${pct(tc.lo)}–${pct(tc.hi)}; latest ${$(oc)} = operating cash ${$(cfo)} − capex ${$(Math.abs(capex))}`
+      : `Owner Earnings ${$(oc)} = operating cash ${$(cfo)} − capex ${$(Math.abs(capex))}`,
     tone,
-    label,
+    label: base + (tc ? " through the cycle" : ""),
     note:
-      `What an owner could take out without starving the business.${margin != null ? ` That's ${(margin * 100).toFixed(0)}% of revenue.` : ""}` +
+      `What an owner could take out without starving the business.${margin != null ? ` That's ${pct(margin)} of revenue this year${tc ? `, a ${pct(tc.median)} median across ${tc.n} years` : ""}.` : ""}` +
       `${ocSbc != null ? ` Treating stock comp as the real expense it is (less ${$(sbc)} of SBC) leaves ${$(ocSbc)}.` : ""}` +
       " Honest caveat: capex here blends maintenance and growth, so steady-state Owner Earnings may run higher (see capex vs. depreciation).",
   };
@@ -454,6 +471,20 @@ export function operatingMargin(L) {
 export function ownerEarningsMargin(L) {
   if (!L || L.cashFromOps == null || L.capex == null || !L.revenue) return null;
   return (L.cashFromOps - Math.abs(L.capex)) / L.revenue;
+}
+
+// The through-cycle reading of a per-year metric: its median across the most recent n fiscal years
+// in the record. Graham and Buffett judge a business on its normalized record, not one peak or
+// trough year ("average out the good and bad years"), so the returns checks tone on this when the
+// history is there. Median, not mean, so a single freak year doesn't drag the read. Null when there
+// are fewer than three years to normalize, in which case the caller falls back to the latest year.
+export function throughCycle(company, metricFn, n = 5) {
+  const hist = Array.isArray(company?.history) ? company.history : [];
+  const vals = hist.map((h) => metricFn(h?.lines)).filter((v) => v != null && Number.isFinite(v));
+  if (vals.length < 3) return null;
+  const recent = vals.slice(-n);
+  const sorted = [...recent].sort((a, b) => a - b);
+  return { median: sorted[Math.floor((sorted.length - 1) / 2)], n: recent.length, lo: sorted[0], hi: sorted[sorted.length - 1] };
 }
 
 // Durability: the same business-quality metrics across ~10 years of filings.
