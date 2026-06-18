@@ -335,7 +335,7 @@ async function getFiling(cik, f) {
   const business = section(text, "item\\s*1[\\.\\s]+business", ["item\\s*1a[\\.\\s]+risk", "item\\s*1b[\\.\\s]", "item\\s*2[\\.\\s]+propert"]);
   const mdna = section(text, "item\\s*7[\\.\\s]+management", ["item\\s*7a[\\.\\s]+quantitative", "item\\s*8[\\.\\s]+financial"]);
   const risk = section(text, "item\\s*1a[\\.\\s]+risk\\s*factors", ["item\\s*1b[\\.\\s]", "item\\s*2[\\.\\s]+propert"]);
-  return { url, business: { ...metrics(business), lead: leadSentences(business) }, mdna: metrics(mdna), risk: metrics(risk), reportDate: f.reportDate };
+  return { url, business: { ...metrics(business), lead: leadSentences(business) }, mdna: { ...metrics(mdna), lead: leadSentences(mdna) }, risk: metrics(risk), reportDate: f.reportDate };
 }
 
 // ---- executive pay (proxy statement / DEF 14A) ----
