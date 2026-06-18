@@ -11,7 +11,7 @@
 // 15B in 2025) when the count actually fell by a third. This rescales the series across any
 // split-sized jump, snapping the jump to the nearest clean split ratio, so the whole series
 // sits on the latest year's basis. Organic change (buybacks, stock pay) passes through.
-const SPLIT_RATIOS = [1.5, 2, 3, 4, 5, 6, 7, 8, 10, 15, 20];
+const SPLIT_RATIOS = [1.5, 2, 3, 4, 5, 6, 7, 8, 10, 15, 20, 25, 30, 40, 50];
 function snapSplit(ratio) {
   let best = 1, bestErr = Infinity;
   for (const s of SPLIT_RATIOS) {
