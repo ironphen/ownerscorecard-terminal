@@ -176,6 +176,33 @@ function metrics(text) {
   return { words: n, sentences: sents.length, fog: Math.round(fog * 10) / 10, hedgeDensity: hedges / n, sents };
 }
 
+// The Candor Read: how management talks to owners, the linguistic filter Buffett and Munger
+// actually apply to a filing. Four deterministic signals over the MD&A, densities per 1,000 words
+// so they compare across filings of any length, plus the verbatim sentences where management owns
+// a miss. No model, no sentiment lexicon bought off the shelf; just the vocabulary an owner cares
+// about. Present, never pronounce: the page shows the densities, the trajectory and the actual
+// sentences, and the reader judges the character.
+const OWNER_TALK = /\b(per[\s-]?share|return on (invested |tangible )?(capital|equity)|intrinsic value|capital allocation|free cash flow|long[\s-]?term|compound\w*|reinvest\w*|book value|owner[\s']?s?\b)/gi;
+const PROMO = /\b(world[\s-]?class|best[\s-]?in[\s-]?class|best[\s-]?of[\s-]?breed|industry[\s-]?leading|cutting[\s-]?edge|state[\s-]?of[\s-]?the[\s-]?art|revolutionary|transformational|disrupt\w*|synerg\w*|leverage our|unprecedented|paradigm|next[\s-]?gen\w*|seamless\w*|turnkey|holistic|mission[\s-]?critical|game[\s-]?chang\w*|robust\w*|compelling)/gi;
+const ADJUSTED = /\b(non[\s-]?GAAP|adjusted (EBITDA|earnings|net income|operating income|operating|diluted|results|EPS|margin)|pro[\s-]?forma|constant currency|excluding (certain|the impact|special|one[\s-]?time|the effect)|core (earnings|operating)|normalized (earnings|EBITDA|results)|one[\s-]?time (item|charge|cost)s?|special items)/gi;
+// A management owning a miss, in the first person and past tense, the rarest and most prized tell.
+// The conditional/hypothetical guard keeps a forward-looking risk factor ("our results could fall
+// short if…") out; genuine candor is declarative about what already happened.
+const ADMIT = /\b(were wrong|made (a |several |some )?mistakes?|misjudged|overpaid|over[\s-]?estimated|too optimistic|fell short of|did not meet (our|the)|failed to (meet|deliver|achieve|execute)|were disappointed|disappointing (results|performance|year|quarter)|underperformed|below our expectations|in hindsight|should have)\b/i;
+const NOT_ADMIT = /\b(may|might|could|would|if\s|risk that|in the event|to the extent|no assurance|cannot assure|future)\b/i;
+function candorSignals(text, sents) {
+  if (!text) return null;
+  sents = sents || sentences(text);
+  const n = (text.match(/[A-Za-z]+/g) || []).length || 1;
+  const per1k = (re) => Math.round(((text.match(re) || []).length / n) * 1000 * 10) / 10;
+  const admissions = sents
+    .map((s) => cleanQuote(String(s || "")).trim())
+    .filter((s) => s.length >= 30 && s.length < 300 && /\b(we|our|management)\b/i.test(s) && ADMIT.test(s) && !NOT_ADMIT.test(s))
+    .filter((s, i, a) => a.indexOf(s) === i)
+    .slice(0, 3);
+  return { owner: per1k(OWNER_TALK), promo: per1k(PROMO), adjusted: per1k(ADJUSTED), admissions };
+}
+
 // The company's own one-sentence account of what it does, lifted verbatim from the
 // top of Item 1 (Business). We strip stacked section headings, reject incorporation,
 // forward-looking and risk-factor sentences, restore a subject lost to a split on
@@ -335,7 +362,8 @@ async function getFiling(cik, f) {
   const business = section(text, "item\\s*1[\\.\\s]+business", ["item\\s*1a[\\.\\s]+risk", "item\\s*1b[\\.\\s]", "item\\s*2[\\.\\s]+propert"]);
   const mdna = section(text, "item\\s*7[\\.\\s]+management", ["item\\s*7a[\\.\\s]+quantitative", "item\\s*8[\\.\\s]+financial"]);
   const risk = section(text, "item\\s*1a[\\.\\s]+risk\\s*factors", ["item\\s*1b[\\.\\s]", "item\\s*2[\\.\\s]+propert"]);
-  return { url, business: { ...metrics(business), lead: leadSentences(business) }, mdna: { ...metrics(mdna), lead: leadSentences(mdna) }, risk: metrics(risk), reportDate: f.reportDate };
+  const md = metrics(mdna);
+  return { url, business: { ...metrics(business), lead: leadSentences(business) }, mdna: { ...md, lead: leadSentences(mdna), candor: candorSignals(mdna, md.sents) }, risk: metrics(risk), reportDate: f.reportDate };
 }
 
 // ---- executive pay (proxy statement / DEF 14A) ----
@@ -622,6 +650,7 @@ async function main() {
         words: cur.mdna.words, fog: cur.mdna.fog, hedgeDensity: Math.round(cur.mdna.hedgeDensity * 1e4) / 1e4,
         wordsPrior: prior?.mdna.words ?? null, fogPrior: prior?.mdna.fog ?? null,
         hedgePrior: prior ? Math.round(prior.mdna.hedgeDensity * 1e4) / 1e4 : null,
+        candor: cur.mdna.candor || null, candorPrior: prior?.mdna.candor || null,
       },
       risk: { words: cur.risk.words, wordsPrior: prior?.risk.words ?? null },
       mdnaChange: mdnaDiff,
@@ -641,7 +670,7 @@ async function main() {
 }
 
 // Exported for the offline logic test; only hit EDGAR when run directly.
-export { ownerFlags, FLAG_THEMES, sentences, isProse, diff, extractPayRatio, htmlToText, section, fetchText, businessDescription };
+export { ownerFlags, FLAG_THEMES, sentences, isProse, diff, extractPayRatio, htmlToText, section, fetchText, businessDescription, candorSignals };
 
 if (import.meta.url === pathToFileURL(process.argv[1] || "").href) {
   main().catch((e) => { console.error(`\n❌ ${e.message}\n`); process.exit(1); });
