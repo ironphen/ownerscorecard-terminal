@@ -611,7 +611,12 @@ async function main() {
       fy: cur.reportDate?.slice(0, 4) || null,
       priorFy: prior?.reportDate?.slice(0, 4) || null,
       sourceUrl: cur.url,
-      business: businessDescription(cur.business.lead?.length ? cur.business.lead : cur.business.sents, c.name, c.ticker),
+      // Offer the MD&A Overview opening first, then the Item 1 Business lead: the Overview is
+      // often the cleanest plain-language statement of what the company does ("We operate a leading
+      // online marketplace…"), where Item 1 can open on corporate structure or boilerplate.
+      // businessDescription scores every candidate and picks the strongest, falling back to the
+      // computed industry phrase when none is a real description, so adding candidates only helps.
+      business: businessDescription([...(cur.mdna?.lead || []), ...(cur.business.lead?.length ? cur.business.lead : (cur.business.sents || []))], c.name, c.ticker),
       ownerFlags: flags,
       mdna: {
         words: cur.mdna.words, fog: cur.mdna.fog, hedgeDensity: Math.round(cur.mdna.hedgeDensity * 1e4) / 1e4,
