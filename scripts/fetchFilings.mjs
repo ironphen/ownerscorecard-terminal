@@ -223,7 +223,7 @@ const BIZ_SKIP = /(was|were)\s+incorporated|incorporated\s+(under|in)\b|reincorp
 // A weak subject: the sentence is about employees, customers or a side note, not the
 // company itself, so it is not a description of the business.
 const BIZ_WEAK = /^(we also\b|when\s+we\b|founded\b|established\b|originally\b|since (our|its|we)\b|our (mission|vision|strateg|purpose|goals?|values|history|story|customers?|employees?|people|associates|team|more than|over\s|approximately|roughly|nearly)|our\b[^.]{0,40}\b(purpose|mission|vision)\b[^.]{0,120}\bis\s+to\b|we have (sharpened|built|been developing|also been|grown|expanded)|we strive|we seek\b|we aim\b|we (encounter|rely|depend|compete|consistently|correctly|pursue|understand|assess|estimate|disposed)\b|we have (entered|received)\b|[a-z][\w& .,'-]{0,38}'s\s+(vision|mission|purpose)\s+is\s+to\b|[a-z][\w& .,'-]{0,38}\b(strives?|aims?)\s+to\b|[a-z][\w& .,'-]{0,38}\bbelieves\b|[a-z][\w& .,'-]{0,30}'s\s+growth\b|[a-z][\w& .,'-]{0,30}\balso has\b)/i;
-const HEAD_TOKEN = /^(item\s*1[ab]?\b\.?|part\s*i+\b\.?|general development of (the )?business|business overview|company overview|our company|our business|the company|introduction|business|general|overview)\s*[:.\-–—]?\s+/i;
+const HEAD_TOKEN = /^(item\s*1[ab]?\b\.?|part\s*i+\b\.?|general development of (the )?business|executive overview|business overview|company overview|our company|our business|the company|introduction|business|general|overview)\s*[:.\-–—]?\s+/i;
 // A broken sentence fragment, not a description: a cross-reference ("found in Items 1 and 2"), or a
 // lead verb jammed into a preposition by bad splitting ("We provide, found in…", "We operate and in
 // the U.S. as a whole"). KMI and WAL slipped a mangled hero through on these; reject them.
@@ -238,7 +238,7 @@ const BIZ_RESULTS = /\b(increases?|decreases?)\s+(in|of)\b[^.]{0,40}\b(result|pr
 // is ONLY a heading/cross-reference, the BIZ_RICH check downstream still drops it.
 // Longer, more-specific headings come first so "overview of business" is taken whole rather than the
 // bare "overview" stripping only its first word and leaving "of business …".
-const LEAD_HEADING = /^((overview|description|summary|nature)\s+of\s+(the\s+)?business|general\s+development\s+of\s+(the\s+)?business|business\s+overview|company\s+overview|overview\s+of\s+operations|business\s+update|recent\s+developments|results\s+of\s+operations|business\s+factors[\w\s]{0,45}?operations|segment\s+reporting|our\s+business|our\s+company|the\s+(business|company)|overview|introduction|business|general|properties)\b[\s:.\-–—]+/i;
+const LEAD_HEADING = /^((overview|description|summary|nature)\s+of\s+(the\s+)?business|general\s+development\s+of\s+(the\s+)?business|executive\s+overview|business\s+overview|company\s+overview|overview\s+of\s+operations|business\s+update|recent\s+developments|results\s+of\s+operations|business\s+factors[\w\s]{0,45}?operations|segment\s+reporting|our\s+business|our\s+company|the\s+(business|company)|overview|introduction|business|general|properties)\b[\s:.\-–—]+/i;
 const stripLeadingHeading = (s) => { let o = String(s || ""); for (let k = 0; k < 2 && LEAD_HEADING.test(o); k++) o = o.replace(LEAD_HEADING, ""); return o ? o.charAt(0).toUpperCase() + o.slice(1) : o; };
 const LEAD_VERB = /^(is|are|operates?|provides?|markets?|designs?|develops?|sells?|offers?|supplies|distributes?|delivers?|produces?|manufactures?|engages?)\b/i;
 // Signals a richer description: names products, markets, customers or segments rather
@@ -250,6 +250,13 @@ const BIZ_STRUCTURAL = /\boperat\w*\b[^.]{0,40}\bthrough\b|operating segments?|r
 // Additional descriptive forms beyond a plain verb or "is a <type>": "engaged in",
 // "principal business", "a leading provider/manufacturer of", "<noun> of".
 const BIZ_ENGAGED = /\b(engaged?|engages?)\s+(primarily\s+)?in\b|\b(principal|primary|core|main)\s+business\b|\b(leading|global|largest|world'?s|premier|principal)\b[^.]{0,40}\b(provider|manufacturer|producer|operator|supplier|distributor|retailer|developer|maker|company|leader|bank|insurer|partner|builder|contractor|shipbuilder)s?\b|\b(provider|manufacturer|producer|operator|developer|maker|distributor)s?\s+of\b/i;
+
+// Non-description openers the scorer otherwise lets through because they carry a subject and a
+// verb: a competition list ("Our competitors include banks, thrifts…", Bank of America) or an
+// operating-process sentence ("We normally purchase our feedstocks weeks before…", Phillips 66).
+// Neither says what the business is, so reject them — the hero then falls back to the segment mix
+// or the computed phrase rather than printing a stray sentence as the description.
+const BIZ_NOTDESC = /\bcompetitors?\s+(include|are|consist|range|comprise|compete)|^(we|our)\s+(normally|typically|generally|usually|principally|routinely|primarily\s+(purchase|buy|source|sell))\s+(purchase|buy|sell|acquire|obtain|source|procure|market|distribute|manufacture|produce|operate)\b/i;
 
 // Pull the company's own one-line description from the top of Item 1. Rather than take
 // the first sentence that passes, we collect candidates from the opening and score
@@ -333,7 +340,7 @@ function businessDescription(sents, name, ticker) {
     if (LEAD_VERB.test(s) && name) s = `${name.trim()} ${s}`; // restore a subject split off entirely
     if (/^[a-z]/.test(s)) s = s.charAt(0).toUpperCase() + s.slice(1);
     if (s.length < 34 || s.length > 700) continue;
-    if (BIZ_SKIP.test(s) || BIZ_WEAK.test(s) || BIZ_FRAGMENT.test(s) || BIZ_RESULTS.test(s)) continue;
+    if (BIZ_SKIP.test(s) || BIZ_WEAK.test(s) || BIZ_FRAGMENT.test(s) || BIZ_RESULTS.test(s) || BIZ_NOTDESC.test(s)) continue;
     const isa = BIZ_ISA.test(s);
     if (!BIZ_DOING.test(s) && !isa && !BIZ_ENGAGED.test(s)) continue;
     const head = s.split(/\s+/).slice(0, 6).join(" ");

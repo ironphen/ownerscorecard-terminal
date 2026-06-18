@@ -119,6 +119,20 @@ const cases = [
   ["AMZN-results", "Amazon.com, Inc.",
     ["Increases in operating income primarily result from increases in sales of products and services and efficiently managing our operating costs."],
     null],
+  // A competition list is not a description (Bank of America shipped this as its hero); reject it so
+  // the page falls back to the segment mix or the computed phrase.
+  ["BAC-competitors", "Bank of America Corporation",
+    ["Our competitors include banks, thrifts, credit unions, investment banking firms, brokerage firms, insurance companies, and mortgage banking companies."],
+    null],
+  // An operating-process sentence is not a description (Phillips 66 shipped this); reject it.
+  ["PSX-process", "Phillips 66",
+    ["We normally purchase our feedstocks weeks before manufacturing and selling the refined products."],
+    null],
+  // A real description buried behind an MD&A "Executive Overview" heading (Humana) must surface once
+  // the stacked heading is stripped, not be lost with it.
+  ["HUM-exec-overview", "Humana Inc.",
+    ["Executive Overview General Humana Inc., headquartered in Louisville, Kentucky, is a leading health and well-being company focused on making it easy for people to achieve their best health."],
+    /Humana Inc\..{0,60}is a leading health and well-being company/i],
 ];
 
 let pass = 0, fail = 0;

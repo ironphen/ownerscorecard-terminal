@@ -157,8 +157,13 @@ const LEAKED = /public accounting firm|registered with the pcaob|\bstudio lot\b|
 // the segment mix or the computed phrase. Measured against every stored lede: matches only genuine
 // headings, no real description.
 const ALLCAPS_HEADING = /^[A-Z0-9][A-Z0-9 ,&'’.\/-]{17,}/;
+// A competition list ("Our competitors include banks, thrifts…") or an operating-process sentence
+// ("We normally purchase our feedstocks weeks before…") that the extraction took for a description.
+// Render-time twin of the fetch scorer's BIZ_NOTDESC, so a name already carrying one of these in
+// the data falls back to the segment mix or the phrase now, without waiting on a re-fetch.
+const NOT_DESC = /\bcompetitors?\s+(include|are|consist|compete|comprise)|^(we|our)\s+(normally|typically|generally|usually|principally|routinely)\s+(purchase|buy|sell|acquire|obtain|source|procure|market|distribute|manufacture|produce)\b/i;
 export function weakLede(s) {
   if (!s || typeof s !== "string") return true;
-  return /^we have entered\b/i.test(s) || WEAK_LEDE.test(s) || ALLCAPS_HEADING.test(s) ||
+  return /^we have entered\b/i.test(s) || WEAK_LEDE.test(s) || ALLCAPS_HEADING.test(s) || NOT_DESC.test(s) ||
     /\bvarious (facilities|services|agreements|arrangements)\b/i.test(s) || NOT_A_DESCRIPTION.test(s) || LEAKED.test(s);
 }
