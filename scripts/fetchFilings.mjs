@@ -338,6 +338,30 @@ function businessDescription(sents, name, ticker) {
   return best.length > 300 ? best.slice(0, 297).replace(/[\s,;]+\S*$/, "") + "…" : best;
 }
 
+// A short "in brief" to sit beneath the hero sentence: up to two more lines that add concrete
+// substance — the products, segments, customers or end-markets a company actually names — cleaned
+// the same way as the hero (cleanQuote, the same skip/weak/structural guards) and kept distinct
+// from it, so the page can say what a business does in a few honest, verbatim sentences instead of
+// one. Empty where the filing offers nothing concrete; never invented.
+function businessBrief(sents, lede, name) {
+  if (!lede || !Array.isArray(sents)) return [];
+  const ledeNorm = normalize(lede);
+  const extras = [];
+  for (let i = 0; i < Math.min(sents.length, 25) && extras.length < 2; i++) {
+    let s = cleanQuote(String(sents[i] || ""));
+    if (LEAD_VERB.test(s) && name) s = `${name.trim()} ${s}`;
+    if (/^[a-z]/.test(s)) s = s.charAt(0).toUpperCase() + s.slice(1);
+    if (s.length < 60 || s.length > 340) continue;
+    if (!isProse(s) || BIZ_SKIP.test(s) || BIZ_WEAK.test(s) || BIZ_STRUCTURAL.test(s)) continue;
+    if (!BIZ_RICH.test(s)) continue; // must name products, markets, segments or customers
+    const sNorm = normalize(s);
+    if (sNorm === ledeNorm || ledeNorm.includes(sNorm.slice(0, 50)) || sNorm.includes(ledeNorm.slice(0, 50))) continue; // not the lede again
+    if (extras.some((e) => jaccard(tokenize(e), tokenize(s)) > 0.5)) continue; // distinct from a prior extra
+    extras.push(s.length > 320 ? s.slice(0, 317).replace(/[\s,;]+\S*$/, "") + "…" : s);
+  }
+  return extras;
+}
+
 // ---- EDGAR document discovery ----
 
 async function latestTenKs(cik, n = 2) {
@@ -635,6 +659,10 @@ async function main() {
       if (proxy) { await sleep(THROTTLE); comp = await getComp(c.cik, proxy); }
     } catch (e) { console.warn(`  ! ${tk}: proxy ${e.message}`); }
 
+    // The lede candidates (MD&A Overview first, then Item 1 Business), scored once and reused for
+    // both the hero sentence and the "in brief" detail lines beneath it.
+    const bizSents = [...(cur.mdna?.lead || []), ...(cur.business.lead?.length ? cur.business.lead : (cur.business.sents || []))];
+    const bizLede = businessDescription(bizSents, c.name, c.ticker);
     out[tk] = {
       fy: cur.reportDate?.slice(0, 4) || null,
       priorFy: prior?.reportDate?.slice(0, 4) || null,
@@ -644,7 +672,8 @@ async function main() {
       // online marketplace…"), where Item 1 can open on corporate structure or boilerplate.
       // businessDescription scores every candidate and picks the strongest, falling back to the
       // computed industry phrase when none is a real description, so adding candidates only helps.
-      business: businessDescription([...(cur.mdna?.lead || []), ...(cur.business.lead?.length ? cur.business.lead : (cur.business.sents || []))], c.name, c.ticker),
+      business: bizLede,
+      brief: businessBrief(bizSents, bizLede, c.name),
       ownerFlags: flags,
       mdna: {
         words: cur.mdna.words, fog: cur.mdna.fog, hedgeDensity: Math.round(cur.mdna.hedgeDensity * 1e4) / 1e4,
@@ -670,7 +699,7 @@ async function main() {
 }
 
 // Exported for the offline logic test; only hit EDGAR when run directly.
-export { ownerFlags, FLAG_THEMES, sentences, isProse, diff, extractPayRatio, htmlToText, section, fetchText, businessDescription, candorSignals };
+export { ownerFlags, FLAG_THEMES, sentences, isProse, diff, extractPayRatio, htmlToText, section, fetchText, businessDescription, candorSignals, businessBrief };
 
 if (import.meta.url === pathToFileURL(process.argv[1] || "").href) {
   main().catch((e) => { console.error(`\n❌ ${e.message}\n`); process.exit(1); });
