@@ -655,12 +655,17 @@ const RESULT_ATTR = /\b(due to|driven by|reflect\w*|result\w* (of|from)|attribut
 // company telling you it has pricing power, it is the company naming a risk. Keep those out.
 const HYPO = /\b(if\s|may not|might not|unable to|cannot|could not|risk that|no assurance|whether (we|the)|to the extent|should we|were we to|in the event|inability to)\b/i;
 
-// The grave accounting-integrity admissions. Material weakness has a clean negation a clean filer
-// states routinely ("we did not identify any material weakness"), so the present/absent pair must
-// assert the weakness EXISTS. Restatement likewise: declarative past tense, not the risk hypothetical.
-const MW_PRESENT = /\bmaterial weakness(es)?\b/i;
-const MW_ABSENT = /\b(no|not|without|did not (identify|have|note|find)|none|free (of|from)|absence of|reasonable assurance|were not|was not|have not|is not|are not)\b[\s\S]{0,40}material weakness|material weakness(es)?[\s\S]{0,40}\b(did not|were not|was not|have not|not (identif|exist|present))/i;
-const RESTATEMENT = /\b(restate\w*|restatement)\b[\s\S]{0,70}\b(financial statements?|prior (period|year)|previously (issued|reported)|results of operations|consolidated|balance sheet)\b|\bpreviously (issued|reported)[\s\S]{0,50}\brestate\w*/i;
+// The grave accounting-integrity admissions. These are rare in truth, but the risk factors are full
+// of hypothetical mentions — "a FAILURE to maintain controls COULD result in a material weakness",
+// "we MAY in the FUTURE be required to restate" — so this facet needs a far stricter guard than the
+// pricing read: it must be a statement that a weakness or restatement actually HAPPENED, present or
+// past tense, with every forward-looking, conditional or remediation-only framing excluded.
+const INTEGRITY_FUTURE = /\b(may|might|could|would|should|if|whether|future|risk that|fail(ure)? to|in the event|to the extent|potential|possible|were we|able to|designed to|intended to|in order to|required to|expose us|subject us|result in|lead to|cause us)\b/i;
+// A material weakness actually declared as existing/identified, in a factual frame.
+const MW_DECLARED = /\b(identified|concluded|determined|disclosed|existed|exists|reported)\b[\s\S]{0,40}\bmaterial weakness/i;
+const MW_ABSENT = /\b(no|not|without|did not (identify|have|note|find)|none|free (of|from)|absence of|reasonable assurance|were not|was not|have not|is not|are not|remediated|been remediated)\b[\s\S]{0,40}material weakness|material weakness(es)?[\s\S]{0,40}\b(did not|were not|was not|have not|not (identif|exist|present)|been remediated|was remediated)/i;
+// A restatement that actually happened: past-tense "restated", tied to the financial statements.
+const RESTATED = /\b(restated|have restated|has restated|were restated|restatement of (our|its|the|previously))\b[\s\S]{0,60}\b(financial statements?|prior (period|year)|previously (issued|reported)|results of operations|consolidated|balance sheet)\b|\bpreviously (issued|reported)[\s\S]{0,40}(financial statements?)[\s\S]{0,30}\b(were |have been )?restated\b/i;
 
 // The judgment-heavy estimates a 10-K's "Critical Accounting Estimates" section names. We map the
 // topic, not just the word, so the read says where the numbers are soft, not merely that the word
@@ -697,13 +702,16 @@ function bestSentence(sents, want, avoid = [], prefer = []) {
   return best;
 }
 
-// First declarative sentence asserting `present` and not `absent`/hypothetical — for the rare grave
-// flags, where the first real instance is the signal and ordering doesn't matter.
-function flagSentence(sents, present, absent) {
+// First sentence that DECLARES the grave flag actually happened — strict by design: it must trip the
+// declarative pattern, must not be a forward-looking/conditional framing (INTEGRITY_FUTURE), and must
+// not be a negation or a remediation-only mention (absent). The risk factors are dense with "could
+// result in a material weakness" hypotheticals, so this guard, not the loose pricing one, is what
+// keeps the facet to the rare companies that truly admit one.
+function integritySentence(sents, declared, absent) {
   for (const raw of sents || []) {
     const s = cleanQuote(String(raw || ""));
     if (s.length < 40 || s.length > 300) continue;
-    if (HYPO.test(s) || !present.test(s)) continue;
+    if (INTEGRITY_FUTURE.test(s) || !declared.test(s)) continue;
     if (absent && absent.test(s)) continue;
     return s;
   }
@@ -747,8 +755,8 @@ function buffettRead(cur) {
   const judgment = criticalEstimates(mdna);
 
   // 3. Accounting integrity.
-  const materialWeakness = flagSentence([...mdna, ...risk], MW_PRESENT, MW_ABSENT);
-  const restatement = flagSentence([...mdna, ...risk], RESTATEMENT, null);
+  const materialWeakness = integritySentence([...mdna, ...risk], MW_DECLARED, MW_ABSENT);
+  const restatement = integritySentence([...mdna, ...risk], RESTATED, null);
   const integrity = materialWeakness || restatement ? { materialWeakness: materialWeakness || null, restatement: restatement || null } : null;
 
   if (!pricing && !judgment && !integrity) return null;

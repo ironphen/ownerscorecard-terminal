@@ -91,6 +91,16 @@ const cases = [
     ],
   }), (r) => !r?.integrity],
 
+  // 9a–9c. The real false-positive patterns the first production run surfaced — risk-factor mentions
+  // of a material weakness that the stricter declarative guard must NOT flag: a future "may have",
+  // a "failure to … could result in", and a weakness already remediated.
+  ["mw-future", mk({ risk: ["We in the past have had, and in the future may have, a material weakness in our internal control over financial reporting."] }),
+    (r) => !r?.integrity],
+  ["mw-failure", mk({ risk: ["Failure to maintain adequate controls could result in material weaknesses and lead to errors in our financial statements."] }),
+    (r) => !r?.integrity],
+  ["mw-remediated", mk({ risk: ["We have identified and remediated material weaknesses in our internal control over financial reporting."] }),
+    (r) => !r?.integrity],
+
   // 10. Pricing-power HYPOTHETICAL guard: a conditional "if we cannot raise prices" is a risk, not
   // evidence of pricing power. Power must be null even though the words "raise prices" appear.
   ["pricing-hypothetical", mk({
