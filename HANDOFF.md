@@ -1,7 +1,10 @@
 # Owner Scorecard — Working Handoff
 
 > Continuity doc for a context refresh. Read this first. Branch: `claude/jolly-ride-nae81r`.
-> `main`/live is only at the coverage-expansion merge; **everything below is branch-only, not live.**
+> **SHIPPED 2026-06-18 (merge `efa6aa9` → main):** ADR financials (foreign banks/insurers on their own
+> statements in home currency), through-cycle returns judgments, the giants' segment-fused descriptions,
+> and the Pillar 1 lede extraction are now LIVE on `main`. The branch develops ahead of `main` and is
+> merged periodically; treat anything committed after `efa6aa9` as branch-only until the next merge.
 
 ## The spirit (carry this forward)
 We're building the canonical **free** place serious fundamental investors send beginners to learn
