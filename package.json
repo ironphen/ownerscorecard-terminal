@@ -15,7 +15,7 @@
     "fetch:segments": "node scripts/fetchSegments.mjs",
     "audit": "node scripts/auditData.mjs",
     "audit:jp": "node scripts/auditJp.mjs",
-    "test": "node scripts/heroTest.mjs && node scripts/edinetTest.mjs && node scripts/buffettReadTest.mjs && node scripts/fundamentalsTest.mjs"
+    "test": "node scripts/heroTest.mjs && node scripts/edinetTest.mjs && node scripts/buffettReadTest.mjs && node scripts/fundamentalsTest.mjs && node scripts/universeTest.mjs"
   },
   "dependencies": {
     "@astrojs/mdx": "^6.0.3",

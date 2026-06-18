@@ -24,8 +24,12 @@ import { pathToFileURL } from "node:url";
 
 const dataDir = path.join(process.cwd(), "src", "data");
 const universePath = path.join(dataDir, "universe.json");
+const adrPath = path.join(dataDir, "universe.adr.json");
 const DRYRUN = !!process.env.UNIVERSE_DRYRUN;
 const MAX = Math.max(500, parseInt(process.env.UNIVERSE_MAX || "3000", 10) || 3000);
+// The ADR pool is smaller and read for prominence, so a tighter cap by market value keeps it to the
+// globally significant names (a TSMC or ASML, not a cross-listed micro-cap).
+const ADR_MAX = Math.max(100, parseInt(process.env.ADR_MAX || "1000", 10) || 1000);
 const UA =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 
@@ -87,6 +91,27 @@ export function parseScreener(json) {
   return out.filter((r) => (seen.has(r.ticker) ? false : (seen.add(r.ticker), true)));
 }
 
+// The ADR universe, from the very same screener fetch: the rows the US parse drops — foreign
+// companies listed on a US exchange. Because they are exchange-listed, they file Form 20-F with the
+// SEC, so EDGAR carries their XBRL (in IFRS), and they self-maintain by market cap exactly like the
+// US set. Country is kept, to label the pool and because it is what defines membership.
+export function parseScreenerADR(json) {
+  const rows = json?.data?.rows || json?.data?.table?.rows || [];
+  const out = [];
+  for (const r of rows) {
+    const tk = String(r.symbol || "").trim().toUpperCase().replace(/[./]/g, "-");
+    if (!/^[A-Z][A-Z-]{0,6}$/.test(tk)) continue;
+    const country = String(r.country || "").trim();
+    if (!country || country === "United States") continue; // the ADRs are exactly the non-US rows
+    const cap = parseFloat(String(r.marketCap || "").replace(/[^0-9.]/g, ""));
+    if (!(cap > 0)) continue;
+    out.push({ ticker: tk, name: cleanName(r.name), cap, country });
+  }
+  out.sort((a, b) => b.cap - a.cap);
+  const seen = new Set();
+  return out.filter((r) => (seen.has(r.ticker) ? false : (seen.add(r.ticker), true)));
+}
+
 async function main() {
   const existing = JSON.parse(fs.readFileSync(universePath, "utf8"));
   const curated = new Map((existing.tickers || []).map((t) => [String(t.ticker).toUpperCase(), t.name || null]));
@@ -139,6 +164,32 @@ async function main() {
   };
   fs.writeFileSync(universePath, JSON.stringify(out, null, 2) + "\n");
   console.log(`  ✅ wrote universe.json with ${list.length} tickers`);
+
+  // The ADR pool, from the same validated payload: the top foreign-listed names by market cap, kept
+  // distinct so the IFRS/20-F pipeline and the separate "ADRs" tab read from it. Curated ADR names
+  // already on file are preserved and unioned in, the same as the US set, so nothing is lost on a
+  // rebuild. Written only after the US payload passed its sanity gate above.
+  const adrCurated = new Map(
+    (() => { try { return JSON.parse(fs.readFileSync(adrPath, "utf8")).tickers || []; } catch { return []; } })()
+      .map((t) => [String(t.ticker).toUpperCase(), t])
+  );
+  const adrRanked = parseScreenerADR(raw);
+  const adrTop = adrRanked.slice(0, ADR_MAX);
+  const adrMerged = new Map();
+  for (const r of adrTop) adrMerged.set(r.ticker, { ticker: r.ticker, name: adrCurated.get(r.ticker)?.name ?? r.name ?? undefined, country: r.country });
+  let adrExtras = 0;
+  for (const [tk, t] of adrCurated) if (!adrMerged.has(tk)) { adrMerged.set(tk, t); adrExtras++; }
+  const adrList = [...adrMerged.values()]
+    .sort((a, b) => (a.ticker < b.ticker ? -1 : a.ticker > b.ticker ? 1 : 0))
+    .map((t) => Object.fromEntries(Object.entries(t).filter(([, v]) => v != null)));
+  console.log(`  ADR pool: ${adrList.length} foreign-listed names (top ${adrTop.length} by market cap, ${adrExtras} curated extras kept)`);
+  if (!DRYRUN && adrList.length) {
+    fs.writeFileSync(adrPath, JSON.stringify({
+      note: `ADR universe: foreign companies listed on US exchanges (Nasdaq screener, non-US rows, top ${ADR_MAX} by market cap). They file Form 20-F with the SEC; read in IFRS by the ADR pipeline. Rebuilt via scripts/buildUniverse.mjs.`,
+      tickers: adrList,
+    }, null, 2) + "\n");
+    console.log(`  ✅ wrote universe.adr.json with ${adrList.length} ADRs`);
+  }
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
