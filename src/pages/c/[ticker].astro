@@ -20,24 +20,32 @@ import NormalizedEarnings from "../../components/NormalizedEarnings.astro";
 import language from "../../data/language.json";
 import { classify } from "../../lib/archetype.mjs";
 import { businessPhrase, weakLede } from "../../lib/business.mjs";
+import adrFundamentals from "../../data/fundamentals.adr.json";
 import { getCollection } from "astro:content";
 
+// ADRs (foreign 20-F filers) carry US-style tickers and the same record shape, so they get the same
+// /c/[ticker] page as a US company; only the data source and currency differ. The two pools are
+// merged for path generation (inline below, since getStaticPaths runs isolated from the frontmatter
+// body) and for the lookup.
 export async function getStaticPaths() {
   const articles = await getCollection("articles", ({ data }) =>
     import.meta.env.PROD ? !data.draft : true
   );
+  const companies = [...(fundamentals.companies || []), ...(adrFundamentals.companies || [])];
   const tickers = new Set([
-    ...(fundamentals.companies || []).map((c) => String(c.ticker || "").toUpperCase()),
+    ...companies.map((c) => String(c.ticker || "").toUpperCase()),
     ...articles.flatMap((a) => a.data.tickers.map((t) => t.toUpperCase())),
   ]);
   tickers.delete("");
   return Array.from(tickers).map((ticker) => ({ params: { ticker } }));
 }
 
+const allCompanies = [...(fundamentals.companies || []), ...(adrFundamentals.companies || [])];
+
 const ticker = String(Astro.params.ticker || "").toUpperCase();
 
 const fund =
-  (fundamentals.companies || []).find((c) => String(c.ticker || "").toUpperCase() === ticker) || null;
+  allCompanies.find((c) => String(c.ticker || "").toUpperCase() === ticker) || null;
 
 const related = (
   await getCollection("articles", ({ data }) =>

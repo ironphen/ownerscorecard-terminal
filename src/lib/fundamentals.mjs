@@ -41,8 +41,14 @@ export function passesQualityFloor(company) {
 // Compact money formatting, currency-aware so the same compute serves the US pool (USD)
 // and the Japanese pool (JPY, which reaches trillions): 123e9 -> "$123.0B", 50.7e12 ->
 // "¥50.7T". The symbol is chosen by currency code; everything else is identical.
-const CCY_SYMBOL = { USD: "$", JPY: "¥" };
-export function currencySymbol(ccy) { return CCY_SYMBOL[ccy] || "$"; }
+// ADRs report in their home currency, so the symbol map covers the major ones; anything unmapped
+// falls back to its ISO code (e.g. "SEK 5B") rather than a wrong "$", so a currency is never mislabeled.
+const CCY_SYMBOL = {
+  USD: "$", JPY: "¥", EUR: "€", GBP: "£", CHF: "CHF ", TWD: "NT$", HKD: "HK$", KRW: "₩",
+  CNY: "CN¥", BRL: "R$", INR: "₹", CAD: "C$", AUD: "A$", SGD: "S$", ILS: "₪", MXN: "MX$",
+  ZAR: "R ", SEK: "SEK ", DKK: "DKK ", NOK: "NOK ", PLN: "zł ", IDR: "Rp ",
+};
+export function currencySymbol(ccy) { return CCY_SYMBOL[ccy] || (ccy ? ccy + " " : "$"); }
 export function fmtMoney(v, ccy = "USD") {
   if (v == null) return "—";
   const sym = currencySymbol(ccy);
