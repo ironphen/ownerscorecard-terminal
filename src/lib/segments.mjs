@@ -39,3 +39,31 @@ export function pickPrimaryBreakdown(S, axes = ["segment", "product", "geography
   }
   return null;
 }
+
+// Clean a segment/product label for prose: decode the XBRL entity, drop a trailing "Segment(s)".
+export const cleanSegLabel = (s) => String(s || "").replace(/&amp;/gi, "&").replace(/\s+Segments?$/i, "").replace(/ And /g, " and ").trim();
+
+// A one-line "what it is" built from the company's own revenue mix — the fallback the hero and
+// the brief share when the filing's own description doesn't parse (a giant that opens on a mission
+// statement: Amazon, Meta, Apple). Prefers operating segments, then product lines; geography
+// answers "where", not "what", so it's left out. Reads out each part's revenue share. Returns null
+// when no breakdown is informative, so the caller falls through to the computed industry phrase.
+export function compositionSentence(S) {
+  const pick = pickPrimaryBreakdown(S, ["segment", "product"]);
+  if (!pick?.raw || !S?.revenueTotal) return null;
+  const total = S.revenueTotal;
+  const kindWord = pick.kind === "product" ? "line" : "segment";
+  const sorted = [...pick.raw.items].filter((it) => it.revenue > 0).sort((a, b) => b.revenue - a.revenue);
+  const big = sorted.filter((it) => (100 * it.revenue) / total >= 1);
+  const items = big.length >= 2 ? big : sorted;
+  if (items.length < 2) return null;
+  const sh = (it) => Math.round((100 * it.revenue) / total);
+  const fmtItem = (it) => `${cleanSegLabel(it.label)} (${sh(it)}%)`;
+  const joinList = (arr) =>
+    arr.length === 1 ? fmtItem(arr[0])
+      : arr.length === 2 ? `${fmtItem(arr[0])} and ${fmtItem(arr[1])}`
+        : `${arr.slice(0, -1).map(fmtItem).join(", ")} and ${fmtItem(arr[arr.length - 1])}`;
+  return items.length <= 3
+    ? `Revenue is ${joinList(items)}.`
+    : `Revenue is led by ${fmtItem(items[0])} and ${fmtItem(items[1])}, with ${items.length - 2} more ${kindWord}s behind.`;
+}
