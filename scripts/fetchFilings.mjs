@@ -891,7 +891,12 @@ async function main() {
         // Extraction diagnostics for the qualitative audit: the word count of each parsed section, so
         // a missing lede can be read as an EXTRACTION failure (Item 1 came up empty) versus a SCORER
         // failure (Item 1 is full but no sentence was accepted) — the distinction that drives the fix.
-        extract: { business: cur.business.words, mdna: cur.mdna.words, risk: cur.risk.words, ledeFromFiling: !!bizLede },
+        extract: {
+          business: cur.business.words, mdna: cur.mdna.words, risk: cur.risk.words, ledeFromFiling: !!bizLede,
+          // When no lede was accepted, keep the first sentences the scorer actually saw, so the scorer's
+          // over-rejection can be diagnosed and fixed from the real openings (AAPL/NVDA), not guessed at.
+          sample: bizLede ? undefined : bizSents.slice(0, 5).map((s) => cleanQuote(String(s || "")).slice(0, 180)).filter(Boolean),
+        },
         ownerFlags: flags,
         mdna: {
           words: cur.mdna.words, fog: cur.mdna.fog, hedgeDensity: Math.round(cur.mdna.hedgeDensity * 1e4) / 1e4,
