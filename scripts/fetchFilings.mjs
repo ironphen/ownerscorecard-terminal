@@ -368,6 +368,12 @@ function businessDescription(sents, name, ticker) {
     console.log(`  raw opening: ${sents.slice(0, 6).map((s) => String(s).slice(0, 55)).join(" | ")}`);
     console.log("=== end BIZ_DEBUG ===\n");
   }
+  // A negative best score means the surviving candidates are deep, structural, or dubious — a risk
+  // or mission sentence that slipped the filters (FedEx's "We are not able to successfully implement
+  // our business strategy…", Marathon's "We are committed to leveraging…"), or a real description
+  // buried so far down the earliness penalty sinks it. Better the segment mix or the computed phrase
+  // than a doubtful sentence presented as what the business is.
+  if (cands[0].score < 0) return null;
   const best = cands[0].s;
   return best.length > 300 ? best.slice(0, 297).replace(/[\s,;]+\S*$/, "") + "…" : best;
 }
