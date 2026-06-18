@@ -1,0 +1,124 @@
+---
+// The Candor Read, surfaced — how management talks to owners, the linguistic filter Buffett and
+// Munger actually apply to a filing. Three deterministic signals counted over the MD&A (the words
+// of an owner, the words of a promoter, and how often the company steers you off GAAP), each shown
+// with its year-over-year drift, and beneath them the rarest, most prized tell: the verbatim
+// sentences where management owns a miss. No model, no bought sentiment lexicon — just the
+// vocabulary an owner cares about, counted. The detector lives in scripts/fetchFilings.mjs; this
+// presents the densities and the actual sentences and never grades the character. Present, never
+// pronounce.
+import language from "../data/language.json";
+import { TONE_COLOR } from "../lib/fundamentals.mjs";
+
+const { company } = Astro.props;
+const L = language?.companies?.[company.ticker] || null;
+const c = L?.mdna?.candor || null;
+const cp = L?.mdna?.candorPrior || null;
+const fy = L?.fy || company.fy;
+
+// The three signals, glossed so the bar teaches the lens rather than asking the reader to read a
+// raw number. Densities are per 1,000 words, so they compare across filings of any length. Each bar
+// is scaled to its own real distribution across the catalog (roughly the 90th percentile: owner ≈ 3,
+// promoter ≈ 1, "adjusted" ≈ 5 per 1,000 words), so a full-ish bar means high FOR THAT KIND of
+// language — the three densities aren't comparable to each other, only each to its own norm.
+const signals = c
+  ? [
+      { key: "owner", label: "An owner's language", tone: "good", scale: 4,
+        gloss: "Per-share thinking, return on capital, intrinsic value, free cash flow, the long term — the vocabulary of someone who reasons like a part-owner.",
+        value: c.owner, prior: cp?.owner ?? null },
+      { key: "promo", label: "A promoter's language", tone: "warn", scale: 1.5,
+        gloss: "World-class, best-in-class, paradigm, synergies, disruptive — the vocabulary of selling rather than accounting.",
+        value: c.promo, prior: cp?.promo ?? null },
+      { key: "adjusted", label: "“Look past GAAP”", tone: "info", scale: 6,
+        gloss: "Adjusted, non-GAAP, pro-forma, one-time, excluding certain items — how often the filing asks you to measure earnings its way.",
+        value: c.adjusted, prior: cp?.adjusted ?? null },
+    ]
+  : [];
+
+const pctOf = (v, scale) => Math.max(2, Math.min(100, (v / scale) * 100));
+// Year-over-year drift, stated in words, not a number — "more/less/about the same" is what an owner
+// takes from it. A meaningful move is a fifth of the prior level (and at least 0.3/1,000).
+function drift(value, prior) {
+  if (prior == null || value == null) return null;
+  const d = value - prior;
+  if (Math.abs(d) < Math.max(0.3, prior * 0.2)) return { word: "about the same as last year", dir: 0 };
+  return { word: `${d > 0 ? "more" : "less"} than last year`, dir: d > 0 ? 1 : -1 };
+}
+
+const admissions = c?.admissions || [];
+const hasContent = !!c;
+---
+
+{hasContent ? (
+  <section class="candor">
+    <div class="head">
+      <h3 class="secTitle">How management talks to owners{fy ? `, FY${fy}` : ""}</h3>
+      {L?.sourceUrl ? <a class="src" href={L.sourceUrl} target="_blank" rel="noopener">read the 10-K →</a> : null}
+    </div>
+    <p class="intro">
+      Buffett and Munger read a filing as much for <em>how</em> management talks as for what it reports.
+      Three kinds of language, counted over the MD&amp;A — the words of an owner, the words of a promoter,
+      and how often you are asked to look past GAAP. The counts and the company's own sentences; the
+      character is yours to read.
+    </p>
+
+    <ul class="bars">
+      {signals.map((s) => {
+        const dr = drift(s.value, s.prior);
+        return (
+          <li>
+            <div class="barTop">
+              <span class="bLabel" style={`color:${TONE_COLOR[s.tone]}`}>{s.label}</span>
+              <span class="bVal">{s.value.toFixed(1)}<span class="per"> / 1,000 words</span>{dr ? <span class={`drift d${dr.dir}`}>· {dr.word}</span> : null}</span>
+            </div>
+            <div class="track"><span class="fill" style={`width:${pctOf(s.value, s.scale)}%; background:${TONE_COLOR[s.tone]}`}></span></div>
+            <p class="gloss">{s.gloss}</p>
+          </li>
+        );
+      })}
+    </ul>
+
+    <div class="admit">
+      <h4 class="aHead">Owned a miss, in its own words</h4>
+      {admissions.length ? (
+        <>
+          <p class="aIntro">The rarest tell in any filing: management saying plainly, in the first person and past tense, that something did not go as hoped. We surface every such sentence verbatim.</p>
+          <ul class="quotes">{admissions.map((q) => <li>“{q}{q.length >= 290 ? "…" : ""}”</li>)}</ul>
+        </>
+      ) : (
+        <p class="aNone">No first-person admission of a miss in this year's MD&amp;A. Common, and not damning — most managements never write one — but its presence elsewhere is worth more than any adjective.</p>
+      )}
+    </div>
+
+    <p class="foot">Classic text analysis of the MD&amp;A itself — no model wrote a word, and every quote is the company's own. A lens on tone, never a score.</p>
+  </section>
+) : null}
+
+<style>
+  .candor { margin: 24px 0; }
+  .head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; border-bottom: 1px solid var(--rule-strong); padding-bottom: 6px; }
+  .secTitle { margin: 0; }
+  .src { font-size: 12px; color: var(--accent); flex: 0 0 auto; }
+  .intro { font-family: var(--serif); font-style: italic; font-size: 13.5px; color: var(--muted); margin: 9px 0 0; max-width: 72ch; line-height: 1.6; }
+
+  .bars { list-style: none; padding: 0; margin: 14px 0 0; }
+  .bars li { padding: 11px 0; border-bottom: 1px solid var(--rule); }
+  .barTop { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+  .bLabel { font-family: var(--sans); font-weight: 700; font-size: 14px; }
+  .bVal { font-family: var(--sans); font-variant-numeric: tabular-nums; font-size: 13px; color: var(--ink); flex: 0 0 auto; }
+  .per { color: var(--muted); font-size: 11px; }
+  .drift { margin-left: 6px; color: var(--muted); font-weight: 400; font-style: italic; }
+  .drift.d1 { color: var(--ink-dim); }
+  .track { height: 6px; background: var(--rule); margin: 7px 0 0; overflow: hidden; }
+  .fill { display: block; height: 100%; }
+  .gloss { font-size: 12.5px; color: var(--ink-dim); margin: 7px 0 0; line-height: 1.5; max-width: 76ch; }
+
+  .admit { margin: 16px 0 0; padding-top: 14px; border-top: 1px solid var(--rule); }
+  .aHead { font-family: var(--sans); font-weight: 700; font-size: 12px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--ink); margin: 0; }
+  .aIntro { font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--muted); margin: 6px 0 0; max-width: 72ch; line-height: 1.55; }
+  .quotes { list-style: none; padding: 0; margin: 10px 0 0; }
+  .quotes li { font-family: var(--serif); font-size: 14.5px; line-height: 1.5; color: var(--ink-soft); border-left: 2px solid var(--good); padding: 3px 0 3px 14px; margin: 9px 0; }
+  .aNone { font-family: var(--serif); font-style: italic; font-size: 13.5px; color: var(--muted); margin: 7px 0 0; line-height: 1.55; max-width: 72ch; }
+
+  .foot { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--rule-strong); margin-top: 16px; padding-top: 10px; max-width: 74ch; }
+</style>

@@ -187,9 +187,13 @@ const PROMO = /\b(world[\s-]?class|best[\s-]?in[\s-]?class|best[\s-]?of[\s-]?bre
 const ADJUSTED = /\b(non[\s-]?GAAP|adjusted (EBITDA|earnings|net income|operating income|operating|diluted|results|EPS|margin)|pro[\s-]?forma|constant currency|excluding (certain|the impact|special|one[\s-]?time|the effect)|core (earnings|operating)|normalized (earnings|EBITDA|results)|one[\s-]?time (item|charge|cost)s?|special items)/gi;
 // A management owning a miss, in the first person and past tense, the rarest and most prized tell.
 // The conditional/hypothetical guard keeps a forward-looking risk factor ("our results could fall
-// short if…") out; genuine candor is declarative about what already happened.
-const ADMIT = /\b(were wrong|made (a |several |some )?mistakes?|misjudged|overpaid|over[\s-]?estimated|too optimistic|fell short of|did not meet (our|the)|failed to (meet|deliver|achieve|execute)|were disappointed|disappointing (results|performance|year|quarter)|underperformed|below our expectations|in hindsight|should have)\b/i;
+// short if…") out; genuine candor is declarative about what already happened. "should have" must be
+// the regretful kind ("we should have acted sooner"), not "investors should have access."
+const ADMIT = /\b(were wrong|made (a |several |some )?mistakes?|misjudged|overpaid|over[\s-]?estimated|too optimistic|fell short of|did not meet (our|the)|failed to (meet|deliver|achieve|execute)|were disappointed|disappointing (results|performance|year|quarter)|underperformed|below (our )?expectations|in hindsight|should have (done|known|anticipated|recognized|acted|been|moved|invested|exited|sold|reduced|avoided|foreseen|started|focused))\b/i;
 const NOT_ADMIT = /\b(may|might|could|would|if\s|risk that|in the event|to the extent|no assurance|cannot assure|future)\b/i;
+// Owning a miss means OWNING it. When the failure is pinned on someone else — a supplier, a partner,
+// a customer who "failed to meet its obligations" — it is the opposite of candor, so it is excluded.
+const BLAME_OTHERS = /\b(supplier|vendor|manufacturer|co-?manufacturer|co-?packer|partner|customer|client|counterparty|contractor|subcontractor|licensee|licensor|third[- ]party|distributor|borrower|tenant|reseller|franchisee|joint venture|other party)\b[\s\S]{0,30}\b(failed to|did not (meet|deliver|perform|pay|complete)|fell short|breached|defaulted|was unable)/i;
 function candorSignals(text, sents) {
   if (!text) return null;
   sents = sents || sentences(text);
@@ -197,7 +201,7 @@ function candorSignals(text, sents) {
   const per1k = (re) => Math.round(((text.match(re) || []).length / n) * 1000 * 10) / 10;
   const admissions = sents
     .map((s) => cleanQuote(String(s || "")).trim())
-    .filter((s) => s.length >= 30 && s.length < 300 && /\b(we|our|management)\b/i.test(s) && ADMIT.test(s) && !NOT_ADMIT.test(s))
+    .filter((s) => s.length >= 30 && s.length < 300 && /\b(we|our|management)\b/i.test(s) && ADMIT.test(s) && !NOT_ADMIT.test(s) && !BLAME_OTHERS.test(s))
     .filter((s, i, a) => a.indexOf(s) === i)
     .slice(0, 3);
   return { owner: per1k(OWNER_TALK), promo: per1k(PROMO), adjusted: per1k(ADJUSTED), admissions };
@@ -613,6 +617,181 @@ function ownerFlags(pool) {
   return out;
 }
 
+// ---- The Buffett read: what an owner would notice ----
+// Past the year-over-year diff and the risk-factor flags lie the handful of things Buffett and
+// Munger actually hunt for when they read a 10-K, drawn from the Business, MD&A and Risk Factors
+// the pipeline already pulls. Unlike the owner-flags, this read may surface a *strength*: pricing
+// power is the one fact Buffett calls the single most important in judging a business, and a filing
+// that demonstrates it has earned the right to say so in its own words. Three facets, each verbatim
+// and sourced, none a verdict; the page lays them out and the reader weighs them.
+//
+//   1. Pricing & costs — the margin-durability read. Does the company state it RAISED prices and
+//      made them hold (Buffett's moat test), or is it taking price rather than setting it? And when
+//      input costs rose, could it pass them through? These are different sentences; we separate them.
+//   2. Where the numbers are soft — the "critical accounting estimates" the SEC makes management
+//      disclose name the figures that rest most on judgment (goodwill, revenue timing, pension, tax,
+//      reserves). The more of them, the more the earnings are an opinion; Munger reads the assumption
+//      before he trusts the result.
+//   3. Accounting integrity — the grave, rare admissions: a material weakness in financial controls,
+//      or a restatement of past numbers. Graham's honesty test, and one of these outweighs a clean
+//      decade. Stated only when real; a clean filer trips none of it, which is the point.
+
+// Declarative price increases that stuck (MD&A results-of-operations language), and the opposite —
+// price competition or cuts. We read the positive case from MD&A/Business (where management states
+// what happened), guarding out the conditional risk-factor phrasing with HYPO.
+const PRICE_UP = /\b(price increases?|increased? (the |our |average |list |net )?(selling )?prices?|raised? (the |our )?prices?|higher (average |net |realized )?(selling )?prices?|favorable(?: net)? pric\w*|realized (higher|improved|favorable|positive) pric\w*|net (realized )?pricing|positive price|price\/mix|improved pricing|pricing actions?|pricing initiatives?|list price increases?)\b/i;
+const PRICE_DOWN = /\b(pricing pressures?|price competition|competitive pric\w*|forced to (lower|reduce|discount)|lower(ed)? (our |average |net |selling )?prices?|price (declines?|erosion|reductions?|cuts?)|reduce(d)? (our |average |net |selling )?prices?|deflation\w*|downward pressure on (our )?(price|selling)|discount\w* (to|in order))\b/i;
+// A cost-rise cue near "cost(s)" — written loosely on purpose, since filings string the inputs
+// together ("higher raw material and freight costs", "rising commodity, labor and energy costs").
+const COST_UP = /\binflation\w*|\b(rising|higher|increased|increasing|elevated|escalating)\b[\s\S]{0,40}?\bcosts?\b|\bcosts?\b[\s\S]{0,20}?\b(rose|increased|rising|climbed|were higher)\b|\bcost (inflation|increases?|pressures?|headwinds?)\b/i;
+const COST_OFFSET = /\b(pass(?:ed|ing)?(?: these| through| on| along)|offset(?: these| the| by| with| through)|recover\w*(?: these| through| the| our| higher)|mitigat\w*(?: the| these)? ?(cost|inflation|impact|increase)|pricing (actions? )?to offset|price increases? to (offset|recover|mitigate)|fully offset|more than offset)\b/i;
+// A negated or partial offset — "unable to fully offset", "only partially offset" — means costs were
+// NOT passed through, the squeeze that compresses margin. Guards passedThrough from reading the word
+// "offset" as a positive when the sentence is saying the opposite.
+const OFFSET_NEG = /\b(unable to|not (?:fully|able)|could not|did not|cannot|failed to|only partial\w*|partially|insufficient to|did little to|less than|not enough to)\b[\s\S]{0,25}(offset|pass\w*|recover\w*|mitigat\w*)|\b(offset|pass\w*|recover\w*|mitigat\w*)[\s\S]{0,20}\b(only partial|not (?:fully|enough)|partial\w*)\b/i;
+// The cost sentence is declarative about what happened, including the negative case ("we were unable
+// to offset"), so it uses a conditional-only guard, not the full HYPO (which would drop that case).
+const COST_HYPO = /\b(if\s|may\b|might\b|could\b|risk that|no assurance|in the event|whether (we|the))\b/i;
+// Sentences attributing a result to price, which makes a pricing-power claim concrete rather than
+// aspirational; preferred when several candidates trip PRICE_UP.
+const RESULT_ATTR = /\b(due to|driven by|reflect\w*|result\w* (of|from)|attributable to|primarily|contributed|benefit(?:ed|ing)? from|increase\w* in (net )?(sales|revenue)|higher (net )?(sales|revenue))\b/i;
+// The conditional / hypothetical guard: a forward-looking "if we cannot raise prices…" is not the
+// company telling you it has pricing power, it is the company naming a risk. Keep those out.
+const HYPO = /\b(if\s|may not|might not|unable to|cannot|could not|risk that|no assurance|whether (we|the)|to the extent|should we|were we to|in the event|inability to)\b/i;
+// A commodity or market price the company merely TAKES is not pricing power — Alcoa's "higher prices
+// for aluminum" is the market moving, not a moat. Exclude price language tied to a commodity, or to a
+// market/spot/benchmark/realized price, so the pricing-power read is about a company setting its own.
+const PRICE_COMMODITY = /\b(aluminum|alumina|copper|steel|iron ore|crude|\boil\b|natural gas|gas prices?|propane|ethane|ethylene|polyethylene|coal|nickel|zinc|lithium|cobalt|\bgold\b|silver|platinum|palladium|uranium|wheat|corn|soybean|grain|lumber|pulp|\bresin\b|petrochemical|feedstock|hydrocarbon|metal)\b[\s\S]{0,18}pric|pric[a-z]*\b[\s\S]{0,18}\b(aluminum|copper|steel|crude|\boil\b|natural gas|nickel|zinc|\bgold\b|silver|commodit|metal|barrel)\b|\b(market|spot|index|benchmark) prices?\b|average realized price|commodity prices?/i;
+// The strongest form of pricing power: a price increase that did NOT cost volume — Buffett's "if you
+// can raise prices without losing business to a competitor, you've got a very good business." Volume,
+// demand, traffic or comparable sales holding or growing, or an explicit "despite price increases."
+const VOLUME_HELD = /\b(volumes?|unit sales|\bunits\b|demand|traffic|transactions?|comparable (store )?sales|same[- ]store sales|shipments?)\b[\s\S]{0,45}\b(grew|increased|rose|higher|\bup\b|strong|robust|resilient|stable|steady|\bflat\b|held|remained|growth|positive)\b|\b(despite|even with|notwithstanding)\b[\s\S]{0,30}\b(price increases?|higher pric|pricing)\b|price increases? more than offset|without (a |any )?(meaningful |material |significant )?(loss|decline|reduction) in (volume|demand|unit)/i;
+
+// The grave accounting-integrity admissions. These are rare in truth, but the risk factors are full
+// of hypothetical mentions — "a FAILURE to maintain controls COULD result in a material weakness",
+// "we MAY in the FUTURE be required to restate" — so this facet needs a far stricter guard than the
+// pricing read: it must be a statement that a weakness or restatement actually HAPPENED, present or
+// past tense, with every forward-looking, conditional or remediation-only framing excluded.
+const INTEGRITY_FUTURE = /\b(may|might|could|would|should|if|whether|future|risk that|fail(ure)? to|in the event|to the extent|potential|possible|were we|able to|designed to|intended to|in order to|required to|expose us|subject us|result in|lead to|cause us)\b/i;
+// A material weakness actually declared as existing/identified, in a factual frame.
+const MW_DECLARED = /\b(identified|concluded|determined|disclosed|existed|exists|reported)\b[\s\S]{0,40}\bmaterial weakness/i;
+const MW_ABSENT = /\b(no|not|without|did not (identify|have|note|find)|none|free (of|from)|absence of|reasonable assurance|were not|was not|have not|is not|are not|remediated|been remediated)\b[\s\S]{0,40}material weakness|material weakness(es)?[\s\S]{0,40}\b(did not|were not|was not|have not|not (identif|exist|present)|been remediated|was remediated)/i;
+// A restatement that actually happened: past-tense "restated", tied to the financial statements.
+const RESTATED = /\b(restated|have restated|has restated|were restated|restatement of (our|its|the|previously))\b[\s\S]{0,60}\b(financial statements?|prior (period|year)|previously (issued|reported)|results of operations|consolidated|balance sheet)\b|\bpreviously (issued|reported)[\s\S]{0,40}(financial statements?)[\s\S]{0,30}\b(were |have been )?restated\b/i;
+
+// The judgment-heavy estimates a 10-K's "Critical Accounting Estimates" section names. We map the
+// topic, not just the word, so the read says where the numbers are soft, not merely that the word
+// "goodwill" appears (it appears everywhere in an MD&A; here it counts only inside that section).
+const CRIT_HEAD = /critical accounting (estimates?|policies(?: and estimates?)?|judgments?)/i;
+const CRIT_TOPICS = [
+  ["Goodwill & intangibles", /\b(goodwill|intangible assets?|impairment of (goodwill|long[\s-]?lived|intangible))\b/i],
+  ["Revenue recognition", /\brevenue recognition|recogni[sz]\w* revenue|performance obligations?|variable consideration\b/i],
+  ["Pension & retirement", /\b(pension|postretirement|post[\s-]?retirement|defined benefit|plan assets|projected benefit obligation)\b/i],
+  ["Income taxes", /\b(income taxes?|valuation allowance|uncertain tax positions?|unrecognized tax benefits?|deferred tax)\b/i],
+  ["Credit & receivables", /\ballowance for (doubtful accounts?|credit losses|loan losses)|expected credit losses|current expected credit\b/i],
+  ["Inventory", /\binventor\w*[\s\S]{0,30}(obsolescence|valuation|reserve|net realizable|lower of cost)|\bLIFO\b/i],
+  ["Acquisitions", /\bbusiness combinations?|purchase price allocation|acquisition accounting|fair value of (the )?(net )?assets acquired\b/i],
+  ["Insurance reserves", /\b(loss reserves?|reserve for (losses|claims|unpaid)|unpaid (losses|claims)|incurred but not reported|\bIBNR\b|policy(holder)? (reserves|benefits)|future policy benefits)\b/i],
+  ["Stock compensation", /\b(stock[\s-]?based compensation|share[\s-]?based (compensation|payments?)|equity[\s-]?based compensation)\b/i],
+  ["Contingencies", /\b(loss contingenc\w*|litigation (reserves?|accruals?)|legal (reserves?|contingenc)|contingent (liabilit|consideration)|environmental (reserves?|remediation))\b/i],
+];
+
+// Pick the single strongest sentence that trips `want`, avoids every regex in `avoid`, and scores
+// up for the `prefer` marks and a quantified statement. Cleaned and length-bounded like the rest.
+function bestSentence(sents, want, avoid = [], prefer = []) {
+  let best = null, bestScore = -Infinity;
+  for (const raw of sents || []) {
+    const s = cleanQuote(String(raw || ""));
+    if (s.length < 45 || s.length > 300) continue;
+    if (!want.test(s) || avoid.some((re) => re.test(s))) continue;
+    let score = 0;
+    for (const p of prefer) if (p.test(s)) score += 1;
+    if (/\d{1,3}(\.\d+)?\s?%/.test(s)) score += 1;
+    if (s.length >= 80 && s.length <= 240) score += 1;
+    if (BOILERPLATE.test(s)) score -= 2;
+    if (score > bestScore) { bestScore = score; best = s; }
+  }
+  return best;
+}
+
+// First sentence that DECLARES the grave flag actually happened — strict by design: it must trip the
+// declarative pattern, must not be a forward-looking/conditional framing (INTEGRITY_FUTURE), and must
+// not be a negation or a remediation-only mention (absent). The risk factors are dense with "could
+// result in a material weakness" hypotheticals, so this guard, not the loose pricing one, is what
+// keeps the facet to the rare companies that truly admit one.
+function integritySentence(sents, declared, absent) {
+  for (const raw of sents || []) {
+    const s = cleanQuote(String(raw || ""));
+    if (s.length < 40 || s.length > 300) continue;
+    if (INTEGRITY_FUTURE.test(s) || !declared.test(s)) continue;
+    if (absent && absent.test(s)) continue;
+    return s;
+  }
+  return null;
+}
+
+// The "Critical Accounting Estimates" disclosure: which judgment-heavy figures the company itself
+// flags as resting on its assumptions. We find the section in the back of the MD&A (taking the last
+// heading match, so a table-of-contents forward-reference doesn't stand in for it) and read the
+// topics from the window that follows.
+function criticalEstimates(mdnaSents) {
+  if (!Array.isArray(mdnaSents) || !mdnaSents.length) return null;
+  let idx = -1;
+  const from = Math.floor(mdnaSents.length * 0.25);
+  for (let i = from; i < mdnaSents.length; i++) if (CRIT_HEAD.test(mdnaSents[i])) idx = i;
+  if (idx < 0) return null;
+  const zone = mdnaSents.slice(idx, idx + 90);
+  const zoneText = zone.join(" ");
+  const topics = CRIT_TOPICS.filter(([, re]) => re.test(zoneText)).map(([label]) => label);
+  if (!topics.length) return null;
+  const quote = (zone.find((s) => { const c = cleanQuote(String(s || "")); return c.length >= 80 && c.length <= 300; }) || zone[0] || "");
+  return { topics, count: topics.length, quote: cleanQuote(String(quote)).slice(0, 280) };
+}
+
+function buffettRead(cur) {
+  const mdna = cur?.mdna?.sents || [];
+  const biz = cur?.business?.sents || [];
+  const risk = cur?.risk?.sents || [];
+  const sales = [...mdna, ...biz]; // declarative results-of-operations + business prose
+
+  // 1. Pricing & costs — Buffett's margin-durability read. Pricing power is the surest moat mark, so
+  // the positive case is read carefully: a price the company SET and tied to a result, not a commodity
+  // or market price it merely takes. The strongest form — raising price without losing volume — is
+  // marked apart. The cost facet only surfaces when the filing takes a stance on whether rising costs
+  // were passed through, since a bare "costs rose" is in almost every MD&A and says nothing.
+  const cq = (raw) => cleanQuote(String(raw || ""));
+  const isPower = (s) => PRICE_UP.test(s) && !PRICE_DOWN.test(s) && !HYPO.test(s) && !PRICE_COMMODITY.test(s);
+  const power = bestSentence(sales, PRICE_UP, [PRICE_DOWN, HYPO, PRICE_COMMODITY], [RESULT_ATTR, VOLUME_HELD]);
+  const powerCount = sales.filter((raw) => isPower(cq(raw))).length;
+  // Raised price AND volume/demand held or grew — the textbook moat, in one sentence.
+  const powerStrong = sales.some((raw) => { const s = cq(raw); return isPower(s) && VOLUME_HELD.test(s); });
+  const pressure = bestSentence(mdna, PRICE_DOWN, [HYPO]);
+  // The cost sentence must itself resolve the question — pass-through (COST_OFFSET) or squeeze
+  // (OFFSET_NEG) — not merely name inflation. Prefer a quantified one.
+  const costStance = mdna
+    .map(cq)
+    .filter((s) => s.length >= 45 && s.length <= 300 && COST_UP.test(s) && !COST_HYPO.test(s) && (COST_OFFSET.test(s) || OFFSET_NEG.test(s)))
+    .sort((a, b) => (/\d/.test(b) ? 1 : 0) - (/\d/.test(a) ? 1 : 0))[0] || null;
+  const pricing = (power || pressure || costStance)
+    ? {
+        power: power || null, powerStrong: power ? powerStrong : false, powerCount,
+        pressure: pressure || null,
+        costInflation: costStance, passedThrough: costStance ? COST_OFFSET.test(costStance) && !OFFSET_NEG.test(costStance) : null,
+      }
+    : null;
+
+  // 2. Where the numbers are soft.
+  const judgment = criticalEstimates(mdna);
+
+  // 3. Accounting integrity.
+  const materialWeakness = integritySentence([...mdna, ...risk], MW_DECLARED, MW_ABSENT);
+  const restatement = integritySentence([...mdna, ...risk], RESTATED, null);
+  const integrity = materialWeakness || restatement ? { materialWeakness: materialWeakness || null, restatement: restatement || null } : null;
+
+  if (!pricing && !judgment && !integrity) return null;
+  return { pricing, judgment, integrity };
+}
+
 async function main() {
   const out = {};
   let ok = 0;
@@ -660,35 +839,42 @@ async function main() {
     } catch (e) { console.warn(`  ! ${tk}: proxy ${e.message}`); }
 
     // The lede candidates (MD&A Overview first, then Item 1 Business), scored once and reused for
-    // both the hero sentence and the "in brief" detail lines beneath it.
-    const bizSents = [...(cur.mdna?.lead || []), ...(cur.business.lead?.length ? cur.business.lead : (cur.business.sents || []))];
-    const bizLede = businessDescription(bizSents, c.name, c.ticker);
-    out[tk] = {
-      fy: cur.reportDate?.slice(0, 4) || null,
-      priorFy: prior?.reportDate?.slice(0, 4) || null,
-      sourceUrl: cur.url,
-      // Offer the MD&A Overview opening first, then the Item 1 Business lead: the Overview is
-      // often the cleanest plain-language statement of what the company does ("We operate a leading
-      // online marketplace…"), where Item 1 can open on corporate structure or boilerplate.
-      // businessDescription scores every candidate and picks the strongest, falling back to the
-      // computed industry phrase when none is a real description, so adding candidates only helps.
-      business: bizLede,
-      brief: businessBrief(bizSents, bizLede, c.name),
-      ownerFlags: flags,
-      mdna: {
-        words: cur.mdna.words, fog: cur.mdna.fog, hedgeDensity: Math.round(cur.mdna.hedgeDensity * 1e4) / 1e4,
-        wordsPrior: prior?.mdna.words ?? null, fogPrior: prior?.mdna.fog ?? null,
-        hedgePrior: prior ? Math.round(prior.mdna.hedgeDensity * 1e4) / 1e4 : null,
-        candor: cur.mdna.candor || null, candorPrior: prior?.mdna.candor || null,
-      },
-      risk: { words: cur.risk.words, wordsPrior: prior?.risk.words ?? null },
-      mdnaChange: mdnaDiff,
-      riskChange: riskDiff,
-      aiRead: aiSignal(cur, prior),
-      comp,
-    };
-    ok++;
-    console.log(`  ✓ ${tk}: ${flags.length} owner-flags, MD&A ${cur.mdna.words}w` + (comp ? `, payRatio ${comp.payRatio}:1` : ""));
+    // both the hero sentence and the "in brief" detail lines beneath it. The whole record assembly
+    // is wrapped so a single odd filing that trips one of the text detectors logs and is skipped
+    // rather than aborting a long run mid-way and losing every company parsed before it.
+    try {
+      const bizSents = [...(cur.mdna?.lead || []), ...(cur.business.lead?.length ? cur.business.lead : (cur.business.sents || []))];
+      const bizLede = businessDescription(bizSents, c.name, c.ticker);
+      out[tk] = {
+        fy: cur.reportDate?.slice(0, 4) || null,
+        priorFy: prior?.reportDate?.slice(0, 4) || null,
+        sourceUrl: cur.url,
+        // Offer the MD&A Overview opening first, then the Item 1 Business lead: the Overview is
+        // often the cleanest plain-language statement of what the company does ("We operate a leading
+        // online marketplace…"), where Item 1 can open on corporate structure or boilerplate.
+        // businessDescription scores every candidate and picks the strongest, falling back to the
+        // computed industry phrase when none is a real description, so adding candidates only helps.
+        business: bizLede,
+        brief: businessBrief(bizSents, bizLede, c.name),
+        ownerFlags: flags,
+        mdna: {
+          words: cur.mdna.words, fog: cur.mdna.fog, hedgeDensity: Math.round(cur.mdna.hedgeDensity * 1e4) / 1e4,
+          wordsPrior: prior?.mdna.words ?? null, fogPrior: prior?.mdna.fog ?? null,
+          hedgePrior: prior ? Math.round(prior.mdna.hedgeDensity * 1e4) / 1e4 : null,
+          candor: cur.mdna.candor || null, candorPrior: prior?.mdna.candor || null,
+        },
+        risk: { words: cur.risk.words, wordsPrior: prior?.risk.words ?? null },
+        mdnaChange: mdnaDiff,
+        riskChange: riskDiff,
+        aiRead: aiSignal(cur, prior),
+        buffettRead: buffettRead(cur),
+        comp,
+      };
+      ok++;
+      console.log(`  ✓ ${tk}: ${flags.length} owner-flags, MD&A ${cur.mdna.words}w` + (comp ? `, payRatio ${comp.payRatio}:1` : ""));
+    } catch (e) {
+      console.warn(`  ! ${tk}: record assembly ${e.message}`);
+    }
   }
 
   fs.writeFileSync(
@@ -699,7 +885,7 @@ async function main() {
 }
 
 // Exported for the offline logic test; only hit EDGAR when run directly.
-export { ownerFlags, FLAG_THEMES, sentences, isProse, diff, extractPayRatio, htmlToText, section, fetchText, businessDescription, candorSignals, businessBrief };
+export { ownerFlags, FLAG_THEMES, sentences, isProse, diff, extractPayRatio, htmlToText, section, fetchText, businessDescription, candorSignals, businessBrief, buffettRead };
 
 if (import.meta.url === pathToFileURL(process.argv[1] || "").href) {
   main().catch((e) => { console.error(`\n❌ ${e.message}\n`); process.exit(1); });

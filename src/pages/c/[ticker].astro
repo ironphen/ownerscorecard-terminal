@@ -8,6 +8,8 @@ import Peers from "../../components/Peers.astro";
 import BusinessRead from "../../components/BusinessRead.astro";
 import Segments from "../../components/Segments.astro";
 import OwnersRead from "../../components/OwnersRead.astro";
+import OwnerNotice from "../../components/OwnerNotice.astro";
+import CandorRead from "../../components/CandorRead.astro";
 import Capital from "../../components/Capital.astro";
 import Inversion from "../../components/Inversion.astro";
 import ActHeader from "../../components/ActHeader.astro";
@@ -51,6 +53,10 @@ const isFin = !!cls && ["financial", "reit"].includes(cls.sector.key);
 // outsourcing clause that happened to parse.
 const rawBiz = language?.companies?.[ticker]?.business || null;
 const bizLine = fund ? (rawBiz && !weakLede(rawBiz) ? rawBiz : businessPhrase(fund)) : rawBiz;
+// The company's own "in brief": up to two more verbatim sentences naming what it sells, kept
+// distinct from the lede by the detector (businessBrief). Sits under the lede so the whole opening
+// reads in the company's own voice. Empty, and so absent, until the filings re-fetch populates it.
+const brief = fund ? (language?.companies?.[ticker]?.brief || []).filter((s) => s && s !== bizLine) : [];
 
 const fmtDate = (d) =>
   d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric", timeZone: "UTC" });
@@ -69,6 +75,7 @@ const fmtDate = (d) =>
       </div>
     ) : null}
     {bizLine ? <p class="lede">{bizLine}</p> : null}
+    {brief.length ? <div class="leadMore">{brief.map((s) => <p>{s}</p>)}</div> : null}
     {fund ? <div class="meta">Latest filing: FY{fund.fy} {fund.form}</div> : null}
   </header>
 
@@ -134,6 +141,8 @@ const fmtDate = (d) =>
     <section id="act-context" class="actGroup">
       <ActHeader n="V" title="Context" lede="The supporting record: what changed in the latest filing, how it stands against peers, and anything written about it here." />
       <div id="sec-changes" class="sec"><OwnersRead company={fund} /></div>
+      <div id="sec-notice" class="sec"><OwnerNotice company={fund} /></div>
+      <div id="sec-candor" class="sec"><CandorRead company={fund} /></div>
       <div id="sec-peers" class="sec"><Peers company={fund} /></div>
       {related.length ? (
         <div id="sec-writing" class="sec">
@@ -161,6 +170,10 @@ const fmtDate = (d) =>
     .model { font-family: var(--sans); font-size: 11.5px; letter-spacing: 0.03em; color: var(--muted); }
     .ident .ov { font-family: var(--sans); font-size: 10px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--warn); border: 1px solid var(--warn); padding: 1px 6px; }
     .lede { font-family: var(--serif); font-size: clamp(16px, 2.4vw, 19px); line-height: 1.5; color: var(--ink-soft); margin: 12px 0 0; max-width: 70ch; }
+    /* The "in brief" continuation: the company's own follow-on sentences, set quieter than the lede
+       so the one-line characterization still leads. */
+    .leadMore { margin: 8px 0 0; max-width: 72ch; }
+    .leadMore p { font-family: var(--serif); font-size: 14.5px; line-height: 1.55; color: var(--muted); margin: 6px 0 0; }
     .meta { color: var(--ink-dim); font-size: 13px; margin-top: 8px; }
 
     /* A one-line walk through the method: the page asks the owner's questions in
