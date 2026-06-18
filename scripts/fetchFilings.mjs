@@ -748,7 +748,12 @@ function criticalEstimates(mdnaSents) {
   return { topics, count: topics.length, quote: cleanQuote(String(quote)).slice(0, 280) };
 }
 
-function buffettRead(cur) {
+// The financial SIC band (6000–6799): banks, thrifts, brokers, insurers, REITs, holding and
+// investment offices. Their MD&As speak of funding costs, deposit mix and credit costs, which the
+// industrial input-cost/pricing-power regexes misread, so the pricing facet is withheld for them.
+const isFinancialSic = (sic) => { const n = Number(sic); return n >= 6000 && n <= 6799; };
+
+function buffettRead(cur, isFinancial) {
   const mdna = cur?.mdna?.sents || [];
   const biz = cur?.business?.sents || [];
   const risk = cur?.risk?.sents || [];
@@ -759,26 +764,32 @@ function buffettRead(cur) {
   // or market price it merely takes. The strongest form — raising price without losing volume — is
   // marked apart. The cost facet only surfaces when the filing takes a stance on whether rising costs
   // were passed through, since a bare "costs rose" is in almost every MD&A and says nothing.
+  // Skipped entirely for banks, insurers and REITs: "input costs" and product pricing power are
+  // industrial concepts, and the regexes misread a bank's funding-mix language ("lower-cost deposits
+  // increased") as rising input costs. Financials are read on their own terms elsewhere.
   const cq = (raw) => cleanQuote(String(raw || ""));
-  const isPower = (s) => PRICE_UP.test(s) && !PRICE_DOWN.test(s) && !HYPO.test(s) && !PRICE_COMMODITY.test(s);
-  const power = bestSentence(sales, PRICE_UP, [PRICE_DOWN, HYPO, PRICE_COMMODITY], [RESULT_ATTR, VOLUME_HELD]);
-  const powerCount = sales.filter((raw) => isPower(cq(raw))).length;
-  // Raised price AND volume/demand held or grew — the textbook moat, in one sentence.
-  const powerStrong = sales.some((raw) => { const s = cq(raw); return isPower(s) && VOLUME_HELD.test(s); });
-  const pressure = bestSentence(mdna, PRICE_DOWN, [HYPO]);
-  // The cost sentence must itself resolve the question — pass-through (COST_OFFSET) or squeeze
-  // (OFFSET_NEG) — not merely name inflation. Prefer a quantified one.
-  const costStance = mdna
-    .map(cq)
-    .filter((s) => s.length >= 45 && s.length <= 300 && COST_UP.test(s) && !COST_HYPO.test(s) && (COST_OFFSET.test(s) || OFFSET_NEG.test(s)))
-    .sort((a, b) => (/\d/.test(b) ? 1 : 0) - (/\d/.test(a) ? 1 : 0))[0] || null;
-  const pricing = (power || pressure || costStance)
-    ? {
-        power: power || null, powerStrong: power ? powerStrong : false, powerCount,
-        pressure: pressure || null,
-        costInflation: costStance, passedThrough: costStance ? COST_OFFSET.test(costStance) && !OFFSET_NEG.test(costStance) : null,
-      }
-    : null;
+  let pricing = null;
+  if (!isFinancial) {
+    const isPower = (s) => PRICE_UP.test(s) && !PRICE_DOWN.test(s) && !HYPO.test(s) && !PRICE_COMMODITY.test(s);
+    const power = bestSentence(sales, PRICE_UP, [PRICE_DOWN, HYPO, PRICE_COMMODITY], [RESULT_ATTR, VOLUME_HELD]);
+    const powerCount = sales.filter((raw) => isPower(cq(raw))).length;
+    // Raised price AND volume/demand held or grew — the textbook moat, in one sentence.
+    const powerStrong = sales.some((raw) => { const s = cq(raw); return isPower(s) && VOLUME_HELD.test(s); });
+    const pressure = bestSentence(mdna, PRICE_DOWN, [HYPO]);
+    // The cost sentence must itself resolve the question — pass-through (COST_OFFSET) or squeeze
+    // (OFFSET_NEG) — not merely name inflation. Prefer a quantified one.
+    const costStance = mdna
+      .map(cq)
+      .filter((s) => s.length >= 45 && s.length <= 300 && COST_UP.test(s) && !COST_HYPO.test(s) && (COST_OFFSET.test(s) || OFFSET_NEG.test(s)))
+      .sort((a, b) => (/\d/.test(b) ? 1 : 0) - (/\d/.test(a) ? 1 : 0))[0] || null;
+    pricing = (power || pressure || costStance)
+      ? {
+          power: power || null, powerStrong: power ? powerStrong : false, powerCount,
+          pressure: pressure || null,
+          costInflation: costStance, passedThrough: costStance ? COST_OFFSET.test(costStance) && !OFFSET_NEG.test(costStance) : null,
+        }
+      : null;
+  }
 
   // 2. Where the numbers are soft.
   const judgment = criticalEstimates(mdna);
@@ -867,7 +878,7 @@ async function main() {
         mdnaChange: mdnaDiff,
         riskChange: riskDiff,
         aiRead: aiSignal(cur, prior),
-        buffettRead: buffettRead(cur),
+        buffettRead: buffettRead(cur, isFinancialSic(c.sic)),
         comp,
       };
       ok++;
