@@ -6,7 +6,7 @@
 // company's own description and the industry sit in the page header above this.
 import language from "../data/language.json";
 import segmentsData from "../data/segments.json";
-import { pickPrimaryBreakdown } from "../lib/segments.mjs";
+import { pickPrimaryBreakdown, compositionSentence } from "../lib/segments.mjs";
 import { classify } from "../lib/archetype.mjs";
 import { roicValue, ownerEarningsMargin, cashConversionCycle, debtReliable } from "../lib/fundamentals.mjs";
 import { financialQuality } from "../lib/financials.mjs";
@@ -62,30 +62,15 @@ const flagPointer = topFlag
 // from lib/segments.mjs, so the two never disagree). Geography answers where, not what,
 // so the brief asks only for segments or product lines. The computed phrase lives in
 // lib/business.mjs and is shown only when the hero is carrying the filing's own words.
-const primaryComp = pickPrimaryBreakdown(seg, ["segment", "product"]);
-const mix = primaryComp?.raw || null;
-const mixKind = primaryComp?.kind === "product" ? "line" : "segment";
-let composition = "";
-if (mix && seg.revenueTotal) {
-  // Drop slivers that round to nothing (Alphabet's Other Bets), which read like an error
-  // in a one-line "what it is," but keep at least the two leaders.
-  const sorted = [...mix.items].sort((a, b) => b.revenue - a.revenue);
-  const big = sorted.filter((it) => (100 * it.revenue) / seg.revenueTotal >= 1);
-  const items = big.length >= 2 ? big : sorted;
-  const sh = (it) => Math.round((100 * it.revenue) / seg.revenueTotal);
-  const fmtItem = (it) => `${cleanSeg(it.label)} (${sh(it)}%)`;
-  const joinList = (arr) =>
-    arr.length === 1 ? fmtItem(arr[0])
-      : arr.length === 2 ? `${fmtItem(arr[0])} and ${fmtItem(arr[1])}`
-        : `${arr.slice(0, -1).map(fmtItem).join(", ")} and ${fmtItem(arr[arr.length - 1])}`;
-  composition = items.length <= 3
-    ? `Revenue is ${joinList(items)}.`
-    : `Revenue is led by ${fmtItem(items[0])} and ${fmtItem(items[1])}, with ${items.length - 2} more ${mixKind}s behind.`;
-}
-// Show the phrase only when the hero is carrying the filing's verbatim description, so
-// the two don't repeat; if the verbatim is weak, the hero already shows this phrase.
+const composition = compositionSentence(seg) || "";
+// The hero (page header) opens with, in order: the filing's verbatim description, else this
+// segment composition, else the computed industry phrase. Show here whatever the hero is NOT
+// showing, so the two read as a pair instead of repeating — the mix beside the filing's own
+// words, or the industry lens beside the mix.
 const goodVerbatim = !weakLede(L?.business);
-const whatItIs = composition || (goodVerbatim ? businessPhrase(company) : null);
+const whatItIs = goodVerbatim
+  ? (composition || businessPhrase(company))
+  : (composition ? businessPhrase(company) : null);
 
 // Is it a good business? Read return on capital across the whole record, but treat
 // the ratio with the skepticism modern accounting demands: buybacks and expensed

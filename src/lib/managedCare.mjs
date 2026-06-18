@@ -7,7 +7,7 @@
 // (the ACA requires roughly 80-85% of premiums be spent on care or rebated) caps how
 // wide that spread can ever be. Arithmetic on the filings; the verdict is the reader's.
 
-import { fmtUSD, operatingMargin } from "./fundamentals.mjs";
+import { fmtMoney, operatingMargin } from "./fundamentals.mjs";
 import { returnOnEquity } from "./financials.mjs";
 
 const pc = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${(Math.abs(v) * 100).toFixed(dp)}%`);
@@ -23,6 +23,7 @@ export function medicalLossRatio(L) {
 }
 
 export function buildManagedCareScorecard(company) {
+  const $ = (v) => fmtMoney(v, company?.currency || "USD");
   const L = company?.lines || {};
   const none = (title, note, concept = null) => ({ title, concept, value: "—", formula: "", tone: "none", label: "Not enough data", note });
 
@@ -30,7 +31,7 @@ export function buildManagedCareScorecard(company) {
   const mlrCheck = mlr == null ? none("Medical loss ratio", "Premiums or medical claims weren't cleanly tagged in the filing data.", "medical-loss-ratio") : {
     title: "Medical loss ratio",
     concept: "medical-loss-ratio",
-    value: pc(mlr, 1), formula: `Medical costs ${fmtUSD(Math.abs(L.claimsIncurred))} ÷ premiums earned ${fmtUSD(L.premiumsEarned)}`,
+    value: pc(mlr, 1), formula: `Medical costs ${$(Math.abs(L.claimsIncurred))} ÷ premiums earned ${$(L.premiumsEarned)}`,
     tone: mlr < 0.82 ? "info" : mlr < 0.87 ? "good" : mlr < 0.9 ? "ok" : mlr < 0.93 ? "warn" : "bad",
     label: mlr < 0.82 ? "Low, near the rebate floor" : mlr < 0.87 ? "Profitable band" : mlr < 0.9 ? "Costs well-covered" : mlr < 0.93 ? "Costs running high" : "Little spread on premiums",
     note: "The number that runs a health plan: cents of every premium dollar paid back out as medical care. A regulated floor (about 80-85% under the ACA, or rebates are owed) means the plan keeps only a thin sliver, so the discipline is in pricing premiums ahead of medical cost trend. Read it across years, because a single bad cost trend, like the recent Medicare Advantage squeeze, shows up here first.",
@@ -40,7 +41,7 @@ export function buildManagedCareScorecard(company) {
   const omCheck = om == null ? none("Operating margin", "Operating income or revenue missing.", "operating-margin") : {
     title: "Operating margin",
     concept: "operating-margin",
-    value: pc(om, 1), formula: `Operating income ${fmtUSD(L.operatingIncome)} ÷ revenue ${fmtUSD(L.revenue)}`,
+    value: pc(om, 1), formula: `Operating income ${$(L.operatingIncome)} ÷ revenue ${$(L.revenue)}`,
     tone: om < 0.02 ? "bad" : om < 0.04 ? "warn" : om < 0.06 ? "ok" : "good",
     label: om < 0.02 ? "Wafer-thin" : om < 0.04 ? "Thin, as the model runs" : om < 0.06 ? "Healthy for a plan" : "Wide for a plan",
     note: "Health plans earn a sliver on enormous revenue, so a few points of margin is the norm and the business is really a volume-and-cost-control game. Because the margin is so thin, a small miss on medical costs swings profit hard, which is why membership scale and cost management matter more than price.",
@@ -50,7 +51,7 @@ export function buildManagedCareScorecard(company) {
   const roeCheck = roe == null ? none("Return on equity", "Net income or equity missing.", "return-on-equity") : {
     title: "Return on equity",
     concept: "return-on-equity",
-    value: pc(roe), formula: `Net income ${fmtUSD(L.netIncome)} ÷ equity ${fmtUSD(L.stockholdersEquity)}`,
+    value: pc(roe), formula: `Net income ${$(L.netIncome)} ÷ equity ${$(L.stockholdersEquity)}`,
     tone: roe < 0 ? "bad" : roe < 0.1 ? "warn" : roe < 0.13 ? "ok" : "good",
     label: roe < 0 ? "Loss on equity" : roe < 0.1 ? "Below the cost of equity" : roe < 0.15 ? "Solid" : "Strong",
     note: "The thin margin turns over fast on a modest capital base, so a healthy plan still earns a good return on equity. Durably above the ~10% cost of equity is what compounds value; a year below it usually means medical costs outran premiums.",

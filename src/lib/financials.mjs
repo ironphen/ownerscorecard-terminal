@@ -4,7 +4,7 @@
 // equity and tangible book, how efficiently it runs, how disciplined the lending is,
 // and how cheap and sticky the funding is. Pure arithmetic on the filing data.
 
-import { fmtUSD } from "./fundamentals.mjs";
+import { fmtMoney } from "./fundamentals.mjs";
 
 const pc = (v, dp = 0) => (v == null ? "—" : `${(v * 100).toFixed(dp)}%`);
 const median = (xs) => { const s = [...xs].sort((a, b) => a - b); return s.length ? s[Math.floor((s.length - 1) / 2)] : null; };
@@ -33,7 +33,13 @@ export function efficiencyRatio(L) {
   return rev > 0 ? L.noninterestExpense / rev : null;
 }
 export function depositFunding(L) {
-  return L && L.deposits != null && L.totalAssets ? L.deposits / L.totalAssets : null;
+  if (!(L && L.deposits != null && L.totalAssets)) return null;
+  const r = L.deposits / L.totalAssets;
+  // Below ~10% of assets the standard deposit tag has almost always captured an interbank
+  // sub-line, not the customer deposit base — foreign banks tag the real total in a company
+  // extension the SEC facts API doesn't expose. Publishing that would paint a deposit-rich bank
+  // (a TD, a Royal Bank) as wholesale-funded, so we show nothing rather than a wrong funding mix.
+  return r >= 0.1 ? r : null;
 }
 export function equityToAssets(L) {
   return L && L.stockholdersEquity != null && L.totalAssets ? L.stockholdersEquity / L.totalAssets : null;
@@ -45,6 +51,7 @@ export function provisionRate(L) {
 // The financials archetype is best judged on these. Returns the same shape the
 // industrial scorecard uses, so the page renders it through the same component.
 export function buildFinancialScorecard(company) {
+  const $ = (v) => fmtMoney(v, company?.currency || "USD");
   const L = company?.lines || {};
   const none = (title, note, concept = null) => ({ title, concept, value: "—", formula: "", tone: "none", label: "Not enough data", note });
 
@@ -56,7 +63,7 @@ export function buildFinancialScorecard(company) {
     return {
       title: "Return on equity",
       concept: "return-on-equity",
-      value: pc(roe), formula: `Net income ${fmtUSD(L.netIncome)} ÷ equity ${fmtUSD(L.stockholdersEquity)}`,
+      value: pc(roe), formula: `Net income ${$(L.netIncome)} ÷ equity ${$(L.stockholdersEquity)}`,
       tone, label,
       note: "The bank's north star, what it earns on shareholders' capital. Cost of equity is roughly 10%, so a return durably above that builds value and below it destroys it. One year is noisy; the durability across a full credit cycle is what counts.",
     };
@@ -65,7 +72,7 @@ export function buildFinancialScorecard(company) {
   const rotceCheck = rotce == null ? none("Return on tangible equity", "Equity, goodwill or intangibles missing.", "rotce") : {
     title: "Return on tangible equity",
     concept: "rotce",
-    value: pc(rotce), formula: `Net income ÷ (equity − goodwill ${fmtUSD(L.goodwill || 0)} − intangibles ${fmtUSD(L.intangibleAssets || 0)})`,
+    value: pc(rotce), formula: `Net income ÷ (equity − goodwill ${$(L.goodwill || 0)} − intangibles ${$(L.intangibleAssets || 0)})`,
     tone: rotce < 0 ? "bad" : rotce < 0.12 ? "warn" : rotce < 0.15 ? "ok" : "good",
     label: rotce < 0 ? "Loss" : rotce < 0.12 ? "Modest" : rotce < 0.18 ? "Strong" : "Exceptional",
     note: "The cleaner return, stripping out the goodwill paid for past acquisitions. This is the number a buyer of the whole bank actually earns on the hard capital.",
@@ -74,7 +81,7 @@ export function buildFinancialScorecard(company) {
   const effCheck = eff == null ? none("Efficiency ratio", "Noninterest expense or revenue missing.", "efficiency-ratio") : {
     title: "Efficiency ratio",
     concept: "efficiency-ratio",
-    value: pc(eff), formula: `Noninterest expense ${fmtUSD(L.noninterestExpense)} ÷ (net interest income + fees)`,
+    value: pc(eff), formula: `Noninterest expense ${$(L.noninterestExpense)} ÷ (net interest income + fees)`,
     tone: eff > 0.75 ? "bad" : eff > 0.65 ? "warn" : eff > 0.58 ? "ok" : "good",
     label: eff > 0.75 ? "Bloated" : eff > 0.65 ? "Average" : eff > 0.58 ? "Efficient" : "Lean",
     note: "The share of revenue eaten by running costs; lower is better, and below about 60% marks a genuinely efficient operation. A low ratio held for years is the operational side of a moat.",
@@ -84,7 +91,7 @@ export function buildFinancialScorecard(company) {
   const cap = equityToAssets(L);
   const capCheck = cap == null ? none("Capital cushion", "Equity or total assets missing.") : {
     title: "Capital (equity / assets)",
-    value: pc(cap, 1), formula: `Equity ${fmtUSD(L.stockholdersEquity)} ÷ assets ${fmtUSD(L.totalAssets)}`,
+    value: pc(cap, 1), formula: `Equity ${$(L.stockholdersEquity)} ÷ assets ${$(L.totalAssets)}`,
     tone: cap < 0.06 ? "bad" : cap < 0.08 ? "warn" : cap < 0.1 ? "ok" : "good",
     label: cap < 0.06 ? "Thin" : cap < 0.08 ? "Modest" : cap < 0.1 ? "Adequate" : "Well capitalized",
     note: "A plain-English leverage read: how much of the balance sheet is the owners' own money. This is a rough proxy; the regulatory figure is the CET1 ratio, which is risk-weighted and reported in the filing. The point is the same, how much loss the bank can absorb before depositors are at risk.",
@@ -93,7 +100,7 @@ export function buildFinancialScorecard(company) {
   const fundCheck = fund == null ? none("Funding", "Deposits or total assets missing.", "net-interest-margin") : {
     title: "Deposit funding",
     concept: "net-interest-margin",
-    value: pc(fund), formula: `Deposits ${fmtUSD(L.deposits)} ÷ assets ${fmtUSD(L.totalAssets)}`,
+    value: pc(fund), formula: `Deposits ${$(L.deposits)} ÷ assets ${$(L.totalAssets)}`,
     tone: fund < 0.5 ? "warn" : fund < 0.65 ? "ok" : "good",
     label: fund < 0.5 ? "Leans on wholesale funding" : fund < 0.65 ? "Mostly deposit-funded" : "Deposit-funded",
     note: "Low-cost, sticky deposits are a bank's real moat, the cheap raw material it lends out at a spread. A bank funded mostly by deposits earns more durably than one that rents its money in the wholesale market.",
@@ -101,7 +108,7 @@ export function buildFinancialScorecard(company) {
   const prov = provisionRate(L);
   const provCheck = prov == null ? none("Credit cost", "Provision or net interest income missing.") : {
     title: "Credit cost (provision / NII)",
-    value: pc(prov), formula: `Provision for credit losses ${fmtUSD(L.provisionForCreditLosses)} ÷ net interest income ${fmtUSD(L.netInterestIncome)}`,
+    value: pc(prov), formula: `Provision for credit losses ${$(L.provisionForCreditLosses)} ÷ net interest income ${$(L.netInterestIncome)}`,
     tone: "info",
     label: prov < 0 ? "Net reserve release" : prov < 0.1 ? "Low" : prov < 0.2 ? "Moderate" : "Elevated",
     note: "What the bank set aside this year against loans going bad, as a share of its lending income. This swings hard with the cycle, low in good years and spiking in recessions, so read it across the record, not in one year. Disciplined underwriting shows up as low, stable provisions through a downturn.",

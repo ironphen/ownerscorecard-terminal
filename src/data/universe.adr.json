@@ -1,0 +1,4892 @@
+{
+  "note": "ADR universe: foreign companies listed on US exchanges (Nasdaq screener, non-US rows, top 1000 by market cap). They file Form 20-F with the SEC; read in IFRS by the ADR pipeline. Rebuilt via scripts/buildUniverse.mjs.",
+  "tickers": [
+    {
+      "ticker": "AACG",
+      "name": "ATA Creativity Global",
+      "country": "China"
+    },
+    {
+      "ticker": "AAMI",
+      "name": "Acadian Asset Management Inc.",
+      "country": "United Kingdom"
+    },
+    {
+      "ticker": "AAPG",
+      "country": "China"
+    },
+    {
+      "ticker": "ABCL",
+      "name": "AbCellera Biologics Inc.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "ABEV",
+      "name": "Ambev S.A.",
+      "country": "Brazil"
+    },
+    {
+      "ticker": "ABLV",
+      "name": "Able View Global Inc.",
+      "country": "China"
+    },
+    {
+      "ticker": "ABUS",
+      "name": "Arbutus Biopharma Corporation",
+      "country": "Canada"
+    },
+    {
+      "ticker": "ABVX",
+      "name": "Abivax SA",
+      "country": "France"
+    },
+    {
+      "ticker": "ACB",
+      "name": "Aurora Cannabis Inc.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "ACCL",
+      "name": "Acco Group Holdings Limited",
+      "country": "Hong Kong"
+    },
+    {
+      "ticker": "ACGL",
+      "name": "Arch Capital Group Ltd.",
+      "country": "Bermuda"
+    },
+    {
+      "ticker": "ACGLN",
+      "name": "Arch Capital Group Ltd.",
+      "country": "Bermuda"
+    },
+    {
+      "ticker": "ACGLO",
+      "name": "Arch Capital Group Ltd.",
+      "country": "Bermuda"
+    },
+    {
+      "ticker": "ACIU",
+      "name": "AC Immune SA",
+      "country": "Switzerland"
+    },
+    {
+      "ticker": "ACN",
+      "country": "Ireland"
+    },
+    {
+      "ticker": "ACOG",
+      "name": "Alpha Cognition Inc.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "ADAG",
+      "name": "Adagene Inc.",
+      "country": "China"
+    },
+    {
+      "ticker": "ADCT",
+      "name": "ADC Therapeutics SA",
+      "country": "Switzerland"
+    },
+    {
+      "ticker": "ADSE",
+      "name": "ADS-TEC ENERGY PLC",
+      "country": "Ireland"
+    },
+    {
+      "ticker": "ADSEW",
+      "name": "ADS-TEC ENERGY PLC",
+      "country": "Ireland"
+    },
+    {
+      "ticker": "ADUR",
+      "name": "Aduro Clean Technologies Inc.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "AEBI",
+      "name": "Aebi Schmidt Holding AG Common Stock",
+      "country": "Switzerland"
+    },
+    {
+      "ticker": "AEC",
+      "name": "Anfield Energy Inc.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "AEG",
+      "name": "Aegon Ltd. New York Registry Shares",
+      "country": "Netherlands"
+    },
+    {
+      "ticker": "AEM",
+      "name": "Agnico Eagle Mines Limited",
+      "country": "Canada"
+    },
+    {
+      "ticker": "AER",
+      "name": "AerCap Holdings N.V.",
+      "country": "Netherlands"
+    },
+    {
+      "ticker": "AFRI",
+      "name": "Forafric Global PLC",
+      "country": "Gibraltar"
+    },
+    {
+      "ticker": "AFYA",
+      "name": "Afya Limited Class A",
+      "country": "Brazil"
+    },
+    {
+      "ticker": "AG",
+      "country": "Canada"
+    },
+    {
+      "ticker": "AGBK",
+      "name": "AGI Inc Class A",
+      "country": "Cayman Islands"
+    },
+    {
+      "ticker": "AGCC",
+      "name": "Agencia Comercial Spirits Ltd",
+      "country": "Taiwan"
+    },
+    {
+      "ticker": "AGI",
+      "name": "Alamos Gold Inc. Class A",
+      "country": "Canada"
+    },
+    {
+      "ticker": "AGMB",
+      "name": "AgomAb Therapeutics NV",
+      "country": "Belgium"
+    },
+    {
+      "ticker": "AGO",
+      "name": "Assured Guaranty Ltd.",
+      "country": "Bermuda"
+    },
+    {
+      "ticker": "AGRO",
+      "name": "Adecoagro S.A.",
+      "country": "Luxembourg"
+    },
+    {
+      "ticker": "AHG",
+      "name": "Akso Health Group ADS",
+      "country": "China"
+    },
+    {
+      "ticker": "AHMA",
+      "country": "United Arab Emirates"
+    },
+    {
+      "ticker": "AIBZ",
+      "name": "Bitzero Holdings Inc.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "AIFU",
+      "name": "AIFU Inc. Class A Ordinary Share",
+      "country": "China"
+    },
+    {
+      "ticker": "AIIO",
+      "name": "Robo.ai Inc.",
+      "country": "United Arab Emirates"
+    },
+    {
+      "ticker": "AIIR",
+      "name": "Air Global PLC",
+      "country": "United Arab Emirates"
+    },
+    {
+      "ticker": "AIOS",
+      "name": "AIOS Tech Inc. Class A",
+      "country": "China"
+    },
+    {
+      "ticker": "ALAR",
+      "country": "Israel"
+    },
+    {
+      "ticker": "ALC",
+      "name": "Alcon Inc.",
+      "country": "Switzerland"
+    },
+    {
+      "ticker": "ALKS",
+      "name": "Alkermes plc",
+      "country": "Ireland"
+    },
+    {
+      "ticker": "ALLT",
+      "name": "Allot Ltd.",
+      "country": "Israel"
+    },
+    {
+      "ticker": "ALM",
+      "name": "Almonty Industries Inc.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "ALPS",
+      "name": "ALPS Group Inc Ordinary Share",
+      "country": "Malaysia"
+    },
+    {
+      "ticker": "ALV",
+      "name": "Autoliv Inc.",
+      "country": "Sweden"
+    },
+    {
+      "ticker": "ALVO",
+      "name": "Alvotech",
+      "country": "Luxembourg"
+    },
+    {
+      "ticker": "ALVOW",
+      "name": "Alvotech",
+      "country": "Luxembourg"
+    },
+    {
+      "ticker": "AMBR",
+      "name": "Amber International Holding Limited",
+      "country": "Hong Kong"
+    },
+    {
+      "ticker": "AMCR",
+      "name": "Amcor plc",
+      "country": "United Kingdom"
+    },
+    {
+      "ticker": "AMRN",
+      "name": "Amarin Corporation plc",
+      "country": "Ireland"
+    },
+    {
+      "ticker": "AMRZ",
+      "name": "Amrize Ltd",
+      "country": "Switzerland"
+    },
+    {
+      "ticker": "AMX",
+      "name": "America Movil S.A.B. de C.V.",
+      "country": "Mexico"
+    },
+    {
+      "ticker": "ANGH",
+      "name": "Anghami Inc.",
+      "country": "United Arab Emirates"
+    },
+    {
+      "ticker": "ANL",
+      "name": "Adlai Nortye Ltd.",
+      "country": "Cayman Islands"
+    },
+    {
+      "ticker": "ANPA",
+      "name": "Rich Sparkle Holdings Limited",
+      "country": "Hong Kong"
+    },
+    {
+      "ticker": "ANTA",
+      "name": "Antalpha Platform Holding Company",
+      "country": "Singapore"
+    },
+    {
+      "ticker": "AOSL",
+      "name": "Alpha and Omega Semiconductor Limited",
+      "country": "Bermuda"
+    },
+    {
+      "ticker": "API",
+      "name": "Agora Inc.",
+      "country": "China"
+    },
+    {
+      "ticker": "APT",
+      "name": "Alpha Pro Tech Ltd.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "APTV",
+      "name": "Aptiv PLC",
+      "country": "United Kingdom"
+    },
+    {
+      "ticker": "APWC",
+      "country": "Taiwan"
+    },
+    {
+      "ticker": "ARBE",
+      "name": "Arbe Robotics Ltd.",
+      "country": "Israel"
+    },
+    {
+      "ticker": "ARBK",
+      "name": "Argo Blockchain plc",
+      "country": "United Kingdom"
+    },
+    {
+      "ticker": "ARCO",
+      "country": "Argentina"
+    },
+    {
+      "ticker": "ARCT",
+      "name": "Arcturus Therapeutics Holdings Inc.",
+      "country": "Israel"
+    },
+    {
+      "ticker": "ARGX",
+      "name": "argenx SE",
+      "country": "Netherlands"
+    },
+    {
+      "ticker": "ARM",
+      "name": "Arm Holdings plc",
+      "country": "United Kingdom"
+    },
+    {
+      "ticker": "ARQQ",
+      "name": "Arqit Quantum Inc.",
+      "country": "United Kingdom"
+    },
+    {
+      "ticker": "ARX",
+      "name": "Accelerant Holdings Class A",
+      "country": "Cayman Islands"
+    },
+    {
+      "ticker": "ASM",
+      "country": "Canada"
+    },
+    {
+      "ticker": "ASML",
+      "country": "Netherlands"
+    },
+    {
+      "ticker": "ASND",
+      "name": "Ascendis Pharma A/S Ordinary Share",
+      "country": "Denmark"
+    },
+    {
+      "ticker": "ASPS",
+      "name": "Altisource Portfolio Solutions S.A.",
+      "country": "Luxembourg"
+    },
+    {
+      "ticker": "ASR",
+      "country": "Mexico"
+    },
+    {
+      "ticker": "ASTL",
+      "name": "Algoma Steel Group Inc.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "ASX",
+      "name": "ASE Technology Holding Co. Ltd.",
+      "country": "Taiwan"
+    },
+    {
+      "ticker": "ATAI",
+      "name": "AtaiBeckley Inc.",
+      "country": "Germany"
+    },
+    {
+      "ticker": "ATAT",
+      "name": "Atour Lifestyle Holdings Limited",
+      "country": "China"
+    },
+    {
+      "ticker": "ATGL",
+      "name": "Alpha Technology Group Limited",
+      "country": "China"
+    },
+    {
+      "ticker": "ATHE",
+      "name": "Alterity Therapeutics Limited",
+      "country": "Australia"
+    },
+    {
+      "ticker": "ATHM",
+      "name": "Autohome Inc.",
+      "country": "China"
+    },
+    {
+      "ticker": "ATHS",
+      "country": "Bermuda"
+    },
+    {
+      "ticker": "ATS",
+      "name": "ATS Corporation",
+      "country": "Canada"
+    },
+    {
+      "ticker": "AU",
+      "name": "AngloGold Ashanti PLC",
+      "country": "South Africa"
+    },
+    {
+      "ticker": "AUDC",
+      "name": "AudioCodes Ltd.",
+      "country": "Israel"
+    },
+    {
+      "ticker": "AUNA",
+      "name": "Auna SA",
+      "country": "Peru"
+    },
+    {
+      "ticker": "AUPH",
+      "name": "Aurinia Pharmaceuticals Inc",
+      "country": "Canada"
+    },
+    {
+      "ticker": "AURE",
+      "name": "Aurelion Inc.",
+      "country": "Hong Kong"
+    },
+    {
+      "ticker": "AUTL",
+      "country": "United Kingdom"
+    },
+    {
+      "ticker": "AVX",
+      "name": "Avax One Technology Ltd.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "AXG",
+      "name": "Solowin Holdings Class A Ordinary Share",
+      "country": "Hong Kong"
+    },
+    {
+      "ticker": "AXIA",
+      "name": "AXIA Energia",
+      "country": "Brazil"
+    },
+    {
+      "ticker": "AXS",
+      "name": "Axis Capital Holdings Limited",
+      "country": "Bermuda"
+    },
+    {
+      "ticker": "AYA",
+      "name": "Aya Gold & Silver Inc.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "AZ",
+      "name": "A2Z Cust2Mate Solutions Corp.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "AZN",
+      "name": "AstraZeneca PLC",
+      "country": "United Kingdom"
+    },
+    {
+      "ticker": "B",
+      "name": "Barrick Mining Corporation",
+      "country": "Canada"
+    },
+    {
+      "ticker": "BABA",
+      "name": "Alibaba Group Holding Limited",
+      "country": "China"
+    },
+    {
+      "ticker": "BAK",
+      "name": "Braskem SA ADR",
+      "country": "Brazil"
+    },
+    {
+      "ticker": "BAP",
+      "name": "Credicorp Ltd.",
+      "country": "Peru"
+    },
+    {
+      "ticker": "BB",
+      "name": "BlackBerry Limited",
+      "country": "Canada"
+    },
+    {
+      "ticker": "BBAR",
+      "name": "Banco BBVA Argentina S.A. ADS",
+      "country": "Argentina"
+    },
+    {
+      "ticker": "BBD",
+      "name": "Banco Bradesco Sa",
+      "country": "Brazil"
+    },
+    {
+      "ticker": "BBDO",
+      "name": "Banco Bradesco Sa",
+      "country": "Brazil"
+    },
+    {
+      "ticker": "BBVA",
+      "name": "Banco Bilbao Vizcaya Argentaria S.A.",
+      "country": "Spain"
+    },
+    {
+      "ticker": "BCE",
+      "name": "BCE Inc.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "BCH",
+      "name": "Banco De Chile ADS",
+      "country": "Chile"
+    },
+    {
+      "ticker": "BCS",
+      "name": "Barclays PLC",
+      "country": "United Kingdom"
+    },
+    {
+      "ticker": "BCYC",
+      "name": "Bicycle Therapeutics plc",
+      "country": "United Kingdom"
+    },
+    {
+      "ticker": "BDMD",
+      "country": "China"
+    },
+    {
+      "ticker": "BEKE",
+      "name": "KE Holdings Inc",
+      "country": "China"
+    },
+    {
+      "ticker": "BEP",
+      "country": "Canada"
+    },
+    {
+      "ticker": "BEPH",
+      "country": "Canada"
+    },
+    {
+      "ticker": "BEPI",
+      "country": "Canada"
+    },
+    {
+      "ticker": "BEPJ",
+      "country": "Canada"
+    },
+    {
+      "ticker": "BETR",
+      "name": "Better Home & Finance Holding Company",
+      "country": "United Kingdom"
+    },
+    {
+      "ticker": "BGDE",
+      "name": "Big Digital Energy Inc.",
+      "country": "Australia"
+    },
+    {
+      "ticker": "BGIN",
+      "name": "Bgin Blockchain Limited",
+      "country": "China"
+    },
+    {
+      "ticker": "BGM",
+      "name": "BGM Group Ltd.",
+      "country": "China"
+    },
+    {
+      "ticker": "BGSI",
+      "name": "Boyd Group Services Inc.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "BHC",
+      "name": "Bausch Health Companies Inc.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "BHP",
+      "name": "BHP Group Limited",
+      "country": "Australia"
+    },
+    {
+      "ticker": "BHST",
+      "name": "BioHarvest Sciences Inc.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "BIDU",
+      "name": "Baidu Inc. ADS",
+      "country": "China"
+    },
+    {
+      "ticker": "BILI",
+      "name": "Bilibili Inc.",
+      "country": "China"
+    },
+    {
+      "ticker": "BIOX",
+      "name": "Bioceres Crop Solutions Corp.",
+      "country": "Argentina"
+    },
+    {
+      "ticker": "BIP",
+      "country": "Bermuda"
+    },
+    {
+      "ticker": "BIPC",
+      "country": "Canada"
+    },
+    {
+      "ticker": "BIPH",
+      "country": "Canada"
+    },
+    {
+      "ticker": "BIPI",
+      "country": "Bermuda"
+    },
+    {
+      "ticker": "BIPJ",
+      "country": "Canada"
+    },
+    {
+      "ticker": "BLDP",
+      "name": "Ballard Power Systems Inc.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "BLIV",
+      "name": "BeLive Holdings Ordinary Share",
+      "country": "Singapore"
+    },
+    {
+      "ticker": "BLSH",
+      "name": "Bullish",
+      "country": "Cayman Islands"
+    },
+    {
+      "ticker": "BLX",
+      "country": "Panama"
+    },
+    {
+      "ticker": "BMA",
+      "country": "Argentina"
+    },
+    {
+      "ticker": "BMHL",
+      "name": "Bluemount Holdings Limited",
+      "country": "Hong Kong"
+    },
+    {
+      "ticker": "BMM",
+      "name": "Blue Moon Metals Inc.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "BMO",
+      "name": "Bank Of Montreal",
+      "country": "Canada"
+    },
+    {
+      "ticker": "BMR",
+      "name": "Beamr Imaging Ltd. Ordinary Share",
+      "country": "Israel"
+    },
+    {
+      "ticker": "BN",
+      "country": "Canada"
+    },
+    {
+      "ticker": "BNH",
+      "country": "Canada"
+    },
+    {
+      "ticker": "BNJ",
+      "country": "Canada"
+    },
+    {
+      "ticker": "BNR",
+      "name": "Burning Rock Biotech Limited",
+      "country": "China"
+    },
+    {
+      "ticker": "BNS",
+      "name": "Bank Nova Scotia Halifax Pfd 3",
+      "country": "Canada"
+    },
+    {
+      "ticker": "BNTX",
+      "name": "BioNTech SE American Depositary Share",
+      "country": "Germany"
+    },
+    {
+      "ticker": "BORR",
+      "name": "Borr Drilling Limited",
+      "country": "Bermuda"
+    },
+    {
+      "ticker": "BOSC",
+      "name": "B.O.S. Better Online Solutions",
+      "country": "Israel"
+    },
+    {
+      "ticker": "BP",
+      "name": "BP p.l.c.",
+      "country": "United Kingdom"
+    },
+    {
+      "ticker": "BPYPM",
+      "country": "Bermuda"
+    },
+    {
+      "ticker": "BPYPN",
+      "country": "Bermuda"
+    },
+    {
+      "ticker": "BPYPO",
+      "country": "Bermuda"
+    },
+    {
+      "ticker": "BPYPP",
+      "country": "Bermuda"
+    },
+    {
+      "ticker": "BRAG",
+      "name": "Bragg Gaming Group Inc.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "BRAI",
+      "name": "Braiin Limited",
+      "country": "Australia"
+    },
+    {
+      "ticker": "BRBI",
+      "name": "BRBI BR Partners S.A. ADSs",
+      "country": "Brazil"
+    },
+    {
+      "ticker": "BRLS",
+      "name": "Borealis Foods Inc. Class A",
+      "country": "Canada"
+    },
+    {
+      "ticker": "BRNS",
+      "name": "Barinthus Biotherapeutics plc",
+      "country": "United Kingdom"
+    },
+    {
+      "ticker": "BSAC",
+      "name": "Banco Santander - Chile ADS",
+      "country": "Chile"
+    },
+    {
+      "ticker": "BSBR",
+      "name": "Banco Santander Brasil SA",
+      "country": "Brazil"
+    },
+    {
+      "ticker": "BTDR",
+      "name": "Bitdeer Technologies Group",
+      "country": "Singapore"
+    },
+    {
+      "ticker": "BTE",
+      "name": "Baytex Energy Corp",
+      "country": "Canada"
+    },
+    {
+      "ticker": "BTG",
+      "name": "B2Gold Corp Common shares (Canada)",
+      "country": "Canada"
+    },
+    {
+      "ticker": "BTI",
+      "country": "United Kingdom"
+    },
+    {
+      "ticker": "BTQ",
+      "name": "BTQ Technologies Corp.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "BUD",
+      "country": "Belgium"
+    },
+    {
+      "ticker": "BUUU",
+      "country": "Hong Kong"
+    },
+    {
+      "ticker": "BVC",
+      "name": "BitVentures Limited",
+      "country": "China"
+    },
+    {
+      "ticker": "BVN",
+      "name": "Buenaventura Mining Company Inc.",
+      "country": "Peru"
+    },
+    {
+      "ticker": "BWAY",
+      "name": "BrainsWay Ltd.",
+      "country": "Israel"
+    },
+    {
+      "ticker": "BWMX",
+      "name": "Betterware de Mexico S.A.P.I. de C.V.",
+      "country": "Mexico"
+    },
+    {
+      "ticker": "BZ",
+      "country": "China"
+    },
+    {
+      "ticker": "BZUN",
+      "name": "Baozun Inc.",
+      "country": "China"
+    },
+    {
+      "ticker": "CAAS",
+      "country": "China"
+    },
+    {
+      "ticker": "CAE",
+      "name": "CAE Inc.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "CAMT",
+      "name": "Camtek Ltd.",
+      "country": "Israel"
+    },
+    {
+      "ticker": "CAN",
+      "name": "Canaan Inc.",
+      "country": "China"
+    },
+    {
+      "ticker": "CANG",
+      "name": "Cango Inc.",
+      "country": "China"
+    },
+    {
+      "ticker": "CB",
+      "name": "Chubb Limited",
+      "country": "Switzerland"
+    },
+    {
+      "ticker": "CBAT",
+      "name": "CBAK Energy Technology Inc.",
+      "country": "China"
+    },
+    {
+      "ticker": "CCEC",
+      "country": "Greece"
+    },
+    {
+      "ticker": "CCEP",
+      "name": "Coca-Cola Europacific Partners plc",
+      "country": "United Kingdom"
+    },
+    {
+      "ticker": "CCG",
+      "name": "Cheche Group Inc.",
+      "country": "China"
+    },
+    {
+      "ticker": "CCJ",
+      "name": "Cameco Corporation",
+      "country": "Canada"
+    },
+    {
+      "ticker": "CCM",
+      "country": "China"
+    },
+    {
+      "ticker": "CCU",
+      "name": "Compania Cervecerias Unidas S.A.",
+      "country": "Chile"
+    },
+    {
+      "ticker": "CD",
+      "name": "Chaince Digital Holdings Inc.",
+      "country": "China"
+    },
+    {
+      "ticker": "CDRO",
+      "name": "Codere Online Luxembourg S.A.",
+      "country": "Luxembourg"
+    },
+    {
+      "ticker": "CGAU",
+      "name": "Centerra Gold Inc.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "CGC",
+      "name": "Canopy Growth Corporation",
+      "country": "Canada"
+    },
+    {
+      "ticker": "CGEN",
+      "name": "Compugen Ltd.",
+      "country": "Israel"
+    },
+    {
+      "ticker": "CGNT",
+      "name": "Cognyte Software Ltd.",
+      "country": "Israel"
+    },
+    {
+      "ticker": "CHA",
+      "name": "Chagee Holdings Limited",
+      "country": "China"
+    },
+    {
+      "ticker": "CHKP",
+      "name": "Check Point Software Technologies Ltd.",
+      "country": "Israel"
+    },
+    {
+      "ticker": "CHT",
+      "name": "Chunghwa Telecom Co. Ltd.",
+      "country": "Taiwan"
+    },
+    {
+      "ticker": "CIB",
+      "name": "Grupo Cibest S.A.",
+      "country": "Colombia"
+    },
+    {
+      "ticker": "CIG",
+      "name": "Comp En De Mn Cemig ADS",
+      "country": "Brazil"
+    },
+    {
+      "ticker": "CIGI",
+      "country": "Canada"
+    },
+    {
+      "ticker": "CLB",
+      "name": "Core Laboratories Inc.",
+      "country": "Netherlands"
+    },
+    {
+      "ticker": "CLBT",
+      "name": "Cellebrite DI Ltd.",
+      "country": "Israel"
+    },
+    {
+      "ticker": "CLLS",
+      "name": "Cellectis S.A.",
+      "country": "France"
+    },
+    {
+      "ticker": "CLPS",
+      "name": "CLPS Incorporation",
+      "country": "China"
+    },
+    {
+      "ticker": "CLS",
+      "name": "Celestica Inc.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "CLVT",
+      "name": "Clarivate Plc",
+      "country": "United Kingdom"
+    },
+    {
+      "ticker": "CM",
+      "name": "Canadian Imperial Bank of Commerce",
+      "country": "Canada"
+    },
+    {
+      "ticker": "CMCL",
+      "name": "Caledonia Mining Corporation Plc",
+      "country": "Canada"
+    },
+    {
+      "ticker": "CMCM",
+      "name": "Cheetah Mobile Inc.",
+      "country": "China"
+    },
+    {
+      "ticker": "CMPR",
+      "name": "Cimpress plc Ordinary Shares (Ireland)",
+      "country": "Netherlands"
+    },
+    {
+      "ticker": "CMPS",
+      "country": "United Kingdom"
+    },
+    {
+      "ticker": "CMRE",
+      "country": "Greece"
+    },
+    {
+      "ticker": "CNCK",
+      "name": "Coincheck Group N.V.",
+      "country": "Netherlands"
+    },
+    {
+      "ticker": "CNH",
+      "name": "CNH Industrial N.V.",
+      "country": "United Kingdom"
+    },
+    {
+      "ticker": "CNI",
+      "name": "Canadian National Railway Company",
+      "country": "Canada"
+    },
+    {
+      "ticker": "CNQ",
+      "name": "Canadian Natural Resources Limited",
+      "country": "Canada"
+    },
+    {
+      "ticker": "CNTA",
+      "name": "Centessa Pharmaceuticals plc",
+      "country": "United Kingdom"
+    },
+    {
+      "ticker": "CNTB",
+      "name": "Connect Biopharma Holdings Limited",
+      "country": "China"
+    },
+    {
+      "ticker": "COE",
+      "name": "51Talk Online Education Group",
+      "country": "China"
+    },
+    {
+      "ticker": "CP",
+      "name": "Canadian Pacific Kansas City Limited",
+      "country": "Canada"
+    },
+    {
+      "ticker": "CPA",
+      "name": "Copa Holdings S.A.",
+      "country": "Panama"
+    },
+    {
+      "ticker": "CPAC",
+      "name": "Cementos Pacasmayo S.A.A.",
+      "country": "Peru"
+    },
+    {
+      "ticker": "CPHI",
+      "name": "China Pharma Holdings Inc.",
+      "country": "China"
+    },
+    {
+      "ticker": "CPRI",
+      "name": "Capri Holdings Limited",
+      "country": "Hong Kong"
+    },
+    {
+      "ticker": "CRDL",
+      "name": "Cardiol Therapeutics Inc. Class A",
+      "country": "Canada"
+    },
+    {
+      "ticker": "CRESY",
+      "name": "Cresud S.A.C.I.F. y A.",
+      "country": "Argentina"
+    },
+    {
+      "ticker": "CRGO",
+      "name": "Freightos Limited",
+      "country": "Israel"
+    },
+    {
+      "ticker": "CRH",
+      "name": "CRH PLC",
+      "country": "Ireland"
+    },
+    {
+      "ticker": "CRML",
+      "name": "Critical Metals Corp.",
+      "country": "British Virgin Islands"
+    },
+    {
+      "ticker": "CRMLW",
+      "name": "Critical Metals Corp.",
+      "country": "British Virgin Islands"
+    },
+    {
+      "ticker": "CRNT",
+      "name": "Ceragon Networks Ltd.",
+      "country": "Israel"
+    },
+    {
+      "ticker": "CRON",
+      "name": "Cronos Group Inc. Common Share",
+      "country": "Canada"
+    },
+    {
+      "ticker": "CRSP",
+      "name": "CRISPR Therapeutics AG",
+      "country": "Switzerland"
+    },
+    {
+      "ticker": "CRTO",
+      "name": "Criteo S.A.",
+      "country": "France"
+    },
+    {
+      "ticker": "CSAN",
+      "name": "Cosan S.A. ADS",
+      "country": "Brazil"
+    },
+    {
+      "ticker": "CSHR",
+      "name": "CoinShares PLC",
+      "country": "Jersey"
+    },
+    {
+      "ticker": "CSHRW",
+      "name": "CoinShares PLC",
+      "country": "Jersey"
+    },
+    {
+      "ticker": "CSIQ",
+      "name": "Canadian Solar Inc. Common Shares (ON)",
+      "country": "Canada"
+    },
+    {
+      "ticker": "CSTE",
+      "name": "Caesarstone Ltd.",
+      "country": "Israel"
+    },
+    {
+      "ticker": "CSTM",
+      "name": "Constellium SE Ordinary Shares (France)",
+      "country": "Netherlands"
+    },
+    {
+      "ticker": "CTOS",
+      "name": "Custom Truck One Source Inc.",
+      "country": "Cayman Islands"
+    },
+    {
+      "ticker": "CTW",
+      "name": "CTW",
+      "country": "Japan"
+    },
+    {
+      "ticker": "CURR",
+      "name": "Currenc Group Inc.",
+      "country": "Singapore"
+    },
+    {
+      "ticker": "CVE",
+      "name": "Cenovus Energy Inc",
+      "country": "Canada"
+    },
+    {
+      "ticker": "CWCO",
+      "name": "Consolidated Water Co. Ltd.",
+      "country": "Cayman Islands"
+    },
+    {
+      "ticker": "CX",
+      "name": "Cemex S.A.B. de C.V. Sponsored ADR",
+      "country": "Mexico"
+    },
+    {
+      "ticker": "CYD",
+      "name": "China Yuchai International Limited",
+      "country": "Singapore"
+    },
+    {
+      "ticker": "DAC",
+      "name": "Danaos Corporation",
+      "country": "Greece"
+    },
+    {
+      "ticker": "DAO",
+      "name": "Youdao Inc.",
+      "country": "China"
+    },
+    {
+      "ticker": "DAVA",
+      "name": "Endava plc",
+      "country": "United Kingdom"
+    },
+    {
+      "ticker": "DB",
+      "name": "Deutsche Bank AG",
+      "country": "Germany"
+    },
+    {
+      "ticker": "DBVT",
+      "name": "DBV Technologies S.A.",
+      "country": "France"
+    },
+    {
+      "ticker": "DCBO",
+      "name": "Docebo Inc.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "DCX",
+      "name": "Digital Currency X Technology Inc.",
+      "country": "Cayman Islands"
+    },
+    {
+      "ticker": "DDI",
+      "country": "South Korea"
+    },
+    {
+      "ticker": "DDL",
+      "name": "Dingdong (Cayman) Limited",
+      "country": "Cayman Islands"
+    },
+    {
+      "ticker": "DEFT",
+      "name": "Defi Technologies Inc.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "DEO",
+      "name": "Diageo plc",
+      "country": "United Kingdom"
+    },
+    {
+      "ticker": "DGNX",
+      "name": "Diginex Limited",
+      "country": "Hong Kong"
+    },
+    {
+      "ticker": "DGXX",
+      "country": "Canada"
+    },
+    {
+      "ticker": "DHT",
+      "name": "DHT Holdings Inc.",
+      "country": "Jersey"
+    },
+    {
+      "ticker": "DLNG",
+      "name": "Dynagas LNG Partners LP Common",
+      "country": "Greece"
+    },
+    {
+      "ticker": "DLO",
+      "name": "DLocal Limited Class A",
+      "country": "Uruguay"
+    },
+    {
+      "ticker": "DMRA",
+      "name": "Damora Therapeutics Inc.",
+      "country": "Denmark"
+    },
+    {
+      "ticker": "DNN",
+      "country": "Canada"
+    },
+    {
+      "ticker": "DOLE",
+      "name": "Dole plc",
+      "country": "Ireland"
+    },
+    {
+      "ticker": "DOO",
+      "country": "Canada"
+    },
+    {
+      "ticker": "DOX",
+      "name": "Amdocs Limited",
+      "country": "Guernsey"
+    },
+    {
+      "ticker": "DOYU",
+      "name": "DouYu International Holdings Limited ADS",
+      "country": "China"
+    },
+    {
+      "ticker": "DPRO",
+      "name": "Draganfly Inc.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "DQ",
+      "name": "DAQO New Energy Corp.",
+      "country": "China"
+    },
+    {
+      "ticker": "DRD",
+      "name": "DRDGOLD Limited",
+      "country": "South Africa"
+    },
+    {
+      "ticker": "DRIO",
+      "name": "DarioHealth Corp.",
+      "country": "Israel"
+    },
+    {
+      "ticker": "DRS",
+      "name": "Leonardo DRS Inc.",
+      "country": "Israel"
+    },
+    {
+      "ticker": "DRTS",
+      "name": "Alpha Tau Medical Ltd.",
+      "country": "Israel"
+    },
+    {
+      "ticker": "DRTSW",
+      "name": "Alpha Tau Medical Ltd.",
+      "country": "Israel"
+    },
+    {
+      "ticker": "DRUG",
+      "name": "Bright Minds Biosciences Inc.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "DSGX",
+      "name": "Descartes Systems Group Inc. (The)",
+      "country": "Canada"
+    },
+    {
+      "ticker": "DSWL",
+      "name": "Deswell Industries Inc.",
+      "country": "Macau"
+    },
+    {
+      "ticker": "DSX",
+      "name": "Diana Shipping inc.",
+      "country": "Greece"
+    },
+    {
+      "ticker": "DUO",
+      "name": "Fangdd Network Group Ltd.",
+      "country": "China"
+    },
+    {
+      "ticker": "E",
+      "name": "ENI S.p.A.",
+      "country": "Italy"
+    },
+    {
+      "ticker": "EC",
+      "name": "Ecopetrol S.A.",
+      "country": "Colombia"
+    },
+    {
+      "ticker": "ECX",
+      "name": "ECARX Holdings Inc.",
+      "country": "China"
+    },
+    {
+      "ticker": "EDN",
+      "country": "Argentina"
+    },
+    {
+      "ticker": "EDRY",
+      "name": "EuroDry Ltd. Common Shares",
+      "country": "Greece"
+    },
+    {
+      "ticker": "EDU",
+      "country": "China"
+    },
+    {
+      "ticker": "EFXT",
+      "name": "Enerflex Ltd",
+      "country": "Canada"
+    },
+    {
+      "ticker": "EG",
+      "name": "Everest Group Ltd.",
+      "country": "Bermuda"
+    },
+    {
+      "ticker": "EH",
+      "name": "EHang Holdings Limited ADS",
+      "country": "China"
+    },
+    {
+      "ticker": "ELBM",
+      "name": "Electra Battery Materials Corporation",
+      "country": "Canada"
+    },
+    {
+      "ticker": "ELE",
+      "name": "Elemental Royalty Corporation",
+      "country": "Canada"
+    },
+    {
+      "ticker": "ELLO",
+      "country": "Israel"
+    },
+    {
+      "ticker": "ELPC",
+      "name": "Companhia Paranaense de Energia (COPEL)",
+      "country": "Brazil"
+    },
+    {
+      "ticker": "ELTK",
+      "name": "Eltek Ltd.",
+      "country": "Israel"
+    },
+    {
+      "ticker": "ELVA",
+      "name": "Electrovaya Inc.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "ELVR",
+      "country": "Australia"
+    },
+    {
+      "ticker": "EMA",
+      "name": "Emera Incorporated",
+      "country": "Canada"
+    },
+    {
+      "ticker": "EMBJ",
+      "name": "Embraer S.A.",
+      "country": "Brazil"
+    },
+    {
+      "ticker": "ENB",
+      "name": "Enbridge Inc",
+      "country": "Canada"
+    },
+    {
+      "ticker": "ENGN",
+      "name": "enGene Therapeutics Inc.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "ENGS",
+      "name": "Energys Group Limited",
+      "country": "United Kingdom"
+    },
+    {
+      "ticker": "ENHA",
+      "name": "Enhanced Group Inc.",
+      "country": "Singapore"
+    },
+    {
+      "ticker": "ENIC",
+      "name": "Enel Chile S.A.",
+      "country": "Chile"
+    },
+    {
+      "ticker": "ENLT",
+      "name": "Enlight Renewable Energy Ltd.",
+      "country": "Israel"
+    },
+    {
+      "ticker": "ENLV",
+      "name": "Enlivex Ltd.",
+      "country": "Israel"
+    },
+    {
+      "ticker": "ENRD",
+      "name": "Einride AB",
+      "country": "Sweden"
+    },
+    {
+      "ticker": "ENRDW",
+      "name": "Einride AB",
+      "country": "Sweden"
+    },
+    {
+      "ticker": "ENTX",
+      "name": "Entera Bio Ltd.",
+      "country": "Israel"
+    },
+    {
+      "ticker": "EPRX",
+      "name": "Eupraxia Pharmaceuticals Inc.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "EQNR",
+      "name": "Equinor ASA",
+      "country": "Norway"
+    },
+    {
+      "ticker": "EQX",
+      "name": "Equinox Gold Corp.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "ERIC",
+      "name": "Ericsson",
+      "country": "Sweden"
+    },
+    {
+      "ticker": "ERO",
+      "name": "Ero Copper Corp.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "ESEA",
+      "country": "Greece"
+    },
+    {
+      "ticker": "ESLT",
+      "name": "Elbit Systems Ltd.",
+      "country": "Israel"
+    },
+    {
+      "ticker": "ESNT",
+      "name": "Essent Group Ltd.",
+      "country": "Bermuda"
+    },
+    {
+      "ticker": "ESTA",
+      "name": "Establishment Labs Holdings Inc.",
+      "country": "Costa Rica"
+    },
+    {
+      "ticker": "ETN",
+      "name": "Eaton Corporation PLC",
+      "country": "Ireland"
+    },
+    {
+      "ticker": "ETOR",
+      "name": "eToro Group Ltd. Class A",
+      "country": "Israel"
+    },
+    {
+      "ticker": "EUDA",
+      "name": "EUDA Health Holdings Limited",
+      "country": "Singapore"
+    },
+    {
+      "ticker": "EVAX",
+      "name": "Evaxion A/S American Depositary Share",
+      "country": "Denmark"
+    },
+    {
+      "ticker": "EVO",
+      "name": "Evotec SE",
+      "country": "Germany"
+    },
+    {
+      "ticker": "EVTC",
+      "name": "Evertec Inc.",
+      "country": "Puerto Rico"
+    },
+    {
+      "ticker": "EXK",
+      "country": "Canada"
+    },
+    {
+      "ticker": "FBP",
+      "name": "First BanCorp. New",
+      "country": "Puerto Rico"
+    },
+    {
+      "ticker": "FDP",
+      "name": "Del Monte Corporation",
+      "country": "Cayman Islands"
+    },
+    {
+      "ticker": "FER",
+      "name": "Ferrovial N.V.",
+      "country": "Netherlands"
+    },
+    {
+      "ticker": "FERG",
+      "name": "Ferguson Enterprises Inc.",
+      "country": "United Kingdom"
+    },
+    {
+      "ticker": "FIGR",
+      "name": "Figure Technology Solutions Inc.",
+      "country": "U.S. Virgin Islands"
+    },
+    {
+      "ticker": "FLEX",
+      "name": "Flex Ltd.",
+      "country": "Singapore"
+    },
+    {
+      "ticker": "FLUT",
+      "name": "Flutter Entertainment plc",
+      "country": "Ireland"
+    },
+    {
+      "ticker": "FLX",
+      "name": "BingEx Limited",
+      "country": "China"
+    },
+    {
+      "ticker": "FMS",
+      "name": "Fresenius Medical Care AG",
+      "country": "Germany"
+    },
+    {
+      "ticker": "FMST",
+      "name": "Foremost Clean Energy Ltd.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "FMX",
+      "country": "Mexico"
+    },
+    {
+      "ticker": "FN",
+      "name": "Fabrinet",
+      "country": "Cayman Islands"
+    },
+    {
+      "ticker": "FNUC",
+      "name": "Frontier Nuclear and Minerals Inc.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "FNV",
+      "name": "Franco-Nevada Corporation",
+      "country": "Canada"
+    },
+    {
+      "ticker": "FOCL",
+      "name": "EDAP TMS S.A.",
+      "country": "France"
+    },
+    {
+      "ticker": "FORTY",
+      "name": "Formula Systems (1985) Ltd.",
+      "country": "Israel"
+    },
+    {
+      "ticker": "FRHC",
+      "name": "Freedom Holding Corp.",
+      "country": "Kazakhstan"
+    },
+    {
+      "ticker": "FRO",
+      "name": "Frontline Plc",
+      "country": "Bermuda"
+    },
+    {
+      "ticker": "FSI",
+      "country": "Canada"
+    },
+    {
+      "ticker": "FSM",
+      "name": "Fortuna Mining Corp.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "FSV",
+      "name": "FirstService Corporation",
+      "country": "Canada"
+    },
+    {
+      "ticker": "FUFU",
+      "name": "BitFuFu Inc.",
+      "country": "Singapore"
+    },
+    {
+      "ticker": "FUFUW",
+      "name": "BitFuFu Inc.",
+      "country": "Singapore"
+    },
+    {
+      "ticker": "FUTU",
+      "name": "Futu Holdings Limited",
+      "country": "Hong Kong"
+    },
+    {
+      "ticker": "G",
+      "name": "Genpact Limited",
+      "country": "Bermuda"
+    },
+    {
+      "ticker": "GAMB",
+      "name": "Gambling.com Group Limited",
+      "country": "Jersey"
+    },
+    {
+      "ticker": "GASS",
+      "name": "StealthGas Inc.",
+      "country": "Greece"
+    },
+    {
+      "ticker": "GAU",
+      "name": "Galiano Gold Inc.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "GCL",
+      "name": "GCL Global Holdings Ltd",
+      "country": "Singapore"
+    },
+    {
+      "ticker": "GDEV",
+      "name": "GDEV Inc.",
+      "country": "Cyprus"
+    },
+    {
+      "ticker": "GDHG",
+      "name": "Golden Heaven Group Holdings Ltd.",
+      "country": "China"
+    },
+    {
+      "ticker": "GDS",
+      "name": "GDS Holdings Limited ADS",
+      "country": "China"
+    },
+    {
+      "ticker": "GENI",
+      "name": "Genius Sports Limited",
+      "country": "Guernsey"
+    },
+    {
+      "ticker": "GFI",
+      "name": "Gold Fields Limited",
+      "country": "South Africa"
+    },
+    {
+      "ticker": "GFL",
+      "country": "Canada"
+    },
+    {
+      "ticker": "GFR",
+      "name": "Greenfire Resources Ltd.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "GGAL",
+      "name": "Grupo Financiero Galicia S.A.",
+      "country": "Argentina"
+    },
+    {
+      "ticker": "GGB",
+      "name": "Gerdau S.A.",
+      "country": "Brazil"
+    },
+    {
+      "ticker": "GGR",
+      "name": "Gogoro Inc.",
+      "country": "Taiwan"
+    },
+    {
+      "ticker": "GHRS",
+      "name": "GH Research PLC",
+      "country": "Ireland"
+    },
+    {
+      "ticker": "GIB",
+      "name": "CGI Inc.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "GIBO",
+      "name": "GIBO Holdings Limited",
+      "country": "Hong Kong"
+    },
+    {
+      "ticker": "GIL",
+      "name": "Gildan Activewear Inc. Class A Sub. Vot.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "GILT",
+      "name": "Gilat Satellite Networks Ltd.",
+      "country": "Israel"
+    },
+    {
+      "ticker": "GLBE",
+      "name": "Global-E Online Ltd.",
+      "country": "Israel"
+    },
+    {
+      "ticker": "GLBS",
+      "name": "Globus Maritime Limited",
+      "country": "Greece"
+    },
+    {
+      "ticker": "GLNG",
+      "name": "Golar Lng Ltd",
+      "country": "Bermuda"
+    },
+    {
+      "ticker": "GLRE",
+      "name": "Greenlight Capital Re Ltd.",
+      "country": "Cayman Islands"
+    },
+    {
+      "ticker": "GMAB",
+      "name": "Genmab A/S ADS",
+      "country": "Denmark"
+    },
+    {
+      "ticker": "GMHS",
+      "name": "Gamehaus Holdings Inc.",
+      "country": "China"
+    },
+    {
+      "ticker": "GNS",
+      "name": "Genius Group Limited",
+      "country": "Singapore"
+    },
+    {
+      "ticker": "GNTA",
+      "name": "Genenta Science S.p.A.",
+      "country": "Italy"
+    },
+    {
+      "ticker": "GOTU",
+      "name": "Gaotu Techedu Inc.",
+      "country": "China"
+    },
+    {
+      "ticker": "GPRK",
+      "name": "Geopark Ltd",
+      "country": "Bermuda"
+    },
+    {
+      "ticker": "GRAB",
+      "name": "Grab Holdings Limited",
+      "country": "Singapore"
+    },
+    {
+      "ticker": "GRABW",
+      "name": "Grab Holdings Limited",
+      "country": "Singapore"
+    },
+    {
+      "ticker": "GRAN",
+      "name": "Grande Group Limited",
+      "country": "Hong Kong"
+    },
+    {
+      "ticker": "GRCE",
+      "name": "Grace Therapeutics Inc.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "GRFS",
+      "name": "Grifols S.A.",
+      "country": "Spain"
+    },
+    {
+      "ticker": "GRMN",
+      "name": "Garmin Ltd. Common Stock (Switzerland)",
+      "country": "Switzerland"
+    },
+    {
+      "ticker": "GRND",
+      "name": "Grindr Inc.",
+      "country": "Singapore"
+    },
+    {
+      "ticker": "GRNQ",
+      "name": "Greenpro Capital Corp.",
+      "country": "China"
+    },
+    {
+      "ticker": "GROY",
+      "name": "Gold Royalty Corp.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "GRRR",
+      "name": "Gorilla Technology Group Inc.",
+      "country": "Taiwan"
+    },
+    {
+      "ticker": "GRVY",
+      "country": "South Korea"
+    },
+    {
+      "ticker": "GSIW",
+      "name": "Garden Stage Limited",
+      "country": "Hong Kong"
+    },
+    {
+      "ticker": "GSK",
+      "name": "GSK plc",
+      "country": "United Kingdom"
+    },
+    {
+      "ticker": "GSL",
+      "name": "Global Ship Lease Inc New Class A",
+      "country": "United Kingdom"
+    },
+    {
+      "ticker": "GSM",
+      "name": "Ferroglobe PLC",
+      "country": "United Kingdom"
+    },
+    {
+      "ticker": "GTE",
+      "name": "Gran Tierra Energy Inc.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "GTES",
+      "name": "Gates Industrial Corporation plc",
+      "country": "United Kingdom"
+    },
+    {
+      "ticker": "GTX",
+      "name": "Garrett Motion Inc.",
+      "country": "Switzerland"
+    },
+    {
+      "ticker": "HBM",
+      "country": "Canada"
+    },
+    {
+      "ticker": "HBNB",
+      "name": "Hotel101 Global Holdings Corp.",
+      "country": "Singapore"
+    },
+    {
+      "ticker": "HCM",
+      "name": "HUTCHMED (China) Limited",
+      "country": "Hong Kong"
+    },
+    {
+      "ticker": "HDB",
+      "name": "HDFC Bank Limited",
+      "country": "India"
+    },
+    {
+      "ticker": "HDL",
+      "name": "SUPER HI INTERNATIONAL HOLDING LTD.",
+      "country": "Singapore"
+    },
+    {
+      "ticker": "HELE",
+      "name": "Helen of Troy Limited",
+      "country": "Bermuda"
+    },
+    {
+      "ticker": "HELP",
+      "name": "Cybin Inc.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "HEPS",
+      "name": "D-Market Electronic Services & Trading",
+      "country": "Turkey"
+    },
+    {
+      "ticker": "HERE",
+      "name": "Here Group Limited",
+      "country": "China"
+    },
+    {
+      "ticker": "HG",
+      "name": "Hamilton Insurance Group Ltd. Class B",
+      "country": "Bermuda"
+    },
+    {
+      "ticker": "HIMX",
+      "name": "Himax Technologies Inc.",
+      "country": "Taiwan"
+    },
+    {
+      "ticker": "HITI",
+      "name": "High Tide Inc.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "HIVE",
+      "name": "HIVE Digital Technologies Ltd.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "HLF",
+      "name": "Herbalife Ltd.",
+      "country": "Cayman Islands"
+    },
+    {
+      "ticker": "HLN",
+      "name": "Haleon plc",
+      "country": "United Kingdom"
+    },
+    {
+      "ticker": "HLP",
+      "name": "Hongli Group Inc.",
+      "country": "China"
+    },
+    {
+      "ticker": "HMC",
+      "name": "Honda Motor Company Ltd.",
+      "country": "Japan"
+    },
+    {
+      "ticker": "HMR",
+      "name": "Heidmar Maritime Holdings Corp.",
+      "country": "Greece"
+    },
+    {
+      "ticker": "HMY",
+      "name": "Harmony Gold Mining Company Limited",
+      "country": "South Africa"
+    },
+    {
+      "ticker": "HPAI",
+      "name": "Helport AI Limited",
+      "country": "Singapore"
+    },
+    {
+      "ticker": "HQ",
+      "name": "Horizon Quantum Holdings Ltd.",
+      "country": "Singapore"
+    },
+    {
+      "ticker": "HQWWW",
+      "name": "Horizon Quantum Holdings Ltd.",
+      "country": "Singapore"
+    },
+    {
+      "ticker": "HSAI",
+      "country": "China"
+    },
+    {
+      "ticker": "HSBC",
+      "name": "HSBC Holdings plc.",
+      "country": "United Kingdom"
+    },
+    {
+      "ticker": "HTCO",
+      "name": "High-Trend International Group",
+      "country": "Singapore"
+    },
+    {
+      "ticker": "HTHT",
+      "name": "H World Group Limited",
+      "country": "China"
+    },
+    {
+      "ticker": "HTLM",
+      "name": "HomesToLife Ltd",
+      "country": "Singapore"
+    },
+    {
+      "ticker": "HTT",
+      "name": "High Templar Tech Limited",
+      "country": "China"
+    },
+    {
+      "ticker": "HUHU",
+      "name": "HUHUTECH International Group Inc.",
+      "country": "China"
+    },
+    {
+      "ticker": "HYFT",
+      "name": "MindWalk Holdings Corp.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "IAG",
+      "name": "Iamgold Corporation",
+      "country": "Canada"
+    },
+    {
+      "ticker": "IAUX",
+      "name": "i-80 Gold Corp.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "IBEX",
+      "name": "IBEX Limited",
+      "country": "Bermuda"
+    },
+    {
+      "ticker": "IBN",
+      "name": "ICICI Bank Limited",
+      "country": "India"
+    },
+    {
+      "ticker": "ICG",
+      "name": "Intchains Group Limited",
+      "country": "China"
+    },
+    {
+      "ticker": "ICL",
+      "name": "ICL Group Ltd.",
+      "country": "Israel"
+    },
+    {
+      "ticker": "ICLR",
+      "name": "ICON plc",
+      "country": "Ireland"
+    },
+    {
+      "ticker": "IE",
+      "name": "Ivanhoe Electric Inc.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "IFRX",
+      "name": "InflaRx N.V.",
+      "country": "Germany"
+    },
+    {
+      "ticker": "IGIC",
+      "country": "Jordan"
+    },
+    {
+      "ticker": "IHG",
+      "name": "Intercontinental Hotels Group",
+      "country": "United Kingdom"
+    },
+    {
+      "ticker": "IHS",
+      "name": "IHS Holding Limited",
+      "country": "Cayman Islands"
+    },
+    {
+      "ticker": "IMAX",
+      "name": "Imax Corporation",
+      "country": "Canada"
+    },
+    {
+      "ticker": "IMCR",
+      "name": "Immunocore Holdings plc",
+      "country": "United Kingdom"
+    },
+    {
+      "ticker": "IMMP",
+      "name": "Immutep Limited",
+      "country": "Australia"
+    },
+    {
+      "ticker": "IMO",
+      "name": "Imperial Oil Limited",
+      "country": "Canada"
+    },
+    {
+      "ticker": "IMOS",
+      "name": "ChipMOS TECHNOLOGIES INC.",
+      "country": "Taiwan"
+    },
+    {
+      "ticker": "IMPP",
+      "name": "Imperial Petroleum Inc.",
+      "country": "Greece"
+    },
+    {
+      "ticker": "IMPPP",
+      "country": "Greece"
+    },
+    {
+      "ticker": "IMTX",
+      "name": "Immatics N.V.",
+      "country": "Germany"
+    },
+    {
+      "ticker": "INCR",
+      "name": "Intercure Ltd.",
+      "country": "Israel"
+    },
+    {
+      "ticker": "INDV",
+      "name": "Indivior Pharmaceuticals Inc.",
+      "country": "United Kingdom"
+    },
+    {
+      "ticker": "INFY",
+      "name": "Infosys Limited",
+      "country": "India"
+    },
+    {
+      "ticker": "ING",
+      "name": "ING Group N.V.",
+      "country": "Netherlands"
+    },
+    {
+      "ticker": "INIO",
+      "name": "INNIO N.V.",
+      "country": "Germany"
+    },
+    {
+      "ticker": "INMD",
+      "name": "InMode Ltd.",
+      "country": "Israel"
+    },
+    {
+      "ticker": "INTR",
+      "name": "Inter & Co. Inc. Class A",
+      "country": "Brazil"
+    },
+    {
+      "ticker": "INVZ",
+      "name": "Innoviz Technologies Ltd.",
+      "country": "Israel"
+    },
+    {
+      "ticker": "IONR",
+      "name": "ioneer Ltd",
+      "country": "Australia"
+    },
+    {
+      "ticker": "IPHA",
+      "name": "Innate Pharma S.A. ADS",
+      "country": "France"
+    },
+    {
+      "ticker": "IQ",
+      "name": "iQIYI Inc.",
+      "country": "China"
+    },
+    {
+      "ticker": "IREN",
+      "name": "IREN Limited",
+      "country": "Australia"
+    },
+    {
+      "ticker": "IRS",
+      "country": "Argentina"
+    },
+    {
+      "ticker": "ITRN",
+      "name": "Ituran Location and Control Ltd.",
+      "country": "Israel"
+    },
+    {
+      "ticker": "ITUB",
+      "name": "Itau Unibanco Banco Holding SA",
+      "country": "Brazil"
+    },
+    {
+      "ticker": "IVA",
+      "country": "France"
+    },
+    {
+      "ticker": "IX",
+      "name": "ORIX Corporation",
+      "country": "Japan"
+    },
+    {
+      "ticker": "IXHL",
+      "name": "Incannex Healthcare Inc.",
+      "country": "Australia"
+    },
+    {
+      "ticker": "JAZZ",
+      "country": "Ireland"
+    },
+    {
+      "ticker": "JCI",
+      "country": "Switzerland"
+    },
+    {
+      "ticker": "JD",
+      "name": "JD.com Inc.",
+      "country": "China"
+    },
+    {
+      "ticker": "JFIN",
+      "name": "Jiayin Group Inc.",
+      "country": "China"
+    },
+    {
+      "ticker": "JFU",
+      "name": "9F Inc.",
+      "country": "China"
+    },
+    {
+      "ticker": "JG",
+      "name": "Aurora Mobile Limited",
+      "country": "China"
+    },
+    {
+      "ticker": "JHG",
+      "name": "Janus Henderson Group plc",
+      "country": "United Kingdom"
+    },
+    {
+      "ticker": "JHX",
+      "name": "James Hardie Industries plc.",
+      "country": "Ireland"
+    },
+    {
+      "ticker": "JKS",
+      "name": "JinkoSolar Holding Company Limited",
+      "country": "China"
+    },
+    {
+      "ticker": "JL",
+      "name": "J-Long Group Limited",
+      "country": "Hong Kong"
+    },
+    {
+      "ticker": "JLHL",
+      "name": "Julong Holding Limited",
+      "country": "China"
+    },
+    {
+      "ticker": "JOYY",
+      "name": "JOYY Inc.",
+      "country": "Singapore"
+    },
+    {
+      "ticker": "JRVR",
+      "name": "James River Group Holdings Inc.",
+      "country": "Bermuda"
+    },
+    {
+      "ticker": "JXG",
+      "name": "JX Luxventure Group Inc.",
+      "country": "China"
+    },
+    {
+      "ticker": "KARO",
+      "name": "Karooooo Ltd.",
+      "country": "Singapore"
+    },
+    {
+      "ticker": "KAZR",
+      "name": "Skyline Builders Group Holding Limited",
+      "country": "Hong Kong"
+    },
+    {
+      "ticker": "KB",
+      "name": "KB Financial Group Inc",
+      "country": "South Korea"
+    },
+    {
+      "ticker": "KBSX",
+      "name": "FST Corp.",
+      "country": "Taiwan"
+    },
+    {
+      "ticker": "KC",
+      "name": "Kingsoft Cloud Holdings Limited",
+      "country": "China"
+    },
+    {
+      "ticker": "KEEL",
+      "name": "Keel Infrastructure Corp.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "KEN",
+      "name": "Kenon Holdings Ltd.",
+      "country": "Singapore"
+    },
+    {
+      "ticker": "KEP",
+      "name": "Korea Electric Power Corporation",
+      "country": "South Korea"
+    },
+    {
+      "ticker": "KG",
+      "name": "Kestrel Group Ltd.",
+      "country": "Bermuda"
+    },
+    {
+      "ticker": "KGC",
+      "name": "Kinross Gold Corporation",
+      "country": "Canada"
+    },
+    {
+      "ticker": "KLIC",
+      "name": "Kulicke and Soffa Industries Inc.",
+      "country": "Singapore"
+    },
+    {
+      "ticker": "KMDA",
+      "name": "Kamada Ltd.",
+      "country": "Israel"
+    },
+    {
+      "ticker": "KMRK",
+      "name": "K-Tech Solutions Company Limited",
+      "country": "Hong Kong"
+    },
+    {
+      "ticker": "KNDI",
+      "name": "Kandi Technologies Group Inc.",
+      "country": "China"
+    },
+    {
+      "ticker": "KNOP",
+      "name": "KNOT Offshore Partners LP Common",
+      "country": "United Kingdom"
+    },
+    {
+      "ticker": "KOF",
+      "name": "Coca Cola Femsa S.A.B. de C.V.",
+      "country": "Mexico"
+    },
+    {
+      "ticker": "KOS",
+      "name": "Kosmos Energy Ltd. Common Shares (DE)",
+      "country": "Bermuda"
+    },
+    {
+      "ticker": "KRKR",
+      "name": "36Kr Holdings Inc.",
+      "country": "China"
+    },
+    {
+      "ticker": "KRNT",
+      "name": "Kornit Digital Ltd.",
+      "country": "Israel"
+    },
+    {
+      "ticker": "KSPI",
+      "country": "Kazakhstan"
+    },
+    {
+      "ticker": "KT",
+      "name": "KT Corporation",
+      "country": "South Korea"
+    },
+    {
+      "ticker": "KTWO",
+      "country": "Cayman Islands"
+    },
+    {
+      "ticker": "KWY",
+      "name": "Kingsway Corporation",
+      "country": "Canada"
+    },
+    {
+      "ticker": "KYIV",
+      "name": "Kyivstar Group Ltd.",
+      "country": "United Arab Emirates"
+    },
+    {
+      "ticker": "KYIVW",
+      "name": "Kyivstar Group Ltd.",
+      "country": "United Arab Emirates"
+    },
+    {
+      "ticker": "KZIA",
+      "name": "Kazia Therapeutics Limited",
+      "country": "Australia"
+    },
+    {
+      "ticker": "LAC",
+      "name": "Lithium Americas Corp.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "LAES",
+      "name": "SEALSQ Corp",
+      "country": "Switzerland"
+    },
+    {
+      "ticker": "LANV",
+      "name": "Lanvin Group Holdings Limited",
+      "country": "Cayman Islands"
+    },
+    {
+      "ticker": "LAR",
+      "name": "Lithium Argentina AG",
+      "country": "Canada"
+    },
+    {
+      "ticker": "LAZ",
+      "name": "Lazard Inc.",
+      "country": "Bermuda"
+    },
+    {
+      "ticker": "LBTYA",
+      "name": "Liberty Global Ltd. Class A",
+      "country": "United Kingdom"
+    },
+    {
+      "ticker": "LBTYB",
+      "name": "Liberty Global Ltd. Class B",
+      "country": "United Kingdom"
+    },
+    {
+      "ticker": "LBTYK",
+      "name": "Liberty Global Ltd. Class C",
+      "country": "United Kingdom"
+    },
+    {
+      "ticker": "LFS",
+      "name": "LEIFRAS Co. Ltd.",
+      "country": "Japan"
+    },
+    {
+      "ticker": "LGCL",
+      "name": "Lucas GC Limited",
+      "country": "China"
+    },
+    {
+      "ticker": "LGO",
+      "name": "Largo Inc.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "LI",
+      "name": "Li Auto Inc.",
+      "country": "China"
+    },
+    {
+      "ticker": "LICN",
+      "name": "Lichen International Limited",
+      "country": "China"
+    },
+    {
+      "ticker": "LION",
+      "name": "Lionsgate Studios Corp",
+      "country": "Canada"
+    },
+    {
+      "ticker": "LITB",
+      "name": "LightInTheBox Holding Co. Ltd.",
+      "country": "China"
+    },
+    {
+      "ticker": "LIVN",
+      "name": "LivaNova PLC",
+      "country": "United Kingdom"
+    },
+    {
+      "ticker": "LKFT",
+      "name": "Lakefront Biotherapeutics",
+      "country": "Belgium"
+    },
+    {
+      "ticker": "LND",
+      "country": "Brazil"
+    },
+    {
+      "ticker": "LOMA",
+      "country": "Argentina"
+    },
+    {
+      "ticker": "LOOP",
+      "name": "Loop Industries Inc.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "LOT",
+      "name": "Lotus Technology Inc.",
+      "country": "China"
+    },
+    {
+      "ticker": "LOTWW",
+      "name": "Lotus Technology Inc.",
+      "country": "China"
+    },
+    {
+      "ticker": "LPL",
+      "country": "South Korea"
+    },
+    {
+      "ticker": "LSAK",
+      "name": "Lesaka Technologies Inc.",
+      "country": "South Africa"
+    },
+    {
+      "ticker": "LSE",
+      "name": "Leishen Energy Holding Co. Ltd.",
+      "country": "China"
+    },
+    {
+      "ticker": "LSPD",
+      "country": "Canada"
+    },
+    {
+      "ticker": "LTM",
+      "name": "LATAM Airlines Group S.A.",
+      "country": "Chile"
+    },
+    {
+      "ticker": "LU",
+      "name": "Lufax Holding Ltd",
+      "country": "China"
+    },
+    {
+      "ticker": "LULU",
+      "name": "lululemon athletica inc.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "LX",
+      "name": "LexinFintech Holdings Ltd.",
+      "country": "China"
+    },
+    {
+      "ticker": "LXFR",
+      "name": "Luxfer Holdings PLC",
+      "country": "United Kingdom"
+    },
+    {
+      "ticker": "LYB",
+      "country": "Netherlands"
+    },
+    {
+      "ticker": "LYG",
+      "name": "Lloyds Banking Group Plc",
+      "country": "United Kingdom"
+    },
+    {
+      "ticker": "LZM",
+      "name": "Lifezone Metals Limited",
+      "country": "Isle of Man"
+    },
+    {
+      "ticker": "MAAS",
+      "name": "Maase Inc.",
+      "country": "China"
+    },
+    {
+      "ticker": "MAKO",
+      "name": "Mako Mining Corp",
+      "country": "Canada"
+    },
+    {
+      "ticker": "MANU",
+      "name": "Manchester",
+      "country": "United Kingdom"
+    },
+    {
+      "ticker": "MATH",
+      "name": "Metalpha Technology Holding Limited",
+      "country": "China"
+    },
+    {
+      "ticker": "MB",
+      "name": "MasterBeef Group",
+      "country": "Hong Kong"
+    },
+    {
+      "ticker": "MBLY",
+      "name": "Mobileye Global Inc.",
+      "country": "Israel"
+    },
+    {
+      "ticker": "MBOT",
+      "name": "Microbot Medical Inc.",
+      "country": "Israel"
+    },
+    {
+      "ticker": "MDCXW",
+      "name": "Medicus Pharma Ltd.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "MDWD",
+      "name": "MediWound Ltd.",
+      "country": "Israel"
+    },
+    {
+      "ticker": "MDXH",
+      "name": "MDxHealth SA",
+      "country": "Belgium"
+    },
+    {
+      "ticker": "MELI",
+      "name": "MercadoLibre Inc.",
+      "country": "Argentina"
+    },
+    {
+      "ticker": "MENS",
+      "name": "Jyong Biotech Ltd.",
+      "country": "Taiwan"
+    },
+    {
+      "ticker": "MEOH",
+      "name": "Methanex Corporation",
+      "country": "Canada"
+    },
+    {
+      "ticker": "MERC",
+      "name": "Mercer International Inc.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "MESO",
+      "name": "Mesoblast Limited",
+      "country": "Australia"
+    },
+    {
+      "ticker": "MFC",
+      "name": "Manulife Financial Corporation",
+      "country": "Canada"
+    },
+    {
+      "ticker": "MFG",
+      "country": "Japan"
+    },
+    {
+      "ticker": "MFI",
+      "name": "mF International Limited",
+      "country": "Hong Kong"
+    },
+    {
+      "ticker": "MGA",
+      "name": "Magna International Inc.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "MGRT",
+      "name": "Mega Fortune Company Limited",
+      "country": "Hong Kong"
+    },
+    {
+      "ticker": "MHLA",
+      "country": "Bermuda"
+    },
+    {
+      "ticker": "MHNC",
+      "country": "Bermuda"
+    },
+    {
+      "ticker": "MIST",
+      "name": "Milestone Pharmaceuticals Inc.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "MKDW",
+      "name": "MKDWELL Tech Inc. Ordinary Share",
+      "country": "Taiwan"
+    },
+    {
+      "ticker": "MLCO",
+      "name": "Melco Resorts & Entertainment Limited",
+      "country": "Hong Kong"
+    },
+    {
+      "ticker": "MMYT",
+      "name": "MakeMyTrip Limited",
+      "country": "India"
+    },
+    {
+      "ticker": "MNDY",
+      "name": "monday.com Ltd.",
+      "country": "Israel"
+    },
+    {
+      "ticker": "MNSO",
+      "name": "MINISO Group Holding Limited",
+      "country": "China"
+    },
+    {
+      "ticker": "MNY",
+      "name": "MoneyHero Limited",
+      "country": "Singapore"
+    },
+    {
+      "ticker": "MOB",
+      "name": "Mobilicom Limited",
+      "country": "Israel"
+    },
+    {
+      "ticker": "MOBBW",
+      "name": "Mobilicom Limited",
+      "country": "Israel"
+    },
+    {
+      "ticker": "MOLN",
+      "name": "Molecular Partners AG",
+      "country": "Switzerland"
+    },
+    {
+      "ticker": "MOMO",
+      "name": "Hello Group Inc.",
+      "country": "China"
+    },
+    {
+      "ticker": "MREO",
+      "name": "Mereo BioPharma Group plc",
+      "country": "United Kingdom"
+    },
+    {
+      "ticker": "MRX",
+      "name": "Marex Group plc",
+      "country": "United Kingdom"
+    },
+    {
+      "ticker": "MSLE",
+      "name": "Satellos Bioscience Inc.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "MT",
+      "name": "Arcelor Mittal NY Registry Shares NEW",
+      "country": "Luxembourg"
+    },
+    {
+      "ticker": "MTC",
+      "name": "MMTec Inc.",
+      "country": "China"
+    },
+    {
+      "ticker": "MTD",
+      "name": "Mettler-Toledo International Inc.",
+      "country": "Switzerland"
+    },
+    {
+      "ticker": "MTLS",
+      "name": "Materialise NV",
+      "country": "Belgium"
+    },
+    {
+      "ticker": "MUFG",
+      "name": "Mitsubishi UFJ Financial Group Inc.",
+      "country": "Japan"
+    },
+    {
+      "ticker": "MUX",
+      "name": "McEwen Inc.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "MWC",
+      "name": "Micware Co. Ltd.",
+      "country": "Japan"
+    },
+    {
+      "ticker": "MX",
+      "name": "Magnachip Semiconductor Corporation",
+      "country": "Luxembourg"
+    },
+    {
+      "ticker": "NA",
+      "name": "Nano Labs Ltd",
+      "country": "China"
+    },
+    {
+      "ticker": "NAAS",
+      "name": "NaaS Technology Inc.",
+      "country": "China"
+    },
+    {
+      "ticker": "NAK",
+      "name": "Northern Dynasty Minerals Ltd.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "NAMM",
+      "name": "Namib Minerals",
+      "country": "Cayman Islands"
+    },
+    {
+      "ticker": "NAMS",
+      "name": "NewAmsterdam Pharma Company N.V.",
+      "country": "Netherlands"
+    },
+    {
+      "ticker": "NAMSW",
+      "name": "NewAmsterdam Pharma Company N.V.",
+      "country": "Netherlands"
+    },
+    {
+      "ticker": "NAT",
+      "name": "Nordic American Tankers Limited",
+      "country": "Bermuda"
+    },
+    {
+      "ticker": "NBIS",
+      "name": "Nebius Group N.V.",
+      "country": "Netherlands"
+    },
+    {
+      "ticker": "NBP",
+      "name": "NovaBridge Biosciences",
+      "country": "China"
+    },
+    {
+      "ticker": "NBR",
+      "name": "Nabors Industries Ltd.",
+      "country": "Bermuda"
+    },
+    {
+      "ticker": "NBTX",
+      "name": "Nanobiotix S.A.",
+      "country": "France"
+    },
+    {
+      "ticker": "NCEW",
+      "name": "New Century Logistics (BVI) Limited",
+      "country": "Hong Kong"
+    },
+    {
+      "ticker": "NCI",
+      "country": "Hong Kong"
+    },
+    {
+      "ticker": "NCTY",
+      "name": "The9 Limited American Depository Shares",
+      "country": "China"
+    },
+    {
+      "ticker": "NEGG",
+      "name": "Newegg Commerce Inc.",
+      "country": "China"
+    },
+    {
+      "ticker": "NEWP",
+      "name": "New Pacific Metals Corp.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "NEXA",
+      "name": "Nexa Resources S.A.",
+      "country": "Luxembourg"
+    },
+    {
+      "ticker": "NEXN",
+      "name": "Nexxen International Ltd.",
+      "country": "Israel"
+    },
+    {
+      "ticker": "NG",
+      "name": "Novagold Resources Inc.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "NGEN",
+      "name": "NervGen Pharma Corp.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "NGG",
+      "country": "United Kingdom"
+    },
+    {
+      "ticker": "NGNE",
+      "name": "Neurogene Inc. Common Stock",
+      "country": "Canada"
+    },
+    {
+      "ticker": "NICE",
+      "name": "NICE Ltd",
+      "country": "Israel"
+    },
+    {
+      "ticker": "NICM",
+      "name": "Nicola Mining Inc.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "NIPG",
+      "name": "NIP Group Inc.",
+      "country": "Sweden"
+    },
+    {
+      "ticker": "NIU",
+      "name": "Niu Technologies",
+      "country": "China"
+    },
+    {
+      "ticker": "NKLR",
+      "name": "Terra Innovatum Global N.V.",
+      "country": "Italy"
+    },
+    {
+      "ticker": "NMG",
+      "name": "Nouveau Monde Graphite Inc.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "NMM",
+      "name": "Navios Maritime Partners LP Common",
+      "country": "Greece"
+    },
+    {
+      "ticker": "NMR",
+      "name": "Nomura Holdings Inc ADR",
+      "country": "Japan"
+    },
+    {
+      "ticker": "NNDM",
+      "name": "Nano Dimension Ltd.",
+      "country": "Israel"
+    },
+    {
+      "ticker": "NNNN",
+      "name": "Anbio Biotechnology",
+      "country": "Germany"
+    },
+    {
+      "ticker": "NNOX",
+      "name": "NANO-X IMAGING LTD",
+      "country": "Israel"
+    },
+    {
+      "ticker": "NOA",
+      "country": "Canada"
+    },
+    {
+      "ticker": "NOAH",
+      "name": "Noah Holdings Limited",
+      "country": "China"
+    },
+    {
+      "ticker": "NOK",
+      "name": "Nokia Corporation Sponsored",
+      "country": "Finland"
+    },
+    {
+      "ticker": "NOMD",
+      "name": "Nomad Foods Limited",
+      "country": "United Kingdom"
+    },
+    {
+      "ticker": "NPT",
+      "name": "Texxon Holding Limited",
+      "country": "China"
+    },
+    {
+      "ticker": "NRSN",
+      "name": "NeuroSense Therapeutics Ltd.",
+      "country": "Israel"
+    },
+    {
+      "ticker": "NSPR",
+      "name": "InspireMD Inc.",
+      "country": "Israel"
+    },
+    {
+      "ticker": "NTB",
+      "country": "Bermuda"
+    },
+    {
+      "ticker": "NTES",
+      "name": "NetEase Inc.",
+      "country": "China"
+    },
+    {
+      "ticker": "NTR",
+      "name": "Nutrien Ltd.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "NU",
+      "name": "Nu Holdings Ltd.",
+      "country": "Cayman Islands"
+    },
+    {
+      "ticker": "NVCR",
+      "name": "NovoCure Limited",
+      "country": "Jersey"
+    },
+    {
+      "ticker": "NVGS",
+      "country": "Marshall Islands"
+    },
+    {
+      "ticker": "NVMI",
+      "name": "Nova Ltd.",
+      "country": "Israel"
+    },
+    {
+      "ticker": "NVO",
+      "name": "Novo Nordisk A/S",
+      "country": "Denmark"
+    },
+    {
+      "ticker": "NVS",
+      "name": "Novartis AG",
+      "country": "Switzerland"
+    },
+    {
+      "ticker": "NVT",
+      "name": "nVent Electric plc Ordinary Shares",
+      "country": "United Kingdom"
+    },
+    {
+      "ticker": "NVX",
+      "country": "Australia"
+    },
+    {
+      "ticker": "NWG",
+      "name": "NatWest Group plc",
+      "country": "United Kingdom"
+    },
+    {
+      "ticker": "NXE",
+      "name": "Nexgen Energy Ltd.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "NXPI",
+      "name": "NXP Semiconductors N.V.",
+      "country": "Netherlands"
+    },
+    {
+      "ticker": "NXTT",
+      "name": "Next Technology Holding Inc.",
+      "country": "China"
+    },
+    {
+      "ticker": "NYAX",
+      "name": "Nayax Ltd.",
+      "country": "Israel"
+    },
+    {
+      "ticker": "NYXH",
+      "name": "Nyxoah SA",
+      "country": "Belgium"
+    },
+    {
+      "ticker": "OBE",
+      "name": "Obsidian Energy Ltd.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "OCS",
+      "name": "Oculis Holding AG",
+      "country": "Switzerland"
+    },
+    {
+      "ticker": "OCSAW",
+      "name": "Oculis Holding AG",
+      "country": "Switzerland"
+    },
+    {
+      "ticker": "ODD",
+      "name": "ODDITY Tech Ltd.",
+      "country": "Israel"
+    },
+    {
+      "ticker": "ODV",
+      "name": "Osisko Development Corp.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "ODVWZ",
+      "name": "Osisko Development Corp.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "ODYS",
+      "name": "Odysight.ai Inc.",
+      "country": "Israel"
+    },
+    {
+      "ticker": "OEC",
+      "name": "Orion S.A.",
+      "country": "Luxembourg"
+    },
+    {
+      "ticker": "OFG",
+      "name": "OFG Bancorp",
+      "country": "Puerto Rico"
+    },
+    {
+      "ticker": "OFIX",
+      "name": "Orthofix Medical Inc. Common Stock (DE)",
+      "country": "Curacao"
+    },
+    {
+      "ticker": "OGI",
+      "name": "Organigram Global Inc.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "OIO",
+      "name": "OIO Group",
+      "country": "Singapore"
+    },
+    {
+      "ticker": "OKYO",
+      "name": "OKYO Pharma Limited",
+      "country": "Guernsey"
+    },
+    {
+      "ticker": "OMAB",
+      "country": "Mexico"
+    },
+    {
+      "ticker": "OMSE",
+      "name": "OMS Energy Technologies Inc.",
+      "country": "Singapore"
+    },
+    {
+      "ticker": "ONC",
+      "name": "BeOne Medicines Ltd.",
+      "country": "Cayman Islands"
+    },
+    {
+      "ticker": "ONCY",
+      "name": "Oncolytics Biotech Inc.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "ONEG",
+      "name": "OneConstruction Group Limited",
+      "country": "Hong Kong"
+    },
+    {
+      "ticker": "ONMD",
+      "name": "OneMedNet Corp",
+      "country": "United Kingdom"
+    },
+    {
+      "ticker": "OPRA",
+      "name": "Opera Limited",
+      "country": "Norway"
+    },
+    {
+      "ticker": "OR",
+      "name": "OR Royalties Inc.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "ORIQU",
+      "name": "Origin Investment Corp I",
+      "country": "Singapore"
+    },
+    {
+      "ticker": "ORMP",
+      "name": "Oramed Pharmaceuticals Inc.",
+      "country": "Israel"
+    },
+    {
+      "ticker": "OSW",
+      "name": "OneSpaWorld Holdings Limited",
+      "country": "Bahamas"
+    },
+    {
+      "ticker": "OTEX",
+      "name": "Open Text Corporation",
+      "country": "Canada"
+    },
+    {
+      "ticker": "OTLY",
+      "name": "Oatly Group AB",
+      "country": "Sweden"
+    },
+    {
+      "ticker": "OVV",
+      "name": "Ovintiv Inc. (DE)",
+      "country": "Canada"
+    },
+    {
+      "ticker": "OWLS",
+      "name": "OBOOK Holdings Inc. Class A",
+      "country": "Taiwan"
+    },
+    {
+      "ticker": "PAAS",
+      "name": "Pan American Silver Corp.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "PAC",
+      "country": "Mexico"
+    },
+    {
+      "ticker": "PAGS",
+      "name": "PagSeguro Digital Ltd. Class A",
+      "country": "Cayman Islands"
+    },
+    {
+      "ticker": "PAM",
+      "name": "Pampa Energia S.A.",
+      "country": "Argentina"
+    },
+    {
+      "ticker": "PAX",
+      "name": "Patria Investments Limited Class A",
+      "country": "Cayman Islands"
+    },
+    {
+      "ticker": "PAYP",
+      "country": "Japan"
+    },
+    {
+      "ticker": "PBA",
+      "country": "Canada"
+    },
+    {
+      "ticker": "PBK",
+      "name": "PowerBank Corporation",
+      "country": "Canada"
+    },
+    {
+      "ticker": "PBR",
+      "name": "Petroleo Brasileiro S.A. Petrobras ADS",
+      "country": "Brazil"
+    },
+    {
+      "ticker": "PCLA",
+      "name": "PicoCELA Inc.",
+      "country": "Japan"
+    },
+    {
+      "ticker": "PDD",
+      "name": "PDD Holdings Inc.",
+      "country": "China"
+    },
+    {
+      "ticker": "PDS",
+      "name": "Precision Drilling Corporation",
+      "country": "Canada"
+    },
+    {
+      "ticker": "PERF",
+      "name": "Perfect Corp. Class A Ordinary Share",
+      "country": "Taiwan"
+    },
+    {
+      "ticker": "PERI",
+      "name": "Perion Network Ltd.",
+      "country": "Israel"
+    },
+    {
+      "ticker": "PFAI",
+      "name": "Pinnacle Food Group Limited Class A",
+      "country": "Canada"
+    },
+    {
+      "ticker": "PHAR",
+      "country": "Netherlands"
+    },
+    {
+      "ticker": "PHG",
+      "country": "Netherlands"
+    },
+    {
+      "ticker": "PHI",
+      "name": "PLDT Inc. Sponsored ADR",
+      "country": "Philippines"
+    },
+    {
+      "ticker": "PHOE",
+      "name": "Phoenix Asia Holdings Limited",
+      "country": "Hong Kong"
+    },
+    {
+      "ticker": "PHUN",
+      "name": "Phunware Inc.",
+      "country": "Greece"
+    },
+    {
+      "ticker": "PHVS",
+      "name": "Pharvaris N.V.",
+      "country": "Netherlands"
+    },
+    {
+      "ticker": "PICS",
+      "name": "PicS N.V. Class A",
+      "country": "Brazil"
+    },
+    {
+      "ticker": "PKX",
+      "name": "POSCO HOLDINGS INC.",
+      "country": "South Korea"
+    },
+    {
+      "ticker": "PLAG",
+      "name": "Planet Green Holdings Corp.",
+      "country": "China"
+    },
+    {
+      "ticker": "PLBL",
+      "name": "Polibeli Group Ltd",
+      "country": "Indonesia"
+    },
+    {
+      "ticker": "PLG",
+      "country": "Canada"
+    },
+    {
+      "ticker": "PLGO",
+      "name": "Pelagos Insurance Capital Limited",
+      "country": "Bermuda"
+    },
+    {
+      "ticker": "PLRZ",
+      "name": "Polyrizon Ltd.",
+      "country": "Israel"
+    },
+    {
+      "ticker": "PLTK",
+      "name": "Playtika Holding Corp.",
+      "country": "Israel"
+    },
+    {
+      "ticker": "PLUR",
+      "name": "Pluri Inc.",
+      "country": "Israel"
+    },
+    {
+      "ticker": "PLUT",
+      "name": "Plutus Financial Group Limited",
+      "country": "Hong Kong"
+    },
+    {
+      "ticker": "PLX",
+      "name": "Protalix BioTherapeutics Inc. (DE)",
+      "country": "Israel"
+    },
+    {
+      "ticker": "PMEC",
+      "name": "Primech Holdings Ltd.",
+      "country": "Singapore"
+    },
+    {
+      "ticker": "PMN",
+      "country": "Canada"
+    },
+    {
+      "ticker": "PN",
+      "name": "Skycorp Solar Group Limited",
+      "country": "China"
+    },
+    {
+      "ticker": "PNR",
+      "name": "Pentair plc. Ordinary Share",
+      "country": "Switzerland"
+    },
+    {
+      "ticker": "POET",
+      "name": "POET Technologies Inc.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "PONY",
+      "name": "Pony AI Inc.",
+      "country": "China"
+    },
+    {
+      "ticker": "PPTA",
+      "name": "Perpetua Resources Corp.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "PRE",
+      "country": "Hong Kong"
+    },
+    {
+      "ticker": "PRM",
+      "name": "Perimeter Solutions SA",
+      "country": "Luxembourg"
+    },
+    {
+      "ticker": "PROF",
+      "name": "Profound Medical Corp.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "PRQR",
+      "name": "ProQR Therapeutics N.V.",
+      "country": "Netherlands"
+    },
+    {
+      "ticker": "PSIG",
+      "name": "PS International Group Ltd.",
+      "country": "Hong Kong"
+    },
+    {
+      "ticker": "PSNY",
+      "country": "Sweden"
+    },
+    {
+      "ticker": "PSNYW",
+      "country": "Sweden"
+    },
+    {
+      "ticker": "PSO",
+      "name": "Pearson Plc",
+      "country": "United Kingdom"
+    },
+    {
+      "ticker": "PTLE",
+      "name": "PTL LTD",
+      "country": "Singapore"
+    },
+    {
+      "ticker": "PUK",
+      "name": "Prudential Public Limited Company",
+      "country": "United Kingdom"
+    },
+    {
+      "ticker": "PXS",
+      "name": "Pyxis Tankers Inc.",
+      "country": "Greece"
+    },
+    {
+      "ticker": "PYPD",
+      "name": "PolyPid Ltd.",
+      "country": "Israel"
+    },
+    {
+      "ticker": "QFIN",
+      "name": "Qfin Holdings Inc.",
+      "country": "China"
+    },
+    {
+      "ticker": "QGEN",
+      "name": "Qiagen N.V.",
+      "country": "Netherlands"
+    },
+    {
+      "ticker": "QNTM",
+      "country": "Canada"
+    },
+    {
+      "ticker": "QSR",
+      "name": "Restaurant Brands International Inc.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "QTEX",
+      "name": "QTREX Quantum Ltd.",
+      "country": "Israel"
+    },
+    {
+      "ticker": "QUCY",
+      "name": "Quantum Cyber N.V.",
+      "country": "Germany"
+    },
+    {
+      "ticker": "QURE",
+      "name": "uniQure N.V.",
+      "country": "Netherlands"
+    },
+    {
+      "ticker": "QXL",
+      "name": "Quantum X Labs Inc.",
+      "country": "Israel"
+    },
+    {
+      "ticker": "RACE",
+      "name": "Ferrari N.V.",
+      "country": "Italy"
+    },
+    {
+      "ticker": "RADX",
+      "name": "Radiopharm Theranostics Limited",
+      "country": "Australia"
+    },
+    {
+      "ticker": "RBA",
+      "name": "RB Global Inc.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "RCI",
+      "name": "Rogers Communication Inc.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "RCT",
+      "name": "RedCloud Holdings plc",
+      "country": "United Kingdom"
+    },
+    {
+      "ticker": "RDCM",
+      "name": "Radcom Ltd.",
+      "country": "Israel"
+    },
+    {
+      "ticker": "RDWR",
+      "name": "Radware Ltd.",
+      "country": "Israel"
+    },
+    {
+      "ticker": "RDY",
+      "name": "Dr. Reddy's Laboratories Ltd",
+      "country": "India"
+    },
+    {
+      "ticker": "REAX",
+      "name": "The Real Brokerage Inc.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "RELX",
+      "name": "RELX PLC PLC",
+      "country": "United Kingdom"
+    },
+    {
+      "ticker": "RERE",
+      "name": "ATRenew Inc.",
+      "country": "Cayman Islands"
+    },
+    {
+      "ticker": "RGC",
+      "name": "Regencell Bioscience Holdings Limited",
+      "country": "Hong Kong"
+    },
+    {
+      "ticker": "RIG",
+      "name": "Transocean Ltd (Switzerland)",
+      "country": "Switzerland"
+    },
+    {
+      "ticker": "RIO",
+      "name": "Rio Tinto Plc",
+      "country": "Australia"
+    },
+    {
+      "ticker": "RITR",
+      "name": "Reitar Logtech Holdings Limited",
+      "country": "Hong Kong"
+    },
+    {
+      "ticker": "RLX",
+      "name": "RLX Technology Inc.",
+      "country": "Cayman Islands"
+    },
+    {
+      "ticker": "RNR",
+      "name": "RenaissanceRe Holdings Ltd.",
+      "country": "Bermuda"
+    },
+    {
+      "ticker": "RNW",
+      "name": "ReNew Energy Global plc",
+      "country": "United Kingdom"
+    },
+    {
+      "ticker": "ROIV",
+      "name": "Roivant Sciences Ltd.",
+      "country": "United Kingdom"
+    },
+    {
+      "ticker": "ROMA",
+      "name": "Roma Green Finance Limited",
+      "country": "Hong Kong"
+    },
+    {
+      "ticker": "RY",
+      "name": "Royal Bank Of Canada",
+      "country": "Canada"
+    },
+    {
+      "ticker": "RYAAY",
+      "name": "Ryanair Holdings plc",
+      "country": "Ireland"
+    },
+    {
+      "ticker": "RYET",
+      "name": "Ruanyun Edai Technology Inc.",
+      "country": "China"
+    },
+    {
+      "ticker": "RYOJ",
+      "name": "rYojbaba Co. Ltd.",
+      "country": "Japan"
+    },
+    {
+      "ticker": "RZLV",
+      "name": "Rezolve AI PLC",
+      "country": "United Kingdom"
+    },
+    {
+      "ticker": "RZLVW",
+      "name": "Rezolve AI PLC",
+      "country": "United Kingdom"
+    },
+    {
+      "ticker": "SA",
+      "name": "Seabridge Gold Inc. Common Shares New",
+      "country": "Canada"
+    },
+    {
+      "ticker": "SAIH",
+      "name": "SAIHEAT Limited",
+      "country": "Singapore"
+    },
+    {
+      "ticker": "SAN",
+      "country": "Spain"
+    },
+    {
+      "ticker": "SANG",
+      "name": "Sangoma Technologies Corporation",
+      "country": "Canada"
+    },
+    {
+      "ticker": "SAP",
+      "name": "SAP  SE ADS",
+      "country": "Germany"
+    },
+    {
+      "ticker": "SATL",
+      "name": "Satellogic Inc.",
+      "country": "Uruguay"
+    },
+    {
+      "ticker": "SATLW",
+      "name": "Satellogic Inc.",
+      "country": "Uruguay"
+    },
+    {
+      "ticker": "SB",
+      "country": "Monaco"
+    },
+    {
+      "ticker": "SBLK",
+      "name": "Star Bulk Carriers Corp.",
+      "country": "Greece"
+    },
+    {
+      "ticker": "SBS",
+      "country": "Brazil"
+    },
+    {
+      "ticker": "SBSW",
+      "name": "D/B/A Sibanye-Stillwater Limited ADS",
+      "country": "South Africa"
+    },
+    {
+      "ticker": "SCAG",
+      "name": "Scage Future",
+      "country": "China"
+    },
+    {
+      "ticker": "SCZM",
+      "name": "Santacruz Silver Mining Ltd.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "SDA",
+      "name": "SunCar Technology Group Inc.",
+      "country": "Hong Kong"
+    },
+    {
+      "ticker": "SDRL",
+      "name": "Seadrill Limited",
+      "country": "Bermuda"
+    },
+    {
+      "ticker": "SEDG",
+      "name": "SolarEdge Technologies Inc.",
+      "country": "Israel"
+    },
+    {
+      "ticker": "SFL",
+      "name": "SFL Corporation Ltd",
+      "country": "Bermuda"
+    },
+    {
+      "ticker": "SFWL",
+      "name": "Shengfeng Development Limited",
+      "country": "China"
+    },
+    {
+      "ticker": "SGML",
+      "name": "Sigma Lithium Corporation",
+      "country": "Canada"
+    },
+    {
+      "ticker": "SHEL",
+      "name": "Shell PLC",
+      "country": "Netherlands"
+    },
+    {
+      "ticker": "SHG",
+      "name": "Shinhan Financial Group Co Ltd",
+      "country": "South Korea"
+    },
+    {
+      "ticker": "SHIP",
+      "name": "Seanergy Maritime Holdings Corp.",
+      "country": "Greece"
+    },
+    {
+      "ticker": "SHMD",
+      "name": "SCHMID Group N.V.",
+      "country": "Germany"
+    },
+    {
+      "ticker": "SHMDW",
+      "name": "SCHMID Group N.V.",
+      "country": "Germany"
+    },
+    {
+      "ticker": "SHOP",
+      "country": "Canada"
+    },
+    {
+      "ticker": "SID",
+      "name": "Companhia Siderurgica Nacional S.A.",
+      "country": "Brazil"
+    },
+    {
+      "ticker": "SIFY",
+      "name": "Sify Technologies Limited",
+      "country": "India"
+    },
+    {
+      "ticker": "SIG",
+      "name": "Signet Jewelers Limited",
+      "country": "Bermuda"
+    },
+    {
+      "ticker": "SILC",
+      "name": "Silicom Ltd",
+      "country": "Israel"
+    },
+    {
+      "ticker": "SIM",
+      "name": "Grupo Simec S.A.B. de C.V.",
+      "country": "Mexico"
+    },
+    {
+      "ticker": "SIMO",
+      "name": "Silicon Motion Technology Corporation",
+      "country": "Taiwan"
+    },
+    {
+      "ticker": "SJ",
+      "country": "China"
+    },
+    {
+      "ticker": "SKM",
+      "name": "SK Telecom Co. Ltd.",
+      "country": "South Korea"
+    },
+    {
+      "ticker": "SLB",
+      "name": "SLB Limited",
+      "country": "France"
+    },
+    {
+      "ticker": "SLBT",
+      "name": "SL Science Holding Limited",
+      "country": "Taiwan"
+    },
+    {
+      "ticker": "SLF",
+      "name": "Sun Life Financial Inc.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "SLGB",
+      "name": "Smart Logistics Global Limited",
+      "country": "Hong Kong"
+    },
+    {
+      "ticker": "SLGL",
+      "name": "Sol-Gel Technologies Ltd.",
+      "country": "Israel"
+    },
+    {
+      "ticker": "SLI",
+      "name": "Standard Lithium Ltd.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "SLMT",
+      "name": "Brera Holdings PLC",
+      "country": "Ireland"
+    },
+    {
+      "ticker": "SLN",
+      "country": "United Kingdom"
+    },
+    {
+      "ticker": "SMFG",
+      "country": "Japan"
+    },
+    {
+      "ticker": "SNDL",
+      "name": "SNDL Inc.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "SNN",
+      "name": "Smith & Nephew SNATS Inc.",
+      "country": "United Kingdom"
+    },
+    {
+      "ticker": "SNT",
+      "name": "Senstar Technologies Corporation",
+      "country": "Canada"
+    },
+    {
+      "ticker": "SNY",
+      "name": "Sanofi ADS",
+      "country": "France"
+    },
+    {
+      "ticker": "SOBO",
+      "name": "South Bow Corporation",
+      "country": "Canada"
+    },
+    {
+      "ticker": "SOGP",
+      "name": "Sound Group Inc.",
+      "country": "China"
+    },
+    {
+      "ticker": "SOHU",
+      "name": "Sohu.com Limited",
+      "country": "China"
+    },
+    {
+      "ticker": "SONY",
+      "name": "Sony Group Corporation",
+      "country": "Japan"
+    },
+    {
+      "ticker": "SOPH",
+      "name": "SOPHiA GENETICS SA",
+      "country": "Switzerland"
+    },
+    {
+      "ticker": "SORA",
+      "name": "AsiaStrategy",
+      "country": "Hong Kong"
+    },
+    {
+      "ticker": "SPCB",
+      "name": "SuperCom Ltd. Ordinary Shares (Israel)",
+      "country": "Israel"
+    },
+    {
+      "ticker": "SPHL",
+      "name": "Springview Holdings Ltd",
+      "country": "Singapore"
+    },
+    {
+      "ticker": "SPNT",
+      "name": "SiriusPoint Ltd.",
+      "country": "Bermuda"
+    },
+    {
+      "ticker": "SPOT",
+      "name": "Spotify Technology S.A.",
+      "country": "Luxembourg"
+    },
+    {
+      "ticker": "SPPL",
+      "name": "SIMPPLE LTD.",
+      "country": "Singapore"
+    },
+    {
+      "ticker": "SQM",
+      "name": "Sociedad Quimica y Minera S.A.",
+      "country": "Chile"
+    },
+    {
+      "ticker": "SQNS",
+      "name": "Sequans Communications S.A.",
+      "country": "France"
+    },
+    {
+      "ticker": "SRAD",
+      "name": "Sportradar Group AG",
+      "country": "Switzerland"
+    },
+    {
+      "ticker": "SSII",
+      "name": "SS Innovations International Inc.",
+      "country": "India"
+    },
+    {
+      "ticker": "SSL",
+      "name": "Sasol Ltd.",
+      "country": "South Africa"
+    },
+    {
+      "ticker": "SSRM",
+      "name": "SSR Mining Inc.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "ST",
+      "name": "Sensata Technologies Holding plc",
+      "country": "Netherlands"
+    },
+    {
+      "ticker": "STAK",
+      "name": "STAK Inc.",
+      "country": "China"
+    },
+    {
+      "ticker": "STGW",
+      "name": "Stagwell Inc.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "STKE",
+      "name": "Sol Strategies Inc.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "STLA",
+      "name": "Stellantis N.V.",
+      "country": "United Kingdom"
+    },
+    {
+      "ticker": "STM",
+      "name": "STMicroelectronics N.V.",
+      "country": "Switzerland"
+    },
+    {
+      "ticker": "STN",
+      "name": "Stantec Inc",
+      "country": "Canada"
+    },
+    {
+      "ticker": "STNE",
+      "name": "StoneCo Ltd. Class A",
+      "country": "Brazil"
+    },
+    {
+      "ticker": "STNG",
+      "name": "Scorpio Tankers Inc.",
+      "country": "Monaco"
+    },
+    {
+      "ticker": "STX",
+      "country": "Ireland"
+    },
+    {
+      "ticker": "SU",
+      "name": "Suncor Energy  Inc.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "SUPX",
+      "name": "SuperX AI Technology Limited",
+      "country": "Hong Kong"
+    },
+    {
+      "ticker": "SUZ",
+      "name": "Suzano S.A.",
+      "country": "Brazil"
+    },
+    {
+      "ticker": "SVM",
+      "name": "Silvercorp Metals Inc.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "SVREW",
+      "name": "SaverOne 2014 Ltd.",
+      "country": "Israel"
+    },
+    {
+      "ticker": "SW",
+      "name": "Smurfit WestRock plc",
+      "country": "Ireland"
+    },
+    {
+      "ticker": "SXTC",
+      "name": "China SXT Pharmaceuticals Inc.",
+      "country": "China"
+    },
+    {
+      "ticker": "SY",
+      "country": "China"
+    },
+    {
+      "ticker": "TAC",
+      "name": "TransAlta Corporation",
+      "country": "Canada"
+    },
+    {
+      "ticker": "TAK",
+      "name": "Takeda Pharmaceutical Company Limited",
+      "country": "Japan"
+    },
+    {
+      "ticker": "TAL",
+      "name": "TAL Education Group",
+      "country": "China"
+    },
+    {
+      "ticker": "TAP",
+      "name": "Molson Coors Beverage Company",
+      "country": "Canada"
+    },
+    {
+      "ticker": "TATT",
+      "name": "TAT Technologies Ltd.",
+      "country": "Israel"
+    },
+    {
+      "ticker": "TBBB",
+      "name": "BBB Foods Inc. Class A",
+      "country": "Mexico"
+    },
+    {
+      "ticker": "TBLA",
+      "name": "Taboola.com Ltd.",
+      "country": "Israel"
+    },
+    {
+      "ticker": "TBPH",
+      "name": "Theravance Biopharma Inc.",
+      "country": "Cayman Islands"
+    },
+    {
+      "ticker": "TC",
+      "name": "Token Cat Limited",
+      "country": "China"
+    },
+    {
+      "ticker": "TCOM",
+      "name": "Trip.com Group Limited",
+      "country": "China"
+    },
+    {
+      "ticker": "TCX",
+      "name": "Tucows Inc.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "TD",
+      "name": "Toronto Dominion Bank (The)",
+      "country": "Canada"
+    },
+    {
+      "ticker": "TE",
+      "name": "T1 Energy Inc.",
+      "country": "Luxembourg"
+    },
+    {
+      "ticker": "TEAM",
+      "name": "Atlassian Corporation",
+      "country": "Australia"
+    },
+    {
+      "ticker": "TECK",
+      "name": "Teck Resources Ltd",
+      "country": "Canada"
+    },
+    {
+      "ticker": "TEL",
+      "name": "TE Connectivity plc",
+      "country": "Ireland"
+    },
+    {
+      "ticker": "TEN",
+      "name": "Tsakos Energy Navigation Ltd",
+      "country": "Greece"
+    },
+    {
+      "ticker": "TEO",
+      "name": "Telecom Argentina SA",
+      "country": "Argentina"
+    },
+    {
+      "ticker": "TEVA",
+      "name": "Teva Pharmaceutical Industries Limited",
+      "country": "Israel"
+    },
+    {
+      "ticker": "TFII",
+      "name": "TFI International Inc.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "TFPM",
+      "name": "Triple Flag Precious Metals Corp.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "TGB",
+      "name": "Taseko Mines Ltd.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "TGLS",
+      "name": "Tecnoglass Inc.",
+      "country": "Colombia"
+    },
+    {
+      "ticker": "TGS",
+      "name": "Transportadora de Gas del Sur SA TGS",
+      "country": "Argentina"
+    },
+    {
+      "ticker": "THCH",
+      "name": "TH International Limited",
+      "country": "China"
+    },
+    {
+      "ticker": "THM",
+      "country": "Canada"
+    },
+    {
+      "ticker": "TIGO",
+      "name": "Millicom International Cellular S.A.",
+      "country": "Luxembourg"
+    },
+    {
+      "ticker": "TIGR",
+      "country": "China"
+    },
+    {
+      "ticker": "TIMB",
+      "name": "TIM S.A.",
+      "country": "Brazil"
+    },
+    {
+      "ticker": "TJGC",
+      "name": "TJGC Group Limited",
+      "country": "Hong Kong"
+    },
+    {
+      "ticker": "TK",
+      "name": "Teekay Corporation Ltd.",
+      "country": "Bermuda"
+    },
+    {
+      "ticker": "TKC",
+      "name": "Turkcell Iletisim Hizmetleri AS",
+      "country": "Turkey"
+    },
+    {
+      "ticker": "TLK",
+      "name": "PT Telekomunikasi Indonesia Tbk",
+      "country": "Indonesia"
+    },
+    {
+      "ticker": "TLSA",
+      "name": "Tiziana Life Sciences Ltd.",
+      "country": "United Kingdom"
+    },
+    {
+      "ticker": "TLX",
+      "name": "Telix Pharmaceuticals Limited",
+      "country": "Australia"
+    },
+    {
+      "ticker": "TM",
+      "name": "Toyota Motor Corporation",
+      "country": "Japan"
+    },
+    {
+      "ticker": "TMC",
+      "name": "TMC the metals company Inc.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "TMCR",
+      "name": "The Metals Royalty Company Inc.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "TMCWW",
+      "name": "TMC the metals company Inc.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "TMQ",
+      "name": "Trilogy Metals Inc.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "TNK",
+      "name": "Teekay Tankers Ltd.",
+      "country": "Bermuda"
+    },
+    {
+      "ticker": "TOP",
+      "name": "TOP Financial Group Limited",
+      "country": "Hong Kong"
+    },
+    {
+      "ticker": "TORO",
+      "name": "Toro Corp.",
+      "country": "Cyprus"
+    },
+    {
+      "ticker": "TOUR",
+      "name": "Tuniu Corporation",
+      "country": "China"
+    },
+    {
+      "ticker": "TOYO",
+      "name": "TOYO Co. Ltd",
+      "country": "Japan"
+    },
+    {
+      "ticker": "TRMD",
+      "name": "TORM plc",
+      "country": "United Kingdom"
+    },
+    {
+      "ticker": "TROO",
+      "name": "TROOPS Inc. Ordinary Shares",
+      "country": "China"
+    },
+    {
+      "ticker": "TRP",
+      "name": "TC Energy Corporation",
+      "country": "Canada"
+    },
+    {
+      "ticker": "TRSG",
+      "name": "Tungray Technologies Inc",
+      "country": "Singapore"
+    },
+    {
+      "ticker": "TRVG",
+      "name": "trivago N.V.",
+      "country": "Germany"
+    },
+    {
+      "ticker": "TRX",
+      "name": "TRX Gold Corporation",
+      "country": "Canada"
+    },
+    {
+      "ticker": "TS",
+      "name": "Tenaris S.A.",
+      "country": "Luxembourg"
+    },
+    {
+      "ticker": "TSAT",
+      "country": "Canada"
+    },
+    {
+      "ticker": "TSEM",
+      "name": "Tower Semiconductor Ltd.",
+      "country": "Israel"
+    },
+    {
+      "ticker": "TSM",
+      "country": "Taiwan"
+    },
+    {
+      "ticker": "TT",
+      "name": "Trane Technologies plc",
+      "country": "Ireland"
+    },
+    {
+      "ticker": "TTE",
+      "name": "TotalEnergies SE",
+      "country": "France"
+    },
+    {
+      "ticker": "TU",
+      "name": "Telus Corporation",
+      "country": "Canada"
+    },
+    {
+      "ticker": "TUYA",
+      "name": "Tuya Inc.",
+      "country": "China"
+    },
+    {
+      "ticker": "TV",
+      "name": "Grupo Televisa S.A.B.",
+      "country": "Mexico"
+    },
+    {
+      "ticker": "TWG",
+      "name": "Top Wealth Group Holding Limited",
+      "country": "Hong Kong"
+    },
+    {
+      "ticker": "TX",
+      "name": "Ternium S.A. Ternium S.A.",
+      "country": "Luxembourg"
+    },
+    {
+      "ticker": "UBS",
+      "name": "UBS Group AG Registered",
+      "country": "Switzerland"
+    },
+    {
+      "ticker": "UCAR",
+      "name": "U Power Limited",
+      "country": "China"
+    },
+    {
+      "ticker": "UCL",
+      "name": "uCloudlink Group Inc.",
+      "country": "Hong Kong"
+    },
+    {
+      "ticker": "UEC",
+      "name": "Uranium Energy Corp.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "UFG",
+      "name": "Uni-Fuels Holdings Limited",
+      "country": "Singapore"
+    },
+    {
+      "ticker": "UGP",
+      "name": "Ultrapar Participacoes S.A. (New)",
+      "country": "Brazil"
+    },
+    {
+      "ticker": "UL",
+      "name": "Unilever PLC",
+      "country": "United Kingdom"
+    },
+    {
+      "ticker": "UMC",
+      "country": "Taiwan"
+    },
+    {
+      "ticker": "UP",
+      "name": "Wheels Up Experience Inc.",
+      "country": "Singapore"
+    },
+    {
+      "ticker": "URG",
+      "name": "Ur Energy Inc Common Shares (Canada)",
+      "country": "Canada"
+    },
+    {
+      "ticker": "URGN",
+      "name": "UroGen Pharma Ltd.",
+      "country": "Israel"
+    },
+    {
+      "ticker": "UROY",
+      "name": "Uranium Royalty Corp.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "USAS",
+      "country": "Canada"
+    },
+    {
+      "ticker": "USEA",
+      "name": "United Maritime Corporation",
+      "country": "Greece"
+    },
+    {
+      "ticker": "UTSI",
+      "name": "UTStarcom Holdings Corp.",
+      "country": "China"
+    },
+    {
+      "ticker": "UUUU",
+      "country": "Canada"
+    },
+    {
+      "ticker": "UXIN",
+      "name": "Uxin Limited ADS",
+      "country": "China"
+    },
+    {
+      "ticker": "UZX",
+      "name": "Linkage Global Inc.",
+      "country": "Japan"
+    },
+    {
+      "ticker": "VALE",
+      "name": "VALE S.A.",
+      "country": "Brazil"
+    },
+    {
+      "ticker": "VALN",
+      "name": "Valneva SE",
+      "country": "France"
+    },
+    {
+      "ticker": "VBNK",
+      "name": "VersaBank",
+      "country": "Canada"
+    },
+    {
+      "ticker": "VEON",
+      "name": "VEON Ltd. ADS",
+      "country": "Netherlands"
+    },
+    {
+      "ticker": "VET",
+      "name": "Vermilion Energy Inc. Common (Canada)",
+      "country": "Canada"
+    },
+    {
+      "ticker": "VFF",
+      "name": "Village Farms International Inc.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "VFS",
+      "name": "VinFast Auto Ltd.",
+      "country": "Singapore"
+    },
+    {
+      "ticker": "VFSWW",
+      "name": "VinFast Auto Ltd.",
+      "country": "Singapore"
+    },
+    {
+      "ticker": "VGNT",
+      "name": "Versigent PLC",
+      "country": "United Kingdom"
+    },
+    {
+      "ticker": "VINP",
+      "name": "Vinci Compass Investments Ltd. Class A",
+      "country": "Brazil"
+    },
+    {
+      "ticker": "VIOT",
+      "name": "Viomi Technology Co. Ltd",
+      "country": "China"
+    },
+    {
+      "ticker": "VIPS",
+      "name": "Vipshop Holdings Limited",
+      "country": "China"
+    },
+    {
+      "ticker": "VIST",
+      "name": "Vista Energy S.A.B. de C.V.",
+      "country": "Mexico"
+    },
+    {
+      "ticker": "VIV",
+      "name": "Telefonica Brasil S.A.",
+      "country": "Brazil"
+    },
+    {
+      "ticker": "VIVO",
+      "name": "VivoPower PLC",
+      "country": "United Kingdom"
+    },
+    {
+      "ticker": "VMET",
+      "name": "Versamet Royalties Corporation",
+      "country": "Canada"
+    },
+    {
+      "ticker": "VNET",
+      "name": "VNET Group Inc.",
+      "country": "China"
+    },
+    {
+      "ticker": "VOD",
+      "name": "Vodafone Group Plc",
+      "country": "United Kingdom"
+    },
+    {
+      "ticker": "VOXR",
+      "name": "Vox Royalty Corp.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "VRXA",
+      "name": "Veraxa Biotech AG",
+      "country": "Switzerland"
+    },
+    {
+      "ticker": "VTEX",
+      "name": "VTEX Class A",
+      "country": "United Kingdom"
+    },
+    {
+      "ticker": "VZLA",
+      "name": "Vizsla Silver Corp.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "WAVE",
+      "name": "Eco Wave Power Global AB (publ)",
+      "country": "Israel"
+    },
+    {
+      "ticker": "WB",
+      "country": "China"
+    },
+    {
+      "ticker": "WBX",
+      "name": "Wallbox N.V.",
+      "country": "Spain"
+    },
+    {
+      "ticker": "WCN",
+      "name": "Waste Connections Inc.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "WDH",
+      "name": "Waterdrop Inc.",
+      "country": "Cayman Islands"
+    },
+    {
+      "ticker": "WDS",
+      "name": "Woodside Energy Group Limited",
+      "country": "Australia"
+    },
+    {
+      "ticker": "WF",
+      "name": "Woori Financial Group Inc.",
+      "country": "South Korea"
+    },
+    {
+      "ticker": "WFG",
+      "name": "West Fraser Timber Co. Ltd",
+      "country": "Canada"
+    },
+    {
+      "ticker": "WILC",
+      "name": "G. Willi-Food International  Ltd.",
+      "country": "Israel"
+    },
+    {
+      "ticker": "WIT",
+      "name": "Wipro Limited",
+      "country": "India"
+    },
+    {
+      "ticker": "WIX",
+      "name": "Wix.com Ltd.",
+      "country": "Israel"
+    },
+    {
+      "ticker": "WKEY",
+      "name": "WISeKey International Holding Ltd",
+      "country": "Switzerland"
+    },
+    {
+      "ticker": "WLDSW",
+      "name": "Wearable Devices Ltd.",
+      "country": "Israel"
+    },
+    {
+      "ticker": "WPM",
+      "country": "Canada"
+    },
+    {
+      "ticker": "WPP",
+      "name": "WPP plc",
+      "country": "Ireland"
+    },
+    {
+      "ticker": "WPRT",
+      "name": "Westport Fuel Systems Inc",
+      "country": "Canada"
+    },
+    {
+      "ticker": "WRD",
+      "name": "WeRide Inc.",
+      "country": "China"
+    },
+    {
+      "ticker": "WRN",
+      "name": "Western Copper and Gold Corporation",
+      "country": "Canada"
+    },
+    {
+      "ticker": "WSE",
+      "name": "Wise Group plc",
+      "country": "United Kingdom"
+    },
+    {
+      "ticker": "WSHP",
+      "name": "WeShop Holdings Limited",
+      "country": "Jersey"
+    },
+    {
+      "ticker": "WTF",
+      "name": "Waton Financial Limited",
+      "country": "Hong Kong"
+    },
+    {
+      "ticker": "WTO",
+      "name": "UTime Limited",
+      "country": "China"
+    },
+    {
+      "ticker": "WTW",
+      "country": "United Kingdom"
+    },
+    {
+      "ticker": "WVE",
+      "name": "Wave Life Sciences Ltd.",
+      "country": "Singapore"
+    },
+    {
+      "ticker": "WXM",
+      "name": "WF International Limited",
+      "country": "China"
+    },
+    {
+      "ticker": "WYHG",
+      "name": "Wing Yip Food Holdings Group Limited",
+      "country": "China"
+    },
+    {
+      "ticker": "XCH",
+      "name": "XCHG Limited American Depositary Share",
+      "country": "Germany"
+    },
+    {
+      "ticker": "XENE",
+      "name": "Xenon Pharmaceuticals Inc.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "XHG",
+      "name": "XChange TEC.INC",
+      "country": "China"
+    },
+    {
+      "ticker": "XNDU",
+      "country": "Canada"
+    },
+    {
+      "ticker": "XNET",
+      "name": "Xunlei Limited",
+      "country": "China"
+    },
+    {
+      "ticker": "XP",
+      "name": "XP Inc.",
+      "country": "Brazil"
+    },
+    {
+      "ticker": "XPEV",
+      "name": "XPeng Inc.",
+      "country": "China"
+    },
+    {
+      "ticker": "XYF",
+      "name": "X Financial",
+      "country": "Cayman Islands"
+    },
+    {
+      "ticker": "YALA",
+      "name": "Yalla Group Limited",
+      "country": "United Arab Emirates"
+    },
+    {
+      "ticker": "YB",
+      "name": "Yuanbao Inc.",
+      "country": "China"
+    },
+    {
+      "ticker": "YDDL",
+      "name": "One and One Green Technologies. Inc",
+      "country": "Philippines"
+    },
+    {
+      "ticker": "YI",
+      "name": "111 Inc.",
+      "country": "China"
+    },
+    {
+      "ticker": "YIBO",
+      "name": "Planet Image International Limited",
+      "country": "China"
+    },
+    {
+      "ticker": "YMM",
+      "name": "Full Truck Alliance Co. Ltd.",
+      "country": "China"
+    },
+    {
+      "ticker": "YMT",
+      "name": "Yimutian Inc.",
+      "country": "China"
+    },
+    {
+      "ticker": "YOOV",
+      "name": "Concorde International Group Ltd",
+      "country": "Singapore"
+    },
+    {
+      "ticker": "YOUL",
+      "name": "Youlife Group Inc.",
+      "country": "China"
+    },
+    {
+      "ticker": "YPF",
+      "name": "YPF Sociedad Anonima",
+      "country": "Argentina"
+    },
+    {
+      "ticker": "YQ",
+      "name": "17 Education & Technology Group Inc.",
+      "country": "China"
+    },
+    {
+      "ticker": "YRD",
+      "name": "Yiren Digital Ltd.",
+      "country": "China"
+    },
+    {
+      "ticker": "YSG",
+      "name": "Yatsen Holding Limited",
+      "country": "China"
+    },
+    {
+      "ticker": "YSXT",
+      "name": "YSX Tech. Co. Ltd",
+      "country": "China"
+    },
+    {
+      "ticker": "YTRA",
+      "name": "Yatra Online Inc.",
+      "country": "India"
+    },
+    {
+      "ticker": "YXT",
+      "country": "China"
+    },
+    {
+      "ticker": "ZENA",
+      "name": "ZenaTech Inc.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "ZEPP",
+      "name": "Zepp Health Corporation",
+      "country": "China"
+    },
+    {
+      "ticker": "ZH",
+      "name": "Zhihu Inc.",
+      "country": "China"
+    },
+    {
+      "ticker": "ZJK",
+      "name": "ZJK Industrial Co. Ltd.",
+      "country": "China"
+    },
+    {
+      "ticker": "ZKH",
+      "name": "ZKH Group Limited",
+      "country": "Cayman Islands"
+    },
+    {
+      "ticker": "ZKIN",
+      "country": "China"
+    },
+    {
+      "ticker": "ZLAB",
+      "name": "Zai Lab Limited",
+      "country": "China"
+    },
+    {
+      "ticker": "ZOOZ",
+      "name": "ZOOZ Strategy Ltd.",
+      "country": "Israel"
+    },
+    {
+      "ticker": "ZTEK",
+      "name": "Zentek Ltd.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "ZTO",
+      "name": "ZTO Express (Cayman) Inc.",
+      "country": "China"
+    },
+    {
+      "ticker": "ZURA",
+      "name": "Zura Bio Limited",
+      "country": "Cayman Islands"
+    },
+    {
+      "ticker": "ZYBT",
+      "name": "Zhengye Biotechnology Holding Limited",
+      "country": "China"
+    }
+  ]
+}

@@ -6,7 +6,7 @@
 // durability of the fee stream. Pure arithmetic on the filing data; the verdict is the
 // reader's.
 
-import { fmtUSD, operatingMargin } from "./fundamentals.mjs";
+import { fmtMoney, operatingMargin } from "./fundamentals.mjs";
 import { returnOnEquity } from "./financials.mjs";
 
 const pc = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${(Math.abs(v) * 100).toFixed(dp)}%`);
@@ -37,6 +37,7 @@ const KIND_NOUN = {
 };
 
 export function buildFeeScorecard(company, subtype = "fee") {
+  const $ = (v) => fmtMoney(v, company?.currency || "USD");
   const L = company?.lines || {};
   const none = (title, note, concept = null) => ({ title, concept, value: "—", formula: "", tone: "none", label: "Not enough data", note });
   const noun = KIND_NOUN[subtype] || KIND_NOUN.fee;
@@ -45,7 +46,7 @@ export function buildFeeScorecard(company, subtype = "fee") {
   const omCheck = om == null ? none("Operating margin", "Operating income or revenue wasn't found in the filing data.", "operating-margin") : {
     title: "Operating margin",
     concept: "operating-margin",
-    value: pc(om, 1), formula: `Operating income ${fmtUSD(L.operatingIncome)} ÷ revenue ${fmtUSD(L.revenue)}`,
+    value: pc(om, 1), formula: `Operating income ${$(L.operatingIncome)} ÷ revenue ${$(L.revenue)}`,
     tone: om < 0.08 ? "bad" : om < 0.18 ? "warn" : om < 0.3 ? "ok" : "good",
     label: om < 0.08 ? "Thin for a fee business" : om < 0.18 ? "Modest fee margin" : om < 0.3 ? "Healthy fee margin" : "Toll-booth economics",
     note: `The heart of a ${noun}: how much of each fee dollar survives the cost of running the business. ${driverOf(subtype)} A high margin held for years, through a market it does not control, is the operational mark of a real franchise.`,
@@ -54,7 +55,7 @@ export function buildFeeScorecard(company, subtype = "fee") {
   const nm = netMargin(L);
   const nmCheck = nm == null ? none("Net margin", "Net income or revenue missing.") : {
     title: "Net margin",
-    value: pc(nm, 1), formula: `Net income ${fmtUSD(L.netIncome)} ÷ revenue ${fmtUSD(L.revenue)}`,
+    value: pc(nm, 1), formula: `Net income ${$(L.netIncome)} ÷ revenue ${$(L.revenue)}`,
     tone: nm < 0.05 ? "warn" : nm < 0.15 ? "ok" : "good",
     label: nm < 0.05 ? "Slim" : nm < 0.15 ? "Solid" : "Rich",
     note: "What reaches the owner after tax and interest. For a capital-light fee business this should be a wide share of revenue; when it is thin despite a high operating margin, debt taken on for acquisitions is usually the reason, so read it next to the balance sheet.",
@@ -64,7 +65,7 @@ export function buildFeeScorecard(company, subtype = "fee") {
   const roeCheck = roe == null ? none("Return on equity", "Equity is zero or negative (often from buybacks), so the ratio would mislead.", "return-on-equity") : {
     title: "Return on equity",
     concept: "return-on-equity",
-    value: pc(roe), formula: `Net income ${fmtUSD(L.netIncome)} ÷ equity ${fmtUSD(L.stockholdersEquity)}`,
+    value: pc(roe), formula: `Net income ${$(L.netIncome)} ÷ equity ${$(L.stockholdersEquity)}`,
     tone: roe < 0.1 ? "warn" : roe < 0.15 ? "ok" : "good",
     label: roe < 0.1 ? "Below the cost of equity" : roe < 0.15 ? "Solid" : roe < 0.25 ? "Strong" : "Exceptional",
     note: "Because the business ties up little capital, a healthy fee stream throws off a high return on the equity behind it. Read it with the buyback record: returning capital lifts this ratio honestly, but heavy debt taken to do so can flatter it.",

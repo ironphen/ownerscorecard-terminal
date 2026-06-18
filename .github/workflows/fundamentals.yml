@@ -23,6 +23,10 @@ on:
         description: "Run only the fundamentals fetch (skip filings/segments) — the light refresh"
         type: boolean
         default: false
+      fetch_adr:
+        description: "Also fetch the ADR pool (IFRS/US-GAAP 20-F fundamentals). Needs universe.adr.json; pair with rebuild_universe=write to bootstrap it."
+        type: boolean
+        default: false
       tickers:
         description: "Limit the segment AND fundamentals fetch to these tickers (comma-separated; blank = all). The rest carry over from the last good file."
         type: string
@@ -89,6 +93,16 @@ jobs:
           SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT }}
           ONLY_TICKERS: ${{ github.event.inputs.tickers }}
           SEG_DEBUG: ${{ github.event.inputs.debug }}
+      # The ADR pool (foreign 20-F filers, IFRS or US-GAAP). Annual filings, so it refreshes on the
+      # monthly cron and on demand; reads universe.adr.json, which the rebuild step above writes (pair
+      # fetch_adr with rebuild_universe=write to bootstrap). Non-fatal: a separate pool never blocks
+      # the US refresh.
+      - run: npm run fetch:fundamentals:adr
+        if: ${{ (github.event.inputs.fetch_adr == 'true' || github.event.schedule == '0 8 1 * *') && github.event.inputs.debug == '' }}
+        continue-on-error: true
+        env:
+          SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT }}
+          ONLY_ADR: ${{ github.event.inputs.tickers }}
       # Data-quality gate: runs the same lib functions the pages do. A systemic coverage
       # cliff (a taxonomy change that drops a whole data layer) fails this step and blocks
       # the commit below, so a broadly-broken refresh is never shipped. Per-company issues
@@ -100,10 +114,13 @@ jobs:
       - name: Commit if changed
         if: ${{ github.event.inputs.debug == '' }}
         run: |
-          if ! git diff --quiet -- src/data/fundamentals.json src/data/language.json src/data/segments.json src/data/universe.json; then
+          # Stage every data file, the ADR pair guarded since it may not exist yet, then commit only
+          # if anything actually staged — so a new ADR file is captured and a no-op run stays quiet.
+          git add src/data/fundamentals.json src/data/language.json src/data/segments.json src/data/universe.json
+          git add src/data/universe.adr.json src/data/fundamentals.adr.json 2>/dev/null || true
+          if ! git diff --cached --quiet; then
             git config user.name "github-actions[bot]"
             git config user.email "github-actions[bot]@users.noreply.github.com"
-            git add src/data/fundamentals.json src/data/language.json src/data/segments.json src/data/universe.json
             git commit -m "Refresh fundamentals + filing language + segments"
             # Rebase-and-retry so a concurrent push can't silently drop the data refresh.
             for i in 1 2 3 4 5; do

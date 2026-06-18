@@ -3,8 +3,11 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 import fundamentals from "../data/fundamentals.json";
 import { getCollection } from "astro:content";
 import JapanCatalog from "../components/JapanCatalog.astro";
+import AdrCatalog from "../components/AdrCatalog.astro";
 import jpData from "../data/fundamentals.jp.json";
+import adrData from "../data/fundamentals.adr.json";
 const jpCount = (jpData.companies || []).length;
+const adrCount = (adrData.companies || []).length;
 
 // The front door is an index, not a screener. A screener pulls toward a verdict — filter to "the
 // ones that pass" and you have implied they are the good ones, the one thing we never do. So this
@@ -60,6 +63,7 @@ const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "
   <div class="poolTabs" role="tablist" aria-label="Choose a market">
     <button class="poolTab" data-pool="us" role="tab" aria-selected="true" id="tab-us">United States<span class="ct">{rows.length}</span></button>
     <button class="poolTab" data-pool="jp" role="tab" aria-selected="false" id="tab-jp">Japan<span class="ct">{jpCount}</span></button>
+    {adrCount ? <button class="poolTab" data-pool="adr" role="tab" aria-selected="false" id="tab-adr">ADRs<span class="ct">{adrCount}</span></button> : null}
   </div>
 
   <section class="catalogWrap" id="pool-us" role="tabpanel" aria-labelledby="tab-us">
@@ -109,6 +113,12 @@ const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "
   <div id="pool-jp" role="tabpanel" aria-labelledby="tab-jp" hidden>
     <JapanCatalog />
   </div>
+
+  {adrCount ? (
+    <div id="pool-adr" role="tabpanel" aria-labelledby="tab-adr" hidden>
+      <AdrCatalog />
+    </div>
+  ) : null}
 
   <style>
     .bandHead { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--rule-strong); padding-bottom: 6px; }
@@ -168,19 +178,22 @@ const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "
   </style>
 
   <script is:inline>
-    /* The market switch: one catalog, two pools, one shown at a time. A /#japan deep link opens Japan. */
+    /* The market switch: one catalog, several pools (US, Japan, ADRs), one shown at a time. A /#japan
+       or /#adrs deep link opens that pool. */
     (function () {
       const tabs = Array.from(document.querySelectorAll(".poolTab"));
-      const panels = { us: document.getElementById("pool-us"), jp: document.getElementById("pool-jp") };
-      if (!tabs.length || !panels.us || !panels.jp) return;
+      const panels = { us: document.getElementById("pool-us"), jp: document.getElementById("pool-jp"), adr: document.getElementById("pool-adr") };
+      if (!tabs.length || !panels.us) return;
+      const hashFor = { jp: "#japan", adr: "#adrs" };
       function show(p) {
         if (!panels[p]) p = "us";
-        Object.keys(panels).forEach((k) => { panels[k].hidden = k !== p; });
+        Object.keys(panels).forEach((k) => { if (panels[k]) panels[k].hidden = k !== p; });
         tabs.forEach((t) => t.setAttribute("aria-selected", String(t.dataset.pool === p)));
-        try { history.replaceState(null, "", p === "jp" ? "#japan" : location.pathname + location.search); } catch (e) {}
+        try { history.replaceState(null, "", hashFor[p] || location.pathname + location.search); } catch (e) {}
       }
       tabs.forEach((t) => t.addEventListener("click", () => show(t.dataset.pool)));
-      show(location.hash === "#japan" ? "jp" : "us");
+      const fromHash = location.hash === "#japan" ? "jp" : location.hash === "#adrs" ? "adr" : "us";
+      show(fromHash);
     })();
   </script>
 
@@ -192,10 +205,12 @@ const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "
       const q = document.getElementById("q");
       const countEl = document.getElementById("count");
       const emptyEl = document.getElementById("empty");
-      const azbar = document.querySelector(".azbar");
+      // Scope every query to the US panel: the ADR pool adds its own .let/.ent/.azbar in the same
+      // page, and this search must not reach across into them (the ADR directory has its own search).
+      const azbar = document.querySelector("#pool-us .azbar");
       if (!q) return;
-      const sections = Array.from(document.querySelectorAll(".let"));
-      const ents = Array.from(document.querySelectorAll(".ent"));
+      const sections = Array.from(document.querySelectorAll("#pool-us .let"));
+      const ents = Array.from(document.querySelectorAll("#pool-us .ent"));
       const total = ents.length;
 
       function apply() {

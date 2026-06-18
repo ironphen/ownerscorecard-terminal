@@ -151,8 +151,25 @@ const NOT_A_DESCRIPTION = new RegExp(
 // named property standing in for the business, or a forward-looking / mission line. When
 // the hero is one of these, the computed industry phrase is the better opener.
 const LEAKED = /public accounting firm|registered with the pcaob|\bstudio lot\b|we expect to (continue|make|invest|incur|spend)\b|deliver value and|operates under a consistent business/i;
+// A leaked all-caps heading or banner the extraction mistook for a sentence: a long run of
+// uppercase before any lowercase (Kroger's "OUR VALUE CREATION MODEL…", a stray "MANAGEMENT'S
+// DISCUSSION AND ANALYSIS…", an "MD&A ABOUT…" prefix). Not a description, so the hero falls back to
+// the segment mix or the computed phrase. Measured against every stored lede: matches only genuine
+// headings, no real description.
+const ALLCAPS_HEADING = /^[A-Z0-9][A-Z0-9 ,&'’.\/-]{17,}/;
+// A competition list ("Our competitors include banks, thrifts…") or an operating-process sentence
+// ("We normally purchase our feedstocks weeks before…") that the extraction took for a description.
+// Render-time twin of the fetch scorer's BIZ_NOTDESC, so a name already carrying one of these in
+// the data falls back to the segment mix or the phrase now, without waiting on a re-fetch.
+const NOT_DESC = /\bcompetitors?\s+(include|are|consist|compete|comprise)|^(we|our)\s+(normally|typically|generally|usually|principally|routinely)\s+(purchase|buy|sell|acquire|obtain|source|procure|market|distribute|manufacture|produce)\b/i;
+// A sentence describing one of the company's products, not the company: "Apple Vision Pro is the
+// Company's spatial computer based on its visionOS operating system." The "<thing> is the Company's
+// <thing>" form means the subject is a product or subsidiary the company owns, never the company
+// itself — so fall back to the segment mix. (A real company description says "<Company> is a …",
+// never "is the Company's …".)
+const PRODUCT_REF = /\bis\s+the\s+(compan|registrant|firm|group|corporation|business|parent)\w*['’]s\b/i;
 export function weakLede(s) {
   if (!s || typeof s !== "string") return true;
-  return /^we have entered\b/i.test(s) || WEAK_LEDE.test(s) ||
+  return /^we have entered\b/i.test(s) || WEAK_LEDE.test(s) || ALLCAPS_HEADING.test(s) || NOT_DESC.test(s) || PRODUCT_REF.test(s) ||
     /\bvarious (facilities|services|agreements|arrangements)\b/i.test(s) || NOT_A_DESCRIPTION.test(s) || LEAKED.test(s);
 }

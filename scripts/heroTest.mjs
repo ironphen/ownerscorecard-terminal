@@ -4,7 +4,7 @@
 // scorer to choose. Guards the tricky cases — a canonical line glued behind a heading or
 // mission tagline, a run-on opener, a name that collides with a common phrase — against
 // regressions. Run with `npm test`.
-import { businessDescription } from "./fetchFilings.mjs";
+import { businessDescription, businessBrief } from "./fetchFilings.mjs";
 
 const cases = [
   // A canonical opener glued behind a section heading and a period-less mission tagline,
@@ -98,6 +98,41 @@ const cases = [
   // back to the computed phrase rather than printing a mangled hero. (KMI and WAL shipped these.)
   ["KMI", "Kinder Morgan, Inc.", ["We provide, found in Items 1 and 2."], null],
   ["WAL", "Western Alliance Bancorporation", ["We operate and in the U.S. as a whole."], null],
+  // The real Apple Item-1 form: a sub-heading glued before "The Company <verb>" — the subject is a
+  // generic self-reference, not the name or "we", which the heading-jump must still strip. This blind
+  // spot (recognizing only name+"we") was the dominant cause of the 427 null-lede SCORER failures
+  // (AAPL/NVDA among them). Must resolve to a real description, not the computed fallback.
+  ["AAPL-glued", "Apple Inc.",
+    ["Company Background The Company designs, manufactures and markets smartphones, personal computers, tablets, wearables and accessories, and sells a variety of related services."],
+    /designs, manufactures and markets smartphones/i],
+  ["GEN-registrant", "Generic Co",
+    ["Overview The Registrant is a leading provider of cloud software and data analytics services to enterprises worldwide."],
+    /is a leading provider of cloud software/i],
+  // NVIDIA's real opener: a heading glued before a description whose verb ("pioneered") wasn't on the
+  // scorer's list, so both the heading-strip and the acceptance failed. Must resolve to a description.
+  ["NVDA-pioneered", "NVIDIA Corporation",
+    ["Our Businesses NVIDIA pioneered accelerated computing to help solve the most challenging computational problems."],
+    /NVIDIA pioneered accelerated computing/i],
+  // An MD&A results-of-operations sentence must be rejected, not shown as the business — a wrong
+  // description is worse than the honest computed fallback (Amazon slipped one through when "com" in
+  // "income" false-matched the subject).
+  ["AMZN-results", "Amazon.com, Inc.",
+    ["Increases in operating income primarily result from increases in sales of products and services and efficiently managing our operating costs."],
+    null],
+  // A competition list is not a description (Bank of America shipped this as its hero); reject it so
+  // the page falls back to the segment mix or the computed phrase.
+  ["BAC-competitors", "Bank of America Corporation",
+    ["Our competitors include banks, thrifts, credit unions, investment banking firms, brokerage firms, insurance companies, and mortgage banking companies."],
+    null],
+  // An operating-process sentence is not a description (Phillips 66 shipped this); reject it.
+  ["PSX-process", "Phillips 66",
+    ["We normally purchase our feedstocks weeks before manufacturing and selling the refined products."],
+    null],
+  // A real description buried behind an MD&A "Executive Overview" heading (Humana) must surface once
+  // the stacked heading is stripped, not be lost with it.
+  ["HUM-exec-overview", "Humana Inc.",
+    ["Executive Overview General Humana Inc., headquartered in Louisville, Kentucky, is a leading health and well-being company focused on making it easy for people to achieve their best health."],
+    /Humana Inc\..{0,60}is a leading health and well-being company/i],
 ];
 
 let pass = 0, fail = 0;
@@ -107,5 +142,20 @@ for (const [tk, name, sents, want] of cases) {
   console.log((ok ? "ok   " : "FAIL ") + tk + " -> " + JSON.stringify(got));
   ok ? pass++ : fail++;
 }
+// businessBrief must not repeat the lede. The lede is often the cleaned form of one of the brief's
+// own sentences (a subsidiary clause inserted, a heading prefixed), so it has to be caught by token
+// overlap, not just a substring match — the CVS case the founder flagged.
+{
+  const lede = "CVS Health Corporation is a leading health solutions company building a world of health around every consumer it serves and connecting care so that it works for people wherever they are.";
+  const sents = [
+    "Overview of Business CVS Health Corporation, together with its subsidiaries (collectively, \"CVS Health\"), is a leading health solutions company building a world of health around every consumer it serves and connecting care so that it works for people wherever they are.",
+    "As of December 31, 2025, the Company had approximately 9,000 retail locations, more than 1,000 walk-in clinics and a leading pharmacy benefits manager with approximately 87 million plan members and specialty pharmacy solutions.",
+  ];
+  const brief = businessBrief(sents, lede, "CVS Health Corporation");
+  const ok = !brief.some((b) => /leading health solutions company building/.test(b)) && brief.some((b) => /9,000 retail locations/.test(b));
+  console.log((ok ? "ok   " : "FAIL ") + "brief-no-lede-repeat -> " + JSON.stringify(brief.map((b) => b.slice(0, 40))));
+  ok ? pass++ : fail++;
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

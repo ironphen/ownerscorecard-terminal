@@ -213,21 +213,32 @@ function candorSignals(text, sents) {
 // "Inc.", and require the company itself to be the subject so we never pass off a
 // risk line or a heading as the description. Their words; our numbers elsewhere for
 // what they mean. Returns null when nothing clean is found, and the page falls back.
-const BIZ_DOING = /\b(designs?|manufactures?|manufacturing|develops?|markets?|provides?|providing|operates?|sells?|selling|distributes?|produces?|producing|delivers?|offers?|offering|supplies|supplying)\b/i;
+// "What it does" verbs. Only description-specific additions to the make/sell/provide core: pioneer,
+// specialize and engineer almost always introduce a real description ("NVIDIA pioneered accelerated
+// computing", "we specialize in…"). The generic build/make/create/power/enable were tried and reverted
+// — they let MD&A junk through ("our fixed costs to build and run the business") for too little gain.
+const BIZ_DOING = /\b(designs?|manufactures?|manufacturing|develops?|markets?|provides?|providing|operates?|sells?|selling|distributes?|produces?|producing|delivers?|offers?|offering|supplies|supplying|pioneers?|pioneered|specializ\w+|engineers?\s+and\s+\w|engineers?\s+\w+\s+(products|systems|solutions))\b/i;
 const BIZ_ISA = /\b(is|are)\s+(a|an|the|one of)\b[^.]{0,60}?\b(compan|provider|manufacturer|producer|retailer|developer|operator|maker|supplier|distributor|platform|business|leader|corporation|holding|bank|insurer|airline|carrier|restaurant|brand|chain|franchis|network|marketplace|trust|utility|pharmaceutical|biopharmaceutical|biotechnolog|technolog|healthcare|energy|refiner|exchange|processor|grocer|wholesaler|broker|dealer|lender|integrator|miner|reit|firm|enterprise|agency|builder|contractor|franchisor|servicer|underwriter|reinsurer|conglomerate)\w*/i;
 const BIZ_SKIP = /(was|were)\s+incorporated|incorporated\s+(under|in)\b|reincorporat|organized under the laws|founded in\s+\d|fiscal year|forward-looking|securities (act|exchange) of|report on form|unless the context|initial public offering|principal executive offices|market for (the )?registrant|common equity|equity securities|stockholder matters|\bmay\b|could\s+(adversely|result|harm|cause|materially|impair)|no assurance|our ability to|unsubstantiated|misleading|negative publicity|table of contents|\bcould\b|\bif (we|our|the company|a |an |adverse)|decline in (consumer|demand|sales)|reasonable basis for (our|the) opinion|provide a reasonable basis|standards of the public company accounting|fair value\b|cost of capital|non-?gaap|balance sheets? (include|reflect)|internally generated cash|dividends are reinvested|consideration we expect|we expect to be entitled|notice letter|corporate headquarters|(listed|traded|trades|trading|registered)\s+on (the )?(nasdaq|new york|nyse)|began trading|common stock (is|has)\s*(been\s*)?(listed|registered|traded)|in our (definitive )?proxy|responsive to this item|incorporated by reference|does not trade in the public market|\b(is|are) subject to\b|corporation (formed|organized)\b|further described (in|below|elsewhere)|\bor in the value of\b|value of the collateral|(reportable|reporting)\s+(business\s+)?segments?\s+are\b|represent(s|ed)\s+[^.]{0,28}\b(majority|\d+%)[^.]{0,18}\brevenue/i;
 // A weak subject: the sentence is about employees, customers or a side note, not the
 // company itself, so it is not a description of the business.
 const BIZ_WEAK = /^(we also\b|when\s+we\b|founded\b|established\b|originally\b|since (our|its|we)\b|our (mission|vision|strateg|purpose|goals?|values|history|story|customers?|employees?|people|associates|team|more than|over\s|approximately|roughly|nearly)|our\b[^.]{0,40}\b(purpose|mission|vision)\b[^.]{0,120}\bis\s+to\b|we have (sharpened|built|been developing|also been|grown|expanded)|we strive|we seek\b|we aim\b|we (encounter|rely|depend|compete|consistently|correctly|pursue|understand|assess|estimate|disposed)\b|we have (entered|received)\b|[a-z][\w& .,'-]{0,38}'s\s+(vision|mission|purpose)\s+is\s+to\b|[a-z][\w& .,'-]{0,38}\b(strives?|aims?)\s+to\b|[a-z][\w& .,'-]{0,38}\bbelieves\b|[a-z][\w& .,'-]{0,30}'s\s+growth\b|[a-z][\w& .,'-]{0,30}\balso has\b)/i;
-const HEAD_TOKEN = /^(item\s*1[ab]?\b\.?|part\s*i+\b\.?|general development of (the )?business|business overview|company overview|our company|our business|the company|introduction|business|general|overview)\s*[:.\-–—]?\s+/i;
+const HEAD_TOKEN = /^(item\s*1[ab]?\b\.?|part\s*i+\b\.?|general development of (the )?business|executive overview|business overview|company overview|our company|our business|the company|introduction|business|general|overview)\s*[:.\-–—]?\s+/i;
 // A broken sentence fragment, not a description: a cross-reference ("found in Items 1 and 2"), or a
 // lead verb jammed into a preposition by bad splitting ("We provide, found in…", "We operate and in
 // the U.S. as a whole"). KMI and WAL slipped a mangled hero through on these; reject them.
 const BIZ_FRAGMENT = /\b(found|described|set forth|referred to|listed|contained|incorporated)\s+in\s+(items?|parts?|notes?|exhibits?)\b|\b(provide|operate|offer|sell|develop|design|market|supply|engage)s?\s*,\s*(found|described|in\b)|\b(operate|provide|offer|sell|develop|design|market|supply)s?\s+and\s+(in|to|with|as|the)\b/i;
+// An MD&A results-of-operations sentence, not a description: a year-over-year change discussion
+// ("Increases in operating income primarily result from…", "Gentex sales were $2.27 billion", "revenues
+// increased 17.3% compared to…", "order backlog decreased"). These read as the business when a short
+// name fragment ("com" in "income") false-matches the subject; reject them outright.
+const BIZ_RESULTS = /\b(increases?|decreases?)\s+(in|of)\b[^.]{0,40}\b(result|primarily|compared|were|was)\b|\bprimarily (result(ed|s)? from|due to|driven by|attributable)|\bcompared (to|with)\s+(the\s+)?(prior|fiscal|preceding|last|\d{4})|\b(net sales|net revenues?|revenues?|sales|net income|operating (income|expenses?|profit)|gross (profit|margin)|order backlog|backlog|earnings|cash flows?)\s+(of\s+\$|were\s+\$|was\s+\$|increased|decreased|grew|declined|rose|fell|totaled|improved)|\b\d{1,2}(\.\d+)?\s?%\s+(increase|decrease|decline|growth|higher|lower)|\byear[-\s]over[-\s]year\b/i;
 // A leading section heading glued to a brief sentence by the extraction ("Overview Archer is…",
 // "Business Overview Aramark is…"). Stripped so the brief reads from the real subject; if a sentence
 // is ONLY a heading/cross-reference, the BIZ_RICH check downstream still drops it.
-const LEAD_HEADING = /^(business\s+overview|company\s+overview|business\s+update|recent\s+developments|results\s+of\s+operations|general\s+development\s+of\s+(the\s+)?business|business\s+factors[\w\s]{0,45}?operations|segment\s+reporting|our\s+business|our\s+company|the\s+(business|company)|overview|introduction|business|general|properties)\b[\s:.\-–—]+/i;
+// Longer, more-specific headings come first so "overview of business" is taken whole rather than the
+// bare "overview" stripping only its first word and leaving "of business …".
+const LEAD_HEADING = /^((overview|description|summary|nature)\s+of\s+(the\s+)?business|general\s+development\s+of\s+(the\s+)?business|executive\s+overview|business\s+overview|company\s+overview|overview\s+of\s+operations|business\s+update|recent\s+developments|results\s+of\s+operations|business\s+factors[\w\s]{0,45}?operations|segment\s+reporting|our\s+business|our\s+company|the\s+(business|company)|overview|introduction|business|general|properties)\b[\s:.\-–—]+/i;
 const stripLeadingHeading = (s) => { let o = String(s || ""); for (let k = 0; k < 2 && LEAD_HEADING.test(o); k++) o = o.replace(LEAD_HEADING, ""); return o ? o.charAt(0).toUpperCase() + o.slice(1) : o; };
 const LEAD_VERB = /^(is|are|operates?|provides?|markets?|designs?|develops?|sells?|offers?|supplies|distributes?|delivers?|produces?|manufactures?|engages?)\b/i;
 // Signals a richer description: names products, markets, customers or segments rather
@@ -239,6 +250,13 @@ const BIZ_STRUCTURAL = /\boperat\w*\b[^.]{0,40}\bthrough\b|operating segments?|r
 // Additional descriptive forms beyond a plain verb or "is a <type>": "engaged in",
 // "principal business", "a leading provider/manufacturer of", "<noun> of".
 const BIZ_ENGAGED = /\b(engaged?|engages?)\s+(primarily\s+)?in\b|\b(principal|primary|core|main)\s+business\b|\b(leading|global|largest|world'?s|premier|principal)\b[^.]{0,40}\b(provider|manufacturer|producer|operator|supplier|distributor|retailer|developer|maker|company|leader|bank|insurer|partner|builder|contractor|shipbuilder)s?\b|\b(provider|manufacturer|producer|operator|developer|maker|distributor)s?\s+of\b/i;
+
+// Non-description openers the scorer otherwise lets through because they carry a subject and a
+// verb: a competition list ("Our competitors include banks, thrifts…", Bank of America) or an
+// operating-process sentence ("We normally purchase our feedstocks weeks before…", Phillips 66).
+// Neither says what the business is, so reject them — the hero then falls back to the segment mix
+// or the computed phrase rather than printing a stray sentence as the description.
+const BIZ_NOTDESC = /\bcompetitors?\s+(include|are|consist|range|comprise|compete)|^(we|our)\s+(normally|typically|generally|usually|principally|routinely|primarily\s+(purchase|buy|source|sell))\s+(purchase|buy|sell|acquire|obtain|source|procure|market|distribute|manufacture|produce|operate)\b/i;
 
 // Pull the company's own one-line description from the top of Item 1. Rather than take
 // the first sentence that passes, we collect candidates from the opening and score
@@ -293,7 +311,7 @@ function businessDescription(sents, name, ticker) {
         // ", a/an <type>" appositive — so a mid-sentence brand mention ("…fast-casual CAVA
         // restaurants") is not mistaken for the subject and the line left a fragment.
         const alt = nameWords.map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|");
-        const nameSubj = new RegExp(`\\b(?:${alt})\\b[\\w &.,'’-]{0,34}?(?:\\s+(?:is|are|was|were|provides?|operates?|designs?|develops?|manufactures?|makes?|markets?|sells?|offers?|supplies|distributes?|delivers?|produces?|serves?|engages?|owns?|builds?|creates?|enables?|helps?)\\b|,\\s+(?:a|an)\\s+[a-z])`, "i");
+        const nameSubj = new RegExp(`\\b(?:${alt})\\b[\\w &.,'’-]{0,34}?(?:\\s+(?:is|are|was|were|provides?|operates?|designs?|develops?|manufactures?|makes?|markets?|sells?|offers?|supplies|distributes?|delivers?|produces?|serves?|engages?|owns?|builds?|creates?|enables?|helps?|pioneers?|pioneered|powers?|specializ\\w+)\\b|,\\s+(?:a|an)\\s+[a-z])`, "i");
         const m2 = s.match(nameSubj);
         if (m2 && m2.index > 0 && m2.index < 160) at = m2.index;
       }
@@ -302,8 +320,11 @@ function businessDescription(sents, name, ticker) {
       // first "<Name>/We <verb>" when what precedes it is a heading or short tagline rather
       // than a real clause, so we never truncate a genuine sentence.
       if (at < 0) {
-        const subj = `(?:${[...nameWords, "we"].map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")})`;
-        const subjVerb = new RegExp(`\\b${subj}\\s+(?:is|are|provides?|designs?|develops?|operates?|manufactures?|makes?|markets?|sells?|offers?|supplies|distributes?|delivers?|produces?|serves?|engages?|builds?|creates?|owns?|enables?|helps?)\\b`, "i");
+        // The subject after the heading may be the company name, "we", OR a generic self-reference
+        // ("The Company / The Registrant / The Group designs…") — Apple and many filers write the
+        // last, and recognizing only name+"we" left their description stranded behind the heading.
+        const subj = `(?:${[...nameWords, "we"].map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")}|the\\s+(?:company|registrant|group|firm|corporation|business|partnership))`;
+        const subjVerb = new RegExp(`\\b${subj}\\s+(?:is|are|provides?|designs?|develops?|operates?|manufactures?|makes?|markets?|sells?|offers?|supplies|distributes?|delivers?|produces?|serves?|engages?|builds?|creates?|owns?|enables?|helps?|pioneers?|pioneered|powers?|specializ\\w+)\\b`, "i");
         const m = s.match(subjVerb);
         if (m && m.index > 0 && m.index < 200) {
           const prefix = s.slice(0, m.index);
@@ -319,7 +340,7 @@ function businessDescription(sents, name, ticker) {
     if (LEAD_VERB.test(s) && name) s = `${name.trim()} ${s}`; // restore a subject split off entirely
     if (/^[a-z]/.test(s)) s = s.charAt(0).toUpperCase() + s.slice(1);
     if (s.length < 34 || s.length > 700) continue;
-    if (BIZ_SKIP.test(s) || BIZ_WEAK.test(s) || BIZ_FRAGMENT.test(s)) continue;
+    if (BIZ_SKIP.test(s) || BIZ_WEAK.test(s) || BIZ_FRAGMENT.test(s) || BIZ_RESULTS.test(s) || BIZ_NOTDESC.test(s)) continue;
     const isa = BIZ_ISA.test(s);
     if (!BIZ_DOING.test(s) && !isa && !BIZ_ENGAGED.test(s)) continue;
     const head = s.split(/\s+/).slice(0, 6).join(" ");
@@ -332,7 +353,10 @@ function businessDescription(sents, name, ticker) {
     if (namedSubject && !weSubject) score += 2; // names the company, not a bare "we"
     if (BIZ_RICH.test(s)) score += 1;           // products, markets, segments
     if (BIZ_STRUCTURAL.test(s)) score -= 3;     // org chart, not a description
-    score -= i * 0.6;                           // the opener is usually the intended one
+    score -= Math.min(i, 3) * 0.6;              // the opener is usually the intended one — but cap the
+    // penalty: with the MD&A Overview appended after Item 1, an unbounded penalty sank every clean
+    // description sitting a dozen sentences deep (the Overview is a fallback for a thin Item 1, and a
+    // real "<Company> is a <type>" there must still clear zero). Junk has no quality score to clear it.
     if (s.length < 70) score -= 1;              // too terse to describe a business
     cands.push({ s, score });
   }
@@ -347,6 +371,12 @@ function businessDescription(sents, name, ticker) {
     console.log(`  raw opening: ${sents.slice(0, 6).map((s) => String(s).slice(0, 55)).join(" | ")}`);
     console.log("=== end BIZ_DEBUG ===\n");
   }
+  // A negative best score means the surviving candidates are deep, structural, or dubious — a risk
+  // or mission sentence that slipped the filters (FedEx's "We are not able to successfully implement
+  // our business strategy…", Marathon's "We are committed to leveraging…"), or a real description
+  // buried so far down the earliness penalty sinks it. Better the segment mix or the computed phrase
+  // than a doubtful sentence presented as what the business is.
+  if (cands[0].score < 0) return null;
   const best = cands[0].s;
   return best.length > 300 ? best.slice(0, 297).replace(/[\s,;]+\S*$/, "") + "…" : best;
 }
@@ -369,6 +399,11 @@ function businessBrief(sents, lede, name) {
     if (!BIZ_RICH.test(s)) continue; // must name products, markets, segments or customers
     const sNorm = normalize(s);
     if (sNorm === ledeNorm || ledeNorm.includes(sNorm.slice(0, 50)) || sNorm.includes(ledeNorm.slice(0, 50))) continue; // not the lede again
+    // The lede is often the cleaned form of one of these sentences (a "together with its subsidiaries"
+    // clause inserted, a heading prefixed), so the substring check above misses it. A high token
+    // overlap catches the near-duplicate — CVS's "Overview of Business … is a leading health solutions
+    // company …" repeating its own lede.
+    if (jaccard(tokenize(s), tokenize(lede)) > 0.5) continue;
     if (extras.some((e) => jaccard(tokenize(e), tokenize(s)) > 0.5)) continue; // distinct from a prior extra
     extras.push(s.length > 320 ? s.slice(0, 317).replace(/[\s,;]+\S*$/, "") + "…" : s);
   }
@@ -868,19 +903,32 @@ async function main() {
     // is wrapped so a single odd filing that trips one of the text detectors logs and is skipped
     // rather than aborting a long run mid-way and losing every company parsed before it.
     try {
-      const bizSents = [...(cur.mdna?.lead || []), ...(cur.business.lead?.length ? cur.business.lead : (cur.business.sents || []))];
+      // Item 1 (Business) is the SEC-required description of the business, so it leads the candidate
+      // pool and earns the earliness bonus; the MD&A Overview follows only as a fallback for names
+      // whose Item 1 is thin or incorporated by reference. (Prepending MD&A, as before, let its
+      // heading and boilerplate — "Management's Discussion and Analysis…" — drown the real Item 1
+      // opener for J&J, Disney, UPS, FedEx, AT&T, Marathon and dozens like them.)
+      const bizLead = cur.business.lead?.length ? cur.business.lead : (cur.business.sents || []);
+      const bizSents = [...bizLead, ...(cur.mdna?.lead || [])];
       const bizLede = businessDescription(bizSents, c.name, c.ticker);
       out[tk] = {
         fy: cur.reportDate?.slice(0, 4) || null,
         priorFy: prior?.reportDate?.slice(0, 4) || null,
         sourceUrl: cur.url,
-        // Offer the MD&A Overview opening first, then the Item 1 Business lead: the Overview is
-        // often the cleanest plain-language statement of what the company does ("We operate a leading
-        // online marketplace…"), where Item 1 can open on corporate structure or boilerplate.
-        // businessDescription scores every candidate and picks the strongest, falling back to the
-        // computed industry phrase when none is a real description, so adding candidates only helps.
+        // Item 1 Business leads, MD&A Overview follows as a fallback: businessDescription scores every
+        // candidate and picks the strongest, falling back to the computed industry phrase when none is
+        // a real description, so keeping the Overview as a backup only helps a thin Item 1.
         business: bizLede,
         brief: businessBrief(bizSents, bizLede, c.name),
+        // Extraction diagnostics for the qualitative audit: the word count of each parsed section, so
+        // a missing lede can be read as an EXTRACTION failure (Item 1 came up empty) versus a SCORER
+        // failure (Item 1 is full but no sentence was accepted) — the distinction that drives the fix.
+        extract: {
+          business: cur.business.words, mdna: cur.mdna.words, risk: cur.risk.words, ledeFromFiling: !!bizLede,
+          // When no lede was accepted, keep the first sentences the scorer actually saw, so the scorer's
+          // over-rejection can be diagnosed and fixed from the real openings (AAPL/NVDA), not guessed at.
+          sample: bizLede ? undefined : bizSents.slice(0, 5).map((s) => cleanQuote(String(s || "")).slice(0, 180)).filter(Boolean),
+        },
         ownerFlags: flags,
         mdna: {
           words: cur.mdna.words, fog: cur.mdna.fog, hedgeDensity: Math.round(cur.mdna.hedgeDensity * 1e4) / 1e4,
