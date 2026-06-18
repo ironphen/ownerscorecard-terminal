@@ -353,7 +353,10 @@ function businessDescription(sents, name, ticker) {
     if (namedSubject && !weSubject) score += 2; // names the company, not a bare "we"
     if (BIZ_RICH.test(s)) score += 1;           // products, markets, segments
     if (BIZ_STRUCTURAL.test(s)) score -= 3;     // org chart, not a description
-    score -= i * 0.6;                           // the opener is usually the intended one
+    score -= Math.min(i, 3) * 0.6;              // the opener is usually the intended one — but cap the
+    // penalty: with the MD&A Overview appended after Item 1, an unbounded penalty sank every clean
+    // description sitting a dozen sentences deep (the Overview is a fallback for a thin Item 1, and a
+    // real "<Company> is a <type>" there must still clear zero). Junk has no quality score to clear it.
     if (s.length < 70) score -= 1;              // too terse to describe a business
     cands.push({ s, score });
   }
