@@ -364,6 +364,32 @@ export function cashConversionCycle(c) {
   };
 }
 
+// Effective tax rate: the share of pre-tax profit paid in tax. A durably low rate can be a real
+// edge (R&D credits, a foreign mix) or a one-off that flatters this year's growth; either way it
+// is worth seeing, because a rate reverting to normal moves reported earnings without the business
+// changing. Null on a loss year (the rate is meaningless) or an out-of-band figure (a tax benefit).
+export function effectiveTaxRate(L) {
+  const tax = L?.incomeTaxExpense, ni = L?.netIncome;
+  if (tax == null || ni == null) return null;
+  const pretax = ni + tax;
+  if (!(pretax > 0)) return null;
+  const r = tax / pretax;
+  return r < -0.1 || r > 0.6 ? null : r;
+}
+
+// Where each revenue dollar goes: the cost structure as shares of revenue — cost of goods, then the
+// operating buckets (overhead and research) — leaving the operating margin. Read across the record
+// it shows operating leverage: whether growth widens the margin or the costs grow right along with
+// it. R&D is carried apart because it is a choice, not a cost of the last sale.
+export function costStack(L) {
+  const rev = L?.revenue;
+  if (!(rev > 0)) return null;
+  const frac = (v) => (v != null ? v / rev : null);
+  const cogs = frac(L.costOfRevenue), sga = frac(L.sgaExpense), rnd = frac(L.researchDevelopment), op = frac(L.operatingIncome);
+  if (cogs == null && sga == null && rnd == null) return null;
+  return { cogs, sga, rnd, op, grossMargin: cogs != null ? 1 - cogs : null };
+}
+
 // Raw metric values from a single year's lines, reused for the time series.
 // Return null when not honestly computable.
 // Debt we can trust as a leverage read. When a company pays material interest but little
