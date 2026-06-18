@@ -10,12 +10,13 @@
     "import:fidelity": "node scripts/importFidelity.mjs",
     "fetch:fundamentals": "node scripts/fetchFundamentals.mjs",
     "fetch:fundamentals:jp": "node scripts/fetchEdinetFundamentals.mjs",
+    "fetch:fundamentals:adr": "node scripts/fetchAdrFundamentals.mjs",
     "fetch:filings": "node scripts/fetchFilings.mjs",
     "fetch:wire": "node scripts/fetchWire.mjs",
     "fetch:segments": "node scripts/fetchSegments.mjs",
     "audit": "node scripts/auditData.mjs",
     "audit:jp": "node scripts/auditJp.mjs",
-    "test": "node scripts/heroTest.mjs && node scripts/edinetTest.mjs && node scripts/buffettReadTest.mjs && node scripts/fundamentalsTest.mjs && node scripts/universeTest.mjs"
+    "test": "node scripts/heroTest.mjs && node scripts/edinetTest.mjs && node scripts/buffettReadTest.mjs && node scripts/fundamentalsTest.mjs && node scripts/universeTest.mjs && node scripts/fundamentalsAdrTest.mjs"
   },
   "dependencies": {
     "@astrojs/mdx": "^6.0.3",
