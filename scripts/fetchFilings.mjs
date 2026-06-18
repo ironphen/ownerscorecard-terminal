@@ -227,7 +227,9 @@ const BIZ_FRAGMENT = /\b(found|described|set forth|referred to|listed|contained|
 // A leading section heading glued to a brief sentence by the extraction ("Overview Archer is…",
 // "Business Overview Aramark is…"). Stripped so the brief reads from the real subject; if a sentence
 // is ONLY a heading/cross-reference, the BIZ_RICH check downstream still drops it.
-const LEAD_HEADING = /^(business\s+overview|company\s+overview|business\s+update|recent\s+developments|results\s+of\s+operations|general\s+development\s+of\s+(the\s+)?business|business\s+factors[\w\s]{0,45}?operations|segment\s+reporting|our\s+business|our\s+company|the\s+(business|company)|overview|introduction|business|general|properties)\b[\s:.\-–—]+/i;
+// Longer, more-specific headings come first so "overview of business" is taken whole rather than the
+// bare "overview" stripping only its first word and leaving "of business …".
+const LEAD_HEADING = /^((overview|description|summary|nature)\s+of\s+(the\s+)?business|general\s+development\s+of\s+(the\s+)?business|business\s+overview|company\s+overview|overview\s+of\s+operations|business\s+update|recent\s+developments|results\s+of\s+operations|business\s+factors[\w\s]{0,45}?operations|segment\s+reporting|our\s+business|our\s+company|the\s+(business|company)|overview|introduction|business|general|properties)\b[\s:.\-–—]+/i;
 const stripLeadingHeading = (s) => { let o = String(s || ""); for (let k = 0; k < 2 && LEAD_HEADING.test(o); k++) o = o.replace(LEAD_HEADING, ""); return o ? o.charAt(0).toUpperCase() + o.slice(1) : o; };
 const LEAD_VERB = /^(is|are|operates?|provides?|markets?|designs?|develops?|sells?|offers?|supplies|distributes?|delivers?|produces?|manufactures?|engages?)\b/i;
 // Signals a richer description: names products, markets, customers or segments rather
@@ -369,6 +371,11 @@ function businessBrief(sents, lede, name) {
     if (!BIZ_RICH.test(s)) continue; // must name products, markets, segments or customers
     const sNorm = normalize(s);
     if (sNorm === ledeNorm || ledeNorm.includes(sNorm.slice(0, 50)) || sNorm.includes(ledeNorm.slice(0, 50))) continue; // not the lede again
+    // The lede is often the cleaned form of one of these sentences (a "together with its subsidiaries"
+    // clause inserted, a heading prefixed), so the substring check above misses it. A high token
+    // overlap catches the near-duplicate — CVS's "Overview of Business … is a leading health solutions
+    // company …" repeating its own lede.
+    if (jaccard(tokenize(s), tokenize(lede)) > 0.5) continue;
     if (extras.some((e) => jaccard(tokenize(e), tokenize(s)) > 0.5)) continue; // distinct from a prior extra
     extras.push(s.length > 320 ? s.slice(0, 317).replace(/[\s,;]+\S*$/, "") + "…" : s);
   }

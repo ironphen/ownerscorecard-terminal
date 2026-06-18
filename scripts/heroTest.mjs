@@ -4,7 +4,7 @@
 // scorer to choose. Guards the tricky cases — a canonical line glued behind a heading or
 // mission tagline, a run-on opener, a name that collides with a common phrase — against
 // regressions. Run with `npm test`.
-import { businessDescription } from "./fetchFilings.mjs";
+import { businessDescription, businessBrief } from "./fetchFilings.mjs";
 
 const cases = [
   // A canonical opener glued behind a section heading and a period-less mission tagline,
@@ -107,5 +107,20 @@ for (const [tk, name, sents, want] of cases) {
   console.log((ok ? "ok   " : "FAIL ") + tk + " -> " + JSON.stringify(got));
   ok ? pass++ : fail++;
 }
+// businessBrief must not repeat the lede. The lede is often the cleaned form of one of the brief's
+// own sentences (a subsidiary clause inserted, a heading prefixed), so it has to be caught by token
+// overlap, not just a substring match — the CVS case the founder flagged.
+{
+  const lede = "CVS Health Corporation is a leading health solutions company building a world of health around every consumer it serves and connecting care so that it works for people wherever they are.";
+  const sents = [
+    "Overview of Business CVS Health Corporation, together with its subsidiaries (collectively, \"CVS Health\"), is a leading health solutions company building a world of health around every consumer it serves and connecting care so that it works for people wherever they are.",
+    "As of December 31, 2025, the Company had approximately 9,000 retail locations, more than 1,000 walk-in clinics and a leading pharmacy benefits manager with approximately 87 million plan members and specialty pharmacy solutions.",
+  ];
+  const brief = businessBrief(sents, lede, "CVS Health Corporation");
+  const ok = !brief.some((b) => /leading health solutions company building/.test(b)) && brief.some((b) => /9,000 retail locations/.test(b));
+  console.log((ok ? "ok   " : "FAIL ") + "brief-no-lede-repeat -> " + JSON.stringify(brief.map((b) => b.slice(0, 40))));
+  ok ? pass++ : fail++;
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
