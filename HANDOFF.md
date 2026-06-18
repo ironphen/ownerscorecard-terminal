@@ -34,14 +34,32 @@ freely). The only ceiling now is **Cloudflare 500 builds/month**, and Cloudflare
 so branch pushes are free; only `main` pushes count (data schedules on main are ~36/mo, comfortable).
 Still **$0 total**, still no LLM, still deterministic.
 
-**A comprehensive re-fetch is RUNNING** (run `27740336418`, dispatched ~06:08 UTC 2026-06-18 on commit
-`0310675`, `rebuild_universe=write` + `fetch_adr=true`, ~2.5–3 h). It lands, in ONE pass: US Current
-Position fundamentals + receivables/inventory tag fills, the regenerated `language.json` with every NLP
-fix (integrity 505→106, commodity exclusion, strong-pricing, admissions, bank-pricing withheld, the CVS
-lede-dup fix), segments, the rebuilt universe, AND the **first real ADR data**. A background watcher
-(`/tmp/watch3.sh`) wakes the session when the "Refresh fundamentals…" commit appears. **Note:** this run
-predates the `extract` diagnostic (commit `f3a2dd1`) and the floor-based ADR cutoff (`0bd160e`), so a
-*follow-up* filings re-fetch is needed to populate `extract` (and a rebuild to apply the ADR floor).
+**ADR FINANCIALS — DONE and verified (HEAD `cab59b3`).** Foreign banks/insurers now read on their own
+statements in their home currency. The chain, fixed across four ADR-only re-fetches (each a genuine
+discovery only visible after the prior one landed — `segments_only=true,fundamentals_only=true,fetch_adr=true`
+runs *only* the ADR fetch, ~12 min, free):
+1. **SIC routing** (`fetchAdrFundamentals.mjs`): companyfacts omits SIC, so every ADR routed as a generic
+   industrial and the financial concepts were dead data. Now fetched from the **SEC submissions API**
+   per company → 100% SIC, routing live (78 banks, 24 insurers, 25 fee, 17 REITs).
+2. **Net interest income reads NET, not gross**: US-GAAP banks tag net directly; IFRS banks tag gross
+   income + expense separately. The fetcher now nets them (`netInterest()` helper: true-net tag, else
+   gross − bank interest expense, else **null — never the inflated gross**). Fixed doubled NIMs
+   (Santander 5.45%→2.27%, BBVA 6.79%→2.41%, the Canadians).
+3. **Deposits**: ranked customer/total tags ahead of interbank `DepositsFromBanks`; `depositFunding`
+   (financials.mjs) drops a figure <10% of assets (a sub-component, not the base) so a deposit-rich
+   TD/RBC doesn't read as wholesale-funded.
+4. **`lines` = freshest non-null per field** (overlay `ttm.lines` on the latest history year), matching
+   US-fetcher semantics — a 20-F whose balance sheet lags its income statement no longer renders a
+   half-empty card. Santander 1/6 → 5/6 checks; MUFG 6/6; Aegon/Sun Life 4/4.
+Coverage of the 127 financial names: NII 66, deposits 58, premiums 37, float 35, provisions 28 — the
+rest **honestly blank**: foreign banks tag much of their detail (some total deposits, provisions) in
+company XBRL extensions the SEC API doesn't expose. Validation harness: `node scripts/checkAdrFinancials.mjs`
+(SIC %, routing, per-concept coverage, spot-checks, render check). Render-verified (Santander screenshot).
+Known soft spot: ING NII reads a touch low (over-netted, one name); not wrong-high, acceptable.
+
+**Earlier comprehensive re-fetch (long landed):** US Current Position 100%, NLP fixes live (integrity
+582→179, bank-pricing withheld, CVS lede-dup fixed), segments, ADR pool. The qualitative re-architecture
+(below) is the next live priority once the ADR batch is merged.
 
 **Shipped on the branch this session (all verified, NOT merged):**
 - **Current Position** (`lib/currentPosition.mjs` + `CurrentPosition.astro`, coda to Act II): Value Line's
