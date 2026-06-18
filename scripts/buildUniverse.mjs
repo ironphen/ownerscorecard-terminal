@@ -173,8 +173,13 @@ async function main() {
     (() => { try { return JSON.parse(fs.readFileSync(adrPath, "utf8")).tickers || []; } catch { return []; } })()
       .map((t) => [String(t.ticker).toUpperCase(), t])
   );
+  // The ADR bar is the US universe's own market-cap floor — a foreign name is in iff it is at least
+  // as large as our smallest US name, so the two pools share one size standard rather than a separate
+  // arbitrary cap. That is the honest reading of "the ADRs that belong in the same index." ADR_MAX
+  // remains only as a safety ceiling in case the floor is ever implausibly low.
+  const floorCap = floor.cap;
   const adrRanked = parseScreenerADR(raw);
-  const adrTop = adrRanked.slice(0, ADR_MAX);
+  const adrTop = adrRanked.filter((r) => r.cap >= floorCap).slice(0, ADR_MAX);
   const adrMerged = new Map();
   for (const r of adrTop) adrMerged.set(r.ticker, { ticker: r.ticker, name: adrCurated.get(r.ticker)?.name ?? r.name ?? undefined, country: r.country });
   let adrExtras = 0;
@@ -182,10 +187,10 @@ async function main() {
   const adrList = [...adrMerged.values()]
     .sort((a, b) => (a.ticker < b.ticker ? -1 : a.ticker > b.ticker ? 1 : 0))
     .map((t) => Object.fromEntries(Object.entries(t).filter(([, v]) => v != null)));
-  console.log(`  ADR pool: ${adrList.length} foreign-listed names (top ${adrTop.length} by market cap, ${adrExtras} curated extras kept)`);
+  console.log(`  ADR pool: ${adrList.length} foreign-listed names (cap ≥ US floor $${(floorCap / 1e9).toFixed(2)}B → ${adrTop.length}, ${adrExtras} curated extras kept)`);
   if (!DRYRUN && adrList.length) {
     fs.writeFileSync(adrPath, JSON.stringify({
-      note: `ADR universe: foreign companies listed on US exchanges (Nasdaq screener, non-US rows, top ${ADR_MAX} by market cap). They file Form 20-F with the SEC; read in IFRS by the ADR pipeline. Rebuilt via scripts/buildUniverse.mjs.`,
+      note: `ADR universe: foreign companies listed on US exchanges (Nasdaq screener, non-US rows) with market cap at least the US universe's floor — i.e. as large as the smallest US name we cover. They file Form 20-F with the SEC; read in IFRS/US-GAAP by the ADR pipeline. Rebuilt via scripts/buildUniverse.mjs.`,
       tickers: adrList,
     }, null, 2) + "\n");
     console.log(`  ✅ wrote universe.adr.json with ${adrList.length} ADRs`);
