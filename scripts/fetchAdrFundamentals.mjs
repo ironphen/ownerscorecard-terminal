@@ -279,9 +279,19 @@ async function main() {
     catch (e) { console.warn(`  ! ${ticker}: companyfacts ${e.message}`); continue; }
     if (!facts || !facts.facts) { console.warn(`  ! ${ticker}: no XBRL facts`); continue; }
 
+    // SIC comes from the submissions API, not companyfacts (which omits it). It is the only
+    // thing the archetype engine routes on, so without it a foreign bank or insurer reads as a
+    // generic industrial — its net interest margin, deposits, float and combined ratio never
+    // surface. A failed submissions fetch is non-fatal: the company still renders, just unrouted.
+    let sub = null;
+    await sleep(THROTTLE_MS);
+    try { sub = await getJSON(`https://data.sec.gov/submissions/CIK${cik}.json`); }
+    catch (e) { console.warn(`  ! ${ticker}: submissions ${e.message} (SIC unresolved)`); }
+
     const ccy = detectCurrency(facts);
     const standard = detectStandard(facts);
-    const sic = String(facts.sic || meta.sic || "");
+    const sic = String(sub?.sic || facts.sic || meta.sic || "");
+    const sicDescription = sub?.sicDescription || meta.sicDescription || null;
     const a = (tags) => pickAnnual(facts, tags, ccy)?.val ?? null;
     const inst = (tags) => latestObservation(facts, tags, ccy, true)?.val ?? null;
 
@@ -370,7 +380,7 @@ async function main() {
     } : null;
 
     const rec = {
-      ticker, name: meta.name || facts.entityName || ticker, cik, sic,
+      ticker, name: meta.name || facts.entityName || ticker, cik, sic, sicDescription,
       market: "ADR", currency: ccy, country: meta.country || null, accountingStandard: standard,
       fy: anchor?.fy ?? null, periodEnd: anchor?.end ?? null, form: anchor?.form || "20-F",
       sourceUrl: `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${cik}&type=20-F`,
