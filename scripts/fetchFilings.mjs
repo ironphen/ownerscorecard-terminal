@@ -802,36 +802,42 @@ async function main() {
     } catch (e) { console.warn(`  ! ${tk}: proxy ${e.message}`); }
 
     // The lede candidates (MD&A Overview first, then Item 1 Business), scored once and reused for
-    // both the hero sentence and the "in brief" detail lines beneath it.
-    const bizSents = [...(cur.mdna?.lead || []), ...(cur.business.lead?.length ? cur.business.lead : (cur.business.sents || []))];
-    const bizLede = businessDescription(bizSents, c.name, c.ticker);
-    out[tk] = {
-      fy: cur.reportDate?.slice(0, 4) || null,
-      priorFy: prior?.reportDate?.slice(0, 4) || null,
-      sourceUrl: cur.url,
-      // Offer the MD&A Overview opening first, then the Item 1 Business lead: the Overview is
-      // often the cleanest plain-language statement of what the company does ("We operate a leading
-      // online marketplace…"), where Item 1 can open on corporate structure or boilerplate.
-      // businessDescription scores every candidate and picks the strongest, falling back to the
-      // computed industry phrase when none is a real description, so adding candidates only helps.
-      business: bizLede,
-      brief: businessBrief(bizSents, bizLede, c.name),
-      ownerFlags: flags,
-      mdna: {
-        words: cur.mdna.words, fog: cur.mdna.fog, hedgeDensity: Math.round(cur.mdna.hedgeDensity * 1e4) / 1e4,
-        wordsPrior: prior?.mdna.words ?? null, fogPrior: prior?.mdna.fog ?? null,
-        hedgePrior: prior ? Math.round(prior.mdna.hedgeDensity * 1e4) / 1e4 : null,
-        candor: cur.mdna.candor || null, candorPrior: prior?.mdna.candor || null,
-      },
-      risk: { words: cur.risk.words, wordsPrior: prior?.risk.words ?? null },
-      mdnaChange: mdnaDiff,
-      riskChange: riskDiff,
-      aiRead: aiSignal(cur, prior),
-      buffettRead: buffettRead(cur),
-      comp,
-    };
-    ok++;
-    console.log(`  ✓ ${tk}: ${flags.length} owner-flags, MD&A ${cur.mdna.words}w` + (comp ? `, payRatio ${comp.payRatio}:1` : ""));
+    // both the hero sentence and the "in brief" detail lines beneath it. The whole record assembly
+    // is wrapped so a single odd filing that trips one of the text detectors logs and is skipped
+    // rather than aborting a long run mid-way and losing every company parsed before it.
+    try {
+      const bizSents = [...(cur.mdna?.lead || []), ...(cur.business.lead?.length ? cur.business.lead : (cur.business.sents || []))];
+      const bizLede = businessDescription(bizSents, c.name, c.ticker);
+      out[tk] = {
+        fy: cur.reportDate?.slice(0, 4) || null,
+        priorFy: prior?.reportDate?.slice(0, 4) || null,
+        sourceUrl: cur.url,
+        // Offer the MD&A Overview opening first, then the Item 1 Business lead: the Overview is
+        // often the cleanest plain-language statement of what the company does ("We operate a leading
+        // online marketplace…"), where Item 1 can open on corporate structure or boilerplate.
+        // businessDescription scores every candidate and picks the strongest, falling back to the
+        // computed industry phrase when none is a real description, so adding candidates only helps.
+        business: bizLede,
+        brief: businessBrief(bizSents, bizLede, c.name),
+        ownerFlags: flags,
+        mdna: {
+          words: cur.mdna.words, fog: cur.mdna.fog, hedgeDensity: Math.round(cur.mdna.hedgeDensity * 1e4) / 1e4,
+          wordsPrior: prior?.mdna.words ?? null, fogPrior: prior?.mdna.fog ?? null,
+          hedgePrior: prior ? Math.round(prior.mdna.hedgeDensity * 1e4) / 1e4 : null,
+          candor: cur.mdna.candor || null, candorPrior: prior?.mdna.candor || null,
+        },
+        risk: { words: cur.risk.words, wordsPrior: prior?.risk.words ?? null },
+        mdnaChange: mdnaDiff,
+        riskChange: riskDiff,
+        aiRead: aiSignal(cur, prior),
+        buffettRead: buffettRead(cur),
+        comp,
+      };
+      ok++;
+      console.log(`  ✓ ${tk}: ${flags.length} owner-flags, MD&A ${cur.mdna.words}w` + (comp ? `, payRatio ${comp.payRatio}:1` : ""));
+    } catch (e) {
+      console.warn(`  ! ${tk}: record assembly ${e.message}`);
+    }
   }
 
   fs.writeFileSync(
