@@ -544,6 +544,15 @@ function aiSignal(cur, prior) {
 // (a moat, who you depend on, who sets the price) would stop on. Each theme is a
 // lens; we surface the single most specific sentence that trips it, verbatim and
 // sourced, never a score. Ordered so the gravest, rarest flags come first.
+// A sentence that DENIES concentration or dependence is the opposite of a flag — it's
+// diversification, and flagging it inverts the meaning. ("No single customer accounted for more
+// than 10% of revenue", Coca-Cola; "we are not dependent on any single supplier".) The customer,
+// supplier and dependence themes share this guard so a company that discloses it has no
+// concentration isn't shown a concentration risk.
+const DENIES_CONC = /\bno\s+(single|individual|one|other|material)?\s*(customer|client|bottler|distributor|reseller|supplier|vendor|product|end customer)s?\b[^.]{0,80}\b(account|represent|generat|exceed|made?\s+up|compris|more than|greater than|equal to|\d{1,2}\s?%)/i;
+const NOT_DEP = /\bnot\s+(currently |materially |significantly |overly |heavily )?(dependent|reliant)\s+(up)?on\s+(a |any |the )?(single|one|individual|small (number|group)|limited number|group of)\b/i;
+const deniesConc = (s) => DENIES_CONC.test(s) || NOT_DEP.test(s);
+
 const FLAG_THEMES = [
   {
     lens: "Going-concern doubt",
@@ -557,6 +566,7 @@ const FLAG_THEMES = [
     // Require an actual share-of-revenue disclosure (a percentage), not merely the
     // word "customers" next to some number, that mislabels subscriber/headcount lines.
     test: (s) =>
+      !deniesConc(s) &&
       /\bcustomers?\b/i.test(s) &&
       /\d{1,3}\s?(%|percent)/i.test(s) &&
       /(account|represent|concentrat|% of|percent of|of (its |our |total |net )*(net )?(revenue|sales|operating revenue))/i.test(s),
@@ -571,7 +581,7 @@ const FLAG_THEMES = [
   {
     lens: "Supplier & input dependence",
     why: "A choke point upstream. A sole or limited supplier can dictate terms, and a single shortage can stop the line.",
-    test: (s) => /(single source|sole source|sole supplier|single supplier|one supplier|limited number of suppliers|few suppliers|rely on a (single|limited)|depend\w* on .{0,30}suppl)/i.test(s),
+    test: (s) => !deniesConc(s) && /(single source|sole source|sole supplier|single supplier|one supplier|limited number of suppliers|few suppliers|rely on a (single|limited)|depend\w* on .{0,30}suppl)/i.test(s),
     bonus: () => 0,
   },
   {
@@ -581,10 +591,11 @@ const FLAG_THEMES = [
     // single-something), so generic "our success depends on our employees", true of
     // every company, doesn't fill the slot.
     test: (s) =>
+      !deniesConc(s) && (
       /(substantially depend|depend\w* heavily|depend\w* significantly|materially depend|a significant (portion|percentage) of (our )?(revenue|net sales|sales|business))/i.test(s) ||
       /\bdepend\w*\s+(?:on|upon)\s+(?:the\s+)?(?:price|availability|supply|cost)s?\b/i.test(s) ||
       (/(our (success|business|growth|results|revenue))[\s\S]{0,50}depend/i.test(s) &&
-        /(product|platform|customer|supplier|vendor|single|sole|concentrat|one |few |limited|key (account|customer|supplier|product))/i.test(s)),
+        /(product|platform|customer|supplier|vendor|single|sole|concentrat|one |few |limited|key (account|customer|supplier|product))/i.test(s))),
     bonus: (s) => (/\d/.test(s) ? 1 : 0),
   },
   {
