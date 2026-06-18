@@ -108,6 +108,11 @@ const cases = [
   ["GEN-registrant", "Generic Co",
     ["Overview The Registrant is a leading provider of cloud software and data analytics services to enterprises worldwide."],
     /is a leading provider of cloud software/i],
+  // NVIDIA's real opener: a heading glued before a description whose verb ("pioneered") wasn't on the
+  // scorer's list, so both the heading-strip and the acceptance failed. Must resolve to a description.
+  ["NVDA-pioneered", "NVIDIA Corporation",
+    ["Our Businesses NVIDIA pioneered accelerated computing to help solve the most challenging computational problems."],
+    /NVIDIA pioneered accelerated computing/i],
 ];
 
 let pass = 0, fail = 0;

@@ -213,7 +213,10 @@ function candorSignals(text, sents) {
 // "Inc.", and require the company itself to be the subject so we never pass off a
 // risk line or a heading as the description. Their words; our numbers elsewhere for
 // what they mean. Returns null when nothing clean is found, and the page falls back.
-const BIZ_DOING = /\b(designs?|manufactures?|manufacturing|develops?|markets?|provides?|providing|operates?|sells?|selling|distributes?|produces?|producing|delivers?|offers?|offering|supplies|supplying)\b/i;
+// "What it does" verbs. Beyond the make/sell/provide core, real descriptions use pioneer/power/build/
+// create/enable/engineer/specialize/serve — NVIDIA's "pioneered accelerated computing" was a clean
+// description rejected only because the verb wasn't on the list.
+const BIZ_DOING = /\b(designs?|manufactures?|manufacturing|develops?|markets?|provides?|providing|operates?|sells?|selling|distributes?|produces?|producing|delivers?|offers?|offering|supplies|supplying|pioneers?|pioneered|powers?|powering|builds?|building|creates?|creating|enables?|enabling|engineers?|specializ\w+|serves?|serving|makes?|making)\b/i;
 const BIZ_ISA = /\b(is|are)\s+(a|an|the|one of)\b[^.]{0,60}?\b(compan|provider|manufacturer|producer|retailer|developer|operator|maker|supplier|distributor|platform|business|leader|corporation|holding|bank|insurer|airline|carrier|restaurant|brand|chain|franchis|network|marketplace|trust|utility|pharmaceutical|biopharmaceutical|biotechnolog|technolog|healthcare|energy|refiner|exchange|processor|grocer|wholesaler|broker|dealer|lender|integrator|miner|reit|firm|enterprise|agency|builder|contractor|franchisor|servicer|underwriter|reinsurer|conglomerate)\w*/i;
 const BIZ_SKIP = /(was|were)\s+incorporated|incorporated\s+(under|in)\b|reincorporat|organized under the laws|founded in\s+\d|fiscal year|forward-looking|securities (act|exchange) of|report on form|unless the context|initial public offering|principal executive offices|market for (the )?registrant|common equity|equity securities|stockholder matters|\bmay\b|could\s+(adversely|result|harm|cause|materially|impair)|no assurance|our ability to|unsubstantiated|misleading|negative publicity|table of contents|\bcould\b|\bif (we|our|the company|a |an |adverse)|decline in (consumer|demand|sales)|reasonable basis for (our|the) opinion|provide a reasonable basis|standards of the public company accounting|fair value\b|cost of capital|non-?gaap|balance sheets? (include|reflect)|internally generated cash|dividends are reinvested|consideration we expect|we expect to be entitled|notice letter|corporate headquarters|(listed|traded|trades|trading|registered)\s+on (the )?(nasdaq|new york|nyse)|began trading|common stock (is|has)\s*(been\s*)?(listed|registered|traded)|in our (definitive )?proxy|responsive to this item|incorporated by reference|does not trade in the public market|\b(is|are) subject to\b|corporation (formed|organized)\b|further described (in|below|elsewhere)|\bor in the value of\b|value of the collateral|(reportable|reporting)\s+(business\s+)?segments?\s+are\b|represent(s|ed)\s+[^.]{0,28}\b(majority|\d+%)[^.]{0,18}\brevenue/i;
 // A weak subject: the sentence is about employees, customers or a side note, not the
@@ -295,7 +298,7 @@ function businessDescription(sents, name, ticker) {
         // ", a/an <type>" appositive — so a mid-sentence brand mention ("…fast-casual CAVA
         // restaurants") is not mistaken for the subject and the line left a fragment.
         const alt = nameWords.map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|");
-        const nameSubj = new RegExp(`\\b(?:${alt})\\b[\\w &.,'’-]{0,34}?(?:\\s+(?:is|are|was|were|provides?|operates?|designs?|develops?|manufactures?|makes?|markets?|sells?|offers?|supplies|distributes?|delivers?|produces?|serves?|engages?|owns?|builds?|creates?|enables?|helps?)\\b|,\\s+(?:a|an)\\s+[a-z])`, "i");
+        const nameSubj = new RegExp(`\\b(?:${alt})\\b[\\w &.,'’-]{0,34}?(?:\\s+(?:is|are|was|were|provides?|operates?|designs?|develops?|manufactures?|makes?|markets?|sells?|offers?|supplies|distributes?|delivers?|produces?|serves?|engages?|owns?|builds?|creates?|enables?|helps?|pioneers?|pioneered|powers?|specializ\\w+)\\b|,\\s+(?:a|an)\\s+[a-z])`, "i");
         const m2 = s.match(nameSubj);
         if (m2 && m2.index > 0 && m2.index < 160) at = m2.index;
       }
@@ -308,7 +311,7 @@ function businessDescription(sents, name, ticker) {
         // ("The Company / The Registrant / The Group designs…") — Apple and many filers write the
         // last, and recognizing only name+"we" left their description stranded behind the heading.
         const subj = `(?:${[...nameWords, "we"].map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")}|the\\s+(?:company|registrant|group|firm|corporation|business|partnership))`;
-        const subjVerb = new RegExp(`\\b${subj}\\s+(?:is|are|provides?|designs?|develops?|operates?|manufactures?|makes?|markets?|sells?|offers?|supplies|distributes?|delivers?|produces?|serves?|engages?|builds?|creates?|owns?|enables?|helps?)\\b`, "i");
+        const subjVerb = new RegExp(`\\b${subj}\\s+(?:is|are|provides?|designs?|develops?|operates?|manufactures?|makes?|markets?|sells?|offers?|supplies|distributes?|delivers?|produces?|serves?|engages?|builds?|creates?|owns?|enables?|helps?|pioneers?|pioneered|powers?|specializ\\w+)\\b`, "i");
         const m = s.match(subjVerb);
         if (m && m.index > 0 && m.index < 200) {
           const prefix = s.slice(0, m.index);
