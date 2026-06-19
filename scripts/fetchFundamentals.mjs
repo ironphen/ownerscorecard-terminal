@@ -80,7 +80,7 @@ const CONCEPTS = {
   interestExpense: ["InterestExpense", "InterestExpenseNonoperating", "InterestAndDebtExpense"],
   revenue: ["RevenueFromContractWithCustomerExcludingAssessedTax", "Revenues", "RevenueFromContractWithCustomerIncludingAssessedTax", "OilAndGasRevenue", "RevenueMineralSales"],
   netIncome: ["NetIncomeLoss", "NetIncomeLossAvailableToCommonStockholdersBasic", "ProfitLoss"],
-  cashFromOps: ["NetCashProvidedByUsedInOperatingActivities"],
+  cashFromOps: ["NetCashProvidedByUsedInOperatingActivities", "NetCashProvidedByUsedInOperatingActivitiesContinuingOperations"],
   // The cash-flow depreciation (+amortization) add-back, the maintenance-capex proxy the
   // steady-state owner-earnings lens subtracts from operating cash flow. Most filers report a
   // combined depreciation-and-amortization line (the leading tags). Microsoft and Alphabet
@@ -599,6 +599,47 @@ async function main() {
         console.log(`  ${concept.padEnd(58)} ${(last.val / 1e6).toFixed(0).padStart(10)}M  (FY${years[years.length - 1]})`);
       }
       console.log("=== end DEP_DEBUG ===\n");
+    }
+
+    // Diagnostic: CFO_DEBUG=APD dumps every operating-cash-flow us-gaap tag and its latest annual
+    // value, to find the line a filer with discontinued operations actually uses (Air Products,
+    // Ashland, GE HealthCare tag ...ContinuingOperations, so the plain tag reads null — or a partial
+    // quarterly value sneaks into the TTM). Names the real tag so the concept map can be widened.
+    if (process.env.CFO_DEBUG && process.env.CFO_DEBUG.toUpperCase().split(",").map((s) => s.trim()).includes(ticker.toUpperCase())) {
+      const ug = facts?.facts?.["us-gaap"] || {};
+      console.log(`\n=== CFO_DEBUG ${ticker}: cashFromOps=${pick(CONCEPTS.cashFromOps)} ===`);
+      for (const concept of Object.keys(ug)) {
+        if (!/cashprovided|cashused|operatingactiv|netcashflow/i.test(concept)) continue;
+        const usd = ug[concept]?.units?.USD;
+        if (!usd) continue;
+        const byYear = {};
+        for (const o of usd) { if (o.form !== "10-K" || o.fp !== "FY" || o.fy == null) continue; if (!byYear[o.fy] || o.end > byYear[o.fy].end) byYear[o.fy] = o; }
+        const years = Object.keys(byYear).sort();
+        if (!years.length) continue;
+        const last = byYear[years[years.length - 1]];
+        console.log(`  ${concept.padEnd(66)} ${(last.val / 1e6).toFixed(0).padStart(10)}M  (FY${years[years.length - 1]})`);
+      }
+      console.log("=== end CFO_DEBUG ===\n");
+    }
+
+    // Diagnostic: CAPEX_DEBUG=EOG dumps every investing-outflow us-gaap tag and its latest annual
+    // value, to find the capex concept a filer actually uses (oil & gas, utilities and others tag it
+    // outside the standard PaymentsToAcquirePropertyPlantAndEquipment, so owner earnings reads null).
+    if (process.env.CAPEX_DEBUG && process.env.CAPEX_DEBUG.toUpperCase().split(",").map((s) => s.trim()).includes(ticker.toUpperCase())) {
+      const ug = facts?.facts?.["us-gaap"] || {};
+      console.log(`\n=== CAPEX_DEBUG ${ticker}: capex=${pick(CONCEPTS.capex)} ===`);
+      for (const concept of Object.keys(ug)) {
+        if (!/payments(to|for)|capitalexpend|additionsto|purchaseof|acquisitionof/i.test(concept)) continue;
+        const usd = ug[concept]?.units?.USD;
+        if (!usd) continue;
+        const byYear = {};
+        for (const o of usd) { if (o.form !== "10-K" || o.fp !== "FY" || o.fy == null) continue; if (!byYear[o.fy] || o.end > byYear[o.fy].end) byYear[o.fy] = o; }
+        const years = Object.keys(byYear).sort();
+        if (!years.length) continue;
+        const last = byYear[years[years.length - 1]];
+        console.log(`  ${concept.padEnd(66)} ${(last.val / 1e6).toFixed(0).padStart(10)}M  (FY${years[years.length - 1]})`);
+      }
+      console.log("=== end CAPEX_DEBUG ===\n");
     }
 
     // Diagnostic: SHARES_DEBUG=MCD dumps every share-count us-gaap tag and its annual values,

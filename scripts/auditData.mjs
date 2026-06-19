@@ -66,6 +66,15 @@ for (const c of companies) {
     }
   }
 
+  // Critical cash-flow lines for a non-financial operating company. Owner earnings is built from
+  // operating cash and capex, so a null here is a mis-matched XBRL tag (a discontinued-ops or
+  // industry variant the concept map misses), not a company without cash flow — exactly the gap
+  // that hid Air Products' real ~$3.3B operating cash. Loud, so a matching gap can't ship silently.
+  if (!isFin && topLineRevenue(L, c) > 0) {
+    if (L.cashFromOps == null) ERR("cashflow-missing", t, "no operating cash flow found (likely a mis-matched XBRL tag); owner earnings, the durability read and the reverse-DCF all go blank");
+    else if (L.capex == null && sector !== "assetLight") WARN("capex-missing", t, "no capital-expenditure line found (likely a mis-matched XBRL tag); owner earnings can't net out reinvestment");
+  }
+
   // Top line: the headline number. Must exist and be positive after reconstruction.
   const rev = topLineRevenue(L, c);
   if (rev == null || rev <= 0) {
