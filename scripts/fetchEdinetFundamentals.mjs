@@ -521,6 +521,19 @@ async function main() {
         for (let k = 0; k <= 3 && k < lines.length; k++) console.log(`     ${k === 0 ? "hdr" : "r" + k}: ${JSON.stringify(lines[k].slice(0, 220))}`);
       }
       parseFacts(text, store);
+      if (isDbg) {
+        // Raw operating-cash-flow rows — every context and consolidated flag — so a mis-pick or a
+        // correct consolidated value sitting under a rejected dimensional context is visible (the
+        // store keeps only the top-ranked match, hiding the rest). The diagnostic for a CFO that
+        // reads wildly out of line with the company's own history.
+        for (let i = 1; i < lines.length; i++) {
+          const row = lines[i].split("\t");
+          if (row.length <= COL.value) continue;
+          const el = cell(row[COL.element]).split(":").pop();
+          if (!/OperatingActivities|CashFlowsFrom|DepreciationAndAmortizationOpeCF/i.test(el)) continue;
+          console.log(`     CF| ${el.padEnd(58)} ctx=${cell(row[COL.context]).padEnd(34)} consol=${cell(row[COL.consol]).padEnd(4)} val=${cell(row[COL.value])}`);
+        }
+      }
     }
     const fy = hit.periodEnd ? Number(hit.periodEnd.slice(0, 4)) : (hit.submit ? Number(hit.submit.slice(0, 4)) : null);
     const meta = { fy, periodEnd: hit.periodEnd, edinetCode: hit.edinetCode, secCode: hit.secCode, docId: hit.docId };

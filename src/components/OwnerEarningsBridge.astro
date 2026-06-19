@@ -38,6 +38,13 @@ if (b) {
 const showBars = !!b && b.netIncome > 0 && b.ownerEarnings > 0;
 const barMax = showBars ? Math.max(b.netIncome, b.ownerEarnings) : 0;
 
+// When a large share of reported profit didn't arrive as operating cash — the residual that
+// closes net income to CFO is a big negative — owner earnings (CFO − capex) understates the
+// year's economics: the gap can be a working-capital swing, a heavy tax year, or, the case that
+// prompted this, profit a company earns on investments it books through investing rather than
+// operations (Nintendo's float of cash and securities). A small note when that gap is large.
+const bigGap = !!b && b.netIncome > 0 && b.other < -0.5 * b.netIncome;
+
 // One factual takeaway, no verdict.
 let takeaway = null;
 if (b) {
@@ -99,6 +106,17 @@ if (b) {
       above.
     </p>
 
+    {bigGap ? (
+      <p class="gapnote">
+        Mind the gap: much of this year's profit didn't arrive as operating cash — it sits in
+        “working capital &amp; other” above. That can be a real inventory or timing swing, or profit
+        that doesn't run through operating cash at all: a heavy tax year, equity-method earnings, or
+        investment income a company earns on its cash pile and books through investing rather than
+        operations. For a year like this, owner earnings understates the cash an owner truly earned;
+        read it against the full cash-flow statement.
+      </p>
+    ) : null}
+
     <p class="foot">Arithmetic on the company's own cash-flow statement; nothing here is scored. It ties out to the Owner Earnings the scorecard reads.</p>
   </section>
 ) : null}
@@ -138,6 +156,8 @@ if (b) {
   .step.total .amt { font-weight: 800; font-size: 18px; color: var(--accent); }
 
   .note { font-family: var(--serif); font-size: 13.5px; line-height: 1.6; color: var(--ink-soft); background: var(--accent-tint); border-left: 2px solid var(--accent); padding: 10px 14px; margin: 14px 0 0; max-width: 80ch; }
+  /* The gap caveat is a quieter aside than the main note — a flag, not a headline. */
+  .gapnote { font-family: var(--serif); font-style: italic; font-size: 13px; line-height: 1.6; color: var(--muted); border-left: 2px solid var(--rule-strong); padding: 2px 0 2px 12px; margin: 12px 0 0; max-width: 80ch; }
   .foot { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--rule-strong); margin-top: 16px; padding-top: 10px; max-width: 74ch; }
 
   @media (max-width: 560px) {

@@ -43,14 +43,17 @@ const cyclical = overlays.some((o) => o.key === "cyclical");
 const median = (xs) => { const s = [...xs].sort((a, b) => a - b); return s.length ? s[Math.floor((s.length - 1) / 2)] : null; };
 
 const L = company.ttm?.lines || company.lines || {};
-// Share count gates every mode; if a TTM block carries no diluted-share figure, fall
-// back to the latest annual so a usable tool (especially the negative-earnings one) isn't
-// silently withheld over a single missing field.
+// Share count turns the price into a market cap. We fall back from the TTM block to the latest
+// annual, but some filers (Up-C structures, multiple share classes — Planet Fitness, Shopify)
+// tag their shares where the pull misses them, leaving it null. Rather than withhold the whole
+// tool over that one field, we run the owner-earnings mode anyway and let the reader bring the
+// share count, the same way they bring the price.
 const shares = L.sharesDiluted ?? company.lines?.sharesDiluted ?? null;
+const haveShares = shares != null && shares > 0;
 const cfo = L.cashFromOps, capex = L.capex;
 const ownerEarnings = cfo != null && capex != null ? cfo - Math.abs(capex) : null;
 const netDebt = (L.totalDebt || 0) - (liquidAssets(L) || 0);
-const runnable = ownerEarnings != null && ownerEarnings > 0 && shares != null && shares > 0;
+const runnable = ownerEarnings != null && ownerEarnings > 0;
 
 // Graham's price-gate inputs: 3-year average earnings (his method, to avoid paying
 // for a peak) and current book value, both per share.
@@ -273,7 +276,7 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
       <p class="note">A reverse-DCF needs positive owner earnings, or at least revenue, to anchor to, there's no clean base here. Judge this one on assets or normalized earnings, not a growth model.</p>
     )
   ) : (
-    <div id="valBox" data-oe={ownerEarnings} data-oe3={oeNormalized ?? ""} data-oemaint={ownerEarningsMaint ?? ""} data-oemaint3={oe3Maint ?? ""} data-sbc={sbcLatest ?? ""} data-gdeliv={gDeliv ?? ""} data-netdebt={netDebt} data-shares={shares} data-name={name} data-eps3={eps3 ?? ""} data-bvps={bvps ?? ""} data-sym={sym}>
+    <div id="valBox" data-oe={ownerEarnings} data-oe3={oeNormalized ?? ""} data-oemaint={ownerEarningsMaint ?? ""} data-oemaint3={oe3Maint ?? ""} data-sbc={sbcLatest ?? ""} data-gdeliv={gDeliv ?? ""} data-netdebt={netDebt} data-shares={shares} data-haveshares={haveShares ? "1" : "0"} data-name={name} data-eps3={eps3 ?? ""} data-bvps={bvps ?? ""} data-sym={sym}>
       <p class="intro">
         A price is the one input we don't pull, <b>you bring it</b>. Type today's close (read it off any
         broker or quote site) and see the owner-earnings growth you'd have to believe to justify it, set
@@ -285,6 +288,15 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
         <span class="dollar">{sym}</span>
         <input id="px" type="number" inputmode="decimal" step="0.01" min="0" placeholder="e.g. 220.50" />
       </div>
+
+      {!haveShares ? (
+        <div class="priceRow shRow">
+          <label for="shInput">Shares outstanding</label>
+          <input id="shInput" type="number" inputmode="decimal" step="0.1" min="0" placeholder="e.g. 87.5" />
+          <span class="unit">million</span>
+          <span class="shWhy">— the filing tags {name}&rsquo;s share count where we can&rsquo;t read it, so bring it too (any quote page lists it); the rest is from the record.</span>
+        </div>
+      ) : null}
 
       <div class="bases" role="group" aria-label="Make the owner-earnings base honest">
         <span class="basesLbl">Base</span>
@@ -327,7 +339,7 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
       </div>
 
       <p class="foot">
-        Owner earnings {$(ownerEarnings)} on {(shares / 1e6).toFixed(0)}M diluted shares; net {netDebt >= 0 ? `debt ${$(netDebt)}` : `cash ${$(-netDebt)}`}.
+        Owner earnings {$(ownerEarnings)} {haveShares ? `on ${(shares / 1e6).toFixed(0)}M diluted shares` : "on the share count you enter above"}; net {netDebt >= 0 ? `debt ${$(netDebt)}` : `cash ${$(-netDebt)}`}.
         The base is the latest year by default; <b>Normalize</b> values it on the through-cycle average margin (the earnings-power figure above, Graham's method), and <b>Net of stock comp</b> treats option pay as the expense it is.{offerMaint ? (<> Capex ({$(Math.abs(capex))}) runs well above depreciation ({$(dep)}), so this is a build-out; <b>Steady-state</b> swaps total capex for maintenance (≈ depreciation), lifting the base to about {$(ownerEarningsMaint)}, the cash it would throw off if it stopped expanding.</>) : null}
         The reference value extrapolates the owner-earnings growth the record actually delivered, netted against debt — a yardstick, never a price target. The tool says what you'd have to <em>believe</em>, not what the company is <em>worth</em>.
       </p>
@@ -349,6 +361,10 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
   .priceRow label { font-size: 13px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
   .priceRow .dollar { font-size: 20px; font-weight: 700; color: var(--ink); }
   .priceRow input { width: 140px; padding: 8px 10px; border: 1px solid var(--rule-strong); font-family: var(--sans); font-size: 18px; font-variant-numeric: tabular-nums; background: var(--surface); }
+  .shRow { margin-top: 10px; }
+  .shRow input { width: 110px; }
+  .shRow .unit { font-size: 13px; color: var(--muted); }
+  .shWhy { flex-basis: 100%; font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); line-height: 1.5; margin-top: 3px; max-width: 70ch; }
 
   .lede { font-family: var(--serif); font-size: clamp(16px, 2.3vw, 18.5px); line-height: 1.5; margin: 14px 0 0; max-width: 66ch; min-height: 1.5em; }
   .lede b { font-weight: 600; }
@@ -389,11 +405,15 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
   (function () {
     const box = document.getElementById("valBox");
     if (!box) return;
-    const OE = parseFloat(box.dataset.oe), SH = parseFloat(box.dataset.shares), NAME = box.dataset.name || "this company";
+    const OE = parseFloat(box.dataset.oe), SH_DATA = parseFloat(box.dataset.shares), NAME = box.dataset.name || "this company";
     const SYM = box.dataset.sym || "$";
     const OE3 = parseFloat(box.dataset.oe3), SBC = parseFloat(box.dataset.sbc) || 0, GDELIV = parseFloat(box.dataset.gdeliv), NETDEBT = parseFloat(box.dataset.netdebt) || 0;
     const OEM = parseFloat(box.dataset.oemaint), OEM3 = parseFloat(box.dataset.oemaint3);
     const px = document.getElementById("px");
+    // When the filing's share count is missing (Up-C / multi-class filers), the reader supplies it
+    // in millions; otherwise SH comes straight from the record. Market cap can't be formed without it.
+    const shInput = document.getElementById("shInput");
+    const curSH = () => { if (SH_DATA > 0) return SH_DATA; const v = shInput ? parseFloat(shInput.value) : NaN; return v > 0 ? v * 1e6 : NaN; };
     const r = document.getElementById("r"), n = document.getElementById("n"), g = document.getElementById("g");
     const rOut = document.getElementById("rOut"), nOut = document.getElementById("nOut"), gOut = document.getElementById("gOut");
     const lede = document.getElementById("lede"), impG = document.getElementById("impG"), oeY = document.getElementById("oeY");
@@ -437,6 +457,7 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
     function update() {
       const { rr, N, gT } = dials();
       const base = effOE();
+      const SH = curSH();
 
       // Reference value: what the business is worth on the growth it actually delivered,
       // valued at your dials. A reference to weigh your price against, never a target; shown
@@ -457,6 +478,11 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
         if (pe) pe.textContent = "—"; if (pb) pb.textContent = "—"; if (ggate) { ggate.textContent = "—"; ggate.style.color = ""; }
         setURL(""); return;
       }
+      if (!(SH > 0)) {
+        lede.textContent = "Enter the shares outstanding above to run it."; impG.textContent = "—"; oeY.textContent = "—";
+        if (pe) pe.textContent = "—"; if (pb) pb.textContent = "—"; if (ggate) { ggate.textContent = "—"; ggate.style.color = ""; }
+        return;
+      }
       const mc = price * SH, res = solve(mc / base, rr, N, gT);
       oeY.textContent = pcs(base / mc);
       if (pe || pb || ggate) {
@@ -476,7 +502,7 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
       else lede.innerHTML = `At <b>${P}</b>, the market is pricing <b>${esc(NAME)}</b> to grow owner earnings about <b class="hot">${pcs(res.g)}</b>/yr for ${N} years, then ${(gT * 100).toFixed(1)}% forever, discounted at ${(rr * 100).toFixed(0)}%.`;
       setURL(px.value);
     }
-    [px, r, n, g].forEach((el) => el.addEventListener("input", update));
+    [px, r, n, g, shInput].forEach((el) => el && el.addEventListener("input", update));
     [oeNorm, oeSbc, oeMaint].forEach((el) => el && el.addEventListener("change", update));
     try { const q = new URL(location.href).searchParams.get("px"); if (q) px.value = q; } catch (e) {}
     update();

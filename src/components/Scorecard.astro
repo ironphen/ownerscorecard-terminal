@@ -68,7 +68,7 @@ const graham = company.market !== "JP" && !isFin ? grahamTests(company) : null;
             </div>
             <div class="label" style={`color:${TONE_COLOR[c.tone]}`}>{c.label}</div>
             {c.formula ? <div class="formula">{c.formula}</div> : null}
-            <p class="note">{c.note}</p>
+            <details class="why"><summary>What this means</summary><p class="note">{c.note}</p></details>
           </li>
         ))}
       </ul>
@@ -87,7 +87,7 @@ const graham = company.market !== "JP" && !isFin ? grahamTests(company) : null;
               <span class="gbadge" style={`color:${TONE_COLOR[GTONE[t.status]]}; border-color:${TONE_COLOR[GTONE[t.status]]}`}>{GLABEL[t.status]}</span>
             </div>
             <div class="gcrit">{t.criterion} · <b>{t.value}</b></div>
-            <p class="factNote">{t.note}</p>
+            <details class="why"><summary>What this means</summary><p class="factNote">{t.note}</p></details>
           </li>
         ))}
       </ul>
@@ -105,7 +105,7 @@ const graham = company.market !== "JP" && !isFin ? grahamTests(company) : null;
               <span class="factLabel">{ft.label}</span>
               <span class="factValue" style={`color:${TONE_COLOR[ft.tone]}`}>{ft.value}</span>
             </div>
-            <p class="factNote">{ft.note}</p>
+            <details class="why"><summary>What this means</summary><p class="factNote">{ft.note}</p></details>
           </li>
         ))}
       </ul>
@@ -147,6 +147,17 @@ const graham = company.market !== "JP" && !isFin ? grahamTests(company) : null;
   .label { font-weight: 600; font-size: 13px; margin-top: 2px; }
   .formula { font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; margin-top: 4px; }
   .note { font-size: 13.5px; color: var(--ink-dim); margin: 6px 0 0; line-height: 1.5; }
+
+  /* The explanatory paragraph under each row is collapsed by default for a clean, scannable
+     scorecard; the figure and its one-word read stay visible, the teaching is one click away. */
+  .why { margin-top: 6px; }
+  .why > summary { list-style: none; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; font-family: var(--sans); font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); user-select: none; }
+  .why > summary::-webkit-details-marker { display: none; }
+  .why > summary::before { content: "▸"; font-size: 9px; line-height: 1; transition: transform 0.15s ease; }
+  .why[open] > summary::before { transform: rotate(90deg); }
+  .why > summary:hover { color: var(--accent); }
+  .why[open] > summary { margin-bottom: 3px; }
+  .why > .note, .why > .factNote { margin-top: 0; }
 
   .durNote { font-family: var(--serif); font-style: italic; font-size: 13.5px; color: var(--muted); margin: 9px 0 6px; }
   .report { list-style: none; padding: 0; margin: 0; }
