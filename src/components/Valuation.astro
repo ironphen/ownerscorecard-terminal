@@ -53,7 +53,9 @@ const haveShares = shares != null && shares > 0;
 const cfo = L.cashFromOps, capex = L.capex;
 const ownerEarnings = cfo != null && capex != null ? cfo - Math.abs(capex) : null;
 const netDebt = (L.totalDebt || 0) - (liquidAssets(L) || 0);
-const runnable = ownerEarnings != null && ownerEarnings > 0;
+// `runnable` is decided below, once the normalized and steady-state bases are known: the latest
+// year can be negative on total capex (a build-out) while a through-cycle or maintenance-capex
+// base is solidly positive, and that should still run the owner-earnings tool, not the loss read.
 
 // Graham's price-gate inputs: 3-year average earnings (his method, to avoid paying
 // for a peak) and current book value, both per share.
@@ -94,6 +96,18 @@ if (oeSeries.length >= 4) {
   if (a > 0 && b > 0) gDeliv = Math.pow(b / a, 1 / span) - 1;
 }
 const oeWin = sparkWin(oeSeries, 7, null);
+
+// A positive base to anchor the reverse-DCF can come from the latest year, the through-cycle
+// normalization, or — for a business mid-build-out whose total capex buries the cash it throws
+// off at rest — the steady-state (maintenance-capex) figure. When the latest year is negative on
+// total capex but a normalized or steady-state base is positive (Air Products, a cyclical at a
+// trough), we still run the owner-earnings tool and open it on that base with the toggle
+// pre-checked, so the normalize controls are right there — rather than dropping to the loss read.
+const maintBasePos = offerMaint && (((ownerEarningsMaint ?? -1) > 0) || ((oe3Maint ?? -1) > 0));
+const normBasePos = (oeNormalized ?? -1) > 0;
+const defaultMaint = !(ownerEarnings > 0) && maintBasePos;
+const defaultNorm = !(ownerEarnings > 0) && !defaultMaint && normBasePos;
+const runnable = (ownerEarnings != null && ownerEarnings > 0) || defaultMaint || defaultNorm;
 
 // Book-value valuation: a bank or an insurer is worth a multiple of tangible book set
 // by the return it earns on that book. Same math for both; only the wording differs,
@@ -283,6 +297,14 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
         beside what {name} has actually delivered. Nothing is stored; the number stays in your browser.
       </p>
 
+      {(defaultMaint || defaultNorm) ? (
+        <p class="basenote">
+          {name}&rsquo;s latest year shows <b>negative owner earnings</b>{defaultMaint
+            ? " — the mark of a build-out, where total capital spending outruns the cash the business throws off today"
+            : ", a cyclical trough"}. So the tool opens on the {defaultMaint ? "steady-state base — maintenance capex in place of the build-out spend" : "through-cycle base"}, the cash it would earn at rest, so the normalize controls actually work; clear the toggle below to read the latest year exactly as reported.
+        </p>
+      ) : null}
+
       <div class="priceRow">
         <label for="px">Today&rsquo;s price</label>
         <span class="dollar">{sym}</span>
@@ -300,9 +322,9 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
 
       <div class="bases" role="group" aria-label="Make the owner-earnings base honest">
         <span class="basesLbl">Base</span>
-        <label class="tog"><input type="checkbox" id="oeNorm" /> Normalize · through-cycle margin</label>
+        <label class="tog"><input type="checkbox" id="oeNorm" checked={defaultNorm} /> Normalize · through-cycle margin</label>
         <label class="tog"><input type="checkbox" id="oeSbc" /> Net of stock comp</label>
-        {offerMaint ? <label class="tog"><input type="checkbox" id="oeMaint" /> Steady-state · maintenance capex</label> : null}
+        {offerMaint ? <label class="tog"><input type="checkbox" id="oeMaint" checked={defaultMaint} /> Steady-state · maintenance capex</label> : null}
       </div>
 
       <p class="lede" id="lede">Enter a price above to run it.</p>
@@ -355,6 +377,8 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
 
   .note { font-family: var(--serif); font-style: italic; font-size: 14px; color: var(--ink-dim); margin: 12px 0 0; line-height: 1.5; max-width: 66ch; }
   .intro { font-family: var(--serif); font-style: italic; font-size: 14px; color: var(--muted); margin: 12px 0 0; line-height: 1.55; max-width: 68ch; }
+  .basenote { font-family: var(--serif); font-size: 13.5px; line-height: 1.55; color: var(--ink-soft); background: var(--accent-tint); border-left: 2px solid var(--accent); padding: 9px 13px; margin: 12px 0 0; max-width: 72ch; }
+  .basenote b { color: var(--ink); }
   .intro b { font-style: normal; color: var(--ink); }
 
   .priceRow { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 16px 0 0; }

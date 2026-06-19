@@ -6,6 +6,7 @@
 const ratio = (n, d) => (n != null && d ? n / d : null);
 const pct = (v, dp = 0) => (v == null ? "—" : `${(v * 100).toFixed(dp)}%`);
 const avg = (xs) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null);
+const medianOf = (xs) => { const s = [...xs].sort((a, b) => a - b); return s.length ? s[Math.floor((s.length - 1) / 2)] : null; };
 
 // ---- sector: the business model, the lens for how to read the company ----
 
@@ -240,15 +241,34 @@ function overlays(company, s) {
   const out = [];
 
   if ((L.netIncome != null && L.netIncome < 0) || (L.operatingIncome != null && L.operatingIncome < 0)) {
-    out.push({ key: "unprofitable", label: "Unprofitable growth",
-      reason: "no operating profit yet, judge it on revenue growth, gross-margin trajectory, cash burn and runway, never on an earnings multiple" });
+    // Unprofitable growth, judged on the record rather than one year. Graham would not brand a
+    // business unprofitable on a single down year (a writedown, a build-out, a cyclical trough),
+    // which the cyclical and build-out overlays and the normalized-earnings read handle. Require
+    // the latest year in the red AND the multi-year record to confirm it: too short to tell, or
+    // most years unprofitable, or a through-cycle median at or below zero — and no recovery already
+    // visible in the trailing twelve months.
+    const niHist = hist.map((h) => h.lines.netIncome).filter((v) => v != null);
+    const ttmNi = company.ttm?.lines?.netIncome ?? null;
+    const negShare = niHist.length ? niHist.filter((v) => v < 0).length / niHist.length : 0;
+    const medNi = niHist.length ? medianOf(niHist) : null;
+    if ((niHist.length < 3 || negShare >= 0.5 || (medNi != null && medNi <= 0)) && !(ttmNi != null && ttmNi > 0)) {
+      out.push({ key: "unprofitable", label: "Unprofitable growth",
+        reason: "no sustained operating profit across the record, judge it on revenue growth, gross-margin trajectory, cash burn and runway, never on an earnings multiple" });
+    }
   }
 
-  const cov = L.operatingIncome != null && L.interestExpense ? L.operatingIncome / L.interestExpense : null;
-  // Real distress = can't cover interest, or operations themselves burn cash,  // not merely negative free cash flow, which heavy capex (a build-out) also causes.
-  if ((cov != null && cov < 1.5) || (L.cashFromOps != null && L.cashFromOps < 0 && L.totalDebt > 0)) {
+  // Distress / turnaround, also read through the cycle: a persistent inability to cover interest,
+  // or operating cash that burns against real debt — a pattern, not one rough year on an otherwise
+  // sound record (which is a cyclical trough or a one-off, read elsewhere). The through-cycle
+  // median coverage, and how often operating cash has actually gone negative, decide it.
+  const covHist = hist.map((h) => (h.lines.operatingIncome != null && h.lines.interestExpense ? h.lines.operatingIncome / h.lines.interestExpense : null)).filter((v) => v != null);
+  const medCov = covHist.length ? medianOf(covHist) : null;
+  const cfoHist = hist.map((h) => h.lines.cashFromOps).filter((v) => v != null);
+  const cfoBurnShare = cfoHist.length ? cfoHist.filter((v) => v < 0).length / cfoHist.length : 0;
+  const latestBurn = L.cashFromOps != null && L.cashFromOps < 0 && L.totalDebt > 0;
+  if ((medCov != null && medCov < 1.5) || (latestBurn && cfoBurnShare >= 0.4)) {
     out.push({ key: "distress", label: "Distress / turnaround",
-      reason: "thin interest coverage or cash-burning operations against real debt, the first questions are liquidity and the maturity wall, not growth" });
+      reason: "thin interest coverage or cash-burning operations against real debt across the record, the first questions are liquidity and the maturity wall, not growth" });
   }
 
   // Capital build-out (the Chanos lens): capex elevated AND surging vs its own past.
