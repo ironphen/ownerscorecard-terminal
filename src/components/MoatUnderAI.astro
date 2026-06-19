@@ -70,13 +70,13 @@ if (exp.tier === "elevated" && (assetLight || wasDurable)) {
 } else if (exp.tier === "low") {
   verdict = `AI is unlikely to contest a moat that is physical, regulated or balance-sheet-funded; here it reads more as a cost tool than a threat${ai && ai.asCapability ? ", and the company is using it that way" : ""}.`;
 } else {
-  verdict = "AI will reshape costs and some products here without clearly contesting or sparing the core moat; how management frames it is the tell, not the industry label.";
+  verdict = "So the honest read here is a question, not an answer: does a moat the record shows as durable outlast a technology that lowers the cost of part of what the firm sells? Weigh the durability in the record above against how the filing itself frames AI — the industry label decides neither.";
 }
 ---
 
 <section class="aimoat">
   <div class="head">
-    <h3 class="secHead"><Term id="too-hard-pile">Moat under AI</Term></h3>
+    <h3 class="secHead"><Term id="too-hard-pile">Does AI threaten the moat?</Term></h3>
     <span class="tierBadge" style={`color:${TONE_COLOR[tier.tone]}; border-color:${TONE_COLOR[tier.tone]}`}>{tier.label} contestability</span>
   </div>
   <p class="lead">{cap(exp.reason)}.</p>

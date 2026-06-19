@@ -81,6 +81,10 @@ const order = [...LETTERS.filter((l) => groups.has(l)), ...(groups.has("#") ? ["
   .letH { font-family: var(--sans); font-weight: 800; font-size: 13px; letter-spacing: 0.08em; color: var(--muted); margin: 22px 0 0; padding-bottom: 5px; border-bottom: 1px solid var(--rule-strong); }
   .ents { list-style: none; padding: 0; margin: 6px 0 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 0 24px; }
   .ent { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; padding: 8px 2px; border-bottom: 1px solid var(--rule); }
+  /* The search hides non-matching rows via the [hidden] attribute, but `.ent { display: flex }`
+     ties the UA `[hidden] { display: none }` rule on specificity and wins on source order, so the
+     rows stayed visible (the count updated, the list didn't). Force hidden to actually hide. */
+  .ent[hidden], .let[hidden] { display: none; }
   .entLink { display: flex; align-items: baseline; gap: 9px; min-width: 0; flex: 1 1 auto; }
   .entLink:hover { text-decoration: none; }
   .entLink:hover .n { color: var(--accent); }
