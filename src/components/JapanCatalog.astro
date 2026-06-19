@@ -1,163 +1,123 @@
 ---
-// The Japanese pool, rendered as its own section of the catalog page: a separate pool that
-// never mixes into the US table above it, never runs through the US SIC engine, and reads in
-// yen straight from EDINET. Anchored by the five trading houses Berkshire holds.
+// The Japanese pool, rendered as its own A-Z directory to match the US and ADR tabs: a separate
+// pool that never mixes into the others and never runs through the US SIC engine, read in yen
+// straight from EDINET. Self-contained — its own scoped search and rail (jp- prefixed) so it never
+// collides with the other directories on the page. Each name opens to its full Owner's Scorecard at
+// /jp/<ticker>, in yen. Anchored by the five trading houses Berkshire holds.
 import jp from "../data/fundamentals.jp.json";
-import { fmtMoney, liquidAssets, operatingMargin, ownerEarningsMargin, oiReliable } from "../lib/fundamentals.mjs";
 
-const yen = (v) => fmtMoney(v, "JPY");
-const pct = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.abs(v * 100).toFixed(dp)}%`);
-const SECTOR_LABEL = { assetLight: "Asset-light", consumer: "Consumer", capital: "Capital-int.", retail: "Trading/dist.", general: "Diversified" };
+const sortKey = (s) => s.replace(/^the\s+/i, "").replace(/^[^a-z0-9]+/i, "").trim().toLowerCase();
+const rows = [...(jp.companies || [])]
+  .map((c) => ({ ticker: String(c.ticker || ""), name: c.name || c.ticker, industry: c.industry || null, key: sortKey(c.name || c.ticker) }))
+  .filter((r) => r.ticker)
+  .sort((a, b) => a.key.localeCompare(b.key) || a.ticker.localeCompare(b.ticker));
 
-const rows = (jp.companies || []).map((c) => {
-  const L = c.lines || {};
-  const roe = L.netIncome != null && L.stockholdersEquity > 0 ? L.netIncome / L.stockholdersEquity : null;
-  const netCash = L.totalDebt != null || L.cashAndEquivalents != null ? (liquidAssets(L) || 0) - (L.totalDebt || 0) : null;
-  return {
-    ticker: c.ticker,
-    name: c.name,
-    industry: c.industry,
-    sector: SECTOR_LABEL[c.sector] || "—",
-    std: c.accountingStandard || "",
-    revenue: L.revenue ?? null,
-    opMargin: oiReliable(c) ? operatingMargin(L) : null, // blank for the trading houses, read on ROE
-    roe,
-    oeMargin: ownerEarningsMargin(L),
-    netCash,
-  };
-}).sort((a, b) => (b.revenue ?? 0) - (a.revenue ?? 0));
-
-const sortData = rows.map((r) => ({ t: r.ticker, rev: r.revenue, opm: r.opMargin, roe: r.roe, oem: r.oeMargin, nc: r.netCash }));
+const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+const letterOf = (k) => { const ch = (k[0] || "#").toUpperCase(); return /[A-Z]/.test(ch) ? ch : "#"; };
+const groups = new Map();
+for (const r of rows) { const k = letterOf(r.key); if (!groups.has(k)) groups.set(k, []); groups.get(k).push(r); }
+const order = [...LETTERS.filter((l) => groups.has(l)), ...(groups.has("#") ? ["#"] : [])];
 ---
 
-<section class="japanWrap" id="japan">
-  <div class="bandHead">
-    <h2>Japan</h2>
-    <span class="badge">A separate pool · EDINET · ¥</span>
-  </div>
-  <p class="method">
-    A separate pool, never mixed into the catalog above and never run through the US classifier.
-    The same owner&rsquo;s questions, asked of Japanese companies straight from their EDINET
-    filings, in yen. Quantitative by design: the figures are read the way the US catalog reads
-    EDGAR; the Japanese-language narrative is left to the filing. It begins where the most famous
-    living value investor went hunting abroad, the five trading houses Berkshire keeps buying.
-    Operating margin is blank for those, which earn through affiliates rather than an operating
-    line; read them on return on equity.
-  </p>
+{rows.length ? (
+  <section class="jpcat">
+    <div class="bandHead">
+      <h2>Japan</h2>
+      <a class="all" href="/concepts">What the terms mean →</a>
+    </div>
+    <p class="method">
+      A separate pool, never mixed into the catalog above and never run through the US classifier —
+      read in yen, straight from each company's EDINET filing, with the same owner's questions. It
+      begins where the most famous living value investor went hunting abroad: the five trading houses
+      Berkshire keeps buying. The same A-to-Z, each a door to its full record. We don't rank them.
+    </p>
 
-  <div class="scroll">
-    <table class="cat" id="jcat">
-      <thead>
-        <tr>
-          <th class="c-name sortable" data-k="t">Company</th>
-          <th class="c-ind">Industry</th>
-          <th class="num sortable desc" data-k="rev">Revenue</th>
-          <th class="num sortable" data-k="opm"><span class="lf">Op. margin</span><span class="ls">Op.</span></th>
-          <th class="num sortable" data-k="roe">ROE</th>
-          <th class="num sortable" data-k="oem"><span class="lf">Owner-earn.</span><span class="ls">OE</span></th>
-          <th class="num sortable" data-k="nc"><span class="lf">Net cash / (debt)</span><span class="ls">Net cash</span></th>
-        </tr>
-      </thead>
-      <tbody>
-        {rows.map((r) => (
-          <tr data-ticker={r.ticker}>
-            <td class="c-name">
-              <a href={`/jp/${r.ticker}`} class="tkr" title={r.name}>{r.ticker}</a>
-              <span class="nm">{r.name}</span>
-            </td>
-            <td class="c-ind"><span class="tag">{r.industry}</span><span class="sec">{r.sector}{r.std ? ` · ${r.std}` : ""}</span></td>
-            <td class="num">{yen(r.revenue)}</td>
-            <td class="num">{pct(r.opMargin)}</td>
-            <td class="num">{pct(r.roe)}</td>
-            <td class="num">{pct(r.oeMargin)}</td>
-            <td class={`num ${r.netCash != null && r.netCash >= 0 ? "pos" : ""}`}>{r.netCash == null ? "—" : (r.netCash >= 0 ? "+" : "") + yen(r.netCash)}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  </div>
+    <div class="toolbar">
+      <input id="jp-q" type="search" placeholder="Search ticker or name…" class="search" autocomplete="off" aria-label="Search Japanese companies by ticker or name" />
+      <span id="jp-count" class="count">{rows.length} companies</span>
+    </div>
 
-  <p class="legend">
-    {rows.length} companies, from the latest EDINET annual report, in yen. Pick a company for its
-    full Owner&rsquo;s Scorecard. A lens, never a verdict.
-  </p>
+    <nav class="azbar" aria-label="Jump to letter">
+      {LETTERS.map((l) => (groups.has(l) ? <a href={`#J-${l}`}>{l}</a> : <span class="off">{l}</span>))}
+    </nav>
 
-  <script type="application/json" id="jcat-data" is:inline set:html={JSON.stringify(sortData)}></script>
-</section>
+    <div id="jp-index">
+      {order.map((l) => (
+        <section class="let" id={l === "#" ? "J-num" : `J-${l}`}>
+          <h3 class="letH" aria-hidden="true">{l}</h3>
+          <ul class="ents">
+            {groups.get(l).map((r) => (
+              <li class="ent" data-s={`${r.name} ${r.ticker} ${r.industry || ""}`.toLowerCase()}>
+                <a class="entLink" href={`/jp/${r.ticker}`}>
+                  <span class="n">{r.name}</span>
+                  <span class="t">{r.ticker}</span>
+                </a>
+                {r.industry ? <span class="ctry">{r.industry}</span> : null}
+              </li>
+            ))}
+          </ul>
+        </section>
+      ))}
+      <p class="empty" id="jp-empty" hidden>No company matches that.</p>
+    </div>
+  </section>
+) : (
+  <p class="soon">The Japan pool is being assembled. Check back shortly.</p>
+)}
 
 <style>
-  .japanWrap { margin: 0; }
-  .japanWrap .bandHead { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--rule-strong); padding-bottom: 6px; }
-  .japanWrap .bandHead h2 { margin: 0; }
-  .badge { font-family: var(--sans); font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--accent); border: 1px solid var(--accent); border-radius: 999px; padding: 3px 11px; flex: 0 0 auto; }
-  .method { font-family: var(--serif); font-style: italic; font-size: 13.5px; color: var(--muted); margin: 9px 0 0; max-width: 80ch; line-height: 1.55; }
-
-  /* Short table (33 rows), so no fixed-height panel; the page scrolls and the header pins to
-     the top of the viewport while this section is in view (the US toolbar has scrolled away
-     by here, so no --tb-h offset). A phone gets a sideways track. */
-  .scroll { margin-top: 14px; border-bottom: 1px solid var(--rule); }
-  table.cat { border-collapse: collapse; width: 100%; font-size: 13.5px; font-variant-numeric: tabular-nums; }
-  .cat thead th { font-family: var(--sans); font-weight: 600; font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); text-align: right; padding: 9px 10px 7px; white-space: nowrap; position: sticky; top: 0; z-index: 6; background: var(--paper); box-shadow: inset 0 -1px 0 var(--rule-strong); }
-  .cat th.c-name, .cat th.c-ind { text-align: left; }
-  .cat thead th.c-name { left: 0; z-index: 7; }
-  .cat th.sortable { cursor: pointer; user-select: none; }
-  .cat th.sortable:hover { color: var(--ink); }
-  .cat th.sortable::after { content: "↕"; opacity: 0.35; margin-left: 4px; font-size: 10px; }
-  .cat th.sortable.asc::after { content: "↑"; opacity: 1; }
-  .cat th.sortable.desc::after { content: "↓"; opacity: 1; }
-
-  .cat td { padding: 9px 10px; border-bottom: 1px solid var(--rule); text-align: right; white-space: nowrap; }
-  .cat td.c-name, .cat td.c-ind { text-align: left; }
-  .c-name { position: sticky; left: 0; background: var(--paper); z-index: 4; }
-  .tkr { font-weight: 700; }
-  .tkr:hover { color: var(--accent); }
-  .nm { display: block; font-size: 11.5px; color: var(--muted); max-width: 24ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 1px; }
-  .tag { display: inline-block; font-size: 10.5px; letter-spacing: 0.02em; color: var(--tag-ink); background: var(--tag-bg); border-radius: 3px; padding: 2px 8px; white-space: nowrap; }
-  .sec { display: block; font-size: 10.5px; color: var(--faint); letter-spacing: 0.03em; margin-top: 2px; text-transform: uppercase; }
-  .num { color: var(--ink-soft); }
-  .num.pos { color: var(--good); }
-  tbody tr:hover td { background: var(--surface-2); }
-  tbody tr:hover .c-name { background: var(--surface-2); }
-  .legend { font-size: 12px; color: var(--muted); margin: 12px 0 0; line-height: 1.55; max-width: 80ch; }
-  .ls { display: none; }
-
-  @media (max-width: 640px) {
-    .scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-    .lf { display: none; } .ls { display: inline; }
-    .nm { max-width: 18ch; }
-  }
+  .bandHead { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--rule-strong); padding-bottom: 6px; }
+  .bandHead h2 { margin: 0; }
+  .all { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; flex: 0 0 auto; }
+  .method { font-family: var(--serif); font-style: italic; font-size: 13.5px; color: var(--muted); margin: 9px 0 0; max-width: 70ch; line-height: 1.6; }
+  .toolbar { position: sticky; top: 0; z-index: 20; background: var(--paper); display: flex; align-items: center; gap: 12px; margin: 14px 0 0; padding: 8px 0; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule-strong); }
+  .search { flex: 1 1 220px; min-width: 140px; padding: 9px 12px; border: 1px solid var(--rule-strong); border-radius: 3px; font-family: var(--sans); font-size: 14px; background: var(--surface); color: var(--ink); }
+  .search::placeholder { color: var(--faint); }
+  .count { font-size: 11.5px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); flex: 0 0 auto; font-variant-numeric: tabular-nums; }
+  .azbar { display: flex; flex-wrap: wrap; gap: 1px 2px; margin: 12px 0 0; position: sticky; top: 49px; z-index: 19; background: var(--paper); padding: 6px 0; border-bottom: 1px solid var(--rule); }
+  .azbar a, .azbar span { font-family: var(--sans); font-size: 12px; font-weight: 600; letter-spacing: 0.02em; padding: 3px 7px; border-radius: 3px; min-width: 22px; text-align: center; }
+  .azbar a { color: var(--accent); }
+  .azbar a:hover { background: var(--accent-tint); text-decoration: none; }
+  .azbar .off { color: var(--faint); }
+  .let { margin: 0; scroll-margin-top: 92px; }
+  .letH { font-family: var(--sans); font-weight: 800; font-size: 13px; letter-spacing: 0.08em; color: var(--muted); margin: 22px 0 0; padding-bottom: 5px; border-bottom: 1px solid var(--rule-strong); }
+  .ents { list-style: none; padding: 0; margin: 6px 0 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 0 24px; }
+  .ent { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; padding: 8px 2px; border-bottom: 1px solid var(--rule); }
+  /* The search hides non-matching rows via the [hidden] attribute; `.ent { display: flex }` would
+     otherwise win on source order and keep them visible, so force hidden to actually hide. */
+  .ent[hidden], .let[hidden] { display: none; }
+  .entLink { display: flex; align-items: baseline; gap: 9px; min-width: 0; flex: 1 1 auto; }
+  .entLink:hover { text-decoration: none; }
+  .entLink:hover .n { color: var(--accent); }
+  .entLink:hover .t { color: var(--accent); }
+  .n { font-size: 14px; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+  .t { font-family: var(--sans); font-weight: 700; font-variant-numeric: tabular-nums; font-size: 11px; letter-spacing: 0.03em; color: var(--muted); flex: 0 0 auto; }
+  .ctry { font-size: 10.5px; letter-spacing: 0.02em; color: var(--tag-ink); background: var(--tag-bg); border-radius: 3px; padding: 2px 7px; white-space: nowrap; flex: 0 0 auto; }
+  .empty { font-family: var(--serif); font-style: italic; color: var(--muted); padding: 26px 2px; }
+  .soon { font-family: var(--serif); font-style: italic; color: var(--muted); margin: 18px 0; }
+  @media (max-width: 640px) { .ctry { display: none; } }
 </style>
 
 <script is:inline>
   (function () {
-    const table = document.getElementById("jcat");
-    const dataEl = document.getElementById("jcat-data");
-    if (!table || !dataEl) return;
-    let DATA = [];
-    try { DATA = JSON.parse(dataEl.textContent || "[]"); } catch (e) { return; }
-    const byT = Object.fromEntries(DATA.map((d) => [d.t, d]));
-    const tbody = table.tBodies[0];
-    const heads = Array.from(table.tHead.querySelectorAll("th.sortable"));
-    let curKey = "rev", curDir = -1; // revenue, descending, matches the server order
-
-    function sort(key, dir) {
-      const rows = Array.from(tbody.rows);
-      rows.sort((ra, rb) => {
-        const a = byT[ra.dataset.ticker] || {}, b = byT[rb.dataset.ticker] || {};
-        if (key === "t") return dir * String(ra.dataset.ticker).localeCompare(String(rb.dataset.ticker));
-        const av = a[key], bv = b[key];
-        if (av == null && bv == null) return 0;
-        if (av == null) return 1;
-        if (bv == null) return -1;
-        return dir * (av - bv);
+    const q = document.getElementById("jp-q");
+    if (!q) return;
+    const countEl = document.getElementById("jp-count");
+    const emptyEl = document.getElementById("jp-empty");
+    const azbar = document.querySelector(".jpcat .azbar");
+    const sections = Array.from(document.querySelectorAll(".jpcat .let"));
+    function apply() {
+      const term = (q.value || "").trim().toLowerCase();
+      let shown = 0; const live = new Set();
+      sections.forEach((s) => {
+        let any = false;
+        s.querySelectorAll(".ent").forEach((e) => { const m = !term || e.dataset.s.indexOf(term) >= 0; e.hidden = !m; if (m) { any = true; shown++; } });
+        s.hidden = !any; if (any) live.add(s.id);
       });
-      rows.forEach((r) => tbody.appendChild(r));
-      heads.forEach((h) => { h.classList.remove("asc", "desc"); if (h.dataset.k === key) h.classList.add(dir > 0 ? "asc" : "desc"); });
+      if (emptyEl) emptyEl.hidden = shown !== 0;
+      if (countEl) countEl.textContent = shown + (shown === 1 ? " company" : " companies");
+      if (azbar) azbar.querySelectorAll("a").forEach((a) => { const on = live.has((a.getAttribute("href") || "").slice(1)); a.style.opacity = on ? "" : "0.3"; a.style.pointerEvents = on ? "" : "none"; });
     }
-    heads.forEach((h) => h.addEventListener("click", () => {
-      const key = h.dataset.k;
-      const dir = key === curKey ? -curDir : (key === "t" ? 1 : -1);
-      curKey = key; curDir = dir; sort(key, dir);
-    }));
+    q.addEventListener("input", apply);
   })();
 </script>
