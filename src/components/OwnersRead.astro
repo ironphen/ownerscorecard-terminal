@@ -5,9 +5,10 @@
 // you can't locate is worse than none). The company's words on the left, the
 // arithmetic that tests them on the right.
 import language from "../data/language.json";
-import { fmtUSD, ownerEarningsMargin, operatingMargin, coverage, cashPosition, topLineRevenue } from "../lib/fundamentals.mjs";
+import { fmtMoney, ownerEarningsMargin, operatingMargin, coverage, cashPosition, topLineRevenue } from "../lib/fundamentals.mjs";
 
 const { company } = Astro.props;
+const $ = (v) => fmtMoney(v, company?.currency || "USD");
 const L = language?.companies?.[company.ticker] || null;
 const flags = L?.ownerFlags || [];
 
@@ -61,7 +62,7 @@ function spark(values, w = 108, h = 22) {
 function bearing(lens) {
   switch (lens) {
     case "Customer concentration":
-      return rev != null ? { label: `Revenue exposed (${curLabel})`, value: fmtUSD(rev) } : null;
+      return rev != null ? { label: `Revenue exposed (${curLabel})`, value: $(rev) } : null;
     case "Pricing power & competition": {
       if (curOM != null && omPeak) {
         const atHigh = curOM >= omPeak.v - 0.01;
@@ -76,7 +77,7 @@ function bearing(lens) {
     case "Supplier & input dependence":
       return curGM != null ? { label: `Gross-margin cushion (${curLabel})`, value: pc(curGM) } : null;
     case "Concentrated dependence":
-      return curOEM != null ? { label: `Owner-earnings margin at stake (${curLabel})`, value: pc(curOEM) } : rev != null ? { label: `Revenue (${curLabel})`, value: fmtUSD(rev) } : null;
+      return curOEM != null ? { label: `Owner-earnings margin at stake (${curLabel})`, value: pc(curOEM) } : rev != null ? { label: `Revenue (${curLabel})`, value: $(rev) } : null;
     case "Debt terms & refinancing":
     case "Going-concern doubt": {
       if (!cash) return null;

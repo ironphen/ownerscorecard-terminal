@@ -1,7 +1,7 @@
 ---
 import fundamentals from "../data/fundamentals.json";
 import { classify } from "../lib/archetype.mjs";
-import { fmtUSD, roicValue, topLineRevenue } from "../lib/fundamentals.mjs";
+import { fmtMoney, roicValue, topLineRevenue } from "../lib/fundamentals.mjs";
 import { returnOnEquity, returnOnTangibleEquity, efficiencyRatio, netInterestMargin } from "../lib/financials.mjs";
 import { ffoMargin, ffoPayout, ffoOnAssets, debtToAssets } from "../lib/reits.mjs";
 import { combinedRatio, lossRatio } from "../lib/insurers.mjs";
@@ -144,7 +144,7 @@ const intro = basis === "model"
           {rows.map(({ c, m }) => (
             <tr class={c.ticker === company.ticker ? "me" : ""}>
               <th class="tl"><a href={`/c/${c.ticker}`}>{c.ticker}</a><span class="nm">{c.name}</span></th>
-              <td>{m.revenue != null ? fmtUSD(m.revenue) : "—"}</td>
+              <td>{m.revenue != null ? fmtMoney(m.revenue, c.currency || "USD") : "—"}</td>
               {COLS.map((col) => <td class={best[col.key] === c.ticker ? "win" : ""}>{pr(m[col.key], col.dp)}</td>)}
             </tr>
           ))}

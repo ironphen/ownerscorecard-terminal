@@ -3,7 +3,7 @@
 // the tests is a floor of safety, not a buy signal, and failing one is not a veto,// many fine modern businesses fail his strictest liquidity tests by design. Every
 // number is sourced and findable in the record. Modernized thresholds are flagged.
 
-import { fmtUSD, debtReliable } from "./fundamentals.mjs";
+import { fmtMoney, currencySymbol, debtReliable } from "./fundamentals.mjs";
 
 const mean = (xs) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null);
 
@@ -12,12 +12,24 @@ export function grahamTests(company) {
   const H = (company.history || []).filter((h) => h?.lines);
   const t = [];
   const add = (name, criterion, value, status, note) => t.push({ name, criterion, value, status, note });
+  const ccy = company?.currency || "USD";
+  const $ = (v) => fmtMoney(v, ccy);
+  const sym = currencySymbol(ccy);
 
-  // 1, Adequate size
+  // 1, Adequate size. Graham's floor is a dollar figure, so we only render a pass/fail for a
+  // dollar filer. A company reporting in another currency gets its home-currency revenue shown
+  // but no verdict: we carry no exchange rate (by design, no external data), so converting to
+  // the $2B line would be a guess — and at yen or won scale a raw comparison would wave every
+  // name through. The figure is shown; the size bar is the reader's to apply.
   if (L.revenue != null) {
     const r = L.revenue;
-    add("Adequate size", "Revenue ≥ $2B", fmtUSD(r), r >= 2e9 ? "pass" : r >= 1e9 ? "near" : "fail",
-      "Big enough to weather a storm. Graham's 1972 floor was ~$100M of sales (≈ $700M today); we use a $2B revenue line as a conservative modern stand-in.");
+    if (ccy === "USD") {
+      add("Adequate size", "Revenue ≥ $2B", $(r), r >= 2e9 ? "pass" : r >= 1e9 ? "near" : "fail",
+        "Big enough to weather a storm. Graham's 1972 floor was ~$100M of sales (≈ $700M today); we use a $2B revenue line as a conservative modern stand-in.");
+    } else {
+      add("Adequate size", "Revenue ≥ $2B (a dollar floor)", $(r), "na",
+        "Big enough to weather a storm. Graham's floor is a dollar figure — about $2B of revenue as a conservative modern stand-in. This company reports in its home currency and we carry no exchange rate, so we show the figure and leave the size bar for you to apply rather than convert it with a number we don't have.");
+    }
   }
 
   // 2, Strong current ratio
@@ -36,7 +48,7 @@ export function grahamTests(company) {
       "The filings tag only a fraction of the debt this company's interest bill implies (much of it sits under segment dimensions the data source strips), so this test can't be run honestly.");
   } else if (ca != null && cl != null && L.totalDebt != null) {
     const wc = ca - cl;
-    add("Conservative debt", "Debt ≤ working capital", `${fmtUSD(L.totalDebt)} vs ${fmtUSD(wc)} WC`,
+    add("Conservative debt", "Debt ≤ working capital", `${$(L.totalDebt)} vs ${$(wc)} WC`,
       wc > 0 && L.totalDebt <= wc ? "pass" : wc > 0 && L.totalDebt <= 1.5 * wc ? "near" : "fail",
       "Graham's rule that borrowings not exceed net current assets. Capital-heavy and buyback-heavy firms routinely fail it, read it next to interest coverage, not alone.");
   }
@@ -78,7 +90,7 @@ export function grahamTests(company) {
   const eps = L.netIncome != null && L.sharesDiluted ? L.netIncome / L.sharesDiluted : null;
   const bvps = L.stockholdersEquity != null && L.sharesDiluted ? L.stockholdersEquity / L.sharesDiluted : null;
   add("Moderate price", "P/E ≤ 15 and P/E × P/B ≤ 22.5", "decided by the price", "na",
-    `Graham's valuation gate, the wall he kept between a sound business and a sound investment. ${eps ? `Earnings are $${eps.toFixed(2)}/share` : ""}${eps && bvps ? " and " : ""}${bvps ? `book value $${bvps.toFixed(2)}/share` : ""}. Enter a price in “What the price implies” just below for the P/E, P/B, and whether it clears. But this is the rule Buffett outgrew: there's no hard P/E law, and a wonderful business can deserve a far richer multiple if the thesis holds, treat it as the bargain-hunter's floor, not a verdict on the price.`);
+    `Graham's valuation gate, the wall he kept between a sound business and a sound investment. ${eps ? `Earnings are ${sym}${eps.toFixed(2)}/share` : ""}${eps && bvps ? " and " : ""}${bvps ? `book value ${sym}${bvps.toFixed(2)}/share` : ""}. Enter a price in “What the price implies” just below for the P/E, P/B, and whether it clears. But this is the rule Buffett outgrew: there's no hard P/E law, and a wonderful business can deserve a far richer multiple if the thesis holds, treat it as the bargain-hunter's floor, not a verdict on the price.`);
 
   const runnable = t.filter((x) => x.status !== "na");
   const passes = t.filter((x) => x.status === "pass").length;

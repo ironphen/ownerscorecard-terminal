@@ -13,9 +13,11 @@ import Term from "./Term.astro";
 
 const { company, sample = false } = Astro.props;
 // Graham's defensive tests live inside the scorecard, so "is it safe" reads in one place
-// instead of split across a separate section. US-only and not for financials (the tests and
-// their thresholds, a $2B revenue floor and an industrial current ratio, are dollar- and
-// industrial-shaped); the Japanese pool and the banks/insurers/REITs skip them.
+// instead of split across a separate section. Run for the US pool and the ADRs, but not the
+// Japanese pool or the financials (the tests are industrial-shaped — a current-ratio and
+// working-capital frame the banks/insurers/REITs don't fit). The one dollar-denominated test,
+// the $2B size floor, shows the figure but withholds a verdict for a non-dollar filer rather
+// than fake an exchange rate (see graham.mjs); the rest are ratios that read in any currency.
 const GTONE = { pass: "good", near: "warn", fail: "bad", na: "none" };
 const GLABEL = { pass: "Pass", near: "Near", fail: "Miss", na: "—" };
 // Each financial kind is read on different statements, so each gets its own scorecard

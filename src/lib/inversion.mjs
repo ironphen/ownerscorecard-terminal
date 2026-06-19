@@ -4,7 +4,7 @@
 // already pulls, returning the actual numbers and whether the fingerprint is present. None
 // is a verdict: a flag is a question to put to the filing, a clear test is one fewer way to
 // be wrong. Present, never pronounce.
-import { ownerEarningsMargin, operatingMargin, fmtMoney } from "./fundamentals.mjs";
+import { ownerEarningsMargin, operatingMargin, fmtMoney, currencySymbol } from "./fundamentals.mjs";
 import { capitalHistory } from "./capital.mjs";
 
 const avg = (xs) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null);
@@ -188,7 +188,8 @@ export function inversionChecks(company) {
   };
 }
 
-// "$1" / "¥1": the unit the one-dollar test is phrased in, so the yen pool reads naturally.
+// "$1" / "¥1" / "€1": the unit the one-dollar test is phrased in, in the company's home
+// currency, so the yen pool and the ADRs each read naturally rather than always in dollars.
 function currencyUnit(ccy) {
-  return `${ccy === "JPY" ? "¥" : "$"}1`;
+  return `${currencySymbol(ccy)}1`;
 }

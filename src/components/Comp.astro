@@ -3,9 +3,10 @@
 // comp (a real expense an owner bears) comes from the financials; the CEO-to-median
 // pay ratio is pulled from the proxy when cleanly disclosed.
 import language from "../data/language.json";
-import { fmtUSD } from "../lib/fundamentals.mjs";
+import { fmtMoney } from "../lib/fundamentals.mjs";
 
 const { company } = Astro.props;
+const $ = (v) => fmtMoney(v, company?.currency || "USD");
 const L = company.lines || {};
 const sbc = L.stockBasedComp;
 const rev = L.revenue, oi = L.operatingIncome;
@@ -41,7 +42,7 @@ const show = (sbc != null && rev) || comp?.payRatio != null;
       ) : null}
       {sbc != null && rev ? (
         <li>
-          <div class="r"><span class="k">Stock-based compensation</span><span class="v">{fmtUSD(sbc)}</span></div>
+          <div class="r"><span class="k">Stock-based compensation</span><span class="v">{$(sbc)}</span></div>
           <p class="n">The slice of the business handed to employees in shares this year, {sbcRev} of revenue{sbcOI ? `, equal to ${sbcOI} of operating profit` : ""}. Buffett's oldest accounting fight: this is compensation, compensation is an expense, real whether or not the headline earnings admit it. And note the trap, the cash-flow statement adds SBC back, so the operating cash, and the owner earnings drawn from it, are flattered by exactly this amount; counted as the cost it is, what an owner keeps is lower.</p>
         </li>
       ) : null}
