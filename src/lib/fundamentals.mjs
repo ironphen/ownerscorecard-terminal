@@ -337,6 +337,35 @@ export function ownerCash(c) {
   };
 }
 
+// The owner-earnings bridge: how a year's reported profit becomes the cash an owner can take
+// out. Reconciles net income → cash from operations → Owner Earnings (operating cash less
+// capex), the same Owner Earnings figure the scorecard and capital-allocation read use, so the
+// page never contradicts itself. Returns raw numbers (the component formats in the company's
+// own currency); null unless the three anchors — net income, operating cash, capex — are all
+// present to bridge between. Depreciation and stock comp are shown when tagged; whatever isn't
+// broken out by name folds into the residual that closes net income to operating cash, so the
+// ledger always ties out exactly.
+export function ownerEarningsBridge(c) {
+  const L = c?.lines || {};
+  const ni = L.netIncome, cfo = L.cashFromOps, capex = L.capex;
+  if (ni == null || cfo == null || capex == null) return null;
+  const dep = L.depreciation != null ? L.depreciation : null;
+  const sbc = L.stockBasedComp != null ? L.stockBasedComp : null;
+  const capexAbs = Math.abs(capex);
+  const other = cfo - ni - (dep || 0) - (sbc || 0);
+  return {
+    fy: c.fy ?? null,
+    revenue: L.revenue ?? null,
+    netIncome: ni,
+    depreciation: dep,
+    stockBasedComp: sbc,
+    other,
+    cashFromOps: cfo,
+    capex: capexAbs,
+    ownerEarnings: cfo - capexAbs,
+  };
+}
+
 // Capital allocation: of the Owner Earnings, how much was returned, and was it real?
 export function capitalAllocation(c) {
   const $ = (v) => fmtMoney(v, c?.currency || "USD");

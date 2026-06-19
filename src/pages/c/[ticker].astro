@@ -17,6 +17,7 @@ import ActHeader from "../../components/ActHeader.astro";
 import Comp from "../../components/Comp.astro";
 import Valuation from "../../components/Valuation.astro";
 import NormalizedEarnings from "../../components/NormalizedEarnings.astro";
+import OwnerEarningsBridge from "../../components/OwnerEarningsBridge.astro";
 import language from "../../data/language.json";
 import segmentsData from "../../data/segments.json";
 import { classify } from "../../lib/archetype.mjs";
@@ -134,6 +135,7 @@ const fmtDate = (d) =>
       <div id="sec-record" class="sec"><TenYear company={fund} /></div>
       <div id="sec-current" class="sec"><CurrentPosition company={fund} /></div>
       {!isFin ? <div id="sec-power" class="sec"><NormalizedEarnings company={fund} /></div> : null}
+      {!isFin ? <div id="sec-bridge" class="sec"><OwnerEarningsBridge company={fund} /></div> : null}
     </section>
   ) : null}
 
