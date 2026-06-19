@@ -17,6 +17,7 @@ import { pathToFileURL } from "node:url";
 import { fmtMoney, liquidAssets, oiReliable } from "../src/lib/fundamentals.mjs";
 
 const yen = (v) => fmtMoney(v, "JPY");
+const median = (xs) => { const s = [...xs].sort((a, b) => a - b); return s.length ? s[Math.floor((s.length - 1) / 2)] : null; };
 const dataDir = path.join(process.cwd(), "src", "data");
 const load = (f) => { try { return JSON.parse(fs.readFileSync(path.join(dataDir, f), "utf8")); } catch { return {}; } };
 const companies = (load("fundamentals.jp.json").companies) || [];
@@ -50,6 +51,19 @@ for (const c of companies) {
   // five-year-summary reach failed for this filer.
   const hy = (c.history || []).filter((h) => h?.lines?.revenue != null).length;
   if (hy < 3) WARN("history-thin", t, `only ${hy} year(s) of history (durability reads are weak)`);
+
+  // Within-company cash-flow outlier: the latest operating cash flow collapses far below the
+  // company's own multi-year norm while net income holds. That is the signature of a mis-read
+  // cash-flow tag (a wrong context, a parent-only line) — and even when it is a genuine one-off,
+  // it should be eyeballed before it anchors the owner-earnings bridge and the scorecard. Flag it.
+  const cfoHist = (c.history || []).filter((h) => h?.fy != null && h.fy !== c.fy).map((h) => h?.lines?.cashFromOps).filter((v) => v != null && v > 0);
+  const cfo = L.cashFromOps, ni = L.netIncome;
+  if (cfo != null && ni != null && cfoHist.length >= 3) {
+    const med = median(cfoHist);
+    if (med > 0 && ni > med * 0.4 && cfo < med * 0.25) {
+      WARN("cfo-outlier", t, `latest operating cash flow ${yen(cfo)} collapsed vs its ${cfoHist.length}-yr median ${yen(med)} while net income ${yen(ni)} held — verify the cash-flow tag before it anchors owner earnings`);
+    }
+  }
 }
 
 // Coverage floors, set to catastrophe levels (a layer cratering), not quality targets.

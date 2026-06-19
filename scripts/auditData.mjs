@@ -40,6 +40,7 @@ const findings = [];
 const flag = (level, code, ticker, msg) => findings.push({ level, code, ticker, msg });
 const ERR = (...a) => flag("error", ...a);
 const WARN = (...a) => flag("warn", ...a);
+const median = (xs) => { const s = [...xs].sort((a, b) => a - b); return s.length ? s[Math.floor((s.length - 1) / 2)] : null; };
 
 // ---- per-company checks. Each is archetype-aware and runs on the value the page would
 // actually show, so we flag a misleading display, not merely an odd raw tag. ----
@@ -49,6 +50,21 @@ for (const c of companies) {
   const { kind, subtype } = financialProfile(c);
   const sector = classify(c).sector.key;
   const isFin = !!kind;
+
+  // Within-company cash-flow outlier (non-financials, where owner earnings = operating cash −
+  // capex is the read): the latest operating cash flow collapses far below the company's own
+  // multi-year norm while net income holds. That is the signature of a mis-read cash-flow tag —
+  // and even a genuine one-off should be eyeballed before it anchors the owner-earnings bridge.
+  // Financials run on different statements and have structurally swingy operating cash, so skip.
+  if (!isFin) {
+    const cfoHist = (c.history || []).filter((h) => h?.fy != null && h.fy !== c.fy).map((h) => h?.lines?.cashFromOps).filter((v) => v != null && v > 0);
+    const cfo = L.cashFromOps, ni = L.netIncome;
+    if (cfo != null && ni != null && cfoHist.length >= 3) {
+      const med = median(cfoHist);
+      if (med > 0 && ni > med * 0.4 && cfo < med * 0.25)
+        WARN("cfo-outlier", t, `latest operating cash flow ${fmtUSD(cfo)} collapsed vs its ${cfoHist.length}-yr median ${fmtUSD(med)} while net income ${fmtUSD(ni)} held — verify before it anchors owner earnings`);
+    }
+  }
 
   // Top line: the headline number. Must exist and be positive after reconstruction.
   const rev = topLineRevenue(L, c);
