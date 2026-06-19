@@ -1,0 +1,147 @@
+---
+// "Owner-earnings bridge" — the single most important Buffett adjustment, made legible: how a
+// year's reported profit becomes the cash an owner can actually take out. Net income is an
+// accountant's number; owner earnings is operating cash less the capital the business must put
+// back to keep running. The bridge walks from one to the other, every step from the company's
+// own cash-flow statement, and ties out to the same Owner Earnings the scorecard reads. We
+// present the reconciliation; the judgment is the reader's. Withheld for financials and for any
+// company whose filing doesn't carry the three anchors (net income, operating cash, capex).
+import { ownerEarningsBridge, fmtMoney } from "../lib/fundamentals.mjs";
+import Term from "./Term.astro";
+
+const { company } = Astro.props;
+const b = ownerEarningsBridge(company);
+const $ = (v) => fmtMoney(v, company?.currency || "USD");
+const signed = (v) => (v < 0 ? "−" : "+") + $(Math.abs(v));
+const pc = (n, d) => (n != null && d ? `${Math.round((n / d) * 100)}%` : null);
+
+// The ledger. Depreciation and stock comp appear only when the filing tags them; whatever
+// isn't named folds into "Working capital & other", so net income always closes to operating
+// cash and the bridge ties out exactly.
+let steps = [], oeMargin = null, sbcAdj = null;
+if (b) {
+  steps = [
+    { k: "ni", label: "Reported net income", kind: "start", v: b.netIncome },
+    b.depreciation != null ? { k: "dep", label: "Depreciation & amortization", kind: "add", v: b.depreciation, hint: "non-cash charge added back" } : null,
+    b.stockBasedComp != null ? { k: "sbc", label: "Stock-based compensation", kind: "add", v: b.stockBasedComp, hint: "non-cash — but a real cost", flag: true } : null,
+    { k: "oth", label: "Working capital & other", kind: "add", v: b.other, hint: "timing of cash in and out, other non-cash items" },
+    { k: "cfo", label: "Cash from operations", kind: "subtotal", v: b.cashFromOps },
+    { k: "capex", label: "Capital expenditure", kind: "sub", v: -b.capex, hint: "cash put back in to keep running and to grow" },
+    { k: "oe", label: "Owner earnings", kind: "total", v: b.ownerEarnings },
+  ].filter(Boolean);
+  oeMargin = pc(b.ownerEarnings, b.revenue);
+  sbcAdj = b.stockBasedComp != null ? b.ownerEarnings - b.stockBasedComp : null;
+}
+
+// The two-bar comparison reads honestly only when both endpoints are positive; with a loss or
+// negative owner earnings the ledger below carries the story and the bars are dropped.
+const showBars = !!b && b.netIncome > 0 && b.ownerEarnings > 0;
+const barMax = showBars ? Math.max(b.netIncome, b.ownerEarnings) : 0;
+
+// One factual takeaway, no verdict.
+let takeaway = null;
+if (b) {
+  const niTxt = b.netIncome >= 0 ? `${$(b.netIncome)} of profit` : `a ${$(Math.abs(b.netIncome))} loss`;
+  takeaway = b.ownerEarnings >= b.netIncome
+    ? `That year the business turned ${niTxt} into ${$(b.ownerEarnings)} of owner earnings — more cash than the profit line showed, after the non-cash charges and the capital it put back in.`
+    : `That year the business reported ${niTxt} but ${$(b.ownerEarnings)} of owner earnings — ${$(Math.abs(b.ownerEarnings - b.netIncome))} less than the profit line, taken out by capital spending and the timing of cash.`;
+}
+---
+
+{b ? (
+  <section class="oeb">
+    <div class="head">
+      <h3 class="secTitle"><Term id="owner-earnings">Owner-earnings bridge</Term></h3>
+      <span class="asof">{b.fy ? `FY${b.fy}` : "latest year"}</span>
+    </div>
+    <p class="intro">
+      Net income is the accountant's number; owner earnings is the cash an owner could actually
+      take out. The walk from one to the other, every step off the company's own cash-flow
+      statement — the gap between reported profit and owner cash is where a business is read.
+    </p>
+
+    {takeaway ? <p class="take">{takeaway}</p> : null}
+
+    {showBars ? (
+      <div class="bars">
+        <div class="barRow">
+          <span class="blab">Reported net income</span>
+          <span class="track"><span class="fill ni" style={`width:${(b.netIncome / barMax) * 100}%`}></span></span>
+          <span class="bval">{$(b.netIncome)}</span>
+        </div>
+        <div class="barRow">
+          <span class="blab">Owner earnings</span>
+          <span class="track"><span class="fill oe" style={`width:${(b.ownerEarnings / barMax) * 100}%`}></span></span>
+          <span class="bval">{$(b.ownerEarnings)}{oeMargin ? <i> · {oeMargin} of revenue</i> : null}</span>
+        </div>
+      </div>
+    ) : null}
+
+    <ul class="ledger">
+      {steps.map((s) => (
+        <li class={`step ${s.kind}`}>
+          <span class="lbl">{s.label}{s.flag ? <span class="real">real cost</span> : null}{s.hint ? <i class="hint">{s.hint}</i> : null}</span>
+          <span class="amt">{s.kind === "add" || s.kind === "sub" ? signed(s.v) : $(s.v)}</span>
+        </li>
+      ))}
+    </ul>
+
+    <p class="note">
+      Owner earnings is operating cash less the capital the business must spend to keep going —
+      what Buffett called the cash you could pull out without starving it.
+      {b.stockBasedComp != null ? (
+        <> Note the stock-comp line: the cash-flow statement adds it back as non-cash, but it is
+        a real cost paid in shares. Counted as the expense it is (less {$(b.stockBasedComp)}),
+        owner earnings is nearer {$(sbcAdj)}.</>
+      ) : null}
+      {" "}And the capex here blends maintenance and growth, so a business spending to expand may
+      earn more in steady state than this one year shows — read it beside capex vs. depreciation
+      above.
+    </p>
+
+    <p class="foot">Arithmetic on the company's own cash-flow statement; nothing here is scored. It ties out to the Owner Earnings the scorecard reads.</p>
+  </section>
+) : null}
+
+<style>
+  .oeb { margin: 24px 0; }
+  .head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; border-bottom: 1px solid var(--rule-strong); padding-bottom: 6px; }
+  .secTitle { margin: 0; }
+  .asof { font-size: 11.5px; letter-spacing: 0.03em; text-transform: uppercase; color: var(--muted); flex: 0 0 auto; }
+  .intro { font-family: var(--serif); font-style: italic; font-size: 13.5px; color: var(--muted); margin: 9px 0 0; max-width: 74ch; line-height: 1.6; }
+  .take { font-family: var(--serif); font-size: 15.5px; line-height: 1.55; color: var(--ink-soft); margin: 12px 0 0; max-width: 72ch; }
+
+  /* Net income vs owner earnings, side by side, so the gap is visible before the ledger. */
+  .bars { margin: 16px 0 0; display: grid; gap: 9px; }
+  .barRow { display: grid; grid-template-columns: 160px 1fr auto; align-items: center; gap: 12px; }
+  .blab { font-family: var(--sans); font-size: 12px; color: var(--muted); }
+  .track { height: 16px; background: var(--surface-2); border: 1px solid var(--rule); position: relative; }
+  .fill { display: block; height: 100%; min-width: 2px; }
+  .fill.ni { background: var(--viz-muted, var(--rule-strong)); }
+  .fill.oe { background: var(--accent); }
+  .bval { font-variant-numeric: tabular-nums; font-weight: 700; font-size: 13.5px; color: var(--ink); flex: 0 0 auto; }
+  .bval i { font-style: normal; font-weight: 400; color: var(--muted); font-size: 12px; }
+
+  .ledger { list-style: none; padding: 0; margin: 16px 0 0; }
+  .step { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 7px 0; border-bottom: 1px solid var(--rule); }
+  .step .lbl { font-size: 13.5px; color: var(--ink-soft); }
+  .step .amt { font-variant-numeric: tabular-nums; font-size: 14px; color: var(--ink); flex: 0 0 auto; }
+  .step .hint { display: block; font-style: normal; font-size: 11.5px; color: var(--ink-dim); margin-top: 1px; }
+  .step.add .lbl, .step.sub .lbl { padding-left: 14px; }
+  .step.add .amt, .step.sub .amt { color: var(--muted); }
+  .real { font-family: var(--sans); font-size: 9.5px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--accent); border: 1px solid var(--accent); border-radius: 2px; padding: 0 5px; margin-left: 8px; vertical-align: 1px; }
+  .step.subtotal { border-top: 1px solid var(--rule-strong); border-bottom: none; margin-top: 2px; padding-top: 9px; }
+  .step.subtotal .lbl { font-family: var(--sans); font-weight: 700; font-size: 12.5px; letter-spacing: 0.03em; text-transform: uppercase; color: var(--ink); }
+  .step.subtotal .amt { font-weight: 700; }
+  .step.total { border-top: 2px solid var(--ink); border-bottom: none; margin-top: 2px; padding-top: 10px; }
+  .step.total .lbl { font-weight: 700; font-size: 15px; color: var(--ink); }
+  .step.total .amt { font-weight: 800; font-size: 18px; color: var(--accent); }
+
+  .note { font-family: var(--serif); font-size: 13.5px; line-height: 1.6; color: var(--ink-soft); background: var(--accent-tint); border-left: 2px solid var(--accent); padding: 10px 14px; margin: 14px 0 0; max-width: 80ch; }
+  .foot { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--rule-strong); margin-top: 16px; padding-top: 10px; max-width: 74ch; }
+
+  @media (max-width: 560px) {
+    .barRow { grid-template-columns: 110px 1fr auto; gap: 8px; }
+    .blab { font-size: 11px; }
+  }
+</style>
