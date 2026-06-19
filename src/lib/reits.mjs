@@ -6,7 +6,7 @@
 // carries kept sound. Pure arithmetic on the filings. Net asset value and occupancy
 // need cap rates and operating detail we do not force.
 
-import { fmtUSD } from "./fundamentals.mjs";
+import { fmtMoney, currencySymbol } from "./fundamentals.mjs";
 
 const median = (xs) => { const s = [...xs].sort((a, b) => a - b); return s.length ? s[Math.floor((s.length - 1) / 2)] : null; };
 const pc = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${(Math.abs(v) * 100).toFixed(dp)}%`);
@@ -48,22 +48,24 @@ export function ebitdaCoverage(L) {
 
 export function buildReitScorecard(company) {
   const L = company?.lines || {};
+  const $ = (v) => fmtMoney(v, company?.currency || "USD");
+  const sym = currencySymbol(company?.currency || "USD");
   const none = (title, note, concept = null) => ({ title, concept, value: "—", formula: "", tone: "none", label: "Not enough data", note });
 
   const f = ffo(L), fps = ffoPerShare(L);
   const ffoCheck = f == null ? none("Funds from operations", "Net income or depreciation wasn't found in the filing data.", "ffo") : {
     title: "Funds from operations (FFO)",
     concept: "ffo",
-    value: fmtUSD(f),
-    formula: `Net income ${fmtUSD(L.netIncome)} + depreciation ${fmtUSD(L.depreciation)}${L.gainOnSaleRealEstate ? ` − gains on sale ${fmtUSD(L.gainOnSaleRealEstate)}` : ""}`,
-    tone: "info", label: fps != null ? `about $${fps.toFixed(2)} per share` : "the REIT earnings measure",
+    value: $(f),
+    formula: `Net income ${$(L.netIncome)} + depreciation ${$(L.depreciation)}${L.gainOnSaleRealEstate ? ` − gains on sale ${$(L.gainOnSaleRealEstate)}` : ""}`,
+    tone: "info", label: fps != null ? `about ${sym}${fps.toFixed(2)} per share` : "the REIT earnings measure",
     note: "GAAP net income with property depreciation added back, because the buildings a REIT charges against earnings usually hold or grow their value. This, not net income, is what a REIT is actually priced on. It is an approximation here: where a filing reports gains on property sales, we remove them, the way the NAREIT definition does.",
   };
   const payout = ffoPayout(L);
   const payoutCheck = payout == null ? none("Dividend coverage", "FFO or dividends missing.", "ffo") : {
     title: "Dividend / FFO (payout)",
     concept: "ffo",
-    value: pc(payout), formula: `Dividends ${fmtUSD(Math.abs(L.dividendsPaid))} ÷ FFO ${fmtUSD(f)}`,
+    value: pc(payout), formula: `Dividends ${$(Math.abs(L.dividendsPaid))} ÷ FFO ${$(f)}`,
     tone: payout > 1 ? "bad" : payout > 0.95 ? "warn" : payout > 0.6 ? "good" : "ok",
     label: payout > 1 ? "Not covered by FFO" : payout > 0.95 ? "Tight" : payout > 0.6 ? "Covered" : "Lightly covered",
     note: "A REIT must distribute most of its taxable income, so a high payout is normal and the question is whether FFO covers it. Above 100%, the trust is funding the dividend with debt or asset sales, and a cut usually follows.",
@@ -74,7 +76,7 @@ export function buildReitScorecard(company) {
     : none("Leverage", "Debt or total assets missing.", "net-debt")) : {
     title: "Debt / assets",
     concept: "net-debt",
-    value: pc(lev), formula: `Total debt ${fmtUSD(L.totalDebt)} ÷ assets ${fmtUSD(L.totalAssets)}`,
+    value: pc(lev), formula: `Total debt ${$(L.totalDebt)} ÷ assets ${$(L.totalAssets)}`,
     tone: lev > 0.6 ? "bad" : lev > 0.5 ? "warn" : lev > 0.4 ? "ok" : "good",
     label: lev > 0.6 ? "Heavy" : lev > 0.5 ? "Elevated" : lev > 0.4 ? "Moderate" : "Conservative",
     note: "Every REIT runs on leverage; how much is the question. Heavy debt is what turns a property downturn into a wipeout, as 2008 showed, so a conservative balance sheet is part of the moat here, not a drag on it.",
@@ -83,7 +85,7 @@ export function buildReitScorecard(company) {
   const covCheck = cov == null ? none("Interest coverage", "Operating income or interest missing.", "interest-coverage") : {
     title: "Interest coverage (EBITDA)",
     concept: "interest-coverage",
-    value: `${cov.toFixed(1)}×`, formula: `(operating income + depreciation) ÷ interest ${fmtUSD(L.interestExpense)}`,
+    value: `${cov.toFixed(1)}×`, formula: `(operating income + depreciation) ÷ interest ${$(L.interestExpense)}`,
     tone: cov < 2 ? "bad" : cov < 3 ? "warn" : cov < 4 ? "ok" : "good",
     label: cov < 2 ? "Thin" : cov < 3 ? "Adequate" : cov < 4 ? "Comfortable" : "Strong",
     note: "How many times the property cash earnings cover the interest bill. Comfortable coverage is what lets a REIT refinance through a tight credit market instead of being forced to sell into one.",

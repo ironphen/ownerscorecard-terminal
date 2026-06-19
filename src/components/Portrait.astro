@@ -1,5 +1,5 @@
 ---
-import { fmtUSD, roicValue, operatingMargin, ownerEarningsMargin, topLineRevenue, debtReliable } from "../lib/fundamentals.mjs";
+import { fmtMoney, roicValue, operatingMargin, ownerEarningsMargin, topLineRevenue, debtReliable } from "../lib/fundamentals.mjs";
 import { returnOnEquity, returnOnTangibleEquity, efficiencyRatio, equityToAssets, returnOnAssets } from "../lib/financials.mjs";
 import { ffoMargin, ffoPayout, debtToAssets } from "../lib/reits.mjs";
 import { combinedRatio, lossRatio } from "../lib/insurers.mjs";
@@ -9,6 +9,7 @@ import { financialKind, financialSubtype } from "../lib/archetype.mjs";
 import Term from "./Term.astro";
 
 const { company } = Astro.props;
+const $ = (v) => fmtMoney(v, company?.currency || "USD");
 // Trust the captured debt (for ROIC) only when interest does not prove it under-captured.
 const debtOk = debtReliable(company.lines || {}) && debtReliable(company.ttm?.lines || {});
 const fk = financialKind(company);
@@ -110,7 +111,7 @@ const sp = spark(revSeries);
   <div class="topline">
     <div class="rev">
       <div class="lbl">Revenue · FY{company.fy}</div>
-      <div class="big">{fmtUSD(rev)}</div>
+      <div class="big">{$(rev)}</div>
       <div class="growth">
         {revGrowth != null ? (
           <span class={revGrowth < 0 ? "neg" : "pos"}>{revGrowth >= 0 ? "+" : ""}{pct(revGrowth, 1)} YoY</span>

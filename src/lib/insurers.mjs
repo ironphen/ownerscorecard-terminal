@@ -8,7 +8,7 @@
 // from the filer's total benefits, losses and expenses over premiums earned, so
 // non-underwriting costs can nudge it a point or two either way from the headline.
 
-import { fmtMoney } from "./fundamentals.mjs";
+import { fmtMoney, currencySymbol } from "./fundamentals.mjs";
 import { returnOnEquity } from "./financials.mjs";
 
 const median = (xs) => { const s = [...xs].sort((a, b) => a - b); return s.length ? s[Math.floor((s.length - 1) / 2)] : null; };
@@ -34,6 +34,7 @@ export function bookValuePerShare(L) { return L && L.stockholdersEquity != null 
 
 export function buildInsurerScorecard(company, subtype = "insurer") {
   const $ = (v) => fmtMoney(v, company?.currency || "USD");
+  const sym = currencySymbol(company?.currency || "USD");
   const L = company?.lines || {};
   const none = (title, note, concept = null) => ({ title, concept, value: "—", formula: "", tone: "none", label: "Not enough data", note });
 
@@ -75,7 +76,7 @@ export function buildInsurerScorecard(company, subtype = "insurer") {
     const bvpsCheck = bvps == null ? none("Book value per share", "Equity or share count missing.", "tangible-book") : {
       title: "Book value per share",
       concept: "tangible-book",
-      value: `$${bvps.toFixed(0)}`, formula: `Equity ${$(L.stockholdersEquity)} ÷ ${(L.sharesDiluted / 1e6).toFixed(0)}M shares`,
+      value: `${sym}${bvps.toFixed(0)}`, formula: `Equity ${$(L.stockholdersEquity)} ÷ ${(L.sharesDiluted / 1e6).toFixed(0)}M shares`,
       tone: "info", label: "the compounding scoreboard",
       note: "A life insurer is judged the way Berkshire is, by the growth in book value per share over the years as the spread on the float and the mortality and fee margins compound into equity. This is the level today; the record below shows whether it has grown. Note that reported book value swings with interest rates, which mark the bond portfolio up and down through other comprehensive income.",
     };

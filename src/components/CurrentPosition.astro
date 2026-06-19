@@ -5,10 +5,11 @@
 // and the teaching that makes a sub-1 ratio honest. Derivation lives in lib/currentPosition.mjs; this
 // presents and never grades. Withheld for financials (no current/non-current split).
 import { currentPosition } from "../lib/currentPosition.mjs";
-import { fmtUSD } from "../lib/fundamentals.mjs";
+import { fmtMoney } from "../lib/fundamentals.mjs";
 
 const { company } = Astro.props;
 const cp = currentPosition(company);
+const $ = (v) => fmtMoney(v, company?.currency || "USD");
 
 const x1 = (v, dp = 2) => (v == null ? "—" : `${v.toFixed(dp)}×`);
 const pc = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.abs(v * 100).toFixed(dp)}%`);
@@ -64,12 +65,12 @@ const trendFirst = cp && cp.series.length >= 3 ? cp.series[0] : null;
 
     <div class="ladders">
       <div class="lad">
-        <div class="ladHead"><span>Current assets</span><b>{fmtUSD(cp.currentAssets)}</b></div>
-        <ul>{assetRows.map((r) => <li><span>{r[0]}</span><span class="v">{fmtUSD(r[1])}</span></li>)}</ul>
+        <div class="ladHead"><span>Current assets</span><b>{$(cp.currentAssets)}</b></div>
+        <ul>{assetRows.map((r) => <li><span>{r[0]}</span><span class="v">{$(r[1])}</span></li>)}</ul>
       </div>
       <div class="lad">
-        <div class="ladHead"><span>Current liabilities</span><b>{fmtUSD(cp.currentLiabilities)}</b></div>
-        <ul>{liabRows.map((r) => <li><span>{r[0]}</span><span class="v">{fmtUSD(r[1])}</span></li>)}</ul>
+        <div class="ladHead"><span>Current liabilities</span><b>{$(cp.currentLiabilities)}</b></div>
+        <ul>{liabRows.map((r) => <li><span>{r[0]}</span><span class="v">{$(r[1])}</span></li>)}</ul>
       </div>
     </div>
 
@@ -91,7 +92,7 @@ const trendFirst = cp && cp.series.length >= 3 ? cp.series[0] : null;
       </div>
       <div class="rat">
         <span class="rlab">Working capital</span>
-        <span class="rval">{fmtUSD(cp.workingCapital)}</span>
+        <span class="rval">{$(cp.workingCapital)}</span>
         <span class="rnote">the cushion left after near-term bills</span>
       </div>
     </div>
@@ -110,7 +111,7 @@ const trendFirst = cp && cp.series.length >= 3 ? cp.series[0] : null;
         <div class="sv">
           <span class="svlab">Debt due this year vs. cash</span>
           <span class="svval" style={cp.debtDueCovered ? "color:var(--good)" : "color:var(--warn)"}>
-            {fmtUSD(cp.debtDue)} due · {fmtUSD(cp.cashLike)} cash
+            {$(cp.debtDue)} due · {$(cp.cashLike)} cash
           </span>
           <span class="svnote">{cp.debtDueCovered ? "covered by cash on hand, no refinancing forced" : "cash alone won't cover the maturities — it leans on refinancing or operating cash"}</span>
         </div>
@@ -145,10 +146,10 @@ const trendFirst = cp && cp.series.length >= 3 ? cp.series[0] : null;
     <div class="deeper">
       <span class="deyebrow">Deeper floors</span>
       <div class="dgrid">
-        {cp.tangibleBook != null ? <div class="d"><span>Tangible book value</span><b>{fmtUSD(cp.tangibleBook)}</b><i>equity stripped of goodwill & intangibles</i></div> : null}
-        {cp.ncav != null ? <div class="d"><span>Net current asset value</span><b>{fmtUSD(cp.ncav)}</b><i>Graham's net-net: current assets less all debt</i></div> : null}
-        {cp.debtPlusLeases != null && cp.debtPlusLeases > 0 ? <div class="d"><span>Debt incl. leases</span><b>{fmtUSD(cp.debtPlusLeases)}</b><i>{cp.leases ? `${fmtUSD(cp.leases)} of it operating leases` : "true obligation, leases added back"}</i></div> : null}
-        {cp.deferredRevenue != null && cp.deferredRevenue > 0 ? <div class="d"><span>Deferred revenue</span><b>{fmtUSD(cp.deferredRevenue)}</b><i>paid in advance — float, and a sign customers pre-pay</i></div> : null}
+        {cp.tangibleBook != null ? <div class="d"><span>Tangible book value</span><b>{$(cp.tangibleBook)}</b><i>equity stripped of goodwill & intangibles</i></div> : null}
+        {cp.ncav != null ? <div class="d"><span>Net current asset value</span><b>{$(cp.ncav)}</b><i>Graham's net-net: current assets less all debt</i></div> : null}
+        {cp.debtPlusLeases != null && cp.debtPlusLeases > 0 ? <div class="d"><span>Debt incl. leases</span><b>{$(cp.debtPlusLeases)}</b><i>{cp.leases ? `${$(cp.leases)} of it operating leases` : "true obligation, leases added back"}</i></div> : null}
+        {cp.deferredRevenue != null && cp.deferredRevenue > 0 ? <div class="d"><span>Deferred revenue</span><b>{$(cp.deferredRevenue)}</b><i>paid in advance — float, and a sign customers pre-pay</i></div> : null}
       </div>
     </div>
 

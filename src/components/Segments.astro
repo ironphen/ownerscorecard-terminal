@@ -5,10 +5,11 @@
 // number is straight from the 10-K's segment footnote on EDGAR; no model, no estimate.
 import segmentsData from "../data/segments.json";
 import language from "../data/language.json";
-import { fmtUSD } from "../lib/fundamentals.mjs";
+import { fmtMoney } from "../lib/fundamentals.mjs";
 import { pickPrimaryBreakdown } from "../lib/segments.mjs";
 
 const { company } = Astro.props;
+const $ = (v) => fmtMoney(v, company?.currency || "USD");
 const S = segmentsData?.companies?.[company.ticker] || null;
 const srcUrl = language?.companies?.[company.ticker]?.sourceUrl || S?.sourceUrl || null;
 const total = S?.revenueTotal ?? null;
@@ -124,7 +125,7 @@ const sectionTitle = { segment: "by reportable segment", product: "by product li
           <span class="sw" style={`background:${it.color}`}></span>
           <span class="lb">{it.label}</span>
           <span class="vals">
-            <b>{pct(it.revenue / total)}%</b> <span class="amt">{fmtUSD(it.revenue)}</span>
+            <b>{pct(it.revenue / total)}%</b> <span class="amt">{$(it.revenue)}</span>
             {hasProfitBar && it.operatingIncome != null ? (
               <span class="oi">{it.operatingIncome < 0 ? "loss" : `${pct(Math.max(0, it.operatingIncome) / oiPool)}% of profit`}</span>
             ) : null}
