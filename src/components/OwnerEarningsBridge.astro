@@ -1,11 +1,11 @@
 ---
-// "Owner-earnings bridge" — the single most important Buffett adjustment, made legible: how a
-// year's reported profit becomes the cash an owner can actually take out. Net income is an
-// accountant's number; owner earnings is operating cash less the capital the business must put
-// back to keep running. The bridge walks from one to the other, every step from the company's
-// own cash-flow statement, and ties out to the same Owner Earnings the scorecard reads. We
-// present the reconciliation; the judgment is the reader's. Withheld for financials and for any
-// company whose filing doesn't carry the three anchors (net income, operating cash, capex).
+// "Owner-earnings bridge" — the most important Buffett adjustment, made legible. Owner earnings is
+// the cash an owner can take out: cash from operations less the capital the business must put back
+// to keep running (CFO − capex), the same figure the scorecard reads. We lead with that derivation
+// — cash first — then reconcile the operating cash back to reported net income, the quality-of-
+// earnings context where the gap between accounting profit and cash is the lesson. Every step is
+// off the company's own cash-flow statement. Withheld for financials and for any filing missing
+// the three anchors (operating cash, capex, net income).
 import { ownerEarningsBridge, fmtMoney } from "../lib/fundamentals.mjs";
 import Term from "./Term.astro";
 
@@ -15,19 +15,23 @@ const $ = (v) => fmtMoney(v, company?.currency || "USD");
 const signed = (v) => (v < 0 ? "−" : "+") + $(Math.abs(v));
 const pc = (n, d) => (n != null && d ? `${Math.round((n / d) * 100)}%` : null);
 
-// The ledger. Depreciation and stock comp appear only when the filing tags them; whatever
-// isn't named folds into "Working capital & other", so net income always closes to operating
-// cash and the bridge ties out exactly.
-let steps = [], oeMargin = null, sbcAdj = null;
+// The derivation (what owner earnings IS): cash from operations, less the capital put back.
+// The reconciliation (where that cash came from): net income closed to operating cash, with
+// depreciation and stock comp shown when the filing tags them and whatever isn't named folded
+// into the residual, so it ties out exactly.
+let deriv = [], recon = [], oeMargin = null, sbcAdj = null;
 if (b) {
-  steps = [
+  deriv = [
+    { k: "cfo", label: "Cash from operations", kind: "start", v: b.cashFromOps, hint: "the cash the business generated this year" },
+    { k: "capex", label: "Capital expenditure", kind: "sub", v: -b.capex, hint: "cash put back in to keep running and to grow" },
+    { k: "oe", label: "Owner earnings", kind: "total", v: b.ownerEarnings },
+  ];
+  recon = [
     { k: "ni", label: "Reported net income", kind: "start", v: b.netIncome },
     b.depreciation != null ? { k: "dep", label: "Depreciation & amortization", kind: "add", v: b.depreciation, hint: "non-cash charge added back" } : null,
     b.stockBasedComp != null ? { k: "sbc", label: "Stock-based compensation", kind: "add", v: b.stockBasedComp, hint: "non-cash — but a real cost", flag: true } : null,
     { k: "oth", label: "Working capital & other", kind: "add", v: b.other, hint: "timing of cash in and out, other non-cash items" },
-    { k: "cfo", label: "Cash from operations", kind: "subtotal", v: b.cashFromOps },
-    { k: "capex", label: "Capital expenditure", kind: "sub", v: -b.capex, hint: "cash put back in to keep running and to grow" },
-    { k: "oe", label: "Owner earnings", kind: "total", v: b.ownerEarnings },
+    { k: "cfo2", label: "Cash from operations", kind: "subtotal", v: b.cashFromOps },
   ].filter(Boolean);
   oeMargin = pc(b.ownerEarnings, b.revenue);
   sbcAdj = b.stockBasedComp != null ? b.ownerEarnings - b.stockBasedComp : null;
@@ -55,9 +59,10 @@ if (b) {
       <span class="asof">{b.fy ? `FY${b.fy}` : "latest year"}</span>
     </div>
     <p class="intro">
-      Net income is the accountant's number; owner earnings is the cash an owner could actually
-      take out. The walk from one to the other, every step off the company's own cash-flow
-      statement — the gap between reported profit and owner cash is where a business is read.
+      Owner earnings is the cash an owner could take out: what the business generates from
+      operations, less the capital it must put back to keep running. Below the derivation, that
+      same operating cash is reconciled to reported profit — the gap between the two is where a
+      business is read.
     </p>
 
     {takeaway ? <p class="take">{takeaway}</p> : null}
@@ -78,13 +83,25 @@ if (b) {
     ) : null}
 
     <ul class="ledger">
-      {steps.map((s) => (
+      {deriv.map((s) => (
         <li class={`step ${s.kind}`}>
-          <span class="lbl">{s.label}{s.flag ? <span class="real">real cost</span> : null}{s.hint ? <i class="hint">{s.hint}</i> : null}</span>
+          <span class="lbl">{s.label}{s.hint ? <i class="hint">{s.hint}</i> : null}</span>
           <span class="amt">{s.kind === "add" || s.kind === "sub" ? signed(s.v) : $(s.v)}</span>
         </li>
       ))}
     </ul>
+
+    <div class="recon">
+      <span class="reconEyebrow">Where that operating cash came from — reconciled to reported profit</span>
+      <ul class="ledger">
+        {recon.map((s) => (
+          <li class={`step ${s.kind}`}>
+            <span class="lbl">{s.label}{s.flag ? <span class="real">real cost</span> : null}{s.hint ? <i class="hint">{s.hint}</i> : null}</span>
+            <span class="amt">{s.kind === "add" || s.kind === "sub" ? signed(s.v) : $(s.v)}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
 
     <p class="note">
       Owner earnings is operating cash less the capital the business must spend to keep going —
@@ -136,6 +153,17 @@ if (b) {
   .step.total { border-top: 2px solid var(--ink); border-bottom: none; margin-top: 2px; padding-top: 10px; }
   .step.total .lbl { font-weight: 700; font-size: 15px; color: var(--ink); }
   .step.total .amt { font-weight: 800; font-size: 18px; color: var(--accent); }
+
+  /* The reconciliation is supporting context, not the spine: quieter and smaller than the
+     derivation above, it shows how the operating cash squares with reported profit. */
+  .recon { margin: 18px 0 0; padding-top: 14px; border-top: 1px solid var(--rule); }
+  .reconEyebrow { display: block; font-family: var(--sans); font-size: 10.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); }
+  .recon .ledger { margin-top: 6px; }
+  .recon .step { padding: 6px 0; }
+  .recon .step .lbl { color: var(--ink-dim); font-size: 13px; }
+  .recon .step .amt { font-size: 13.5px; color: var(--ink-soft); }
+  .recon .step.subtotal .lbl { color: var(--ink); }
+  .recon .step.subtotal .amt { color: var(--ink); }
 
   .note { font-family: var(--serif); font-size: 13.5px; line-height: 1.6; color: var(--ink-soft); background: var(--accent-tint); border-left: 2px solid var(--accent); padding: 10px 14px; margin: 14px 0 0; max-width: 80ch; }
   .foot { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--rule-strong); margin-top: 16px; padding-top: 10px; max-width: 74ch; }
