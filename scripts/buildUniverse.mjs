@@ -184,6 +184,10 @@ async function main() {
   for (const r of adrTop) adrMerged.set(r.ticker, { ticker: r.ticker, name: adrCurated.get(r.ticker)?.name ?? r.name ?? undefined, country: r.country });
   let adrExtras = 0;
   for (const [tk, t] of adrCurated) if (!adrMerged.has(tk)) { adrMerged.set(tk, t); adrExtras++; }
+  // A foreign-incorporated company that files a us-GAAP 10-K (Chubb, NXP, Garmin, Eaton…) is read by
+  // the US pipeline and already lives in the US universe; drop it from the ADR pool so it isn't
+  // double-listed in both catalogs. The ADR pool is for the IFRS/20-F filers the US side can't read.
+  for (const tk of merged.keys()) adrMerged.delete(tk);
   const adrList = [...adrMerged.values()]
     .sort((a, b) => (a.ticker < b.ticker ? -1 : a.ticker > b.ticker ? 1 : 0))
     .map((t) => Object.fromEntries(Object.entries(t).filter(([, v]) => v != null)));
