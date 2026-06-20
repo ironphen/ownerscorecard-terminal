@@ -55,7 +55,11 @@ const CONCEPTS = {
   // a borrower) so the bank lens nets gross interest income against the right line.
   bankInterestExpense: ["InterestExpense", "InterestAndSimilarExpense", "InterestExpenseOperating", "InterestAndDebtExpense", "FinanceCosts"],
   // cash flow
-  cashFromOps: ["CashFlowsFromUsedInOperatingActivities", "NetCashFlowsFromUsedInOperatingActivities", "NetCashProvidedByUsedInOperatingActivities", "NetCashProvidedByUsedInOperatingActivitiesContinuingOperations"],
+  // Operating cash, IFRS then US-GAAP. An IFRS filer with discontinued operations tags the net line
+  // …OperatingActivitiesContinuingOperations (National Grid, Philips, Prudential, Cosan); a few tag
+  // only the shorter CashFlowsFromUsedInOperations (Suncor, Bitdeer). Ordered so the standard net
+  // line wins where present and these fill the rest.
+  cashFromOps: ["CashFlowsFromUsedInOperatingActivities", "CashFlowsFromUsedInOperatingActivitiesContinuingOperations", "NetCashFlowsFromUsedInOperatingActivities", "NetCashProvidedByUsedInOperatingActivities", "NetCashProvidedByUsedInOperatingActivitiesContinuingOperations", "CashFlowsFromUsedInOperations"],
   // Capex, IFRS then US-GAAP. Beyond the standard PP&E line, whole industries tag it their own way
   // and otherwise read null: oil & gas as oil-and-gas property, utilities as regulated property, and
   // many filers carry only the "Other" PP&E line. Ordered most-complete-first; first tag with data
@@ -63,11 +67,13 @@ const CONCEPTS = {
   capex: [
     "PurchaseOfPropertyPlantAndEquipmentClassifiedAsInvestingActivities",
     "PurchaseOfPropertyPlantAndEquipmentIntangibleAssetsAndOtherNoncurrentAssets",
+    "PurchaseOfPropertyPlantAndEquipmentIntangibleAssetsOtherThanGoodwillInvestmentPropertyAndOtherNoncurrentAssets",
     "PurchaseOfPropertyPlantAndEquipment",
     "PaymentsToAcquirePropertyPlantAndEquipment",
     "PaymentsToAcquireProductiveAssets",
     "PaymentsToAcquireOilAndGasPropertyAndEquipment",
     "PaymentsToAcquireOilAndGasProperty",
+    "PaymentsForDevelopmentProjectExpenditure",
     "PaymentsToAcquireRegulatedProperty",
     "PaymentsForCapitalImprovements",
     "PaymentsToAcquireMachineryAndEquipment",
