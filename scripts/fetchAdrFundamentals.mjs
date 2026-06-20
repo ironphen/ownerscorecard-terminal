@@ -73,6 +73,8 @@ const CONCEPTS = {
     "PaymentsToAcquireProductiveAssets",
     "PaymentsToAcquireOilAndGasPropertyAndEquipment",
     "PaymentsToAcquireOilAndGasProperty",
+    "PaymentsToExploreAndDevelopOilAndGasProperties",
+    "PurchaseOfExplorationAndEvaluationAssets",
     "PaymentsForDevelopmentProjectExpenditure",
     "PaymentsToAcquireRegulatedProperty",
     "PaymentsForCapitalImprovements",
