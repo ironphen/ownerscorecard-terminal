@@ -55,8 +55,32 @@ const CONCEPTS = {
   // a borrower) so the bank lens nets gross interest income against the right line.
   bankInterestExpense: ["InterestExpense", "InterestAndSimilarExpense", "InterestExpenseOperating", "InterestAndDebtExpense", "FinanceCosts"],
   // cash flow
-  cashFromOps: ["CashFlowsFromUsedInOperatingActivities", "NetCashFlowsFromUsedInOperatingActivities", "NetCashProvidedByUsedInOperatingActivities"],
-  capex: ["PurchaseOfPropertyPlantAndEquipmentClassifiedAsInvestingActivities", "PurchaseOfPropertyPlantAndEquipmentIntangibleAssetsAndOtherNoncurrentAssets", "PaymentsToAcquirePropertyPlantAndEquipment", "PaymentsToAcquireProductiveAssets"],
+  // Operating cash, IFRS then US-GAAP. An IFRS filer with discontinued operations tags the net line
+  // …OperatingActivitiesContinuingOperations (National Grid, Philips, Prudential, Cosan); a few tag
+  // only the shorter CashFlowsFromUsedInOperations (Suncor, Bitdeer). Ordered so the standard net
+  // line wins where present and these fill the rest.
+  cashFromOps: ["CashFlowsFromUsedInOperatingActivities", "CashFlowsFromUsedInOperatingActivitiesContinuingOperations", "NetCashFlowsFromUsedInOperatingActivities", "NetCashProvidedByUsedInOperatingActivities", "NetCashProvidedByUsedInOperatingActivitiesContinuingOperations", "CashFlowsFromUsedInOperations"],
+  // Capex, IFRS then US-GAAP. Beyond the standard PP&E line, whole industries tag it their own way
+  // and otherwise read null: oil & gas as oil-and-gas property, utilities as regulated property, and
+  // many filers carry only the "Other" PP&E line. Ordered most-complete-first; first tag with data
+  // per year wins, never summed.
+  capex: [
+    "PurchaseOfPropertyPlantAndEquipmentClassifiedAsInvestingActivities",
+    "PurchaseOfPropertyPlantAndEquipmentIntangibleAssetsAndOtherNoncurrentAssets",
+    "PurchaseOfPropertyPlantAndEquipmentIntangibleAssetsOtherThanGoodwillInvestmentPropertyAndOtherNoncurrentAssets",
+    "PurchaseOfPropertyPlantAndEquipment",
+    "PaymentsToAcquirePropertyPlantAndEquipment",
+    "PaymentsToAcquireProductiveAssets",
+    "PaymentsToAcquireOilAndGasPropertyAndEquipment",
+    "PaymentsToAcquireOilAndGasProperty",
+    "PaymentsToExploreAndDevelopOilAndGasProperties",
+    "PurchaseOfExplorationAndEvaluationAssets",
+    "PaymentsForDevelopmentProjectExpenditure",
+    "PaymentsToAcquireRegulatedProperty",
+    "PaymentsForCapitalImprovements",
+    "PaymentsToAcquireMachineryAndEquipment",
+    "PaymentsToAcquireOtherPropertyPlantAndEquipment",
+  ],
   depreciation: ["DepreciationAndAmortisationExpense", "DepreciationAmortisationAndImpairmentLossReversalOfImpairmentLossRecognisedInProfitOrLoss", "DepreciationDepletionAndAmortization", "DepreciationAndAmortization"],
   dividendsPaid: ["DividendsPaidClassifiedAsFinancingActivities", "DividendsPaid", "PaymentsOfDividendsCommonStock", "PaymentsOfDividends"],
   buybacks: ["PaymentsToAcquireOrRedeemEntitysShares", "PaymentsForRepurchaseOfCommonStock"],
@@ -314,6 +338,30 @@ async function main() {
     const sicDescription = sub?.sicDescription || meta.sicDescription || null;
     const a = (tags) => pickAnnual(facts, tags, ccy)?.val ?? null;
     const inst = (tags) => latestObservation(facts, tags, ccy, true)?.val ?? null;
+
+    // Diagnostic: ADR_DEBUG=NGG dumps the operating-cash and capex concepts a 20-F filer actually
+    // tags, across IFRS and US-GAAP, in its home currency — so the concept map is widened from real
+    // filings, not guessed (an IFRS grid operator or oil major names these its own way).
+    if (process.env.ADR_DEBUG && process.env.ADR_DEBUG.toUpperCase().split(",").map((s) => s.trim()).includes(ticker.toUpperCase())) {
+      console.log(`\n=== ADR_DEBUG ${ticker} [${ccy}/${standard}]: cashFromOps=${a(CONCEPTS.cashFromOps)} capex=${a(CONCEPTS.capex)} ===`);
+      for (const ns of NAMESPACES) {
+        const g = facts?.facts?.[ns] || {};
+        for (const concept of Object.keys(g)) {
+          if (!/cashflow|operatingactiv|cashfromused|cashgenerated|payments(to|for)|purchaseof|acqui|propertyplant|capitalexpend|additionsto|expenditure/i.test(concept)) continue;
+          if (/proceeds|receivable|liabilit|payable|fairvalue|futurenet|maturit|repurchase|dividend|sharebased|interestpaid|taxespaid|financingactiv/i.test(concept)) continue;
+          const u = g[concept]?.units?.[ccy];
+          if (!u) continue;
+          const byYear = {};
+          for (const o of u) { if (!o.start || !o.end) continue; const d = days(o.start, o.end); if (d < 350 || d > 380) continue; const fy = new Date(o.end).getUTCFullYear(); if (!byYear[fy] || (o.filed || "") > (byYear[fy].filed || "")) byYear[fy] = o; }
+          const ys = Object.keys(byYear).sort();
+          if (!ys.length) continue;
+          const last = byYear[ys[ys.length - 1]];
+          if (Math.abs(last.val) < 1e6) continue;
+          console.log(`  ${(ns + ":" + concept).padEnd(70)} ${(last.val / 1e6).toFixed(0).padStart(10)}M (FY${ys[ys.length - 1]})`);
+        }
+      }
+      console.log("=== end ADR_DEBUG ===\n");
+    }
 
     const ha = Object.fromEntries(Object.keys(CONCEPTS).map((k) => [k, collectAnnual(facts, CONCEPTS[k], ccy)]));
     const hi = Object.fromEntries(["totalAssets", "currentAssets", "currentLiabilities", "totalLiabilities", "cashAndEquivalents", "shortTermInvestments", "receivables", "inventory", "accountsPayable", "equity", "goodwill", "intangibleAssets", "longTermDebt", "currentDebt", "deposits", "lossReserves"].map((k) => [k, collectInstant(facts, CONCEPTS[k], ccy)]));

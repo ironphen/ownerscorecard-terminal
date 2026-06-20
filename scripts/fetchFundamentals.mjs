@@ -80,7 +80,7 @@ const CONCEPTS = {
   interestExpense: ["InterestExpense", "InterestExpenseNonoperating", "InterestAndDebtExpense"],
   revenue: ["RevenueFromContractWithCustomerExcludingAssessedTax", "Revenues", "RevenueFromContractWithCustomerIncludingAssessedTax", "OilAndGasRevenue", "RevenueMineralSales"],
   netIncome: ["NetIncomeLoss", "NetIncomeLossAvailableToCommonStockholdersBasic", "ProfitLoss"],
-  cashFromOps: ["NetCashProvidedByUsedInOperatingActivities"],
+  cashFromOps: ["NetCashProvidedByUsedInOperatingActivities", "NetCashProvidedByUsedInOperatingActivitiesContinuingOperations"],
   // The cash-flow depreciation (+amortization) add-back, the maintenance-capex proxy the
   // steady-state owner-earnings lens subtracts from operating cash flow. Most filers report a
   // combined depreciation-and-amortization line (the leading tags). Microsoft and Alphabet
@@ -91,7 +91,25 @@ const CONCEPTS = {
   // figure, and property-and-equipment depreciation is the right match for capex, which buys
   // exactly that.
   depreciation: ["DepreciationDepletionAndAmortization", "DepreciationAmortizationAndAccretionNet", "DepreciationAndAmortization", "DepreciationAmortizationAndOther", "DepreciationDepletionAndAmortizationNonproduction", "CostOfGoodsAndServicesSoldDepreciationAndAmortization", "Depreciation"],
-  capex: ["PaymentsToAcquirePropertyPlantAndEquipment", "PaymentsToAcquireProductiveAssets"],
+  // Capex is the cash spent on the property and equipment the business runs on. The standard tag
+  // covers most filers, but whole industries tag it their own way and otherwise read null (owner
+  // earnings then can't net out reinvestment): oil & gas as oil-and-gas property, utilities as
+  // regulated property, a water utility as water systems, and many filers (ADP, EA) only carry the
+  // "Other" PP&E line. Ordered most-complete-first, so a filer reporting the standard total keeps
+  // it and the variants fill only the names that miss it; the first tag with data per year wins,
+  // never summed, so nothing double-counts.
+  capex: [
+    "PaymentsToAcquirePropertyPlantAndEquipment",
+    "PaymentsToAcquireProductiveAssets",
+    "PaymentsToAcquireOilAndGasPropertyAndEquipment",
+    "PaymentsToAcquireOilAndGasProperty",
+    "PaymentsToExploreAndDevelopOilAndGasProperties",
+    "PaymentsToAcquireRegulatedProperty",
+    "PaymentsForCapitalImprovements",
+    "PaymentsToAcquireWaterAndWasteWaterSystems",
+    "PaymentsToAcquireMachineryAndEquipment",
+    "PaymentsToAcquireOtherPropertyPlantAndEquipment",
+  ],
   longTermDebt: ["LongTermDebtNoncurrent", "LongTermDebt"],
   currentDebt: ["LongTermDebtCurrent", "DebtCurrent"],
   // Aggregate total-debt tags for filers whose borrowings sit outside the standard
@@ -599,6 +617,53 @@ async function main() {
         console.log(`  ${concept.padEnd(58)} ${(last.val / 1e6).toFixed(0).padStart(10)}M  (FY${years[years.length - 1]})`);
       }
       console.log("=== end DEP_DEBUG ===\n");
+    }
+
+    // Diagnostic: CFO_DEBUG=APD dumps every operating-cash-flow us-gaap tag and its latest annual
+    // value, to find the line a filer with discontinued operations actually uses (Air Products,
+    // Ashland, GE HealthCare tag ...ContinuingOperations, so the plain tag reads null — or a partial
+    // quarterly value sneaks into the TTM). Names the real tag so the concept map can be widened.
+    if (process.env.CFO_DEBUG && process.env.CFO_DEBUG.toUpperCase().split(",").map((s) => s.trim()).includes(ticker.toUpperCase())) {
+      const ug = facts?.facts?.["us-gaap"] || {};
+      console.log(`\n=== CFO_DEBUG ${ticker}: cashFromOps=${pick(CONCEPTS.cashFromOps)} ===`);
+      for (const concept of Object.keys(ug)) {
+        if (!/cashprovided|cashused|operatingactiv|netcashflow/i.test(concept)) continue;
+        const usd = ug[concept]?.units?.USD;
+        if (!usd) continue;
+        const byYear = {};
+        for (const o of usd) { if (o.form !== "10-K" || o.fp !== "FY" || o.fy == null) continue; if (!byYear[o.fy] || o.end > byYear[o.fy].end) byYear[o.fy] = o; }
+        const years = Object.keys(byYear).sort();
+        if (!years.length) continue;
+        const last = byYear[years[years.length - 1]];
+        console.log(`  ${concept.padEnd(66)} ${(last.val / 1e6).toFixed(0).padStart(10)}M  (FY${years[years.length - 1]})`);
+      }
+      console.log("=== end CFO_DEBUG ===\n");
+    }
+
+    // Diagnostic: CAPEX_DEBUG=EOG dumps every investing-outflow us-gaap tag and its latest annual
+    // value, to find the capex concept a filer actually uses (oil & gas, utilities and others tag it
+    // outside the standard PaymentsToAcquirePropertyPlantAndEquipment, so owner earnings reads null).
+    if (process.env.CAPEX_DEBUG && process.env.CAPEX_DEBUG.toUpperCase().split(",").map((s) => s.trim()).includes(ticker.toUpperCase())) {
+      console.log(`\n=== CAPEX_DEBUG ${ticker}: capex=${pick(CONCEPTS.capex)} ===`);
+      // Scan every namespace, not just us-gaap: a regulated utility or pipeline often tags its plant
+      // additions under a company-extension concept the standard taxonomy doesn't carry.
+      const allNs = facts?.facts || {};
+      for (const ns of Object.keys(allNs)) {
+        for (const concept of Object.keys(allNs[ns] || {})) {
+          if (!/payment|capital|additionsto|purchaseof|acqui|propert|plant|equipment|construction|expenditure/i.test(concept)) continue;
+          if (/proceeds|receivable|liabilit|payable|fairvalue|future|maturit|leasepayments|repurchase|dividend|stockcomp|sharebased/i.test(concept)) continue;
+          const usd = allNs[ns][concept]?.units?.USD;
+          if (!usd) continue;
+          const byYear = {};
+          for (const o of usd) { if (o.form !== "10-K" || o.fp !== "FY" || o.fy == null) continue; if (!byYear[o.fy] || o.end > byYear[o.fy].end) byYear[o.fy] = o; }
+          const years = Object.keys(byYear).sort();
+          if (!years.length) continue;
+          const last = byYear[years[years.length - 1]];
+          if (Math.abs(last.val) < 1e6) continue;
+          console.log(`  ${((ns === "us-gaap" ? "" : ns + ":") + concept).padEnd(68)} ${(last.val / 1e6).toFixed(0).padStart(10)}M  (FY${years[years.length - 1]})`);
+        }
+      }
+      console.log("=== end CAPEX_DEBUG ===\n");
     }
 
     // Diagnostic: SHARES_DEBUG=MCD dumps every share-count us-gaap tag and its annual values,

@@ -77,6 +77,8 @@ jobs:
           REVENUE_DEBUG: ${{ github.event.inputs.debug }}
           DEP_DEBUG: ${{ github.event.inputs.debug }}
           SHARES_DEBUG: ${{ github.event.inputs.debug }}
+          CFO_DEBUG: ${{ github.event.inputs.debug }}
+          CAPEX_DEBUG: ${{ github.event.inputs.debug }}
           ONLY_FUND: ${{ github.event.inputs.tickers }}
       # Filing language and segments only change when a company files a new annual report, so the
       # weekly Monday cron skips them; they refresh on the monthly cron and on demand.
@@ -98,11 +100,12 @@ jobs:
       # fetch_adr with rebuild_universe=write to bootstrap). Non-fatal: a separate pool never blocks
       # the US refresh.
       - run: npm run fetch:fundamentals:adr
-        if: ${{ (github.event.inputs.fetch_adr == 'true' || github.event.schedule == '0 8 1 * *') && github.event.inputs.debug == '' }}
+        if: ${{ (github.event.inputs.fetch_adr == 'true' || github.event.schedule == '0 8 1 * *') }}
         continue-on-error: true
         env:
           SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT }}
           ONLY_ADR: ${{ github.event.inputs.tickers }}
+          ADR_DEBUG: ${{ github.event.inputs.debug }}
       # Data-quality gate: runs the same lib functions the pages do. A systemic coverage
       # cliff (a taxonomy change that drops a whole data layer) fails this step and blocks
       # the commit below, so a broadly-broken refresh is never shipped. Per-company issues
