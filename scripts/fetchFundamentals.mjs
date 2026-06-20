@@ -91,7 +91,24 @@ const CONCEPTS = {
   // figure, and property-and-equipment depreciation is the right match for capex, which buys
   // exactly that.
   depreciation: ["DepreciationDepletionAndAmortization", "DepreciationAmortizationAndAccretionNet", "DepreciationAndAmortization", "DepreciationAmortizationAndOther", "DepreciationDepletionAndAmortizationNonproduction", "CostOfGoodsAndServicesSoldDepreciationAndAmortization", "Depreciation"],
-  capex: ["PaymentsToAcquirePropertyPlantAndEquipment", "PaymentsToAcquireProductiveAssets"],
+  // Capex is the cash spent on the property and equipment the business runs on. The standard tag
+  // covers most filers, but whole industries tag it their own way and otherwise read null (owner
+  // earnings then can't net out reinvestment): oil & gas as oil-and-gas property, utilities as
+  // regulated property, a water utility as water systems, and many filers (ADP, EA) only carry the
+  // "Other" PP&E line. Ordered most-complete-first, so a filer reporting the standard total keeps
+  // it and the variants fill only the names that miss it; the first tag with data per year wins,
+  // never summed, so nothing double-counts.
+  capex: [
+    "PaymentsToAcquirePropertyPlantAndEquipment",
+    "PaymentsToAcquireProductiveAssets",
+    "PaymentsToAcquireOilAndGasPropertyAndEquipment",
+    "PaymentsToAcquireOilAndGasProperty",
+    "PaymentsToAcquireRegulatedProperty",
+    "PaymentsForCapitalImprovements",
+    "PaymentsToAcquireWaterAndWasteWaterSystems",
+    "PaymentsToAcquireMachineryAndEquipment",
+    "PaymentsToAcquireOtherPropertyPlantAndEquipment",
+  ],
   longTermDebt: ["LongTermDebtNoncurrent", "LongTermDebt"],
   currentDebt: ["LongTermDebtCurrent", "DebtCurrent"],
   // Aggregate total-debt tags for filers whose borrowings sit outside the standard
@@ -626,18 +643,24 @@ async function main() {
     // value, to find the capex concept a filer actually uses (oil & gas, utilities and others tag it
     // outside the standard PaymentsToAcquirePropertyPlantAndEquipment, so owner earnings reads null).
     if (process.env.CAPEX_DEBUG && process.env.CAPEX_DEBUG.toUpperCase().split(",").map((s) => s.trim()).includes(ticker.toUpperCase())) {
-      const ug = facts?.facts?.["us-gaap"] || {};
       console.log(`\n=== CAPEX_DEBUG ${ticker}: capex=${pick(CONCEPTS.capex)} ===`);
-      for (const concept of Object.keys(ug)) {
-        if (!/payments(to|for)|capitalexpend|additionsto|purchaseof|acquisitionof/i.test(concept)) continue;
-        const usd = ug[concept]?.units?.USD;
-        if (!usd) continue;
-        const byYear = {};
-        for (const o of usd) { if (o.form !== "10-K" || o.fp !== "FY" || o.fy == null) continue; if (!byYear[o.fy] || o.end > byYear[o.fy].end) byYear[o.fy] = o; }
-        const years = Object.keys(byYear).sort();
-        if (!years.length) continue;
-        const last = byYear[years[years.length - 1]];
-        console.log(`  ${concept.padEnd(66)} ${(last.val / 1e6).toFixed(0).padStart(10)}M  (FY${years[years.length - 1]})`);
+      // Scan every namespace, not just us-gaap: a regulated utility or pipeline often tags its plant
+      // additions under a company-extension concept the standard taxonomy doesn't carry.
+      const allNs = facts?.facts || {};
+      for (const ns of Object.keys(allNs)) {
+        for (const concept of Object.keys(allNs[ns] || {})) {
+          if (!/payment|capital|additionsto|purchaseof|acqui|propert|plant|equipment|construction|expenditure/i.test(concept)) continue;
+          if (/proceeds|receivable|liabilit|payable|fairvalue|future|maturit|leasepayments|repurchase|dividend|stockcomp|sharebased/i.test(concept)) continue;
+          const usd = allNs[ns][concept]?.units?.USD;
+          if (!usd) continue;
+          const byYear = {};
+          for (const o of usd) { if (o.form !== "10-K" || o.fp !== "FY" || o.fy == null) continue; if (!byYear[o.fy] || o.end > byYear[o.fy].end) byYear[o.fy] = o; }
+          const years = Object.keys(byYear).sort();
+          if (!years.length) continue;
+          const last = byYear[years[years.length - 1]];
+          if (Math.abs(last.val) < 1e6) continue;
+          console.log(`  ${((ns === "us-gaap" ? "" : ns + ":") + concept).padEnd(68)} ${(last.val / 1e6).toFixed(0).padStart(10)}M  (FY${years[years.length - 1]})`);
+        }
       }
       console.log("=== end CAPEX_DEBUG ===\n");
     }
