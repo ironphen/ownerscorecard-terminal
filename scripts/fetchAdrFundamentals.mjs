@@ -331,6 +331,30 @@ async function main() {
     const a = (tags) => pickAnnual(facts, tags, ccy)?.val ?? null;
     const inst = (tags) => latestObservation(facts, tags, ccy, true)?.val ?? null;
 
+    // Diagnostic: ADR_DEBUG=NGG dumps the operating-cash and capex concepts a 20-F filer actually
+    // tags, across IFRS and US-GAAP, in its home currency — so the concept map is widened from real
+    // filings, not guessed (an IFRS grid operator or oil major names these its own way).
+    if (process.env.ADR_DEBUG && process.env.ADR_DEBUG.toUpperCase().split(",").map((s) => s.trim()).includes(ticker.toUpperCase())) {
+      console.log(`\n=== ADR_DEBUG ${ticker} [${ccy}/${standard}]: cashFromOps=${a(CONCEPTS.cashFromOps)} capex=${a(CONCEPTS.capex)} ===`);
+      for (const ns of NAMESPACES) {
+        const g = facts?.facts?.[ns] || {};
+        for (const concept of Object.keys(g)) {
+          if (!/cashflow|operatingactiv|cashfromused|cashgenerated|payments(to|for)|purchaseof|acqui|propertyplant|capitalexpend|additionsto|expenditure/i.test(concept)) continue;
+          if (/proceeds|receivable|liabilit|payable|fairvalue|futurenet|maturit|repurchase|dividend|sharebased|interestpaid|taxespaid|financingactiv/i.test(concept)) continue;
+          const u = g[concept]?.units?.[ccy];
+          if (!u) continue;
+          const byYear = {};
+          for (const o of u) { if (!o.start || !o.end) continue; const d = days(o.start, o.end); if (d < 350 || d > 380) continue; const fy = new Date(o.end).getUTCFullYear(); if (!byYear[fy] || (o.filed || "") > (byYear[fy].filed || "")) byYear[fy] = o; }
+          const ys = Object.keys(byYear).sort();
+          if (!ys.length) continue;
+          const last = byYear[ys[ys.length - 1]];
+          if (Math.abs(last.val) < 1e6) continue;
+          console.log(`  ${(ns + ":" + concept).padEnd(70)} ${(last.val / 1e6).toFixed(0).padStart(10)}M (FY${ys[ys.length - 1]})`);
+        }
+      }
+      console.log("=== end ADR_DEBUG ===\n");
+    }
+
     const ha = Object.fromEntries(Object.keys(CONCEPTS).map((k) => [k, collectAnnual(facts, CONCEPTS[k], ccy)]));
     const hi = Object.fromEntries(["totalAssets", "currentAssets", "currentLiabilities", "totalLiabilities", "cashAndEquivalents", "shortTermInvestments", "receivables", "inventory", "accountsPayable", "equity", "goodwill", "intangibleAssets", "longTermDebt", "currentDebt", "deposits", "lossReserves"].map((k) => [k, collectInstant(facts, CONCEPTS[k], ccy)]));
     const shAnnual = collectAnnual(facts, CONCEPTS.sharesDiluted, "shares");
