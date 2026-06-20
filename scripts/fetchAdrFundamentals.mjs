@@ -55,8 +55,24 @@ const CONCEPTS = {
   // a borrower) so the bank lens nets gross interest income against the right line.
   bankInterestExpense: ["InterestExpense", "InterestAndSimilarExpense", "InterestExpenseOperating", "InterestAndDebtExpense", "FinanceCosts"],
   // cash flow
-  cashFromOps: ["CashFlowsFromUsedInOperatingActivities", "NetCashFlowsFromUsedInOperatingActivities", "NetCashProvidedByUsedInOperatingActivities"],
-  capex: ["PurchaseOfPropertyPlantAndEquipmentClassifiedAsInvestingActivities", "PurchaseOfPropertyPlantAndEquipmentIntangibleAssetsAndOtherNoncurrentAssets", "PaymentsToAcquirePropertyPlantAndEquipment", "PaymentsToAcquireProductiveAssets"],
+  cashFromOps: ["CashFlowsFromUsedInOperatingActivities", "NetCashFlowsFromUsedInOperatingActivities", "NetCashProvidedByUsedInOperatingActivities", "NetCashProvidedByUsedInOperatingActivitiesContinuingOperations"],
+  // Capex, IFRS then US-GAAP. Beyond the standard PP&E line, whole industries tag it their own way
+  // and otherwise read null: oil & gas as oil-and-gas property, utilities as regulated property, and
+  // many filers carry only the "Other" PP&E line. Ordered most-complete-first; first tag with data
+  // per year wins, never summed.
+  capex: [
+    "PurchaseOfPropertyPlantAndEquipmentClassifiedAsInvestingActivities",
+    "PurchaseOfPropertyPlantAndEquipmentIntangibleAssetsAndOtherNoncurrentAssets",
+    "PurchaseOfPropertyPlantAndEquipment",
+    "PaymentsToAcquirePropertyPlantAndEquipment",
+    "PaymentsToAcquireProductiveAssets",
+    "PaymentsToAcquireOilAndGasPropertyAndEquipment",
+    "PaymentsToAcquireOilAndGasProperty",
+    "PaymentsToAcquireRegulatedProperty",
+    "PaymentsForCapitalImprovements",
+    "PaymentsToAcquireMachineryAndEquipment",
+    "PaymentsToAcquireOtherPropertyPlantAndEquipment",
+  ],
   depreciation: ["DepreciationAndAmortisationExpense", "DepreciationAmortisationAndImpairmentLossReversalOfImpairmentLossRecognisedInProfitOrLoss", "DepreciationDepletionAndAmortization", "DepreciationAndAmortization"],
   dividendsPaid: ["DividendsPaidClassifiedAsFinancingActivities", "DividendsPaid", "PaymentsOfDividendsCommonStock", "PaymentsOfDividends"],
   buybacks: ["PaymentsToAcquireOrRedeemEntitysShares", "PaymentsForRepurchaseOfCommonStock"],
