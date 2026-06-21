@@ -18,7 +18,7 @@ const curLabel = company.ttm?.lines ? "TTM" : company.fy ? `FY${company.fy}` : "
 const rev = topLineRevenue(cur, company) ?? topLineRevenue(company.lines, company);
 const grossMargin = (l) => (l && l.revenue && l.costOfRevenue != null ? 1 - l.costOfRevenue / l.revenue : null);
 const curGM = grossMargin(cur);
-const curOEM = ownerEarningsMargin(cur);
+const curOEM = ownerEarningsMargin(cur, company);
 const cov = coverage(company);
 const cash = cashPosition(company);
 

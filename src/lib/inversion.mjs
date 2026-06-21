@@ -4,7 +4,7 @@
 // already pulls, returning the actual numbers and whether the fingerprint is present. None
 // is a verdict: a flag is a question to put to the filing, a clear test is one fewer way to
 // be wrong. Present, never pronounce.
-import { ownerEarningsMargin, operatingMargin, fmtMoney, currencySymbol } from "./fundamentals.mjs";
+import { ownerEarningsMargin, ownerEarningsAbs, operatingMargin, fmtMoney, currencySymbol } from "./fundamentals.mjs";
 import { capitalHistory } from "./capital.mjs";
 
 const avg = (xs) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null);
@@ -22,7 +22,7 @@ export function inversionChecks(company) {
   const lines = H.map((h) => h.lines);
   const endL = company.ttm?.lines || lines[lines.length - 1];
   const startL = lines[0];
-  const oeAbs = lines.map((L) => (L.cashFromOps != null && L.capex != null ? L.cashFromOps - Math.abs(L.capex) : null));
+  const oeAbs = lines.map((L) => ownerEarningsAbs(L, company));
   const cap = capitalHistory(company);
   const checks = [];
 
@@ -31,7 +31,7 @@ export function inversionChecks(company) {
   // slide, not one soft year, is the mark; a cyclical trough reads as a slide too, which is
   // why the note sends the reader to the cause rather than calling it.
   {
-    const oem = lines.map((L) => ownerEarningsMargin(L));
+    const oem = lines.map((L) => ownerEarningsMargin(L, company));
     const useOpm = oem.filter((v) => v != null).length < 4;
     const raw = useOpm ? lines.map((L) => operatingMargin(L)) : oem;
     const series = raw.filter((v) => v != null && Math.abs(v) <= 1.5);

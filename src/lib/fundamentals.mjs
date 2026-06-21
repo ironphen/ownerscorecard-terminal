@@ -306,41 +306,39 @@ export function roic(c) {
   };
 }
 
-// Owner Earnings (owner earnings): operating cash minus capex, what an owner can take out.
+// Owner earnings (Buffett's figure): operating cash minus the maintenance capex the business
+// must spend to hold its position — what an owner can take out without starving it. Free cash
+// flow (after growth capex too) is shown beside it in the note, so the two never get conflated.
 export function ownerCash(c) {
   const $ = (v) => fmtMoney(v, c?.currency || "USD");
   const L = c?.lines || {};
   const cfo = L.cashFromOps, capex = L.capex;
   if (cfo == null || capex == null) return null;
-  const oc = cfo - Math.abs(capex);
+  const maint = maintenanceCapex(c) ?? Math.abs(capex);
+  const oe = cfo - maint;            // Buffett owner earnings: operating cash less maintenance capex
+  const fcf = cfo - Math.abs(capex); // free cash flow: after the discretionary growth capex too
   const rev = L.revenue, sbc = L.stockBasedComp;
-  const margin = rev ? oc / rev : null;
-  const ocSbc = sbc != null ? oc - sbc : null;
-  const maint = maintenanceCapex(c);
-  const buffOE = maint != null ? cfo - maint : null;
-  // Material growth capex: the free-cash figure understates Buffett's owner earnings, which charges
-  // only the maintenance the business owes, not the growth it chose.
-  const growthGap = buffOE != null && buffOE - oc > Math.max(Math.abs(oc) * 0.15, (rev || 0) * 0.01);
+  const margin = rev ? oe / rev : null;
+  const oeSbc = sbc != null ? oe - sbc : null;
+  const growthGap = oe - fcf > Math.max(Math.abs(oe) * 0.1, (rev || 0) * 0.01);
   const pct = (x) => `${(x * 100).toFixed(0)}%`;
   // Judge on the through-cycle median margin, so a heavy build-out year (or a one-off cash year)
   // doesn't set the verdict on a business that earns well across the record.
-  const tc = throughCycle(c, ownerEarningsMargin);
+  const tc = throughCycle(c, (l) => ownerEarningsMargin(l, c));
   const j = tc ? tc.median : margin;
-  const tone = j == null ? (oc <= 0 ? "bad" : "ok") : j <= 0 ? "bad" : j < 0.05 ? "warn" : j < 0.15 ? "ok" : "good";
-  const base = j == null ? (oc <= 0 ? "Consumes cash" : "Positive") : j <= 0 ? "Consumes cash" : j < 0.05 ? "Thin" : j < 0.15 ? "Solid" : "Cash machine";
+  const tone = j == null ? (oe <= 0 ? "bad" : "ok") : j <= 0 ? "bad" : j < 0.05 ? "warn" : j < 0.15 ? "ok" : "good";
+  const base = j == null ? (oe <= 0 ? "Consumes cash" : "Positive") : j <= 0 ? "Consumes cash" : j < 0.05 ? "Thin" : j < 0.15 ? "Solid" : "Cash machine";
   return {
-    value: tc ? pct(j) : margin != null ? pct(margin) : $(oc),
+    value: tc ? pct(j) : margin != null ? pct(margin) : $(oe),
     formula: tc
-      ? `${tc.n}-yr median margin, range ${pct(tc.lo)}–${pct(tc.hi)}; latest ${$(oc)} = operating cash ${$(cfo)} − capex ${$(Math.abs(capex))}`
-      : `Owner Earnings ${$(oc)} = operating cash ${$(cfo)} − capex ${$(Math.abs(capex))}`,
+      ? `${tc.n}-yr median margin, range ${pct(tc.lo)}–${pct(tc.hi)}; latest ${$(oe)} = operating cash ${$(cfo)} − maintenance capex ${$(maint)}`
+      : `Owner earnings ${$(oe)} = operating cash ${$(cfo)} − maintenance capex ${$(maint)}`,
     tone,
     label: base + (tc ? " through the cycle" : ""),
     note:
-      `What an owner could take out without starving the business.${margin != null ? ` That's ${pct(margin)} of revenue this year${tc ? `, a ${pct(tc.median)} median across ${tc.n} years` : ""}.` : ""}` +
-      `${ocSbc != null ? ` Treating stock comp as the real expense it is (less ${$(sbc)} of SBC) leaves ${$(ocSbc)}.` : ""}` +
-      (growthGap
-        ? ` This is free cash flow, struck after growth capex. Charged only the maintenance it owes (≈ ${$(maint)}), Buffett's owner earnings runs nearer ${$(buffOE)} — the gap is the build-out; see the owner-earnings bridge.`
-        : " Capex here is close to maintenance, so this sits near Buffett's owner earnings already."),
+      `What an owner could take out without starving the business: operating cash less the maintenance capital it must spend to hold its position — Buffett's owner earnings.${margin != null ? ` That's ${pct(margin)} of revenue this year${tc ? `, a ${pct(tc.median)} median across ${tc.n} years` : ""}.` : ""}` +
+      (growthGap ? ` It chose to put ${$(Math.abs(capex) - maint)} more into growth, so free cash flow this year was ${$(fcf)} — the gap is investment, not weakness.` : "") +
+      `${oeSbc != null ? ` Treating stock comp as the real expense it is (less ${$(sbc)} of SBC) leaves ${$(oeSbc)}.` : ""}`,
   };
 }
 
@@ -353,12 +351,24 @@ export function ownerCash(c) {
 // counts as growth only when revenue is genuinely rising (else the excess is replacement-cost
 // inflation on flat volume, still maintenance), in which case maintenance ≈ depreciation.
 export function maintenanceCapex(c) {
-  const L = c?.lines || {};
-  const capex = L.capex != null ? Math.abs(L.capex) : null;
+  return maintenanceCapexFor(c?.lines || {}, c);
+}
+// Maintenance capex for a single year's lines, given the company (whose record decides whether it is
+// genuinely growing). Used per-year so every owner-earnings surface — the bridge, the scorecard, the
+// ten-year table, peers, durability — reads the same Buffett figure rather than free cash flow.
+export function maintenanceCapexFor(L, company) {
+  const capex = L?.capex != null ? Math.abs(L.capex) : null;
   if (capex == null) return null;
   const dep = L.depreciation;
   if (dep == null || dep <= 0 || capex <= dep * 1.25) return capex;
-  return revenueGrowing(c) ? dep : capex;
+  return revenueGrowing(company) ? dep : capex;
+}
+// Owner earnings, the cash figure (not a margin): operating cash less the maintenance capex Buffett
+// subtracts. The single definition the whole site reads, so the bridge and the tables never disagree.
+export function ownerEarningsAbs(L, company) {
+  if (!L || L.cashFromOps == null || L.capex == null) return null;
+  const maint = maintenanceCapexFor(L, company);
+  return maint == null ? null : L.cashFromOps - maint;
 }
 // Did the business actually grow across the record? First few years of revenue vs the last few, so a
 // one-year blip doesn't read as growth and a steady decliner isn't credited with growth capex.
@@ -534,9 +544,13 @@ export function operatingMargin(L) {
   return L && L.operatingIncome != null && L.revenue ? L.operatingIncome / L.revenue : null;
 }
 
-export function ownerEarningsMargin(L) {
+export function ownerEarningsMargin(L, company) {
   if (!L || L.cashFromOps == null || L.capex == null || !L.revenue) return null;
-  return (L.cashFromOps - Math.abs(L.capex)) / L.revenue;
+  // Buffett's owner earnings: operating cash less maintenance capex, not total capex (which would be
+  // free cash flow). `company` carries the record the growth test needs; without it we fall back to
+  // total capex, so a stray call can never read higher than free cash flow.
+  const maint = company ? maintenanceCapexFor(L, company) : Math.abs(L.capex);
+  return (L.cashFromOps - maint) / L.revenue;
 }
 
 // The through-cycle reading of a per-year metric: its median across the record (up to the ~10 years
@@ -572,7 +586,7 @@ export function durability(company) {
         consistency: roicVals.length ? `≥15% in ${above} of ${roicVals.length} years` : null,
       },
       { label: "Operating margin", values: hist.map((h) => operatingMargin(h.lines)), consistency: null },
-      { label: "Owner Earnings margin", values: hist.map((h) => ownerEarningsMargin(h.lines)), consistency: null },
+      { label: "Owner-earnings margin", values: hist.map((h) => ownerEarningsMargin(h.lines, company)), consistency: null },
     ],
   };
 }
@@ -619,7 +633,7 @@ export function buildScorecard(company) {
         heading: "Is it a good business?",
         checks: [
           wrap("Return on invested capital", "roic", roic(company)),
-          wrap("Owner Earnings (free cash) margin", "owner-earnings", ownerCash(company)),
+          wrap("Owner-earnings margin", "owner-earnings", ownerCash(company)),
           wrap("Are earnings backed by cash?", "free-cash-flow", earningsQuality(company)),
         ],
       },

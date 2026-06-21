@@ -3,6 +3,11 @@
 // no generative tools. The classification is transparent by design, every call
 // carries the reason it was made, so the page can show its work.
 
+// Owner-earnings margin, so the key-figures strip reads the same Buffett figure (operating cash
+// less maintenance capex) the scorecard and tables do. Call-time use only, so the fundamentals ↔
+// archetype cycle resolves lazily.
+import { ownerEarningsMargin } from "./fundamentals.mjs";
+
 const ratio = (n, d) => (n != null && d ? n / d : null);
 const pct = (v, dp = 0) => (v == null ? "—" : `${(v * 100).toFixed(dp)}%`);
 const avg = (xs) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null);
@@ -360,20 +365,20 @@ export function keyFigures(company, sectorKey) {
   const L = company.lines || {};
   const rev = L.revenue;
   const gm = rev && L.costOfRevenue != null ? 1 - L.costOfRevenue / rev : null;
-  const oem = L.cashFromOps != null && L.capex != null && rev ? (L.cashFromOps - Math.abs(L.capex)) / rev : null;
+  const oem = ownerEarningsMargin(L, company);
   const opm = ratio(L.operatingIncome, rev);
   const f = (label, value) => ({ label, value });
   switch (sectorKey) {
     case "assetLight":
-      return [f("Gross margin", pct(gm)), f("Stock comp / revenue", pct(ratio(L.stockBasedComp, rev), 1)), f("Owner Earnings margin", pct(oem))];
+      return [f("Gross margin", pct(gm)), f("Stock comp / revenue", pct(ratio(L.stockBasedComp, rev), 1)), f("Owner-earnings margin", pct(oem))];
     case "retail":
-      return [f("Inventory turns", L.inventory && L.costOfRevenue ? `${(L.costOfRevenue / L.inventory).toFixed(1)}×` : "—"), f("Operating margin", pct(opm, 1)), f("Owner Earnings margin", pct(oem))];
+      return [f("Inventory turns", L.inventory && L.costOfRevenue ? `${(L.costOfRevenue / L.inventory).toFixed(1)}×` : "—"), f("Operating margin", pct(opm, 1)), f("Owner-earnings margin", pct(oem))];
     case "capital":
-      return [f("Capex / revenue", pct(ratio(L.capex != null ? Math.abs(L.capex) : null, rev))), f("Capex vs depreciation", L.capex && L.depreciation ? `${(Math.abs(L.capex) / L.depreciation).toFixed(2)}×` : "—"), f("Owner Earnings margin", pct(oem))];
+      return [f("Capex / revenue", pct(ratio(L.capex != null ? Math.abs(L.capex) : null, rev))), f("Capex vs depreciation", L.capex && L.depreciation ? `${(Math.abs(L.capex) / L.depreciation).toFixed(2)}×` : "—"), f("Owner-earnings margin", pct(oem))];
     case "consumer":
-      return [f("Operating margin", pct(opm, 1)), f("Gross margin", pct(gm)), f("Owner Earnings margin", pct(oem))];
+      return [f("Operating margin", pct(opm, 1)), f("Gross margin", pct(gm)), f("Owner-earnings margin", pct(oem))];
     default:
-      return [f("Operating margin", pct(opm, 1)), f("Owner Earnings margin", pct(oem))];
+      return [f("Operating margin", pct(opm, 1)), f("Owner-earnings margin", pct(oem))];
   }
 }
 

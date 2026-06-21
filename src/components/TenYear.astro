@@ -1,6 +1,6 @@
 ---
 import { classify, financialKind, financialSubtype } from "../lib/archetype.mjs";
-import { fmtMoney, currencySymbol, roicValue, liquidAssets, topLineRevenue, debtReliable, oiReliable, effectiveTaxRate } from "../lib/fundamentals.mjs";
+import { fmtMoney, currencySymbol, roicValue, liquidAssets, topLineRevenue, debtReliable, oiReliable, effectiveTaxRate, ownerEarningsAbs } from "../lib/fundamentals.mjs";
 import { returnOnEquity, returnOnTangibleEquity, returnOnAssets, efficiencyRatio, tangibleEquity } from "../lib/financials.mjs";
 import { ffo, ffoPerShare, ffoPayout, debtToAssets } from "../lib/reits.mjs";
 import { combinedRatio, lossRatio } from "../lib/insurers.mjs";
@@ -61,8 +61,8 @@ const ROW = {
   // moves (Capcom's capex nearly halves its owner earnings; Microsoft's capex/revenue has
   // tripled). Then the returns earned on the capital tied up. ---
   cashFromOps: { label: "Operating cash flow", short: "Op. cash", g: 2, get: (L) => money(L.cashFromOps) },
-  ownerEarnings: { label: "Owner earnings", short: "Owner earn.", g: 2, get: (L) => (L.cashFromOps != null && L.capex != null ? money(L.cashFromOps - Math.abs(L.capex)) : "—") },
-  oeMargin: { label: "Owner earnings margin", short: "OE mgn", g: 2, get: (L) => marginStr(L.cashFromOps != null && L.capex != null ? L.cashFromOps - Math.abs(L.capex) : null, L.revenue) },
+  ownerEarnings: { label: "Owner earnings", short: "Owner earn.", g: 2, get: (L) => { const oe = ownerEarningsAbs(L, company); return oe == null ? "—" : money(oe); } },
+  oeMargin: { label: "Owner earnings margin", short: "OE mgn", g: 2, get: (L) => marginStr(ownerEarningsAbs(L, company), L.revenue) },
   roic: { label: "ROIC", short: "ROIC", g: 2, get: (L) => { if (!debtOk || !oiOk) return "—"; const r = roicValue(L); return r == null ? "—" : `${(r * 100).toFixed(0)}%`; } },
   roe: { label: "Return on equity", short: "ROE", g: 2, get: (L) => { const r = returnOnEquity(L); return r == null || !(L.stockholdersEquity > 0) ? "—" : `${(r * 100).toFixed(0)}%`; } },
   roa: { label: "Return on assets", short: "ROA", g: 2, get: (L) => { const r = returnOnAssets(L); return r == null ? "—" : `${(r * 100).toFixed(1)}%`; } },

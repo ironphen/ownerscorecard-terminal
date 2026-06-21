@@ -1,7 +1,7 @@
 ---
 import fundamentals from "../data/fundamentals.json";
 import { classify } from "../lib/archetype.mjs";
-import { fmtMoney, roicValue, topLineRevenue } from "../lib/fundamentals.mjs";
+import { fmtMoney, roicValue, topLineRevenue, ownerEarningsMargin } from "../lib/fundamentals.mjs";
 import { returnOnEquity, returnOnTangibleEquity, efficiencyRatio, netInterestMargin } from "../lib/financials.mjs";
 import { ffoMargin, ffoPayout, ffoOnAssets, debtToAssets } from "../lib/reits.mjs";
 import { combinedRatio, lossRatio } from "../lib/insurers.mjs";
@@ -47,7 +47,7 @@ const metricsOf = (c) => {
     grossMargin: L.revenue && L.costOfRevenue != null ? (L.revenue - L.costOfRevenue) / L.revenue : null,
     opMargin: L.operatingIncome != null && L.revenue ? L.operatingIncome / L.revenue : null,
     roic: roicValue(L),
-    oeMargin: L.cashFromOps != null && L.capex != null && L.revenue ? (L.cashFromOps - Math.abs(L.capex)) / L.revenue : null,
+    oeMargin: ownerEarningsMargin(L, c),
     netMargin: L.netIncome != null && L.revenue ? L.netIncome / L.revenue : null,
     roe: returnOnEquity(L),
     rotce: returnOnTangibleEquity(L),

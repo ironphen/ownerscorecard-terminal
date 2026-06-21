@@ -366,7 +366,7 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
       </div>
 
       <p class="foot">
-        Owner earnings {$(ownerEarnings)} {haveShares ? `on ${(shares / 1e6).toFixed(0)}M diluted shares` : "on the share count you enter above"}; net {netDebt >= 0 ? `debt ${$(netDebt)}` : `cash ${$(-netDebt)}`}.
+        {offerMaint ? "Free cash flow" : "Owner earnings"} {$(ownerEarnings)} {haveShares ? `on ${(shares / 1e6).toFixed(0)}M diluted shares` : "on the share count you enter above"}; net {netDebt >= 0 ? `debt ${$(netDebt)}` : `cash ${$(-netDebt)}`}.
         The base is the latest year by default; <b>Normalize</b> values it on the through-cycle average margin (the earnings-power figure above, Graham's method), and <b>Net of stock comp</b> treats option pay as the expense it is.{offerMaint ? (<> Capex ({$(Math.abs(capex))}) runs well above depreciation ({$(dep)}), so this is a build-out; <b>Steady-state</b> swaps total capex for maintenance (≈ depreciation), lifting the base to about {$(ownerEarningsMaint)}, the cash it would throw off if it stopped expanding.</>) : null}
         The reference value extrapolates the owner-earnings growth the record actually delivered, netted against debt — a yardstick, never a price target. The tool says what you'd have to <em>believe</em>, not what the company is <em>worth</em>.
       </p>

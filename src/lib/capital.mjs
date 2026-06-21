@@ -4,6 +4,8 @@
 // price), or to the balance sheet. Pure arithmetic on figures the pipeline pulls; the
 // report lays the facts in a row and never grades, the owner judges.
 
+import { ownerEarningsAbs } from "./fundamentals.mjs";
+
 // Diluted share counts come straight from each filing, and a stock split restates them: the
 // years a later 10-K still covers are reported on the new basis, while older years (no later
 // filing reaches back to restate them) stay on the old one, leaving a 4x or 20x cliff in the
@@ -50,7 +52,7 @@ export function capitalHistory(company) {
   const years = H.map((h) => h.fy);
   const per = H.map((h) => {
     const L = h.lines;
-    const oe = L.cashFromOps != null && L.capex != null ? L.cashFromOps - Math.abs(L.capex) : null;
+    const oe = ownerEarningsAbs(L, company);
     return {
       fy: h.fy,
       cfo: L.cashFromOps || 0,
@@ -131,7 +133,7 @@ export function capitalHistory(company) {
   const niTotal = per.reduce((a, q) => a + (q.ni || 0), 0);
   const retainedEarnings = niTotal - returned; // net income kept after dividends and buybacks
   const oeFirst = per.find((q) => q.oe != null)?.oe ?? null;
-  const oeLast = (endL.cashFromOps != null && endL.capex != null ? endL.cashFromOps - Math.abs(endL.capex) : null) ?? [...per].reverse().find((q) => q.oe != null)?.oe ?? null;
+  const oeLast = ownerEarningsAbs(endL, company) ?? [...per].reverse().find((q) => q.oe != null)?.oe ?? null;
   const incrementalOE = oeFirst != null && oeLast != null ? oeLast - oeFirst : null;
   const returnOnRetained = retainedEarnings > 0 && incrementalOE != null ? incrementalOE / retainedEarnings : null;
 
