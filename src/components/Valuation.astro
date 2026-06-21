@@ -6,7 +6,7 @@
 // target: it shows the owner-earnings growth a price implies, set against the record.
 import { classify, financialKind } from "../lib/archetype.mjs";
 import { moatReport } from "../lib/durability.mjs";
-import { fmtMoney, currencySymbol, liquidAssets } from "../lib/fundamentals.mjs";
+import { fmtMoney, currencySymbol, liquidAssets, maintenanceCapex } from "../lib/fundamentals.mjs";
 import { tangibleEquity } from "../lib/financials.mjs";
 import { ffoPerShare } from "../lib/reits.mjs";
 import { earningsPower } from "../lib/normalize.mjs";
@@ -79,13 +79,18 @@ const sbcLatest = L.stockBasedComp ?? company.lines?.stockBasedComp ?? 0;
 // the cash it would throw off at rest, so we offer a base that swaps capex for depreciation,
 // the standard maintenance-capex proxy. Offered only when it differs enough to matter.
 const dep = L.depreciation;
-const ownerEarningsMaint = cfo != null && dep != null ? cfo - dep : null;
+// Maintenance capex (Buffett's owner earnings base) instead of total: the same per-company estimate
+// the owner-earnings bridge uses, so the steady-state lens here and the bridge never disagree. It
+// carves growth capex out only for a business spending above depreciation while it grows.
+const maintCx = maintenanceCapex(company);
+const ownerEarningsMaint = cfo != null && maintCx != null ? cfo - maintCx : null;
 const oeHistMaint = (company.history || []).map((h) => (h.lines.cashFromOps != null && h.lines.depreciation != null ? h.lines.cashFromOps - h.lines.depreciation : null));
 const oem3vals = [...oeHistMaint].reverse().filter((v) => v != null).slice(0, 3);
 const oe3Maint = oem3vals.length >= 2 ? oem3vals.reduce((a, b) => a + b, 0) / oem3vals.length : ownerEarningsMaint;
-// Show the steady-state toggle only where capex runs meaningfully above depreciation (a real
-// build-out); when they are close it changes nothing and would just be a dial for its own sake.
-const offerMaint = ownerEarningsMaint != null && ownerEarnings != null && capex != null && dep != null && Math.abs(capex) > dep * 1.25;
+// Show the steady-state toggle only where it actually differs — a real builder whose growth capex
+// the maintenance estimate carves out; when maintenance ≈ total capex it would just be a dial for
+// its own sake.
+const offerMaint = ownerEarningsMaint != null && ownerEarnings != null && maintCx != null && capex != null && maintCx < Math.abs(capex) * 0.9;
 // The owner-earnings growth the business actually delivered, as a number, to anchor a
 // reference value against (never a target): what the record would be worth on its own record.
 const oeSeries = oeHist.filter((v) => v != null);
