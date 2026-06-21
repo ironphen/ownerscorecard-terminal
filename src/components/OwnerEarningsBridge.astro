@@ -15,9 +15,12 @@ const $ = (v) => fmtMoney(v, company?.currency || "USD");
 const signed = (v) => (v < 0 ? "−" : "+") + $(Math.abs(v));
 const pc = (n, d) => (n != null && d ? `${Math.round((n / d) * 100)}%` : null);
 
-// The ledger. Depreciation and stock comp appear only when the filing tags them; whatever
-// isn't named folds into "Working capital & other", so net income always closes to operating
-// cash and the bridge ties out exactly.
+// The ledger. Net income closes to operating cash (depreciation and stock comp shown when tagged,
+// everything else in the residual, so it ties out), then capex splits the Buffett way: the
+// maintenance the business needs just to hold its position, which owner earnings subtracts, and —
+// only for a builder spending above depreciation while it grows — the discretionary growth capex,
+// which carries on down to free cash flow (the figure the scorecard's free-cash margin reads).
+const hasGrowth = !!b && b.growthCapex > 0;
 let steps = [], oeMargin = null, sbcAdj = null;
 if (b) {
   steps = [
@@ -26,8 +29,10 @@ if (b) {
     b.stockBasedComp != null ? { k: "sbc", label: "Stock-based compensation", kind: "add", v: b.stockBasedComp, hint: "non-cash — but a real cost", flag: true } : null,
     { k: "oth", label: "Working capital & other", kind: "add", v: b.other, hint: "timing of cash in and out, other non-cash items" },
     { k: "cfo", label: "Cash from operations", kind: "subtotal", v: b.cashFromOps },
-    { k: "capex", label: "Capital expenditure", kind: "sub", v: -b.capex, hint: "cash put back in to keep running and to grow" },
+    { k: "maint", label: hasGrowth ? "Maintenance capital expenditure" : "Capital expenditure", kind: "sub", v: -b.maintCapex, hint: hasGrowth ? "the spending needed just to hold its position and volume" : "cash put back in to keep running and to grow" },
     { k: "oe", label: "Owner earnings", kind: "total", v: b.ownerEarnings },
+    hasGrowth ? { k: "growth", label: "Growth capital expenditure", kind: "sub", v: -b.growthCapex, hint: "discretionary — spent to get bigger, not to stand still" } : null,
+    hasGrowth ? { k: "fcf", label: "Free cash flow", kind: "subtotal", v: b.freeCashFlow } : null,
   ].filter(Boolean);
   oeMargin = pc(b.ownerEarnings, b.revenue);
   sbcAdj = b.stockBasedComp != null ? b.ownerEarnings - b.stockBasedComp : null;
@@ -49,9 +54,13 @@ const bigGap = !!b && b.netIncome > 0 && b.other < -0.5 * b.netIncome;
 let takeaway = null;
 if (b) {
   const niTxt = b.netIncome >= 0 ? `${$(b.netIncome)} of profit` : `a ${$(Math.abs(b.netIncome))} loss`;
-  takeaway = b.ownerEarnings >= b.netIncome
-    ? `That year the business turned ${niTxt} into ${$(b.ownerEarnings)} of owner earnings — more cash than the profit line showed, after the non-cash charges and the capital it put back in.`
-    : `That year the business reported ${niTxt} but ${$(b.ownerEarnings)} of owner earnings — ${$(Math.abs(b.ownerEarnings - b.netIncome))} less than the profit line, taken out by capital spending and the timing of cash.`;
+  if (hasGrowth) {
+    takeaway = `That year the business earned ${$(b.ownerEarnings)} of owner earnings — the operating cash left after the ${$(b.maintCapex)} it takes just to hold its position. It chose to put ${$(b.growthCapex)} more into growth, which is why free cash flow was only ${$(b.freeCashFlow)}: the gap is investment, not weakness.`;
+  } else {
+    takeaway = b.ownerEarnings >= b.netIncome
+      ? `That year the business turned ${niTxt} into ${$(b.ownerEarnings)} of owner earnings — more cash than the profit line showed, after the non-cash charges and the capital it put back in.`
+      : `That year the business reported ${niTxt} but ${$(b.ownerEarnings)} of owner earnings — ${$(Math.abs(b.ownerEarnings - b.netIncome))} less than the profit line, taken out by capital spending and the timing of cash.`;
+  }
 }
 ---
 
@@ -94,16 +103,17 @@ if (b) {
     </ul>
 
     <p class="note">
-      Owner earnings is operating cash less the capital the business must spend to keep going —
-      what Buffett called the cash you could pull out without starving it.
-      {b.stockBasedComp != null ? (
-        <> Note the stock-comp line: the cash-flow statement adds it back as non-cash, but it is
-        a real cost paid in shares. Counted as the expense it is (less {$(b.stockBasedComp)}),
-        owner earnings is nearer {$(sbcAdj)}.</>
+      Owner earnings is what Buffett called the cash you could pull out without starving the business:
+      operating cash less the {hasGrowth ? "maintenance " : ""}capital it must spend to hold its position
+      {hasGrowth ? <> — here about {$(b.maintCapex)}, roughly its depreciation, the rate its assets wear out</> : null}.
+      {hasGrowth ? (
+        <> The other {$(b.growthCapex)} of its capital spending is growth it chose, not upkeep it owed; charged
+        only with the maintenance it must do, the business earns well more than this year's free cash flow shows.</>
       ) : null}
-      {" "}And the capex here blends maintenance and growth, so a business spending to expand may
-      earn more in steady state than this one year shows — read it beside capex vs. depreciation
-      above.
+      {b.stockBasedComp != null ? (
+        <> The cash-flow statement also adds stock comp back as non-cash, but it is a real cost paid in
+        shares — counted as the expense it is (less {$(b.stockBasedComp)}), owner earnings is nearer {$(sbcAdj)}.</>
+      ) : null}
     </p>
 
     {bigGap ? (
@@ -117,7 +127,7 @@ if (b) {
       </p>
     ) : null}
 
-    <p class="foot">Arithmetic on the company's own cash-flow statement; nothing here is scored. It ties out to the Owner Earnings the scorecard reads.</p>
+    <p class="foot">Arithmetic on the company's own cash-flow statement; nothing here is scored. Maintenance capex is estimated as depreciation only where a growing business invests above it (Buffett's proxy, with no property-and-equipment line to do better); free cash flow is the figure the scorecard's free-cash margin reads.</p>
   </section>
 ) : null}
 

@@ -316,6 +316,11 @@ export function ownerCash(c) {
   const rev = L.revenue, sbc = L.stockBasedComp;
   const margin = rev ? oc / rev : null;
   const ocSbc = sbc != null ? oc - sbc : null;
+  const maint = maintenanceCapex(c);
+  const buffOE = maint != null ? cfo - maint : null;
+  // Material growth capex: the free-cash figure understates Buffett's owner earnings, which charges
+  // only the maintenance the business owes, not the growth it chose.
+  const growthGap = buffOE != null && buffOE - oc > Math.max(Math.abs(oc) * 0.15, (rev || 0) * 0.01);
   const pct = (x) => `${(x * 100).toFixed(0)}%`;
   // Judge on the through-cycle median margin, so a heavy build-out year (or a one-off cash year)
   // doesn't set the verdict on a business that earns well across the record.
@@ -333,18 +338,45 @@ export function ownerCash(c) {
     note:
       `What an owner could take out without starving the business.${margin != null ? ` That's ${pct(margin)} of revenue this year${tc ? `, a ${pct(tc.median)} median across ${tc.n} years` : ""}.` : ""}` +
       `${ocSbc != null ? ` Treating stock comp as the real expense it is (less ${$(sbc)} of SBC) leaves ${$(ocSbc)}.` : ""}` +
-      " Honest caveat: capex here blends maintenance and growth, so steady-state Owner Earnings may run higher (see capex vs. depreciation).",
+      (growthGap
+        ? ` This is free cash flow, struck after growth capex. Charged only the maintenance it owes (≈ ${$(maint)}), Buffett's owner earnings runs nearer ${$(buffOE)} — the gap is the build-out; see the owner-earnings bridge.`
+        : " Capex here is close to maintenance, so this sits near Buffett's owner earnings already."),
   };
 }
 
+// Maintenance capex — the spending a business needs to hold its competitive position and unit
+// volume, the figure Buffett's owner earnings actually subtracts (total capex also funds growth,
+// which is discretionary). With no PP&E line to run the Greenwald sales-intensity split, we use
+// depreciation, Buffett's own stand-in for the assets consumed each year. The rule is conservative —
+// only a demonstrable builder gets growth capex carved out: capex at or below depreciation
+// (harvesting, asset-light, steady state) IS the maintenance figure; capex well above depreciation
+// counts as growth only when revenue is genuinely rising (else the excess is replacement-cost
+// inflation on flat volume, still maintenance), in which case maintenance ≈ depreciation.
+export function maintenanceCapex(c) {
+  const L = c?.lines || {};
+  const capex = L.capex != null ? Math.abs(L.capex) : null;
+  if (capex == null) return null;
+  const dep = L.depreciation;
+  if (dep == null || dep <= 0 || capex <= dep * 1.25) return capex;
+  return revenueGrowing(c) ? dep : capex;
+}
+// Did the business actually grow across the record? First few years of revenue vs the last few, so a
+// one-year blip doesn't read as growth and a steady decliner isn't credited with growth capex.
+function revenueGrowing(c) {
+  const H = (c?.history || []).filter((h) => h?.lines?.revenue != null);
+  if (H.length < 4) return true; // too short to judge; treat a build-out as growth (the AI-capex case)
+  const m = (xs) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
+  const early = m(H.slice(0, 3).map((h) => h.lines.revenue));
+  const late = m(H.slice(-3).map((h) => h.lines.revenue));
+  return early > 0 && late > early * 1.1;
+}
+
 // The owner-earnings bridge: how a year's reported profit becomes the cash an owner can take
-// out. Reconciles net income → cash from operations → Owner Earnings (operating cash less
-// capex), the same Owner Earnings figure the scorecard and capital-allocation read use, so the
-// page never contradicts itself. Returns raw numbers (the component formats in the company's
-// own currency); null unless the three anchors — net income, operating cash, capex — are all
-// present to bridge between. Depreciation and stock comp are shown when tagged; whatever isn't
-// broken out by name folds into the residual that closes net income to operating cash, so the
-// ledger always ties out exactly.
+// out. Reconciles net income → cash from operations, then splits capex into the maintenance the
+// business needs and the growth it chooses, landing on Buffett's owner earnings (operating cash
+// less maintenance capex) and, after growth capex too, free cash flow — the figure the scorecard's
+// "free cash" margin reads, so the page never contradicts itself. Raw numbers (the component formats
+// in the company's currency); null unless net income, operating cash and capex are all present.
 export function ownerEarningsBridge(c) {
   const L = c?.lines || {};
   const ni = L.netIncome, cfo = L.cashFromOps, capex = L.capex;
@@ -353,6 +385,8 @@ export function ownerEarningsBridge(c) {
   const sbc = L.stockBasedComp != null ? L.stockBasedComp : null;
   const capexAbs = Math.abs(capex);
   const other = cfo - ni - (dep || 0) - (sbc || 0);
+  const maint = maintenanceCapex(c) ?? capexAbs;
+  const growth = Math.max(0, capexAbs - maint);
   return {
     fy: c.fy ?? null,
     revenue: L.revenue ?? null,
@@ -362,7 +396,10 @@ export function ownerEarningsBridge(c) {
     other,
     cashFromOps: cfo,
     capex: capexAbs,
-    ownerEarnings: cfo - capexAbs,
+    maintCapex: maint,
+    growthCapex: growth,
+    ownerEarnings: cfo - maint,    // Buffett owner earnings: operating cash less maintenance capex
+    freeCashFlow: cfo - capexAbs,  // after the discretionary growth capex too
   };
 }
 
