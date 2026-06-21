@@ -3,7 +3,7 @@
 // the through-cycle margins, the owner earnings those margins imply on today's revenue, and
 // where the latest year sits against its own average, so the reader can tell a peak from a
 // trough. No forecast, no verdict.
-import { ownerEarningsMargin, operatingMargin } from "./fundamentals.mjs";
+import { ownerEarningsMargin, ownerEarningsAbs, operatingMargin } from "./fundamentals.mjs";
 
 // Median, not mean: the typical-year margin a single bad year cannot skew. Some filings carry
 // a partial or mis-tagged revenue year that explodes a ratio (an owner-earnings margin of
@@ -21,7 +21,7 @@ export function earningsPower(company) {
   const rev = L.revenue;
   if (!rev || rev <= 0) return null;
 
-  const oem = H.map((h) => ownerEarningsMargin(h.lines)).filter(plausible);
+  const oem = H.map((h) => ownerEarningsMargin(h.lines, company)).filter(plausible);
   const opm = H.map((h) => operatingMargin(h.lines)).filter(plausible);
   const nm = H.map((h) => netMargin(h.lines)).filter(plausible);
   // Normalizing owner earnings needs a real owner-earnings history. The Japanese pool carries
@@ -34,10 +34,10 @@ export function earningsPower(company) {
   const normNetMargin = median(nm);
   const oemRange = oem.length ? [Math.min(...oem), Math.max(...oem)] : null;
 
-  const latestOeMargin = ownerEarningsMargin(L);
+  const latestOeMargin = ownerEarningsMargin(L, company);
   const latestNetMargin = netMargin(L);
   const normOE = normOeMargin != null ? normOeMargin * rev : null;
-  const latestOE = L.cashFromOps != null && L.capex != null ? L.cashFromOps - Math.abs(L.capex) : null;
+  const latestOE = ownerEarningsAbs(L, company);
   const normNet = normNetMargin != null ? normNetMargin * rev : null;
 
   // Where the latest year sits against its own through-cycle average. A factual peak/trough

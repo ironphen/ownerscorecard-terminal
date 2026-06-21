@@ -89,7 +89,7 @@ const roicInflated = cls.sector.key === "assetLight"
   || (investedIntensity != null && investedIntensity < 0.3)
   || (roicMed != null && roicMed > 0.3);
 
-const oeSeries = H.map((h) => ownerEarningsMargin(h.lines)).filter((v) => v != null);
+const oeSeries = H.map((h) => ownerEarningsMargin(h.lines, company)).filter((v) => v != null);
 const oeMed = median(oeSeries);
 const oeStable = oeSeries.length >= 3 && oeSeries.filter((v) => v > 0).length >= oeSeries.length - 1;
 const ccc = cashConversionCycle(company);

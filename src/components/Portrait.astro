@@ -89,7 +89,7 @@ const vitals = (isReit
       { label: "Gross margin", concept: "gross-margin", value: grossM(cur), avg: avgOf(grossM), dp: 0 },
       { label: "Operating margin", concept: "operating-margin", value: operatingMargin(cur), avg: avgOf(operatingMargin), dp: 1 },
       { label: "ROIC", concept: "roic", value: debtOk ? roicValue(cur) : null, avg: debtOk ? avgOf(roicValue) : null, dp: 0 },
-      { label: "Owner-earnings margin", concept: "owner-earnings", value: ownerEarningsMargin(cur), avg: avgOf(ownerEarningsMargin), dp: 0 },
+      { label: "Owner-earnings margin", concept: "owner-earnings", value: ownerEarningsMargin(cur, company), avg: avgOf((l) => ownerEarningsMargin(l, company)), dp: 0 },
     ]
 ).filter((v) => v.value != null);
 

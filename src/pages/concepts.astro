@@ -29,7 +29,7 @@ const topBy = (pool, metric, n = 6, asc = false) =>
 const brandLike = ind.filter((c) => ["consumer", "assetLight"].includes(classify(c).sector.key));
 const EXEMPLARS = {
   roic: { label: "Returns that have held highest across the record", tickers: topBy(ind, medianRoic) },
-  "owner-earnings": { label: "Most cash reaching owners", tickers: topBy(ind, (c) => ownerEarningsMargin(c.lines)) },
+  "owner-earnings": { label: "Most cash reaching owners", tickers: topBy(ind, (c) => ownerEarningsMargin(c.lines, c)) },
   "gross-margin": { label: "Widest gross margins (brands and asset-light)", tickers: topBy(brandLike, grossM) },
   "net-debt": { label: "Deepest net-cash balance sheets", tickers: topBy(ind, netCashOf) },
   "cash-conversion-cycle": { label: "Funded by customers and suppliers", tickers: big.filter((c) => cashConversionCycle(c)?.tone === "good").sort((a, b) => (topLineRevenue(b.lines, b) || 0) - (topLineRevenue(a.lines, a) || 0)).slice(0, 6).map((c) => c.ticker) },

@@ -5,7 +5,7 @@
 // the capital the business plowed back, which separates a compounding moat from
 // one that's merely being milked.
 
-import { debtReliable } from "./fundamentals.mjs";
+import { debtReliable, ownerEarningsAbs } from "./fundamentals.mjs";
 
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 const firstN = (arr, n) => arr.filter((x) => x != null).slice(0, n);
@@ -91,13 +91,14 @@ export function moatReport(company) {
     }
   }
 
-  // 5, How fast did owner earnings compound?
-  const oe = L.map((x) => (x.cashFromOps != null && x.capex != null ? x.cashFromOps - Math.abs(x.capex) : null));
+  // 5, How fast did owner earnings compound? Buffett's figure (operating cash less the
+  // maintenance capex), not free cash flow, so a builder's growth spending isn't read as shrinkage.
+  const oe = L.map((x) => ownerEarningsAbs(x, company));
   const oeE = avgFirst(oe, 2), oeL = avgLast(oe, 2);
   const g = oeE != null && oeL != null ? cagr(oeE, oeL, span) : null;
   if (g != null) add("Owner earnings growth", `${g >= 0 ? "+" : "−"}${pct(Math.abs(g))}/yr`,
     g >= 0.1 ? "good" : g >= 0 ? "ok" : "warn",
-    `Free cash to owners ${g >= 0 ? "grew" : "shrank"} about ${pct(Math.abs(g))} a year over the record.`);
+    `Owner earnings ${g >= 0 ? "grew" : "shrank"} about ${pct(Math.abs(g))} a year over the record.`);
 
   // 6, Resilience: the worst year.
   let wi = -1, wv = Infinity;
