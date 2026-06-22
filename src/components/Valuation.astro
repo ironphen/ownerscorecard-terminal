@@ -355,8 +355,8 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
 
       <div class="compare">
         <div class="cmp"><span class="cl">Implied by the price</span><span class="cv hot" id="impG">—</span></div>
-        {gDeliv5 != null ? <div class="cmp"><span class="cl">Delivered · last 5 yrs</span><span class="cv">{gFmt(gDeliv5)}</span></div> : null}
-        <div class="cmp"><span class="cl">{gDeliv5 != null ? `Delivered · ${recYrs}-yr record` : "Delivered (record)"}</span><span class="cv">{oeGrowth ? `${oeGrowth.replace("/yr", "")}/yr` : "—"}</span>{oeWin ? <Sparkline series={oeWin} klass="cmpSpark" /> : null}</div>
+        {gDeliv5 != null ? <div class="cmp"><span class="cl">Owner-earnings growth · 5 yr</span><span class="cv">{gFmt(gDeliv5)}</span></div> : null}
+        <div class="cmp"><span class="cl">{gDeliv5 != null ? `Owner-earnings growth · ${recYrs} yr` : "Owner-earnings growth, delivered"}</span><span class="cv">{oeGrowth ? `${oeGrowth.replace("/yr", "")}/yr` : "—"}</span>{oeWin ? <Sparkline series={oeWin} klass="cmpSpark" /> : null}</div>
         <div class="cmp"><span class="cl">Owner-earnings yield</span><span class="cv" id="oeY">—</span></div>
       </div>
 
