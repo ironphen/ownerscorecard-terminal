@@ -119,6 +119,13 @@ const ROW = {
   opIncome: { label: "Operating income", short: "Op. inc.", g: 1, get: (L) => (oiOk ? money(L.operatingIncome) : "—") },
   taxRate: { label: "Effective tax rate", short: "Tax rate", g: 1, kind: "neutral", get: (L) => { const r = effectiveTaxRate(L); return r == null ? "—" : `${(r * 100).toFixed(0)}%`; } },
   depreciation: { label: "Depreciation", short: "Deprec.", g: 2, kind: "neutral", get: (L) => money(L.depreciation) },
+  // The rest of what turns profit into operating cash: the change in working capital and the other
+  // non-cash items the cash-flow statement reconciles (deferred tax, gains, equity-method profit
+  // booked through investing). Operating cash less net income, depreciation and stock comp — the same
+  // figure the owner-earnings bridge carries — so a year where cash and profit part ways is legible
+  // in the record, not only in the bridge. Big swings here are usually timing (Capcom's FY26 sales of
+  // a hit game land in receivables before cash), not a change in the business's earning power.
+  wcOther: { label: "Working capital & other", short: "WC & other", g: 2, kind: "neutral", get: (L) => (L.cashFromOps != null && L.netIncome != null ? money(L.cashFromOps - L.netIncome - (L.depreciation || 0) - (L.stockBasedComp || 0)) : "—") },
   acquisitions: { label: "Acquisitions", short: "Acquis.", g: 2, kind: "neutral", get: (L) => (L.acquisitionSpend != null ? money(Math.abs(L.acquisitionSpend)) : "—") },
   dividendsPaidAbs: { label: "Dividends paid", short: "Div. paid", g: 2, get: (L) => (L.dividendsPaid != null ? money(Math.abs(L.dividendsPaid)) : "—") },
   buybacksAbs: { label: "Buybacks", short: "Buybacks", g: 2, get: (L) => (L.buybacks != null ? money(Math.abs(L.buybacks)) : "—") },
@@ -140,7 +147,7 @@ const ROW = {
 // inventory for a software maker, no R&D for a retailer, no goodwill for one that never acquires).
 const FULL = [
   ROW.revenue, ROW.grossMargin, ROW.sga, ROW.rnd, ROW.opIncome, ROW.opMargin, ROW.netIncome, ROW.taxRate, ROW.eps,
-  ROW.cashFromOps, ROW.depreciation, ROW.capex, ROW.ownerEarnings, ROW.oeMargin, ROW.acquisitions, ROW.dividendsPaidAbs, ROW.buybacksAbs, ROW.roic, ROW.roe,
+  ROW.cashFromOps, ROW.depreciation, ROW.wcOther, ROW.capex, ROW.ownerEarnings, ROW.oeMargin, ROW.acquisitions, ROW.dividendsPaidAbs, ROW.buybacksAbs, ROW.roic, ROW.roe,
   ROW.cash, ROW.receivables, ROW.inventoryRow, ROW.goodwillRow, ROW.totalAssets, ROW.totalDebt, ROW.netDebt, ROW.intCov, ROW.workingCap, ROW.currentRatio, ROW.equity, ROW.bvps, ROW.sbcToRev, ROW.dps, ROW.goodwillImp,
 ];
 // Operating companies get the full snapshot above; banks, insurers and REITs each read on their
