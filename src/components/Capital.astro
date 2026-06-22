@@ -39,6 +39,8 @@ const facts = cap
         value: cap.avgBuybackPrice != null ? per(cap.avgBuybackPrice) : "—",
         note: cap.avgBuybackPrice != null
           ? `Across the years the filing reports a share count, ${(cap.bbSharesPriced / 1e6).toFixed(0)}M shares were bought for ${$(cap.bbSpentPriced)}, about ${per(cap.avgBuybackPrice)} each. Compare that to the price you bring and to the per-share figures above.`
+          : cap.bbPriceUnreliable
+          ? `Buybacks ran ${$(cap.bb)} over the span, but a stock split in the window left the reported buyback-share counts on a basis the diluted-share count doesn't match, so a comparable average price can't be deduced honestly here.`
           : `Buybacks ran ${$(cap.bb)} over the span, but the filings don't tag the share count needed to deduce the average price paid.`,
         show: cap.bb > 0,
       },

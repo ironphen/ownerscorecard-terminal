@@ -100,14 +100,58 @@ export function capitalHistory(company) {
   const splitFac = splitFactorsByFy(sharePoints);
   const fac = (fy) => splitFac.get(fy) ?? 1;
 
-  // Buybacks at what price: align cash with count, summing only the years that report both, on
-  // one split-adjusted basis, so the blended average is cash ÷ shares actually bought stated in
-  // today's shares. A close approximation (a year of purchases, any accelerated repurchase),
-  // not a tick-by-tick figure.
-  const bbYears = per.filter((q) => q.bb > 0 && q.repShares != null);
-  const bbSpentPriced = bbYears.reduce((a, q) => a + q.bb, 0);
-  const bbSharesPriced = bbYears.reduce((a, q) => a + q.repShares * fac(q.fy), 0);
-  const avgBuybackPrice = bbSharesPriced > 0 ? bbSpentPriced / bbSharesPriced : null;
+  // Buybacks at what price, on one split-adjusted basis, so the blended average is cash ÷ shares
+  // actually bought, stated in today's shares. A close approximation (a year of purchases, any
+  // accelerated repurchase), not a tick-by-tick figure. One wrinkle the diluted-share factor alone
+  // can't catch: a later 10-K sometimes restates the diluted count for a split while the
+  // buyback-share count for the same year was pulled before that restatement, leaving the two on
+  // different bases (Netflix's 2025 ten-for-one — the diluted series is post-split from FY2023, but
+  // the repurchase counts stayed pre-split through FY2024). A single factor then mis-scales those
+  // years and the blend mixes pre- and post-split prices. So we don't only trust the factor: the
+  // true today-basis multiple for a year's repurchases is one the record already shows, and we pick
+  // — walking back from the most recent buyback, which is reliably on today's basis — whichever
+  // keeps the per-share price in line with the year beside it. We let only large, clean split ratios
+  // drive this: a 1.5 or 2 in the series is far more often share-count noise (issuance, a merger)
+  // than a true split, and shouldn't move a price. If after all that the per-year prices still don't
+  // reconcile, the basis is one we can't trust, so we withhold the average rather than publish a guess.
+  const REAL_SPLITS = new Set([4, 5, 6, 7, 8, 10, 15, 20, 25, 30, 40, 50]);
+  const splitMultiples = [...new Set([...splitFac.values()])].filter((m) => REAL_SPLITS.has(m)).sort((a, b) => a - b);
+  const bbYears = per.filter((q) => q.bb > 0 && q.repShares != null).sort((a, b) => a.fy - b.fy);
+  let bbSpentPriced = 0, bbSharesPriced = 0, avgBuybackPrice = null, bbPriceUnreliable = false;
+  if (bbYears.length) {
+    const priced = bbYears.map((q) => ({ spent: q.bb, baseShares: q.repShares * fac(q.fy) }));
+    const n = priced.length;
+    priced[n - 1].shares = priced[n - 1].baseShares; // most recent buyback anchors today's basis
+    priced[n - 1].price = priced[n - 1].spent / priced[n - 1].shares;
+    for (let i = n - 2; i >= 0; i--) {
+      const ref = priced[i + 1].price; // the corrected price of the next-newer buyback year
+      const baseShares = priced[i].baseShares;
+      const facErr = Math.abs(Math.log((priced[i].spent / baseShares) / ref));
+      let shares = baseShares, err = facErr;
+      for (const m of splitMultiples) {
+        const thresh = Math.log(Math.sqrt(m)); // override only on a discrepancy past half the split
+        const altShares = baseShares * m, altErr = Math.abs(Math.log((priced[i].spent / altShares) / ref));
+        if (facErr > thresh && altErr < thresh && altErr < err) { shares = altShares; err = altErr; }
+      }
+      priced[i].shares = shares;
+      priced[i].price = priced[i].spent / shares;
+    }
+    // Only where a real split was in play: if, after correction, adjacent buyback years still differ
+    // by more than ~4x, the repurchase counts sit on a basis we couldn't reconcile, so withhold rather
+    // than publish a blend we don't trust. (Without a split, a wide spread is just a stock that moved
+    // — real, and kept.)
+    if (splitMultiples.length) {
+      for (let i = 1; i < n; i++) {
+        const r = priced[i].price / priced[i - 1].price;
+        if (r > 4 || r < 0.25) bbPriceUnreliable = true;
+      }
+    }
+    if (!bbPriceUnreliable) {
+      bbSpentPriced = priced.reduce((a, q) => a + q.spent, 0);
+      bbSharesPriced = priced.reduce((a, q) => a + q.shares, 0);
+      avgBuybackPrice = bbSharesPriced > 0 ? bbSpentPriced / bbSharesPriced : null;
+    }
+  }
 
   // Did the diluted share count actually fall? The real test, net of stock issued to staff,
   // on the split-adjusted basis above so a split can't masquerade as dilution (or hide it).
@@ -146,7 +190,7 @@ export function capitalHistory(company) {
     // report-card facts
     oeTotal,
     returnedOfOE: oeTotal > 0 ? returned / oeTotal : null,
-    avgBuybackPrice, bbSharesPriced, bbSpentPriced,
+    avgBuybackPrice, bbSharesPriced, bbSpentPriced, bbPriceUnreliable,
     firstShares, lastShares, shareChange,
     divYears, dpsFirst, dpsLast, dpsGrowth, everCut,
     retainedEarnings, incrementalOE, returnOnRetained,
