@@ -6,7 +6,7 @@
 // target: it shows the owner-earnings growth a price implies, set against the record.
 import { classify, financialKind } from "../lib/archetype.mjs";
 import { moatReport } from "../lib/durability.mjs";
-import { fmtMoney, currencySymbol, liquidAssets, maintenanceCapex } from "../lib/fundamentals.mjs";
+import { fmtMoney, currencySymbol, liquidAssets, maintenanceCapex, ownerEarningsAbs } from "../lib/fundamentals.mjs";
 import { tangibleEquity } from "../lib/financials.mjs";
 import { ffoPerShare } from "../lib/reits.mjs";
 import { earningsPower } from "../lib/normalize.mjs";
@@ -184,6 +184,25 @@ const profitableNeg = niNow != null && niNow > 0;
 
 const report = moatReport(company);
 const oeGrowth = report?.facts.find((f) => f.label === "Owner earnings growth")?.value ?? null;
+// Delivered owner-earnings growth over a recent 5-year window, beside the full record: a
+// full-record CAGR can smooth over a recent acceleration or fade, so the shorter read sits next
+// to it. Same maintenance-based owner-earnings series (ownerEarningsAbs) and the same
+// 2-year-averaged-endpoint method the durability card's figure uses, read over each window, so the
+// two compare cleanly. Only shown when the record runs past five years, else it just repeats it.
+const oeAbsHist = (company.history || [])
+  .filter((h) => h?.lines?.revenue != null)
+  .map((h) => ({ fy: h.fy, v: ownerEarningsAbs(h.lines, company) }))
+  .filter((p) => p.v != null);
+const deliveredOe = (pts) => {
+  if (pts.length < 4) return null;
+  const early = (pts[0].v + pts[1].v) / 2;
+  const late = (pts[pts.length - 1].v + pts[pts.length - 2].v) / 2;
+  const yrs = pts[pts.length - 1].fy - pts[0].fy;
+  return early > 0 && late > 0 && yrs > 0 ? Math.pow(late / early, 1 / yrs) - 1 : null;
+};
+const recYrs = report?.years?.length ?? oeAbsHist.length;
+const gDeliv5 = oeAbsHist.length > 5 ? deliveredOe(oeAbsHist.slice(-5)) : null;
+const gFmt = (v) => (v == null ? "—" : `${v >= 0 ? "+" : "−"}${Math.abs(v * 100).toFixed(0)}%/yr`);
 const name = company.name || company.ticker;
 const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.abs(v * 100).toFixed(dp)}%`);
 ---
@@ -336,7 +355,8 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
 
       <div class="compare">
         <div class="cmp"><span class="cl">Implied by the price</span><span class="cv hot" id="impG">—</span></div>
-        <div class="cmp"><span class="cl">Delivered (record)</span><span class="cv">{oeGrowth ? `${oeGrowth.replace("/yr", "")}/yr` : "—"}</span>{oeWin ? <Sparkline series={oeWin} klass="cmpSpark" /> : null}</div>
+        {gDeliv5 != null ? <div class="cmp"><span class="cl">Delivered · last 5 yrs</span><span class="cv">{gFmt(gDeliv5)}</span></div> : null}
+        <div class="cmp"><span class="cl">{gDeliv5 != null ? `Delivered · ${recYrs}-yr record` : "Delivered (record)"}</span><span class="cv">{oeGrowth ? `${oeGrowth.replace("/yr", "")}/yr` : "—"}</span>{oeWin ? <Sparkline series={oeWin} klass="cmpSpark" /> : null}</div>
         <div class="cmp"><span class="cl">Owner-earnings yield</span><span class="cv" id="oeY">—</span></div>
       </div>
 
