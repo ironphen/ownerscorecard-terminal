@@ -203,6 +203,30 @@ const deliveredOe = (pts) => {
 const recYrs = report?.years?.length ?? oeAbsHist.length;
 const gDeliv5 = oeAbsHist.length > 5 ? deliveredOe(oeAbsHist.slice(-5)) : null;
 const gFmt = (v) => (v == null ? "—" : `${v >= 0 ? "+" : "−"}${Math.abs(v * 100).toFixed(0)}%/yr`);
+// A turnaround the CAGRs can't read: when owner earnings cross from losses to profit there's no
+// full-record (or 5-year) CAGR to take — you can't annualize a move from negative to positive. But
+// a business whose owner earnings have turned positive and are climbing (Unity: a loss through 2022,
+// then $179M → $463M) has delivered something worth showing, not a blank. So when no CAGR exists we
+// read the growth over the most recent unbroken run of positive years and label it from where it
+// began, so the turn reads as a turn. It is not fed into the reference value: a rate off a low,
+// just-positive base isn't one it's honest to extrapolate ten years out, which the 30% cap there enforces.
+const recentOe = (oeGrowth == null) ? (() => {
+  let i = oeAbsHist.length - 1;
+  while (i >= 0 && oeAbsHist[i].v > 0) i--;
+  const run = oeAbsHist.slice(i + 1);
+  if (run.length < 2) return null;
+  const yrs = run[run.length - 1].fy - run[0].fy;
+  return yrs > 0 ? { g: Math.pow(run[run.length - 1].v / run[0].v, 1 / yrs) - 1, fromFy: run[0].fy } : null;
+})() : null;
+// Label and value for the delivered-growth row: the full record where a CAGR exists, else the
+// recent positive run for a turnaround, else withheld.
+const dLabel = oeGrowth != null
+  ? (gDeliv5 != null ? `Owner-earnings growth · ${recYrs} yr` : "Owner-earnings growth, delivered")
+  : recentOe != null ? `Owner-earnings growth · since FY${recentOe.fromFy}`
+  : "Owner-earnings growth, delivered";
+const dValue = oeGrowth != null ? `${oeGrowth.replace("/yr", "")}/yr`
+  : recentOe != null ? gFmt(recentOe.g)
+  : "—";
 const name = company.name || company.ticker;
 const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.abs(v * 100).toFixed(dp)}%`);
 ---
@@ -356,7 +380,7 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
       <div class="compare">
         <div class="cmp"><span class="cl">Implied by the price</span><span class="cv hot" id="impG">—</span></div>
         {gDeliv5 != null ? <div class="cmp"><span class="cl">Owner-earnings growth · 5 yr</span><span class="cv">{gFmt(gDeliv5)}</span></div> : null}
-        <div class="cmp"><span class="cl">{gDeliv5 != null ? `Owner-earnings growth · ${recYrs} yr` : "Owner-earnings growth, delivered"}</span><span class="cv">{oeGrowth ? `${oeGrowth.replace("/yr", "")}/yr` : "—"}</span>{oeWin ? <Sparkline series={oeWin} klass="cmpSpark" /> : null}</div>
+        <div class="cmp"><span class="cl">{dLabel}</span><span class="cv">{dValue}</span>{oeWin ? <Sparkline series={oeWin} klass="cmpSpark" /> : null}</div>
         <div class="cmp"><span class="cl">Owner-earnings yield</span><span class="cv" id="oeY">—</span></div>
       </div>
 
@@ -426,6 +450,7 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
   .tog { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--ink-dim); cursor: pointer; user-select: none; }
   .tog input { accent-color: var(--accent); cursor: pointer; }
   .compare { display: flex; flex-wrap: wrap; gap: 10px 28px; margin: 16px 0 0; padding: 12px 0; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }
+  .compare[hidden] { display: none; } /* the flex rule above otherwise defeats the hidden attribute, leaving an empty reference row of dashes */
   .compare.ref { border-top: 0; margin-top: 0; padding-top: 0; }
   .cmp { display: flex; flex-direction: column; }
   .cl { font-size: 11.5px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
