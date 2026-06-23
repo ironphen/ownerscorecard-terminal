@@ -369,18 +369,31 @@ const CF_KEYS = [
   ["dividendsPaid", "dividendsPaid", false],
   ["buybacks", "buybacks", true],
 ];
-const CF_VERSION = 2;
+// Balance-sheet working-capital items the five-year summary also omits, backfilled from the same
+// older filings (each carries the current and prior year as instant balances). With these the
+// receivables, inventory and current-account levels behind "working capital & other" read across
+// the whole record, not only the latest two years. Instant concepts, so they come from INST.
+const BS_KEYS = [
+  ["receivables", "receivables"],    // [history field, INST concept]
+  ["inventory", "inventory"],
+  ["accountsPayable", "accountsPayable"],
+  ["currentAssets", "currentAssets"],
+  ["currentLiabilities", "currentLiabilities"],
+];
+const DEEPEN_FIELDS = [...CF_KEYS, ...BS_KEYS].map(([f]) => f);
+const CF_VERSION = 3; // bump when CF_KEYS or BS_KEYS changes, to rebuild the per-filing cache
 
-// Pull the deeper cash-flow history for one company by walking its older annual reports (each
-// carries two years), filling the years the latest filing's five-year summary leaves blank:
-// capex and depreciation (so owner earnings run deep), and dividends and buybacks (so the
-// capital-allocation record is not read off only the latest two years). Cached per docId in
-// cache.cf so an unchanged older filing is parsed once.
+// Pull the deeper history for one company by walking its older annual reports (each carries two
+// years), filling the years the latest filing's five-year summary leaves blank: capex and
+// depreciation (so owner earnings run deep), dividends and buybacks (so the capital-allocation
+// record is not read off only the latest two years), and the working-capital balances (receivables,
+// inventory, payables, current assets and liabilities). Cached per docId in cache.cf so an unchanged
+// older filing is parsed once.
 async function deepenCashFlow(rec, reports, cache) {
-  const missing = rec.history.filter((h) => h.lines.capex == null || h.lines.dividendsPaid == null);
+  const missing = rec.history.filter((h) => h.lines.capex == null || h.lines.dividendsPaid == null || h.lines.receivables == null);
   if (!missing.length || reports.length < 2) return 0;
   cache.cf ||= {};
-  const byFy = {}; // fy -> { capex, depreciation, dividendsPaid, buybacks }
+  const byFy = {}; // fy -> { ...CF_KEYS and BS_KEYS fields }
   for (let ri = 1; ri < reports.length && ri <= CAPEX_BACKFILL; ri++) {
     const r = reports[ri];
     let cf = cache.cf[r.docId];
@@ -398,6 +411,11 @@ async function deepenCashFlow(rec, reports, cache) {
             row[field] = v != null ? (abs ? Math.abs(v) : v) : null;
             if (v != null) any = true;
           }
+          for (const [field, concept] of BS_KEYS) {
+            const v = first(INST[concept], rel, true);
+            row[field] = v != null ? v : null;
+            if (v != null) any = true;
+          }
           if (any) cf[rfy + rel] = row;
         }
       } catch (err) { console.warn(`    ! older filing ${r.docId}: ${err.message}`); }
@@ -405,14 +423,14 @@ async function deepenCashFlow(rec, reports, cache) {
     }
     for (const fy in cf) {
       const o = (byFy[fy] ||= {});
-      for (const [field] of CF_KEYS) if (o[field] == null && cf[fy][field] != null) o[field] = cf[fy][field];
+      for (const field of DEEPEN_FIELDS) if (o[field] == null && cf[fy][field] != null) o[field] = cf[fy][field];
     }
   }
   let patched = 0;
   for (const h of rec.history) {
     const o = byFy[h.fy];
     if (!o) continue;
-    for (const [field] of CF_KEYS) {
+    for (const field of DEEPEN_FIELDS) {
       if (h.lines[field] == null && o[field] != null) { h.lines[field] = o[field]; if (field === "capex") patched++; }
     }
   }
