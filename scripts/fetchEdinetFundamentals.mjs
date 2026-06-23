@@ -187,7 +187,13 @@ const INST = {
   shortTermInvestments: ["ShortTermInvestmentSecurities", "SecuritiesCA", "MarketableSecurities"],
   currentAssets: ["CurrentAssetsIFRS", "CurrentAssets"],
   currentLiabilities: ["CurrentLiabilitiesIFRS", "CurrentLiabilities"],
-  receivables: ["TradeAndOtherReceivablesCAIFRS", "TradeAndOtherReceivablesIFRS", "NotesAndAccountsReceivableTrade", "NotesAndAccountsReceivableTradeAndContractAssets"],
+  // Trade receivables on the balance sheet. J-GAAP sellers with no notes receivable (digital content —
+  // Capcom, Kadokawa) carry the post-2021 revenue-standard line as accounts-receivable-and-contract-
+  // assets, sometimes net of allowance; a few IFRS filers tag a plain trade-receivables current element
+  // rather than the trade-and-other line above. The extra names are appended, so they only fill a year
+  // the standard tags leave blank and can never displace a match the established tags already make.
+  receivables: ["TradeAndOtherReceivablesCAIFRS", "TradeAndOtherReceivablesIFRS", "NotesAndAccountsReceivableTrade", "NotesAndAccountsReceivableTradeAndContractAssets",
+    "AccountsReceivableTradeAndContractAssets", "AccountsReceivableTradeAndContractAssetsNet", "NotesAndAccountsReceivableTradeAndContractAssetsNet", "NotesAndAccountsReceivableTradeNet", "AccountsReceivableTrade", "TradeReceivablesIFRS", "TradeAndOtherCurrentReceivablesIFRS"],
   inventory: ["InventoriesIFRS", "Inventories", "MerchandiseAndFinishedGoods"],
   accountsPayable: ["TradeAndOtherPayablesCLIFRS", "TradeAndOtherPayablesIFRS", "NotesAndAccountsPayableTrade"],
   goodwill: ["GoodwillIFRS", "Goodwill"],
