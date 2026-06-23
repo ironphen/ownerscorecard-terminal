@@ -530,10 +530,17 @@ async function main() {
     const isReitCo = sicN >= 6500 && sicN <= 6799;
     const revTags = isReitCo ? REIT_REVENUE : CONCEPTS.revenue;
     const revAnnualBy = annualByYear(facts, revTags, "USD", isReitCo);
-    const revLatest = latestEntry(revAnnualBy)?.val ?? null;
+    const latestRev = latestEntry(revAnnualBy);
+    const revLatest = latestRev?.val ?? null;
 
     const oi = pickAnnual(facts, CONCEPTS.operatingIncome);
-    const anchor = oi || latestEntry(revAnnualBy); // for fy / period / filing link
+    // Anchor the fiscal year, period and filing link on whichever of operating income or revenue is
+    // MORE RECENT. Operating income marks the period well for most filers, but an insurer like
+    // Berkshire tags OperatingIncomeLoss only in an old year (its latest is FY2012), which would
+    // otherwise anchor the whole record — fy, TTM, the filing link — to that stale year.
+    const anchor = (oi && latestRev)
+      ? (new Date(oi.end) >= new Date(latestRev.end) ? oi : latestRev)
+      : (oi || latestRev); // for fy / period / filing link
     const maxOf = (...vals) => { const xs = vals.filter((v) => v != null); return xs.length ? Math.max(...xs) : null; };
     // Total debt: long-term + current from the component tags, taken against the max of
     // every aggregate total-debt tag. We take the MAX across the tags (not a priority
@@ -586,18 +593,22 @@ async function main() {
     // like Berkshire's, where cash and Treasury bills are split across reporting segments, can be
     // diagnosed against what companyfacts actually exposes.
     if (process.env.CASH_DEBUG && process.env.CASH_DEBUG.toUpperCase().split(",").map((s) => s.trim()).includes(ticker.toUpperCase())) {
-      const ug = facts?.facts?.["us-gaap"] || {};
       console.log(`\n=== CASH_DEBUG ${ticker} (cash/investment tags; $B; {a,b}=multiple vals that year; *=has frame) ===`);
-      for (const concept of Object.keys(ug)) {
-        if (!/cash|shortterminvest|treasur|marketable|investment|usgovernment|heldtomaturit|availableforsale|equitysecurit|debtsecurit/i.test(concept)) continue;
-        const usd = ug[concept]?.units?.USD;
-        if (!usd) continue;
-        const byYear = {};
-        for (const o of usd) { if (o.form !== "10-K" || o.fy == null || o.start) continue; (byYear[o.fy] ||= []).push(o); }
-        const yrs = Object.keys(byYear).sort();
-        if (!yrs.length) continue;
-        const cell = (os) => { const v = [...new Set(os.map((o) => o.val))]; const f = os.some((o) => o.frame) ? "*" : ""; return (v.length > 1 ? `{${v.map((x) => (x / 1e9).toFixed(1)).join(",")}}` : (v[0] / 1e9).toFixed(1)) + f; };
-        console.log(`  ${concept.padEnd(60)} ${yrs.map((y) => `${String(y).slice(2)}:${cell(byYear[y])}`).join(" ")}`);
+      // Scan every namespace, not just us-gaap: Berkshire tags its ~$290B Treasury-bill pile under a
+      // company-extension element the standard taxonomy doesn't carry, so it never shows in us-gaap.
+      const allNs = facts?.facts || {};
+      for (const ns of Object.keys(allNs)) {
+        for (const concept of Object.keys(allNs[ns] || {})) {
+          if (!/cash|shortterminvest|treasur|marketable|investment|usgovernment|heldtomaturit|availableforsale|equitysecurit|debtsecurit/i.test(concept)) continue;
+          const usd = allNs[ns][concept]?.units?.USD;
+          if (!usd) continue;
+          const byYear = {};
+          for (const o of usd) { if (o.form !== "10-K" || o.fy == null || o.start) continue; (byYear[o.fy] ||= []).push(o); }
+          const yrs = Object.keys(byYear).sort();
+          if (!yrs.length) continue;
+          const cell = (os) => { const v = [...new Set(os.map((o) => o.val))]; const f = os.some((o) => o.frame) ? "*" : ""; return (v.length > 1 ? `{${v.map((x) => (x / 1e9).toFixed(1)).join(",")}}` : (v[0] / 1e9).toFixed(1)) + f; };
+          console.log(`  ${((ns === "us-gaap" ? "" : ns + ":") + concept).padEnd(64)} ${yrs.map((y) => `${String(y).slice(2)}:${cell(byYear[y])}`).join(" ")}`);
+        }
       }
       console.log("=== end CASH_DEBUG ===\n");
     }
