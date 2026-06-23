@@ -164,6 +164,12 @@ const CONCEPTS = {
     "CashAndCashEquivalentsAtCarryingValue",
     "CashCashEquivalentsAndShortTermInvestmentsAtCarryingValue",
     "CashCashEquivalentsAndShortTermInvestments",
+    // ASU 2016-18 (effective 2018) folded restricted cash into the cash-flow reconciliation total,
+    // and some filers — Berkshire among them — stopped tagging the plain balance-sheet line, so
+    // without this their cash reads blank from 2018 on and falls back to a stale pre-2018 value.
+    // Restricted cash is included but is immaterial for nearly all filers; the period-merge keeps the
+    // plain line above where a filer still reports it.
+    "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents",
   ],
   // Liquid securities held alongside cash, netted against debt for a truer
   // leverage read (a company like Apple parks most of its war chest here, not in
