@@ -136,6 +136,15 @@ export const CONCEPTS = [
     body: "A quiet structural advantage when it runs negative. If a company collects from its customers before it has to pay its suppliers, the business grows on other people's money, the same trick Buffett prized in insurance float. It needs no capital from owners to expand its working capital, which is one reason some retailers and platforms compound so efficiently.",
     seeAlso: ["insurance-float", "owner-earnings"],
   },
+  {
+    id: "working-capital",
+    term: "Working capital & other",
+    group: "capital",
+    short: "Why operating cash differs from profit: cash tied up in (or freed from) receivables, inventory and payables, plus other non-cash items. Usually timing, not a change in earning power.",
+    body: "The income statement books a sale when it is earned; the cash-flow statement counts it when the money actually arrives. Working capital is the bridge between the two. When a business ships more than it collects, cash is tied up in receivables and inventory and operating cash falls below profit; when it collects faster than it pays its suppliers, cash is freed and operating cash runs above profit. It does not appear on the income statement at all — it shows up as the year-to-year change in the balance sheet's current accounts, the receivables and inventory and payables lines. The “and other” folds in the non-cash items the cash-flow statement also reconciles: deferred taxes, gains and losses on asset sales, profit from affiliates booked through investing. The honest read: a single large swing is usually timing — a hit product whose sales land in receivables before the cash does — and it tends to reverse the next year. But a working-capital build that grows year after year, faster than sales, is the classic mark of profit that is not turning into cash, so read this line beside the receivables and inventory rows, never on its own.",
+    formula: "Operating cash flow − net income − depreciation − stock-based compensation",
+    seeAlso: ["cash-conversion-cycle", "owner-earnings"],
+  },
 
   // --- Will it survive? ---
   {
