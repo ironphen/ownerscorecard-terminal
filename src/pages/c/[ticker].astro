@@ -21,8 +21,9 @@ import OwnerEarningsBridge from "../../components/OwnerEarningsBridge.astro";
 import language from "../../data/language.json";
 import segmentsData from "../../data/segments.json";
 import { classify } from "../../lib/archetype.mjs";
-import { businessPhrase, weakLede } from "../../lib/business.mjs";
+import { businessPhrase, weakLede, pickNote } from "../../lib/business.mjs";
 import { compositionSentence } from "../../lib/segments.mjs";
+import notes from "../../data/notes.json";
 import adrFundamentals from "../../data/fundamentals.adr.json";
 import { getCollection } from "astro:content";
 
@@ -60,15 +61,17 @@ const related = (
 const name = fund?.name || "";
 const cls = fund ? classify(fund) : null;
 const isFin = !!cls && ["financial", "reit"].includes(cls.sector.key);
-// Lede priority, so the hero always opens with the most concrete accurate thing: the filing's
-// own description when it actually describes the business; else the company's own revenue mix
-// (so a giant that opens on a mission statement — Amazon, Apple — still says what it does, from
-// its reportable segments); else the computed one-line industry characterization. BusinessRead
-// recomputes the same chain to show the complement, never a repeat.
+// Lede priority, so the hero always opens with the most concrete accurate thing: a reviewed,
+// model-drafted note (the names a human has written up, governed by docs/qualitative-doctrine.md)
+// first; else the filing's own description when it actually describes the business; else the
+// company's own revenue mix (so a giant that opens on a mission statement — Amazon, Apple — still
+// says what it does, from its reportable segments); else the computed one-line industry
+// characterization. BusinessRead recomputes the same chain to show the complement, never a repeat.
+const note = fund ? pickNote(notes, ticker) : null;
 const rawBiz = language?.companies?.[ticker]?.business || null;
 const seg = fund ? segmentsData?.companies?.[ticker] : null;
 const bizLine = fund
-  ? (rawBiz && !weakLede(rawBiz) ? rawBiz : (compositionSentence(seg) || businessPhrase(fund)))
+  ? (note?.whatItIs || (rawBiz && !weakLede(rawBiz) ? rawBiz : (compositionSentence(seg) || businessPhrase(fund))))
   : rawBiz;
 // The company's own "in brief": up to two more verbatim sentences naming what it sells, kept
 // distinct from the lede by the detector (businessBrief). Sits under the lede so the whole opening

@@ -1,0 +1,17 @@
+{
+  "_doc": "Model-drafted, founder-reviewed qualitative notes, governed by docs/qualitative-doctrine.md. Drafts only the two descriptive sections (whatItIs, needle); 'Is it a good business?' stays computed. The model never writes a figure. A note renders only when reviewed === true; absent or unreviewed, the page falls back to the computed template in src/lib/business.mjs. Generated once offline and committed as static data — no model runs in the build.",
+  "companies": {
+    "NFLX": {
+      "whatItIs": "Netflix sells one thing — a monthly subscription to a library of series, films, games and, now, live events, streamed in most countries and most languages. It lays out billions to produce and license that content, then spreads that largely fixed cost across a global base of paying members. The more members carry the same content bill, the better the math.",
+      "needle": "Members added against members lost, the price it can charge, and the cost of the content that holds both. Pricing power is the first test — Buffett's single most important — and Netflix has raised prices repeatedly while still growing its base; its own filing leans hardest on pricing and competition, set against the numbers in what the filing emphasizes, below. The business works only as content spend becomes a smaller share of a larger revenue base; whether that operating leverage survives a content arms race that never lets spending fall is the whole question. The margins through the cycle are in the record below.",
+      "sourceFy": 2025,
+      "reviewed": true
+    },
+    "9697": {
+      "whatItIs": "Capcom makes video games and owns the franchises behind them — Resident Evil, Monster Hunter and Street Fighter. It earns two ways: the launch of a new title, and a long tail of catalog sales and downloads on games it made years ago, which sell at almost no added cost. The catalog is the quiet engine.",
+      "needle": "The hit cycle and the catalog behind it. A single blockbuster launch can swing a year — which is why owner earnings have lurched even as the catalog grew — but the durable value is the back catalog selling digitally, year after year, at almost no marginal cost. Read the operating margin through the cycle rather than in any one year, and watch the cash building on the balance sheet. The figures are in the record below.",
+      "sourceFy": 2026,
+      "reviewed": true
+    }
+  }
+}

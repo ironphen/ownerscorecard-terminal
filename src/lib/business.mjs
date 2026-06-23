@@ -173,3 +173,17 @@ export function weakLede(s) {
   return /^we have entered\b/i.test(s) || WEAK_LEDE.test(s) || ALLCAPS_HEADING.test(s) || NOT_DESC.test(s) || PRODUCT_REF.test(s) ||
     /\bvarious (facilities|services|agreements|arrangements)\b/i.test(s) || NOT_A_DESCRIPTION.test(s) || LEAKED.test(s);
 }
+
+// A reviewed, model-drafted note (src/data/notes.json, governed by
+// docs/qualitative-doctrine.md) overrides the computed template for the two
+// descriptive reads — "what it is" and "what moves the needle" — for the names a
+// human has actually written up. A pure selector: the caller passes the notes data
+// in, so this lib stays runnable under plain node (which needs an import attribute
+// to load JSON) while the .astro components feed it the Vite-imported object. Only
+// a note explicitly marked reviewed renders; anything else falls back to the
+// template, so nothing un-reviewed reaches a page. The number is never in here —
+// notes carry prose only; every figure stays arithmetic in the sections below.
+export function pickNote(notesData, ticker) {
+  const n = notesData?.companies?.[String(ticker || "").toUpperCase()];
+  return n && n.reviewed === true && (n.whatItIs || n.needle) ? n : null;
+}
