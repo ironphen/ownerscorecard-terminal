@@ -574,6 +574,28 @@ async function main() {
       console.log("=== end DEBT_DEBUG ===\n");
     }
 
+    // Diagnostic: CASH_DEBUG=BRK-A dumps every cash/investment-like us-gaap tag and its 10-K annual
+    // instant series, flagging years with multiple distinct values (segment-dimensioned facts) and
+    // whether a frame (the consolidated default member) is present — so a segmented balance sheet
+    // like Berkshire's, where cash and Treasury bills are split across reporting segments, can be
+    // diagnosed against what companyfacts actually exposes.
+    if (process.env.CASH_DEBUG && process.env.CASH_DEBUG.toUpperCase().split(",").map((s) => s.trim()).includes(ticker.toUpperCase())) {
+      const ug = facts?.facts?.["us-gaap"] || {};
+      console.log(`\n=== CASH_DEBUG ${ticker} (cash/investment tags; $B; {a,b}=multiple vals that year; *=has frame) ===`);
+      for (const concept of Object.keys(ug)) {
+        if (!/cash|shortterminvest|treasur|marketable|investment|usgovernment|heldtomaturit|availableforsale|equitysecurit|debtsecurit/i.test(concept)) continue;
+        const usd = ug[concept]?.units?.USD;
+        if (!usd) continue;
+        const byYear = {};
+        for (const o of usd) { if (o.form !== "10-K" || o.fy == null || o.start) continue; (byYear[o.fy] ||= []).push(o); }
+        const yrs = Object.keys(byYear).sort();
+        if (!yrs.length) continue;
+        const cell = (os) => { const v = [...new Set(os.map((o) => o.val))]; const f = os.some((o) => o.frame) ? "*" : ""; return (v.length > 1 ? `{${v.map((x) => (x / 1e9).toFixed(1)).join(",")}}` : (v[0] / 1e9).toFixed(1)) + f; };
+        console.log(`  ${concept.padEnd(60)} ${yrs.map((y) => `${String(y).slice(2)}:${cell(byYear[y])}`).join(" ")}`);
+      }
+      console.log("=== end CASH_DEBUG ===\n");
+    }
+
     const pick = (tags) => pickAnnual(facts, tags)?.val ?? null;
     const inst = (tags) => pickInstant(facts, tags)?.val ?? null;
 

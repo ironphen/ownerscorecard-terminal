@@ -79,6 +79,7 @@ jobs:
           SHARES_DEBUG: ${{ github.event.inputs.debug }}
           CFO_DEBUG: ${{ github.event.inputs.debug }}
           CAPEX_DEBUG: ${{ github.event.inputs.debug }}
+          CASH_DEBUG: ${{ github.event.inputs.debug }}
           ONLY_FUND: ${{ github.event.inputs.tickers }}
       # Filing language and segments only change when a company files a new annual report, so the
       # weekly Monday cron skips them; they refresh on the monthly cron and on demand.
