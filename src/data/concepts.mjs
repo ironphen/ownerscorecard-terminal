@@ -145,6 +145,15 @@ export const CONCEPTS = [
     formula: "Operating cash flow − net income − depreciation − stock-based compensation",
     seeAlso: ["cash-conversion-cycle", "owner-earnings"],
   },
+  {
+    id: "operating-working-capital",
+    term: "Operating working capital",
+    group: "capital",
+    short: "The cash tied up in running the business: receivables and inventory you have funded, less the supplier credit funding you. Negative means customers and suppliers fund the growth.",
+    body: "What it costs in cash to operate between paying for goods and collecting for them — receivables plus inventory, less accounts payable. It is the figure behind Buffett's cash-conversion read: a business that collects from customers before it pays its suppliers runs on negative working capital and grows on other people's money, the trait he prized in insurance float and in some retailers. Read it apart from two look-alikes that share the name. It is not the balance sheet's net working capital (current assets minus current liabilities), which for a cash-rich company is mostly its cash and securities pile and speaks to solvency, not operations — that belongs to the current-position read. And it is not the cash-flow line “working capital & other,” which is the year-to-year change in these accounts plus other non-cash items. The honest limit: operating working capital that swells faster than sales is cash quietly leaving the business — customers paying slower, or inventory piling up — so watch its trend against revenue.",
+    formula: "Receivables + inventory − accounts payable",
+    seeAlso: ["cash-conversion-cycle", "working-capital"],
+  },
 
   // --- Will it survive? ---
   {

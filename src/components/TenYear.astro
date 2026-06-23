@@ -137,7 +137,7 @@ const ROW = {
   goodwillRow: { label: "Goodwill", short: "Goodwill", g: 3, kind: "neutral", get: (L) => money(L.goodwill) },
   totalAssets: { label: "Total assets", short: "Assets", g: 3, kind: "neutral", get: (L) => money(L.totalAssets) },
   equity: { label: "Shareholders’ equity", short: "Equity", g: 3, kind: "neutral", get: (L) => money(L.stockholdersEquity) },
-  workingCap: { label: "Working capital", short: "Work. cap.", g: 3, kind: "neutral", get: (L) => (L.currentAssets != null && L.currentLiabilities != null ? money(L.currentAssets - L.currentLiabilities) : "—") },
+  operatingWC: { label: "Operating working capital", short: "Oper. WC", g: 3, kind: "neutral", get: (L) => ((L.receivables != null || L.inventory != null) ? money((L.receivables || 0) + (L.inventory || 0) - (L.accountsPayable || 0)) : "—") },
   currentRatio: { label: "Current ratio", short: "Curr. ratio", g: 3, kind: "neutral", get: (L) => (L.currentAssets != null && L.currentLiabilities > 0 ? xStr(L.currentAssets / L.currentLiabilities, 1) : "—") },
   goodwillImp: { label: "Goodwill written down", short: "GW imp.", g: 3, kind: "charge", get: (L) => (L.goodwillImpairment ? money(Math.abs(L.goodwillImpairment)) : "—") },
   feeIncome: { label: "Noninterest income", short: "Fee inc.", g: 1, get: (L) => money(L.noninterestIncome) },
@@ -151,7 +151,7 @@ const ROW = {
 const FULL = [
   ROW.revenue, ROW.grossMargin, ROW.sga, ROW.rnd, ROW.opIncome, ROW.opMargin, ROW.netIncome, ROW.taxRate, ROW.eps,
   ROW.cashFromOps, ROW.depreciation, ROW.wcOther, ROW.capex, ROW.ownerEarnings, ROW.oeMargin, ROW.acquisitions, ROW.dividendsPaidAbs, ROW.buybacksAbs, ROW.roic, ROW.roe,
-  ROW.cash, ROW.receivables, ROW.inventoryRow, ROW.accountsPayable, ROW.currentAssets, ROW.currentLiabilities, ROW.workingCap, ROW.currentRatio, ROW.goodwillRow, ROW.totalAssets, ROW.totalDebt, ROW.netDebt, ROW.intCov, ROW.equity, ROW.bvps, ROW.sbcToRev, ROW.dps, ROW.goodwillImp,
+  ROW.cash, ROW.receivables, ROW.inventoryRow, ROW.accountsPayable, ROW.operatingWC, ROW.currentAssets, ROW.currentLiabilities, ROW.currentRatio, ROW.goodwillRow, ROW.totalAssets, ROW.totalDebt, ROW.netDebt, ROW.intCov, ROW.equity, ROW.bvps, ROW.sbcToRev, ROW.dps, ROW.goodwillImp,
 ];
 // Operating companies get the full snapshot above; banks, insurers and REITs each read on their
 // own measures, so they keep a curated set. Rows the data can't fill drop out below.
@@ -218,7 +218,7 @@ const chosen = SETS[setKey] || SETS.general;
 const ROW_CONCEPT = {
   "Gross margin": "gross-margin", "Operating margin": "operating-margin",
   "Owner earnings": "owner-earnings", "Owner earnings margin": "owner-earnings", "ROIC": "roic",
-  "Working capital & other": "working-capital",
+  "Working capital & other": "working-capital", "Operating working capital": "operating-working-capital",
   "Total debt": "net-debt", "Net debt / (cash)": "net-debt", "Net debt / EBITDA": "net-debt",
   "Interest coverage": "interest-coverage",
   "Shares out (diluted)": "dilution", "Stock comp / revenue": "dilution",
