@@ -123,8 +123,8 @@ const ROW = {
   // non-cash items the cash-flow statement reconciles (deferred tax, gains, equity-method profit
   // booked through investing). Operating cash less net income, depreciation and stock comp — the same
   // figure the owner-earnings bridge carries — so a year where cash and profit part ways is legible
-  // in the record, not only in the bridge. Big swings here are usually timing (Capcom's FY26 sales of
-  // a hit game land in receivables before cash), not a change in the business's earning power.
+  // in the record, not only in the bridge. Big swings here are usually timing — receivables, payables,
+  // tax and accrual balances shifting between years — not a change in the business's earning power.
   wcOther: { label: "Working capital & other", short: "WC & other", g: 2, kind: "neutral", get: (L) => (L.cashFromOps != null && L.netIncome != null ? money(L.cashFromOps - L.netIncome - (L.depreciation || 0) - (L.stockBasedComp || 0)) : "—") },
   acquisitions: { label: "Acquisitions", short: "Acquis.", g: 2, kind: "neutral", get: (L) => (L.acquisitionSpend != null ? money(Math.abs(L.acquisitionSpend)) : "—") },
   dividendsPaidAbs: { label: "Dividends paid", short: "Div. paid", g: 2, get: (L) => (L.dividendsPaid != null ? money(Math.abs(L.dividendsPaid)) : "—") },
@@ -215,6 +215,7 @@ const chosen = SETS[setKey] || SETS.general;
 const ROW_CONCEPT = {
   "Gross margin": "gross-margin", "Operating margin": "operating-margin",
   "Owner earnings": "owner-earnings", "Owner earnings margin": "owner-earnings", "ROIC": "roic",
+  "Working capital & other": "working-capital",
   "Total debt": "net-debt", "Net debt / (cash)": "net-debt", "Net debt / EBITDA": "net-debt",
   "Interest coverage": "interest-coverage",
   "Shares out (diluted)": "dilution", "Stock comp / revenue": "dilution",
