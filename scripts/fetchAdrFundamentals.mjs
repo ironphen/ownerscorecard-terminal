@@ -468,11 +468,22 @@ async function main() {
     else { withheld.add(ticker); console.log(`  ⊘ ${ticker}: withheld (below quality floor)`); }
   }
 
-  companies.sort((a, b) => a.ticker.localeCompare(b.ticker));
+  // Carry over the last good file. A targeted run (ONLY_ADR) fetches only a few tickers, and even a
+  // full run can drop one to a transient SEC error — either way the rest must survive. Overlay the
+  // freshly fetched records onto the prior pool and write the union, dropping only tickers no longer
+  // in the universe. Without this a targeted fetch replaced the whole pool with just what it ran,
+  // which once collapsed it from 878 companies to one.
+  let prior = [];
+  try { prior = JSON.parse(fs.readFileSync(path.join(dataDir, "fundamentals.adr.json"), "utf8")).companies || []; } catch { /* first run: nothing to carry */ }
+  const inUniverse = new Set([...names.keys()]);
+  const byTicker = new Map(prior.filter((c) => inUniverse.has(String(c.ticker).toUpperCase())).map((c) => [c.ticker, c]));
+  for (const c of companies) byTicker.set(c.ticker, c); // a freshly fetched record supersedes its prior one
+  const merged = [...byTicker.values()].sort((a, b) => a.ticker.localeCompare(b.ticker));
+  const carried = merged.length - companies.length;
   fs.writeFileSync(path.join(dataDir, "fundamentals.adr.json"), JSON.stringify({
-    asOf: new Date().toISOString().slice(0, 10), source: "SEC EDGAR companyfacts (Form 20-F/40-F; IFRS or US-GAAP)", sample: false, companies,
+    asOf: new Date().toISOString().slice(0, 10), source: "SEC EDGAR companyfacts (Form 20-F/40-F; IFRS or US-GAAP)", sample: false, companies: merged,
   }, null, 2) + "\n");
-  console.log(`\n✅ Wrote ${companies.length} ADR companies (${withheld.size} withheld)`);
+  console.log(`\n✅ Wrote ${merged.length} ADR companies (${companies.length} fetched/updated, ${carried} carried over, ${withheld.size} withheld)`);
 }
 
 export { rowsFor, detectCurrency, detectStandard, annualByYear, instantByYear, quarterSeries, latestObservation, CONCEPTS };
