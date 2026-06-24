@@ -1,0 +1,191 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+
+// The method, in one place. The concepts page teaches the vocabulary — owner earnings, the margin of
+// safety, the combined ratio — one word at a time. This teaches the order they go in: how to actually
+// read a business, start to finish, the way the company pages are built to be read. It pronounces no
+// verdict and names no stock to buy; the whole point is to hand the reader the questions, not the
+// answers. Static prose, written once; nothing here is computed.
+const example = "KO"; // Coca-Cola — the business Buffett has called the kind you understand in a sentence
+---
+
+<BaseLayout title="How to read a business, Owner Scorecard">
+  <header class="hero">
+    <h1>How to read a business</h1>
+    <p class="dek">
+      Not a stock — a business. The difference is the whole method. A stock is a price that jumps around
+      all day; a business is a thing that sells something to someone and keeps part of what comes in.
+      Learn to read the second and the first stops frightening you. Here is the order to read it in, the
+      same order every page in this catalog follows.
+    </p>
+  </header>
+
+  <section class="band intro">
+    <div class="prose">
+      <p>
+        Graham taught that an investment operation is one which, on thorough analysis, promises safety of
+        principal and an adequate return — and that everything else is speculation. Buffett added the part
+        that makes it doable: you do not have to study every business, only stay inside the few you can
+        understand, and there judge them as an owner would, on the cash they will hand their owners over
+        time. Munger supplied the discipline that protects you from yourself — invert, look for the ways
+        it fails, and pass on anything you cannot hold in your head.
+      </p>
+      <p>
+        None of that requires a terminal, a model, or a forecast. It requires reading the filing in a
+        sensible order and being honest about what you find. The pages here lay that reading out for you,
+        every figure traced to the company's own SEC filings, and they stop where judgment begins: they
+        present the evidence and never tell you the answer. The answer is yours to form. What follows is
+        how to form it — five questions, in the order an owner asks them. Read along on a real one as you
+        go: <a href={`/c/${example}`}>open Coca-Cola</a> and find each part as it comes up.
+      </p>
+    </div>
+  </section>
+
+  <section class="band">
+    <h2>1 · What is it?</h2>
+    <div class="prose">
+      <p>
+        Start where an owner starts, not where a trader starts. Before a single ratio: what does this
+        company sell, to whom, and how does it turn that into money? If you cannot say it in a plain
+        sentence — the way you would explain it to someone at dinner — you do not yet understand it well
+        enough to own it, and no amount of arithmetic will rescue you. Buffett's filter has always been
+        this simple and this strict: stay inside what you can explain.
+      </p>
+      <p>
+        On the page this is <b>What it is</b> and <b>Where the money comes from</b>. Read them together.
+        The first says, in a few sentences drawn from the filing, what the business does and what one or
+        two things actually decide its fate. The second follows the money into its segments and
+        geographies — and shows you the concentration, because a company that earns most of its profit
+        from one product or one country is carrying a risk the headline revenue hides. A business you can
+        describe and whose money you can trace is a business you can begin to judge. One you cannot is one
+        to put back on the shelf.
+      </p>
+    </div>
+  </section>
+
+  <section class="band">
+    <h2>2 · Is it a good business?</h2>
+    <div class="prose">
+      <p>
+        Now the economics. A good business, in the sense that matters to an owner, is one that earns a
+        high return on the capital tied up in it and can do so again next year without a fight. Buffett's
+        test is whether a dollar retained in the business becomes more than a dollar of market value over
+        time — and that only happens when the business earns well above its cost of capital. So you look
+        at the return on capital across the whole record, not one year, and you look at how much of each
+        sales dollar actually reaches owners as cash — <a href="/concepts#owner-earnings">owner earnings</a>,
+        operating cash less the capital spending needed just to stand still.
+      </p>
+      <p>
+        On the page this is <b>The record</b> — a decade in one table, meant to be read <i>down the rows,
+        a single line across all its years</i>, not across one year's column — and the <b>Is it a good
+        business?</b> and <b>Earnings power</b> reads beside it. Watch three things. Has the
+        <a href="/concepts#roic">return on capital</a> stayed high through good years and bad? Does owner
+        earnings track the reported profit, or do the two drift apart (a sign the profit is not turning
+        into cash)? And is this year a fair one to judge by, or a peak or a trough — Graham's whole point
+        in normalizing across a cycle. A wonderful business answers all three the same way for years on
+        end. A mediocre one earns its keep only at the top of its cycle.
+      </p>
+    </div>
+  </section>
+
+  <section class="band">
+    <h2>3 · Will it last?</h2>
+    <div class="prose">
+      <p>
+        A high return invites competition the way honey invites bears. So the next question is the one
+        Munger cared about most: is there a moat — some durable reason the returns will still be here in
+        ten years — and can the business get through a bad decade without a forced sale or a wiped-out
+        balance sheet? This is two questions, and the order matters. First survival, then durability.
+        Graham's first rule was never to lose; only a business that lives gets to compound.
+      </p>
+      <p>
+        On the page, survival is <b>Will it survive?</b> and <b>Current Position</b> — can it pay its
+        interest, cover its near-term bills, get through a downturn without depending on the kindness of
+        lenders. Durability is <b>Durability &amp; moat</b>, and notice how it is written: it names the
+        moat as a <i>test to watch</i> — pricing power that should show in margins that hold under
+        pressure, switching costs that should show in customers who stay — and never as a fact the company
+        possesses. That restraint is deliberate. A moat asserted is a story; a moat that shows up in the
+        numbers, year after year, is an asset. The page hands you the place to look; whether the evidence
+        is there is your call.
+      </p>
+    </div>
+  </section>
+
+  <section class="band">
+    <h2>4 · Who is running it, and what do they do with the cash?</h2>
+    <div class="prose">
+      <p>
+        A good business can be ruined by what is done with its profits, and a fair one made richer. After
+        the operating return, a management's most important job is capital allocation — what it does with
+        the cash the business throws off: reinvest it, buy other companies, pay it out, or buy back its
+        own shares. Buffett judges the buybacks especially closely, because a repurchase made cheap builds
+        per-share value and one made dear quietly destroys it. And underneath all of it sits the question
+        of candor: does management tell its owners the truth, in plain words, including the bad news?
+      </p>
+      <p>
+        On the page this is <b>How is the cash used?</b>, <b>Management &amp; pay</b>, and the candor read
+        of what the filing emphasizes and how it talks to owners. Watch whether retained earnings have
+        actually produced growth in value, whether buybacks were made when the shares were cheap or only
+        when flush, and whether the filing owns its problems or buries them in adjusted figures and
+        cheerful adjectives. Munger's rule of thumb is worth keeping here: show me the incentive and I
+        will show you the outcome.
+      </p>
+    </div>
+  </section>
+
+  <section class="band">
+    <h2>5 · Invert — then, only then, the price.</h2>
+    <div class="prose">
+      <p>
+        Before you let yourself like a business, turn it over. Munger's habit was to invert: do not ask
+        how this succeeds, ask how it fails — what would have to go wrong, and how likely is it. The page
+        does this for you in <b>Inverting the record</b>, reading the record for the cracks rather than
+        the case. If the bad cases are survivable and unlikely, you have something. If one of them is a
+        coin-flip that ends the company, no price is cheap enough.
+      </p>
+      <p>
+        And the price comes <i>last</i>, on purpose. A great business at a foolish price is a poor
+        investment; a fair one bought with a margin of safety is Graham's whole edifice. <b>The price</b>
+        and <b>What the price implies</b> turn the reverse-DCF around: instead of pretending to forecast,
+        they show you what growth the current price is already counting on, so you can ask whether the
+        record makes that plausible or heroic. The
+        <a href="/concepts#margin-of-safety">margin of safety</a> is the gap between what you pay and what
+        the business is worth — and the wider it is, the less your judgment has to be right.
+      </p>
+    </div>
+  </section>
+
+  <section class="band close">
+    <div class="prose">
+      <p>
+        That is the whole of it: understand it, judge its economics, test that they will last, weigh its
+        stewards, invert, and only then look at the price. Five questions, asked in order, on one business
+        at a time. Buffett, asked how a person without his resources should start, said to begin with the
+        A's and work through every company, one by one — which is exactly what the
+        <a href="/">catalog</a> is for. The numbers on each page are the evidence, gathered honestly and
+        traced to the source. The verdict is the one thing they will never give you, because forming it
+        yourself is the only way you ever learn to read the next one without us.
+      </p>
+      <p class="next">
+        Learn the words as you go in the <a href="/concepts">concepts</a>, and start reading at the
+        <a href="/">A's</a>.
+      </p>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .hero { max-width: 760px; margin: 8px 0 26px; }
+  .hero h1 { font-size: clamp(30px, 6vw, 46px); line-height: 1.06; letter-spacing: -0.02em; margin: 0 0 12px; }
+  .dek { font-size: clamp(16px, 2.4vw, 19px); line-height: 1.55; color: var(--muted); margin: 0; }
+  .band { max-width: 760px; margin: 0 0 30px; }
+  .band h2 { font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); margin: 0 0 10px; font-weight: 700; }
+  .prose p { font-size: 16.5px; line-height: 1.62; margin: 0 0 14px; }
+  .prose p:last-child { margin-bottom: 0; }
+  .prose b { font-weight: 650; }
+  .prose a { color: var(--ink); text-decoration: underline; text-decoration-color: var(--rule); text-underline-offset: 2px; }
+  .prose a:hover { text-decoration-color: var(--accent); }
+  .intro { border-bottom: 1px solid var(--rule); padding-bottom: 22px; }
+  .close { border-top: 1px solid var(--rule); padding-top: 22px; }
+  .next { font-size: 15px; color: var(--muted); }
+</style>
