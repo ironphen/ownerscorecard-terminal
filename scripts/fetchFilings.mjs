@@ -25,6 +25,10 @@ const THROTTLE = 200;
 
 const dataDir = path.join(process.cwd(), "src", "data");
 const fundamentals = JSON.parse(fs.readFileSync(path.join(dataDir, "fundamentals.json"), "utf8"));
+// The ADR pool (foreign 20-F / 40-F filers) carries the same qualitative read, pulled from the
+// English text of the foreign annual report. Optional — a missing file just means no ADRs this run.
+let adrFundamentals = { companies: [] };
+try { adrFundamentals = JSON.parse(fs.readFileSync(path.join(dataDir, "fundamentals.adr.json"), "utf8")); } catch { /* no ADR pool yet */ }
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 async function fetchText(url) {
@@ -412,28 +416,50 @@ function businessBrief(sents, lede, name) {
 
 // ---- EDGAR document discovery ----
 
-async function latestTenKs(cik, n = 2) {
+// Annual-report forms: 10-K (US), 20-F (foreign private issuers) and 40-F (Canadian MJDS filers).
+// The most recent two of WHICHEVER kind the company files, so one path serves both pools.
+const ANNUAL_FORMS = new Set(["10-K", "20-F", "40-F"]);
+async function latestAnnual(cik, n = 2) {
   const sub = await fetchText(`https://data.sec.gov/submissions/CIK${cik}.json`);
   const j = JSON.parse(sub);
   const r = j.filings?.recent;
   if (!r) return [];
   const out = [];
   for (let i = 0; i < r.form.length && out.length < n; i++) {
-    if (r.form[i] === "10-K" && r.primaryDocument[i]) {
-      out.push({ accn: r.accessionNumber[i], doc: r.primaryDocument[i], date: r.filingDate[i], reportDate: r.reportDate?.[i] });
+    if (ANNUAL_FORMS.has(r.form[i]) && r.primaryDocument[i]) {
+      out.push({ accn: r.accessionNumber[i], doc: r.primaryDocument[i], date: r.filingDate[i], reportDate: r.reportDate?.[i], form: r.form[i] });
     }
   }
   return out;
 }
+
+// Section anchors by annual-report form. A 10-K is read on its Item 1 (Business), Item 7 (MD&A) and
+// Item 1A (Risk Factors). A 20-F uses Item 4 (Information on the Company), Item 5 (Operating &
+// Financial Review) and Item 3.D (Risk Factors). A 40-F has no fixed item layout, so it borrows the
+// 20-F anchors and, failing the word-count gate downstream, is simply skipped — the safe outcome.
+const SECTION_ANCHORS = {
+  "10-K": {
+    business: ["item\\s*1[\\.\\s]+business", ["item\\s*1a[\\.\\s]+risk", "item\\s*1b[\\.\\s]", "item\\s*2[\\.\\s]+propert"]],
+    mdna: ["item\\s*7[\\.\\s]+management", ["item\\s*7a[\\.\\s]+quantitative", "item\\s*8[\\.\\s]+financial"]],
+    risk: ["item\\s*1a[\\.\\s]+risk\\s*factors", ["item\\s*1b[\\.\\s]", "item\\s*2[\\.\\s]+propert"]],
+  },
+  "20-F": {
+    business: ["item\\s*4[\\.\\s]+information\\s+on\\s+the\\s+company|item\\s*4[\\.\\s]*b[\\.\\s]+business\\s+overview|\\bbusiness\\s+overview\\b", ["item\\s*4[\\.\\s]*d[\\.\\s]", "item\\s*5[\\.\\s]+operating", "operating\\s+and\\s+financial\\s+review\\s+and\\s+prospects"]],
+    mdna: ["item\\s*5[\\.\\s]+operating|operating\\s+and\\s+financial\\s+review\\s+and\\s+prospects", ["item\\s*6[\\.\\s]+directors", "item\\s*6[\\.\\s]"]],
+    risk: ["item\\s*3[\\.\\s]*d[\\.\\s]+risk\\s*factors|item\\s*3[\\.\\s]+risk\\s*factors", ["item\\s*4[\\.\\s]+information", "item\\s*3[\\.\\s]*e[\\.\\s]"]],
+  },
+};
+SECTION_ANCHORS["40-F"] = SECTION_ANCHORS["20-F"];
 
 async function getFiling(cik, f) {
   const accnNoDash = f.accn.replace(/-/g, "");
   const url = `https://www.sec.gov/Archives/edgar/data/${Number(cik)}/${accnNoDash}/${f.doc}`;
   const html = await fetchText(url);
   const text = htmlToText(html);
-  const business = section(text, "item\\s*1[\\.\\s]+business", ["item\\s*1a[\\.\\s]+risk", "item\\s*1b[\\.\\s]", "item\\s*2[\\.\\s]+propert"]);
-  const mdna = section(text, "item\\s*7[\\.\\s]+management", ["item\\s*7a[\\.\\s]+quantitative", "item\\s*8[\\.\\s]+financial"]);
-  const risk = section(text, "item\\s*1a[\\.\\s]+risk\\s*factors", ["item\\s*1b[\\.\\s]", "item\\s*2[\\.\\s]+propert"]);
+  const a = SECTION_ANCHORS[f.form] || SECTION_ANCHORS["10-K"];
+  const business = section(text, a.business[0], a.business[1]);
+  const mdna = section(text, a.mdna[0], a.mdna[1]);
+  const risk = section(text, a.risk[0], a.risk[1]);
   const md = metrics(mdna);
   return { url, business: { ...metrics(business), lead: leadSentences(business) }, mdna: { ...md, lead: leadSentences(mdna), candor: candorSignals(mdna, md.sents) }, risk: metrics(risk), reportDate: f.reportDate };
 }
@@ -864,17 +890,34 @@ function buffettRead(cur, isFinancial) {
 }
 
 async function main() {
-  const out = {};
+  // Carry-over: start from the existing file, so a partial run (a ticker limit, or a pool that comes
+  // up empty) never wipes good entries — fresh results overlay, and names no longer in either
+  // universe are dropped at the end.
+  let out = {};
+  try { out = JSON.parse(fs.readFileSync(path.join(dataDir, "language.json"), "utf8")).companies || {}; } catch { out = {}; }
+
+  // One roster across both pools: US 10-K filers and ADR 20-F/40-F filers, each tagged so the proxy
+  // (DEF 14A) pull is skipped for foreign private issuers, which do not file one.
+  const roster = [
+    ...(fundamentals.companies || []).map((c) => ({ c, isAdr: false })),
+    ...(adrFundamentals.companies || []).map((c) => ({ c, isAdr: true })),
+  ];
+  const inUniverse = new Set(roster.map(({ c }) => String(c.ticker).toUpperCase()));
+  // Optional ticker limit (the rest carry over), so a run can validate a handful of names quickly.
+  const only = (process.env.ONLY_TICKERS || "").toUpperCase().split(",").map((s) => s.trim()).filter(Boolean);
+  const onlySet = only.length ? new Set(only) : null;
+
   let ok = 0;
-  for (const c of fundamentals.companies) {
+  for (const { c, isAdr } of roster) {
     const tk = c.ticker;
     if (!c.cik) continue;
+    if (onlySet && !onlySet.has(String(tk).toUpperCase())) continue;
     await sleep(THROTTLE);
     let filings;
     try {
-      filings = await latestTenKs(c.cik, 2);
+      filings = await latestAnnual(c.cik, 2);
     } catch (e) { console.warn(`  ! ${tk}: submissions ${e.message}`); continue; }
-    if (!filings.length) { console.warn(`  ! ${tk}: no 10-K found`); continue; }
+    if (!filings.length) { console.warn(`  ! ${tk}: no annual report found`); continue; }
 
     let cur, prior;
     try {
@@ -888,7 +931,7 @@ async function main() {
     // garbage. The owner-flags can carry even if one section came up short.
     const qualWords = cur.business.words + cur.mdna.words + cur.risk.words;
     if (qualWords < 1500) {
-      console.warn(`  ! ${tk}: qualitative sections not cleanly extracted (${qualWords}w), skipping`);
+      console.warn(`  ! ${tk}: qualitative sections not cleanly extracted (${qualWords}w${isAdr ? `, ${filings[0].form}` : ""}), skipping`);
       continue;
     }
 
@@ -902,12 +945,15 @@ async function main() {
     const mdnaDiff = prior ? diff(cur.mdna.sents, prior.mdna.sents) : null;
     const riskDiff = prior ? diff(cur.risk.sents, prior.risk.sents) : null;
 
-    // Executive pay from the latest proxy (non-fatal, a bonus layer).
+    // Executive pay from the latest proxy (non-fatal, a bonus layer). US only: foreign private
+    // issuers file no DEF 14A, so the proxy pull is skipped for the ADR pool.
     let comp = null;
-    try {
-      const proxy = await latestProxy(c.cik);
-      if (proxy) { await sleep(THROTTLE); comp = await getComp(c.cik, proxy); }
-    } catch (e) { console.warn(`  ! ${tk}: proxy ${e.message}`); }
+    if (!isAdr) {
+      try {
+        const proxy = await latestProxy(c.cik);
+        if (proxy) { await sleep(THROTTLE); comp = await getComp(c.cik, proxy); }
+      } catch (e) { console.warn(`  ! ${tk}: proxy ${e.message}`); }
+    }
 
     // The lede candidates (MD&A Overview first, then Item 1 Business), scored once and reused for
     // both the hero sentence and the "in brief" detail lines beneath it. The whole record assembly
@@ -961,11 +1007,15 @@ async function main() {
     }
   }
 
+  // Drop any carried-over entry whose company has left both universes, so a removed name does not
+  // linger as stale qualitative text.
+  for (const tk of Object.keys(out)) if (!inUniverse.has(tk.toUpperCase())) delete out[tk];
+
   fs.writeFileSync(
     path.join(dataDir, "language.json"),
-    JSON.stringify({ asOf: new Date().toISOString().slice(0, 10), source: "SEC EDGAR, 10-K documents", sample: false, companies: out }, null, 2) + "\n"
+    JSON.stringify({ asOf: new Date().toISOString().slice(0, 10), source: "SEC EDGAR, 10-K and 20-F/40-F annual reports", sample: false, companies: out }, null, 2) + "\n"
   );
-  console.log(`\n✅ Wrote language analysis for ${ok}/${fundamentals.companies.length} companies`);
+  console.log(`\n✅ Wrote language analysis for ${ok} companies this run (${Object.keys(out).length} total across both pools)`);
 }
 
 // Exported for the offline logic test; only hit EDGAR when run directly.

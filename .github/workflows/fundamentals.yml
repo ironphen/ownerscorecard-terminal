@@ -89,6 +89,7 @@ jobs:
         env:
           SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT }}
           BIZ_DEBUG: ${{ github.event.inputs.debug }}
+          ONLY_TICKERS: ${{ github.event.inputs.tickers }} # limit the filing-language run (the rest carry over)
       - run: npm run fetch:segments
         if: ${{ github.event.inputs.filings_only != 'true' && github.event.inputs.fundamentals_only != 'true' && github.event.schedule != '0 7 * * 1' }}
         continue-on-error: true # where-the-money-comes-from layer; never fail the refresh
