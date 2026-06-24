@@ -41,7 +41,13 @@ if (revSeries.length >= 4) {
 // for context, is the business running above or below its own recent norm?
 const cur = company.ttm?.lines || L;
 const curLabel = company.ttm?.lines ? "TTM" : `FY${company.fy}`;
-const grossM = grossMargin;
+// A goods business — a manufacturer, retailer or branded-goods maker — cannot have a ~100% gross
+// margin; that means the cost-of-revenue line was misclassified or partly missed (Caterpillar's $49M
+// COGS against $68B of revenue). A genuine ~100%-gross model is asset-light, not goods (a platform, an
+// exchange), and reports no cost line at all. So on a goods business, treat a near-total gross margin
+// as the capture error it is and withhold it rather than print an impossible figure.
+const goodsSector = (() => { try { return ["capital", "consumer", "retail"].includes(classify(company).sector.key); } catch { return false; } })();
+const grossM = (l) => { const v = grossMargin(l); return v != null && v > 0.95 && goodsSector ? null : v; };
 const hist5 = hist.slice(-5).map((h) => h.lines);
 const avgLabel = hist5.length >= 5 ? "5-yr average" : hist5.length >= 2 ? `${hist5.length}-yr average` : null;
 const avgShort = avgLabel ? avgLabel.replace("average", "avg") : "";
