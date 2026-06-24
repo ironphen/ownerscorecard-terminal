@@ -69,13 +69,16 @@ const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "
   <section class="catalogWrap" id="pool-us" role="tabpanel" aria-labelledby="tab-us">
     <div class="bandHead">
       <h2>The Catalog</h2>
-      <a class="all" href="/concepts">What the terms mean →</a>
+      <span class="headLinks">
+        <a class="all" href="/concepts">Principles →</a>
+        <a class="all" href="/concepts#vocabulary">What the terms mean →</a>
+      </span>
     </div>
     <p class="method">
       Asked how he'd find ideas if he were starting over with little money, Buffett said he'd open the
       manuals and start with the A's — reading every company, one by one. So here they all are,
       alphabetically by name, each a door to its full Owner Scorecard. Search for one, or do as he did
-      and start at the top.
+      and start at the top. New to it? Begin with the <a href="/concepts">principles</a>.
     </p>
 
     <div class="toolbar">
@@ -124,6 +127,7 @@ const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "
     .bandHead { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--rule-strong); padding-bottom: 6px; }
     .bandHead h2 { margin: 0; }
     .all { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; flex: 0 0 auto; }
+    .headLinks { display: flex; gap: 16px; flex: 0 0 auto; align-items: baseline; flex-wrap: wrap; justify-content: flex-end; }
 
     /* One catalog, two pools (United States, Japan): a segmented switch is the single way in. */
     .poolTabs { display: inline-flex; margin: 22px 0 0; border: 1px solid var(--rule-strong); border-radius: 999px; padding: 3px; background: var(--surface); gap: 2px; }
