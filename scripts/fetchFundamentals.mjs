@@ -271,6 +271,15 @@ const REIT_REVENUE = [
 // pick-max used for REIT rent, since premiums carry no excise and the size comparison holds.
 const INSURER_REVENUE = ["Revenues", "RevenueFromContractWithCustomerExcludingAssessedTax", "RevenueFromContractWithCustomerIncludingAssessedTax"];
 
+// A bank's top line is total revenue — net interest income plus noninterest income. Most tag it under
+// "Revenues" (JPMorgan, Bank of America, Citigroup), but some re-tagged the same total as
+// "RevenuesNetOfInterestExpense" — Wells Fargo did so after 2019, which stranded its whole record at
+// the last year it used "Revenues" (the ASC 606 contract tag captures only the noninterest fee sliver,
+// so it must never win). First-tag-wins, not pick-max: "Revenues" still wins wherever a bank reports
+// it, so the banks already read correctly are unchanged; the net-of-interest total only fills the years
+// a filer left "Revenues" blank. Used for depository SICs (6020-6079).
+const BANK_REVENUE = ["Revenues", "RevenuesNetOfInterestExpense", "RevenueFromContractWithCustomerExcludingAssessedTax", "RevenueFromContractWithCustomerIncludingAssessedTax"];
+
 const days = (a, b) => Math.abs((new Date(b) - new Date(a)) / 86400000);
 
 // ---- value extraction (tag-merged) ----
@@ -542,7 +551,8 @@ async function main() {
     const sicN = Number(sic) || 0;
     const isReitCo = sicN >= 6500 && sicN <= 6799;
     const isInsurerCo = sicN >= 6300 && sicN <= 6399;
-    const revTags = isReitCo ? REIT_REVENUE : isInsurerCo ? INSURER_REVENUE : CONCEPTS.revenue;
+    const isBankCo = sicN >= 6020 && sicN <= 6079;
+    const revTags = isReitCo ? REIT_REVENUE : isInsurerCo ? INSURER_REVENUE : isBankCo ? BANK_REVENUE : CONCEPTS.revenue;
     const revAnnualBy = annualByYear(facts, revTags, "USD", isReitCo || isInsurerCo);
     const latestRev = latestEntry(revAnnualBy);
     const revLatest = latestRev?.val ?? null;
