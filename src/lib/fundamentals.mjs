@@ -564,7 +564,14 @@ export function roicValue(L) {
   if (pretax != null && ie != null && ie > 0 && oi > 0 && oi - Math.abs(ie) > pretax * 1.5) return null;
   let t = 0.21;
   if (tax != null && ni != null && ni + tax > 0) t = Math.min(Math.max(tax / (ni + tax), 0), 0.5);
-  return (oi * (1 - t)) / invested;
+  const r = (oi * (1 - t)) / invested;
+  // When invested capital is a thin sliver — a distributor running on negative working capital, or a
+  // company whose buybacks have driven equity near zero — the denominator is unstable and the ratio
+  // explodes into a figure no owner could underwrite (McKesson printing ~230%, not a real return on
+  // capital). Decline it; the asset-light story still shows in the margins. A genuinely high-return
+  // franchise (Apple, Mastercard) tops out well under this, on a base that is a real fraction of sales.
+  if (r > 1.0 && (!L.revenue || invested < 0.06 * L.revenue)) return null;
+  return r;
 }
 
 export function operatingMargin(L) {

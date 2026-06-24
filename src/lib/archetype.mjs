@@ -142,9 +142,13 @@ export function financialProfile(company) {
     // Equity REITs (real depreciable property) keep the FFO scorecard. SIC 6795 (mineral-royalty
     // trusts) is not a property REIT either, so it gets no REIT scorecard.
     if (sic === 6795) return { kind: null, subtype: null };
-    const mreitNII = L.netInterestIncome != null && L.netInterestIncome > 0;
-    const tinyDep = L.depreciation != null && L.totalAssets ? Math.abs(L.depreciation) / L.totalAssets < 0.015 : false;
-    if (mreitNII && tinyDep) return { kind: "bank", subtype: "mortgage-reit" };
+    // Detect it by the net-interest signature plus negligible depreciation — whatever the SIGN of net
+    // interest in a given year (a mortgage REIT can run a negative spread when rates invert), and
+    // including a null depreciation line, which is the most loan-pool-like of all. An equity REIT
+    // carries real building depreciation, so it never trips the negligible-depreciation test.
+    const hasNII = L.netInterestIncome != null;
+    const negligibleDep = L.depreciation == null || (L.totalAssets ? Math.abs(L.depreciation) / L.totalAssets < 0.015 : false);
+    if (hasNII && negligibleDep) return { kind: "bank", subtype: "mortgage-reit" };
     // A real-estate SERVICES firm — brokerage, property and facilities management (CBRE, JLL) — sits
     // in the same SIC range but earns fees, not rent: it turns its asset base over many times a year,
     // so revenue is a large fraction of assets. A rent-collecting REIT turns its property slowly —
@@ -163,6 +167,13 @@ export function financialProfile(company) {
     // ratio reads as a permanent underwriting loss and teaches the wrong thing. The managed-care
     // carve-out (6324) is already handled above; fire/marine/casualty (6331+) stays P&C.
     if (sic >= 6310 && sic <= 6321) return { kind: "insurer", subtype: "life-insurer" };
+    // A diversified holding company that happens to own insurers (Berkshire) carries a P&C SIC but
+    // books insurance as a small minority of a far larger, mixed revenue base — railroads, energy,
+    // manufacturing, retail. A combined ratio then describes a sliver of the company and reads mostly
+    // blank: the wrong lens. When premiums are a small fraction of revenue, read it as the diversified
+    // capital allocator it is, off the insurer scorecard. (A real P&C insurer's premiums are most of
+    // its revenue, so this catches only the conglomerate, not a lightly-levered underwriter.)
+    if (L.premiumsEarned != null && L.revenue && L.premiumsEarned / L.revenue < 0.25) return { kind: null, subtype: null };
     return { kind: "insurer", subtype: "insurer" };
   }
   if (sic >= 6000 && sic <= 6299) {
@@ -216,7 +227,10 @@ function sectorFromSIC(sic) {
   if (c >= 2840 && c <= 2844) return "consumer";         // soap, cosmetics, personal care
   if (c >= 3000 && c <= 3199) return "consumer";         // footwear, leather, rubber goods
   if (c >= 3940 && c <= 3949) return "consumer";         // toys & games
-  // Retail
+  // Retail — but eating & drinking places (5810–5819) are a brand and an operation, not a
+  // thin-margin inventory retailer; the inventory-turns lens misreads a restaurant, so route
+  // them to the consumer-brand read (operating margin, gross margin, owner earnings).
+  if (c >= 5810 && c <= 5819) return "consumer";
   if (c >= 5200 && c <= 5999) return "retail";
   // Capital-intensive: extraction, heavy manufacturing, transport, utilities
   if (c >= 1000 && c <= 1799) return "capital";          // mining, oil & gas, construction
