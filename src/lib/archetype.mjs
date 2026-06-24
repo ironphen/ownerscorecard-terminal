@@ -42,7 +42,7 @@ const SIC_LABEL = {
   "2840": "Household & personal care", "2844": "Household & personal care", "2842": "Household & personal care",
   "2670": "Household & personal care", "2890": "Specialty chemicals", "5331": "Discount & variety retail",
   "5311": "Department stores", "5211": "Home-improvement retail", "4813": "Telecom", "4812": "Wireless telecom",
-  "4512": "Airlines", "4400": "Cruise lines", "5812": "Restaurants", "2911": "Oil & gas", "3711": "Automakers",
+  "4512": "Airlines", "4400": "Cruise lines", "4700": "Travel services", "5812": "Restaurants", "2911": "Oil & gas", "3711": "Automakers",
   "6798": "Real estate", "6500": "Real estate",
   "7320": "Financial data & analytics", "7323": "Financial data & analytics",
 };
@@ -224,6 +224,13 @@ function sectorFromSIC(sic) {
   if (c >= 3200 && c <= 3569) return "capital";          // stone/glass, metals, fabricated, machinery (non-computer)
   if (c >= 3580 && c <= 3669) return "capital";          // machinery, electrical equipment (non-semi)
   if (c >= 3700 && c <= 3799) return "capital";          // transportation equipment (autos, aerospace)
+  // Transportation SERVICES — travel agencies and online travel (4700, 4720–4729), freight
+  // arrangement and forwarding (4730–4739) — are asset-light arrangers that own no planes, trucks
+  // or track. The broad transport-and-utilities bucket below would misread them as capital-intensive,
+  // so route them to the financial-shape read, which reads online-travel and freight-broker economics
+  // (fat margins, negligible capex) as asset-light — and still catches a genuinely heavy operator in
+  // this band (a railcar lessor) by its own capex through the shape read.
+  if (c >= 4700 && c <= 4789) return null;               // transport services → shape (asset-light arrangers)
   if (c >= 4000 && c <= 4991) return "capital";          // transport, communications, utilities
   return null;                                           // chemicals, paper, instruments, misc → shape
 }
@@ -234,7 +241,10 @@ function sectorFromSIC(sic) {
 function sectorFromShape(s) {
   if (s.rev == null) return "general";
   const hiGM = s.grossMargin != null && s.grossMargin >= 0.5;
-  const loInv = s.invToRev != null && s.invToRev < 0.05;
+  // Inventory-light includes carrying NO inventory at all: a pure service or platform (an online
+  // marketplace, a ratings or data franchise, a freight broker) reports no inventory line, which is
+  // the most inventory-light a business can be — so a null reads as light, not as "unknown/heavy".
+  const loInv = s.invToRev == null || s.invToRev < 0.05;
   const someInv = s.invToRev != null && s.invToRev >= 0.1;
   const hiCapex = s.capexToRev != null && s.capexToRev >= 0.08;
   if (hiCapex) return "capital";              // heavy fixed assets
