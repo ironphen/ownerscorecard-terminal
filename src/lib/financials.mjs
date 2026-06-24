@@ -118,16 +118,19 @@ export function buildFinancialScorecard(company, subtype = "bank") {
     label: cap < 0.06 ? "Thin" : cap < 0.08 ? "Modest" : cap < 0.1 ? "Adequate" : "Well capitalized",
     note: "A plain-English leverage read: how much of the balance sheet is the owners' own money. This is a rough proxy; the regulatory figure is the CET1 ratio, which is risk-weighted and reported in the filing. The point is the same, how much loss the bank can absorb before depositors are at risk.",
   };
-  const de = L.totalDebt != null && L.stockholdersEquity > 0 ? L.totalDebt / L.stockholdersEquity : null;
+  // A mortgage REIT funds its pool mostly with short-term repo, which the filings carry in liabilities
+  // rather than as tagged debt, so debt/equity reads near zero and badly understates the leverage. The
+  // honest read is the whole financed balance sheet against the owners' equity: assets / equity.
+  const aoe = L.totalAssets > 0 && L.stockholdersEquity > 0 ? L.totalAssets / L.stockholdersEquity : null;
   const fund = depositFunding(L);
   const fundCheck = isMReit
-    ? (de == null ? none("Leverage", "Debt or equity missing.", "net-debt") : {
-        title: "Leverage (debt / equity)",
+    ? (aoe == null ? none("Leverage", "Assets or equity missing.", "net-debt") : {
+        title: "Leverage (assets / equity)",
         concept: "net-debt",
-        value: `${de.toFixed(1)}×`, formula: `Debt ${$(L.totalDebt)} ÷ equity ${$(L.stockholdersEquity)}`,
+        value: `${aoe.toFixed(1)}×`, formula: `Assets ${$(L.totalAssets)} ÷ equity ${$(L.stockholdersEquity)}`,
         tone: "info",
         label: "Borrowed against book",
-        note: "A mortgage REIT finances a pool of mortgages with borrowed money, so it runs far more leverage than an operating company; that leverage magnifies both the spread it earns and the loss when rates or credit move against it. Read it beside the book value, not as a pass or fail — the question is whether the spread compensates for the leverage through a cycle.",
+        note: "A mortgage REIT finances a pool of mortgages with borrowed money — mostly short-term repo, which sits in liabilities rather than as tagged debt — so its true leverage is the whole balance sheet against the owners' equity, not just labeled debt. That leverage magnifies both the spread it earns and the loss when rates or credit move against it; read it beside the book value, the question being whether the spread compensated for the leverage through a cycle.",
       })
     : fund == null ? none("Funding", "Deposits or total assets missing.", "net-interest-margin") : {
         title: "Deposit funding",

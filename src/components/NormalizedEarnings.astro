@@ -17,7 +17,9 @@ const pct = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.abs
 // median is not positive), we say so plainly instead of normalizing — a turnaround read it on
 // the trajectory and the range, not a normalized number that would be negative or mislead.
 let read = null;
-if (ep && ep.normUnstable) {
+if (ep && ep.structuralBreak) {
+  read = `Revenue has fallen well below its prior peak and stayed there — a one-time windfall reversed, or the business has structurally shrunk, not a cycle that turns. The earlier, far larger years no longer describe what the company is, so a through-cycle margin applied to today's revenue would manufacture an earning power that is not real. Read the range above and the year-by-year record, not a normalized figure.`;
+} else if (ep && ep.normUnstable) {
   read = ep.crossesZero
     ? `Owner-earnings margin crosses from loss to profit across this record, so there is no single through-cycle figure to normalize to — this is a turnaround or a structural change, not a business with one steady earning power. Read it on the range above and the year-by-year record, not a normalized number.`
     : `Owner earnings have been negative through most of this record, so there is no positive earning power to normalize to. Read the margin range above and the year-by-year record; the latest year, on its own, does not yet make a through-cycle figure.`;
