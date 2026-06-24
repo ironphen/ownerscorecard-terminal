@@ -29,6 +29,16 @@ export function earningsPower(company) {
   const rev = company.lines?.revenue && company.lines.revenue > 0 ? company.lines.revenue : Llatest.revenue;
   if (!rev || rev <= 0) return null;
 
+  // Structural break, not a cycle. A through-cycle median assumes the window's years repeat. When
+  // revenue has fallen below half its in-window peak AND that peak is several years past — a one-time
+  // windfall reversed (Moderna's COVID revenue collapsing ~90%), not a trough that recovers — the old
+  // high-revenue years no longer describe the business, so applying their margins to today's revenue
+  // would manufacture an earning power that is not real. Withhold the normalized figure, as for a
+  // turnaround. A cyclical at a trough sits well above half its peak (oil, chemicals) and is unaffected.
+  const revs = H.map((h) => h.lines.revenue).filter((v) => v != null && v > 0);
+  const peakRev = revs.length ? Math.max(...revs) : null;
+  const structuralBreak = peakRev != null && rev < peakRev * 0.5 && revs.lastIndexOf(peakRev) <= revs.length - 3;
+
   // Track which years actually carry a plausible owner-earnings margin, so the span and the year
   // count describe the series the median is built from, not the longer revenue history.
   const oemEntries = H.filter((h) => plausible(ownerEarningsMargin(h.lines, company)));
@@ -58,7 +68,7 @@ export function earningsPower(company) {
 
   const latestOeMargin = ownerEarningsMargin(Llatest, company);
   const latestNetMargin = netMargin(Llatest);
-  const normOE = !normUnstable && normOeMargin != null ? normOeMargin * rev : null;
+  const normOE = !normUnstable && !structuralBreak && normOeMargin != null ? normOeMargin * rev : null;
   const latestOE = ownerEarningsAbs(Llatest, company);
   const normNet = normNetMargin != null ? normNetMargin * rev : null;
 
@@ -66,7 +76,7 @@ export function earningsPower(company) {
   // is stable (a positive, meaningful through-cycle margin); a ratio against a near-zero or
   // negative base is undefined and would mislabel a record year as a trough.
   let cyclePos = null;
-  if (!normUnstable) {
+  if (!normUnstable && !structuralBreak) {
     const refM = latestOeMargin != null && normOeMargin != null ? latestOeMargin : (latestNetMargin != null && normNetMargin != null ? latestNetMargin : null);
     const refNorm = latestOeMargin != null && normOeMargin != null ? normOeMargin : normNetMargin;
     if (refM != null && refNorm != null && refNorm > 0) {
@@ -85,6 +95,6 @@ export function earningsPower(company) {
     normOeMargin, normOpMargin, normNetMargin, oemRange,
     latestOeMargin, latestNetMargin,
     normOE, latestOE, normNet,
-    cyclePos, swing, rev, normUnstable, crossesZero,
+    cyclePos, swing, rev, normUnstable, crossesZero, structuralBreak,
   };
 }
