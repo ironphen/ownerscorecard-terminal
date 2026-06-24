@@ -5,7 +5,7 @@ import { ffoMargin, ffoPayout, debtToAssets } from "../lib/reits.mjs";
 import { combinedRatio, lossRatio } from "../lib/insurers.mjs";
 import { netMargin, feeReturnOnEquity } from "../lib/feeFinancials.mjs";
 import { medicalLossRatio } from "../lib/managedCare.mjs";
-import { financialKind, financialSubtype } from "../lib/archetype.mjs";
+import { financialKind, financialSubtype, classify } from "../lib/archetype.mjs";
 import Term from "./Term.astro";
 
 const { company } = Astro.props;
@@ -46,9 +46,27 @@ const hist5 = hist.slice(-5).map((h) => h.lines);
 const avgLabel = hist5.length >= 5 ? "5-yr average" : hist5.length >= 2 ? `${hist5.length}-yr average` : null;
 const avgShort = avgLabel ? avgLabel.replace("average", "avg") : "";
 const avgOf = (fn) => { const xs = hist5.map(fn).filter((v) => v != null); return xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null; };
+// A pre-commercial company that loses more than it sells has margins that are noise — a −2,000%
+// "operating margin" teaches nothing. When the filing's own situation says so (the unprofitable-growth
+// overlay) and revenue is still de minimis, read it the way that overlay prescribes: on cash — the size
+// of the war chest, the rate it burns, and the runway that leaves. A large company whose loss is a
+// one-off writedown rather than a true cash burn is held out by the revenue ceiling.
+const omCur = operatingMargin(cur);
+const isBurnStage = (classify(company).overlays || []).some((o) => o.key === "unprofitable") && omCur != null && omCur < -1 && (rev == null || rev < 3e9);
+const liquidity = (cur.cashAndEquivalents || 0) + (cur.shortTermInvestments || 0) + (cur.longTermMarketable || 0);
+const burnRate = cur.cashFromOps != null && cur.cashFromOps < 0 ? -cur.cashFromOps : null;
+const runwayYrs = burnRate && liquidity > 0 ? liquidity / burnRate : null;
+const fmtRunway = (y) => (y == null ? null : y >= 10 ? "10+ yrs" : y >= 1 ? `${y.toFixed(1)} yrs` : `${Math.round(y * 12)} mo`);
+const burnVitals = [
+  { label: "Cash & investments", display: liquidity > 0 ? $(liquidity) : null },
+  { label: "Cash burn · annual", display: burnRate != null ? $(burnRate) : null },
+  { label: "Runway", display: fmtRunway(runwayYrs) },
+  { label: "Gross margin", concept: "gross-margin", value: ((g) => (g != null && g > -0.2 && g <= 1.001 ? g : null))(grossM(cur)), dp: 0 },
+].filter((v) => v.display != null || v.value != null);
+
 // Vital signs differ by archetype: a bank's "is it a good business" lives in return
 // on equity and the efficiency of the operation, not in margins or ROIC.
-const vitals = (isReit
+const vitals = isBurnStage ? burnVitals : (isReit
   ? [
       { label: "FFO margin", concept: "ffo", value: ffoMargin(cur), avg: avgOf(ffoMargin), dp: 0 },
       { label: "Dividend payout (FFO)", concept: "ffo", value: ffoPayout(cur), avg: avgOf(ffoPayout), dp: 0 },
@@ -129,12 +147,12 @@ const sp = spark(revSeries);
 
   {vitals.length ? (
     <div class="vitals">
-      <span class="vLbl">Vital signs · {curLabel}{avgLabel ? `, with ${avgLabel}` : ""}</span>
+      <span class="vLbl">Vital signs · {curLabel}{!isBurnStage && avgLabel ? `, with ${avgLabel}` : ""}</span>
       <div class="vRow">
         {vitals.map((v) => (
           <div class="v">
             <span class="vk">{v.concept ? <Term id={v.concept}>{v.label}</Term> : v.label}</span>
-            <span class="vv">{pct(v.value, v.dp)}</span>
+            <span class="vv">{v.display != null ? v.display : pct(v.value, v.dp)}</span>
             {v.avg != null && avgShort ? <span class="va">{avgShort} {pct(v.avg, v.dp)}</span> : null}
           </div>
         ))}
