@@ -179,7 +179,7 @@ function metrics(text) {
 // The Candor Read: how management talks to owners, the linguistic filter Buffett and Munger
 // actually apply to a filing. Four deterministic signals over the MD&A, densities per 1,000 words
 // so they compare across filings of any length, plus the verbatim sentences where management owns
-// a miss. No model, no sentiment lexicon bought off the shelf; just the vocabulary an owner cares
+// a miss. No sentiment lexicon bought off the shelf; just the vocabulary an owner cares
 // about. Present, never pronounce: the page shows the densities, the trajectory and the actual
 // sentences, and the reader judges the character.
 const OWNER_TALK = /\b(per[\s-]?share|return on (invested |tangible )?(capital|equity)|intrinsic value|capital allocation|free cash flow|long[\s-]?term|compound\w*|reinvest\w*|book value|owner[\s']?s?\b)/gi;
@@ -501,7 +501,7 @@ function diff(curSents, priorSents) {
 }
 
 // ---- AI / "too-hard pile" signal ----
-// Classic NLP, no model. Two questions, answered from the filing's own words: does the
+// Classic NLP. Two questions, answered from the filing's own words: does the
 // company name artificial intelligence as a competitive risk in its Item 1A (and is that
 // language new this year), and does it position AI as a capability in the Business/MD&A?
 // The verbatim is the evidence; the page pairs it with the structural AI-exposure of the

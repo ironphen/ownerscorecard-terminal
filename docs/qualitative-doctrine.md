@@ -201,12 +201,13 @@ for any name without a reviewed note, so nothing renders unreviewed by accident.
   unreviewed draft does not render.
 - The **runtime stays deterministic and free.** Notes are static JSON, generated
   once offline, committed to the repo, and read at build exactly like any other
-  data. No model runs in the build, and no API key is required to build the site.
+  data. The build runs no inference, and no API key is required to build the site.
 - The **labeling stays honest.** On a page carrying a reviewed note, the brief says
   the lens was *drafted from the company's own filings and reviewed* and that every
-  number is arithmetic. The old "no model wrote a word of this" claim is retired on
-  those pages — it is kept only where it remains literally true (the filing
-  text-analysis reads: owner's letter, candor, owner notice).
+  number is arithmetic. The product makes no blanket claim that its words are
+  model-free — that phrasing is retired across the site, since the qualitative layer
+  is now model-drafted (offline, reviewed); the text-analysis reads simply describe
+  themselves as classic text analysis of the filing's own words.
 
 ---
 

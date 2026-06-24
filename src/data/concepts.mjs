@@ -1,7 +1,7 @@
 // The vocabulary of ownership, defined once. Every term the pages use lives here in
 // plain language, with why an owner cares and the honest limit of the measure. This
 // is the teaching layer: a reader learns the word in context on a company page, then
-// follows it here to understand it for good. No model writes these; they are the same
+// follows it here to understand it for good. These are written by hand, the same
 // arithmetic and the same Graham/Buffett framing the rest of the site is built on.
 
 export const GROUPS = [
