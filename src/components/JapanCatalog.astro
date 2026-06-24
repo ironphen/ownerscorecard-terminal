@@ -7,8 +7,11 @@
 import jp from "../data/fundamentals.jp.json";
 
 const sortKey = (s) => s.replace(/^the\s+/i, "").replace(/^[^a-z0-9]+/i, "").trim().toLowerCase();
+// data-r: a log-scaled revenue magnitude, read by the home page's unified search to order matches by
+// prominence. Comparable within the pool's currency (yen here); never displayed.
+const magOf = (rev) => (rev > 0 ? Math.round(Math.log10(rev) * 10) : 0);
 const rows = [...(jp.companies || [])]
-  .map((c) => ({ ticker: String(c.ticker || ""), name: c.name || c.ticker, industry: c.industry || null, key: sortKey(c.name || c.ticker) }))
+  .map((c) => ({ ticker: String(c.ticker || ""), name: c.name || c.ticker, industry: c.industry || null, key: sortKey(c.name || c.ticker), r: magOf((c.lines && c.lines.revenue) || 0) }))
   .filter((r) => r.ticker)
   .sort((a, b) => a.key.localeCompare(b.key) || a.ticker.localeCompare(b.ticker));
 
@@ -47,7 +50,7 @@ const order = [...LETTERS.filter((l) => groups.has(l)), ...(groups.has("#") ? ["
           <h3 class="letH" aria-hidden="true">{l}</h3>
           <ul class="ents">
             {groups.get(l).map((r) => (
-              <li class="ent" data-s={`${r.name} ${r.ticker} ${r.industry || ""}`.toLowerCase()}>
+              <li class="ent" data-s={`${r.name} ${r.ticker} ${r.industry || ""}`.toLowerCase()} data-r={r.r}>
                 <a class="entLink" href={`/jp/${r.ticker}`}>
                   <span class="n">{r.name}</span>
                   <span class="t">{r.ticker}</span>

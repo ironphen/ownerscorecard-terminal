@@ -9,18 +9,26 @@ import adrData from "../data/fundamentals.adr.json";
 const jpCount = (jpData.companies || []).length;
 const adrCount = (adrData.companies || []).length;
 
-// The front door is an index, not a screener. A screener pulls toward a verdict — filter to "the
-// ones that pass" and you have implied they are the good ones, the one thing we never do. So this
-// presents every business we cover the way Buffett said he'd look for ideas starting over: open the
-// manuals and start with the A's, one company at a time. We sort and group by company NAME (his
-// manuals were alphabetical by name), each a door to its own full Owner Scorecard.
-// A leading "The" doesn't decide the letter (The Coca-Cola Company files under C); a name that opens
-// on a number or symbol lands under "#".
+// The front door is a search box, not a screener. A screener pulls toward a verdict — filter to "the
+// ones that pass" and you have implied they are the good ones, the one thing we never do. So instead
+// the door is open to all of them at once: one bar that reaches every business we cover, in every
+// pool, the way you'd walk up to a reference desk and name the company you came to read. Behind a
+// small link sits the full catalog — Buffett's "open the manuals and start with the A's" — for the
+// reader who'd rather browse than search. We sort and group the catalog by company NAME (his manuals
+// were alphabetical), each a door to its own full Owner Scorecard. A leading "The" doesn't decide the
+// letter (The Coca-Cola Company files under C); a name that opens on a number or symbol lands under "#".
 const sortKey = (s) => s.replace(/^the\s+/i, "").replace(/^[^a-z0-9]+/i, "").trim().toLowerCase();
+// A compact prominence signal for ranking search results: log-scaled revenue (≈0.1-decade buckets),
+// so a household name outranks a tiny look-alike when both match what you typed. Carried on each row
+// as data-r and read back by the search; never shown.
+const magOf = (rev) => (rev > 0 ? Math.round(Math.log10(rev) * 10) : 0);
 const rows = [...(fundamentals.companies || [])]
-  .map((c) => { const ticker = String(c.ticker || ""); const name = c.name || ticker; return { ticker, name, key: sortKey(name) || ticker.toLowerCase() }; })
+  .map((c) => { const ticker = String(c.ticker || ""); const name = c.name || ticker; return { ticker, name, key: sortKey(name) || ticker.toLowerCase(), r: magOf((c.lines && c.lines.revenue) || 0) }; })
   .filter((r) => r.ticker)
   .sort((a, b) => a.key.localeCompare(b.key) || a.ticker.localeCompare(b.ticker));
+
+const totalCount = rows.length + jpCount + adrCount;
+const totalLabel = totalCount.toLocaleString("en-US");
 
 const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 const letterOf = (key) => { const ch = (key[0] || "#").toUpperCase(); return /[A-Z]/.test(ch) ? ch : "#"; };
@@ -39,106 +47,259 @@ const articles = (
   .slice(0, 3);
 
 const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric", timeZone: "UTC" });
+
+// Starter examples — names (not tickers) so they resolve regardless of ticker form, and a deliberate
+// spread: a tech compounder, a classic brand, a conglomerate, a retailer, a foreign great.
+const STARTERS = ["Apple", "Coca-Cola", "Berkshire", "Costco", "Toyota", "Visa"];
 ---
 
 <BaseLayout title="Owner Scorecard, read a company the way an owner would">
-  {articles.length ? (
-    <section class="writing">
-      <div class="bandHead">
-        <h2>Latest writing</h2>
-        <a class="all" href="/articles">All articles →</a>
-      </div>
-      <ul class="cards">
-        {articles.map((a) => (
-          <li>
-            <a class="cardTitle" href={`/articles/${a.id}`}>{a.data.title}</a>
-            <p class="dek">{a.data.description}</p>
-            <div class="cardMeta"><span class="sec">{a.data.section}</span> {fmtDate(a.data.date)}</div>
-          </li>
-        ))}
-      </ul>
-    </section>
-  ) : null}
-
-  <div class="poolTabs" role="tablist" aria-label="Choose a market">
-    <button class="poolTab" data-pool="us" role="tab" aria-selected="true" id="tab-us">United States<span class="ct">{rows.length}</span></button>
-    <button class="poolTab" data-pool="jp" role="tab" aria-selected="false" id="tab-jp">Japan<span class="ct">{jpCount}</span></button>
-    {adrCount ? <button class="poolTab" data-pool="adr" role="tab" aria-selected="false" id="tab-adr">ADRs<span class="ct">{adrCount}</span></button> : null}
-  </div>
-
-  <section class="catalogWrap" id="pool-us" role="tabpanel" aria-labelledby="tab-us">
-    <div class="bandHead">
-      <h2>The Catalog</h2>
-      <span class="headLinks">
-        <a class="all" href="/concepts">Principles →</a>
-        <a class="all" href="/concepts#vocabulary">What the terms mean →</a>
-      </span>
+  <!-- ============================ SEARCH (the default door) ============================ -->
+  <section id="searchView">
+    <div class="lede">
+      <h1>Read any company the way an owner would.</h1>
+      <p class="sub">
+        Every figure traced to the company's own SEC filing. We lay a business out in the order an owner
+        reads it — and stop where judgment begins. We present the evidence; we never pronounce the verdict.
+      </p>
     </div>
-    <p class="method">
-      Asked how he'd find ideas if he were starting over with little money, Buffett said he'd open the
-      manuals and start with the A's — reading every company, one by one. So here they all are,
-      alphabetically by name, each a door to its full Owner Scorecard. Search for one, or do as he did
-      and start at the top. New to it? Begin with the <a href="/concepts">principles</a>.
+
+    <div class="omni" id="omniBox">
+      <div class="omniField">
+        <svg class="omniIcon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input
+          id="omni"
+          type="search"
+          placeholder={`Search ${totalLabel} companies by name or ticker…`}
+          autocomplete="off"
+          autocapitalize="off"
+          spellcheck="false"
+          aria-label="Search every company by name or ticker"
+          role="combobox"
+          aria-expanded="false"
+          aria-controls="omniResults"
+          aria-autocomplete="list"
+        />
+        <kbd class="omniKbd" aria-hidden="true">/</kbd>
+      </div>
+
+      <div class="omniPanel" id="omniPanel" hidden>
+        <div class="omniCount" id="omniCount" aria-live="polite"></div>
+        <ul class="omniResults" id="omniResults" role="listbox" aria-label="Matching companies"></ul>
+        <p class="omniEmpty" id="omniEmpty" hidden>No company matches that. Try a ticker, or part of a name.</p>
+      </div>
+
+      <div class="chips" id="omniChips">
+        <span class="chipLbl">Try</span>
+        {STARTERS.map((s) => <button type="button" class="chip" data-q={s}>{s}</button>)}
+      </div>
+    </div>
+
+    <p class="entry">
+      New here? Start with the <a href="/concepts">principles</a> — how to read a business, start to finish.
+      <span class="sep" aria-hidden="true">·</span>
+      <a class="browse" href="#catalog" data-to="catalog">Browse all {totalLabel} companies →</a>
     </p>
 
-    <div class="toolbar">
-      <input id="q" type="search" placeholder="Search ticker or name…" class="search" autocomplete="off" aria-label="Search by ticker or name" />
-      <span id="count" class="count">{rows.length} companies</span>
-    </div>
+    <!-- A light map of the reading, for the newcomer; the full method is the Principles page. -->
+    <section class="how" aria-label="How to read a company">
+      <h2 class="howH">What a reading looks like</h2>
+      <ol class="steps">
+        <li>
+          <span class="stepN" aria-hidden="true">1</span>
+          <span class="stepBody"><b>What is it?</b> What the company sells, and where the money truly comes from — said in one plain sentence.</span>
+        </li>
+        <li>
+          <span class="stepN" aria-hidden="true">2</span>
+          <span class="stepBody"><b>Does it earn?</b> The return on the capital it employs, and how much of the profit reaches owners as cash.</span>
+        </li>
+        <li>
+          <span class="stepN" aria-hidden="true">3</span>
+          <span class="stepBody"><b>Will it last?</b> The balance sheet — debt, liquidity, the staying power to get through a bad year whole.</span>
+        </li>
+        <li>
+          <span class="stepN" aria-hidden="true">4</span>
+          <span class="stepBody"><b>What's the price?</b> What you'd pay for the earnings — the one place a bargain, or a folly, hides.</span>
+        </li>
+      </ol>
+      <p class="howFoot">Each page answers these in turn and leaves the verdict to you. The full method is in the <a href="/concepts">principles</a>.</p>
+    </section>
 
-    <nav class="azbar" aria-label="Jump to letter">
-      {LETTERS.map((l) => (groups.has(l)
-        ? <a href={`#L-${l}`}>{l}</a>
-        : <span class="off">{l}</span>))}
-      {groups.has("#") ? <a href="#L-num">#</a> : null}
-    </nav>
-
-    <div id="index">
-      {order.map((l) => (
-        <section class="let" id={l === "#" ? "L-num" : `L-${l}`}>
-          <h3 class="letH" aria-hidden="true">{l}</h3>
-          <ul class="ents">
-            {groups.get(l).map((r) => (
-              <li class="ent" data-s={`${r.name} ${r.ticker}`.toLowerCase()}>
-                <a class="entLink" href={`/c/${r.ticker}`}>
-                  <span class="n">{r.name}</span>
-                  <span class="t">{r.ticker}</span>
-                </a>
-              </li>
-            ))}
-          </ul>
-        </section>
-      ))}
-      <p class="empty" id="empty" hidden>No company matches that. Try a ticker or part of a name.</p>
-    </div>
+    {articles.length ? (
+      <section class="writing">
+        <div class="bandHead">
+          <h2>Latest writing</h2>
+          <a class="all" href="/articles">All articles →</a>
+        </div>
+        <ul class="cards">
+          {articles.map((a) => (
+            <li>
+              <a class="cardTitle" href={`/articles/${a.id}`}>{a.data.title}</a>
+              <p class="dek">{a.data.description}</p>
+              <div class="cardMeta"><span class="sec">{a.data.section}</span> {fmtDate(a.data.date)}</div>
+            </li>
+          ))}
+        </ul>
+      </section>
+    ) : null}
   </section>
 
-  <div id="pool-jp" role="tabpanel" aria-labelledby="tab-jp" hidden>
-    <JapanCatalog />
-  </div>
+  <!-- ============================ CATALOG (behind the small link) ============================ -->
+  <section id="catalogView" hidden>
+    <p class="backRow"><a href="#" class="back" data-to="search">← Back to search</a></p>
 
-  {adrCount ? (
-    <div id="pool-adr" role="tabpanel" aria-labelledby="tab-adr" hidden>
-      <AdrCatalog />
+    <div class="poolTabs" role="tablist" aria-label="Choose a market">
+      <button class="poolTab" data-pool="us" role="tab" aria-selected="true" id="tab-us">United States<span class="ct">{rows.length}</span></button>
+      <button class="poolTab" data-pool="jp" role="tab" aria-selected="false" id="tab-jp">Japan<span class="ct">{jpCount}</span></button>
+      {adrCount ? <button class="poolTab" data-pool="adr" role="tab" aria-selected="false" id="tab-adr">ADRs<span class="ct">{adrCount}</span></button> : null}
     </div>
-  ) : null}
+
+    <section class="catalogWrap" id="pool-us" role="tabpanel" aria-labelledby="tab-us">
+      <div class="bandHead">
+        <h2>The Catalog</h2>
+        <span class="headLinks">
+          <a class="all" href="/concepts">Principles →</a>
+          <a class="all" href="/concepts#vocabulary">What the terms mean →</a>
+        </span>
+      </div>
+      <p class="method">
+        Asked how he'd find ideas if he were starting over with little money, Buffett said he'd open the
+        manuals and start with the A's — reading every company, one by one. So here they all are,
+        alphabetically by name, each a door to its full Owner Scorecard. Search for one, or do as he did
+        and start at the top. New to it? Begin with the <a href="/concepts">principles</a>.
+      </p>
+
+      <div class="toolbar">
+        <input id="q" type="search" placeholder="Search ticker or name…" class="search" autocomplete="off" aria-label="Search by ticker or name" />
+        <span id="count" class="count">{rows.length} companies</span>
+      </div>
+
+      <nav class="azbar" aria-label="Jump to letter">
+        {LETTERS.map((l) => (groups.has(l)
+          ? <a href={`#L-${l}`}>{l}</a>
+          : <span class="off">{l}</span>))}
+        {groups.has("#") ? <a href="#L-num">#</a> : null}
+      </nav>
+
+      <div id="index">
+        {order.map((l) => (
+          <section class="let" id={l === "#" ? "L-num" : `L-${l}`}>
+            <h3 class="letH" aria-hidden="true">{l}</h3>
+            <ul class="ents">
+              {groups.get(l).map((r) => (
+                <li class="ent" data-s={`${r.name} ${r.ticker}`.toLowerCase()} data-r={r.r}>
+                  <a class="entLink" href={`/c/${r.ticker}`}>
+                    <span class="n">{r.name}</span>
+                    <span class="t">{r.ticker}</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ))}
+        <p class="empty" id="empty" hidden>No company matches that. Try a ticker or part of a name.</p>
+      </div>
+    </section>
+
+    <div id="pool-jp" role="tabpanel" aria-labelledby="tab-jp" hidden>
+      <JapanCatalog />
+    </div>
+
+    {adrCount ? (
+      <div id="pool-adr" role="tabpanel" aria-labelledby="tab-adr" hidden>
+        <AdrCatalog />
+      </div>
+    ) : null}
+  </section>
+
+  <noscript>
+    <style>
+      /* With no JavaScript the omni-search can't run; fall back to the full browsable catalog. */
+      #omniBox, #omniChips, .entry .browse, .entry .sep { display: none !important; }
+      #catalogView { display: block !important; }
+    </style>
+  </noscript>
 
   <style>
-    .bandHead { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--rule-strong); padding-bottom: 6px; }
-    .bandHead h2 { margin: 0; }
-    .all { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; flex: 0 0 auto; }
-    .headLinks { display: flex; gap: 16px; flex: 0 0 auto; align-items: baseline; flex-wrap: wrap; justify-content: flex-end; }
+    /* ---------------------------------- search view ---------------------------------- */
+    #searchView { margin-top: 8px; }
+    .lede { max-width: 640px; margin: 22px auto 0; text-align: center; }
+    .lede h1 { font-size: clamp(27px, 4.6vw, 40px); margin: 0; line-height: 1.1; }
+    .sub { font-size: 15px; line-height: 1.55; color: var(--ink-dim); margin: 14px auto 0; max-width: 60ch; }
 
-    /* One catalog, two pools (United States, Japan): a segmented switch is the single way in. */
-    .poolTabs { display: inline-flex; margin: 22px 0 0; border: 1px solid var(--rule-strong); border-radius: 999px; padding: 3px; background: var(--surface); gap: 2px; }
-    .poolTab { font-family: var(--sans); font-size: 13.5px; font-weight: 600; letter-spacing: 0.02em; color: var(--muted); background: none; border: 0; border-radius: 999px; padding: 7px 18px; cursor: pointer; display: inline-flex; align-items: baseline; gap: 7px; white-space: nowrap; }
-    .poolTab:hover { color: var(--ink); }
-    .poolTab[aria-selected="true"] { background: var(--solid); color: var(--solid-ink); }
-    .poolTab .ct { font-size: 11px; font-weight: 500; opacity: 0.7; font-variant-numeric: tabular-nums; }
-    @media (max-width: 480px) { .poolTabs { display: flex; } .poolTab { flex: 1 1 0; justify-content: center; } }
+    .omni { max-width: 640px; margin: 24px auto 0; }
+    .omniField {
+      display: flex; align-items: center; gap: 10px;
+      border: 1.5px solid var(--rule-strong); border-radius: 10px;
+      background: var(--surface); padding: 0 14px;
+      box-shadow: 0 1px 2px var(--shadow); transition: border-color 0.12s, box-shadow 0.12s;
+    }
+    .omniField:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-tint); }
+    .omniIcon { width: 19px; height: 19px; color: var(--faint); flex: 0 0 auto; }
+    .omniField:focus-within .omniIcon { color: var(--accent); }
+    #omni {
+      flex: 1 1 auto; min-width: 0; border: 0; background: none; outline: none;
+      font-family: var(--sans); font-size: 17px; color: var(--ink);
+      padding: 15px 0; line-height: 1.2;
+    }
+    #omni::placeholder { color: var(--faint); }
+    #omni::-webkit-search-cancel-button { -webkit-appearance: none; }
+    .omniKbd {
+      flex: 0 0 auto; font-family: var(--sans); font-size: 11px; font-weight: 600; color: var(--muted);
+      border: 1px solid var(--rule-strong); border-radius: 4px; padding: 2px 7px; line-height: 1.3;
+      background: var(--paper);
+    }
+    @media (max-width: 520px) { .omniKbd { display: none; } }
+
+    /* results sit directly under the field, attached, like a reference desk handing you the cards */
+    .omniPanel { margin-top: 8px; border: 1px solid var(--rule-strong); border-radius: 10px; background: var(--surface); overflow: hidden; box-shadow: 0 4px 16px var(--shadow); }
+    .omniCount { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); padding: 9px 14px; border-bottom: 1px solid var(--rule); font-variant-numeric: tabular-nums; }
+    .omniResults { list-style: none; margin: 0; padding: 4px; max-height: min(60vh, 460px); overflow-y: auto; }
+    /* The result rows are created in JavaScript, so they never carry Astro's scope attribute; scope
+       the container and mark the dynamic descendants :global so their styles actually apply. */
+    .omniResults :global(.res) { margin: 0; border-radius: 6px; }
+    .omniResults :global(.resLink) { display: flex; align-items: baseline; gap: 10px; padding: 9px 11px; min-width: 0; color: var(--ink); }
+    .omniResults :global(.resLink:hover) { text-decoration: none; }
+    .omniResults :global(.res.is-active) { background: var(--accent-tint); }
+    .omniResults :global(.res.is-active .resName) { color: var(--accent); }
+    .omniResults :global(.resName) { font-size: 15px; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1 1 auto; min-width: 0; }
+    .omniResults :global(.resTicker) { font-family: var(--sans); font-weight: 700; font-variant-numeric: tabular-nums; font-size: 11.5px; letter-spacing: 0.03em; color: var(--muted); flex: 0 0 auto; }
+    .omniResults :global(.res.is-active .resTicker) { color: var(--accent); }
+    .omniResults :global(.resPlace) { font-size: 10.5px; letter-spacing: 0.02em; color: var(--tag-ink); background: var(--tag-bg); border-radius: 3px; padding: 2px 7px; white-space: nowrap; flex: 0 0 auto; }
+    .omniEmpty { font-family: var(--serif); font-style: italic; color: var(--muted); margin: 0; padding: 22px 14px; }
+
+    .chips { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 12px 2px 0; justify-content: center; }
+    .chipLbl { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--faint); }
+    .chip {
+      font-family: var(--sans); font-size: 13px; color: var(--ink-soft);
+      border: 1px solid var(--rule-strong); border-radius: 999px; padding: 5px 13px; cursor: pointer;
+      background: var(--surface); transition: border-color 0.1s, color 0.1s;
+    }
+    .chip:hover { border-color: var(--accent); color: var(--accent); }
+
+    .entry { text-align: center; font-size: 13.5px; color: var(--muted); margin: 22px auto 0; max-width: 640px; line-height: 1.7; }
+    .entry .sep { margin: 0 10px; color: var(--faint); }
+    .browse { font-weight: 600; }
+
+    /* ---- how to read one ---- */
+    .how { max-width: 720px; margin: 46px auto 0; }
+    .howH { font-size: clamp(18px, 2.6vw, 22px); text-align: center; margin: 0; }
+    .steps { list-style: none; counter-reset: none; margin: 20px 0 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 16px 28px; }
+    .steps li { display: flex; gap: 12px; align-items: flex-start; }
+    .stepN {
+      flex: 0 0 auto; width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--rule-strong);
+      display: inline-flex; align-items: center; justify-content: center;
+      font-family: var(--serif); font-weight: 600; font-size: 14px; color: var(--accent); margin-top: 1px;
+    }
+    .stepBody { font-size: 14px; line-height: 1.5; color: var(--ink-dim); }
+    .stepBody b { color: var(--ink); font-weight: 600; }
+    .howFoot { text-align: center; font-family: var(--serif); font-style: italic; font-size: 13.5px; color: var(--muted); margin: 22px 0 0; }
+    @media (max-width: 560px) { .steps { grid-template-columns: 1fr; gap: 14px; } }
 
     /* ---- writing band ---- */
-    .writing { margin: 0 0 36px; }
+    .writing { margin: 46px 0 0; }
     .cards { list-style: none; padding: 0; margin: 14px 0 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
     .cards li { border-left: 2px solid var(--rule); padding: 2px 0 2px 14px; }
     .cardTitle { font-family: var(--serif); font-weight: 600; font-size: 17px; line-height: 1.25; display: block; color: var(--ink); }
@@ -147,7 +308,23 @@ const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "
     .cardMeta { font-size: 11.5px; color: var(--muted); letter-spacing: 0.02em; }
     .cardMeta .sec { text-transform: uppercase; letter-spacing: 0.06em; border: 1px solid var(--rule); padding: 1px 5px; margin-right: 6px; font-size: 10px; }
 
-    /* ---- catalog ---- */
+    /* ---------------------------------- catalog view ---------------------------------- */
+    .backRow { margin: 8px 0 0; }
+    .back { font-size: 12.5px; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; }
+
+    .bandHead { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--rule-strong); padding-bottom: 6px; }
+    .bandHead h2 { margin: 0; }
+    .all { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; flex: 0 0 auto; }
+    .headLinks { display: flex; gap: 16px; flex: 0 0 auto; align-items: baseline; flex-wrap: wrap; justify-content: flex-end; }
+
+    /* One catalog, three pools (United States, Japan, ADRs): a segmented switch is the single way in. */
+    .poolTabs { display: inline-flex; margin: 14px 0 0; border: 1px solid var(--rule-strong); border-radius: 999px; padding: 3px; background: var(--surface); gap: 2px; }
+    .poolTab { font-family: var(--sans); font-size: 13.5px; font-weight: 600; letter-spacing: 0.02em; color: var(--muted); background: none; border: 0; border-radius: 999px; padding: 7px 18px; cursor: pointer; display: inline-flex; align-items: baseline; gap: 7px; white-space: nowrap; }
+    .poolTab:hover { color: var(--ink); }
+    .poolTab[aria-selected="true"] { background: var(--solid); color: var(--solid-ink); }
+    .poolTab .ct { font-size: 11px; font-weight: 500; opacity: 0.7; font-variant-numeric: tabular-nums; }
+    @media (max-width: 480px) { .poolTabs { display: flex; } .poolTab { flex: 1 1 0; justify-content: center; } }
+
     .method { font-family: var(--serif); font-style: italic; font-size: 13.5px; color: var(--muted); margin: 9px 0 0; max-width: 66ch; }
 
     /* Search + count, sticky so they stay reachable as the index scrolls. */
@@ -167,6 +344,7 @@ const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "
     .letH { font-family: var(--sans); font-weight: 800; font-size: 13px; letter-spacing: 0.08em; color: var(--muted); margin: 22px 0 0; padding-bottom: 5px; border-bottom: 1px solid var(--rule-strong); }
     .ents { list-style: none; padding: 0; margin: 6px 0 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 0 24px; }
     .ent { padding: 8px 2px; border-bottom: 1px solid var(--rule); }
+    .ent[hidden], .let[hidden] { display: none; }
     .entLink { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; min-width: 0; }
     .entLink:hover { text-decoration: none; }
     .entLink:hover .n { color: var(--accent); }
@@ -182,35 +360,268 @@ const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "
   </style>
 
   <script is:inline>
-    /* The market switch: one catalog, several pools (US, Japan, ADRs), one shown at a time. A /#japan
-       or /#adrs deep link opens that pool. */
+    /* View + pool controller. The page has two doors: a search view (the default) and the full
+       catalog view (United States, Japan, ADRs — one pool shown at a time). A /#japan or /#adrs deep
+       link opens the catalog on that pool; /#catalog opens it on the US tab. The small "Browse" and
+       "Back to search" links flip between the two. */
     (function () {
+      const searchView = document.getElementById("searchView");
+      const catalogView = document.getElementById("catalogView");
       const tabs = Array.from(document.querySelectorAll(".poolTab"));
       const panels = { us: document.getElementById("pool-us"), jp: document.getElementById("pool-jp"), adr: document.getElementById("pool-adr") };
-      if (!tabs.length || !panels.us) return;
-      const hashFor = { jp: "#japan", adr: "#adrs" };
-      function show(p) {
+      if (!searchView || !catalogView) return;
+      const poolHash = { jp: "#japan", adr: "#adrs" };
+
+      function setPool(p) {
         if (!panels[p]) p = "us";
         Object.keys(panels).forEach((k) => { if (panels[k]) panels[k].hidden = k !== p; });
         tabs.forEach((t) => t.setAttribute("aria-selected", String(t.dataset.pool === p)));
-        try { history.replaceState(null, "", hashFor[p] || location.pathname + location.search); } catch (e) {}
+        return p;
       }
-      tabs.forEach((t) => t.addEventListener("click", () => show(t.dataset.pool)));
-      const fromHash = location.hash === "#japan" ? "jp" : location.hash === "#adrs" ? "adr" : "us";
-      show(fromHash);
+      function currentPool() {
+        const t = tabs.find((t) => t.getAttribute("aria-selected") === "true");
+        return t ? t.dataset.pool : "us";
+      }
+      function setView(v, pool) {
+        const cat = v === "catalog";
+        searchView.hidden = cat;
+        catalogView.hidden = !cat;
+        if (cat) {
+          const p = setPool(pool || currentPool() || "us");
+          try { history.replaceState(null, "", poolHash[p] || "#catalog"); } catch (e) {}
+          window.scrollTo(0, 0);
+        } else {
+          try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {}
+          const o = document.getElementById("omni");
+          if (o) o.focus();
+        }
+      }
+
+      tabs.forEach((t) => t.addEventListener("click", () => {
+        const p = setPool(t.dataset.pool);
+        try { history.replaceState(null, "", poolHash[p] || "#catalog"); } catch (e) {}
+      }));
+      document.querySelectorAll('[data-to="catalog"]').forEach((el) =>
+        el.addEventListener("click", (e) => { e.preventDefault(); setView("catalog"); }));
+      document.querySelectorAll('[data-to="search"]').forEach((el) =>
+        el.addEventListener("click", (e) => { e.preventDefault(); setView("search"); }));
+
+      const h = location.hash;
+      if (h === "#japan") setView("catalog", "jp");
+      else if (h === "#adrs") setView("catalog", "adr");
+      else if (h === "#catalog") setView("catalog", "us");
+      else { searchView.hidden = false; catalogView.hidden = true; }
     })();
   </script>
 
   <script is:inline>
-    /* Search filters the index in place: hide the names that don't match, hide any letter that
-       empties out, and dim the A–Z rail to what's left. No rebuild, so it works on the
-       server-rendered list and degrades to a plain A–Z directory with JS off. */
+    /* The unified search. It reads its index once from the catalog already rendered on the page (every
+       pool's rows are in the DOM, just hidden), so there is no second copy of the data to ship or keep
+       in sync. Ranking favors an exact ticker, then a ticker or name that starts with what you typed,
+       then a word inside the name, then anything containing it. Keyboard: ↑/↓ to move, Enter to open,
+       Esc to clear; "/" from anywhere jumps to the box. */
+    (function () {
+      const input = document.getElementById("omni");
+      const panel = document.getElementById("omniPanel");
+      const list = document.getElementById("omniResults");
+      const countEl = document.getElementById("omniCount");
+      const emptyEl = document.getElementById("omniEmpty");
+      const chips = document.getElementById("omniChips");
+      if (!input || !panel || !list) return;
+      const MAX = 40;
+      const sortKey = (s) => s.replace(/^the\s+/i, "").replace(/^[^a-z0-9]+/i, "").trim().toLowerCase();
+      // Squeeze out spaces and punctuation so "jp morgan" finds JPMorgan and "coca cola" finds
+      // Coca-Cola — a reader shouldn't have to guess a company's exact spacing or hyphens.
+      const sq = (s) => s.replace(/[^a-z0-9]+/g, "");
+
+      // Harvest the index from the rendered catalog (US + Japan + ADRs). Tagging each row with its pool
+      // lets a US listing rank ahead of a foreign duplicate of the same name (Coca-Cola Co. before a
+      // Mexican bottler), and keeps the revenue-magnitude prominence comparable within one currency.
+      const INDEX = [];
+      const POOLRANK = { us: 0, adr: 1, jp: 2 };
+      function harvest(sel, pool) {
+        document.querySelectorAll(sel).forEach((e) => {
+          const a = e.querySelector("a.entLink");
+          if (!a) return;
+          const href = a.getAttribute("href");
+          if (!href) return;
+          const nEl = e.querySelector(".n"), tEl = e.querySelector(".t"), cEl = e.querySelector(".ctry");
+          const name = nEl ? nEl.textContent.trim() : "";
+          const ticker = tEl ? tEl.textContent.trim() : "";
+          const place = cEl ? cEl.textContent.trim() : "";
+          if (!name && !ticker) return;
+          const nl = name.toLowerCase();
+          const hay = (e.dataset.s || (nl + " " + ticker.toLowerCase())) + " " + place.toLowerCase();
+          INDEX.push({
+            name, ticker, place, href,
+            pool: POOLRANK[pool] || 0,
+            prom: parseInt(e.dataset.r || "0", 10) || 0,
+            tl: ticker.toLowerCase(),
+            words: nl.split(/[^a-z0-9]+/).filter(Boolean),
+            nlsq: sq(nl), nksq: sq(sortKey(name)), haysq: sq(hay),
+          });
+        });
+      }
+      harvest("#pool-us .ent", "us");
+      harvest("#pool-jp .ent", "jp");
+      harvest("#pool-adr .ent", "adr");
+
+      let shown = [];   // current rendered matches
+      let active = -1;  // highlighted index into `shown`
+
+      function rank(term) {
+        const t = term.trim().toLowerCase();
+        const tq = sq(t);
+        if (!tq) return [];
+        const out = [];
+        for (let i = 0; i < INDEX.length; i++) {
+          const it = INDEX[i];
+          let s = -1;
+          if (it.tl === tq) s = 0;                                          // exact ticker
+          else if (it.tl.indexOf(tq) === 0) s = 1;                          // ticker prefix
+          else if (it.nlsq.indexOf(tq) === 0 || it.nksq.indexOf(tq) === 0) s = 2; // name prefix
+          else if (it.words.some((w) => w.indexOf(t) === 0)) s = 3;         // a word in the name starts with it
+          else if (it.nlsq.indexOf(tq) >= 0) s = 4;                         // name contains
+          else if (it.haysq.indexOf(tq) >= 0) s = 5;                        // ticker or place contains
+          if (s >= 0) out.push({ it, s });
+        }
+        // Best match first: closeness of match, then a US listing over a foreign duplicate, then the
+        // bigger company, then the shorter (more canonical) name, then alphabetical.
+        out.sort((a, b) =>
+          a.s - b.s ||
+          a.it.pool - b.it.pool ||
+          b.it.prom - a.it.prom ||
+          a.it.name.length - b.it.name.length ||
+          a.it.nlsq.localeCompare(b.it.nlsq));
+        return out;
+      }
+
+      function setActive(i) {
+        const items = list.children;
+        if (active >= 0 && items[active]) { items[active].classList.remove("is-active"); items[active].setAttribute("aria-selected", "false"); }
+        active = i;
+        if (active >= 0 && items[active]) {
+          items[active].classList.add("is-active");
+          items[active].setAttribute("aria-selected", "true");
+          input.setAttribute("aria-activedescendant", items[active].id);
+          items[active].scrollIntoView({ block: "nearest" });
+        } else {
+          input.removeAttribute("aria-activedescendant");
+        }
+      }
+
+      function render(term) {
+        const matches = rank(term);
+        shown = matches.slice(0, MAX).map((m) => m.it);
+        list.textContent = "";
+        active = -1;
+        input.removeAttribute("aria-activedescendant");
+
+        if (!matches.length) {
+          panel.hidden = false;
+          countEl.hidden = true;
+          emptyEl.hidden = false;
+          input.setAttribute("aria-expanded", "true");
+          return;
+        }
+        emptyEl.hidden = true;
+        countEl.hidden = false;
+        countEl.textContent = matches.length > MAX
+          ? ("Showing " + MAX + " of " + matches.length.toLocaleString() + " — keep typing to narrow")
+          : (matches.length + (matches.length === 1 ? " match" : " matches"));
+
+        shown.forEach((it, i) => {
+          const li = document.createElement("li");
+          li.className = "res";
+          li.id = "res-" + i;
+          li.setAttribute("role", "option");
+          li.setAttribute("aria-selected", "false");
+          const a = document.createElement("a");
+          a.className = "resLink";
+          a.href = it.href;
+          a.tabIndex = -1;
+          const n = document.createElement("span"); n.className = "resName"; n.textContent = it.name || it.ticker;
+          const t = document.createElement("span"); t.className = "resTicker"; t.textContent = it.ticker;
+          a.appendChild(n); a.appendChild(t);
+          if (it.place) { const p = document.createElement("span"); p.className = "resPlace"; p.textContent = it.place; a.appendChild(p); }
+          li.appendChild(a);
+          li.addEventListener("mouseenter", () => setActive(i));
+          list.appendChild(li);
+        });
+        panel.hidden = false;
+        input.setAttribute("aria-expanded", "true");
+      }
+
+      function collapse() {
+        panel.hidden = true;
+        list.textContent = "";
+        shown = []; active = -1;
+        input.setAttribute("aria-expanded", "false");
+        input.removeAttribute("aria-activedescendant");
+        if (chips) chips.hidden = false;
+      }
+
+      function onInput() {
+        const term = (input.value || "").trim().toLowerCase();
+        if (!term) { collapse(); return; }
+        if (chips) chips.hidden = true;
+        render(term);
+      }
+
+      function go(it) { if (it && it.href) window.location.href = it.href; }
+
+      input.addEventListener("input", onInput);
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "ArrowDown") { e.preventDefault(); if (shown.length) setActive(Math.min((active < 0 ? -1 : active) + 1, shown.length - 1)); }
+        else if (e.key === "ArrowUp") { e.preventDefault(); if (shown.length) setActive(Math.max(active - 1, 0)); }
+        else if (e.key === "Enter") { if (shown.length) { e.preventDefault(); go(shown[active >= 0 ? active : 0]); } }
+        else if (e.key === "Escape") { if (input.value) { input.value = ""; collapse(); } else input.blur(); }
+      });
+      // Clicking a result navigates (the anchor handles middle-click / open-in-new-tab on its own).
+      list.addEventListener("click", (e) => { if (e.target.closest("a")) return; const li = e.target.closest(".res"); if (li) { const i = Array.prototype.indexOf.call(list.children, li); go(shown[i]); } });
+
+      if (chips) chips.addEventListener("click", (e) => {
+        const b = e.target.closest(".chip");
+        if (!b) return;
+        input.value = b.dataset.q || b.textContent;
+        input.focus();
+        onInput();
+      });
+
+      // "/" focuses whichever search is in view: the omni box, or the active pool's box in the catalog.
+      document.addEventListener("keydown", (e) => {
+        if (e.key !== "/" ) return;
+        const tag = ((document.activeElement || {}).tagName || "").toLowerCase();
+        if (tag === "input" || tag === "textarea" || tag === "select") return;
+        const catalog = document.getElementById("catalogView");
+        e.preventDefault();
+        if (catalog && !catalog.hidden) {
+          const box = catalog.querySelector('#pool-us:not([hidden]) #q, #pool-jp:not([hidden]) #jp-q, #pool-adr:not([hidden]) #adr-q');
+          (box || input).focus();
+        } else {
+          input.focus();
+        }
+      });
+
+      // Land and type: on a desktop arriving at the search view, focus the box (without scrolling).
+      // Skipped on touch, where it would pop the keyboard over the page, and when deep-linked to a pool.
+      try {
+        const sv = document.getElementById("searchView");
+        if (sv && !sv.hidden && window.matchMedia && window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
+          input.focus({ preventScroll: true });
+        }
+      } catch (e) {}
+    })();
+  </script>
+
+  <script is:inline>
+    /* Catalog (US tab) search filters the index in place: hide the names that don't match, hide any
+       letter that empties out, and dim the A–Z rail to what's left. Server-rendered, so it degrades to
+       a plain A–Z directory with JS off. Scoped to #pool-us; Japan and ADRs carry their own. */
     (function () {
       const q = document.getElementById("q");
       const countEl = document.getElementById("count");
       const emptyEl = document.getElementById("empty");
-      // Scope every query to the US panel: the ADR pool adds its own .let/.ent/.azbar in the same
-      // page, and this search must not reach across into them (the ADR directory has its own search).
       const azbar = document.querySelector("#pool-us .azbar");
       if (!q) return;
       const sections = Array.from(document.querySelectorAll("#pool-us .let"));
@@ -247,11 +658,6 @@ const fmtDate = (d) => d.toLocaleDateString("en-US", { year: "numeric", month: "
       }
 
       q.addEventListener("input", apply);
-      // "/" jumps to the search box, the way a terminal would.
-      document.addEventListener("keydown", (e) => {
-        const tag = ((document.activeElement || {}).tagName || "").toLowerCase();
-        if (e.key === "/" && tag !== "input" && tag !== "textarea" && tag !== "select") { e.preventDefault(); q.focus(); }
-      });
     })();
   </script>
 </BaseLayout>
