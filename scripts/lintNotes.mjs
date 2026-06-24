@@ -5,6 +5,19 @@
 // trajectory / current-state claim — the three ways a note ages out. Deterministic, no
 // model; run in `npm test`.
 import notes from "../src/data/notes.json" with { type: "json" };
+import usF from "../src/data/fundamentals.json" with { type: "json" };
+import adrF from "../src/data/fundamentals.adr.json" with { type: "json" };
+import jpF from "../src/data/fundamentals.jp.json" with { type: "json" };
+
+// A company can carry a digit in its own name — 3M, Phillips 66, Group 1 — which is a proper
+// noun, not a figure. Map each ticker to the digit-bearing tokens of its name so they can be
+// stripped before the figure check, and a real "66%" elsewhere is still caught.
+const nameDigitTokens = {};
+for (const pool of [usF, adrF, jpF])
+  for (const c of pool.companies || []) {
+    const toks = String(c.name || "").split(/\s+/).filter((w) => /\d/.test(w));
+    if (toks.length) nameDigitTokens[String(c.ticker).toUpperCase()] = toks;
+  }
 
 // A bare number, percentage, or money amount. The numbers live in the record below, never
 // in the prose. (Allows ordinary words; targets digits and currency.)
@@ -22,9 +35,11 @@ let checked = 0;
 for (const [ticker, n] of Object.entries(companies)) {
   if (ticker.startsWith("_")) continue;
   if (n.reviewed !== true) continue; // only notes that actually render
+  const drop = nameDigitTokens[ticker.toUpperCase()] || [];
   for (const field of FIELDS) {
-    const s = n[field];
+    let s = n[field];
     if (!s) continue;
+    for (const tok of drop) s = s.split(tok).join(" "); // strip the company's own name-digits
     checked++;
     const issues = [];
     let m;
