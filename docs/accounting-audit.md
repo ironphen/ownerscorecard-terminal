@@ -44,10 +44,18 @@ The **false-verdict cluster — Themes A, C and E (16 findings)** is **fixed** (
   states it excludes unearned premiums. JP near-term-position box deferred (by design — JP uses a
   separate template and shows the current ratio in the record table).
 
-**Remaining (not yet addressed): Theme B (4 findings)** — lens/classification routing: life
-insurers (Aflac, Principal) getting the P&C combined-ratio lens, mortgage REITs getting the equity-
-REIT FFO scorecard, JP trading houses' meaningless ROIC. These carry product-judgment calls (which
-lens each kind deserves) and are best done with founder input.
+- **Theme B — lens/classification routing** (commit `b0d81eb`): life/health insurers (range extended
+  to SIC 6310–6321) read on the spread and book value, not the P&C combined ratio (Aflac, Principal,
+  Unum, CNO); mortgage REITs (tiny depreciation + net interest income) route to the lender lens —
+  return on equity, tangible book, and the leverage that defines them, priced on book — while equity
+  REITs (including triple-net VICI) keep FFO; the dead `durability()` export (the one unguarded
+  consumer of `roicValue` for JP trading houses) was removed.
+
+## Complete
+
+All 36 confirmed findings are resolved (35 fixed across Themes A–F; the JP near-term-position box,
+a low-severity item, deferred as by-design — JP pages use a separate template and show the current
+ratio in the record table). All on `claude/jolly-ride-nae81r`; build clean, test suite green.
 
 ---
 
