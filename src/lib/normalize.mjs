@@ -17,16 +17,22 @@ const plausible = (v) => v != null && Math.abs(v) <= 1.0;
 export function earningsPower(company) {
   const H = (company.history || []).filter((h) => h?.lines?.revenue != null);
   if (H.length < 4) return null;
-  const L = company.ttm?.lines || company.lines || {};
-  const rev = L.revenue;
+  const Llatest = company.ttm?.lines || company.lines || {}; // freshest actual, for "latest reported"
+  // Normalize on the latest ANNUAL revenue, not the rolling TTM window: applying a through-cycle
+  // median margin to a TTM revenue peak would inflate the normalized figure. Margin and the
+  // revenue base it is applied to are kept on the same (annual) basis.
+  const rev = company.lines?.revenue && company.lines.revenue > 0 ? company.lines.revenue : Llatest.revenue;
   if (!rev || rev <= 0) return null;
 
-  const oem = H.map((h) => ownerEarningsMargin(h.lines, company)).filter(plausible);
+  // Track which years actually carry a plausible owner-earnings margin, so the span and the year
+  // count describe the series the median is built from, not the longer revenue history.
+  const oemEntries = H.filter((h) => plausible(ownerEarningsMargin(h.lines, company)));
+  const oem = oemEntries.map((h) => ownerEarningsMargin(h.lines, company));
   const opm = H.map((h) => operatingMargin(h.lines)).filter(plausible);
   const nm = H.map((h) => netMargin(h.lines)).filter(plausible);
-  // Normalizing owner earnings needs a real owner-earnings history. The Japanese pool carries
-  // it for only the latest two years (the five-year-summary limit), and two years is not a
-  // cycle, so the section is honestly withheld there until the history deepens.
+  // Normalizing owner earnings needs a real owner-earnings history. The Japanese pool now carries
+  // about five years (the deepened EDINET capex history); below four years is not a cycle, so the
+  // section is honestly withheld until the record is long enough.
   if (oem.length < 4) return null;
 
   const normOeMargin = median(oem);
@@ -34,31 +40,46 @@ export function earningsPower(company) {
   const normNetMargin = median(nm);
   const oemRange = oem.length ? [Math.min(...oem), Math.max(...oem)] : null;
 
-  const latestOeMargin = ownerEarningsMargin(L, company);
-  const latestNetMargin = netMargin(L);
-  const normOE = normOeMargin != null ? normOeMargin * rev : null;
-  const latestOE = ownerEarningsAbs(L, company);
+  // A structural turnaround or chronic loss-maker has no single through-cycle earning power: its
+  // through-cycle median owner-earnings margin sits at or below zero (the typical year is a loss).
+  // For those a "normalized owner earnings" dollar figure is negative — it would call a record
+  // profit year a trough — and a peak/trough ratio against a non-positive base is undefined, so we
+  // withhold both and show only the margin range and the record. A profitable cyclical with the
+  // odd negative trough year keeps its figure: a positive median IS a through-cycle earning power,
+  // and normalizing across the bad years is exactly Graham's point. crossesZero only colours the
+  // note (turnaround vs chronic loss), it does not by itself withhold.
+  const crossesZero = oem.some((v) => v > 0) && oem.some((v) => v < 0);
+  const normUnstable = normOeMargin == null || normOeMargin <= 0;
+
+  const latestOeMargin = ownerEarningsMargin(Llatest, company);
+  const latestNetMargin = netMargin(Llatest);
+  const normOE = !normUnstable && normOeMargin != null ? normOeMargin * rev : null;
+  const latestOE = ownerEarningsAbs(Llatest, company);
   const normNet = normNetMargin != null ? normNetMargin * rev : null;
 
-  // Where the latest year sits against its own through-cycle average. A factual peak/trough
-  // read, not a judgment: a margin well above average means this year's reported earnings may
-  // flatter the business; well below, it may understate it.
+  // Where the latest year sits against its own through-cycle average. Only when the normalization
+  // is stable (a positive, meaningful through-cycle margin); a ratio against a near-zero or
+  // negative base is undefined and would mislabel a record year as a trough.
   let cyclePos = null;
-  const refM = latestOeMargin != null && normOeMargin != null ? latestOeMargin : (latestNetMargin != null && normNetMargin != null ? latestNetMargin : null);
-  const refNorm = latestOeMargin != null && normOeMargin != null ? normOeMargin : normNetMargin;
-  if (refM != null && refNorm != null && refNorm !== 0) {
-    const ratio = refM / refNorm;
-    cyclePos = ratio > 1.15 ? "above" : ratio < 0.85 ? "below" : "at";
+  if (!normUnstable) {
+    const refM = latestOeMargin != null && normOeMargin != null ? latestOeMargin : (latestNetMargin != null && normNetMargin != null ? latestNetMargin : null);
+    const refNorm = latestOeMargin != null && normOeMargin != null ? normOeMargin : normNetMargin;
+    if (refM != null && refNorm != null && refNorm > 0) {
+      const ratio = refM / refNorm;
+      cyclePos = ratio > 1.15 ? "above" : ratio < 0.85 ? "below" : "at";
+    }
   }
-  // How cyclical: the spread of owner-earnings margin across the record, relative to the mean.
-  const swing = oemRange && normOeMargin && normOeMargin !== 0 ? (oemRange[1] - oemRange[0]) / Math.abs(normOeMargin) : null;
+  // How cyclical: the spread of owner-earnings margin relative to a meaningful positive base. Only
+  // a positive median of at least ~3% is a base a spread can be read against; below that the ratio
+  // explodes and would call a turnaround or a near-breakeven business "a cyclical".
+  const swing = oemRange && normOeMargin != null && normOeMargin >= 0.03 ? (oemRange[1] - oemRange[0]) / normOeMargin : null;
 
   return {
-    span: `${H[0].fy}–${H[H.length - 1].fy}`,
-    years: Math.max(oem.length, nm.length),
+    span: oemEntries.length ? `${oemEntries[0].fy}–${oemEntries[oemEntries.length - 1].fy}` : `${H[0].fy}–${H[H.length - 1].fy}`,
+    years: oem.length,
     normOeMargin, normOpMargin, normNetMargin, oemRange,
     latestOeMargin, latestNetMargin,
     normOE, latestOE, normNet,
-    cyclePos, swing, rev,
+    cyclePos, swing, rev, normUnstable, crossesZero,
   };
 }
