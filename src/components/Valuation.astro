@@ -39,6 +39,13 @@ const { sector, overlays } = classify(company);
 const fk = financialKind(company);
 const isInsurer = fk === "insurer";
 const offModel = fk === "bank" || fk === "insurer" || fk === "reit";
+// An ADR (a foreign 20-F/40-F filer) reports its financials in its home currency and on its
+// ordinary-share count, undivided by the ADR ratio. The reader-supplied price is the only input
+// the tool can't currency-convert (we carry no FX rate or ADR ratio, by the no-market-data rule),
+// so a US ADR quote in dollars would not reconcile with home-currency owner earnings and an
+// ordinary-share count — the multiple would be off by the exchange rate times the ADR ratio. We
+// warn loudly and tell the reader the basis to enter on, rather than silently invert the read.
+const isADR = company.market === "ADR";
 const cyclical = overlays.some((o) => o.key === "cyclical");
 const median = (xs) => { const s = [...xs].sort((a, b) => a - b); return s.length ? s[Math.floor((s.length - 1) / 2)] : null; };
 
@@ -237,6 +244,17 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
     <span class="tag">{bankRunnable ? "price / tangible book" : reitRunnable ? "price / FFO" : "reverse-DCF"}</span>
   </div>
 
+  {isADR ? (
+    <p class="adrWarn">
+      <b>Enter the home-market price, not the US ADR quote.</b> {name} reports in <b>{ccy}</b>,
+      and every figure here — owner earnings, book value, the share count — is on that
+      {ccy === "USD" ? " ordinary-share" : ` ${ccy}, ordinary-share`} basis. Enter the price on the
+      same basis: the local-exchange quote per ordinary share{ccy === "USD" ? "" : ` in ${ccy}`}.
+      A US ADR price in dollars bundles the ADR-to-ordinary ratio{ccy === "USD" ? "" : " and the exchange rate"},
+      so it will not reconcile with these figures and would throw the multiple off.
+    </p>
+  ) : null}
+
   {offModel ? (
     reitRunnable ? (
       <div id="valBoxReit" data-ffops={ffops} data-dps={dpsReit ?? ""} data-name={name} data-sym={sym}>
@@ -427,6 +445,10 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
   .note { font-family: var(--serif); font-style: italic; font-size: 14px; color: var(--ink-dim); margin: 12px 0 0; line-height: 1.5; max-width: 66ch; }
   .intro { font-family: var(--serif); font-style: italic; font-size: 14px; color: var(--muted); margin: 12px 0 0; line-height: 1.55; max-width: 68ch; }
   .basenote { font-family: var(--serif); font-size: 13.5px; line-height: 1.55; color: var(--ink-soft); background: var(--accent-tint); border-left: 2px solid var(--accent); padding: 9px 13px; margin: 12px 0 0; max-width: 72ch; }
+  /* ADR price-basis warning: a foreign filer's figures are in its home currency on the ordinary-
+     share count, so the reader must not enter a US ADR quote. Flagged, not hidden. */
+  .adrWarn { font-size: 13.5px; line-height: 1.55; color: var(--ink-soft); background: var(--warn-tint, var(--accent-tint)); border-left: 3px solid var(--warn); padding: 10px 13px; margin: 14px 0 0; max-width: 74ch; }
+  .adrWarn b { color: var(--ink); }
   .basenote b { color: var(--ink); }
   .intro b { font-style: normal; color: var(--ink); }
 
