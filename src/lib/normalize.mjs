@@ -17,7 +17,12 @@ const plausible = (v) => v != null && Math.abs(v) <= 1.0;
 export function earningsPower(company) {
   const H = (company.history || []).filter((h) => h?.lines?.revenue != null);
   if (H.length < 4) return null;
-  const Llatest = company.ttm?.lines || company.lines || {}; // freshest actual, for "latest reported"
+  // The "latest reported" figure must sit on the SAME basis as the normalization, which is the latest
+  // ANNUAL revenue (below) — not the rolling TTM, whose revenue and margin would mismatch the annual
+  // base and set an apples-to-oranges comparison (a TTM owner earnings beside an annual-revenue
+  // normalization). So read "this year" as the latest fiscal year; the TTM freshness lives in the
+  // vital-signs strip, not in this through-cycle comparison.
+  const Llatest = company.lines || company.ttm?.lines || {};
   // Normalize on the latest ANNUAL revenue, not the rolling TTM window: applying a through-cycle
   // median margin to a TTM revenue peak would inflate the normalized figure. Margin and the
   // revenue base it is applied to are kept on the same (annual) basis.
