@@ -139,14 +139,43 @@ less and point to the arithmetic below.
 
 ---
 
+## Durable, not current — the layer must hold for years
+
+The qualitative layer describes the **enduring economic character** of a business —
+the kind of machine it is and the levers that move it — not its current readout. A
+franchise's nature changes slowly; that is exactly the layer that holds for years,
+and it is the layer a value investor is actually assessing. So every note is written
+to stay true, *unchanged*, for the same company across many years and many filings.
+
+This is stricter than "no figures." It also rules out:
+
+- **Temporal markers** — "now", "today", "currently", "recently", "this year",
+  "lately". The note carries no date stamp; nothing in it should imply one.
+- **Trajectory and current-state claims** — "growing its base", "margins widening",
+  "cash building", "has climbed". These describe which way the needle happens to be
+  pointing, and the needle reverses. Keep the *lever*; drop the *direction*.
+  ("Operating leverage as the base scales" is durable; "margins have widened as the
+  base grew" is not.)
+
+Where the reader needs the current state — the actual margin, the actual member
+count, this year's owner earnings — the note **points to the record below**, where
+the arithmetic lives and is refreshed every cycle. The prose names what to look at;
+the table says where it stands. This is also why a reviewed note is refreshed only
+when a filing changes the *description or the business mix* — not every cycle —
+because nothing in it is tied to a single year's numbers.
+
+---
+
 ## Grounding — how the copy stays honest
 
 The seed copy is drafted only from:
 
 1. **The company's own filing text**, where it exists (US/ADR filers carry a
    description and risk language; this is the primary source).
-2. **The computed numbers**, always — but the draft *references* the dynamics they
-   show ("margins have widened as the base grew"), it never *states* a figure.
+2. **The computed numbers**, always — but the draft names the *lever* they bear on
+   ("how far content spend stretches as the base scales"), never the figure, and
+   never its *direction* (see *Durable, not current*, above). The number, and which
+   way it is moving, both live in the record below.
 3. **Established, non-controversial identity facts** where the filing text is thin
    — most importantly the Japanese (EDINET) names, which carry no description in our
    data. Saying "Capcom owns the Resident Evil and Monster Hunter franchises" is
@@ -165,6 +194,9 @@ for any name without a reviewed note, so nothing renders unreviewed by accident.
 - The model drafts only the two **descriptive** sections — "what it is" and "what
   moves the needle". **"Is it a good business?" stays computed** from the record.
 - The model **never writes a figure.** Numbers come from the arithmetic.
+- The copy describes **enduring economic character, never current state**: no
+  figures, no temporal markers, no trajectory claims. It must hold true, unchanged,
+  for years (see *Durable, not current*).
 - Every note is **reviewed before commit** (`reviewed: true` in `notes.json`). An
   unreviewed draft does not render.
 - The **runtime stays deterministic and free.** Notes are static JSON, generated
