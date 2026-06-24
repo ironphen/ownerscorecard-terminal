@@ -184,7 +184,11 @@ export function weakLede(s) {
 // template, so nothing un-reviewed reaches a page. The number is never in here —
 // notes carry prose only; every figure stays arithmetic in the sections below.
 export function pickNote(notesData, ticker) {
-  const n = notesData?.companies?.[String(ticker || "").toUpperCase()];
+  const companies = notesData?.companies || {};
+  let n = companies[String(ticker || "").toUpperCase()];
+  // A share-class sibling (BRK-A beside BRK-B, GOOG beside GOOGL) carries only { alias } and points
+  // at the canonical note on the company's main ticker — same business, so the prose lives once.
+  if (n && n.alias) n = companies[String(n.alias).toUpperCase()];
   return n && n.reviewed === true && (n.whatItIs || n.needle) ? n : null;
 }
 
