@@ -35,10 +35,19 @@ The **false-verdict cluster — Themes A, C and E (16 findings)** is **fixed** (
   the dilution threshold is raised to ~3%; the reference-value growth anchor uses the labeled 5-year
   figure.
 
-**Remaining (not yet addressed): Themes B, F (12 findings)** — lens/classification routing (life
-insurers, mortgage REITs, JP trading houses), NIM on earning assets, the moat-roic tax-rate
-overstatement (Alcoa-type), and the low-severity cleanups. Theme B carries product-judgment calls
-(which lens each kind deserves) and is best done with founder input.
+- **Theme F — ROIC tax, cash-burn, NIM, cleanups** (commits `ff7b894`, `e0e9bd8`): ROIC declines a
+  year when, net of a tagged interest bill, operating income exceeds pretax profit by more than half
+  (Alcoa's 48%→median); "burning" gated on negative operating cash, not free cash flow
+  (ED/APD/AMZN); bank efficiency ratio drops its grade for 20-F/IFRS filers; NIM relabelled "NII /
+  assets" (neutral, proxy note); EBITDA coverage declined when net income dwarfs operating income
+  (VICI); share-count colour dropped; serial-impairment threshold raised to a majority; float note
+  states it excludes unearned premiums. JP near-term-position box deferred (by design — JP uses a
+  separate template and shows the current ratio in the record table).
+
+**Remaining (not yet addressed): Theme B (4 findings)** — lens/classification routing: life
+insurers (Aflac, Principal) getting the P&C combined-ratio lens, mortgage REITs getting the equity-
+REIT FFO scorecard, JP trading houses' meaningless ROIC. These carry product-judgment calls (which
+lens each kind deserves) and are best done with founder input.
 
 ---
 
