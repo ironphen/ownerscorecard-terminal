@@ -11,6 +11,28 @@ The dominant root cause (Theme A) is the same defect in many places: a verdict i
 on data that is missing or implausible, instead of being withheld — the very fiction
 debtReliable() already prevents for debt. Most fixes are one guard applied in N spots.
 
+## Fix status
+
+The **false-verdict cluster — Themes A, C and E (16 findings)** is **fixed** (branch
+`claude/jolly-ride-nae81r`):
+
+- **Theme A — believability guards** (commit `621304a`): cashPosition/leverage gated on
+  debtReliable; bank efficiency ratio and ROE guarded; ROIC routed off banks/insurers; loss
+  ratio banded; buyback price plausibility (impossible counts, outliers, sub-dollar,
+  count-reduction cross-check); dividend "reported zero" vs "not in data"; leverage-creep
+  debtReliable guard; incremental-ROIC small-denominator/magnitude guard.
+- **Theme C — normalization & turnarounds** (commit `3f0bec7`): withhold the normalized figure
+  and the peak/trough read when the through-cycle median is ≤ 0; cyclical label read only
+  against a positive ≥3% median; normalize on latest annual revenue; span/year-count from the
+  owner-earnings series.
+- **Theme E — ADR reverse-DCF FX** (commit `264cb51`): every ADR page warns to enter the
+  home-market price per ordinary share in the reporting currency, not the USD ADR quote.
+
+**Remaining (not yet addressed): Themes B, D, F (20 findings)** — lens/classification routing
+(life insurers, mortgage REITs, JP trading houses), endpoint/window bugs (return-on-retained,
+working-capital drift, conversion windows), NIM on earning assets, and the moat-roic tax-rate
+overstatement (Alcoa-type). These are the next batches.
+
 ---
 
 ## Theme A. Missing believability guards (false verdicts on bad/missing data)
