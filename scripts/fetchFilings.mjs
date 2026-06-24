@@ -261,6 +261,11 @@ const BIZ_ENGAGED = /\b(engaged?|engages?)\s+(primarily\s+)?in\b|\b(principal|pr
 // Neither says what the business is, so reject them — the hero then falls back to the segment mix
 // or the computed phrase rather than printing a stray sentence as the description.
 const BIZ_NOTDESC = /\bcompetitors?\s+(include|are|consist|range|comprise|compete)|^(we|our)\s+(normally|typically|generally|usually|principally|routinely|primarily\s+(purchase|buy|source|sell))\s+(purchase|buy|sell|acquire|obtain|source|procure|market|distribute|manufacture|produce|operate)\b/i;
+// A product or subsidiary sentence the scorer otherwise rewards for carrying "is the": "Apple Vision
+// Pro is the Company's spatial computer based on its visionOS operating system." The subject is a
+// thing the company owns, not the company, so it must never stand in as the description — reject it,
+// and let the real "<Company> designs/operates …" line (or the segment mix) win instead.
+const BIZ_PRODUCTREF = /\bis\s+(?:the\s+)?(?:compan|registrant|firm|group|corporation|business|parent)\w*['’]s\b/i;
 
 // Pull the company's own one-line description from the top of Item 1. Rather than take
 // the first sentence that passes, we collect candidates from the opening and score
@@ -344,7 +349,7 @@ function businessDescription(sents, name, ticker) {
     if (LEAD_VERB.test(s) && name) s = `${name.trim()} ${s}`; // restore a subject split off entirely
     if (/^[a-z]/.test(s)) s = s.charAt(0).toUpperCase() + s.slice(1);
     if (s.length < 34 || s.length > 700) continue;
-    if (BIZ_SKIP.test(s) || BIZ_WEAK.test(s) || BIZ_FRAGMENT.test(s) || BIZ_RESULTS.test(s) || BIZ_NOTDESC.test(s)) continue;
+    if (BIZ_SKIP.test(s) || BIZ_WEAK.test(s) || BIZ_FRAGMENT.test(s) || BIZ_RESULTS.test(s) || BIZ_NOTDESC.test(s) || BIZ_PRODUCTREF.test(s)) continue;
     const isa = BIZ_ISA.test(s);
     if (!BIZ_DOING.test(s) && !isa && !BIZ_ENGAGED.test(s)) continue;
     const head = s.split(/\s+/).slice(0, 6).join(" ");
@@ -354,6 +359,12 @@ function businessDescription(sents, name, ticker) {
     if ((!weSubject && !namedSubject) || !/^[A-Z]/.test(s)) continue;
     let score = 0;
     if (isa) score += 3;                        // the canonical "is a/an/one of <type>" form
+    // The "<Company>/We designs|operates|provides|sells … <products/markets>" form is a real
+    // description even without an "is a <type>" frame (Airbnb's "We operate a global marketplace
+    // connecting guests with stays…", Apple's "The Company designs, manufactures and markets
+    // smartphones…"). Reward it so it clears the earliness penalty instead of being sunk to a
+    // negative score and dropped, which left hundreds of names — Apple among them — with no lede.
+    else if (BIZ_DOING.test(s) && BIZ_RICH.test(s)) score += 2.5;
     if (namedSubject && !weSubject) score += 2; // names the company, not a bare "we"
     if (BIZ_RICH.test(s)) score += 1;           // products, markets, segments
     if (BIZ_STRUCTURAL.test(s)) score -= 3;     // org chart, not a description
