@@ -28,10 +28,17 @@ The **false-verdict cluster — Themes A, C and E (16 findings)** is **fixed** (
 - **Theme E — ADR reverse-DCF FX** (commit `264cb51`): every ADR page warns to enter the
   home-market price per ordinary share in the reporting currency, not the USD ADR quote.
 
-**Remaining (not yet addressed): Themes B, D, F (20 findings)** — lens/classification routing
-(life insurers, mortgage REITs, JP trading houses), endpoint/window bugs (return-on-retained,
-working-capital drift, conversion windows), NIM on earning assets, and the moat-roic tax-rate
-overstatement (Alcoa-type). These are the next batches.
+- **Theme D — endpoint/window bugs** (commit `65ff92f`): return-on-retained averages the first/last
+  three fiscal years (no TTM splice, near-zero-denominator guard); working-capital drift counts only
+  components present in both endpoints; margin-fade flags only when the latest year has not recovered;
+  conversion sums net income and cash over a matched window; the panel span covers the full record;
+  the dilution threshold is raised to ~3%; the reference-value growth anchor uses the labeled 5-year
+  figure.
+
+**Remaining (not yet addressed): Themes B, F (12 findings)** — lens/classification routing (life
+insurers, mortgage REITs, JP trading houses), NIM on earning assets, the moat-roic tax-rate
+overstatement (Alcoa-type), and the low-severity cleanups. Theme B carries product-judgment calls
+(which lens each kind deserves) and is best done with founder input.
 
 ---
 
