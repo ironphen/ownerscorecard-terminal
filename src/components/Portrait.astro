@@ -1,5 +1,5 @@
 ---
-import { fmtMoney, roicValue, operatingMargin, ownerEarningsMargin, topLineRevenue, debtReliable, grossMargin } from "../lib/fundamentals.mjs";
+import { fmtMoney, roicValue, operatingMargin, ownerEarningsMargin, freeCashFlowMargin, topLineRevenue, debtReliable, grossMargin } from "../lib/fundamentals.mjs";
 import { returnOnEquity, returnOnTangibleEquity, efficiencyRatio, equityToAssets, returnOnAssets } from "../lib/financials.mjs";
 import { ffoMargin, ffoPayout, debtToAssets } from "../lib/reits.mjs";
 import { combinedRatio, lossRatio } from "../lib/insurers.mjs";
@@ -108,6 +108,7 @@ const vitals = isBurnStage ? burnVitals : (isReit
       { label: "Operating margin", concept: "operating-margin", value: operatingMargin(cur), avg: avgOf(operatingMargin), dp: 1 },
       { label: "ROIC", concept: "roic", value: debtOk ? roicValue(cur) : null, avg: debtOk ? avgOf(roicValue) : null, dp: 0 },
       { label: "Owner-earnings margin", concept: "owner-earnings", value: ownerEarningsMargin(cur, company), avg: avgOf((l) => ownerEarningsMargin(l, company)), dp: 0 },
+      { label: "Free cash flow margin", concept: "free-cash-flow", value: freeCashFlowMargin(cur), avg: avgOf(freeCashFlowMargin), dp: 0 },
     ]
 ).filter((v) => v.value != null);
 

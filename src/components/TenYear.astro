@@ -1,6 +1,6 @@
 ---
 import { classify, financialKind, financialSubtype } from "../lib/archetype.mjs";
-import { fmtMoney, currencySymbol, roicValue, liquidAssets, topLineRevenue, debtReliable, oiReliable, effectiveTaxRate, ownerEarningsAbs } from "../lib/fundamentals.mjs";
+import { fmtMoney, currencySymbol, roicValue, liquidAssets, topLineRevenue, debtReliable, oiReliable, effectiveTaxRate, ownerEarningsAbs, freeCashFlowAbs } from "../lib/fundamentals.mjs";
 import { returnOnEquity, returnOnTangibleEquity, returnOnAssets, efficiencyRatio, tangibleEquity } from "../lib/financials.mjs";
 import { ffo, ffoPerShare, ffoPayout, debtToAssets } from "../lib/reits.mjs";
 import { combinedRatio, lossRatio } from "../lib/insurers.mjs";
@@ -63,6 +63,10 @@ const ROW = {
   cashFromOps: { label: "Operating cash flow", short: "Op. cash", g: 2, get: (L) => money(L.cashFromOps) },
   ownerEarnings: { label: "Owner earnings", short: "Owner earn.", g: 2, get: (L) => { const oe = ownerEarningsAbs(L, company); return oe == null ? "—" : money(oe); } },
   oeMargin: { label: "Owner earnings margin", short: "OE mgn", g: 2, get: (L) => marginStr(ownerEarningsAbs(L, company), L.revenue) },
+  // Free cash flow sits beside owner earnings: where they diverge the gap is the growth capex owner
+  // earnings excludes, so a build-out cannot hide behind the higher figure.
+  freeCashFlow: { label: "Free cash flow", short: "FCF", g: 2, get: (L) => { const f = freeCashFlowAbs(L); return f == null ? "—" : money(f); } },
+  fcfMargin: { label: "Free cash flow margin", short: "FCF mgn", g: 2, get: (L) => marginStr(freeCashFlowAbs(L), L.revenue) },
   roic: { label: "ROIC", short: "ROIC", g: 2, get: (L) => { if (!debtOk || !oiOk) return "—"; const r = roicValue(L); return r == null ? "—" : `${(r * 100).toFixed(0)}%`; } },
   roe: { label: "Return on equity", short: "ROE", g: 2, get: (L) => { const r = returnOnEquity(L); return r == null || !(L.stockholdersEquity > 0) ? "—" : `${(r * 100).toFixed(0)}%`; } },
   roa: { label: "Return on assets", short: "ROA", g: 2, get: (L) => { const r = returnOnAssets(L); return r == null ? "—" : `${(r * 100).toFixed(1)}%`; } },
@@ -150,7 +154,7 @@ const ROW = {
 // inventory for a software maker, no R&D for a retailer, no goodwill for one that never acquires).
 const FULL = [
   ROW.revenue, ROW.grossMargin, ROW.sga, ROW.rnd, ROW.opIncome, ROW.opMargin, ROW.netIncome, ROW.taxRate, ROW.eps,
-  ROW.cashFromOps, ROW.depreciation, ROW.wcOther, ROW.capex, ROW.ownerEarnings, ROW.oeMargin, ROW.acquisitions, ROW.dividendsPaidAbs, ROW.buybacksAbs, ROW.roic, ROW.roe,
+  ROW.cashFromOps, ROW.depreciation, ROW.wcOther, ROW.capex, ROW.ownerEarnings, ROW.oeMargin, ROW.freeCashFlow, ROW.fcfMargin, ROW.acquisitions, ROW.dividendsPaidAbs, ROW.buybacksAbs, ROW.roic, ROW.roe,
   ROW.cash, ROW.receivables, ROW.inventoryRow, ROW.accountsPayable, ROW.operatingWC, ROW.currentAssets, ROW.currentLiabilities, ROW.currentRatio, ROW.goodwillRow, ROW.totalAssets, ROW.totalDebt, ROW.netDebt, ROW.intCov, ROW.equity, ROW.bvps, ROW.sbcToRev, ROW.dps, ROW.goodwillImp,
 ];
 // Operating companies get the full snapshot above; banks, insurers and REITs each read on their
