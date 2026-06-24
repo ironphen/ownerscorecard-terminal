@@ -187,14 +187,20 @@ export function inversionChecks(company) {
     const impYears = lines.filter((L) => (L.goodwillImpairment || 0) > 0 || (L.assetImpairment || 0) > 0).length;
     const cum = lines.reduce((a, L) => a + (L.goodwillImpairment || 0) + (L.assetImpairment || 0), 0);
     if (impYears >= 1) {
-      const flagged = impYears >= 3;
+      // A genuine "yearly habit" is a majority of the years, not 3 of 10 (which would flag most
+      // impairment-takers and lose the signal). Require at least half the record, and at least
+      // four years, before calling the "one-time" the business; the note's force scales with how
+      // relentless it is.
+      const half = Math.max(4, Math.ceil(H.length / 2));
+      const flagged = impYears >= half;
+      const relentless = impYears >= Math.ceil(H.length * 0.8);
       checks.push({
         key: "writeoffs",
         label: `Are "one-time" charges a yearly habit?`,
         value: `${impYears} of ${H.length} years`,
         flagged,
         note: flagged
-          ? `Management took an impairment or write-down in ${impYears} of the last ${H.length} years, ${$(cum)} in all. A charge that keeps recurring is not one-time; it is past deals coming due, and an admission the assets were worth less than what was paid. Munger's rule: when the "one-time" keeps happening, it is the business. Read it beside the goodwill the company still carries.`
+          ? `Management took an impairment or write-down in ${impYears} of the last ${H.length} years, ${$(cum)} in all. ${relentless ? "A charge taken almost every year is not one-time; it is the business — past deals coming due, and an admission the assets were worth less than what was paid. Munger's rule: when the \"one-time\" keeps happening, it is the business." : "Taken across the majority of the record, the \"one-time\" label is wearing thin — ask whether these are past deals coming due rather than genuinely isolated events."} Read it beside the goodwill the company still carries.`
           : `Impairments hit ${impYears} of the last ${H.length} years (${$(cum)} in all) — a real write-down to read in the record, but not the yearly habit that turns a "one-time" charge into the business.`,
       });
     }
