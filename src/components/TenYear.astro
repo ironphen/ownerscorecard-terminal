@@ -1,6 +1,6 @@
 ---
 import { classify, financialKind, financialSubtype } from "../lib/archetype.mjs";
-import { fmtMoney, currencySymbol, roicValue, liquidAssets, topLineRevenue, debtReliable, oiReliable, effectiveTaxRate, ownerEarningsAbs } from "../lib/fundamentals.mjs";
+import { fmtMoney, currencySymbol, roicValue, liquidAssets, topLineRevenue, debtReliable, oiReliable, effectiveTaxRate, ownerEarningsAbs, freeCashFlowAbs } from "../lib/fundamentals.mjs";
 import { returnOnEquity, returnOnTangibleEquity, returnOnAssets, efficiencyRatio, tangibleEquity } from "../lib/financials.mjs";
 import { ffo, ffoPerShare, ffoPayout, debtToAssets } from "../lib/reits.mjs";
 import { combinedRatio, lossRatio } from "../lib/insurers.mjs";
@@ -17,6 +17,10 @@ const { sector } = classify(company);
 // against little tagged debt) lives in the latest annual, since history and TTM rows
 // often omit the interest tag; an under-capture in either marks the whole record unknown.
 const debtOk = debtReliable(company.lines || {}) && debtReliable(company.ttm?.lines || {});
+// Whether the company carries real debt anywhere in the record. A null debt line is ambiguous —
+// genuinely debt-free, or a year the tag was simply missed — so a null year only reads as net cash when
+// the company is debt-free throughout; if it shows real debt elsewhere, a null year is a gap, not zero.
+const everHadDebt = [...(company.history || []).map((h) => h.lines), company.lines, company.ttm?.lines].some((L) => L && L.totalDebt > 0);
 // Whether the operating line is a meaningful read (false for JP holding/trading companies
 // that earn through equity-method affiliates); the operating-margin and ROIC rows drop out
 // for those, since the record reads on return on equity instead.
@@ -63,6 +67,10 @@ const ROW = {
   cashFromOps: { label: "Operating cash flow", short: "Op. cash", g: 2, get: (L) => money(L.cashFromOps) },
   ownerEarnings: { label: "Owner earnings", short: "Owner earn.", g: 2, get: (L) => { const oe = ownerEarningsAbs(L, company); return oe == null ? "—" : money(oe); } },
   oeMargin: { label: "Owner earnings margin", short: "OE mgn", g: 2, get: (L) => marginStr(ownerEarningsAbs(L, company), L.revenue) },
+  // Free cash flow sits beside owner earnings: where they diverge the gap is the growth capex owner
+  // earnings excludes, so a build-out cannot hide behind the higher figure.
+  freeCashFlow: { label: "Free cash flow", short: "FCF", g: 2, get: (L) => { const f = freeCashFlowAbs(L); return f == null ? "—" : money(f); } },
+  fcfMargin: { label: "Free cash flow margin", short: "FCF mgn", g: 2, get: (L) => marginStr(freeCashFlowAbs(L), L.revenue) },
   roic: { label: "ROIC", short: "ROIC", g: 2, get: (L) => { if (!debtOk || !oiOk) return "—"; const r = roicValue(L); return r == null ? "—" : `${(r * 100).toFixed(0)}%`; } },
   roe: { label: "Return on equity", short: "ROE", g: 2, get: (L) => { const r = returnOnEquity(L); return r == null || !(L.stockholdersEquity > 0) ? "—" : `${(r * 100).toFixed(0)}%`; } },
   roa: { label: "Return on assets", short: "ROA", g: 2, get: (L) => { const r = returnOnAssets(L); return r == null ? "—" : `${(r * 100).toFixed(1)}%`; } },
@@ -88,7 +96,7 @@ const ROW = {
     label: "Net debt / (cash)", short: "Net debt", g: 3, kind: "netdebt",
     get: (L) => {
       if (!debtOk) return "—"; // material interest proves the debt is under-captured for this filer
-      if (L.totalDebt == null && L.cashAndEquivalents == null) return "—";
+      if (L.totalDebt == null && (everHadDebt || L.cashAndEquivalents == null)) return "—"; // a missing debt year is a gap, not net cash
       return money((L.totalDebt || 0) - (liquidAssets(L) || 0));
     },
   },
@@ -97,6 +105,7 @@ const ROW = {
     label: "Net debt / EBITDA", short: "ND/EBITDA", g: 3, kind: "leverage",
     get: (L) => {
       if (!debtOk) return "—";
+      if (L.totalDebt == null && everHadDebt) return "—"; // a missing debt year is a gap, not zero
       const ebitda = L.operatingIncome != null && L.depreciation != null ? L.operatingIncome + L.depreciation : null;
       if (!ebitda || ebitda <= 0) return "—";
       const nd = (L.totalDebt || 0) - (liquidAssets(L) || 0);
@@ -150,7 +159,7 @@ const ROW = {
 // inventory for a software maker, no R&D for a retailer, no goodwill for one that never acquires).
 const FULL = [
   ROW.revenue, ROW.grossMargin, ROW.sga, ROW.rnd, ROW.opIncome, ROW.opMargin, ROW.netIncome, ROW.taxRate, ROW.eps,
-  ROW.cashFromOps, ROW.depreciation, ROW.wcOther, ROW.capex, ROW.ownerEarnings, ROW.oeMargin, ROW.acquisitions, ROW.dividendsPaidAbs, ROW.buybacksAbs, ROW.roic, ROW.roe,
+  ROW.cashFromOps, ROW.depreciation, ROW.wcOther, ROW.capex, ROW.ownerEarnings, ROW.oeMargin, ROW.freeCashFlow, ROW.fcfMargin, ROW.acquisitions, ROW.dividendsPaidAbs, ROW.buybacksAbs, ROW.roic, ROW.roe,
   ROW.cash, ROW.receivables, ROW.inventoryRow, ROW.accountsPayable, ROW.operatingWC, ROW.currentAssets, ROW.currentLiabilities, ROW.currentRatio, ROW.goodwillRow, ROW.totalAssets, ROW.totalDebt, ROW.netDebt, ROW.intCov, ROW.equity, ROW.bvps, ROW.sbcToRev, ROW.dps, ROW.goodwillImp,
 ];
 // Operating companies get the full snapshot above; banks, insurers and REITs each read on their

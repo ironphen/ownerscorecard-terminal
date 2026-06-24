@@ -376,9 +376,27 @@ export function maintenanceCapex(c) {
 export function maintenanceCapexFor(L, company) {
   const capex = L?.capex != null ? Math.abs(L.capex) : null;
   if (capex == null) return null;
-  const dep = L.depreciation;
+  let dep = L.depreciation;
+  // Depreciation is missing for some early filing years (a tag gap) on ~4% of names. Without it the
+  // maintenance-capex estimate flips to full capex, so owner earnings jumps the year the data appears
+  // (Google's series climbing 17%→36% across the 2021 boundary). Backfill the missing year from the
+  // company's own typical depreciation-to-revenue ratio so the estimate stays continuous; the reported
+  // depreciation figures shown elsewhere are untouched.
+  if ((dep == null || dep <= 0) && L.revenue) {
+    const t = typicalDepToRev(company);
+    if (t != null) dep = t * L.revenue;
+  }
   if (dep == null || dep <= 0 || capex <= dep * 1.25) return capex;
   return revenueGrowing(company) ? dep : capex;
+}
+// The company's normal depreciation as a share of revenue, from the years that report it — used to
+// backfill a year whose depreciation tag is missing so the maintenance-capex split stays consistent.
+function typicalDepToRev(company) {
+  const H = (company?.history || []).map((h) => h?.lines).concat(company?.lines ? [company.lines] : []);
+  const r = H.filter((l) => l && l.depreciation > 0 && l.revenue > 0).map((l) => l.depreciation / l.revenue);
+  if (!r.length) return null;
+  const s = [...r].sort((a, b) => a - b);
+  return s[Math.floor((s.length - 1) / 2)];
 }
 // Owner earnings, the cash figure (not a margin): operating cash less the maintenance capex Buffett
 // subtracts. The single definition the whole site reads, so the bridge and the tables never disagree.
@@ -386,6 +404,16 @@ export function ownerEarningsAbs(L, company) {
   if (!L || L.cashFromOps == null || L.capex == null) return null;
   const maint = maintenanceCapexFor(L, company);
   return maint == null ? null : L.cashFromOps - maint;
+}
+// Free cash flow: operating cash after ALL capital spending, maintenance and growth alike. The
+// conservative companion to owner earnings — where the two part ways the gap is the growth investment,
+// so showing both keeps a capex build-out from hiding behind the owner-earnings figure.
+export function freeCashFlowAbs(L) {
+  return L && L.cashFromOps != null && L.capex != null ? L.cashFromOps - Math.abs(L.capex) : null;
+}
+export function freeCashFlowMargin(L) {
+  const f = freeCashFlowAbs(L);
+  return f != null && L && L.revenue ? f / L.revenue : null;
 }
 // Did the business actually grow across the record? First few years of revenue vs the last few, so a
 // one-year blip doesn't read as growth and a steady decliner isn't credited with growth capex.
@@ -564,7 +592,14 @@ export function roicValue(L) {
   if (pretax != null && ie != null && ie > 0 && oi > 0 && oi - Math.abs(ie) > pretax * 1.5) return null;
   let t = 0.21;
   if (tax != null && ni != null && ni + tax > 0) t = Math.min(Math.max(tax / (ni + tax), 0), 0.5);
-  return (oi * (1 - t)) / invested;
+  const r = (oi * (1 - t)) / invested;
+  // When invested capital is a thin sliver — a distributor running on negative working capital, or a
+  // company whose buybacks have driven equity near zero — the denominator is unstable and the ratio
+  // explodes into a figure no owner could underwrite (McKesson printing ~230%, not a real return on
+  // capital). Decline it; the asset-light story still shows in the margins. A genuinely high-return
+  // franchise (Apple, Mastercard) tops out well under this, on a base that is a real fraction of sales.
+  if (r > 1.0 && (!L.revenue || invested < 0.06 * L.revenue)) return null;
+  return r;
 }
 
 export function operatingMargin(L) {

@@ -4,6 +4,7 @@
 // grades. Withheld for banks/insurers/REITs, whose balance sheets carry no current/non-current split
 // and for whom a "current ratio" is meaningless.
 import { cashConversionCycle } from "./fundamentals.mjs";
+import { classify } from "./archetype.mjs";
 
 const num = (v) => (typeof v === "number" && isFinite(v) ? v : null);
 const sum = (...xs) => { let s = 0, any = false; for (const x of xs) if (num(x) != null) { s += x; any = true; } return any ? s : null; };
@@ -83,8 +84,15 @@ export function currentPosition(company) {
   const ccc = cashConversionCycle(company);
   const opLiab = (num(b.accountsPayable) ?? 0) + (num(b.deferredRevenueCurrent) ?? 0);
   const debtDueShare = cl > 0 && debtDue != null ? debtDue / cl : null;
+  // "Structural strength" only when the sub-1 ratio is genuinely customer-funded float — not when it is
+  // driven by debt maturities (a refinancing question, not float: a regulated utility, a tower REIT, a
+  // debt-financed buildout all show a "negative cycle" the float story misreads) or when the business is
+  // itself distressed or unprofitable (negative working capital is then a strain, not the Costco/Amazon
+  // advantage). Guards both the cycle and the operating path.
+  const overlays = new Set((classify(company).overlays || []).map((o) => o.key));
+  const floatEligible = (debtDueShare == null || debtDueShare < 0.25) && !overlays.has("distress") && !overlays.has("unprofitable");
   let floatKind = null;
-  if (currentRatio != null && currentRatio < 1) {
+  if (currentRatio != null && currentRatio < 1 && floatEligible) {
     if (ccc && /Negative/.test(ccc.label || "")) floatKind = "cycle";
     else if (debtDueShare != null && debtDueShare < 0.2 && opLiab >= 0.45 * cl) floatKind = "operating";
   }

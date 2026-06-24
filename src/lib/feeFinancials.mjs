@@ -10,7 +10,7 @@ import { fmtMoney, operatingMargin } from "./fundamentals.mjs";
 import { returnOnEquity } from "./financials.mjs";
 
 const pc = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${(Math.abs(v) * 100).toFixed(dp)}%`);
-const median = (xs) => { const s = [...xs].sort((a, b) => a - b); return s.length ? s[Math.floor((s.length - 1) / 2)] : null; };
+const median = (xs) => { if (!xs.length) return null; const s = [...xs].sort((a, b) => a - b); const m = Math.floor(s.length / 2); return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
 
 export function netMargin(L) {
   return L && L.netIncome != null && L.revenue ? L.netIncome / L.revenue : null;

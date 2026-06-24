@@ -142,9 +142,13 @@ export function financialProfile(company) {
     // Equity REITs (real depreciable property) keep the FFO scorecard. SIC 6795 (mineral-royalty
     // trusts) is not a property REIT either, so it gets no REIT scorecard.
     if (sic === 6795) return { kind: null, subtype: null };
-    const mreitNII = L.netInterestIncome != null && L.netInterestIncome > 0;
-    const tinyDep = L.depreciation != null && L.totalAssets ? Math.abs(L.depreciation) / L.totalAssets < 0.015 : false;
-    if (mreitNII && tinyDep) return { kind: "bank", subtype: "mortgage-reit" };
+    // Detect it by the net-interest signature plus negligible depreciation — whatever the SIGN of net
+    // interest in a given year (a mortgage REIT can run a negative spread when rates invert), and
+    // including a null depreciation line, which is the most loan-pool-like of all. An equity REIT
+    // carries real building depreciation, so it never trips the negligible-depreciation test.
+    const hasNII = L.netInterestIncome != null;
+    const negligibleDep = L.depreciation == null || (L.totalAssets ? Math.abs(L.depreciation) / L.totalAssets < 0.015 : false);
+    if (hasNII && negligibleDep) return { kind: "bank", subtype: "mortgage-reit" };
     // A real-estate SERVICES firm — brokerage, property and facilities management (CBRE, JLL) — sits
     // in the same SIC range but earns fees, not rent: it turns its asset base over many times a year,
     // so revenue is a large fraction of assets. A rent-collecting REIT turns its property slowly —
@@ -163,6 +167,13 @@ export function financialProfile(company) {
     // ratio reads as a permanent underwriting loss and teaches the wrong thing. The managed-care
     // carve-out (6324) is already handled above; fire/marine/casualty (6331+) stays P&C.
     if (sic >= 6310 && sic <= 6321) return { kind: "insurer", subtype: "life-insurer" };
+    // A diversified holding company that happens to own insurers (Berkshire) carries a P&C SIC but
+    // books insurance as a small minority of a far larger, mixed revenue base — railroads, energy,
+    // manufacturing, retail. A combined ratio then describes a sliver of the company and reads mostly
+    // blank: the wrong lens. When premiums are a small fraction of revenue, read it as the diversified
+    // capital allocator it is, off the insurer scorecard. (A real P&C insurer's premiums are most of
+    // its revenue, so this catches only the conglomerate, not a lightly-levered underwriter.)
+    if (L.premiumsEarned != null && L.revenue && L.premiumsEarned / L.revenue < 0.25) return { kind: null, subtype: null };
     return { kind: "insurer", subtype: "insurer" };
   }
   if (sic >= 6000 && sic <= 6299) {
@@ -216,7 +227,10 @@ function sectorFromSIC(sic) {
   if (c >= 2840 && c <= 2844) return "consumer";         // soap, cosmetics, personal care
   if (c >= 3000 && c <= 3199) return "consumer";         // footwear, leather, rubber goods
   if (c >= 3940 && c <= 3949) return "consumer";         // toys & games
-  // Retail
+  // Retail — but eating & drinking places (5810–5819) are a brand and an operation, not a
+  // thin-margin inventory retailer; the inventory-turns lens misreads a restaurant, so route
+  // them to the consumer-brand read (operating margin, gross margin, owner earnings).
+  if (c >= 5810 && c <= 5819) return "consumer";
   if (c >= 5200 && c <= 5999) return "retail";
   // Capital-intensive: extraction, heavy manufacturing, transport, utilities
   if (c >= 1000 && c <= 1799) return "capital";          // mining, oil & gas, construction
@@ -247,7 +261,14 @@ function sectorFromShape(s) {
   const loInv = s.invToRev == null || s.invToRev < 0.05;
   const someInv = s.invToRev != null && s.invToRev >= 0.1;
   const hiCapex = s.capexToRev != null && s.capexToRev >= 0.08;
+  // Owned-or-leased plant that is a large share of the balance sheet marks a capital-intensive
+  // operator however fat the margin or however little inventory it holds — a theater chain or a
+  // hospital that leases its buildings reads heavy here, where the margin-and-inventory test alone
+  // had read it light. Balance-sheet share (not the revenue multiple) is the signal, so a thin-revenue
+  // company cannot trip it on a near-zero denominator.
+  const heavyPlant = s.ppeToAssets != null && s.ppeToAssets >= 0.35;
   if (hiCapex) return "capital";              // heavy fixed assets
+  if (heavyPlant) return "capital";           // owned or leased plant dominates the balance sheet
   if (loInv && hiGM) return "assetLight";     // IP-led, inventory-light, fat margins
   if (hiGM) return "consumer";                // fat margins on modest capex → a brand
   if (someInv) return "capital";              // makes physical goods at scale on thin margins
@@ -392,6 +413,15 @@ function shapeOf(company) {
     capexToRev: ratio(L.capex != null ? Math.abs(L.capex) : null, rev),
     sbcToRev: ratio(L.stockBasedComp, rev),
     capex: L.capex != null ? Math.abs(L.capex) : null,
+    // Owned plant (net PP&E) plus the leased plant a business runs on (the operating-lease
+    // right-of-use asset). Intensity against sales and against the balance sheet is the evidence
+    // that separates a capital-intensive operator from an asset-light one when margins and inventory
+    // alone mislead. A null line reads as zero, so a company missing the data simply reads light.
+    ppeToRev: ratio((L.netPPE || 0) + (L.operatingLeaseAsset || 0), rev),
+    // PP&E plus the lease asset are components of total assets, so the ratio cannot exceed ~1; a value
+    // well above it is a mis-scaled or stale data point (GIBO at 130×), not a real reading — decline it
+    // rather than let it force a classification.
+    ppeToAssets: (() => { const a = L.totalAssets ? ((L.netPPE || 0) + (L.operatingLeaseAsset || 0)) / L.totalAssets : null; return a != null && a <= 1.5 ? a : null; })(),
   };
 }
 
@@ -428,6 +458,13 @@ export function classify(company) {
   // asset-light too.
   const sicN = Number(company?.sic) || 0;
   if (key === "assetLight" && sicN >= 3670 && sicN <= 3679 && s.capexToRev != null && s.capexToRev >= 0.12) { key = "capital"; bySic = false; }
+  // A "cloud" or "AI-infrastructure" operator carries a software SIC but owns or leases the data
+  // centers and servers it rents out, so its plant both dwarfs its revenue AND is the bulk of its
+  // balance sheet — CoreWeave, Applied Digital. Read it as the capital-intensive operator it is. The
+  // dual test holds out a true software business pouring a temporary buildout into AI capacity (Oracle,
+  // Microsoft, Google), whose plant stays a minority of a far larger asset base, and a cash-rich
+  // pre-revenue name (Aurora, IonQ) whose plant is tiny against its war chest.
+  if (key === "assetLight" && sicN >= 7370 && sicN <= 7379 && s.ppeToRev != null && s.ppeToRev >= 1 && s.ppeToAssets != null && s.ppeToAssets >= 0.6) { key = "capital"; bySic = false; }
   // A catch-all finance SIC that the financial-profile tiebreak rejected (a crypto miner or fintech
   // with no lending balance sheet) is not actually a financial; reading it as one would label it a
   // "lender's balance sheet" while showing the industrial scorecard. Recompute its model from shape.

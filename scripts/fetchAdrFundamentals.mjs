@@ -93,6 +93,11 @@ const CONCEPTS = {
   shortTermInvestments: ["CurrentInvestments", "OtherCurrentFinancialAssets", "ShortTermInvestments", "MarketableSecuritiesCurrent"],
   receivables: ["TradeAndOtherCurrentReceivables", "CurrentTradeReceivables", "TradeReceivables", "AccountsReceivableNetCurrent", "ReceivablesNetCurrent"],
   inventory: ["Inventories", "InventoryNet"],
+  // Asset-heaviness: net PP&E and the lease right-of-use asset (IFRS often folds ROU into PP&E; some
+  // report it separately as RightofuseAssets). Separates a capital-intensive operator from an
+  // asset-light platform when SIC and margins mislead.
+  netPPE: ["PropertyPlantAndEquipment", "PropertyPlantAndEquipmentNet"],
+  operatingLeaseAsset: ["RightofuseAssets", "OperatingLeaseRightOfUseAsset"],
   accountsPayable: ["TradeAndOtherCurrentPayables", "CurrentTradePayables", "TradePayables", "AccountsPayableCurrent"],
   equity: ["EquityAttributableToOwnersOfParent", "Equity", "StockholdersEquity"],
   goodwill: ["Goodwill"],
@@ -364,7 +369,7 @@ async function main() {
     }
 
     const ha = Object.fromEntries(Object.keys(CONCEPTS).map((k) => [k, collectAnnual(facts, CONCEPTS[k], ccy)]));
-    const hi = Object.fromEntries(["totalAssets", "currentAssets", "currentLiabilities", "totalLiabilities", "cashAndEquivalents", "shortTermInvestments", "receivables", "inventory", "accountsPayable", "equity", "goodwill", "intangibleAssets", "longTermDebt", "currentDebt", "deposits", "lossReserves"].map((k) => [k, collectInstant(facts, CONCEPTS[k], ccy)]));
+    const hi = Object.fromEntries(["totalAssets", "currentAssets", "currentLiabilities", "totalLiabilities", "cashAndEquivalents", "shortTermInvestments", "receivables", "inventory", "netPPE", "operatingLeaseAsset", "accountsPayable", "equity", "goodwill", "intangibleAssets", "longTermDebt", "currentDebt", "deposits", "lossReserves"].map((k) => [k, collectInstant(facts, CONCEPTS[k], ccy)]));
     const shAnnual = collectAnnual(facts, CONCEPTS.sharesDiluted, "shares");
     const shInstant = collectInstant(facts, CONCEPTS.sharesOutstanding, "shares");
 
@@ -391,6 +396,8 @@ async function main() {
         shortTermInvestments: hi.shortTermInvestments[fy] ?? null,
         receivables: hi.receivables[fy] ?? null,
         inventory: hi.inventory[fy] ?? null,
+        netPPE: hi.netPPE[fy] ?? null,
+        operatingLeaseAsset: hi.operatingLeaseAsset[fy] ?? null,
         accountsPayable: hi.accountsPayable[fy] ?? null,
         currentAssets: hi.currentAssets[fy] ?? null,
         currentLiabilities: hi.currentLiabilities[fy] ?? null,
@@ -425,6 +432,7 @@ async function main() {
         currentAssets: inst(CONCEPTS.currentAssets), currentLiabilities: inst(CONCEPTS.currentLiabilities), currentDebt: inst(CONCEPTS.currentDebt),
         stockholdersEquity: inst(CONCEPTS.equity), cashAndEquivalents: inst(CONCEPTS.cashAndEquivalents), shortTermInvestments: inst(CONCEPTS.shortTermInvestments),
         receivables: inst(CONCEPTS.receivables), inventory: inst(CONCEPTS.inventory), accountsPayable: inst(CONCEPTS.accountsPayable),
+        netPPE: inst(CONCEPTS.netPPE), operatingLeaseAsset: inst(CONCEPTS.operatingLeaseAsset),
         totalAssets: inst(CONCEPTS.totalAssets), goodwill: inst(CONCEPTS.goodwill), intangibleAssets: inst(CONCEPTS.intangibleAssets),
         netInterestIncome: netInterest(tf(CONCEPTS.netInterestIncome), tf(CONCEPTS.interestIncomeGross), tf(CONCEPTS.bankInterestExpense)), noninterestIncome: tf(CONCEPTS.noninterestIncome), noninterestExpense: tf(CONCEPTS.noninterestExpense),
         provisionForCreditLosses: tf(CONCEPTS.provisionForCreditLosses), deposits: inst(CONCEPTS.deposits),
