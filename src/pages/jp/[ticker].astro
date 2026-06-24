@@ -9,6 +9,8 @@ import Capital from "../../components/Capital.astro";
 import Inversion from "../../components/Inversion.astro";
 import Valuation from "../../components/Valuation.astro";
 import ActHeader from "../../components/ActHeader.astro";
+import notes from "../../data/notes.json";
+import { pickNote } from "../../lib/business.mjs";
 
 // The Japanese pool, a separate route and a separate dataset from the US catalog. These
 // pages are quantitative by design: the figures are read straight from each company's
@@ -25,6 +27,12 @@ export function getStaticPaths() {
 const ticker = String(Astro.params.ticker || "");
 const fund = (jp.companies || []).find((c) => String(c.ticker) === ticker) || null;
 const name = fund?.name || "";
+// A reviewed, hand-written business note (docs/qualitative-doctrine.md) is the one
+// narrative these otherwise quantitative pages carry: the Japanese-language filing is
+// not machine-read, so for the names a human has written up we surface the reviewed
+// note instead, grounded in the filing and the company's established facts. Absent a
+// note, the page stays quantitative-only and says so.
+const note = fund ? pickNote(notes, ticker) : null;
 
 const SECTOR_LABEL = {
   assetLight: "Asset-light compounder",
@@ -53,14 +61,43 @@ const sectorLabel = fund ? SECTOR_LABEL[fund.sector] || "Diversified" : null;
       </header>
 
       <section class="band note">
-        <p>
-          This is a <b>quantitative</b> scorecard. The numbers below are read directly from
-          {name}&rsquo;s EDINET filing, in yen. The Japanese-language narrative, what the
-          business does, its risks, what changed this year, is not machine-read here, so we
-          do not paraphrase it. For the words, go to the filing itself; for the numbers, read on.
-          <a href={fund.sourceUrl} target="_blank" rel="noopener"> Find it on EDINET (code {ticker}) →</a>
-        </p>
+        {note ? (
+          <p>
+            The numbers below are read directly from {name}&rsquo;s EDINET filing, in yen. The
+            Japanese-language narrative is not machine-read; the short business note that follows
+            is <b>written and reviewed by hand</b>, grounded in the filing and the company&rsquo;s
+            established facts, not machine-paraphrased. Every figure is arithmetic on the filing.
+            <a href={fund.sourceUrl} target="_blank" rel="noopener"> Find it on EDINET (code {ticker}) →</a>
+          </p>
+        ) : (
+          <p>
+            This is a <b>quantitative</b> scorecard. The numbers below are read directly from
+            {name}&rsquo;s EDINET filing, in yen. The Japanese-language narrative, what the
+            business does, its risks, what changed this year, is not machine-read here, so we
+            do not paraphrase it. For the words, go to the filing itself; for the numbers, read on.
+            <a href={fund.sourceUrl} target="_blank" rel="noopener"> Find it on EDINET (code {ticker}) →</a>
+          </p>
+        )}
       </section>
+
+      {note ? (
+        <section class="brief">
+          <h3 class="secTitle">The business in brief</h3>
+          <dl class="reads">
+            {note.whatItIs ? (
+              <div class="r"><dt>What it is</dt><dd>{note.whatItIs}</dd></div>
+            ) : null}
+            {note.needle ? (
+              <div class="r"><dt>What moves the needle</dt><dd>{note.needle}</dd></div>
+            ) : null}
+          </dl>
+          <p class="briefFoot">
+            Written and reviewed by hand, grounded in the filing and the company&rsquo;s established
+            facts; whether it is a good business is the arithmetic below, not a word of this. The
+            judgment is yours.
+          </p>
+        </section>
+      ) : null}
 
       <section class="actGroup">
         <ActHeader n="I" title="The record" lede="What the business has done across the cycle, read straight from the EDINET filing: the multi-year record and, where the history allows, what it earns at mid-cycle." />
@@ -105,6 +142,17 @@ const sectorLabel = fund ? SECTOR_LABEL[fund.sector] || "Diversified" : null;
     .note p { font-size: 14px; line-height: 1.6; color: var(--ink-soft); margin: 0; max-width: 76ch; }
     .note b { color: var(--ink); }
     .note a { color: var(--accent); white-space: nowrap; }
+
+    /* The reviewed business note: the one narrative a JP page carries, styled to match
+       the US "business in brief". */
+    .brief { margin: 22px 0 0; }
+    .brief .secTitle { font-family: var(--sans); font-size: 13px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink); border-bottom: 1px solid var(--rule-strong); padding-bottom: 6px; margin: 0; }
+    .brief .reads { margin: 12px 0 0; }
+    .brief .r { display: grid; grid-template-columns: 190px 1fr; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--rule); }
+    .brief .r dt { font-family: var(--sans); font-weight: 700; font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+    .brief .r dd { margin: 0; font-size: 14.5px; line-height: 1.55; color: var(--ink-soft); max-width: 72ch; }
+    .briefFoot { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--rule-strong); margin-top: 14px; padding-top: 10px; max-width: 72ch; }
+    @media (max-width: 560px) { .brief .r { grid-template-columns: 1fr; gap: 4px; } }
 
     .sec { scroll-margin-top: 16px; }
     .foot { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); margin: 20px 0 0; line-height: 1.5; max-width: 76ch; border-top: 1px solid var(--rule); padding-top: 12px; }

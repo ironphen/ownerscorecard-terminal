@@ -4,7 +4,7 @@
 // already pulls, returning the actual numbers and whether the fingerprint is present. None
 // is a verdict: a flag is a question to put to the filing, a clear test is one fewer way to
 // be wrong. Present, never pronounce.
-import { ownerEarningsMargin, ownerEarningsAbs, operatingMargin, fmtMoney, currencySymbol } from "./fundamentals.mjs";
+import { ownerEarningsMargin, ownerEarningsAbs, operatingMargin, fmtMoney, currencySymbol, debtReliable } from "./fundamentals.mjs";
 import { capitalHistory } from "./capital.mjs";
 
 const avg = (xs) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null);
@@ -38,14 +38,23 @@ export function inversionChecks(company) {
     if (series.length >= 4) {
       const early = avg(firstN(series, 3));
       const recent = avg(lastN(series, 3));
-      const flagged = early > 0 && recent < early * 0.9;
+      const latest = lastN(series, 1)[0] ?? null;
+      // A deep cyclical's last-three-year window is dragged below the early window by a single
+      // trough year even when the latest year has fully recovered. So flag a fade only when the
+      // recent average AND the most recent single year are both below the early baseline; a
+      // recovered latest year is a cycle, not a slide. And the note asks rather than pronounces.
+      const recovered = latest != null && early > 0 && latest >= early * 0.9;
+      const faded = early > 0 && recent < early * 0.9;
+      const flagged = faded && !recovered;
       checks.push({
         key: "margin",
         label: "Is it less profitable than it was?",
         value: `${pct(recent, 1)} vs ${pct(early, 1)}`,
         flagged,
         note: flagged
-          ? `The ${useOpm ? "operating" : "owner-earnings"} margin averaged ${pct(early, 1)} early in the record and ${pct(recent, 1)} across the last three years. That is a structural drift, not one soft year. Ask the filing what is compressing it, price, mix, cost, or a competitor, and whether it is cyclical or permanent.`
+          ? `The ${useOpm ? "operating" : "owner-earnings"} margin averaged ${pct(early, 1)} early in the record and ${pct(recent, 1)} across the last three years, and the latest year has not recovered. Ask the filing whether that is a structural drift or a cyclical trough — price, mix, cost, or a competitor — and whether it is permanent.`
+          : faded && recovered
+          ? `The ${useOpm ? "operating" : "owner-earnings"} margin averaged ${pct(early, 1)} early and ${pct(recent, 1)} across the last three years, but the latest year is back near that early level (${pct(latest, 1)}): a cyclical trough pulling the three-year average down, not a one-way slide. Read it across the cycle, not on the three-year window.`
           : `The ${useOpm ? "operating" : "owner-earnings"} margin held across the record (about ${pct(early, 1)} early, ${pct(recent, 1)} lately), so profitability has not quietly eroded underneath the headline.`,
       });
     }
@@ -54,7 +63,10 @@ export function inversionChecks(company) {
   // 2. Dilution: did the diluted share count rise over the span, the more so if the company
   // was buying back stock at the same time (the buyback treadmill that masks issuance).
   if (cap && cap.shareChange != null) {
-    const flagged = cap.shareChange > 0.01;
+    // Material net dilution only: a sub-2%-over-a-decade rise is usually an endpoint artifact
+    // (a spin-off, a share-count restatement), not the "treadmill" the flagged note describes,
+    // so the threshold sits at ~3% cumulative rather than 1%.
+    const flagged = cap.shareChange > 0.03;
     const boughtBack = cap.bb > 0;
     checks.push({
       key: "dilution",
@@ -73,7 +85,10 @@ export function inversionChecks(company) {
     const oeEarly = avg(firstN(oeAbs, 3));
     const oeRecent = avg(lastN(oeAbs, 3));
     const d0 = startL.totalDebt, d1 = endL.totalDebt;
-    if (d0 != null && d1 != null && d0 >= 0 && d1 >= 0 && oeEarly != null && oeRecent != null) {
+    // Only when the debt is reliably captured at both ends. If interest proves it grossly
+    // under-tagged, a "debt did not outrun the business" clear would be a false reassurance —
+    // the exact fiction debtReliable() exists to prevent — so withhold the check entirely.
+    if (d0 != null && d1 != null && d0 >= 0 && d1 >= 0 && oeEarly != null && oeRecent != null && debtReliable(startL) && debtReliable(endL)) {
       const debtUp = d1 > d0 * 1.25 && d1 > 0;
       const earnFlat = oeRecent < oeEarly * 1.1;
       const flagged = debtUp && earnFlat;
@@ -100,8 +115,8 @@ export function inversionChecks(company) {
       value: `${pct(r, 0)} on each ${currencyUnit(ccy)}`,
       flagged,
       note: flagged
-        ? `Over ${cap.span} the company retained ${$(cap.retainedEarnings)} of earnings rather than paying it out, and annual owner earnings changed by ${$(cap.incrementalOE)}: about ${pct(r, 0)} on each retained ${currencyUnit(ccy)}. Below the return the cash could have earned elsewhere, the owners would have been better served by a dividend. Buffett's test for whether earnings were worth keeping.`
-        : `The earnings it kept compounded: ${$(cap.retainedEarnings)} retained over ${cap.span} turned into about ${$(cap.incrementalOE)} of added annual owner earnings, roughly ${pct(r, 0)} on each ${currencyUnit(ccy)}, so reinvestment cleared a reasonable bar.`,
+        ? `Over ${cap.span} the company retained ${$(cap.retainedEarnings)} of earnings rather than paying it out, and annual owner earnings (first three years vs last three) changed by ${$(cap.incrementalOE)}: about ${pct(r, 0)} on each retained ${currencyUnit(ccy)}. That is below what the cash might have earned elsewhere, so ask whether the retained earnings are compounding, or whether owners would be better served by a dividend — and whether a build-out or a cyclical trough is holding the return down. Buffett's test for whether earnings were worth keeping.`
+        : `The earnings it kept compounded: ${$(cap.retainedEarnings)} retained over ${cap.span} turned into about ${$(cap.incrementalOE)} of added annual owner earnings (first three years vs last three), roughly ${pct(r, 0)} on each ${currencyUnit(ccy)}, so reinvestment cleared a reasonable bar.`,
     });
   }
 
@@ -111,11 +126,14 @@ export function inversionChecks(company) {
   // quality from the reinvestment question, so a heavy grower's growth capex doesn't read as
   // a red flag here.
   {
-    const niVals = lines.map((L) => L.netIncome).filter((v) => v != null);
-    const cfoVals = lines.map((L) => L.cashFromOps).filter((v) => v != null);
-    const niSum = lines.reduce((a, L) => a + (L.netIncome != null ? L.netIncome : 0), 0);
-    const cfoSum = lines.reduce((a, L) => a + (L.cashFromOps != null ? L.cashFromOps : 0), 0);
-    if (niVals.length >= 4 && cfoVals.length >= 4 && niSum > 0) {
+    // Both sums over the SAME matched window — only years where net income and operating cash are
+    // both present. Summing each over its own independent set of years would divide a sum over one
+    // period by a sum over a different one, and the accrual cancellation the check relies on would
+    // no longer hold (a company with more profit years than cash years reads falsely well).
+    const matched = lines.filter((L) => L.netIncome != null && L.cashFromOps != null);
+    const niSum = matched.reduce((a, L) => a + L.netIncome, 0);
+    const cfoSum = matched.reduce((a, L) => a + L.cashFromOps, 0);
+    if (matched.length >= 4 && niSum > 0) {
       const ratio = cfoSum / niSum;
       const flagged = ratio < 0.85;
       checks.push({
@@ -134,8 +152,15 @@ export function inversionChecks(company) {
   // faster is the fingerprint of customers paying slower, inventory piling up, or sales
   // pulled forward, each a way growth can quietly eat cash or flatter the top line.
   {
-    const wc = (L) => (L.receivables == null && L.inventory == null ? null : (L.receivables || 0) + (L.inventory || 0));
-    const w0 = wc(startL), w1 = wc(endL);
+    // Only count a component (receivables, inventory) present in BOTH endpoints. When one is
+    // untagged in the start year but tagged later, treating the missing year as zero manufactures
+    // apparent working-capital growth out of a data gap, then narrates it as customers paying
+    // slower or stock building up. Same components both ends, or withhold the check.
+    const bothRecv = startL.receivables != null && endL.receivables != null;
+    const bothInv = startL.inventory != null && endL.inventory != null;
+    const wc = (L) => (bothRecv ? L.receivables : 0) + (bothInv ? L.inventory : 0);
+    const w0 = bothRecv || bothInv ? wc(startL) : null;
+    const w1 = bothRecv || bothInv ? wc(endL) : null;
     const r0 = startL.revenue, r1 = endL.revenue;
     if (w0 != null && w1 != null && w0 > 0 && r0 && r1 && r0 > 0 && r1 > 0) {
       const wcGrow = w1 / w0, revGrow = r1 / r0;
@@ -162,14 +187,20 @@ export function inversionChecks(company) {
     const impYears = lines.filter((L) => (L.goodwillImpairment || 0) > 0 || (L.assetImpairment || 0) > 0).length;
     const cum = lines.reduce((a, L) => a + (L.goodwillImpairment || 0) + (L.assetImpairment || 0), 0);
     if (impYears >= 1) {
-      const flagged = impYears >= 3;
+      // A genuine "yearly habit" is a majority of the years, not 3 of 10 (which would flag most
+      // impairment-takers and lose the signal). Require at least half the record, and at least
+      // four years, before calling the "one-time" the business; the note's force scales with how
+      // relentless it is.
+      const half = Math.max(4, Math.ceil(H.length / 2));
+      const flagged = impYears >= half;
+      const relentless = impYears >= Math.ceil(H.length * 0.8);
       checks.push({
         key: "writeoffs",
         label: `Are "one-time" charges a yearly habit?`,
         value: `${impYears} of ${H.length} years`,
         flagged,
         note: flagged
-          ? `Management took an impairment or write-down in ${impYears} of the last ${H.length} years, ${$(cum)} in all. A charge that keeps recurring is not one-time; it is past deals coming due, and an admission the assets were worth less than what was paid. Munger's rule: when the "one-time" keeps happening, it is the business. Read it beside the goodwill the company still carries.`
+          ? `Management took an impairment or write-down in ${impYears} of the last ${H.length} years, ${$(cum)} in all. ${relentless ? "A charge taken almost every year is not one-time; it is the business — past deals coming due, and an admission the assets were worth less than what was paid. Munger's rule: when the \"one-time\" keeps happening, it is the business." : "Taken across the majority of the record, the \"one-time\" label is wearing thin — ask whether these are past deals coming due rather than genuinely isolated events."} Read it beside the goodwill the company still carries.`
           : `Impairments hit ${impYears} of the last ${H.length} years (${$(cum)} in all) — a real write-down to read in the record, but not the yearly habit that turns a "one-time" charge into the business.`,
       });
     }
@@ -181,7 +212,12 @@ export function inversionChecks(company) {
   // as the record of what was checked and came back clean.
   checks.sort((a, b) => (a.flagged === b.flagged ? 0 : a.flagged ? -1 : 1));
   return {
-    span: cap?.span || `${fy[0]}–${fy[fy.length - 1]}`,
+    // The panel header spans the full record the checks actually run over (every year with
+    // lines), not cap.span — which capitalHistory truncates to the years carrying both operating
+    // cash and capex, and so would understate the window the margin, conversion and leverage tests
+    // compute across. The capital-allocation notes keep cap.span, which is the right window for
+    // their buyback/retention quantities.
+    span: `${fy[0]}–${fy[fy.length - 1]}`,
     checks,
     flaggedCount: checks.filter((c) => c.flagged).length,
     total: checks.length,

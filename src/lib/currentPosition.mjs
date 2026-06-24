@@ -46,12 +46,17 @@ export function currentPosition(company) {
   // Deferred revenue: cash collected before delivery — float, and a sign customers pre-pay for it.
   const deferredRevenue = sum(b.deferredRevenueCurrent, b.deferredRevenueNoncurrent);
 
-  // Runway, only when the business is burning: cash on hand ÷ the rate it consumes it (TTM free cash
-  // flow), in years. Healthy names show nothing here.
+  // Runway, only when the business is genuinely consuming cash: operating cash itself negative, not
+  // merely free cash flow. A profitable name that funds heavy growth capex out of operating cash
+  // (a utility, an industrial, Amazon) is investing, not burning, so it shows nothing here — the
+  // same maintenance-vs-growth-capex distinction owner earnings is careful to draw. When it IS
+  // burning, the runway is measured against total free cash flow (the faster, more conservative
+  // drain).
   const ttm = company.ttm?.lines || {};
   const fcf = num(ttm.cashFromOps) != null && num(ttm.capex) != null ? ttm.cashFromOps - Math.abs(ttm.capex) : null;
-  const burning = fcf != null && fcf < -1e6;
-  const runwayYears = burning && cashLike > 0 ? cashLike / Math.abs(fcf) : null;
+  const burning = num(ttm.cashFromOps) != null && ttm.cashFromOps < -1e6;
+  const burnRate = fcf != null && fcf < 0 ? Math.abs(fcf) : (num(ttm.cashFromOps) != null ? Math.abs(ttm.cashFromOps) : null);
+  const runwayYears = burning && burnRate && cashLike > 0 ? cashLike / burnRate : null;
 
   // The liquidity trend across the recent quarters (current ratio + working capital), and the
   // most-recent-quarter revenue momentum versus the same quarter a year earlier.

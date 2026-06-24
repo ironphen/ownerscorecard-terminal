@@ -1,7 +1,7 @@
 // The vocabulary of ownership, defined once. Every term the pages use lives here in
 // plain language, with why an owner cares and the honest limit of the measure. This
 // is the teaching layer: a reader learns the word in context on a company page, then
-// follows it here to understand it for good. No model writes these; they are the same
+// follows it here to understand it for good. These are written by hand, the same
 // arithmetic and the same Graham/Buffett framing the rest of the site is built on.
 
 export const GROUPS = [
@@ -240,7 +240,7 @@ export const CONCEPTS = [
     term: "Net interest margin",
     group: "financial",
     short: "The spread a bank earns between the interest it charges on loans and the interest it pays for deposits and funding.",
-    body: "A lender's core engine. It widens and narrows with interest rates and with the bank's funding advantage: a bank rich in cheap, sticky deposits earns more spread than one forced to borrow in the market. Stable margins through a rate cycle point to a deposit franchise worth having.",
+    body: "A lender's core engine. It widens and narrows with interest rates and with the bank's funding advantage: a bank rich in cheap, sticky deposits earns more spread than one forced to borrow in the market. Stable margins through a rate cycle point to a deposit franchise worth having. Shown here as net interest income over total assets — a proxy, not the true earning-asset margin, so it reads a touch lower than a bank's reported NIM, and a trading-heavy bank with little lending reads low for a reason; compare it against the bank's own history, not blindly across very different business models.",
   },
   {
     id: "efficiency-ratio",

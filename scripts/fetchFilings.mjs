@@ -25,6 +25,10 @@ const THROTTLE = 200;
 
 const dataDir = path.join(process.cwd(), "src", "data");
 const fundamentals = JSON.parse(fs.readFileSync(path.join(dataDir, "fundamentals.json"), "utf8"));
+// The ADR pool (foreign 20-F / 40-F filers) carries the same qualitative read, pulled from the
+// English text of the foreign annual report. Optional — a missing file just means no ADRs this run.
+let adrFundamentals = { companies: [] };
+try { adrFundamentals = JSON.parse(fs.readFileSync(path.join(dataDir, "fundamentals.adr.json"), "utf8")); } catch { /* no ADR pool yet */ }
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 async function fetchText(url) {
@@ -179,7 +183,7 @@ function metrics(text) {
 // The Candor Read: how management talks to owners, the linguistic filter Buffett and Munger
 // actually apply to a filing. Four deterministic signals over the MD&A, densities per 1,000 words
 // so they compare across filings of any length, plus the verbatim sentences where management owns
-// a miss. No model, no sentiment lexicon bought off the shelf; just the vocabulary an owner cares
+// a miss. No sentiment lexicon bought off the shelf; just the vocabulary an owner cares
 // about. Present, never pronounce: the page shows the densities, the trajectory and the actual
 // sentences, and the reader judges the character.
 const OWNER_TALK = /\b(per[\s-]?share|return on (invested |tangible )?(capital|equity)|intrinsic value|capital allocation|free cash flow|long[\s-]?term|compound\w*|reinvest\w*|book value|owner[\s']?s?\b)/gi;
@@ -257,6 +261,11 @@ const BIZ_ENGAGED = /\b(engaged?|engages?)\s+(primarily\s+)?in\b|\b(principal|pr
 // Neither says what the business is, so reject them — the hero then falls back to the segment mix
 // or the computed phrase rather than printing a stray sentence as the description.
 const BIZ_NOTDESC = /\bcompetitors?\s+(include|are|consist|range|comprise|compete)|^(we|our)\s+(normally|typically|generally|usually|principally|routinely|primarily\s+(purchase|buy|source|sell))\s+(purchase|buy|sell|acquire|obtain|source|procure|market|distribute|manufacture|produce|operate)\b/i;
+// A product or subsidiary sentence the scorer otherwise rewards for carrying "is the": "Apple Vision
+// Pro is the Company's spatial computer based on its visionOS operating system." The subject is a
+// thing the company owns, not the company, so it must never stand in as the description — reject it,
+// and let the real "<Company> designs/operates …" line (or the segment mix) win instead.
+const BIZ_PRODUCTREF = /\bis\s+(?:the\s+)?(?:compan|registrant|firm|group|corporation|business|parent)\w*['’]s\b/i;
 
 // Pull the company's own one-line description from the top of Item 1. Rather than take
 // the first sentence that passes, we collect candidates from the opening and score
@@ -340,7 +349,7 @@ function businessDescription(sents, name, ticker) {
     if (LEAD_VERB.test(s) && name) s = `${name.trim()} ${s}`; // restore a subject split off entirely
     if (/^[a-z]/.test(s)) s = s.charAt(0).toUpperCase() + s.slice(1);
     if (s.length < 34 || s.length > 700) continue;
-    if (BIZ_SKIP.test(s) || BIZ_WEAK.test(s) || BIZ_FRAGMENT.test(s) || BIZ_RESULTS.test(s) || BIZ_NOTDESC.test(s)) continue;
+    if (BIZ_SKIP.test(s) || BIZ_WEAK.test(s) || BIZ_FRAGMENT.test(s) || BIZ_RESULTS.test(s) || BIZ_NOTDESC.test(s) || BIZ_PRODUCTREF.test(s)) continue;
     const isa = BIZ_ISA.test(s);
     if (!BIZ_DOING.test(s) && !isa && !BIZ_ENGAGED.test(s)) continue;
     const head = s.split(/\s+/).slice(0, 6).join(" ");
@@ -350,6 +359,12 @@ function businessDescription(sents, name, ticker) {
     if ((!weSubject && !namedSubject) || !/^[A-Z]/.test(s)) continue;
     let score = 0;
     if (isa) score += 3;                        // the canonical "is a/an/one of <type>" form
+    // The "<Company>/We designs|operates|provides|sells … <products/markets>" form is a real
+    // description even without an "is a <type>" frame (Airbnb's "We operate a global marketplace
+    // connecting guests with stays…", Apple's "The Company designs, manufactures and markets
+    // smartphones…"). Reward it so it clears the earliness penalty instead of being sunk to a
+    // negative score and dropped, which left hundreds of names — Apple among them — with no lede.
+    else if (BIZ_DOING.test(s) && BIZ_RICH.test(s)) score += 2.5;
     if (namedSubject && !weSubject) score += 2; // names the company, not a bare "we"
     if (BIZ_RICH.test(s)) score += 1;           // products, markets, segments
     if (BIZ_STRUCTURAL.test(s)) score -= 3;     // org chart, not a description
@@ -412,28 +427,50 @@ function businessBrief(sents, lede, name) {
 
 // ---- EDGAR document discovery ----
 
-async function latestTenKs(cik, n = 2) {
+// Annual-report forms: 10-K (US), 20-F (foreign private issuers) and 40-F (Canadian MJDS filers).
+// The most recent two of WHICHEVER kind the company files, so one path serves both pools.
+const ANNUAL_FORMS = new Set(["10-K", "20-F", "40-F"]);
+async function latestAnnual(cik, n = 2) {
   const sub = await fetchText(`https://data.sec.gov/submissions/CIK${cik}.json`);
   const j = JSON.parse(sub);
   const r = j.filings?.recent;
   if (!r) return [];
   const out = [];
   for (let i = 0; i < r.form.length && out.length < n; i++) {
-    if (r.form[i] === "10-K" && r.primaryDocument[i]) {
-      out.push({ accn: r.accessionNumber[i], doc: r.primaryDocument[i], date: r.filingDate[i], reportDate: r.reportDate?.[i] });
+    if (ANNUAL_FORMS.has(r.form[i]) && r.primaryDocument[i]) {
+      out.push({ accn: r.accessionNumber[i], doc: r.primaryDocument[i], date: r.filingDate[i], reportDate: r.reportDate?.[i], form: r.form[i] });
     }
   }
   return out;
 }
+
+// Section anchors by annual-report form. A 10-K is read on its Item 1 (Business), Item 7 (MD&A) and
+// Item 1A (Risk Factors). A 20-F uses Item 4 (Information on the Company), Item 5 (Operating &
+// Financial Review) and Item 3.D (Risk Factors). A 40-F has no fixed item layout, so it borrows the
+// 20-F anchors and, failing the word-count gate downstream, is simply skipped — the safe outcome.
+const SECTION_ANCHORS = {
+  "10-K": {
+    business: ["item\\s*1[\\.\\s]+business", ["item\\s*1a[\\.\\s]+risk", "item\\s*1b[\\.\\s]", "item\\s*2[\\.\\s]+propert"]],
+    mdna: ["item\\s*7[\\.\\s]+management", ["item\\s*7a[\\.\\s]+quantitative", "item\\s*8[\\.\\s]+financial"]],
+    risk: ["item\\s*1a[\\.\\s]+risk\\s*factors", ["item\\s*1b[\\.\\s]", "item\\s*2[\\.\\s]+propert"]],
+  },
+  "20-F": {
+    business: ["item\\s*4[\\.\\s]+information\\s+on\\s+the\\s+company|item\\s*4[\\.\\s]*b[\\.\\s]+business\\s+overview|\\bbusiness\\s+overview\\b", ["item\\s*4[\\.\\s]*d[\\.\\s]", "item\\s*5[\\.\\s]+operating", "operating\\s+and\\s+financial\\s+review\\s+and\\s+prospects"]],
+    mdna: ["item\\s*5[\\.\\s]+operating|operating\\s+and\\s+financial\\s+review\\s+and\\s+prospects", ["item\\s*6[\\.\\s]+directors", "item\\s*6[\\.\\s]"]],
+    risk: ["item\\s*3[\\.\\s]*d[\\.\\s]+risk\\s*factors|item\\s*3[\\.\\s]+risk\\s*factors", ["item\\s*4[\\.\\s]+information", "item\\s*3[\\.\\s]*e[\\.\\s]"]],
+  },
+};
+SECTION_ANCHORS["40-F"] = SECTION_ANCHORS["20-F"];
 
 async function getFiling(cik, f) {
   const accnNoDash = f.accn.replace(/-/g, "");
   const url = `https://www.sec.gov/Archives/edgar/data/${Number(cik)}/${accnNoDash}/${f.doc}`;
   const html = await fetchText(url);
   const text = htmlToText(html);
-  const business = section(text, "item\\s*1[\\.\\s]+business", ["item\\s*1a[\\.\\s]+risk", "item\\s*1b[\\.\\s]", "item\\s*2[\\.\\s]+propert"]);
-  const mdna = section(text, "item\\s*7[\\.\\s]+management", ["item\\s*7a[\\.\\s]+quantitative", "item\\s*8[\\.\\s]+financial"]);
-  const risk = section(text, "item\\s*1a[\\.\\s]+risk\\s*factors", ["item\\s*1b[\\.\\s]", "item\\s*2[\\.\\s]+propert"]);
+  const a = SECTION_ANCHORS[f.form] || SECTION_ANCHORS["10-K"];
+  const business = section(text, a.business[0], a.business[1]);
+  const mdna = section(text, a.mdna[0], a.mdna[1]);
+  const risk = section(text, a.risk[0], a.risk[1]);
   const md = metrics(mdna);
   return { url, business: { ...metrics(business), lead: leadSentences(business) }, mdna: { ...md, lead: leadSentences(mdna), candor: candorSignals(mdna, md.sents) }, risk: metrics(risk), reportDate: f.reportDate };
 }
@@ -501,7 +538,7 @@ function diff(curSents, priorSents) {
 }
 
 // ---- AI / "too-hard pile" signal ----
-// Classic NLP, no model. Two questions, answered from the filing's own words: does the
+// Classic NLP. Two questions, answered from the filing's own words: does the
 // company name artificial intelligence as a competitive risk in its Item 1A (and is that
 // language new this year), and does it position AI as a capability in the Business/MD&A?
 // The verbatim is the evidence; the page pairs it with the structural AI-exposure of the
@@ -864,17 +901,40 @@ function buffettRead(cur, isFinancial) {
 }
 
 async function main() {
-  const out = {};
+  // Carry-over: start from the existing file, so a partial run (a ticker limit, or a pool that comes
+  // up empty) never wipes good entries — fresh results overlay, and names no longer in either
+  // universe are dropped at the end.
+  let out = {};
+  try { out = JSON.parse(fs.readFileSync(path.join(dataDir, "language.json"), "utf8")).companies || {}; } catch { out = {}; }
+
+  // One roster across both pools: US 10-K filers and ADR 20-F/40-F filers, each tagged so the proxy
+  // (DEF 14A) pull is skipped for foreign private issuers, which do not file one. POL limits which
+  // pool is fetched this run (us | adr | both) — so an ADR-only pass need not re-fetch the US names,
+  // whose entries carry over.
+  const POOL = (process.env.POOL || "both").toLowerCase();
+  const roster = [
+    ...(POOL !== "adr" ? (fundamentals.companies || []).map((c) => ({ c, isAdr: false })) : []),
+    ...(POOL !== "us" ? (adrFundamentals.companies || []).map((c) => ({ c, isAdr: true })) : []),
+  ];
+  // inUniverse is always BOTH pools, so a single-pool run's carry-over cleanup never drops the other.
+  const inUniverse = new Set(
+    [...(fundamentals.companies || []), ...(adrFundamentals.companies || [])].map((c) => String(c.ticker).toUpperCase())
+  );
+  // Optional ticker limit (the rest carry over), so a run can validate a handful of names quickly.
+  const only = (process.env.ONLY_TICKERS || "").toUpperCase().split(",").map((s) => s.trim()).filter(Boolean);
+  const onlySet = only.length ? new Set(only) : null;
+
   let ok = 0;
-  for (const c of fundamentals.companies) {
+  for (const { c, isAdr } of roster) {
     const tk = c.ticker;
     if (!c.cik) continue;
+    if (onlySet && !onlySet.has(String(tk).toUpperCase())) continue;
     await sleep(THROTTLE);
     let filings;
     try {
-      filings = await latestTenKs(c.cik, 2);
+      filings = await latestAnnual(c.cik, 2);
     } catch (e) { console.warn(`  ! ${tk}: submissions ${e.message}`); continue; }
-    if (!filings.length) { console.warn(`  ! ${tk}: no 10-K found`); continue; }
+    if (!filings.length) { console.warn(`  ! ${tk}: no annual report found`); continue; }
 
     let cur, prior;
     try {
@@ -888,7 +948,7 @@ async function main() {
     // garbage. The owner-flags can carry even if one section came up short.
     const qualWords = cur.business.words + cur.mdna.words + cur.risk.words;
     if (qualWords < 1500) {
-      console.warn(`  ! ${tk}: qualitative sections not cleanly extracted (${qualWords}w), skipping`);
+      console.warn(`  ! ${tk}: qualitative sections not cleanly extracted (${qualWords}w${isAdr ? `, ${filings[0].form}` : ""}), skipping`);
       continue;
     }
 
@@ -902,12 +962,15 @@ async function main() {
     const mdnaDiff = prior ? diff(cur.mdna.sents, prior.mdna.sents) : null;
     const riskDiff = prior ? diff(cur.risk.sents, prior.risk.sents) : null;
 
-    // Executive pay from the latest proxy (non-fatal, a bonus layer).
+    // Executive pay from the latest proxy (non-fatal, a bonus layer). US only: foreign private
+    // issuers file no DEF 14A, so the proxy pull is skipped for the ADR pool.
     let comp = null;
-    try {
-      const proxy = await latestProxy(c.cik);
-      if (proxy) { await sleep(THROTTLE); comp = await getComp(c.cik, proxy); }
-    } catch (e) { console.warn(`  ! ${tk}: proxy ${e.message}`); }
+    if (!isAdr) {
+      try {
+        const proxy = await latestProxy(c.cik);
+        if (proxy) { await sleep(THROTTLE); comp = await getComp(c.cik, proxy); }
+      } catch (e) { console.warn(`  ! ${tk}: proxy ${e.message}`); }
+    }
 
     // The lede candidates (MD&A Overview first, then Item 1 Business), scored once and reused for
     // both the hero sentence and the "in brief" detail lines beneath it. The whole record assembly
@@ -961,11 +1024,15 @@ async function main() {
     }
   }
 
+  // Drop any carried-over entry whose company has left both universes, so a removed name does not
+  // linger as stale qualitative text.
+  for (const tk of Object.keys(out)) if (!inUniverse.has(tk.toUpperCase())) delete out[tk];
+
   fs.writeFileSync(
     path.join(dataDir, "language.json"),
-    JSON.stringify({ asOf: new Date().toISOString().slice(0, 10), source: "SEC EDGAR, 10-K documents", sample: false, companies: out }, null, 2) + "\n"
+    JSON.stringify({ asOf: new Date().toISOString().slice(0, 10), source: "SEC EDGAR, 10-K and 20-F/40-F annual reports", sample: false, companies: out }, null, 2) + "\n"
   );
-  console.log(`\n✅ Wrote language analysis for ${ok}/${fundamentals.companies.length} companies`);
+  console.log(`\n✅ Wrote language analysis for ${ok} companies this run (${Object.keys(out).length} total across both pools)`);
 }
 
 // Exported for the offline logic test; only hit EDGAR when run directly.

@@ -169,6 +169,11 @@ export function leverage(c) {
   const $ = (v) => fmtMoney(v, c?.currency || "USD");
   const debt = c?.lines?.totalDebt;
   const oi = c?.lines?.operatingIncome;
+  // Before the null check: a heavy interest bill with little or no debt tagged is the
+  // under-capture case, and showing nothing there reads as "no debt" just as wrongly as a low
+  // ratio would. Name it instead.
+  if (!debtReliable(c?.lines || {}))
+    return { value: "—", formula: "", tone: "none", label: "Debt under-captured — leverage unknown, not low", note: "This company's interest bill implies far more debt than its filings tag at the consolidated level (the rest sits under segment dimensions the data source strips), so years of operating profit to repay it cannot be read honestly here, and a low figure would be a fiction. Judge it on the record and owner earnings instead." };
   if (debt == null || oi == null) return null;
   if (!oiReliable(c))
     return { value: "—", formula: "", tone: "none", label: "Read on equity, not operating income", note: "Years of operating profit to repay debt is not the right leverage read for a holding or trading company, whose earnings flow through affiliates rather than an operating line. Look at net debt and the return on equity instead." };
@@ -205,6 +210,8 @@ export function cashPosition(c) {
   const L = c?.lines || {};
   const cash = L.cashAndEquivalents, debt = L.totalDebt;
   if (cash == null && debt == null) return null;
+  if (!debtReliable(L))
+    return { value: "—", formula: "", tone: "none", label: "Debt under-captured — leverage unknown, not low", note: "This company pays far more interest than its tagged debt implies (the rest sits under segment dimensions the data source strips), so its net cash or net debt cannot be read honestly: the gap is unknown, not zero, and 'net cash' here would be exactly the fiction the figure is meant to prevent. Judge it on the record and owner earnings instead." };
   const st = L.shortTermInvestments || 0;
   const lt = L.longTermMarketable || 0;
   const liquid = (cash || 0) + st;
@@ -258,6 +265,11 @@ export function capexVsDepreciation(c) {
 export function roic(c) {
   const $ = (v) => fmtMoney(v, c?.currency || "USD");
   const L = c?.lines || {};
+  if (financialKind(c))
+    return {
+      value: "—", formula: "", tone: "none", label: "Not the right lens here",
+      note: "A bank, insurer or property trust is not read on return on invested capital — for these, capital is the raw material, not a means to an operating end. Read it on return on equity (and the combined ratio, or funds from operations) instead.",
+    };
   if (!debtReliable(L))
     return {
       value: "—", formula: "", tone: "none", label: "Debt under-captured",
@@ -284,11 +296,14 @@ export function roic(c) {
   const tax = L.incomeTaxExpense, ni = L.netIncome;
   if (tax != null && ni != null && ni + tax > 0) t = Math.min(Math.max(tax / (ni + tax), 0), 0.5);
   const nopat = oi * (1 - t);
-  const r = nopat / invested;
+  // The latest figure carries roicValue's distortion guard, so it is null when large non-operating
+  // charges put the operating line well above pretax profit (an inflated print otherwise).
+  const r = roicValue(L);
   // Judge on the through-cycle median, not this one year: the same franchise reads "exceptional"
   // at the peak and "below average" at the trough. The headline becomes the normalized rate when
   // the record allows; the latest year moves to the formula and note.
   const tc = throughCycle(c, roicValue);
+  if (r == null && tc == null) return null;
   const j = tc ? tc.median : r;
   const pct = (x) => `${(x * 100).toFixed(0)}%`;
   const tone = j < 0.08 ? "warn" : j < 0.15 ? "ok" : "good";
@@ -296,12 +311,14 @@ export function roic(c) {
   return {
     value: tc ? pct(j) : pct(r),
     formula: tc
-      ? `${tc.n}-yr median, range ${pct(tc.lo)}–${pct(tc.hi)}; ${pct(r)} latest = NOPAT ${$(nopat)} ÷ invested capital ${$(invested)}`
+      ? `${tc.n}-yr median, range ${pct(tc.lo)}–${pct(tc.hi)}` + (r != null
+          ? `; ${pct(r)} latest = NOPAT ${$(nopat)} ÷ invested capital ${$(invested)}`
+          : `; the latest year is left out — large non-operating charges put its operating line well above pretax profit`)
       : `NOPAT ${$(nopat)} ÷ invested capital ${$(invested)} (debt + equity − cash)`,
     tone,
     label,
     note: "The rate the business earns on the money tied up in it, Buffett's north star, because over time a stock tracks the ROIC beneath it. Above ~15% sustained hints at a moat; below ~8% the company may destroy value as it grows."
-      + (tc ? ` The headline is the median of the last ${tc.n} years (it ran ${pct(r)} most recently), so one peak or trough year doesn't set the verdict.` : "")
+      + (tc && r != null ? ` The headline is the median of the last ${tc.n} years (it ran ${pct(r)} most recently), so one peak or trough year doesn't set the verdict.` : tc ? ` The headline is the median of the last ${tc.n} years, so one peak or trough year doesn't set the verdict.` : "")
       + " Asset-light businesses (R&D expensed, little capital) read artificially high, pair this with Owner Earnings.",
   };
 }
@@ -534,14 +551,36 @@ export function roicValue(L) {
   const debt = L.totalDebt || 0;
   const invested = debt + eq - (L.cashAndEquivalents || 0);
   if (invested <= 0) return null;
-  let t = 0.21;
   const tax = L.incomeTaxExpense, ni = L.netIncome;
+  // The numerator is the after-tax operating profit available to ALL capital. The operating line
+  // should exceed pretax income by roughly the interest bill (interest being debt's share of the
+  // return); when, NET of a known interest bill, it still exceeds pretax by far more, large
+  // non-operating charges (impairments, pension, equity-method losses) sit below the operating line,
+  // so it overstates what the capital earned — decline rather than print an inflated figure (Alcoa:
+  // a ~48% print on a true ~16% return). Only when interest is actually tagged: with interest
+  // unknown we cannot tell a real interest gap from a non-operating one, so we leave it alone.
+  const pretax = ni != null && tax != null ? ni + tax : null;
+  const ie = L.interestExpense;
+  if (pretax != null && ie != null && ie > 0 && oi > 0 && oi - Math.abs(ie) > pretax * 1.5) return null;
+  let t = 0.21;
   if (tax != null && ni != null && ni + tax > 0) t = Math.min(Math.max(tax / (ni + tax), 0), 0.5);
   return (oi * (1 - t)) / invested;
 }
 
 export function operatingMargin(L) {
   return L && L.operatingIncome != null && L.revenue ? L.operatingIncome / L.revenue : null;
+}
+
+// Gross margin, with an arithmetic sanity check: it can never sit below the operating margin
+// (operating profit is gross profit less operating costs, which are not negative). When it computes
+// below — a cost-of-revenue line mis-tagged, printing a negative gross beside a healthy operating
+// margin, as GE's does — the cost figure is wrong, so withhold rather than render an impossible number.
+export function grossMargin(L) {
+  if (!L || !L.revenue || L.costOfRevenue == null) return null;
+  const gm = 1 - L.costOfRevenue / L.revenue;
+  const om = L.operatingIncome != null ? L.operatingIncome / L.revenue : null;
+  if (om != null && gm < om - 0.01) return null;
+  return gm;
 }
 
 export function ownerEarningsMargin(L, company) {
@@ -568,28 +607,10 @@ export function throughCycle(company, metricFn, n = 12) {
   return { median: sorted[Math.floor((sorted.length - 1) / 2)], n: recent.length, lo: sorted[0], hi: sorted[sorted.length - 1] };
 }
 
-// Durability: the same business-quality metrics across ~10 years of filings.
-// A moat is high ROIC that doesn't fade, you can only see it over a cycle.
-export function durability(company) {
-  const hist = company?.history;
-  if (!Array.isArray(hist) || hist.length < 3) return null;
-  const years = hist.map((h) => h.fy);
-  const roic = hist.map((h) => roicValue(h.lines));
-  const roicVals = roic.filter((v) => v != null);
-  const above = roicVals.filter((v) => v >= 0.15).length;
-  return {
-    years,
-    metrics: [
-      {
-        label: "Return on invested capital",
-        values: roic,
-        consistency: roicVals.length ? `≥15% in ${above} of ${roicVals.length} years` : null,
-      },
-      { label: "Operating margin", values: hist.map((h) => operatingMargin(h.lines)), consistency: null },
-      { label: "Owner-earnings margin", values: hist.map((h) => ownerEarningsMargin(h.lines, company)), consistency: null },
-    ],
-  };
-}
+// (The former durability() export was removed: it was dead code, and being the one consumer of
+// roicValue() that did not re-apply the oiReliable/financial-kind gate the rendered surfaces use,
+// it was also the only place a Japanese trading house's meaningless operating line could have
+// produced a ROIC. The live read is moatReport() in durability.mjs.)
 
 // Assemble the panel, grouped into the two questions Graham and Buffett asked.
 export function buildScorecard(company) {

@@ -17,7 +17,7 @@
     "audit": "node scripts/auditData.mjs",
     "audit:lang": "node scripts/auditLanguage.mjs",
     "audit:jp": "node scripts/auditJp.mjs",
-    "test": "node scripts/heroTest.mjs && node scripts/edinetTest.mjs && node scripts/buffettReadTest.mjs && node scripts/fundamentalsTest.mjs && node scripts/universeTest.mjs && node scripts/fundamentalsAdrTest.mjs && node scripts/segmentTest.mjs"
+    "test": "node scripts/heroTest.mjs && node scripts/edinetTest.mjs && node scripts/buffettReadTest.mjs && node scripts/fundamentalsTest.mjs && node scripts/universeTest.mjs && node scripts/fundamentalsAdrTest.mjs && node scripts/segmentTest.mjs && node scripts/lintNotes.mjs"
   },
   "dependencies": {
     "@astrojs/mdx": "^6.0.3",

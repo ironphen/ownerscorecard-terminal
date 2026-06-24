@@ -43,7 +43,13 @@ export function debtUnderCaptured(L) {
 export function ebitdaCoverage(L) {
   if (!L || !L.interestExpense || L.interestExpense <= 0) return null;
   const ebitda = L.operatingIncome != null && L.depreciation != null ? L.operatingIncome + L.depreciation : null;
-  return ebitda != null ? ebitda / L.interestExpense : null;
+  if (ebitda == null) return null;
+  // When net income dwarfs operating income, the operating line is undercaptured — a triple-net
+  // REIT earns most of its return through sales-type/direct-financing leases whose income bypasses
+  // the operating line — so an EBITDA proxy collapses and a coverage built on it reads falsely thin.
+  // Decline rather than print a misleading "bad" (VICI: a 0.4× print against 3.3× on net income).
+  if (L.netIncome != null && L.operatingIncome != null && L.netIncome > L.operatingIncome * 2 && L.netIncome > L.interestExpense) return null;
+  return ebitda / L.interestExpense;
 }
 
 export function buildReitScorecard(company) {
@@ -82,7 +88,7 @@ export function buildReitScorecard(company) {
     note: "Every REIT runs on leverage; how much is the question. Heavy debt is what turns a property downturn into a wipeout, as 2008 showed, so a conservative balance sheet is part of the moat here, not a drag on it.",
   };
   const cov = ebitdaCoverage(L);
-  const covCheck = cov == null ? none("Interest coverage", "Operating income or interest missing.", "interest-coverage") : {
+  const covCheck = cov == null ? none("Interest coverage", "Operating income or interest is missing, or operating income sits far below net income (a triple-net REIT's lease income bypasses the operating line), so an EBITDA coverage would mislead — read it on net income against the interest bill, and on debt / assets, instead.", "interest-coverage") : {
     title: "Interest coverage (EBITDA)",
     concept: "interest-coverage",
     value: `${cov.toFixed(1)}×`, formula: `(operating income + depreciation) ÷ interest ${$(L.interestExpense)}`,

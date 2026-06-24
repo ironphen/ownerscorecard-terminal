@@ -12,9 +12,16 @@ const ccy = company.currency || "USD";
 const $ = (v) => (v == null ? "—" : fmtMoney(v, ccy));
 const pct = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.abs(v * 100).toFixed(dp)}%`);
 
-// The plain read: where this year sits against its own average, stated as a fact.
+// The plain read: where this year sits against its own average, stated as a fact. When the
+// record has no single through-cycle earning power (owner-earnings margin crosses zero, or the
+// median is not positive), we say so plainly instead of normalizing — a turnaround read it on
+// the trajectory and the range, not a normalized number that would be negative or mislead.
 let read = null;
-if (ep && ep.cyclePos === "above") {
+if (ep && ep.normUnstable) {
+  read = ep.crossesZero
+    ? `Owner-earnings margin crosses from loss to profit across this record, so there is no single through-cycle figure to normalize to — this is a turnaround or a structural change, not a business with one steady earning power. Read it on the range above and the year-by-year record, not a normalized number.`
+    : `Owner earnings have been negative through most of this record, so there is no positive earning power to normalize to. Read the margin range above and the year-by-year record; the latest year, on its own, does not yet make a through-cycle figure.`;
+} else if (ep && ep.cyclePos === "above") {
   read = `This year's margin runs above its through-cycle average, so the latest owner earnings may flatter the business; a buyer paying on the reported figure is paying on a good year.`;
 } else if (ep && ep.cyclePos === "below") {
   read = `This year's margin runs below its through-cycle average, so the latest owner earnings may understate the business; the reported figure is being set in a lean year.`;
@@ -29,14 +36,14 @@ const cyclical = ep && ep.swing != null && ep.swing > 1.2;
     <div class="head"><h3>Earnings power, through the cycle</h3><span class="coda">a read of the record above</span></div>
     <p class="lede">
       Graham warned against paying for a peak year or fleeing a trough. Here is what {company.name || company.ticker}
-      earns on its <b>through-cycle</b> margin across {ep.span}, applied to this year's revenue, set beside the latest reported figure.
+      earns on its <b>through-cycle</b> margin across {ep.span}, applied to the latest annual revenue, set beside the latest reported figure.
     </p>
 
     <div class="grid">
       <div class="cell">
         <span class="cl">Normalized owner earnings</span>
         <span class="cv hot">{$(ep.normOE)}</span>
-        <span class="sub">{pct(ep.normOeMargin, 1)} through-cycle margin on {$(ep.rev)} revenue</span>
+        <span class="sub">{ep.normOE != null ? `${pct(ep.normOeMargin, 1)} through-cycle margin on ${$(ep.rev)} revenue` : "no single through-cycle figure here — see below"}</span>
       </div>
       <div class="cell">
         <span class="cl">Latest, reported</span>
@@ -53,11 +60,11 @@ const cyclical = ep && ep.swing != null && ep.swing > 1.2;
     {read ? <p class="read">{read}</p> : null}
 
     <p class="foot">
-      Normalized owner earnings apply the median, through-cycle owner-earnings margin of the record to this year's
-      revenue, the earnings-power method, with the median used so one partial or one-off year cannot skew it. It
-      assumes today's revenue is a fair base, so for a business at a clear revenue peak or trough, or one that has
-      structurally changed, the older years mislead and the figure is only a starting point. A yardstick to weigh the
-      reported year against, never a target.
+      Normalized owner earnings apply the median owner-earnings margin of the {ep.years} owner-earnings years on
+      record ({ep.span}) to the latest annual revenue, the earnings-power method, with the median used so one partial
+      or one-off year cannot skew it.{ep.years < 7 ? " Fewer than seven years is shorter than a full cycle for a cyclical, so weigh it as a starting point, not a settled figure." : ""} It assumes that revenue is a fair base, so for a
+      business at a clear revenue peak or trough, or one that has structurally changed, the older years mislead and
+      the figure is only a starting point. A yardstick to weigh the reported year against, never a target.
     </p>
   </section>
 ) : null}

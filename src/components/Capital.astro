@@ -48,7 +48,10 @@ const facts = cap
         key: "sharecount",
         label: "Did the share count actually fall?",
         value: cap.shareChange != null ? pct(cap.shareChange, 1) : "—",
-        cls: cap.shareChange != null ? (cap.shareChange <= 0 ? "good" : "warn") : "",
+        // No good/warn colour: a falling count is not unambiguously good (buying back overvalued
+        // stock destroys value) and a rising one can be fine (a growth issuer). The number and the
+        // prose carry it; the page grades nothing.
+        cls: "",
         note: cap.shareChange == null
           ? "No continuous share count across the span."
           : cap.shareChange <= -0.01
@@ -61,9 +64,11 @@ const facts = cap
       {
         key: "dividends",
         label: "Dividend record",
-        value: cap.dpsLast != null ? `${per(cap.dpsLast)}/sh` : (cap.divYears > 0 ? "Pays" : "None"),
+        value: cap.dpsLast != null ? `${per(cap.dpsLast)}/sh` : (cap.divYears > 0 ? "Pays" : cap.divReported ? "None" : "—"),
         note: cap.divYears === 0
-          ? "Paid no dividend over the span; it returns cash through buybacks or retains it."
+          ? (cap.divReported
+            ? "Paid no dividend over the span; it returns cash through buybacks or retains it."
+            : "No dividend line was reported in the filing data over the span, so we can't say whether it pays one — check the filing itself before assuming it does not.")
           : `Paid in ${cap.divYears} of the years on record${cap.dpsGrowth != null ? `, the per-share dividend ${cap.dpsGrowth >= 0 ? "growing" : "shrinking"} about ${pct(Math.abs(cap.dpsGrowth))} a year` : ""}. ${cap.everCut ? "It was cut at least once along the way." : "It was never cut over the span."}`,
         show: true,
       },
@@ -72,8 +77,8 @@ const facts = cap
         label: "Return on what it retained",
         value: cap.returnOnRetained != null ? pct(cap.returnOnRetained) : "—",
         note: cap.returnOnRetained != null
-          ? `Of the earnings it kept rather than paid out (${$(cap.retainedEarnings)} over the span), annual owner earnings grew ${$(cap.incrementalOE)}, so each retained ${sym}1 added about ${(cap.returnOnRetained).toFixed(2)} of yearly owner earnings. Buffett's test, run on owner earnings instead of market value.`
-          : "Not computable here (owner earnings or retained earnings are negative over the span).",
+          ? `Of the earnings it kept rather than paid out (${$(cap.retainedEarnings)} over the span), annual owner earnings (first three years vs last three) grew ${$(cap.incrementalOE)}, so each retained ${sym}1 added about ${(cap.returnOnRetained).toFixed(2)} of yearly owner earnings. Buffett's test, run on owner earnings instead of market value.`
+          : "Not read here: owner earnings are negative over the span, or the company returned nearly all its earnings rather than retaining them, so there is too little retained to measure a return on.",
         show: cap.returnOnRetained != null || cap.retainedEarnings > 0,
       },
     ].filter((f) => f.show)

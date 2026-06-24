@@ -58,6 +58,7 @@ export function capitalHistory(company) {
       cfo: L.cashFromOps || 0,
       capex: L.capex != null ? Math.abs(L.capex) : 0,
       div: L.dividendsPaid != null ? Math.abs(L.dividendsPaid) : 0,
+      divPresent: L.dividendsPaid != null, // distinguish "reported zero" from "not in the data"
       bb: L.buybacks != null ? Math.abs(L.buybacks) : 0,
       ni: L.netIncome,
       oe,
@@ -116,10 +117,15 @@ export function capitalHistory(company) {
   // reconcile, the basis is one we can't trust, so we withhold the average rather than publish a guess.
   const REAL_SPLITS = new Set([4, 5, 6, 7, 8, 10, 15, 20, 25, 30, 40, 50]);
   const splitMultiples = [...new Set([...splitFac.values()])].filter((m) => REAL_SPLITS.has(m)).sort((a, b) => a - b);
-  const bbYears = per.filter((q) => q.bb > 0 && q.repShares != null).sort((a, b) => a.fy - b.fy);
+  const bbYears = per
+    .filter((q) => q.bb > 0 && q.repShares != null)
+    // A repurchase of more shares than the company has is a mis-tag, not a buyback — drop the
+    // year so it cannot poison the blend (the source of the $0.00-per-share artifacts).
+    .filter((q) => q.shares == null || q.repShares <= q.shares * 1.05)
+    .sort((a, b) => a.fy - b.fy);
   let bbSpentPriced = 0, bbSharesPriced = 0, avgBuybackPrice = null, bbPriceUnreliable = false;
   if (bbYears.length) {
-    const priced = bbYears.map((q) => ({ spent: q.bb, baseShares: q.repShares * fac(q.fy) }));
+    const priced = bbYears.map((q) => ({ fy: q.fy, spent: q.bb, baseShares: q.repShares * fac(q.fy) }));
     const n = priced.length;
     priced[n - 1].shares = priced[n - 1].baseShares; // most recent buyback anchors today's basis
     priced[n - 1].price = priced[n - 1].spent / priced[n - 1].shares;
@@ -146,11 +152,22 @@ export function capitalHistory(company) {
         if (r > 4 || r < 0.25) bbPriceUnreliable = true;
       }
     }
-    if (!bbPriceUnreliable) {
-      bbSpentPriced = priced.reduce((a, q) => a + q.spent, 0);
-      bbSharesPriced = priced.reduce((a, q) => a + q.shares, 0);
+    // Plausibility, split or not: a single year whose reconciled price sits more than ~10× off the
+    // median is a mis-tagged repurchase count, not a real price — drop it before the blend. A genuine
+    // multi-year price trend stays well inside this; only a tag error blows past it. This catches the
+    // $5,482-per-share artifacts the split reconciliation can't see.
+    let kept = priced;
+    const pl = priced.map((q) => q.price).filter((v) => v > 0).sort((a, b) => a - b);
+    const medPrice = pl.length ? pl[Math.floor((pl.length - 1) / 2)] : null;
+    if (medPrice) kept = priced.filter((q) => q.price > 0 && q.price <= medPrice * 10 && q.price >= medPrice / 10);
+    if (!bbPriceUnreliable && kept.length) {
+      bbSpentPriced = kept.reduce((a, q) => a + q.spent, 0);
+      bbSharesPriced = kept.reduce((a, q) => a + q.shares, 0);
       avgBuybackPrice = bbSharesPriced > 0 ? bbSpentPriced / bbSharesPriced : null;
     }
+    // A sub-dollar blended price is implausible for this large-cap universe: the repurchase count is
+    // garbage, so withhold rather than publish "$0.00".
+    if (avgBuybackPrice != null && avgBuybackPrice < 1) { avgBuybackPrice = null; bbPriceUnreliable = true; }
   }
 
   // Did the diluted share count actually fall? The real test, net of stock issued to staff,
@@ -160,6 +177,15 @@ export function capitalHistory(company) {
   const firstShares = firstShareYear ? firstShareYear.shares * fac(firstShareYear.fy) : null;
   const lastShares = endShares != null ? endShares : (lastShareYear ? lastShareYear.shares * fac(lastShareYear.fy) : null);
   const shareChange = firstShares != null && lastShares != null && firstShares > 0 ? lastShares / firstShares - 1 : null;
+
+  // Final cross-check on the buyback price: the shares we priced should roughly reconcile with the
+  // real reduction in the count. If the count genuinely fell but the priced repurchase shares are a
+  // small fraction of that drop, the repurchase counts are undercaptured and the blended price is
+  // inflated — withhold it. (Catches the uniformly-scaled garbage the per-year checks above miss.)
+  if (avgBuybackPrice != null && firstShares != null && lastShares != null) {
+    const netReduction = firstShares - lastShares;
+    if (netReduction > 0 && bbSharesPriced < netReduction * 0.3) { avgBuybackPrice = null; bbPriceUnreliable = true; }
+  }
 
   // Dividend record: years paid, the trajectory of the per-share dividend, and whether it
   // was ever cut (the fact a dividend investor cares about most).
@@ -173,13 +199,21 @@ export function capitalHistory(company) {
   const dpsGrowth = dpsFirst && dpsLast && dpsFirst > 0 && dpsSeries.length >= 2 ? Math.pow(dpsLast / dpsFirst, 1 / (dpsSeries.length - 1)) - 1 : null;
 
   // Return on what was retained (Buffett's test, on owner earnings, no market price needed):
-  // the growth in annual owner earnings per dollar of earnings kept in the business.
+  // the growth in annual owner earnings per dollar of earnings kept in the business. Both
+  // endpoints are averaged over the first and last three years (mirroring the leverage check),
+  // and both are fiscal-year figures — never a TTM end spliced onto a fiscal-year start — so a
+  // single noisy year (a working-capital swing, a soft TTM window) cannot drive the answer to
+  // zero or flip its sign.
   const niTotal = per.reduce((a, q) => a + (q.ni || 0), 0);
   const retainedEarnings = niTotal - returned; // net income kept after dividends and buybacks
-  const oeFirst = per.find((q) => q.oe != null)?.oe ?? null;
-  const oeLast = ownerEarningsAbs(endL, company) ?? [...per].reverse().find((q) => q.oe != null)?.oe ?? null;
-  const incrementalOE = oeFirst != null && oeLast != null ? oeLast - oeFirst : null;
-  const returnOnRetained = retainedEarnings > 0 && incrementalOE != null ? incrementalOE / retainedEarnings : null;
+  const oeVals = per.map((q) => q.oe).filter((v) => v != null);
+  const oeEarly = oeVals.length ? oeVals.slice(0, 3).reduce((a, b) => a + b, 0) / Math.min(3, oeVals.length) : null;
+  const oeRecent = oeVals.length ? oeVals.slice(-3).reduce((a, b) => a + b, 0) / Math.min(3, oeVals.length) : null;
+  const incrementalOE = oeVals.length >= 2 && oeEarly != null && oeRecent != null ? oeRecent - oeEarly : null;
+  // Only when the company retained a meaningful share of its earnings (at least ~10% of
+  // cumulative net income). A near-zero retained base explodes the ratio into a meaningless
+  // triple-digit figure for a business that returns almost everything it earns.
+  const returnOnRetained = retainedEarnings > Math.abs(niTotal) * 0.1 && incrementalOE != null ? incrementalOE / retainedEarnings : null;
 
   return {
     span: `${years[0]}–${years[years.length - 1]}`,
@@ -193,6 +227,7 @@ export function capitalHistory(company) {
     avgBuybackPrice, bbSharesPriced, bbSpentPriced, bbPriceUnreliable,
     firstShares, lastShares, shareChange,
     divYears, dpsFirst, dpsLast, dpsGrowth, everCut,
+    divReported: per.some((q) => q.divPresent), // was a dividend line present at all in the span?
     retainedEarnings, incrementalOE, returnOnRetained,
   };
 }
