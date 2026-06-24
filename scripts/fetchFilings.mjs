@@ -897,12 +897,18 @@ async function main() {
   try { out = JSON.parse(fs.readFileSync(path.join(dataDir, "language.json"), "utf8")).companies || {}; } catch { out = {}; }
 
   // One roster across both pools: US 10-K filers and ADR 20-F/40-F filers, each tagged so the proxy
-  // (DEF 14A) pull is skipped for foreign private issuers, which do not file one.
+  // (DEF 14A) pull is skipped for foreign private issuers, which do not file one. POL limits which
+  // pool is fetched this run (us | adr | both) — so an ADR-only pass need not re-fetch the US names,
+  // whose entries carry over.
+  const POOL = (process.env.POOL || "both").toLowerCase();
   const roster = [
-    ...(fundamentals.companies || []).map((c) => ({ c, isAdr: false })),
-    ...(adrFundamentals.companies || []).map((c) => ({ c, isAdr: true })),
+    ...(POOL !== "adr" ? (fundamentals.companies || []).map((c) => ({ c, isAdr: false })) : []),
+    ...(POOL !== "us" ? (adrFundamentals.companies || []).map((c) => ({ c, isAdr: true })) : []),
   ];
-  const inUniverse = new Set(roster.map(({ c }) => String(c.ticker).toUpperCase()));
+  // inUniverse is always BOTH pools, so a single-pool run's carry-over cleanup never drops the other.
+  const inUniverse = new Set(
+    [...(fundamentals.companies || []), ...(adrFundamentals.companies || [])].map((c) => String(c.ticker).toUpperCase())
+  );
   // Optional ticker limit (the rest carry over), so a run can validate a handful of names quickly.
   const only = (process.env.ONLY_TICKERS || "").toUpperCase().split(",").map((s) => s.trim()).filter(Boolean);
   const onlySet = only.length ? new Set(only) : null;

@@ -19,6 +19,15 @@ on:
         description: "Run only the filing-language fetch (skip fundamentals/segments)"
         type: boolean
         default: false
+      filings_pool:
+        description: "Which pool the filing-language fetch covers (the other carries over). Blank = both."
+        type: choice
+        options:
+          - ""
+          - "us"
+          - "adr"
+          - "both"
+        default: ""
       fundamentals_only:
         description: "Run only the fundamentals fetch (skip filings/segments) — the light refresh"
         type: boolean
@@ -90,6 +99,7 @@ jobs:
           SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT }}
           BIZ_DEBUG: ${{ github.event.inputs.debug }}
           ONLY_TICKERS: ${{ github.event.inputs.tickers }} # limit the filing-language run (the rest carry over)
+          POOL: ${{ github.event.inputs.filings_pool }} # us | adr | both (blank = both); the other pool carries over
       - run: npm run fetch:segments
         if: ${{ github.event.inputs.filings_only != 'true' && github.event.inputs.fundamentals_only != 'true' && github.event.schedule != '0 7 * * 1' }}
         continue-on-error: true # where-the-money-comes-from layer; never fail the refresh
