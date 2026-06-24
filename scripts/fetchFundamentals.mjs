@@ -198,6 +198,13 @@ const CONCEPTS = {
   // leases to debt; captured so true leverage (debt + leases) can be shown.
   operatingLeaseCurrent: ["OperatingLeaseLiabilityCurrent"],
   operatingLeaseNoncurrent: ["OperatingLeaseLiabilityNoncurrent"],
+  // Net property, plant & equipment, and the operating-lease right-of-use asset (the leased plant a
+  // retailer, airline, theater or warehouse operator runs on — on the balance sheet since ASC 842).
+  // Together these measure how asset-heavy the operation truly is: the signal that separates a
+  // capital-intensive operator from an asset-light platform when SIC and margins alone mislead
+  // (a data-center operator that owns its servers; a theater chain that leases its screens).
+  netPPE: ["PropertyPlantAndEquipmentNet"],
+  operatingLeaseAsset: ["OperatingLeaseRightOfUseAsset"],
   sharesDiluted: [
     "WeightedAverageNumberOfDilutedSharesOutstanding",
     "WeightedAverageNumberOfShareOutstandingBasicAndDiluted",
@@ -790,6 +797,8 @@ async function main() {
       intangibles: collectInstant(facts, CONCEPTS.intangibleAssets),
       realEstateGross: collectInstant(facts, CONCEPTS.realEstateGross),
       lossReserves: collectInstant(facts, CONCEPTS.lossReserves),
+      netPPE: collectInstant(facts, CONCEPTS.netPPE),
+      operatingLeaseAsset: collectInstant(facts, CONCEPTS.operatingLeaseAsset),
     };
     const history = Object.keys(ha.revenue)
       .map(Number)
@@ -816,6 +825,8 @@ async function main() {
           longTermMarketable: hi.ltMkt[fy] ?? null,
           receivables: hi.receivables[fy] ?? null,
           inventory: hi.inventory[fy] ?? null,
+          netPPE: hi.netPPE[fy] ?? null,
+          operatingLeaseAsset: hi.operatingLeaseAsset[fy] ?? null,
           accountsPayable: hi.accountsPayable[fy] ?? null,
           currentAssets: hi.ca[fy] ?? null,
           currentLiabilities: hi.cl[fy] ?? null,
@@ -978,6 +989,8 @@ async function main() {
         longTermMarketable: inst(CONCEPTS.longTermMarketable),
         receivables: inst(CONCEPTS.receivables),
         inventory: inst(CONCEPTS.inventory),
+        netPPE: inst(CONCEPTS.netPPE),
+        operatingLeaseAsset: inst(CONCEPTS.operatingLeaseAsset),
         accountsPayable: inst(CONCEPTS.accountsPayable),
         currentAssets: inst(CONCEPTS.currentAssets),
         currentLiabilities: inst(CONCEPTS.currentLiabilities),
