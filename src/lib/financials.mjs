@@ -11,7 +11,10 @@ const median = (xs) => { const s = [...xs].sort((a, b) => a - b); return s.lengt
 
 // --- raw metrics, each null when not honestly computable ---
 export function returnOnEquity(L) {
-  return L && L.netIncome != null && L.stockholdersEquity ? L.netIncome / L.stockholdersEquity : null;
+  // Require positive equity: a loss over negative book yields a positive ratio that reads
+  // as a strength when it is the opposite, so withhold rather than flatter (mirrors the
+  // tangible-equity and fee-side guards).
+  return L && L.netIncome != null && L.stockholdersEquity > 0 ? L.netIncome / L.stockholdersEquity : null;
 }
 export function tangibleEquity(L) {
   if (!L || L.stockholdersEquity == null) return null;
@@ -28,9 +31,17 @@ export function netInterestMargin(L) {
   return L && L.netInterestIncome != null && L.totalAssets ? L.netInterestIncome / L.totalAssets : null;
 }
 export function efficiencyRatio(L) {
-  if (!L || L.noninterestExpense == null) return null;
-  const rev = (L.netInterestIncome || 0) + (L.noninterestIncome || 0);
-  return rev > 0 ? L.noninterestExpense / rev : null;
+  if (!L || L.noninterestExpense == null || L.noninterestExpense <= 0) return null;
+  // Both revenue components must be present and positive. A partially-tagged income
+  // statement — a bank whose net interest income or fee income sits in a company extension
+  // the facts API strips — cannot yield a comparable ratio, and a missing component
+  // silently changes what the ratio means across the pools.
+  if (L.netInterestIncome == null || L.netInterestIncome <= 0 || L.noninterestIncome == null || L.noninterestIncome <= 0) return null;
+  const rev = L.netInterestIncome + L.noninterestIncome;
+  const r = rev > 0 ? L.noninterestExpense / rev : null;
+  // Outside a believable band (~20%–110%) the inputs are mis-tagged, not the bank
+  // extraordinary, so show nothing rather than a "Lean" or "Bloated" verdict on garbage.
+  return r != null && r >= 0.2 && r <= 1.1 ? r : null;
 }
 export function depositFunding(L) {
   if (!(L && L.deposits != null && L.totalAssets)) return null;

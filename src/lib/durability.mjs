@@ -78,13 +78,22 @@ export function moatReport(company) {
   const ivE = avgFirst(L.map(invested), 3), ivL = avgLast(L.map(invested), 3);
   if (debtOk && npE != null && npL != null && ivE != null && ivL != null) {
     const dNop = npL - npE, dInv = ivL - ivE;
-    if (dInv > ivE * 0.1) {
+    // The denominator must be both positive and meaningfully large (the base grew by more
+    // than ~30%); a small or near-zero change in invested capital turns dNop/dInv into a
+    // triple-digit artifact, not a moat reading. And cap the magnitude: a "200% incremental
+    // ROIC" is noise dressed as a verdict, so decline it rather than print "still compounding".
+    if (ivE > 0 && dInv > ivE * 0.3) {
       const inc = dNop / dInv;
-      add("Reinvestment, incremental ROIC", pct(inc),
-        inc >= 0.15 ? "good" : inc >= 0.08 ? "ok" : "warn",
-        inc >= 0.15 ? "Every extra dollar the company reinvested earned a high return, it is still compounding, not coasting on an old moat."
-          : inc >= 0 ? "Reinvested capital earned only a modest return, growth is getting expensive."
-          : "Reinvested capital earned a negative return, the business spent money to shrink its own economics.");
+      if (!Number.isFinite(inc) || Math.abs(inc) > 0.6) {
+        add("Reinvestment, incremental ROIC", "—", "info",
+          "The reinvested base moved too little against the change in profit to read a reliable return on it here — the figure would be a small-denominator artifact, not a moat. Judge this one on the owner-earnings record and the cash it returns instead.");
+      } else {
+        add("Reinvestment, incremental ROIC", pct(inc),
+          inc >= 0.15 ? "good" : inc >= 0.08 ? "ok" : "warn",
+          inc >= 0.15 ? "Every extra dollar the company reinvested earned a high return, it is still compounding, not coasting on an old moat."
+            : inc >= 0 ? "Reinvested capital earned only a modest return, growth is getting expensive."
+            : "Reinvested capital earned a negative return, the business spent money to shrink its own economics.");
+      }
     } else {
       add("Reinvestment, incremental ROIC", "returns capital", "info",
         "The capital base barely grew: this business returns cash through dividends and buybacks rather than reinvesting. Judge it on the cash returned, not on compounding.");

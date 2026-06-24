@@ -61,9 +61,11 @@ const facts = cap
       {
         key: "dividends",
         label: "Dividend record",
-        value: cap.dpsLast != null ? `${per(cap.dpsLast)}/sh` : (cap.divYears > 0 ? "Pays" : "None"),
+        value: cap.dpsLast != null ? `${per(cap.dpsLast)}/sh` : (cap.divYears > 0 ? "Pays" : cap.divReported ? "None" : "—"),
         note: cap.divYears === 0
-          ? "Paid no dividend over the span; it returns cash through buybacks or retains it."
+          ? (cap.divReported
+            ? "Paid no dividend over the span; it returns cash through buybacks or retains it."
+            : "No dividend line was reported in the filing data over the span, so we can't say whether it pays one — check the filing itself before assuming it does not.")
           : `Paid in ${cap.divYears} of the years on record${cap.dpsGrowth != null ? `, the per-share dividend ${cap.dpsGrowth >= 0 ? "growing" : "shrinking"} about ${pct(Math.abs(cap.dpsGrowth))} a year` : ""}. ${cap.everCut ? "It was cut at least once along the way." : "It was never cut over the span."}`,
         show: true,
       },

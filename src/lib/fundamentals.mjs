@@ -169,6 +169,11 @@ export function leverage(c) {
   const $ = (v) => fmtMoney(v, c?.currency || "USD");
   const debt = c?.lines?.totalDebt;
   const oi = c?.lines?.operatingIncome;
+  // Before the null check: a heavy interest bill with little or no debt tagged is the
+  // under-capture case, and showing nothing there reads as "no debt" just as wrongly as a low
+  // ratio would. Name it instead.
+  if (!debtReliable(c?.lines || {}))
+    return { value: "—", formula: "", tone: "none", label: "Debt under-captured — leverage unknown, not low", note: "This company's interest bill implies far more debt than its filings tag at the consolidated level (the rest sits under segment dimensions the data source strips), so years of operating profit to repay it cannot be read honestly here, and a low figure would be a fiction. Judge it on the record and owner earnings instead." };
   if (debt == null || oi == null) return null;
   if (!oiReliable(c))
     return { value: "—", formula: "", tone: "none", label: "Read on equity, not operating income", note: "Years of operating profit to repay debt is not the right leverage read for a holding or trading company, whose earnings flow through affiliates rather than an operating line. Look at net debt and the return on equity instead." };
@@ -205,6 +210,8 @@ export function cashPosition(c) {
   const L = c?.lines || {};
   const cash = L.cashAndEquivalents, debt = L.totalDebt;
   if (cash == null && debt == null) return null;
+  if (!debtReliable(L))
+    return { value: "—", formula: "", tone: "none", label: "Debt under-captured — leverage unknown, not low", note: "This company pays far more interest than its tagged debt implies (the rest sits under segment dimensions the data source strips), so its net cash or net debt cannot be read honestly: the gap is unknown, not zero, and 'net cash' here would be exactly the fiction the figure is meant to prevent. Judge it on the record and owner earnings instead." };
   const st = L.shortTermInvestments || 0;
   const lt = L.longTermMarketable || 0;
   const liquid = (cash || 0) + st;
@@ -258,6 +265,11 @@ export function capexVsDepreciation(c) {
 export function roic(c) {
   const $ = (v) => fmtMoney(v, c?.currency || "USD");
   const L = c?.lines || {};
+  if (financialKind(c))
+    return {
+      value: "—", formula: "", tone: "none", label: "Not the right lens here",
+      note: "A bank, insurer or property trust is not read on return on invested capital — for these, capital is the raw material, not a means to an operating end. Read it on return on equity (and the combined ratio, or funds from operations) instead.",
+    };
   if (!debtReliable(L))
     return {
       value: "—", formula: "", tone: "none", label: "Debt under-captured",

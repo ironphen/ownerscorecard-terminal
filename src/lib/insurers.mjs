@@ -14,7 +14,16 @@ import { returnOnEquity } from "./financials.mjs";
 const median = (xs) => { const s = [...xs].sort((a, b) => a - b); return s.length ? s[Math.floor((s.length - 1) / 2)] : null; };
 const pc = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${(Math.abs(v) * 100).toFixed(dp)}%`);
 
-export function lossRatio(L) { return L && L.claimsIncurred != null && L.premiumsEarned ? Math.abs(L.claimsIncurred) / L.premiumsEarned : null; }
+export function lossRatio(L) {
+  if (!(L && L.claimsIncurred != null && L.premiumsEarned)) return null;
+  const r = Math.abs(L.claimsIncurred) / L.premiumsEarned;
+  // Only within a believable P&C band; outside it the claims or premiums tag is wrong (or
+  // this isn't a P&C book — a life/annuity or blended total lands above this, as Berkshire's
+  // ~108% does). A loss ratio above ~95% already implies a combined ratio well over 100%, so
+  // beyond the band we show nothing rather than a graded verdict — the discipline combinedRatio()
+  // already applies.
+  return r >= 0.4 && r <= 0.95 ? r : null;
+}
 export function expenseRatio(L) { return L && L.underwritingExpense != null && L.premiumsEarned ? Math.abs(L.underwritingExpense) / L.premiumsEarned : null; }
 export function combinedRatio(L) {
   if (!L || !L.premiumsEarned) return null;

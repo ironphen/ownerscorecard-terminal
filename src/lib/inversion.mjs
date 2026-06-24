@@ -4,7 +4,7 @@
 // already pulls, returning the actual numbers and whether the fingerprint is present. None
 // is a verdict: a flag is a question to put to the filing, a clear test is one fewer way to
 // be wrong. Present, never pronounce.
-import { ownerEarningsMargin, ownerEarningsAbs, operatingMargin, fmtMoney, currencySymbol } from "./fundamentals.mjs";
+import { ownerEarningsMargin, ownerEarningsAbs, operatingMargin, fmtMoney, currencySymbol, debtReliable } from "./fundamentals.mjs";
 import { capitalHistory } from "./capital.mjs";
 
 const avg = (xs) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null);
@@ -73,7 +73,10 @@ export function inversionChecks(company) {
     const oeEarly = avg(firstN(oeAbs, 3));
     const oeRecent = avg(lastN(oeAbs, 3));
     const d0 = startL.totalDebt, d1 = endL.totalDebt;
-    if (d0 != null && d1 != null && d0 >= 0 && d1 >= 0 && oeEarly != null && oeRecent != null) {
+    // Only when the debt is reliably captured at both ends. If interest proves it grossly
+    // under-tagged, a "debt did not outrun the business" clear would be a false reassurance —
+    // the exact fiction debtReliable() exists to prevent — so withhold the check entirely.
+    if (d0 != null && d1 != null && d0 >= 0 && d1 >= 0 && oeEarly != null && oeRecent != null && debtReliable(startL) && debtReliable(endL)) {
       const debtUp = d1 > d0 * 1.25 && d1 > 0;
       const earnFlat = oeRecent < oeEarly * 1.1;
       const flagged = debtUp && earnFlat;
