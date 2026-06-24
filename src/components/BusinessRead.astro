@@ -29,7 +29,7 @@ const sourceUrl = L?.sourceUrl || null;
 const fk = financialKind(company);
 
 const pc = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${(Math.abs(v) * 100).toFixed(dp)}%`);
-const median = (xs) => { const s = [...xs].sort((a, b) => a - b); return s.length ? s[Math.floor((s.length - 1) / 2)] : null; };
+const median = (xs) => { if (!xs.length) return null; const s = [...xs].sort((a, b) => a - b); const m = Math.floor(s.length / 2); return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
 
 // A reviewed, model-drafted note (docs/qualitative-doctrine.md) for the names a human
 // has written up: it supplies the two descriptive reads in place of the computed
