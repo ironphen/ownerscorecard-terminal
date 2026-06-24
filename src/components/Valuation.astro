@@ -356,7 +356,7 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
       <p class="note">A reverse-DCF needs positive owner earnings, or at least revenue, to anchor to, there's no clean base here. Judge this one on assets or normalized earnings, not a growth model.</p>
     )
   ) : (
-    <div id="valBox" data-oe={ownerEarnings} data-oe3={oeNormalized ?? ""} data-oemaint={ownerEarningsMaint ?? ""} data-oemaint3={oe3Maint ?? ""} data-sbc={sbcLatest ?? ""} data-gdeliv={gDeliv ?? ""} data-netdebt={netDebt} data-shares={shares} data-haveshares={haveShares ? "1" : "0"} data-name={name} data-eps3={eps3 ?? ""} data-bvps={bvps ?? ""} data-sym={sym}>
+    <div id="valBox" data-oe={ownerEarnings} data-oe3={oeNormalized ?? ""} data-oemaint={ownerEarningsMaint ?? ""} data-oemaint3={oe3Maint ?? ""} data-sbc={sbcLatest ?? ""} data-gdeliv={(gDeliv5 ?? gDeliv) ?? ""} data-netdebt={netDebt} data-shares={shares} data-haveshares={haveShares ? "1" : "0"} data-name={name} data-eps3={eps3 ?? ""} data-bvps={bvps ?? ""} data-sym={sym}>
       <p class="intro">
         A price is the one input we don't pull, <b>you bring it</b>. Type today's close (read it off any
         broker or quote site) and see the owner-earnings growth you'd have to believe to justify it, set

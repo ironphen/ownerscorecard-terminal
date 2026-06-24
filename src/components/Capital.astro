@@ -74,8 +74,8 @@ const facts = cap
         label: "Return on what it retained",
         value: cap.returnOnRetained != null ? pct(cap.returnOnRetained) : "—",
         note: cap.returnOnRetained != null
-          ? `Of the earnings it kept rather than paid out (${$(cap.retainedEarnings)} over the span), annual owner earnings grew ${$(cap.incrementalOE)}, so each retained ${sym}1 added about ${(cap.returnOnRetained).toFixed(2)} of yearly owner earnings. Buffett's test, run on owner earnings instead of market value.`
-          : "Not computable here (owner earnings or retained earnings are negative over the span).",
+          ? `Of the earnings it kept rather than paid out (${$(cap.retainedEarnings)} over the span), annual owner earnings (first three years vs last three) grew ${$(cap.incrementalOE)}, so each retained ${sym}1 added about ${(cap.returnOnRetained).toFixed(2)} of yearly owner earnings. Buffett's test, run on owner earnings instead of market value.`
+          : "Not read here: owner earnings are negative over the span, or the company returned nearly all its earnings rather than retaining them, so there is too little retained to measure a return on.",
         show: cap.returnOnRetained != null || cap.retainedEarnings > 0,
       },
     ].filter((f) => f.show)

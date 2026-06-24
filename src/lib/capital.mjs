@@ -199,13 +199,21 @@ export function capitalHistory(company) {
   const dpsGrowth = dpsFirst && dpsLast && dpsFirst > 0 && dpsSeries.length >= 2 ? Math.pow(dpsLast / dpsFirst, 1 / (dpsSeries.length - 1)) - 1 : null;
 
   // Return on what was retained (Buffett's test, on owner earnings, no market price needed):
-  // the growth in annual owner earnings per dollar of earnings kept in the business.
+  // the growth in annual owner earnings per dollar of earnings kept in the business. Both
+  // endpoints are averaged over the first and last three years (mirroring the leverage check),
+  // and both are fiscal-year figures — never a TTM end spliced onto a fiscal-year start — so a
+  // single noisy year (a working-capital swing, a soft TTM window) cannot drive the answer to
+  // zero or flip its sign.
   const niTotal = per.reduce((a, q) => a + (q.ni || 0), 0);
   const retainedEarnings = niTotal - returned; // net income kept after dividends and buybacks
-  const oeFirst = per.find((q) => q.oe != null)?.oe ?? null;
-  const oeLast = ownerEarningsAbs(endL, company) ?? [...per].reverse().find((q) => q.oe != null)?.oe ?? null;
-  const incrementalOE = oeFirst != null && oeLast != null ? oeLast - oeFirst : null;
-  const returnOnRetained = retainedEarnings > 0 && incrementalOE != null ? incrementalOE / retainedEarnings : null;
+  const oeVals = per.map((q) => q.oe).filter((v) => v != null);
+  const oeEarly = oeVals.length ? oeVals.slice(0, 3).reduce((a, b) => a + b, 0) / Math.min(3, oeVals.length) : null;
+  const oeRecent = oeVals.length ? oeVals.slice(-3).reduce((a, b) => a + b, 0) / Math.min(3, oeVals.length) : null;
+  const incrementalOE = oeVals.length >= 2 && oeEarly != null && oeRecent != null ? oeRecent - oeEarly : null;
+  // Only when the company retained a meaningful share of its earnings (at least ~10% of
+  // cumulative net income). A near-zero retained base explodes the ratio into a meaningless
+  // triple-digit figure for a business that returns almost everything it earns.
+  const returnOnRetained = retainedEarnings > Math.abs(niTotal) * 0.1 && incrementalOE != null ? incrementalOE / retainedEarnings : null;
 
   return {
     span: `${years[0]}–${years[years.length - 1]}`,
