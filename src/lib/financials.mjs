@@ -61,10 +61,14 @@ export function provisionRate(L) {
 
 // The financials archetype is best judged on these. Returns the same shape the
 // industrial scorecard uses, so the page renders it through the same component.
-export function buildFinancialScorecard(company) {
+export function buildFinancialScorecard(company, subtype = "bank") {
   const $ = (v) => fmtMoney(v, company?.currency || "USD");
   const L = company?.lines || {};
   const none = (title, note, concept = null) => ({ title, concept, value: "—", formula: "", tone: "none", label: "Not enough data", note });
+  // A mortgage REIT is read on the same lender lens (return on equity, tangible book) but it funds a
+  // pool of mortgages with borrowing, not deposits, so the deposit-funding check is replaced with the
+  // leverage that actually defines it.
+  const isMReit = subtype === "mortgage-reit";
 
   // Is it a good business: return on equity, on tangible equity, and efficiency.
   const roe = returnOnEquity(L);
@@ -114,15 +118,25 @@ export function buildFinancialScorecard(company) {
     label: cap < 0.06 ? "Thin" : cap < 0.08 ? "Modest" : cap < 0.1 ? "Adequate" : "Well capitalized",
     note: "A plain-English leverage read: how much of the balance sheet is the owners' own money. This is a rough proxy; the regulatory figure is the CET1 ratio, which is risk-weighted and reported in the filing. The point is the same, how much loss the bank can absorb before depositors are at risk.",
   };
+  const de = L.totalDebt != null && L.stockholdersEquity > 0 ? L.totalDebt / L.stockholdersEquity : null;
   const fund = depositFunding(L);
-  const fundCheck = fund == null ? none("Funding", "Deposits or total assets missing.", "net-interest-margin") : {
-    title: "Deposit funding",
-    concept: "net-interest-margin",
-    value: pc(fund), formula: `Deposits ${$(L.deposits)} ÷ assets ${$(L.totalAssets)}`,
-    tone: fund < 0.5 ? "warn" : fund < 0.65 ? "ok" : "good",
-    label: fund < 0.5 ? "Leans on wholesale funding" : fund < 0.65 ? "Mostly deposit-funded" : "Deposit-funded",
-    note: "Low-cost, sticky deposits are a bank's real moat, the cheap raw material it lends out at a spread. A bank funded mostly by deposits earns more durably than one that rents its money in the wholesale market.",
-  };
+  const fundCheck = isMReit
+    ? (de == null ? none("Leverage", "Debt or equity missing.", "net-debt") : {
+        title: "Leverage (debt / equity)",
+        concept: "net-debt",
+        value: `${de.toFixed(1)}×`, formula: `Debt ${$(L.totalDebt)} ÷ equity ${$(L.stockholdersEquity)}`,
+        tone: "info",
+        label: "Borrowed against book",
+        note: "A mortgage REIT finances a pool of mortgages with borrowed money, so it runs far more leverage than an operating company; that leverage magnifies both the spread it earns and the loss when rates or credit move against it. Read it beside the book value, not as a pass or fail — the question is whether the spread compensates for the leverage through a cycle.",
+      })
+    : fund == null ? none("Funding", "Deposits or total assets missing.", "net-interest-margin") : {
+        title: "Deposit funding",
+        concept: "net-interest-margin",
+        value: pc(fund), formula: `Deposits ${$(L.deposits)} ÷ assets ${$(L.totalAssets)}`,
+        tone: fund < 0.5 ? "warn" : fund < 0.65 ? "ok" : "good",
+        label: fund < 0.5 ? "Leans on wholesale funding" : fund < 0.65 ? "Mostly deposit-funded" : "Deposit-funded",
+        note: "Low-cost, sticky deposits are a bank's real moat, the cheap raw material it lends out at a spread. A bank funded mostly by deposits earns more durably than one that rents its money in the wholesale market.",
+      };
   const prov = provisionRate(L);
   const provCheck = prov == null ? none("Credit cost", "Provision or net interest income missing.") : {
     title: "Credit cost (provision / NII)",
@@ -142,7 +156,8 @@ export function buildFinancialScorecard(company) {
 
 // The "is it a good business?" read for the brief: return-on-equity durability across
 // the record, the bank equivalent of the ROIC read, with the verdict left to the filing.
-export function financialQuality(company) {
+export function financialQuality(company, subtype = "bank") {
+  const isMReit = subtype === "mortgage-reit";
   const H = (company?.history || []).filter((h) => h?.lines?.netIncome != null && h?.lines?.stockholdersEquity);
   const roeSeries = H.map((h) => h.lines.netIncome / h.lines.stockholdersEquity).filter((v) => Number.isFinite(v));
   if (roeSeries.length < 3) return null;
@@ -163,9 +178,13 @@ export function financialQuality(company) {
   // comparable to the US thresholds (see the scorecard note).
   if (eff != null && company?.market !== "ADR") s2 = ` It runs at a ${pc(eff)} efficiency ratio, ${eff < 0.6 ? "lean" : eff < 0.68 ? "about average" : "on the heavy side"}.`;
 
-  const s3 = med >= 0.12
-    ? " A bank that earns above its cost of equity through the cycle compounds book value; whether this one did it by underwriting discipline or by reaching for risk is what the 10-K, and the worst years in the record, will tell you."
-    : " The cycle and the loan book decide this one; weigh the recession years in the record, not the average, and read the 10-K.";
+  const s3 = isMReit
+    ? (med >= 0.12
+      ? " A mortgage REIT that earns above its cost of equity through the cycle compounds book value; but it does so on heavy borrowing against a pool of mortgages, so whether the spread compensated for the leverage, or simply rode falling rates, is what the worst years in the record and the 10-K will tell you."
+      : " A mortgage REIT lives on the spread between what its mortgages earn and what its borrowing costs, levered many times over; weigh the worst rate and credit years in the record, not the average, and read the 10-K.")
+    : (med >= 0.12
+      ? " A bank that earns above its cost of equity through the cycle compounds book value; whether this one did it by underwriting discipline or by reaching for risk is what the 10-K, and the worst years in the record, will tell you."
+      : " The cycle and the loan book decide this one; weigh the recession years in the record, not the average, and read the 10-K.");
 
   return { text: s1 + s2 + s3 };
 }

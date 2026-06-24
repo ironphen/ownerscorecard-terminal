@@ -32,7 +32,7 @@ const { sections } =
   : fk === "insurer" ? buildInsurerScorecard(company, financialSubtype(company))
   : fk === "managedCare" ? buildManagedCareScorecard(company)
   : fk === "fee" ? buildFeeScorecard(company, financialSubtype(company))
-  : fk === "bank" ? buildFinancialScorecard(company)
+  : fk === "bank" ? buildFinancialScorecard(company, financialSubtype(company))
   : buildScorecard(company);
 const report = isFin ? null : moatReport(company);
 const graham = company.market !== "JP" && !isFin ? grahamTests(company) : null;

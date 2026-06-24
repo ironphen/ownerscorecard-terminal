@@ -4,7 +4,7 @@
 // your browser. That sidesteps every market-data licence and keeps the page honest
 //, the only number we'd ever "redistribute" is the one you typed in. Never a price
 // target: it shows the owner-earnings growth a price implies, set against the record.
-import { classify, financialKind } from "../lib/archetype.mjs";
+import { classify, financialKind, financialSubtype } from "../lib/archetype.mjs";
 import { moatReport } from "../lib/durability.mjs";
 import { fmtMoney, currencySymbol, liquidAssets, maintenanceCapex, ownerEarningsAbs } from "../lib/fundamentals.mjs";
 import { tangibleEquity } from "../lib/financials.mjs";
@@ -125,9 +125,12 @@ const runnable = (ownerEarnings != null && ownerEarnings > 0) || defaultMaint ||
 // by the return it earns on that book. Same math for both; only the wording differs,
 // since an insurer's cycle is underwriting, not credit. Normalize over the record.
 const isBank = fk === "bank" || fk === "insurer";
-const finKind = isInsurer ? "insurer" : "bank";
+const isMReit = financialSubtype(company) === "mortgage-reit";
+const finKind = isInsurer ? "insurer" : isMReit ? "mortgage REIT" : "bank";
 const bankRisk = isInsurer
   ? "an underwriting cycle, a reserve shortfall or a bad year on the float"
+  : isMReit
+  ? "a rate shock, a spread that compresses or a credit cycle"
   : "a credit cycle, a rate shock or a bad acquisition";
 const tEq = tangibleEquity(L);
 const tbvps = tEq != null && shares ? tEq / shares : null;

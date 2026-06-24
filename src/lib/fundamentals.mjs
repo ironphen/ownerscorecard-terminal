@@ -595,28 +595,10 @@ export function throughCycle(company, metricFn, n = 12) {
   return { median: sorted[Math.floor((sorted.length - 1) / 2)], n: recent.length, lo: sorted[0], hi: sorted[sorted.length - 1] };
 }
 
-// Durability: the same business-quality metrics across ~10 years of filings.
-// A moat is high ROIC that doesn't fade, you can only see it over a cycle.
-export function durability(company) {
-  const hist = company?.history;
-  if (!Array.isArray(hist) || hist.length < 3) return null;
-  const years = hist.map((h) => h.fy);
-  const roic = hist.map((h) => roicValue(h.lines));
-  const roicVals = roic.filter((v) => v != null);
-  const above = roicVals.filter((v) => v >= 0.15).length;
-  return {
-    years,
-    metrics: [
-      {
-        label: "Return on invested capital",
-        values: roic,
-        consistency: roicVals.length ? `≥15% in ${above} of ${roicVals.length} years` : null,
-      },
-      { label: "Operating margin", values: hist.map((h) => operatingMargin(h.lines)), consistency: null },
-      { label: "Owner-earnings margin", values: hist.map((h) => ownerEarningsMargin(h.lines, company)), consistency: null },
-    ],
-  };
-}
+// (The former durability() export was removed: it was dead code, and being the one consumer of
+// roicValue() that did not re-apply the oiReliable/financial-kind gate the rendered surfaces use,
+// it was also the only place a Japanese trading house's meaningless operating line could have
+// produced a ROIC. The live read is moatReport() in durability.mjs.)
 
 // Assemble the panel, grouped into the two questions Graham and Buffett asked.
 export function buildScorecard(company) {

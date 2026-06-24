@@ -133,11 +133,28 @@ export function financialProfile(company) {
   const sic = Number(company?.sic) || 0;
   const L = company?.lines || {};
   const deposits = L.deposits != null && L.deposits > 0;
-  if (sic >= 6500 && sic <= 6799) return { kind: "reit", subtype: "reit" };
+  if (sic >= 6500 && sic <= 6799) {
+    // A mortgage REIT owns loans, not buildings: near-zero depreciation and a balance sheet that
+    // earns net interest on a financed pool of mortgages. Adding back building depreciation to get
+    // FFO, and grading an FFO payout, is meaningless for it — the market prices it on book value and
+    // the return on it, like a lender. So route it to the lender lens (return on equity and tangible
+    // book) when the data shows that signature, the same data tie-break the bank branch uses below.
+    // Equity REITs (real depreciable property) keep the FFO scorecard. SIC 6795 (mineral-royalty
+    // trusts) is not a property REIT either, so it gets no REIT scorecard.
+    if (sic === 6795) return { kind: null, subtype: null };
+    const mreitNII = L.netInterestIncome != null && L.netInterestIncome > 0;
+    const tinyDep = L.depreciation != null && L.totalAssets ? Math.abs(L.depreciation) / L.totalAssets < 0.015 : false;
+    if (mreitNII && tinyDep) return { kind: "bank", subtype: "mortgage-reit" };
+    return { kind: "reit", subtype: "reit" };
+  }
   if (sic >= 6300 && sic <= 6499) {
     if (sic === 6324) return { kind: "managedCare", subtype: "managed-care" };
     if (sic >= 6410 && sic <= 6419) return { kind: "fee", subtype: "insurance-broker" };
-    if (sic >= 6310 && sic <= 6319) return { kind: "insurer", subtype: "life-insurer" };
+    // Life (6310–6319) and accident & health (up to 6321, e.g. Aflac) are read on the spread and
+    // book value, not the P&C combined ratio — benefits exceed premiums by design, so a combined
+    // ratio reads as a permanent underwriting loss and teaches the wrong thing. The managed-care
+    // carve-out (6324) is already handled above; fire/marine/casualty (6331+) stays P&C.
+    if (sic >= 6310 && sic <= 6321) return { kind: "insurer", subtype: "life-insurer" };
     return { kind: "insurer", subtype: "insurer" };
   }
   if (sic >= 6000 && sic <= 6299) {

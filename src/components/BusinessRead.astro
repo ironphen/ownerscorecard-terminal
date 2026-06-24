@@ -122,7 +122,7 @@ let moat = fk === "reit" ? reitQuality(company)
   : fk === "insurer" ? insurerQuality(company, financialSubtype(company))
   : fk === "managedCare" ? managedCareQuality(company)
   : fk === "fee" ? feeQuality(company, financialSubtype(company))
-  : fk === "bank" ? financialQuality(company)
+  : fk === "bank" ? financialQuality(company, financialSubtype(company))
   : null;
 const debtOk = debtReliable(company.lines || {}) && debtReliable(company.ttm?.lines || {});
 if (!isFin && debtOk && roicSeries.length >= 3 && roicMed != null) {
