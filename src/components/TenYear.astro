@@ -106,7 +106,7 @@ const ROW = {
     get: (L) => {
       if (!debtOk) return "—";
       if (L.totalDebt == null && everHadDebt) return "—"; // a missing debt year is a gap, not zero
-      const ebitda = L.operatingIncome != null && L.depreciation != null ? L.operatingIncome + L.depreciation : null;
+      const ebitda = L.operatingIncome != null && L.depreciation != null ? L.operatingIncome + Math.abs(L.depreciation) : null;
       if (!ebitda || ebitda <= 0) return "—";
       const nd = (L.totalDebt || 0) - (liquidAssets(L) || 0);
       return nd <= 0 ? "net cash" : xStr(nd / ebitda);
@@ -127,7 +127,8 @@ const ROW = {
   rnd: { label: "R&D / revenue", short: "R&D/rev", g: 1, kind: "neutral", get: (L) => marginStr(L.researchDevelopment, L.revenue, 0) },
   opIncome: { label: "Operating income", short: "Op. inc.", g: 1, get: (L) => (oiOk ? money(L.operatingIncome) : "—") },
   taxRate: { label: "Effective tax rate", short: "Tax rate", g: 1, kind: "neutral", get: (L) => { const r = effectiveTaxRate(L); return r == null ? "—" : `${(r * 100).toFixed(0)}%`; } },
-  depreciation: { label: "Depreciation", short: "Deprec.", g: 2, kind: "neutral", get: (L) => money(L.depreciation) },
+  // Depreciation is an add-back, always positive; a negative tag is a sign error, so show its magnitude.
+  depreciation: { label: "Depreciation", short: "Deprec.", g: 2, kind: "neutral", get: (L) => (L.depreciation == null ? "—" : money(Math.abs(L.depreciation))) },
   // The rest of what turns profit into operating cash: the change in working capital and the other
   // non-cash items the cash-flow statement reconciles (deferred tax, gains, equity-method profit
   // booked through investing). Operating cash less net income, depreciation and stock comp — the same

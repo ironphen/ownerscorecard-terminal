@@ -42,7 +42,7 @@ export function debtUnderCaptured(L) {
 }
 export function ebitdaCoverage(L) {
   if (!L || !L.interestExpense || L.interestExpense <= 0) return null;
-  const ebitda = L.operatingIncome != null && L.depreciation != null ? L.operatingIncome + L.depreciation : null;
+  const ebitda = L.operatingIncome != null && L.depreciation != null ? L.operatingIncome + Math.abs(L.depreciation) : null;
   if (ebitda == null) return null;
   // When net income dwarfs operating income, the operating line is undercaptured — a triple-net
   // REIT earns most of its return through sales-type/direct-financing leases whose income bypasses
