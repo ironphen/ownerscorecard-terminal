@@ -6,11 +6,12 @@
 // arithmetic that tests them on the right.
 import language from "../data/language.json";
 import { fmtMoney, ownerEarningsMargin, operatingMargin, coverage, cashPosition, topLineRevenue } from "../lib/fundamentals.mjs";
+import { cleanOwnerFlags } from "../lib/business.mjs";
 
 const { company } = Astro.props;
 const $ = (v) => fmtMoney(v, company?.currency || "USD");
 const L = language?.companies?.[company.ticker] || null;
-const flags = L?.ownerFlags || [];
+const flags = cleanOwnerFlags(L?.ownerFlags);
 
 const H = (company.history || []).filter((h) => h?.lines?.revenue != null);
 const cur = company.ttm?.lines || company.lines || {};

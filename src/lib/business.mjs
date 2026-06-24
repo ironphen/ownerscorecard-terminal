@@ -187,3 +187,13 @@ export function pickNote(notesData, ticker) {
   const n = notesData?.companies?.[String(ticker || "").toUpperCase()];
   return n && n.reviewed === true && (n.whatItIs || n.needle) ? n : null;
 }
+
+// A flag whose quote is plainly a financial-statement or table fragment the extractor mis-tagged
+// as a risk — a geography/segment table header, a cash-flow line, a results sentence — rather than
+// a real risk the filing raises. Munger's "no flim-flam": "what the filing emphasizes" must show the
+// company's own words on what could go wrong, not a mis-read table caption. Render-side only; the raw
+// flag stays in the data.
+const MISTAGGED_FLAG = /\bthe following table\b|\btable (below|presents)\b|\bcash (used in|provided by) (operating|investing|financing) activities\b|\b(revenues?|net (sales|income|cash)|operating (income|cash|expenses?)|gross (profit|margin))\b[^.]{0,30}\b(increased|decreased|by geography|by segment|by region)\b|^\s*revenues? by (geography|segment|region|product)\b/i;
+export function cleanOwnerFlags(flags) {
+  return (Array.isArray(flags) ? flags : []).filter((f) => f && typeof f.quote === "string" && f.quote.length >= 30 && !MISTAGGED_FLAG.test(f.quote));
+}

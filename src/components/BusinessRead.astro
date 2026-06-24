@@ -18,7 +18,7 @@ import { insurerQuality } from "../lib/insurers.mjs";
 import { feeQuality } from "../lib/feeFinancials.mjs";
 import { managedCareQuality } from "../lib/managedCare.mjs";
 import { financialKind, financialSubtype } from "../lib/archetype.mjs";
-import { businessLever, businessPhrase, weakLede, pickNote } from "../lib/business.mjs";
+import { businessLever, businessPhrase, weakLede, pickNote, cleanOwnerFlags } from "../lib/business.mjs";
 import notes from "../data/notes.json";
 
 const { company } = Astro.props;
@@ -64,7 +64,7 @@ if (segPick?.raw?.hasOperatingIncome) {
 // driver, reusing the same ownerFlags the section below sets against the numbers. A
 // pointer, not a repeat: the quote and the weld stay in "what the filing emphasizes".
 const DRIVER_LENSES = new Set(["Customer concentration", "Pricing power & competition", "Supplier & input dependence", "Concentrated dependence", "Cyclicality & demand"]);
-const oflags = L?.ownerFlags || [];
+const oflags = cleanOwnerFlags(L?.ownerFlags);
 const topFlag = oflags.find((f) => DRIVER_LENSES.has(f.lens)) || oflags[0] || null;
 const flagPointer = topFlag
   ? ` On its own account, the filing leans hardest on ${topFlag.lens.toLowerCase()}, set against the numbers in what the filing emphasizes, below.`
