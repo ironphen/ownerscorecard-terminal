@@ -5,15 +5,17 @@ import fundamentals from "../data/fundamentals.json";
 import { roicValue, ownerEarningsMargin, liquidAssets, cashConversionCycle, debtReliable, topLineRevenue } from "../lib/fundamentals.mjs";
 import { financialKind, classify } from "../lib/archetype.mjs";
 
-// The vocabulary of ownership, in one place. Each term is defined once, in plain
-// language, with why an owner cares and the honest limit of the measure. The company
-// pages link into it; this is where a reader learns the word for good.
+// One learning hub: first the method — how to read a business, start to finish, in the order an owner
+// asks the questions — then the vocabulary, every term defined once. The method pronounces no verdict
+// and names no stock; the whole point is to hand the reader the questions, not the answers. Static
+// prose, nothing computed. The /concepts URL is preserved because every company page links into its
+// #term anchors; the method sits above them, and #vocabulary jumps straight to the glossary.
 const byGroup = (key) => CONCEPTS.filter((c) => c.group === key);
 
-// Bridge each measurable idea to reality: the catalog companies where it shows up most
-// plainly, so a reader can leave the definition and go watch it at work. Same sourced
-// figures, recognizable names only (a revenue floor), never a recommendation, just where
-// the number runs high (or, for dilution, where it runs the wrong way).
+// Bridge each measurable idea to reality: the catalog companies where it shows up most plainly, so a
+// reader can leave the definition and go watch it at work. Same sourced figures, recognizable names
+// only (a revenue floor), never a recommendation, just where the number runs high (or, for dilution,
+// where it runs the wrong way).
 const big = (fundamentals.companies || []).filter((c) => (topLineRevenue(c.lines, c) || 0) > 3e9);
 const ind = big.filter((c) => !financialKind(c));
 const median = (xs) => { const s = [...xs].sort((a, b) => a - b); return s.length ? s[Math.floor((s.length - 1) / 2)] : null; };
@@ -22,10 +24,6 @@ const grossM = (c) => { const L = c.lines || {}; return L.revenue && L.costOfRev
 const netCashOf = (c) => { const L = c.lines || {}; return debtReliable(L) ? (liquidAssets(L) || 0) - (L.totalDebt || 0) : null; };
 const topBy = (pool, metric, n = 6, asc = false) =>
   pool.map((c) => ({ t: c.ticker, v: metric(c) })).filter((x) => x.v != null).sort((a, b) => (asc ? a.v - b.v : b.v - a.v)).slice(0, n).map((x) => x.t);
-// Gross margin is only a clean pricing-power read where cost of revenue is tagged the
-// usual way; utilities and heavy industrials tag it erratically and read artificially
-// wide, so we draw the examples from consumer brands and asset-light businesses, which is
-// also exactly where a wide gross margin means pricing power.
 const brandLike = ind.filter((c) => ["consumer", "assetLight"].includes(classify(c).sector.key));
 const EXEMPLARS = {
   roic: { label: "Returns that have held highest across the record", tickers: topBy(ind, medianRoic) },
@@ -36,23 +34,245 @@ const EXEMPLARS = {
 };
 ---
 
-<BaseLayout title="Concepts, Owner Scorecard">
+<BaseLayout title="How to read a business, Owner Scorecard">
   <header class="hero">
-    <h1>The vocabulary of ownership</h1>
+    <h1>How to read a business</h1>
     <p class="dek">
-      Every term the pages use, defined once and in plain language. Learn the word here and it
-      travels with you to any filing you open, in this catalog or not.
+      Not a stock — a business. The difference is the whole method. A stock is a price that jumps around
+      all day; a business is a thing that sells something to someone and keeps part of what comes in.
+      Learn to read the second and the first stops frightening you. Here is the order to read it in, the
+      same order every page in this catalog follows — and below it, the vocabulary you will need.
     </p>
   </header>
 
-  <section class="band intro">
+  <section class="band">
     <div class="prose">
       <p>
-        The hard part of investing is not the arithmetic; it is knowing which few numbers matter and
-        what each one is honestly telling you. This page collects the handful of ideas the whole
-        method runs on, from owner earnings to the margin of safety, each with the reasoning behind it
-        and the place it can mislead you. None of it is secret, and none of it requires a terminal. Read
-        the entry, then go watch the idea at work on a real company.
+        Graham taught that an investment operation is one which, on thorough analysis, promises safety of
+        principal and an adequate return — and that everything else is speculation. Buffett added the part
+        that makes it doable: you do not have to study every business, only stay inside the few you can
+        understand, and there judge them as an owner would, on the cash they will hand their owners over
+        time. Munger supplied the discipline that protects you from yourself — invert, look for the ways
+        it fails, and pass on anything you cannot hold in your head.
+      </p>
+      <p>
+        None of that requires a terminal, a model, or a forecast. It requires reading the filing in a
+        sensible order and being honest about what you find. The pages here lay that reading out for you,
+        every figure traced to the company's own SEC filings, and they stop where judgment begins: they
+        present the evidence and never tell you the answer. The answer is yours to form. What follows is
+        how to form it — five questions, in the order an owner asks them. Read along on a real one as you
+        go: <a href="/c/KO">open Coca-Cola</a> and find each part as it comes up.
+      </p>
+    </div>
+  </section>
+
+  <section class="band">
+    <h2>1 · What is it?</h2>
+    <div class="prose">
+      <p>
+        Start where an owner starts, not where a trader starts. Before a single ratio: what does this
+        company sell, to whom, and how does it turn that into money? If you cannot say it in a plain
+        sentence — the way you would explain it to someone at dinner — you do not yet understand it well
+        enough to own it, and no amount of arithmetic will rescue you. Buffett's filter has always been
+        this simple and this strict: stay inside what you can explain.
+      </p>
+      <p>
+        On the page this is <b>What it is</b> and <b>Where the money comes from</b>. Read them together.
+        The first says, in a few sentences drawn from the filing, what the business does and what one or
+        two things actually decide its fate. The second follows the money into its segments and
+        geographies — and shows you the concentration, because a company that earns most of its profit
+        from one product or one country is carrying a risk the headline revenue hides. A business you can
+        describe and whose money you can trace is a business you can begin to judge. One you cannot is one
+        to put back on the shelf.
+      </p>
+    </div>
+  </section>
+
+  <section class="band">
+    <h2>2 · Is it a good business?</h2>
+    <div class="prose">
+      <p>
+        Now the economics. A good business, in the sense that matters to an owner, is one that earns a
+        high return on the capital tied up in it and can do so again next year without a fight. Buffett's
+        test is whether a dollar retained in the business becomes more than a dollar of market value over
+        time — and that only happens when the business earns well above its cost of capital. So you look
+        at the return on capital across the whole record, not one year, and you look at how much of each
+        sales dollar actually reaches owners as cash — <a href="#owner-earnings">owner earnings</a>,
+        operating cash less the capital spending needed just to stand still.
+      </p>
+      <p>
+        On the page this is <b>The record</b> — a decade in one table, meant to be read <i>down the rows,
+        a single line across all its years</i>, not across one year's column — and the <b>Is it a good
+        business?</b> and <b>Earnings power</b> reads beside it. Watch three things. Has the
+        <a href="#roic">return on capital</a> stayed high through good years and bad? Does owner earnings
+        track the reported profit, or do the two drift apart (a sign the profit is not turning into cash)?
+        And is this year a fair one to judge by, or a peak or a trough — Graham's whole point in
+        normalizing across a cycle. A wonderful business answers all three the same way for years on end.
+        A mediocre one earns its keep only at the top of its cycle.
+      </p>
+    </div>
+  </section>
+
+  <section class="band">
+    <h2>3 · Will it last?</h2>
+    <div class="prose">
+      <p>
+        A high return invites competition the way honey invites bears. So the next question is the one
+        Munger cared about most: is there a moat — some durable reason the returns will still be here in
+        ten years — and can the business get through a bad decade without a forced sale or a wiped-out
+        balance sheet? This is two questions, and the order matters. First survival, then durability.
+        Graham's first rule was never to lose; only a business that lives gets to compound.
+      </p>
+      <p>
+        On the page, survival is <b>Will it survive?</b> and <b>Current Position</b> — can it pay its
+        interest, cover its near-term bills, get through a downturn without depending on the kindness of
+        lenders. Durability is <b>Durability &amp; moat</b>, and notice how it is written: it names the
+        moat as a <i>test to watch</i> — pricing power that should show in margins that hold under
+        pressure, switching costs that should show in customers who stay — and never as a fact the company
+        possesses. That restraint is deliberate. A moat asserted is a story; a moat that shows up in the
+        numbers, year after year, is an asset. The page hands you the place to look; whether the evidence
+        is there is your call.
+      </p>
+    </div>
+  </section>
+
+  <section class="band">
+    <h2>4 · Who is running it, and what do they do with the cash?</h2>
+    <div class="prose">
+      <p>
+        A good business can be ruined by what is done with its profits, and a fair one made richer. After
+        the operating return, a management's most important job is capital allocation — what it does with
+        the cash the business throws off: reinvest it, buy other companies, pay it out, or buy back its
+        own shares. Buffett judges the buybacks especially closely, because a repurchase made cheap builds
+        per-share value and one made dear quietly destroys it. And underneath all of it sits the question
+        of candor: does management tell its owners the truth, in plain words, including the bad news?
+      </p>
+      <p>
+        On the page this is <b>How is the cash used?</b>, <b>Management &amp; pay</b>, and the candor read
+        of what the filing emphasizes and how it talks to owners. Watch whether retained earnings have
+        actually produced growth in value, whether buybacks were made when the shares were cheap or only
+        when flush, and whether the filing owns its problems or buries them in adjusted figures and
+        cheerful adjectives. Munger's rule of thumb is worth keeping here: show me the incentive and I
+        will show you the outcome.
+      </p>
+    </div>
+  </section>
+
+  <section class="band">
+    <h2>5 · Invert — then, only then, the price.</h2>
+    <div class="prose">
+      <p>
+        Before you let yourself like a business, turn it over. Munger's habit was to invert: do not ask
+        how this succeeds, ask how it fails — what would have to go wrong, and how likely is it. The page
+        does this for you in <b>Inverting the record</b>, reading the record for the cracks rather than
+        the case. If the bad cases are survivable and unlikely, you have something. If one of them is a
+        coin-flip that ends the company, no price is cheap enough.
+      </p>
+      <p>
+        And the price comes <i>last</i>, on purpose. A great business at a foolish price is a poor
+        investment; a fair one bought with a margin of safety is Graham's whole edifice. <b>The price</b>
+        and <b>What the price implies</b> turn the reverse-DCF around: instead of pretending to forecast,
+        they show you what growth the current price is already counting on, so you can ask whether the
+        record makes that plausible or heroic. The
+        <a href="#margin-of-safety">margin of safety</a> is the gap between what you pay and what the
+        business is worth — and the wider it is, the less your judgment has to be right.
+      </p>
+    </div>
+  </section>
+
+  <section class="band">
+    <h2>A note · some businesses read differently</h2>
+    <div class="prose">
+      <p>
+        Most companies sell a thing and keep part of what comes in, and the five questions read them
+        straight. But a few kinds run on a different engine, and forcing them through the ordinary gauges
+        — gross margin, owner earnings, return on invested capital — tells you nothing, or worse, tells
+        you something false. The pages know this and switch instruments; here is what changes, and why,
+        for the three you will meet most. The questions do not change. Only the gauges do.
+      </p>
+      <p>
+        <b>A bank</b> sells money, and money is a commodity, so a bank wins not on margin but on funding
+        itself cheaply — sticky, low-cost deposits — and lending wisely. A bank <i>is</i> a balance
+        sheet, so you read it on <a href="#return-on-equity">return on equity</a>, the efficiency of the
+        operation, and how thin the equity is against the assets, not on a margin. And the danger hides: a
+        bank looks most profitable in the year just before its bad loans surface, because the losses were
+        always in the book, merely unreserved. Buffett's caution is the whole of it — leverage turns a
+        small underwriting mistake into a large one — which is why you judge a bank across a full credit
+        cycle, never one fair-weather year. <a href="/c/JPM">See it on JPMorgan</a>.
+      </p>
+      <p>
+        <b>An insurer</b> takes premiums today and pays claims years later, and in between it holds the
+        money. Buffett built Berkshire on what that money is: <i>float</i> — funds the insurer holds but
+        does not own, free to invest for its own account until the claims come due. A great underwriter is
+        <i>paid</i> to hold its float, taking in more in premiums than it pays out (a combined ratio under
+        100), so the float is leverage that costs less than nothing and compounds in the book value; a
+        poor one pays for the privilege. So you read an insurer on the combined ratio — underwriting
+        profit or loss — and on the growth in book value the float makes possible, not on a margin.
+        <a href="/c/PGR">See it on Progressive</a>.
+      </p>
+      <p>
+        <b>A property trust</b> is the case where the accounting itself misleads: GAAP makes a REIT
+        depreciate buildings that are often appreciating, so reported "earnings" understate the cash by a
+        wide margin. The honest figure is <a href="#ffo">funds from operations</a> — cash earnings with
+        that paper depreciation added back — read against what the trust pays out and the debt stacked
+        behind the property. Net income is the wrong number here; FFO is the right one.
+        <a href="/c/O">See it on Realty Income</a>.
+      </p>
+      <p>
+        In every case the spirit is the same. Ask what the business actually does with money, find the
+        gauge that measures it honestly, and distrust the one the accounting hands you when it flatters.
+        That is the discipline behind every page: the right instrument for the business, and the reasons
+        shown so you can check them.
+      </p>
+    </div>
+  </section>
+
+  <section class="band">
+    <h2>The most important idea, saved for last · Mr. Market</h2>
+    <div class="prose">
+      <p>
+        Graham left one character for the end, and Buffett has called him the most valuable idea in all
+        of investing. Imagine you own half of a business with a partner — call him Mr. Market — who is
+        obliging to a fault: every single day he names a price at which he will either buy your half or
+        sell you his. He is also, unfortunately, emotionally unstable. Some days he is euphoric and can
+        see only the good ahead, so he names a wildly high price; other days he is despairing and will
+        offer you his half for a pittance. And he does not mind being ignored — turn him down today and he
+        is back tomorrow with a new quote.
+      </p>
+      <p>
+        The point of the allegory is the whole point of this site. Mr. Market's prices are there to
+        <i>serve</i> you, not to instruct you. A quote that has fallen is not a fact about the business;
+        it is an offer, and an offer is only good news to someone who knows what the thing is worth. That
+        is the entire reason to read a business the way these pages lay it out — so that when Mr. Market is
+        fearful you are equipped to buy from him, when he is greedy you can sell to him, and the rest of
+        the time you can let him shout and go back to reading. Graham's other warning belongs here too:
+        the investor's chief problem, and even his worst enemy, is likely to be himself. The numbers are
+        the easy part. The discipline to act on them, and only on them, is the part no page can do for you.
+      </p>
+    </div>
+  </section>
+
+  <section class="band bridge">
+    <div class="prose">
+      <p>
+        That is the whole of it: understand it, judge its economics, test that they will last, weigh its
+        stewards, invert, and only then look at the price — five questions, on one business at a time. The
+        words you will meet along the way are defined below; learn one and it travels with you to any
+        filing you open, in this catalog or not. Then do as Buffett said and start with the
+        <a href="/">A's</a>.
+      </p>
+    </div>
+  </section>
+
+  <section class="band intro" id="vocabulary">
+    <h2>The vocabulary of ownership</h2>
+    <div class="prose">
+      <p>
+        The hard part of investing is not the arithmetic; it is knowing which few numbers matter and what
+        each one is honestly telling you. Below is the handful of ideas the whole method runs on, from
+        owner earnings to the margin of safety, each with the reasoning behind it and the place it can
+        mislead you. None of it is secret, and none of it requires a terminal. Read the entry, then go
+        watch the idea at work on a real company.
       </p>
     </div>
     <nav class="grpnav" aria-label="Sections">
@@ -126,6 +346,9 @@ const EXEMPLARS = {
     .band h2 { border-bottom: 1px solid var(--rule-strong); padding-bottom: 6px; scroll-margin-top: 12px; }
     .sub { font-family: var(--serif); font-style: italic; color: var(--muted); margin: 10px 0 0; max-width: 66ch; }
     .prose p { font-size: 16px; line-height: 1.65; color: var(--ink-soft); margin: 12px 0 0; max-width: 68ch; }
+    .prose b { font-weight: 650; color: var(--ink); }
+    .prose i { font-style: italic; }
+    .bridge { border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); padding: 18px 0; }
 
     .intro { margin-top: 26px; }
     .grpnav { display: flex; flex-wrap: wrap; gap: 6px 8px; margin: 18px 0 0; }
