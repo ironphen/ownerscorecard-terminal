@@ -571,6 +571,18 @@ export function operatingMargin(L) {
   return L && L.operatingIncome != null && L.revenue ? L.operatingIncome / L.revenue : null;
 }
 
+// Gross margin, with an arithmetic sanity check: it can never sit below the operating margin
+// (operating profit is gross profit less operating costs, which are not negative). When it computes
+// below — a cost-of-revenue line mis-tagged, printing a negative gross beside a healthy operating
+// margin, as GE's does — the cost figure is wrong, so withhold rather than render an impossible number.
+export function grossMargin(L) {
+  if (!L || !L.revenue || L.costOfRevenue == null) return null;
+  const gm = 1 - L.costOfRevenue / L.revenue;
+  const om = L.operatingIncome != null ? L.operatingIncome / L.revenue : null;
+  if (om != null && gm < om - 0.01) return null;
+  return gm;
+}
+
 export function ownerEarningsMargin(L, company) {
   if (!L || L.cashFromOps == null || L.capex == null || !L.revenue) return null;
   // Buffett's owner earnings: operating cash less maintenance capex, not total capex (which would be

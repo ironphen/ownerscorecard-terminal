@@ -193,7 +193,28 @@ export function pickNote(notesData, ticker) {
 // a real risk the filing raises. Munger's "no flim-flam": "what the filing emphasizes" must show the
 // company's own words on what could go wrong, not a mis-read table caption. Render-side only; the raw
 // flag stays in the data.
-const MISTAGGED_FLAG = /\bthe following table\b|\btable (below|presents)\b|\bcash (used in|provided by) (operating|investing|financing) activities\b|\b(revenues?|net (sales|income|cash)|operating (income|cash|expenses?)|gross (profit|margin))\b[^.]{0,30}\b(increased|decreased|by geography|by segment|by region)\b|^\s*revenues? by (geography|segment|region|product)\b/i;
+const MISTAGGED_FLAG = new RegExp([
+  // statement / table headers and cash-flow lines
+  "\\bthe following table\\b", "\\btable (below|presents)\\b",
+  "\\b(financing|investing|operating) activities\\s*\\$", "\\bcash (used in|provided by) (operating|investing|financing) activities\\b",
+  // MD&A variance and results sentences (a movement, not a risk)
+  "\\bcost of (sales|revenue|goods)\\b[^.]{0,30}\\b(increased|decreased|was|associated)\\b",
+  "\\boperating margins?\\b[^.]{0,45}\\b(reflect|was|were|impacted|positively|negatively|for \\d{4})\\b",
+  "\\b(revenues?|net (sales|income|cash)|operating (income|cash|expenses?)|gross (profit|margin))\\b[^.]{0,30}\\b(increased|decreased|by geography|by segment|by region)\\b",
+  "\\b\\d+(\\.\\d+)?\\s*%\\s+(growth|increase|decrease) in\\b",
+  // accounting-policy definitions
+  "\\b(includes all|classif\\w+ all)\\b[^.]{0,40}\\b(highly liquid|debt instruments|marketable|cash equivalents)\\b",
+  // exhibit / contract / indenture indices
+  "\\bas trustee,?\\s+relating to\\b", "\\bmaterial contracts\\b", "\\b\\d+(\\.\\d+)?\\s*% (senior|subordinated)\\b",
+  // currency-sensitivity tables
+  "\\bchange in (usd|eur|jpy|fx|exchange|[a-z]{3}) rate\\b[^.]{0,30}\\beffect on\\b", "\\bschedule of foreign currency\\b",
+  // affirmations of NO dependence — the opposite of a risk
+  "\\bdoes not consider any of its businesses\\b", "\\bnot materially (dependent|reliant)\\b", "\\bneither our business as a whole\\b",
+  // cross-references to another item, not a risk in themselves
+  "\\bin item \\d+[a-z]? of this (annual report|report|form)\\b",
+  // geography / segment revenue tables
+  "^\\s*revenues? by (geography|segment|region|product)\\b",
+].join("|"), "i");
 export function cleanOwnerFlags(flags) {
   return (Array.isArray(flags) ? flags : []).filter((f) => f && typeof f.quote === "string" && f.quote.length >= 30 && !MISTAGGED_FLAG.test(f.quote));
 }

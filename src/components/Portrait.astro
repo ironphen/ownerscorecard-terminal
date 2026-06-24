@@ -1,5 +1,5 @@
 ---
-import { fmtMoney, roicValue, operatingMargin, ownerEarningsMargin, topLineRevenue, debtReliable } from "../lib/fundamentals.mjs";
+import { fmtMoney, roicValue, operatingMargin, ownerEarningsMargin, topLineRevenue, debtReliable, grossMargin } from "../lib/fundamentals.mjs";
 import { returnOnEquity, returnOnTangibleEquity, efficiencyRatio, equityToAssets, returnOnAssets } from "../lib/financials.mjs";
 import { ffoMargin, ffoPayout, debtToAssets } from "../lib/reits.mjs";
 import { combinedRatio, lossRatio } from "../lib/insurers.mjs";
@@ -41,7 +41,7 @@ if (revSeries.length >= 4) {
 // for context, is the business running above or below its own recent norm?
 const cur = company.ttm?.lines || L;
 const curLabel = company.ttm?.lines ? "TTM" : `FY${company.fy}`;
-const grossM = (l) => (l && l.revenue && l.costOfRevenue != null ? 1 - l.costOfRevenue / l.revenue : null);
+const grossM = grossMargin;
 const hist5 = hist.slice(-5).map((h) => h.lines);
 const avgLabel = hist5.length >= 5 ? "5-yr average" : hist5.length >= 2 ? `${hist5.length}-yr average` : null;
 const avgShort = avgLabel ? avgLabel.replace("average", "avg") : "";

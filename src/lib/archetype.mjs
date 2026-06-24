@@ -6,7 +6,7 @@
 // Owner-earnings margin, so the key-figures strip reads the same Buffett figure (operating cash
 // less maintenance capex) the scorecard and tables do. Call-time use only, so the fundamentals ↔
 // archetype cycle resolves lazily.
-import { ownerEarningsMargin } from "./fundamentals.mjs";
+import { ownerEarningsMargin, oiReliable } from "./fundamentals.mjs";
 
 const ratio = (n, d) => (n != null && d ? n / d : null);
 const pct = (v, dp = 0) => (v == null ? "—" : `${(v * 100).toFixed(dp)}%`);
@@ -145,6 +145,14 @@ export function financialProfile(company) {
     const mreitNII = L.netInterestIncome != null && L.netInterestIncome > 0;
     const tinyDep = L.depreciation != null && L.totalAssets ? Math.abs(L.depreciation) / L.totalAssets < 0.015 : false;
     if (mreitNII && tinyDep) return { kind: "bank", subtype: "mortgage-reit" };
+    // A real-estate SERVICES firm — brokerage, property and facilities management (CBRE, JLL) — sits
+    // in the same SIC range but earns fees, not rent: it turns its asset base over many times a year,
+    // so revenue is a large fraction of assets. A rent-collecting REIT turns its property slowly —
+    // even a high-yield or operating REIT keeps revenue well under half of a heavy, depreciating asset
+    // base — so an asset turn above ~0.5 marks a services operator, not a property trust. The FFO
+    // scorecard is meaningless for it, so read it as the operating business it is.
+    const assetTurn = L.revenue != null && L.totalAssets ? L.revenue / L.totalAssets : null;
+    if (assetTurn != null && assetTurn > 0.5) return { kind: null, subtype: null };
     return { kind: "reit", subtype: "reit" };
   }
   if (sic >= 6300 && sic <= 6499) {
@@ -403,11 +411,23 @@ export function classify(company) {
   const s = shapeOf(company);
   let key = sectorFromSIC(company?.sic);
   let bySic = key != null;
+  // A semiconductor maker that owns its fabs (TSMC, Intel, ASE) is capital-intensive, not asset-light,
+  // however the chip SIC defaults. Scoped to the semiconductor codes on purpose: a software business
+  // pouring capex into AI data centers (Oracle, Microsoft) is still asset-light in character — a temporary
+  // build-out, not heavy plant — so it must not be swept up. A fabless chip designer (low capex) stays
+  // asset-light too.
+  const sicN = Number(company?.sic) || 0;
+  if (key === "assetLight" && sicN >= 3670 && sicN <= 3679 && s.capexToRev != null && s.capexToRev >= 0.12) { key = "capital"; bySic = false; }
   // A catch-all finance SIC that the financial-profile tiebreak rejected (a crypto miner or fintech
   // with no lending balance sheet) is not actually a financial; reading it as one would label it a
   // "lender's balance sheet" while showing the industrial scorecard. Recompute its model from shape.
   if (key === "financial" && !financialKind(company)) { key = null; bySic = false; }
   if (!key) key = sectorFromShape(s);
+  // A Japanese trading house (sogo shosha — Mitsubishi, Itochu, Mitsui, Sumitomo, Marubeni) earns
+  // mostly through equity-method affiliates, so its operating line is dwarfed by net income — the same
+  // signature oiReliable flags. That marks a diversified holding-and-trading company, read on the
+  // discipline of its capital allocation, not the consumer brand the thin-shape fallback guesses.
+  if (company?.market === "JP" && !oiReliable(company)) key = "general";
   // The distress, build-out and cyclical overlays are industrial heuristics (built on
   // operating cash flow, capex and operating margin) that misfire on a bank, whose
   // cash-flow statement and capex mean something different. Keep only "unprofitable"
