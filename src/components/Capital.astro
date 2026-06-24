@@ -48,7 +48,10 @@ const facts = cap
         key: "sharecount",
         label: "Did the share count actually fall?",
         value: cap.shareChange != null ? pct(cap.shareChange, 1) : "—",
-        cls: cap.shareChange != null ? (cap.shareChange <= 0 ? "good" : "warn") : "",
+        // No good/warn colour: a falling count is not unambiguously good (buying back overvalued
+        // stock destroys value) and a rising one can be fine (a growth issuer). The number and the
+        // prose carry it; the page grades nothing.
+        cls: "",
         note: cap.shareChange == null
           ? "No continuous share count across the span."
           : cap.shareChange <= -0.01

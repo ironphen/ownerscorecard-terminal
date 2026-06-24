@@ -63,7 +63,7 @@ export function buildInsurerScorecard(company, subtype = "insurer") {
     concept: "insurance-float",
     value: $(fl), formula: `Loss and claim reserves ${$(fl)}${fe != null ? `, ${fe.toFixed(1)}× equity` : ""}`,
     tone: "info", label: fe != null ? `${fe.toFixed(1)}× equity` : "policyholder money held",
-    note: "Money collected as premiums and held against future claims, invested in the meantime. Buffett's insight was that good underwriting makes this float cost less than nothing, a pool of other people's money the owners earn on. The larger it is against equity, the more that leverage works, for better or worse.",
+    note: "Money held against future claims and invested in the meantime. Buffett's insight was that good underwriting makes this float cost less than nothing, a pool of other people's money the owners earn on. Measured here from loss and claim reserves only; it excludes unearned premiums and funds held, so the true float is somewhat larger than shown. The larger it is against equity, the more that leverage works, for better or worse.",
   };
   const inv = L.investmentIncome;
   const invCheck = inv == null ? none("Investment income", "Net investment income wasn't found.", "insurance-float") : {

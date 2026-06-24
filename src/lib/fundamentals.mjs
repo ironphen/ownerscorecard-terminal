@@ -296,11 +296,14 @@ export function roic(c) {
   const tax = L.incomeTaxExpense, ni = L.netIncome;
   if (tax != null && ni != null && ni + tax > 0) t = Math.min(Math.max(tax / (ni + tax), 0), 0.5);
   const nopat = oi * (1 - t);
-  const r = nopat / invested;
+  // The latest figure carries roicValue's distortion guard, so it is null when large non-operating
+  // charges put the operating line well above pretax profit (an inflated print otherwise).
+  const r = roicValue(L);
   // Judge on the through-cycle median, not this one year: the same franchise reads "exceptional"
   // at the peak and "below average" at the trough. The headline becomes the normalized rate when
   // the record allows; the latest year moves to the formula and note.
   const tc = throughCycle(c, roicValue);
+  if (r == null && tc == null) return null;
   const j = tc ? tc.median : r;
   const pct = (x) => `${(x * 100).toFixed(0)}%`;
   const tone = j < 0.08 ? "warn" : j < 0.15 ? "ok" : "good";
@@ -308,12 +311,14 @@ export function roic(c) {
   return {
     value: tc ? pct(j) : pct(r),
     formula: tc
-      ? `${tc.n}-yr median, range ${pct(tc.lo)}–${pct(tc.hi)}; ${pct(r)} latest = NOPAT ${$(nopat)} ÷ invested capital ${$(invested)}`
+      ? `${tc.n}-yr median, range ${pct(tc.lo)}–${pct(tc.hi)}` + (r != null
+          ? `; ${pct(r)} latest = NOPAT ${$(nopat)} ÷ invested capital ${$(invested)}`
+          : `; the latest year is left out — large non-operating charges put its operating line well above pretax profit`)
       : `NOPAT ${$(nopat)} ÷ invested capital ${$(invested)} (debt + equity − cash)`,
     tone,
     label,
     note: "The rate the business earns on the money tied up in it, Buffett's north star, because over time a stock tracks the ROIC beneath it. Above ~15% sustained hints at a moat; below ~8% the company may destroy value as it grows."
-      + (tc ? ` The headline is the median of the last ${tc.n} years (it ran ${pct(r)} most recently), so one peak or trough year doesn't set the verdict.` : "")
+      + (tc && r != null ? ` The headline is the median of the last ${tc.n} years (it ran ${pct(r)} most recently), so one peak or trough year doesn't set the verdict.` : tc ? ` The headline is the median of the last ${tc.n} years, so one peak or trough year doesn't set the verdict.` : "")
       + " Asset-light businesses (R&D expensed, little capital) read artificially high, pair this with Owner Earnings.",
   };
 }
@@ -546,8 +551,18 @@ export function roicValue(L) {
   const debt = L.totalDebt || 0;
   const invested = debt + eq - (L.cashAndEquivalents || 0);
   if (invested <= 0) return null;
-  let t = 0.21;
   const tax = L.incomeTaxExpense, ni = L.netIncome;
+  // The numerator is the after-tax operating profit available to ALL capital. The operating line
+  // should exceed pretax income by roughly the interest bill (interest being debt's share of the
+  // return); when, NET of a known interest bill, it still exceeds pretax by far more, large
+  // non-operating charges (impairments, pension, equity-method losses) sit below the operating line,
+  // so it overstates what the capital earned — decline rather than print an inflated figure (Alcoa:
+  // a ~48% print on a true ~16% return). Only when interest is actually tagged: with interest
+  // unknown we cannot tell a real interest gap from a non-operating one, so we leave it alone.
+  const pretax = ni != null && tax != null ? ni + tax : null;
+  const ie = L.interestExpense;
+  if (pretax != null && ie != null && ie > 0 && oi > 0 && oi - Math.abs(ie) > pretax * 1.5) return null;
+  let t = 0.21;
   if (tax != null && ni != null && ni + tax > 0) t = Math.min(Math.max(tax / (ni + tax), 0), 0.5);
   return (oi * (1 - t)) / invested;
 }

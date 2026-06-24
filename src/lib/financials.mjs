@@ -89,13 +89,20 @@ export function buildFinancialScorecard(company) {
     note: "The cleaner return, stripping out the goodwill paid for past acquisitions. This is the number a buyer of the whole bank actually earns on the hard capital.",
   };
   const eff = efficiencyRatio(L);
+  // A 20-F/IFRS filer structures its income statement without the clean US noninterest-income /
+  // -expense split, so the same formula picks up partial sub-lines and lands systematically lower.
+  // For those we keep the figure but drop the lean/bloated grade, the way depositFunding suppresses
+  // a sub-10% deposit ratio, rather than apply US thresholds to a number whose definition differs.
+  const effAdr = company?.market === "ADR";
   const effCheck = eff == null ? none("Efficiency ratio", "Noninterest expense or revenue missing.", "efficiency-ratio") : {
     title: "Efficiency ratio",
     concept: "efficiency-ratio",
     value: pc(eff), formula: `Noninterest expense ${$(L.noninterestExpense)} ÷ (net interest income + fees)`,
-    tone: eff > 0.75 ? "bad" : eff > 0.65 ? "warn" : eff > 0.58 ? "ok" : "good",
-    label: eff > 0.75 ? "Bloated" : eff > 0.65 ? "Average" : eff > 0.58 ? "Efficient" : "Lean",
-    note: "The share of revenue eaten by running costs; lower is better, and below about 60% marks a genuinely efficient operation. A low ratio held for years is the operational side of a moat.",
+    tone: effAdr ? "info" : eff > 0.75 ? "bad" : eff > 0.65 ? "warn" : eff > 0.58 ? "ok" : "good",
+    label: effAdr ? "Cost-income, not comparable to the US grades" : eff > 0.75 ? "Bloated" : eff > 0.65 ? "Average" : eff > 0.58 ? "Efficient" : "Lean",
+    note: effAdr
+      ? "The share of revenue eaten by running costs. A 20-F/IFRS filer structures its income statement differently from a US bank, so this figure is not comparable to the US thresholds and is shown without a lean/bloated grade — read it against the bank's own history, not across the pool."
+      : "The share of revenue eaten by running costs; lower is better, and below about 60% marks a genuinely efficient operation. A low ratio held for years is the operational side of a moat.",
   };
 
   // Is it sound: capital, funding, credit cost.
@@ -152,7 +159,9 @@ export function financialQuality(company) {
   s1 += ".";
 
   let s2 = "";
-  if (eff != null) s2 = ` It runs at a ${pc(eff)} efficiency ratio, ${eff < 0.6 ? "lean" : eff < 0.68 ? "about average" : "on the heavy side"}.`;
+  // Skip the lean/heavy characterization for 20-F/IFRS filers, whose efficiency ratio is not
+  // comparable to the US thresholds (see the scorecard note).
+  if (eff != null && company?.market !== "ADR") s2 = ` It runs at a ${pc(eff)} efficiency ratio, ${eff < 0.6 ? "lean" : eff < 0.68 ? "about average" : "on the heavy side"}.`;
 
   const s3 = med >= 0.12
     ? " A bank that earns above its cost of equity through the cycle compounds book value; whether this one did it by underwriting discipline or by reaching for risk is what the 10-K, and the worst years in the record, will tell you."
