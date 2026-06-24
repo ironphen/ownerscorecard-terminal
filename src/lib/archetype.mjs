@@ -261,7 +261,14 @@ function sectorFromShape(s) {
   const loInv = s.invToRev == null || s.invToRev < 0.05;
   const someInv = s.invToRev != null && s.invToRev >= 0.1;
   const hiCapex = s.capexToRev != null && s.capexToRev >= 0.08;
+  // Owned-or-leased plant that is a large share of the balance sheet marks a capital-intensive
+  // operator however fat the margin or however little inventory it holds — a theater chain or a
+  // hospital that leases its buildings reads heavy here, where the margin-and-inventory test alone
+  // had read it light. Balance-sheet share (not the revenue multiple) is the signal, so a thin-revenue
+  // company cannot trip it on a near-zero denominator.
+  const heavyPlant = s.ppeToAssets != null && s.ppeToAssets >= 0.35;
   if (hiCapex) return "capital";              // heavy fixed assets
+  if (heavyPlant) return "capital";           // owned or leased plant dominates the balance sheet
   if (loInv && hiGM) return "assetLight";     // IP-led, inventory-light, fat margins
   if (hiGM) return "consumer";                // fat margins on modest capex → a brand
   if (someInv) return "capital";              // makes physical goods at scale on thin margins
@@ -406,6 +413,15 @@ function shapeOf(company) {
     capexToRev: ratio(L.capex != null ? Math.abs(L.capex) : null, rev),
     sbcToRev: ratio(L.stockBasedComp, rev),
     capex: L.capex != null ? Math.abs(L.capex) : null,
+    // Owned plant (net PP&E) plus the leased plant a business runs on (the operating-lease
+    // right-of-use asset). Intensity against sales and against the balance sheet is the evidence
+    // that separates a capital-intensive operator from an asset-light one when margins and inventory
+    // alone mislead. A null line reads as zero, so a company missing the data simply reads light.
+    ppeToRev: ratio((L.netPPE || 0) + (L.operatingLeaseAsset || 0), rev),
+    // PP&E plus the lease asset are components of total assets, so the ratio cannot exceed ~1; a value
+    // well above it is a mis-scaled or stale data point (GIBO at 130×), not a real reading — decline it
+    // rather than let it force a classification.
+    ppeToAssets: (() => { const a = L.totalAssets ? ((L.netPPE || 0) + (L.operatingLeaseAsset || 0)) / L.totalAssets : null; return a != null && a <= 1.5 ? a : null; })(),
   };
 }
 
@@ -442,6 +458,13 @@ export function classify(company) {
   // asset-light too.
   const sicN = Number(company?.sic) || 0;
   if (key === "assetLight" && sicN >= 3670 && sicN <= 3679 && s.capexToRev != null && s.capexToRev >= 0.12) { key = "capital"; bySic = false; }
+  // A "cloud" or "AI-infrastructure" operator carries a software SIC but owns or leases the data
+  // centers and servers it rents out, so its plant both dwarfs its revenue AND is the bulk of its
+  // balance sheet — CoreWeave, Applied Digital. Read it as the capital-intensive operator it is. The
+  // dual test holds out a true software business pouring a temporary buildout into AI capacity (Oracle,
+  // Microsoft, Google), whose plant stays a minority of a far larger asset base, and a cash-rich
+  // pre-revenue name (Aurora, IonQ) whose plant is tiny against its war chest.
+  if (key === "assetLight" && sicN >= 7370 && sicN <= 7379 && s.ppeToRev != null && s.ppeToRev >= 1 && s.ppeToAssets != null && s.ppeToAssets >= 0.6) { key = "capital"; bySic = false; }
   // A catch-all finance SIC that the financial-profile tiebreak rejected (a crypto miner or fintech
   // with no lending balance sheet) is not actually a financial; reading it as one would label it a
   // "lender's balance sheet" while showing the industrial scorecard. Recompute its model from shape.
