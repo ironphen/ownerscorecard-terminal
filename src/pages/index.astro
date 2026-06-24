@@ -600,6 +600,15 @@ const STARTERS = ["Apple", "Coca-Cola", "Berkshire", "Costco", "Toyota", "Visa"]
           input.focus();
         }
       });
+
+      // Land and type: on a desktop arriving at the search view, focus the box (without scrolling).
+      // Skipped on touch, where it would pop the keyboard over the page, and when deep-linked to a pool.
+      try {
+        const sv = document.getElementById("searchView");
+        if (sv && !sv.hidden && window.matchMedia && window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
+          input.focus({ preventScroll: true });
+        }
+      } catch (e) {}
     })();
   </script>
 
