@@ -265,6 +265,12 @@ const REIT_REVENUE = [
   "RevenueFromContractWithCustomerIncludingAssessedTax",
 ];
 
+// An insurer's top line is premiums plus net investment income plus fees, all booked under the total
+// "Revenues" tag; the ASC 606 contract-revenue tag captures only the fee sliver (MetLife $2.4B against
+// a ~$72B total). So for insurance carriers we prefer the total and take the largest — the same safe
+// pick-max used for REIT rent, since premiums carry no excise and the size comparison holds.
+const INSURER_REVENUE = ["Revenues", "RevenueFromContractWithCustomerExcludingAssessedTax", "RevenueFromContractWithCustomerIncludingAssessedTax"];
+
 const days = (a, b) => Math.abs((new Date(b) - new Date(a)) / 86400000);
 
 // ---- value extraction (tag-merged) ----
@@ -535,8 +541,9 @@ async function main() {
     // is the whole top line and the one that books a combined total under "Revenues".
     const sicN = Number(sic) || 0;
     const isReitCo = sicN >= 6500 && sicN <= 6799;
-    const revTags = isReitCo ? REIT_REVENUE : CONCEPTS.revenue;
-    const revAnnualBy = annualByYear(facts, revTags, "USD", isReitCo);
+    const isInsurerCo = sicN >= 6300 && sicN <= 6399;
+    const revTags = isReitCo ? REIT_REVENUE : isInsurerCo ? INSURER_REVENUE : CONCEPTS.revenue;
+    const revAnnualBy = annualByYear(facts, revTags, "USD", isReitCo || isInsurerCo);
     const latestRev = latestEntry(revAnnualBy);
     const revLatest = latestRev?.val ?? null;
 
