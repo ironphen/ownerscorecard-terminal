@@ -357,7 +357,7 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
       <p class="note">A reverse-DCF needs positive owner earnings, or at least revenue, to anchor to, there's no clean base here. Judge this one on assets or normalized earnings, not a growth model.</p>
     )
   ) : (
-    <div id="valBox" data-oe={ownerEarnings} data-oe3={oeNormalized ?? ""} data-oemaint={ownerEarningsMaint ?? ""} data-oemaint3={oe3Maint ?? ""} data-sbc={sbcLatest ?? ""} data-gdeliv={(gDeliv5 ?? gDeliv) ?? ""} data-netdebt={netDebt} data-shares={shares} data-haveshares={haveShares ? "1" : "0"} data-name={name} data-eps3={eps3 ?? ""} data-bvps={bvps ?? ""} data-sym={sym}>
+    <div id="valBox" data-oe={ownerEarnings} data-oe3={oeNormalized ?? ""} data-oemaint={ownerEarningsMaint ?? ""} data-oemaint3={oe3Maint ?? ""} data-sbc={sbcLatest ?? ""} data-gdeliv={(gDeliv5 ?? gDeliv) ?? ""} data-netdebt={netDebt} data-shares={shares} data-haveshares={haveShares ? "1" : "0"} data-name={name} data-eps3={eps3 ?? ""} data-bvps={bvps ?? ""} data-rev={rev ?? ""} data-grev={gRevRaw ?? ""} data-sym={sym}>
       <p class="intro">
         A price is the one input we don't pull, <b>you bring it</b>. Type today's close (read it off any
         broker or quote site) and see the owner-earnings growth you'd have to believe to justify it, set
@@ -400,11 +400,15 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
         <div class="cmp"><span class="cl">Implied by the price</span><span class="cv hot" id="impG">—</span></div>
         {gDeliv5 != null ? <div class="cmp"><span class="cl">Owner-earnings growth · 5 yr</span><span class="cv">{gFmt(gDeliv5)}</span></div> : null}
         <div class="cmp"><span class="cl">{dLabel}</span><span class="cv">{dValue}</span>{oeWin ? <Sparkline series={oeWin} klass="cmpSpark" /> : null}</div>
+        <div class="cmp"><span class="cl">Multiple paid</span><span class="cv" id="multPaid">—</span></div>
         <div class="cmp"><span class="cl">Owner-earnings yield</span><span class="cv" id="oeY">—</span></div>
       </div>
 
+      <p class="impOps" id="impOps" hidden></p>
+
       <div class="compare ref" id="refRow" hidden>
         <div class="cmp"><span class="cl">On the growth it delivered</span><span class="cv" id="refG">—</span></div>
+        <div class="cmp"><span class="cl">Justified multiple</span><span class="cv" id="justMult">—</span></div>
         <div class="cmp"><span class="cl">Reference value / share</span><span class="cv hot" id="refV">—</span></div>
         <div class="cmp"><span class="cl">…less a 30% margin of safety</span><span class="cv" id="refMos">—</span></div>
       </div>
@@ -426,6 +430,12 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
         <label>Years of high growth <output id="nOut">10</output><input id="n" type="range" min="5" max="15" step="1" value="10" /></label>
         <label>Terminal growth <output id="gOut">2.5%</output><input id="g" type="range" min="0" max="4" step="0.25" value="2.5" /></label>
         <p class="dialsNote">The discount rate is your interest rate, what a dollar years from now is worth today, anchored to the long-term Treasury yield (~4–5% today, plus whatever premium you want for risk). Drag it toward the risk-free rate and watch how much growth the price suddenly “needs”: interest rates are gravity on valuations.</p>
+      </div>
+
+      <div class="sens" id="sens" hidden>
+        <span class="sensLbl">What the record justifies — the owner-earnings multiple, across the dials</span>
+        <div class="sensWrap"><table class="sensTbl" id="sensTbl" aria-label="Justified owner-earnings multiple by discount rate and years of high growth"></table></div>
+        <p class="sensNote" id="sensNote"></p>
       </div>
 
       <p class="foot">
@@ -487,6 +497,25 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
   .dials input[type="range"] { flex: 1 1 auto; max-width: 320px; accent-color: var(--accent); }
   .dialsNote { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); margin: 10px 0 0; line-height: 1.5; max-width: 70ch; }
 
+  /* The operating picture behind a price: owner earnings reached and the margin it demands. */
+  .impOps { font-family: var(--serif); font-size: 14px; line-height: 1.55; color: var(--ink-soft); background: var(--surface-2); border-left: 2px solid var(--accent); padding: 10px 14px; margin: 14px 0 0; max-width: 76ch; }
+  .impOps[hidden] { display: none; }
+  .impOps b { font-weight: 600; color: var(--ink); }
+  .impOps b.hot { color: var(--accent); }
+
+  /* The sensitivity grid: justified owner-earnings multiple across discount rate × horizon. */
+  .sens { margin: 18px 0 0; }
+  .sens[hidden] { display: none; }
+  .sensLbl { font-size: 11.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+  .sensWrap { overflow-x: auto; margin: 10px 0 0; }
+  .sensTbl { border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: 13px; }
+  .sensTbl th, .sensTbl td { border: 1px solid var(--rule); padding: 5px 13px; text-align: right; white-space: nowrap; }
+  .sensTbl thead th { color: var(--muted); font-weight: 600; font-size: 11px; letter-spacing: 0.03em; }
+  .sensTbl tbody th { color: var(--muted); font-weight: 600; }
+  .sensTbl td { color: var(--ink-dim); }
+  .sensTbl td.now { background: var(--accent-tint); color: var(--accent); font-weight: 700; }
+  .sensNote { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); margin: 9px 0 0; line-height: 1.5; max-width: 72ch; }
+
   .gatenote { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); margin: 8px 0 0; line-height: 1.5; max-width: 70ch; }
   .foot { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); margin: 14px 0 0; line-height: 1.5; max-width: 70ch; }
 
@@ -518,6 +547,9 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
     const oeNorm = document.getElementById("oeNorm"), oeSbc = document.getElementById("oeSbc"), oeMaint = document.getElementById("oeMaint");
     const refRow = document.getElementById("refRow"), refG = document.getElementById("refG"), refV = document.getElementById("refV"), refMos = document.getElementById("refMos");
     const EPS3 = parseFloat(box.dataset.eps3), BVPS = parseFloat(box.dataset.bvps);
+    const REV = parseFloat(box.dataset.rev), GREV = parseFloat(box.dataset.grev);
+    const multPaid = document.getElementById("multPaid"), justMult = document.getElementById("justMult"), impOps = document.getElementById("impOps");
+    const sens = document.getElementById("sens"), sensTbl = document.getElementById("sensTbl"), sensNote = document.getElementById("sensNote");
 
     const pv = (gr, rr, N, gT) => { let p = 0, oe = 1; for (let y = 1; y <= N; y++) { oe *= 1 + gr; p += oe / Math.pow(1 + rr, y); } return p + (oe * (1 + gT)) / (rr - gT) / Math.pow(1 + rr, N); };
     function solve(mult, rr, N, gT) {
@@ -531,6 +563,30 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
     }
     const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
     const pcs = (v) => (v < 0 ? "−" : "") + Math.abs(v * 100).toFixed(1) + "%";
+    const usd = (v) => { const a = Math.abs(v); const s = a >= 1e12 ? SYM + (a / 1e12).toFixed(2) + "T" : a >= 1e9 ? SYM + (a / 1e9).toFixed(1) + "B" : a >= 1e6 ? SYM + Math.round(a / 1e6) + "M" : SYM + Math.round(a); return v < 0 ? "(" + s + ")" : s; };
+
+    // The sensitivity grid: the owner-earnings multiple the delivered growth justifies across a span of
+    // discount rates (down) and high-growth horizons (across), so the reader sees the whole surface at
+    // once — interest-rate gravity down a column, the price of a longer runway across a row — not just
+    // the one cell their dials happen to land on.
+    const R_ROWS = [0.06, 0.08, 0.1, 0.12], N_COLS = [5, 10, 15];
+    const nearest = (arr, x) => arr.reduce((a, b) => (Math.abs(b - x) < Math.abs(a - x) ? b : a));
+    function renderSens(gT, rrCur, NCur) {
+      if (!sens || !sensTbl || isNaN(GDELIV)) { if (sens) sens.hidden = true; return; }
+      const rN = nearest(R_ROWS, rrCur), nN = nearest(N_COLS, NCur);
+      let html = "<thead><tr><th>disc · yrs</th>" + N_COLS.map((n) => "<th>" + n + "y</th>").join("") + "</tr></thead><tbody>";
+      for (const rr of R_ROWS) {
+        html += "<tr><th>" + (rr * 100).toFixed(0) + "%</th>";
+        for (const n of N_COLS) {
+          const m = rr > gT ? pv(GDELIV, rr, n, gT) : null;
+          html += "<td" + (rr === rN && n === nN ? ' class="now"' : "") + ">" + (m != null ? m.toFixed(1) + "×" : "—") + "</td>";
+        }
+        html += "</tr>";
+      }
+      sensTbl.innerHTML = html + "</tbody>";
+      sens.hidden = false;
+      if (sensNote) sensNote.textContent = "Each cell is the owner-earnings multiple a " + pcs(GDELIV) + "/yr record justifies at that discount rate and horizon (then " + (gT * 100).toFixed(1) + "% forever). Your dials sit on the highlighted cell; set the price's multiple against it.";
+    }
 
     // The base the whole tool runs on, made honest by the toggles: a 3-year average instead of
     // one noisy year; the steady-state base that subtracts maintenance capex (≈ depreciation)
@@ -561,27 +617,33 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
       // only when the delivered growth is in a range it's honest to extrapolate.
       if (refRow) {
         if (!isNaN(GDELIV) && GDELIV >= -0.05 && GDELIV <= 0.30 && base > 0 && SH > 0 && rr > gT) {
-          const fairPx = (pv(GDELIV, rr, N, gT) * base - NETDEBT) / SH;
+          const mult = pv(GDELIV, rr, N, gT);
+          const fairPx = (mult * base - NETDEBT) / SH;
           refRow.hidden = false;
           refG.textContent = pcs(GDELIV) + "/yr";
+          if (justMult) justMult.textContent = mult.toFixed(1) + "×";
           refV.textContent = fairPx > 0 ? SYM + fairPx.toFixed(2) : "—";
           refMos.textContent = fairPx > 0 ? SYM + (fairPx * 0.7).toFixed(2) : "—";
-        } else { refRow.hidden = true; }
+          renderSens(gT, rr, N);
+        } else { refRow.hidden = true; if (sens) sens.hidden = true; }
       }
 
       const price = parseFloat(px.value);
       if (!(price > 0)) {
         lede.textContent = "Enter a price above to run it."; impG.textContent = "—"; oeY.textContent = "—";
+        if (multPaid) multPaid.textContent = "—"; if (impOps) impOps.hidden = true;
         if (pe) pe.textContent = "—"; if (pb) pb.textContent = "—"; if (ggate) { ggate.textContent = "—"; ggate.style.color = ""; }
         setURL(""); return;
       }
       if (!(SH > 0)) {
         lede.textContent = "Enter the shares outstanding above to run it."; impG.textContent = "—"; oeY.textContent = "—";
+        if (multPaid) multPaid.textContent = "—"; if (impOps) impOps.hidden = true;
         if (pe) pe.textContent = "—"; if (pb) pb.textContent = "—"; if (ggate) { ggate.textContent = "—"; ggate.style.color = ""; }
         return;
       }
       const mc = price * SH, res = solve(mc / base, rr, N, gT);
       oeY.textContent = pcs(base / mc);
+      if (multPaid) multPaid.textContent = (mc / base).toFixed(1) + "×";
       if (pe || pb || ggate) {
         const peV = EPS3 > 0 ? price / EPS3 : null, pbV = BVPS > 0 ? price / BVPS : null;
         if (pe) pe.textContent = peV != null ? peV.toFixed(1) + "×" : "n/m";
@@ -597,6 +659,20 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
       if (res.cap) lede.innerHTML = `At <b>${P}</b>, even <b class="hot">100%+/yr</b> growth for a decade can't justify the price on owner earnings alone.`;
       else if (res.g < 0) lede.innerHTML = `At <b>${P}</b>, the market is pricing owner earnings to <b>shrink ${pcs(res.g)}/yr</b> for ${N} years, priced for decline.`;
       else lede.innerHTML = `At <b>${P}</b>, the market is pricing <b>${esc(NAME)}</b> to grow owner earnings about <b class="hot">${pcs(res.g)}</b>/yr for ${N} years, then ${(gT * 100).toFixed(1)}% forever, discounted at ${(rr * 100).toFixed(0)}%.`;
+      // The operating picture behind the price: owner earnings compounding at the implied growth to
+      // year N, and the margin that demands on revenue grown at its delivered rate. Skips the capped
+      // case (no finite growth solves it) and the decline case (an end-state below today isn't a reach).
+      if (impOps) {
+        if (!res.cap && res.g != null && isFinite(res.g) && res.g > 0) {
+          const grow = Math.pow(1 + res.g, N), oeN = base * grow;
+          let s = `To justify <b>${P}</b>, owner earnings would compound to about <b class="hot">${usd(oeN)}</b> by year ${N} — <b>${grow.toFixed(1)}×</b> today’s.`;
+          if (REV > 0 && !isNaN(GREV) && GREV > -0.5) {
+            const revN = REV * Math.pow(1 + GREV, N), margN = oeN / revN, margNow = base / REV;
+            s += ` On revenue grown at its delivered ${pcs(GREV)}/yr to ${usd(revN)}, that implies an owner-earnings margin near <b class="hot">${pcs(margN)}</b> (about ${pcs(margNow)} today).`;
+          }
+          impOps.innerHTML = s; impOps.hidden = false;
+        } else { impOps.hidden = true; }
+      }
       setURL(px.value);
     }
     [px, r, n, g, shInput].forEach((el) => el && el.addEventListener("input", update));
