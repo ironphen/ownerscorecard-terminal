@@ -1,5 +1,7 @@
 ---
-import { buildScorecard, TONE_COLOR } from "../lib/fundamentals.mjs";
+import fundamentals from "../data/fundamentals.json";
+import { buildScorecard, TONE_COLOR, roicValue, ownerEarningsMargin } from "../lib/fundamentals.mjs";
+import { selectPeers, peerMedian } from "../lib/peers.mjs";
 import { buildFinancialScorecard } from "../lib/financials.mjs";
 import { buildReitScorecard } from "../lib/reits.mjs";
 import { buildInsurerScorecard } from "../lib/insurers.mjs";
@@ -11,7 +13,7 @@ import { financialKind, financialSubtype } from "../lib/archetype.mjs";
 import MoatUnderAI from "./MoatUnderAI.astro";
 import Term from "./Term.astro";
 
-const { company, sample = false } = Astro.props;
+const { company, sample = false, peers: peersProp } = Astro.props;
 // Graham's defensive tests live inside the scorecard, so "is it safe" reads in one place
 // instead of split across a separate section. Run for the US pool and the ADRs, but not the
 // Japanese pool or the financials (the tests are industrial-shaped — a current-ratio and
@@ -36,6 +38,24 @@ const { sections } =
   : buildScorecard(company);
 const report = isFin ? null : moatReport(company);
 const graham = company.market !== "JP" && !isFin ? grahamTests(company) : null;
+
+// Peer context on the two quality reads that are otherwise judged against an absolute band: a number
+// means something only beside its peers — 18% ROIC is wonderful for a grocer and ordinary for software.
+// The same economic-engine peers the table below uses, each read through its own cycle, so the median is
+// the line this company's figure is set against. Factual context, never a verdict; shown only when the
+// industry has enough peers carrying the metric (peerMedian withholds otherwise). Non-financials only for
+// now — each financial kind's return metric (ROE, ROTCE) is the next pass.
+const peerCtx = (() => {
+  if (isFin) return {};
+  const peers = peersProp || selectPeers(company, fundamentals.companies || []).peers;
+  const roicMed = peerMedian(peers, (L) => roicValue(L));
+  const oeMed = peerMedian(peers, (L, c) => ownerEarningsMargin(L, c));
+  const ctx = {};
+  if (roicMed != null) ctx["Return on invested capital"] = `Industry peers: median ${(roicMed * 100).toFixed(0)}%`;
+  if (oeMed != null) ctx["Owner-earnings margin"] = `Industry peers: median ${(oeMed * 100).toFixed(0)}%`;
+  return ctx;
+})();
+const withPeers = (sec) => ({ ...sec, checks: sec.checks.map((c) => (peerCtx[c.title] ? { ...c, peer: peerCtx[c.title] } : c)) });
 ---
 
 <section class="scorecard">
@@ -56,7 +76,7 @@ const graham = company.market !== "JP" && !isFin ? grahamTests(company) : null;
     </div>
   ) : null}
 
-  {sections.map((sec) => (
+  {sections.map(withPeers).map((sec) => (
     <div class="section">
       <h3 class="secHead">{sec.heading}</h3>
       <ul class="checks">
@@ -68,6 +88,7 @@ const graham = company.market !== "JP" && !isFin ? grahamTests(company) : null;
             </div>
             <div class="label" style={`color:${TONE_COLOR[c.tone]}`}>{c.label}</div>
             {c.formula ? <div class="formula">{c.formula}</div> : null}
+            {c.peer ? <div class="peer">{c.peer}</div> : null}
             <details class="why"><summary>What this means</summary><p class="note">{c.note}</p></details>
           </li>
         ))}
@@ -146,6 +167,9 @@ const graham = company.market !== "JP" && !isFin ? grahamTests(company) : null;
 
   .label { font-weight: 600; font-size: 13px; margin-top: 2px; }
   .formula { font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; margin-top: 4px; }
+  /* Peer context: where this figure sits against its industry, the line that gives the number meaning.
+     Set in the accent so the eye catches the comparison, but stated as fact — never a verdict. */
+  .peer { font-size: 12px; color: var(--accent); font-variant-numeric: tabular-nums; margin-top: 4px; letter-spacing: 0.01em; }
   .note { font-size: 13.5px; color: var(--ink-dim); margin: 6px 0 0; line-height: 1.5; }
 
   /* The explanatory paragraph under each row is collapsed by default for a clean, scannable

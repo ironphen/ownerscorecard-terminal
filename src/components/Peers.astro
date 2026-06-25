@@ -10,13 +10,15 @@ import { financialKind, financialSubtype } from "../lib/archetype.mjs";
 import { selectPeers, peerStat } from "../lib/peers.mjs";
 import Term from "./Term.astro";
 
-const { company } = Astro.props;
+// The peer set is computed once on the page and passed in, so the universe scan runs a single time per
+// page; selectPeers here is the fallback when the component is used on its own.
+const { company, peers: peersProp, basis: basisProp } = Astro.props;
 const all = fundamentals.companies || [];
 
 // Peers are drawn from the same economic engine and ranked by structural likeness — selectPeers lives in
 // lib/peers.mjs so the rule is one place and testable. The basis (a real industry group vs the nearest by
 // economic model) keeps the heading honest.
-const { peers, basis } = selectPeers(company, all);
+const { peers, basis } = peersProp ? { peers: peersProp, basis: basisProp } : selectPeers(company, all);
 const group = [company, ...peers].sort((a, b) => (b.lines?.revenue || 0) - (a.lines?.revenue || 0));
 const cls = classify(company);
 

@@ -23,6 +23,7 @@ import segmentsData from "../../data/segments.json";
 import { classify } from "../../lib/archetype.mjs";
 import { businessPhrase, weakLede, pickNote } from "../../lib/business.mjs";
 import { compositionSentence } from "../../lib/segments.mjs";
+import { selectPeers } from "../../lib/peers.mjs";
 import notes from "../../data/notes.json";
 import adrFundamentals from "../../data/fundamentals.adr.json";
 import { getCollection } from "astro:content";
@@ -50,6 +51,10 @@ const ticker = String(Astro.params.ticker || "").toUpperCase();
 
 const fund =
   allCompanies.find((c) => String(c.ticker || "").toUpperCase() === ticker) || null;
+
+// Peers, found once and shared: both the peer table and the scorecard's peer context read the same set,
+// and the universe scan runs a single time per page rather than once per component.
+const peerResult = fund ? selectPeers(fund, fundamentals.companies || []) : { peers: [], basis: "model" };
 
 const related = (
   await getCollection("articles", ({ data }) =>
@@ -145,7 +150,7 @@ const fmtDate = (d) =>
   {fund ? (
     <section id="act-quality" class="actGroup">
       <ActHeader n="III" title="Quality &amp; stewardship" lede="Is it a good business, will it survive, and is it run for the owners? The checks that answer each, set beside how management is paid." />
-      <div id="sec-scorecard" class="sec"><Scorecard company={fund} sample={fundamentals.sample} /></div>
+      <div id="sec-scorecard" class="sec"><Scorecard company={fund} sample={fundamentals.sample} peers={peerResult.peers} /></div>
       {!isFin ? <div id="sec-capital" class="sec"><Capital company={fund} /></div> : null}
       <div id="sec-pay" class="sec"><Comp company={fund} /></div>
       {!isFin ? <div id="sec-inversion" class="sec"><Inversion company={fund} /></div> : null}
@@ -165,7 +170,7 @@ const fmtDate = (d) =>
       <div id="sec-changes" class="sec"><OwnersRead company={fund} /></div>
       <div id="sec-notice" class="sec"><OwnerNotice company={fund} /></div>
       <div id="sec-candor" class="sec"><CandorRead company={fund} /></div>
-      <div id="sec-peers" class="sec"><Peers company={fund} /></div>
+      <div id="sec-peers" class="sec"><Peers company={fund} peers={peerResult.peers} basis={peerResult.basis} /></div>
       {related.length ? (
         <div id="sec-writing" class="sec">
           <h2>Writing</h2>

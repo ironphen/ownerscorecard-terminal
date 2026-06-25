@@ -92,6 +92,27 @@ export function selectPeers(company, all, n = 7) {
   return { peers, basis: drewFromIndustry ? "industry" : "model" };
 }
 
+const med = (xs) => { const s = [...xs].sort((a, b) => a - b); const m = Math.floor(s.length / 2); return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
+
+// The through-cycle reading of a metric for one company: the median across its record (latest year as a
+// fallback for a short record), so a peak or trough can't speak for the whole. Shared, so the peer table
+// and the scorecard read a company the same way. fn takes (lines, company) — the company for the few
+// metrics (owner earnings) whose maintenance-capex test needs the record.
+export function throughCycleMetric(c, fn) {
+  const hist = (c?.history || []).map((h) => fn(h?.lines || {}, c)).filter((v) => v != null && isFinite(v));
+  if (hist.length >= 3) return med(hist);
+  const latest = fn(c?.lines || {}, c);
+  return latest != null && isFinite(latest) ? latest : null;
+}
+
+// The peer-group median of a metric, each peer read through its own cycle — context for a company's own
+// figure. Null when too few peers carry the metric to form a distribution (the caller then shows no peer
+// line rather than a median of one or two).
+export function peerMedian(peers, fn) {
+  const vals = (peers || []).map((c) => throughCycleMetric(c, fn)).filter((v) => v != null && isFinite(v));
+  return vals.length >= 3 ? med(vals) : null;
+}
+
 // Where a value falls in the peer set: the group median, the company's percentile, and the min/max band.
 // Context, never a crown — the reader reads the position, we assign no winner. Needs at least three
 // non-null values (the company plus two peers) to be a distribution worth reading; null otherwise.
