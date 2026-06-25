@@ -472,8 +472,13 @@ async function main() {
       lines: latestLines,
       history, ttm, quarterly,
     };
-    if (passesQualityFloor(rec)) { companies.push(rec); console.log(`  ✓ ${ticker} (${ccy}, ${standard}, FY${rec.fy ?? "?"})`); }
-    else { withheld.add(ticker); console.log(`  ⊘ ${ticker}: withheld (below quality floor)`); }
+    // Withhold a record more than ~24 months stale: foreign filers whose revenue tag changed strand at
+    // an old year and then present old (often internally inconsistent) figures as the present — Total-
+    // Energies showed a recent revenue mislabeled FY2017. A current 20-F filer is always within ~24
+    // months, so beyond that the record is behind and better shown as nothing. The number is sacred.
+    const tooStale = rec.periodEnd ? (Date.now() - new Date(rec.periodEnd).getTime()) > 24 * 30.44 * 86400000 : false;
+    if (passesQualityFloor(rec) && !tooStale) { companies.push(rec); console.log(`  ✓ ${ticker} (${ccy}, ${standard}, FY${rec.fy ?? "?"})`); }
+    else { withheld.add(ticker); console.log(`  ⊘ ${ticker}: withheld (${tooStale ? `stale — latest FY${rec.fy ?? "?"}` : "below quality floor"})`); }
   }
 
   // Carry over the last good file. A targeted run (ONLY_ADR) fetches only a few tickers, and even a
@@ -484,7 +489,9 @@ async function main() {
   let prior = [];
   try { prior = JSON.parse(fs.readFileSync(path.join(dataDir, "fundamentals.adr.json"), "utf8")).companies || []; } catch { /* first run: nothing to carry */ }
   const inUniverse = new Set([...names.keys()]);
-  const byTicker = new Map(prior.filter((c) => inUniverse.has(String(c.ticker).toUpperCase())).map((c) => [c.ticker, c]));
+  // Drop a ticker withheld this run (stale or below the floor) from the carry-over too, so a record
+  // that just failed the staleness gate is removed rather than kept alive from the last good file.
+  const byTicker = new Map(prior.filter((c) => inUniverse.has(String(c.ticker).toUpperCase()) && !withheld.has(c.ticker)).map((c) => [c.ticker, c]));
   for (const c of companies) byTicker.set(c.ticker, c); // a freshly fetched record supersedes its prior one
   const merged = [...byTicker.values()].sort((a, b) => a.ticker.localeCompare(b.ticker));
   const carried = merged.length - companies.length;
