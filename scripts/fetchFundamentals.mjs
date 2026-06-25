@@ -1073,12 +1073,17 @@ async function main() {
     };
     // The quality floor: a company that can't render a non-broken page is withheld rather than
     // shipped, the condition for pushing coverage toward the whole universe without losing trust.
-    if (passesQualityFloor(rec)) {
+    // A record more than ~24 months stale is withheld for the same reason: a current annual filer's
+    // latest period-end is always within ~15 months, so beyond two years the company is behind on its
+    // filings and the record would present old — often internally inconsistent — figures as the
+    // present. The number is sacred; a stale one mislabels today, so it is better shown as nothing.
+    const tooStale = rec.periodEnd ? (Date.now() - new Date(rec.periodEnd).getTime()) > 24 * 30.44 * 86400000 : false;
+    if (passesQualityFloor(rec) && !tooStale) {
       companies.push(rec);
       console.log(`  ✓ ${ticker} (CIK ${cik}, FY${anchor?.fy ?? "?"})`);
     } else {
       withheld.add(ticker.toUpperCase());
-      console.log(`  ⊘ ${ticker}: withheld (below the data-quality floor — no usable top line or no earnings)`);
+      console.log(`  ⊘ ${ticker}: withheld (${tooStale ? `stale — latest filing FY${anchor?.fy ?? "?"}` : "below the data-quality floor — no usable top line or no earnings"})`);
     }
   }
 
