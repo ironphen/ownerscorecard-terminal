@@ -178,12 +178,14 @@ const ADJUSTED_HEAVY = 4.8;
 // same steering over cash-backed GAAP profit is a tension the cash itself resolves. The ratio stays
 // the spine; the words make it smarter. Present, never pronounce. Pure: the caller passes the
 // language signals in (qualityTone from earningsQuality, the rest from the language JSON), so this
-// lib still runs under plain node. Returns a clause and its tone, or null when there is nothing to add.
+// lib still runs under plain node. For a financial — read on a balance sheet, not a cash-conversion
+// ratio — the caller passes qualityTone "none" and no adjusted density, so only the integrity branch
+// speaks: Graham's honesty test, which comes before any ratio. Returns a clause and its tone, or null.
 export function earningsQualityReconciliation(qualityTone, lang) {
   if (!lang) return null;
   // The gravest admissions first: they undermine the numbers themselves, whatever the ratio says.
   if (lang.materialWeakness)
-    return { tone: "bad", text: "The filing discloses a material weakness in its financial controls — this cash-backing figure, and the record built on it, is only as reliable as the system that produced the numbers." };
+    return { tone: "bad", text: "The filing discloses a material weakness in its financial controls — the reported numbers here, and the record built on them, are only as reliable as the controls that produced them." };
   if (lang.restatement)
     return { tone: "warn", text: "The filing discloses a restatement of previously reported figures — some numbers in the record have moved since they were first filed; read what changed, and why, before trusting the trend." };
   // Then the non-GAAP steering, read against whether cash actually backs the GAAP profit.

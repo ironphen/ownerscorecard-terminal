@@ -87,15 +87,23 @@ const peerCtx = (() => {
   return ctx;
 })();
 
-// The earnings-quality tie: the filing's language about the numbers, brought to the cash-backing
-// check. Integrity admissions (a material weakness, a restatement) undermine the numbers themselves;
-// heavy "look past GAAP" steering is read against whether cash actually backs the GAAP profit. The
-// ratio stays the spine; the words say whether to trust it. Non-financial scorecard only, where the
-// "Are earnings backed by cash?" check lives; financials' admissions still surface in the owner read.
+// The earnings-reliability tie: the filing's own language about whether the numbers can be trusted,
+// brought to the judgment it bears on. Integrity admissions — a material weakness in financial
+// controls, a restatement of past figures — are Graham's honesty test, the question that comes
+// before any ratio. For an operator we also read heavy "look past GAAP" steering against whether
+// cash actually backs the GAAP profit; for a financial, read on a balance sheet rather than a
+// cash-conversion ratio, only the integrity admission speaks. Present, never pronounce.
 const eqTie = (() => {
-  if (isFin) return null;
   const lc = language?.companies?.[company.ticker] || null;
   const integ = lc?.buffettRead?.integrity || null;
+  if (isFin) {
+    // A bank, insurer or REIT is read on the soundness of its balance sheet, so a deficient control
+    // system or a restatement undercuts the whole read. The non-GAAP/cash-conversion lens is the
+    // wrong one here (a financial's "adjusted" is a different animal; pricing/cost language is
+    // withheld for them too), so we pass no adjusted density and let only the integrity branch speak.
+    if (!integ) return null;
+    return earningsQualityReconciliation("none", { adjusted: null, materialWeakness: !!integ.materialWeakness, restatement: !!integ.restatement });
+  }
   const adjusted = lc?.mdna?.candor?.adjusted ?? null;
   if (!integ && adjusted == null) return null;
   const q = earningsQuality(company);
@@ -106,13 +114,21 @@ const eqTie = (() => {
   });
 })();
 
+// Where the tie attaches: the cash-backing check for an operator, and — for a financial, which has
+// no such check — the first, most prominent check of its scorecard (ROE, the combined ratio, FFO),
+// because the soundness of the numbers is the question that comes before the ratio. Matched by object
+// identity, so the anchor is unambiguous whatever its title.
+const eqAnchor = isFin
+  ? (sections[0]?.checks?.[0] || null)
+  : sections.flatMap((s) => s.checks).find((c) => c.title === "Are earnings backed by cash?") || null;
+
 // Enrich each check with the context it earns: the peer median where the metric is peer-comparable,
-// and — on the cash-backing check — the filing's own language about the reliability of the numbers.
+// and — on the anchor check — the filing's own language about the reliability of the numbers.
 const enrich = (sec) => ({
   ...sec,
   checks: sec.checks.map((c) => {
     let cc = peerCtx[c.title] ? { ...c, peer: peerCtx[c.title] } : c;
-    if (eqTie && c.title === "Are earnings backed by cash?") cc = { ...cc, lang: eqTie.text, langTone: eqTie.tone };
+    if (eqTie && c === eqAnchor) cc = { ...cc, lang: eqTie.text, langTone: eqTie.tone };
     return cc;
   }),
 });

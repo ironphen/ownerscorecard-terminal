@@ -75,5 +75,14 @@ check("EQ: heavy non-GAAP at the threshold (4.8) fires", earningsQualityReconcil
 check("EQ: just-below-threshold non-GAAP withholds", earningsQualityReconciliation("warn", { adjusted: 4.7 }) === null);
 check("EQ: heavy non-GAAP but middling cash-backing (ok) → withhold (no false flag)", earningsQualityReconciliation("ok", { adjusted: 6.0 }) === null);
 
+// The financial path: no cash-conversion ratio and no non-GAAP lens, so the caller passes
+// qualityTone "none" and no adjusted density — only the integrity admission may speak (the honesty
+// test that comes before any ratio for a bank, insurer or REIT).
+const finMw = earningsQualityReconciliation("none", { adjusted: null, materialWeakness: true, restatement: false });
+check("EQ(financial): material weakness speaks with no ratio and no non-GAAP (bad)", finMw?.tone === "bad" && /material weakness/i.test(finMw.text));
+check("EQ(financial): restatement speaks with no ratio (warn)", earningsQualityReconciliation("none", { adjusted: null, materialWeakness: false, restatement: true })?.tone === "warn");
+check("EQ(financial): a clean financial filing adds nothing", earningsQualityReconciliation("none", { adjusted: null, materialWeakness: false, restatement: false }) === null);
+check("EQ(financial): the non-GAAP branch never fires without an adjusted density", earningsQualityReconciliation("none", { adjusted: null, materialWeakness: false, restatement: false }) === null);
+
 console.log(`\n${pass} passed, ${fail} failed`);
 if (fail) process.exit(1);
