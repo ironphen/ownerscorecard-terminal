@@ -80,25 +80,30 @@ function cleanQuote(s) {
   return s.trim();
 }
 
-// Capture from a start heading to the earliest following end heading. With a TOC at the front, the
-// real section is the longest candidate, so keep the largest — but two artifacts in the largest filers
-// broke that. A table-of-contents row or a running page header ("Walmart Inc. Item 1 Business 8") is
-// not the section start: it is followed by a page number, not the business prose. And a cross-reference
-// in the body ("see Item 1A. Risk Factors of this report") is not the section end. Letting the early
-// cross-reference truncate the true section handed the longest chunk to a later running-header
-// occurrence that began mid-section, so risk and competition text reached the hero (Walmart, Coca-Cola,
-// Bank of America). Skip a page-number-followed start and a cross-reference end, so a real heading bounds
-// the section. A page number is digits not glued to a letter, so an opener that starts "3M Company …" is
-// kept, while "Business 8 …" and "Business ……… 3 Item 1A" are skipped.
+// Capture from a start heading to the earliest following end heading. With a TOC at the front, the real
+// section is the longest candidate, so keep the largest — but three artifacts in the largest filers broke
+// that, each confirmed from the recorded extract.bizHead on real filings. (1) A table-of-contents row or
+// a running page header ("Walmart Inc. Item 1 Business 8") is followed by a page number, not the business
+// prose. (2) A cross-reference to the END heading ("see Item 1A. Risk Factors of this report") in the body
+// is not the section end. (3) A cross-reference to the START heading itself ("...see \"Item 1. Business\"
+// above", "Item 1. Business beginning on page 2", "...and Note 15") sits in LATER sections (risk, MD&A),
+// and seeded a chunk that spanned all of risk to Item 2 — so risk and competition text reached the hero
+// (Walmart, Coca-Cola, Bank of America, Alphabet, Chevron, Ford). The real heading is followed by the
+// business prose and is not quoted; skip the rest, so a real heading bounds the section. A page number is
+// digits not glued to a letter, so an opener that starts "3M Company …" is kept.
 const PAGE_AFTER = /^[\s.·•…_-]*\d+(?![0-9A-Za-z])/;
+const START_XREF_AFTER = /^["'”’\s.,;]*\b(above|below|herein|hereof|elsewhere|and\s+notes?\b|and\s+["'“]?(?:item|part)\b|beginning\s+on\s+page|of\s+this\s+(?:report|form|annual|filing|document)|information\s+required\s+by)/i;
+const START_QUOTE_BEFORE = /["'“]\s*$/;
 const XREF_BEFORE = /\b(see|under|within|refer(?:ence|red)?|described|discussed|contained|included|noted|defined|set\s+forth|pursuant\s+to|provided|listed)\s+(?:to|in|under|above|below|elsewhere)?\s*$/i;
 function section(text, startRe, endRes) {
   let best = "";
   let m;
   const re = new RegExp(startRe, "gi");
   while ((m = re.exec(text)) !== null) {
-    const from = m.index, afterHead = from + m[0].length;
-    if (PAGE_AFTER.test(text.slice(afterHead, afterHead + 25))) continue; // a TOC row or running header, not the heading
+    const from = m.index, afterHead = from + m[0].length, after = text.slice(afterHead, afterHead + 30);
+    // Not the section start: a TOC row or running header (a page number follows), or a cross-reference to
+    // the heading (quoted, or followed by "above" / "beginning on page" / "of this report" / "and Note").
+    if (PAGE_AFTER.test(after) || START_XREF_AFTER.test(after) || START_QUOTE_BEFORE.test(text.slice(Math.max(0, from - 8), from))) continue;
     let to = text.length;
     for (const er of endRes) {
       const e = new RegExp(er, "gi");

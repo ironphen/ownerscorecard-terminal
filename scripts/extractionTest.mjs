@@ -45,6 +45,38 @@ const cases = [
     "Item 1. Business Ford Motor Company is a global automotive company that designs and manufactures vehicles. " + "We sell cars. ".repeat(5)
     + "Ford Item 1 Business 7 page content here. " + "Item 1A. Risk Factors Risks. " + "More risk. ".repeat(3),
     (s) => s.includes("Ford Motor Company is a global") && !s.includes("More risk")],
+  // Cross-references to the START heading itself, taken verbatim from the recorded extract.bizHead of the
+  // real filings (Walmart, Coca-Cola, Bank of America, Alphabet, Chevron). Each sits inside a long risk
+  // section that, under the old "longest chunk" rule, beat the true Item 1 — so risk/competition text led
+  // the description. Each must now recover the real opening. The risk section here ends only at Item 2.
+  ...(() => {
+    const mk = (open, xref) =>
+      "Table of Contents Item 1 Business 3 Item 1A Risk Factors 20 Item 2 Properties 40 "
+      + "Item 1. Business " + open + " " + "We operate across many markets. ".repeat(4)
+      + "Item 1A. Risk Factors " + "Various risks could affect us. ".repeat(10) + xref + " " + "More competition risk follows. ".repeat(10)
+      + "Item 2. Properties We own facilities. ";
+    return [
+      ['xref: "Item 1. Business" above (Walmart)',
+        mk("Walmart Inc. helps people save money in retail stores and through eCommerce.", 'as discussed in "Item 1. Business" above for additional discussion of the competitive landscape'),
+        (s) => /helps people save money/.test(s) && !s.includes("competition risk")],
+      ['xref: "Item 1. Business" of this report (Coca-Cola)',
+        mk("The Coca-Cola Company is a total beverage company.", 'see "Item 1. Business" of this report.'),
+        (s) => /Coca-Cola Company is a total beverage/.test(s)],
+      ["xref: Item 1. Business beginning on page 2 (Bank of America)",
+        mk("Bank of America Corporation is a bank holding company and a financial holding company.", "refer to Item 1. Business beginning on page 2 and MD&A beginning on page 26"),
+        (s) => /Bank of America Corporation is a bank holding company/.test(s)],
+      ["xref: Item 1 Business and Note 15 (Alphabet)",
+        mk("Alphabet is a collection of businesses, the largest of which is Google.", "as described in Item 1 Business and Note 15 of the Notes to Consolidated Financial Statements"),
+        (s) => /Alphabet is a collection of businesses/.test(s)],
+      ["xref: Information required by Subpart 1200 (Chevron)",
+        mk("Chevron Corporation manages investments in subsidiaries that engage in integrated energy operations.", "Item 1. Business . Information required by Subpart 1200 of Regulation S-K"),
+        (s) => /Chevron Corporation manages investments/.test(s)],
+    ];
+  })(),
+  // A real heading with a "General" sub-label (Humana) must NOT be mistaken for a cross-reference.
+  ["real heading with General sub-label",
+    "Table of Contents Item 1 Business 3 Item 1A Risk Factors 20 Item 1. Business General Headquartered in Louisville, Kentucky, Humana Inc. is a leading health and well-being company. We serve millions. Item 1A. Risk Factors Risks. More risk. ",
+    (s) => /Humana Inc\. is a leading health/.test(s)],
 ];
 
 let pass = 0, fail = 0;
