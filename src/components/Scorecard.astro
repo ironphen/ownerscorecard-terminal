@@ -10,6 +10,7 @@ import { buildManagedCareScorecard, medicalLossRatio } from "../lib/managedCare.
 import { moatReport } from "../lib/durability.mjs";
 import { grahamTests } from "../lib/graham.mjs";
 import { financialKind, financialSubtype } from "../lib/archetype.mjs";
+import language from "../data/language.json";
 import MoatUnderAI from "./MoatUnderAI.astro";
 import Term from "./Term.astro";
 
@@ -36,7 +37,11 @@ const { sections } =
   : fk === "fee" ? buildFeeScorecard(company, financialSubtype(company))
   : fk === "bank" ? buildFinancialScorecard(company, financialSubtype(company))
   : buildScorecard(company);
-const report = isFin ? null : moatReport(company);
+// The filing's own pricing words, threaded into the moat report so the margin/pricing-power line
+// reads the number and the company's language together. Withheld for financials (where "pricing
+// power" and "input costs" are the wrong lens) — and moatReport runs for non-financials only anyway.
+const pricingLang = isFin ? null : (language?.companies?.[company.ticker]?.buffettRead?.pricing || null);
+const report = isFin ? null : moatReport(company, { pricing: pricingLang });
 const graham = company.market !== "JP" && !isFin ? grahamTests(company) : null;
 
 // Peer context on the two quality reads that are otherwise judged against an absolute band: a number
@@ -152,6 +157,7 @@ const withPeers = (sec) => ({ ...sec, checks: sec.checks.map((c) => (peerCtx[c.t
               <span class="factLabel">{ft.label}</span>
               <span class="factValue" style={`color:${TONE_COLOR[ft.tone]}`}>{ft.value}</span>
             </div>
+            {ft.lang ? <p class="langTie" style={`border-color:${TONE_COLOR[ft.langTone]}`}><span class="langMark" style={`color:${TONE_COLOR[ft.langTone]}`}>In the filing’s words</span> {ft.lang}</p> : null}
             <details class="why"><summary>What this means</summary><p class="factNote">{ft.note}</p></details>
           </li>
         ))}
@@ -216,6 +222,12 @@ const withPeers = (sec) => ({ ...sec, checks: sec.checks.map((c) => (peerCtx[c.t
   .factLabel { font-weight: 600; font-size: 15px; }
   .factValue { font-weight: 700; font-size: 17px; font-variant-numeric: tabular-nums; flex: 0 0 auto; text-align: right; }
   .factNote { font-size: 13px; color: var(--ink-dim); margin: 4px 0 0; line-height: 1.5; }
+
+  /* The pricing-power tie: the filing's own words brought to the margin number, set off with a
+     tone-colored rule so it reads as a second voice corroborating, explaining or contesting the
+     record — not another data line. The marker names the source; the clause does the reasoning. */
+  .langTie { font-family: var(--serif); font-size: 13.5px; color: var(--ink-soft); line-height: 1.55; margin: 7px 0 0; padding: 1px 0 1px 12px; border-left: 2px solid var(--rule-strong); max-width: 74ch; }
+  .langMark { font-family: var(--sans); font-style: normal; font-weight: 700; font-size: 10.5px; letter-spacing: 0.05em; text-transform: uppercase; margin-right: 6px; }
 
   .gbadge { font-family: var(--sans); font-size: 10.5px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; border: 1px solid; border-radius: 2px; padding: 1px 7px; flex: 0 0 auto; }
   .gcrit { font-size: 13px; color: var(--muted); margin-top: 3px; font-variant-numeric: tabular-nums; }

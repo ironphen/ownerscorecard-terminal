@@ -29,9 +29,56 @@ function invested(L) {
   return iv > 0 ? iv : null;
 }
 
-export function moatReport(company) {
+// Wire the filing's own words about pricing into the margin number. Pricing power is the single
+// judgment Buffett calls most important in evaluating a business, and the margin trajectory alone
+// only shows the result, never the cause. The company's language — does it set its price or take
+// it, did a price increase hold its volume, were rising costs passed through — either corroborates
+// the number, explains it, or stands in honest tension with it. The number stays the spine; the
+// words make it smarter. Present, never pronounce: we reconcile the two, we never crown a moat.
+// Pure: the caller (the .astro component, which can import the language JSON under Vite) passes the
+// buffettRead.pricing object in, so this lib still runs under plain node. Returns a short clause and
+// its tone, or null when the filing offers no pricing signal and the number must stand alone.
+export function pricingReconciliation(marginDelta, pricing) {
+  if (!pricing || marginDelta == null) return null;
+  const { power, powerStrong, pressure, costInflation, passedThrough } = pricing;
+  const dir = marginDelta > 0.02 ? "up" : marginDelta < -0.02 ? "down" : "flat";
+  const contested = !!(power && pressure);
+
+  // The strongest form Buffett names: a price increase that did not cost volume.
+  if (powerStrong) {
+    return dir === "up"
+      ? { tone: "good", text: "The words confirm the number: the filing says price increases held their volume, and the margin widened with them — Buffett’s strongest mark of pricing power." }
+      : { tone: "info", text: "The filing claims pricing power in its strongest form — price raised, volume held — yet the margin here has not widened to match. The claim leads the record; weigh them together." };
+  }
+  // The filing ties gains to its own pricing.
+  if (power) {
+    if (contested)
+      return dir === "down"
+        ? { tone: "warn", text: "The filing attributes gains to higher prices but names price competition too — and the margin slipped, so the pressure is winning here." }
+        : { tone: "ok", text: "The filing ties gains to its own pricing, but names price competition too — pricing power that is real yet contested, not unopposed. The margin shows who is winning." };
+    return dir === "up"
+      ? { tone: "good", text: "The record and the words agree: the margin widened and the filing attributes the gain to its own pricing, not volume alone." }
+      : { tone: "info", text: "The filing attributes gains to higher prices, but the margin in the record has not followed — the claim outruns the result here." };
+  }
+  // No claim of power, but the filing names price competition or cuts.
+  if (pressure) {
+    if (dir === "down") return { tone: "warn", text: "The words explain the slip: the filing names price competition rather than pricing actions of its own — a business that looks to take its price, not set it." };
+    if (dir === "up") return { tone: "info", text: "The margin widened even though the filing names price competition — the gain came from volume or cost, not pricing power. Read where." };
+    return { tone: "warn", text: "The margin has held, but the filing names price competition — the pressure is present even where the margin has absorbed it so far." };
+  }
+  // No pricing-power signal either way: fall back to cost pass-through, the margin-durability
+  // complement, when the filing discussed input-cost inflation.
+  if (costInflation && passedThrough === true && dir !== "down")
+    return { tone: "good", text: "Input costs rose and the filing says it recovered them in price — consistent with the margin holding here." };
+  if (costInflation && passedThrough === false && dir === "down")
+    return { tone: "warn", text: "Input costs rose and the filing says it could not fully pass them on — which is where this margin compressed." };
+  return null;
+}
+
+export function moatReport(company, opts = {}) {
   const H = (company.history || []).filter((h) => h?.lines?.revenue != null);
   if (H.length < 4) return null;
+  const pricing = opts.pricing || null;
   const L = H.map((h) => h.lines);
   const years = H.map((h) => h.fy);
   const span = years[years.length - 1] - years[0];
@@ -71,6 +118,10 @@ export function moatReport(company) {
       d > 0.02 ? "Margins widened over the record, pricing power intact or improving."
         : d < -0.02 ? "Margins slipped over the record, competition or costs are biting in."
         : "Margins held roughly steady across the record.");
+    // Bring the filing's own pricing words to the margin number, so the moat's defining
+    // question reads the record and the company's language together, not in two sections.
+    const recon = pricingReconciliation(d, pricing);
+    if (recon) { const f = facts[facts.length - 1]; f.lang = recon.text; f.langTone = recon.tone; }
   }
 
   // 4, The centerpiece: incremental ROIC (what reinvested capital earned).
