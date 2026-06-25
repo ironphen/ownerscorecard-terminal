@@ -80,19 +80,33 @@ function cleanQuote(s) {
   return s.trim();
 }
 
-// Capture from a start heading to the earliest following end heading. With a TOC
-// at the front, the real section is the longest candidate, so keep the largest.
+// Capture from a start heading to the earliest following end heading. With a TOC at the front, the
+// real section is the longest candidate, so keep the largest — but two artifacts in the largest filers
+// broke that. A table-of-contents row or a running page header ("Walmart Inc. Item 1 Business 8") is
+// not the section start: it is followed by a page number, not the business prose. And a cross-reference
+// in the body ("see Item 1A. Risk Factors of this report") is not the section end. Letting the early
+// cross-reference truncate the true section handed the longest chunk to a later running-header
+// occurrence that began mid-section, so risk and competition text reached the hero (Walmart, Coca-Cola,
+// Bank of America). Skip a page-number-followed start and a cross-reference end, so a real heading bounds
+// the section. A page number is digits not glued to a letter, so an opener that starts "3M Company …" is
+// kept, while "Business 8 …" and "Business ……… 3 Item 1A" are skipped.
+const PAGE_AFTER = /^[\s.·•…_-]*\d+(?![0-9A-Za-z])/;
+const XREF_BEFORE = /\b(see|under|within|refer(?:ence|red)?|described|discussed|contained|included|noted|defined|set\s+forth|pursuant\s+to|provided|listed)\s+(?:to|in|under|above|below|elsewhere)?\s*$/i;
 function section(text, startRe, endRes) {
   let best = "";
   let m;
   const re = new RegExp(startRe, "gi");
   while ((m = re.exec(text)) !== null) {
-    const from = m.index;
+    const from = m.index, afterHead = from + m[0].length;
+    if (PAGE_AFTER.test(text.slice(afterHead, afterHead + 25))) continue; // a TOC row or running header, not the heading
     let to = text.length;
     for (const er of endRes) {
       const e = new RegExp(er, "gi");
       e.lastIndex = from + 40;
-      const em = e.exec(text);
+      let em;
+      while ((em = e.exec(text)) !== null) {
+        if (!XREF_BEFORE.test(text.slice(Math.max(0, em.index - 28), em.index))) break; // a real heading, not a cross-reference
+      }
       if (em && em.index < to) to = em.index;
     }
     const chunk = text.slice(from, to);
@@ -267,6 +281,15 @@ const BIZ_NOTDESC = /\bcompetitors?\s+(include|are|consist|range|comprise|compet
 // and let the real "<Company> designs/operates …" line (or the segment mix) win instead.
 const BIZ_PRODUCTREF = /\bis\s+(?:the\s+)?(?:compan|registrant|firm|group|corporation|business|parent)\w*['’]s\b/i;
 
+// A mission-framed opener that still names a concrete business: the largest retailers and service
+// companies open Item 1 on what they do FOR customers ("Walmart Inc. helps people around the world save
+// money and live better, in retail stores and through eCommerce") rather than "designs/operates …". A
+// bare service verb is mission fluff, so accept it only when a concrete commerce or operating channel is
+// named alongside it (retail, eCommerce, stores, restaurants, branches) — never on "we help businesses
+// succeed with our platform". Paired, it is a real, verbatim description of the business.
+const BIZ_SERVE = /\b(helps?|serves?|enables?|empowers?|connects?|powers?)\b/i;
+const BIZ_CHANNEL = /\b(retail|wholesale|e-?commerce|online|marketplace|web ?sites?|mobile apps?|stores?|outlets?|supermarkets?|restaurants?|warehouses?|clubs?|branches?|dealerships?|pharmac\w+|grocer\w*)\b/i;
+
 // Pull the company's own one-line description from the top of Item 1. Rather than take
 // the first sentence that passes, we collect candidates from the opening and score
 // them, so the canonical "<Company> is a <type> ..." form and richer, company-named
@@ -351,7 +374,8 @@ function businessDescription(sents, name, ticker) {
     if (s.length < 34 || s.length > 700) continue;
     if (BIZ_SKIP.test(s) || BIZ_WEAK.test(s) || BIZ_FRAGMENT.test(s) || BIZ_RESULTS.test(s) || BIZ_NOTDESC.test(s) || BIZ_PRODUCTREF.test(s)) continue;
     const isa = BIZ_ISA.test(s);
-    if (!BIZ_DOING.test(s) && !isa && !BIZ_ENGAGED.test(s)) continue;
+    const serves = BIZ_SERVE.test(s) && BIZ_CHANNEL.test(s); // a mission opener that still names a concrete channel
+    if (!BIZ_DOING.test(s) && !isa && !BIZ_ENGAGED.test(s) && !serves) continue;
     const head = s.split(/\s+/).slice(0, 6).join(" ");
     const headNorm = head.toLowerCase().replace(/[^a-z0-9]/g, "");
     const weSubject = /^(we|our|the (company|registrant|firm|group)|us)\b/i.test(s);
@@ -365,6 +389,7 @@ function businessDescription(sents, name, ticker) {
     // smartphones…"). Reward it so it clears the earliness penalty instead of being sunk to a
     // negative score and dropped, which left hundreds of names — Apple among them — with no lede.
     else if (BIZ_DOING.test(s) && BIZ_RICH.test(s)) score += 2.5;
+    else if (serves) score += 2;                // "<Company> helps … in retail stores and through eCommerce" (Walmart)
     if (namedSubject && !weSubject) score += 2; // names the company, not a bare "we"
     if (BIZ_RICH.test(s)) score += 1;           // products, markets, segments
     if (BIZ_STRUCTURAL.test(s)) score -= 3;     // org chart, not a description
