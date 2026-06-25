@@ -277,8 +277,11 @@ const INSURER_REVENUE = ["Revenues", "RevenueFromContractWithCustomerExcludingAs
 // the last year it used "Revenues" (the ASC 606 contract tag captures only the noninterest fee sliver,
 // so it must never win). First-tag-wins, not pick-max: "Revenues" still wins wherever a bank reports
 // it, so the banks already read correctly are unchanged; the net-of-interest total only fills the years
-// a filer left "Revenues" blank. Used for depository SICs (6020-6079).
-const BANK_REVENUE = ["Revenues", "RevenuesNetOfInterestExpense", "RevenueFromContractWithCustomerExcludingAssessedTax", "RevenueFromContractWithCustomerIncludingAssessedTax"];
+// a filer left "Revenues" blank. The ASC 606 contract tag is deliberately excluded — for a bank it is
+// only the noninterest fee sliver, never the top line — so a year with no combined total is filled
+// from net-interest-income + noninterest-income components instead (see the reconstruction below).
+// Used for depository SICs (6020-6079).
+const BANK_REVENUE = ["Revenues", "RevenuesNetOfInterestExpense"];
 
 const days = (a, b) => Math.abs((new Date(b) - new Date(a)) / 86400000);
 
@@ -554,6 +557,27 @@ async function main() {
     const isBankCo = sicN >= 6020 && sicN <= 6079;
     const revTags = isReitCo ? REIT_REVENUE : isInsurerCo ? INSURER_REVENUE : isBankCo ? BANK_REVENUE : CONCEPTS.revenue;
     const revAnnualBy = annualByYear(facts, revTags, "USD", isReitCo || isInsurerCo);
+    // Most banks book no combined total-revenue tag at all — their top line is two components, net
+    // interest income plus noninterest income. For any year the total tags miss, reconstruct the total
+    // from those components (both required, so a half-tagged year never understates). This is what lets
+    // the majority of banks — which report only components — anchor to the current year and read their
+    // real total revenue instead of stranding at an old filing or showing a fee sliver.
+    if (isBankCo) {
+      const niiBy = annualByYear(facts, CONCEPTS.netInterestIncome, "USD");
+      const noniBy = annualByYear(facts, CONCEPTS.noninterestIncome, "USD");
+      for (const fy of new Set([...Object.keys(niiBy), ...Object.keys(noniBy)])) {
+        const nii = niiBy[fy], noni = noniBy[fy];
+        if (!(nii && noni && nii.val != null && noni.val != null)) continue;
+        // Fill a year with no total tag; also override a total that reads below net interest income
+        // alone — which a real total (NII + noninterest) can never be — since some banks tag "Revenues"
+        // with only a sub-total or fee sliver (Zions reads ~$0.66B against a true ~$3.4B). The
+        // replacement equals the reported total wherever that total is already right, so a correctly
+        // tagged bank (JPMorgan, Wells Fargo) is never disturbed.
+        const existing = revAnnualBy[fy];
+        if (!existing || existing.val < nii.val)
+          revAnnualBy[fy] = { val: nii.val + noni.val, end: nii.end || noni.end, filed: (nii.filed || "") > (noni.filed || "") ? nii.filed : noni.filed, form: nii.form || noni.form };
+      }
+    }
     const latestRev = latestEntry(revAnnualBy);
     const revLatest = latestRev?.val ?? null;
 
