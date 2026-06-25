@@ -10,6 +10,7 @@ import BusinessRead from "../../components/BusinessRead.astro";
 import Segments from "../../components/Segments.astro";
 import OwnersRead from "../../components/OwnersRead.astro";
 import CandorRead from "../../components/CandorRead.astro";
+import OwnerQuestions from "../../components/OwnerQuestions.astro";
 import Capital from "../../components/Capital.astro";
 import Inversion from "../../components/Inversion.astro";
 import ActHeader from "../../components/ActHeader.astro";
@@ -104,17 +105,6 @@ const fmtDate = (d) =>
   </header>
 
   {fund ? (
-    <p class="readguide">
-      Read top to bottom, in five acts, the owner's questions in the order an owner asks them:
-      <a href="#act-what">what the business is</a>,
-      <a href="#act-record">whether the record holds</a>,
-      <a href="#act-quality">whether it survives and is run for owners</a>, and
-      <a href="#act-price">what you would be paying</a>.
-      New to the terms? <a href="/concepts">Concepts</a> defines every one in plain language.
-    </p>
-  ) : null}
-
-  {fund ? (
     <div class="cbar">
       <a class="cbar-id" href="#top">{ticker}<span class="cbar-nm">{name ? ` · ${name}` : ""}</span></a>
       <nav class="secnav" aria-label="Sections">
@@ -126,6 +116,8 @@ const fmtDate = (d) =>
       </nav>
     </div>
   ) : null}
+
+  {fund ? <div id="sec-questions" class="sec"><OwnerQuestions company={fund} /></div> : null}
 
   {fund ? (
     <section id="act-what" class="actGroup">
@@ -201,10 +193,6 @@ const fmtDate = (d) =>
     .leadMore p { font-family: var(--serif); font-size: 14.5px; line-height: 1.55; color: var(--muted); margin: 6px 0 0; }
     .meta { color: var(--ink-dim); font-size: 13px; margin-top: 8px; }
 
-    /* A one-line walk through the method: the page asks the owner's questions in
-       order, each phrase jumping to the section that answers it. */
-    .readguide { font-family: var(--serif); font-style: italic; font-size: 13.5px; line-height: 1.6; color: var(--muted); margin: 14px 0 0; max-width: 74ch; }
-    .readguide a { color: var(--accent); }
 
     /* Sticky company bar, ticker always in view, plus section jump-nav. */
     .cbar {

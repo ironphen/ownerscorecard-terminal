@@ -1,0 +1,61 @@
+---
+// The owner's questions — the synthesis at the top of the page. The few things Graham, Buffett and
+// Munger actually ask of a business, in the order they ask them, each answered with a fact the page
+// computes and linked to the section that settles it. It teaches the method and orients the read; it
+// never answers "good" or "bad". The logic lives in lib/synthesis.mjs (pure, testable); this lays it out.
+import language from "../data/language.json";
+import { ownerQuestions } from "../lib/synthesis.mjs";
+
+const { company } = Astro.props;
+const lang = language?.companies?.[company.ticker] || null;
+const questions = ownerQuestions(company, lang);
+---
+
+{questions.length ? (
+  <section class="oq" aria-label="The questions an owner asks">
+    <div class="head">
+      <h3 class="secTitle">The questions an owner asks</h3>
+      <span class="tag">read top to bottom</span>
+    </div>
+    <p class="intro">
+      Graham, Buffett and Munger work a business in an order: understand it, test the moat, make sure it
+      survives a bad year, judge the people, and only then weigh the price. Here is what the record and
+      the filing say about each — the facts, not a verdict. The judgment is yours; follow a question down
+      to the section that settles it.
+    </p>
+    <ol class="qs">
+      {questions.map((it, i) => (
+        <li>
+          <span class="n">{i + 1}</span>
+          <div class="body">
+            <a class="q" href={it.href}>{it.q}</a>
+            <p class="a">{it.a}</p>
+            <a class="jump" href={it.href}>{it.hrefLabel} →</a>
+          </div>
+        </li>
+      ))}
+    </ol>
+    <p class="foot">Every line above is the same figure shown in full in the section it links to, surfaced once as the answer to the question it bears on. We point; we never pronounce. New to the terms? <a href="/concepts">Concepts</a> defines every one in plain language.</p>
+  </section>
+) : null}
+
+<style>
+  .oq { margin: 18px 0 22px; }
+  .head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; border-bottom: 1px solid var(--rule-strong); padding-bottom: 6px; }
+  .secTitle { margin: 0; }
+  .tag { font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); flex: 0 0 auto; }
+  .intro { font-family: var(--serif); font-style: italic; font-size: 13.5px; color: var(--muted); margin: 10px 0 0; max-width: 74ch; line-height: 1.6; }
+
+  .qs { list-style: none; padding: 0; margin: 14px 0 0; counter-reset: none; }
+  .qs li { display: flex; gap: 14px; padding: 13px 0; border-bottom: 1px solid var(--rule); }
+  .n { flex: 0 0 auto; width: 26px; height: 26px; border: 1px solid var(--rule-strong); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: var(--sans); font-weight: 700; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .body { flex: 1 1 auto; min-width: 0; }
+  .q { display: block; font-family: var(--sans); font-weight: 700; font-size: 15.5px; color: var(--ink); line-height: 1.35; text-decoration: none; }
+  .q:hover { color: var(--accent); }
+  .a { font-family: var(--serif); font-size: 14px; line-height: 1.55; color: var(--ink-soft); margin: 5px 0 0; max-width: 78ch; }
+  .jump { display: inline-block; margin: 7px 0 0; font-size: 12px; letter-spacing: 0.02em; color: var(--accent); text-decoration: none; }
+  .jump:hover { text-decoration: underline; }
+
+  .foot { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); margin: 12px 0 0; line-height: 1.5; max-width: 74ch; }
+  .foot a { color: var(--accent); font-style: normal; }
+</style>
