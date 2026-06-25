@@ -6,7 +6,7 @@
 //     cash-backing ratio (is the reported profit real). Matrix: (cash-backing) × (what the words admit).
 // Both corroborate when they agree, explain when the words explain the number, surface tension when
 // they disagree, and withhold when there is no signal so the number stands alone. Run with `npm test`.
-import { pricingReconciliation } from "../src/lib/durability.mjs";
+import { pricingReconciliation, registerReconciliation } from "../src/lib/durability.mjs";
 import { earningsQualityReconciliation } from "../src/lib/fundamentals.mjs";
 
 let pass = 0, fail = 0;
@@ -83,6 +83,32 @@ check("EQ(financial): material weakness speaks with no ratio and no non-GAAP (ba
 check("EQ(financial): restatement speaks with no ratio (warn)", earningsQualityReconciliation("none", { adjusted: null, materialWeakness: false, restatement: true })?.tone === "warn");
 check("EQ(financial): a clean financial filing adds nothing", earningsQualityReconciliation("none", { adjusted: null, materialWeakness: false, restatement: false }) === null);
 check("EQ(financial): the non-GAAP branch never fires without an adjusted density", earningsQualityReconciliation("none", { adjusted: null, materialWeakness: false, restatement: false }) === null);
+
+// ---- registerReconciliation: the language register (owner vs promoter) against the record's trajectory ----
+
+// Withhold unless one register clearly dominates: the mixed and unremarkable middle gets no character.
+const OWNER = { owner: 3.2, promo: 0.2 };   // heavy owner-talk, light promoter-talk
+const PROMO = { owner: 1.0, promo: 1.2 };   // heavy promoter-talk, light owner-talk
+check("REG: no candor → no read", registerReconciliation("compounding", null) === null);
+check("REG: no trajectory → no read", registerReconciliation(null, OWNER) === null);
+check("REG: high in both registers → withhold (mixed)", registerReconciliation("fading", { owner: 3.2, promo: 1.2 }) === null);
+check("REG: low in both → withhold (unremarkable)", registerReconciliation("fading", { owner: 1.0, promo: 0.2 }) === null);
+
+// A promoter's vocabulary, read against the record — Munger's tell sharpens when returns are fading.
+const promoFade = registerReconciliation("fading", PROMO);
+check("REG: promoter + fading → the gap to weigh (warn, Promotional)", promoFade?.tone === "warn" && promoFade.value === "Promotional" && /sell harder than the results/i.test(promoFade.text));
+check("REG: promoter + compounding → results back the talk (info)", registerReconciliation("compounding", PROMO)?.tone === "info");
+check("REG: promoter + holding → words doing the numbers' work (info)", registerReconciliation("holding", PROMO)?.tone === "info");
+
+// An owner's vocabulary, read against the record.
+const ownerComp = registerReconciliation("compounding", OWNER);
+check("REG: owner + compounding → register and record agree (good, Owner’s terms)", ownerComp?.tone === "good" && ownerComp.value === "Owner’s terms");
+check("REG: owner + fading → candor about a hard stretch (ok)", registerReconciliation("fading", OWNER)?.tone === "ok");
+check("REG: owner + holding → words and results of a piece (ok)", registerReconciliation("holding", OWNER)?.tone === "ok");
+
+// The thresholds are the catalog's top decile (owner 2.9, promoter 0.8).
+check("REG: owner just below 2.9 with low promoter → withhold", registerReconciliation("compounding", { owner: 2.8, promo: 0.2 }) === null);
+check("REG: promoter just below 0.8 with low owner → withhold", registerReconciliation("fading", { owner: 1.0, promo: 0.7 }) === null);
 
 console.log(`\n${pass} passed, ${fail} failed`);
 if (fail) process.exit(1);

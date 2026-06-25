@@ -41,7 +41,10 @@ const { sections } =
 // reads the number and the company's language together. Withheld for financials (where "pricing
 // power" and "input costs" are the wrong lens) — and moatReport runs for non-financials only anyway.
 const pricingLang = isFin ? null : (language?.companies?.[company.ticker]?.buffettRead?.pricing || null);
-const report = isFin ? null : moatReport(company, { pricing: pricingLang });
+// The candor register (owner vs promoter vocabulary), threaded into the moat report's closing read so
+// "how management talks" is reconciled with whether the business is actually compounding.
+const candorLang = isFin ? null : (language?.companies?.[company.ticker]?.mdna?.candor || null);
+const report = isFin ? null : moatReport(company, { pricing: pricingLang, candor: candorLang });
 const graham = company.market !== "JP" && !isFin ? grahamTests(company) : null;
 
 // Peer context on the two quality reads that are otherwise judged against an absolute band: a number

@@ -75,6 +75,46 @@ export function pricingReconciliation(marginDelta, pricing) {
   return null;
 }
 
+// The catalog's 90th percentiles for an owner's vocabulary (per-share value, return on capital,
+// intrinsic value, free cash flow, the long term) and a promoter's (world-class, best-in-class,
+// paradigm, synergies, disruptive), counted per 1,000 MD&A words. Above its own line, a register is
+// as pronounced as the loudest tenth of the catalog. Relative to the catalog, the way the Candor
+// Read scales its bars — never an absolute the reader must calibrate.
+const OWNER_HI = 2.9, PROMO_HI = 0.8;
+
+// Wire the language register into the durability read. Buffett and Munger read a filing for how
+// management talks as much as for what it reports, and the tell sharpens against the record: a
+// promoter's vocabulary sitting over a fading return is a different story than an owner's. We read
+// the register only where one voice clearly dominates — heavy owner-talk and light promoter-talk, or
+// the reverse — and withhold on the mixed or unremarkable middle, then set it against whether the
+// business is actually compounding. The counted densities are the company's own word choices, not our
+// opinion; we reconcile them with the record and hand the weight to the reader. Present, never
+// pronounce. Pure: the caller passes the candor object in. Returns a value tag, tone and clause, or null.
+export function registerReconciliation(trajectory, candor) {
+  if (!candor || !trajectory) return null;
+  const ownerHi = candor.owner != null && candor.owner >= OWNER_HI;
+  const promoHi = candor.promo != null && candor.promo >= PROMO_HI;
+  // Only the clear cases: one register plainly dominates. High in both, or in neither, is mixed or
+  // unremarkable — we withhold rather than force a character onto the filing.
+  let register;
+  if (promoHi && !ownerHi) register = "promoter";
+  else if (ownerHi && !promoHi) register = "owner";
+  else return null;
+
+  if (register === "promoter") {
+    if (trajectory === "fading")
+      return { value: "Promotional", tone: "warn", text: "The returns have faded, yet the filing reaches for a promoter’s vocabulary — world-class, best-in-class, disruptive — more than an owner’s. When the words sell harder than the results deliver, the gap is the thing to weigh." };
+    if (trajectory === "compounding")
+      return { value: "Promotional", tone: "info", text: "The record is compounding, but the filing leans on a promoter’s vocabulary rather than the per-share, return-on-capital terms an owner uses. The results back the talk here; the register is still worth noting." };
+    return { value: "Promotional", tone: "info", text: "Results have held roughly flat while the filing leans on a promoter’s vocabulary — watch whether the words are doing work the numbers are not." };
+  }
+  if (trajectory === "compounding")
+    return { value: "Owner’s terms", tone: "good", text: "The record and the register agree: capital is compounding and the filing reasons in an owner’s terms — per-share value, return on capital, the long term — not a promoter’s." };
+  if (trajectory === "fading")
+    return { value: "Owner’s terms", tone: "ok", text: "Returns have thinned, but the filing discusses it in an owner’s vocabulary rather than selling past it — candor about a hard stretch counts for more than an adjective." };
+  return { value: "Owner’s terms", tone: "ok", text: "The filing reasons in an owner’s terms — per-share, return on capital, the long term — and the record has held; the words and the results are of a piece." };
+}
+
 export function moatReport(company, opts = {}) {
   const H = (company.history || []).filter((h) => h?.lines?.revenue != null);
   if (H.length < 4) return null;
@@ -87,6 +127,9 @@ export function moatReport(company, opts = {}) {
   const debtOk = debtReliable(company.lines || {}) && debtReliable(company.ttm?.lines || {});
   const facts = [];
   const add = (label, value, tone, note) => facts.push({ label, value, tone, note });
+  // The record's trajectory, captured for the closing register read: the margin trend and the
+  // owner-earnings growth rate, set below as they are computed.
+  let marginDelta = null;
 
   // 1, Stability: did it ever lose money?
   const ni = L.map((x) => x.netIncome).filter((x) => x != null);
@@ -113,6 +156,7 @@ export function moatReport(company, opts = {}) {
   const lI = om.length - 1 - [...om].reverse().findIndex((v) => v != null);
   if (fI >= 0 && lI > fI) {
     const d = om[lI] - om[fI];
+    marginDelta = d;
     const dir = d > 0.02 ? "good" : d < -0.02 ? "warn" : "ok";
     add("Operating margin", `${pct(om[fI])} (FY${years[fI]}) → ${pct(om[lI])} (FY${years[lI]})`, dir,
       d > 0.02 ? "Margins widened over the record, pricing power intact or improving."
@@ -190,6 +234,17 @@ export function moatReport(company, opts = {}) {
       grew ? "Paid and raised the dividend across the record, the continuity Graham prized."
         : `Paid a dividend in ${paidYrs} of the years on record.`);
   }
+
+  // 9, The register, set against the record: how management talks, reconciled with whether the
+  // business is actually compounding. The trajectory is read from owner-earnings growth where the
+  // record carries it, else the margin trend — and withheld where neither is legible, since the
+  // whole point is to reconcile the words with a record we could actually read.
+  const trajectory = (g != null || marginDelta != null)
+    ? ((g != null ? g >= 0.04 : marginDelta > 0.02) ? "compounding"
+        : (g != null ? g < 0 : marginDelta < -0.02) ? "fading" : "holding")
+    : null;
+  const reg = registerReconciliation(trajectory, opts.candor);
+  if (reg) add("How management talks about it", reg.value, reg.tone, reg.text);
 
   return { years, facts };
 }
