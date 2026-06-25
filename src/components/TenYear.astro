@@ -1,6 +1,6 @@
 ---
 import { classify, financialKind, financialSubtype } from "../lib/archetype.mjs";
-import { fmtMoney, currencySymbol, roicValue, liquidAssets, topLineRevenue, debtReliable, oiReliable, effectiveTaxRate, ownerEarningsAbs, freeCashFlowAbs } from "../lib/fundamentals.mjs";
+import { fmtMoney, currencySymbol, roicValue, liquidAssets, topLineRevenue, debtReliable, oiReliable, effectiveTaxRate, ownerEarningsAbs, freeCashFlowAbs, grossMargin } from "../lib/fundamentals.mjs";
 import { returnOnEquity, returnOnTangibleEquity, returnOnAssets, efficiencyRatio, tangibleEquity } from "../lib/financials.mjs";
 import { ffo, ffoPerShare, ffoPayout, debtToAssets } from "../lib/reits.mjs";
 import { combinedRatio, lossRatio } from "../lib/insurers.mjs";
@@ -50,7 +50,7 @@ const xStr = (v, dp = 1) => (v == null ? "—" : `${v.toFixed(dp)}×`);
 const ROW = {
   // --- group 1: what it earned ---
   revenue: { label: "Revenue", short: "Revenue", g: 1, get: (L) => money(topLineRevenue(L, company)) },
-  grossMargin: { label: "Gross margin", short: "Gross mgn", g: 1, get: (L) => marginStr(L.revenue != null && L.costOfRevenue != null ? L.revenue - L.costOfRevenue : null, L.revenue, 0) },
+  grossMargin: { label: "Gross margin", short: "Gross mgn", g: 1, get: (L) => { const v = grossMargin(L); return v == null ? "—" : marginStr(v, 1, 0); } },
   opMargin: { label: "Operating margin", short: "Op. mgn", g: 1, get: (L) => (oiOk ? marginStr(L.operatingIncome, L.revenue) : "—") },
   nii: { label: "Net interest income", short: "Net int.", g: 1, get: (L) => money(L.netInterestIncome) },
   premiums: { label: "Premiums earned", short: "Premiums", g: 1, get: (L) => money(L.premiumsEarned) },
