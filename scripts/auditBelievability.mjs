@@ -24,7 +24,7 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 import {
   topLineRevenue, grossMargin, operatingMargin, ownerEarningsMargin, freeCashFlowAbs,
-  liquidAssets, debtReliable, fmtMoney,
+  liquidAssets, debtReliable, fmtMoney, corruptGrossMarginYears,
 } from "../src/lib/fundamentals.mjs";
 import { earningsPower } from "../src/lib/normalize.mjs";
 import { financialProfile } from "../src/lib/archetype.mjs";
@@ -90,7 +90,10 @@ for (const c of companies) {
   // (Caterpillar: 30% → 99% in one year, operating margin 13.5% → 13.3%). The reader sees the jump in
   // the record's gross-margin row.
   if (!kind) {
-    const gmSeries = histYears(c).map((h) => ({ fy: h.fy, gm: grossMargin(h.lines), om: operatingMargin(h.lines) }));
+    // The record table withholds the corrupt swing years, so the gate reads the series the same way —
+    // a discontinuity that only exists between two cells the page never shows is not a contradiction.
+    const corruptYrs = corruptGrossMarginYears(c);
+    const gmSeries = histYears(c).map((h) => ({ fy: h.fy, gm: corruptYrs.has(h.fy) ? null : grossMargin(h.lines), om: operatingMargin(h.lines) }));
     for (let i = 1; i < gmSeries.length; i++) {
       const a = gmSeries[i - 1], b = gmSeries[i];
       if (a.gm == null || b.gm == null) continue;

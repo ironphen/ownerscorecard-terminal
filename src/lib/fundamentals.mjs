@@ -628,6 +628,29 @@ export function grossMargin(L) {
   return gm;
 }
 
+// The single-year grossMargin() above can't see the record, so it can't catch the other cost-of-revenue
+// mis-tag: a company whose gross margin SWINGS between a clearly moderate year (under ~60%) and a
+// near-total one (≥85%). A real business holds a roughly steady gross margin — it does not go from 16%
+// to 95% and back — so the near-total years are a captured-near-zero cost line, an impossible ~100%
+// margin (an auto dealer, a distributor, a utility reading 100% one year and 20% the next). A genuinely
+// high-margin business — software, a drug — holds a stable high margin and never dips to a moderate year,
+// so it is never caught. These two helpers let the record table, the vital-signs strip and the
+// believability gate withhold the same corrupt cells from a series the per-year function can't judge.
+function grossMarginRecord(company) {
+  return (company?.history || [])
+    .filter((h) => h?.lines)
+    .map((h) => ({ fy: h.fy, gm: grossMargin(h.lines) }))
+    .filter((r) => r.gm != null);
+}
+export function grossMarginSwings(company) {
+  const ser = grossMarginRecord(company);
+  return ser.length >= 3 && Math.min(...ser.map((r) => r.gm)) < 0.6;
+}
+export function corruptGrossMarginYears(company) {
+  if (!grossMarginSwings(company)) return new Set();
+  return new Set(grossMarginRecord(company).filter((r) => r.gm >= 0.85).map((r) => r.fy));
+}
+
 export function ownerEarningsMargin(L, company) {
   if (!L || L.cashFromOps == null || L.capex == null || !L.revenue) return null;
   // Buffett's owner earnings: operating cash less maintenance capex, not total capex (which would be

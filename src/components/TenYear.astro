@@ -1,6 +1,6 @@
 ---
 import { classify, financialKind, financialSubtype } from "../lib/archetype.mjs";
-import { fmtMoney, currencySymbol, roicValue, liquidAssets, topLineRevenue, debtReliable, oiReliable, effectiveTaxRate, ownerEarningsAbs, freeCashFlowAbs, grossMargin } from "../lib/fundamentals.mjs";
+import { fmtMoney, currencySymbol, roicValue, liquidAssets, topLineRevenue, debtReliable, oiReliable, effectiveTaxRate, ownerEarningsAbs, freeCashFlowAbs, grossMargin, corruptGrossMarginYears } from "../lib/fundamentals.mjs";
 import { returnOnEquity, returnOnTangibleEquity, returnOnAssets, efficiencyRatio, tangibleEquity } from "../lib/financials.mjs";
 import { ffo, ffoPerShare, ffoPayout, debtToAssets } from "../lib/reits.mjs";
 import { combinedRatio, lossRatio } from "../lib/insurers.mjs";
@@ -212,6 +212,19 @@ const lastI = cols.length - 1;
   cols.forEach((c, i) => {
     if (c.lines && c.lines.sharesDiluted != null && factor[i] !== 1)
       c.lines = { ...c.lines, sharesDiluted: c.lines.sharesDiluted * factor[i] };
+  });
+}
+
+// Withhold a mis-tagged cost-of-revenue year: a company whose gross margin swings between a moderate
+// year and a near-total one has its cost line captured near zero in the high years — an impossible
+// ~100% gross margin (an auto dealer, a utility). Null the cost line for those years so the gross-margin
+// row reads "—" rather than printing the corruption; nothing else in the table derives from it. The TTM
+// column carries no fiscal year, so it is judged on its own near-total reading when the record swings.
+{
+  const corruptGM = corruptGrossMarginYears(company);
+  if (corruptGM.size) cols.forEach((c) => {
+    const corrupt = c.ttm ? (c.lines && grossMargin(c.lines) >= 0.85) : corruptGM.has(Number(c.label));
+    if (corrupt && c.lines && c.lines.costOfRevenue != null) c.lines = { ...c.lines, costOfRevenue: null };
   });
 }
 
