@@ -1,69 +1,64 @@
 ---
 import fundamentals from "../data/fundamentals.json";
 import { classify } from "../lib/archetype.mjs";
-import { fmtMoney, roicValue, topLineRevenue, ownerEarningsMargin } from "../lib/fundamentals.mjs";
+import { fmtMoney, roicValue, topLineRevenue, ownerEarningsMargin, grossMargin } from "../lib/fundamentals.mjs";
 import { returnOnEquity, returnOnTangibleEquity, efficiencyRatio, netInterestMargin } from "../lib/financials.mjs";
 import { ffoMargin, ffoPayout, ffoOnAssets, debtToAssets } from "../lib/reits.mjs";
 import { combinedRatio, lossRatio } from "../lib/insurers.mjs";
 import { medicalLossRatio } from "../lib/managedCare.mjs";
 import { financialKind, financialSubtype } from "../lib/archetype.mjs";
+import { selectPeers, peerStat } from "../lib/peers.mjs";
 import Term from "./Term.astro";
 
 const { company } = Astro.props;
 const all = fundamentals.companies || [];
 
-// Peers: same 3-digit SIC (a tight industry group); broaden to the 2-digit group,
-// then to the economic model, if that is too thin. We track which basis we used so
-// the heading stays honest: an industry group is named by its industry, while a model
-// fallback says so rather than claiming an industry the peers don't really share.
-function findPeers(co) {
-  const sic = String(co.sic || "");
-  const inSic = (n) => (sic.slice(0, n) ? all.filter((c) => c.ticker !== co.ticker && String(c.sic || "").slice(0, n) === sic.slice(0, n)) : []);
-  let p = inSic(3), basis = "industry";
-  if (p.length < 2) p = inSic(2);
-  if (p.length < 2) {
-    const arch = classify(co).sector.key;
-    p = all.filter((c) => c.ticker !== co.ticker && classify(c).sector.key === arch);
-    basis = "model";
-  }
-  const rev = co.lines?.revenue || 0;
-  return { peers: p.sort((a, b) => Math.abs((a.lines?.revenue || 0) - rev) - Math.abs((b.lines?.revenue || 0) - rev)).slice(0, 7), basis };
-}
-
-const { peers, basis } = findPeers(company);
+// Peers are drawn from the same economic engine and ranked by structural likeness — selectPeers lives in
+// lib/peers.mjs so the rule is one place and testable. The basis (a real industry group vs the nearest by
+// economic model) keeps the heading honest.
+const { peers, basis } = selectPeers(company, all);
 const group = [company, ...peers].sort((a, b) => (b.lines?.revenue || 0) - (a.lines?.revenue || 0));
 const cls = classify(company);
 
 const pr = (v, dp = 0) => (v == null ? "—" : `${(v * 100).toFixed(dp)}%`);
+const median = (xs) => { if (!xs.length) return null; const s = [...xs].sort((a, b) => a - b); const m = Math.floor(s.length / 2); return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
 const fk = financialKind(company);
 const isLife = fk === "insurer" && financialSubtype(company) === "life-insurer";
 const isReit = fk === "reit", isBank = fk === "bank", isInsurer = fk === "insurer" && !isLife;
 const isFee = fk === "fee", isManagedCare = fk === "managedCare";
 
-const metricsOf = (c) => {
-  const L = c.lines || {};
-  return {
-    revenue: topLineRevenue(L, c),
-    grossMargin: L.revenue && L.costOfRevenue != null ? (L.revenue - L.costOfRevenue) / L.revenue : null,
-    opMargin: L.operatingIncome != null && L.revenue ? L.operatingIncome / L.revenue : null,
-    roic: roicValue(L),
-    oeMargin: ownerEarningsMargin(L, c),
-    netMargin: L.netIncome != null && L.revenue ? L.netIncome / L.revenue : null,
-    roe: returnOnEquity(L),
-    rotce: returnOnTangibleEquity(L),
-    efficiency: efficiencyRatio(L),
-    nim: netInterestMargin(L),
-    ffoMargin: ffoMargin(L),
-    ffoOnAssets: ffoOnAssets(L),
-    payout: ffoPayout(L),
-    debtToAssets: debtToAssets(L),
-    combined: combinedRatio(L),
-    lossR: lossRatio(L),
-    mlr: medicalLossRatio(L),
-    invYield: L.investmentIncome != null && L.lossReserves ? L.investmentIncome / L.lossReserves : null,
-    roa: L.netIncome != null && L.totalAssets ? L.netIncome / L.totalAssets : null,
-  };
+// Each comparison figure is read through the cycle, not off one year: the median of the metric across the
+// company's record, so a peer caught at a peak or a trough doesn't distort the table — Graham's discipline,
+// applied to the peer comparison the same way the scorecard and the record apply it. Falls back to the
+// latest year only where the record is too short to normalize (under three readings). Revenue stays the
+// latest figure: it is the scale anchor for the row, not a rate to average.
+const norm = (c, fn) => {
+  const hist = (c.history || []).map((h) => fn(h?.lines || {}, c)).filter((v) => v != null && isFinite(v));
+  if (hist.length >= 3) return median(hist);
+  const latest = fn(c.lines || {}, c);
+  return latest != null && isFinite(latest) ? latest : null;
 };
+const metricsOf = (c) => ({
+  revenue: topLineRevenue(c.lines || {}, c),
+  grossMargin: norm(c, (L) => grossMargin(L)),
+  opMargin: norm(c, (L) => (L.operatingIncome != null && L.revenue ? L.operatingIncome / L.revenue : null)),
+  roic: norm(c, (L) => roicValue(L)),
+  oeMargin: norm(c, (L, co) => ownerEarningsMargin(L, co)),
+  netMargin: norm(c, (L) => (L.netIncome != null && L.revenue ? L.netIncome / L.revenue : null)),
+  roe: norm(c, (L) => returnOnEquity(L)),
+  rotce: norm(c, (L) => returnOnTangibleEquity(L)),
+  efficiency: norm(c, (L) => efficiencyRatio(L)),
+  nim: norm(c, (L) => netInterestMargin(L)),
+  ffoMargin: norm(c, (L) => ffoMargin(L)),
+  ffoOnAssets: norm(c, (L) => ffoOnAssets(L)),
+  payout: norm(c, (L) => ffoPayout(L)),
+  debtToAssets: norm(c, (L) => debtToAssets(L)),
+  combined: norm(c, (L) => combinedRatio(L)),
+  lossR: norm(c, (L) => lossRatio(L)),
+  mlr: norm(c, (L) => medicalLossRatio(L)),
+  invYield: norm(c, (L) => (L.investmentIncome != null && L.lossReserves ? L.investmentIncome / L.lossReserves : null)),
+  roa: norm(c, (L) => (L.netIncome != null && L.totalAssets ? L.netIncome / L.totalAssets : null)),
+});
 
 // The comparison columns are archetype-aware: a bank on the bank lens, a REIT on
 // FFO. "Best" respects each column's direction; "neutral" gets no best mark.
@@ -121,6 +116,14 @@ for (const col of COLS) {
   best[col.key] = bt;
 }
 
+// The group's distribution per column — the median the company is read against, so a figure is context
+// rather than a lone number. peerStat needs three readings (the company plus two peers); a thinner group
+// simply shows no median line.
+const subjectRow = rows.find((r) => r.c.ticker === company.ticker);
+const dist = {};
+for (const col of COLS) dist[col.key] = peerStat(rows.map((r) => r.m[col.key]), subjectRow?.m[col.key]);
+const anyMed = COLS.some((col) => dist[col.key]);
+
 const lens = isReit ? "the REIT lens" : isLife ? "the spread-and-book-value lens" : isInsurer ? "the underwriting lens" : isBank ? "the bank lens" : isManagedCare ? "the medical-loss-ratio lens" : isFee ? "fee margins" : "owner economics";
 const heading = basis === "model" ? "Peers, nearest by economic model" : `Peers, ${cls.industry.label}`;
 const intro = basis === "model"
@@ -131,7 +134,7 @@ const intro = basis === "model"
 {group.length >= 2 ? (
   <section class="peers">
     <h3 class="secTitle pHead">{heading}</h3>
-    <p class="pNote">{intro} <span class="bestKey">●</span> marks best in the group.</p>
+    <p class="pNote">{intro} Each figure is a <b>through-cycle median</b>, so a peak or trough year can&rsquo;t distort it; the <b>group median</b> at the foot is the line to read each against. <span class="bestKey">●</span> marks the group&rsquo;s best on a single measure.</p>
     <div class="wrap">
       <table>
         <thead>
@@ -149,6 +152,15 @@ const intro = basis === "model"
             </tr>
           ))}
         </tbody>
+        {anyMed ? (
+          <tfoot>
+            <tr class="medRow">
+              <th class="tl">Group median</th>
+              <td>—</td>
+              {COLS.map((col) => <td>{dist[col.key] ? pr(dist[col.key].median, col.dp) : "—"}</td>)}
+            </tr>
+          </tfoot>
+        ) : null}
       </table>
     </div>
   </section>
@@ -172,4 +184,10 @@ const intro = basis === "model"
   tr.me { background: var(--accent-tint); }
   td.win { color: var(--good); font-weight: 700; }
   td.win::after { content: " ●"; font-size: 9px; vertical-align: middle; }
+
+  /* The group-median row: the distribution line the company's figures are read against. Set off with a
+     heavier rule and a muted, italic label so it reads as the yardstick, not another peer. */
+  tfoot .medRow th.tl, tfoot .medRow td { border-top: 2px solid var(--rule-strong); padding-top: 9px; color: var(--ink-soft); font-weight: 600; }
+  tfoot .medRow th.tl { font-style: italic; color: var(--muted); }
+  .pNote b { font-style: normal; color: var(--ink); }
 </style>
