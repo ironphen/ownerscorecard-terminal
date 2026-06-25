@@ -472,7 +472,7 @@ async function getFiling(cik, f) {
   const mdna = section(text, a.mdna[0], a.mdna[1]);
   const risk = section(text, a.risk[0], a.risk[1]);
   const md = metrics(mdna);
-  return { url, business: { ...metrics(business), lead: leadSentences(business) }, mdna: { ...md, lead: leadSentences(mdna), candor: candorSignals(mdna, md.sents) }, risk: metrics(risk), reportDate: f.reportDate };
+  return { url, business: { ...metrics(business), lead: leadSentences(business), head: business.slice(0, 800) }, mdna: { ...md, lead: leadSentences(mdna), candor: candorSignals(mdna, md.sents) }, risk: metrics(risk), reportDate: f.reportDate };
 }
 
 // ---- executive pay (proxy statement / DEF 14A) ----
@@ -1002,6 +1002,12 @@ async function main() {
           // When no lede was accepted, keep the first sentences the scorer actually saw, so the scorer's
           // over-rejection can be diagnosed and fixed from the real openings (AAPL/NVDA), not guessed at.
           sample: bizLede ? undefined : bizSents.slice(0, 5).map((s) => cleanQuote(String(s || "")).slice(0, 180)).filter(Boolean),
+          // The raw head of the extracted Item 1 section, so a re-fetch shows WHERE the section boundary
+          // landed. On the largest filers an early in-text cross-reference to "Item 1A. Risk Factors"
+          // truncates the true section, and the longest-chunk rule then hands the hero a span that starts
+          // mid-section — risk or competition text reaching the description (Walmart, Coca-Cola, BofA).
+          // This makes that visible on real text rather than guessed; kept only when no lede was found.
+          bizHead: bizLede ? undefined : (cur.business.head || null),
         },
         ownerFlags: flags,
         mdna: {
