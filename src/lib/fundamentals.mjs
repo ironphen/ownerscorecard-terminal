@@ -615,6 +615,10 @@ export function grossMargin(L) {
   const gm = 1 - L.costOfRevenue / L.revenue;
   const om = L.operatingIncome != null ? L.operatingIncome / L.revenue : null;
   if (om != null && gm < om - 0.01) return null;
+  // A backstop for years that carry no operating income to check against: a gross margin below −100%
+  // (cost of revenue more than double the top line) is never real — it means the cost line was
+  // mis-tagged or the top line understated (Archer-Daniels printed −201%, Bunge −295%). Withhold it.
+  if (gm < -1) return null;
   return gm;
 }
 
