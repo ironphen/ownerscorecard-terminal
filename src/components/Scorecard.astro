@@ -1,12 +1,12 @@
 ---
 import fundamentals from "../data/fundamentals.json";
-import { buildScorecard, TONE_COLOR, roicValue, ownerEarningsMargin } from "../lib/fundamentals.mjs";
+import { buildScorecard, TONE_COLOR, roicValue, ownerEarningsMargin, operatingMargin } from "../lib/fundamentals.mjs";
 import { selectPeers, peerMedian } from "../lib/peers.mjs";
-import { buildFinancialScorecard } from "../lib/financials.mjs";
+import { buildFinancialScorecard, returnOnEquity, returnOnTangibleEquity, efficiencyRatio } from "../lib/financials.mjs";
 import { buildReitScorecard } from "../lib/reits.mjs";
-import { buildInsurerScorecard } from "../lib/insurers.mjs";
+import { buildInsurerScorecard, combinedRatio } from "../lib/insurers.mjs";
 import { buildFeeScorecard } from "../lib/feeFinancials.mjs";
-import { buildManagedCareScorecard } from "../lib/managedCare.mjs";
+import { buildManagedCareScorecard, medicalLossRatio } from "../lib/managedCare.mjs";
 import { moatReport } from "../lib/durability.mjs";
 import { grahamTests } from "../lib/graham.mjs";
 import { financialKind, financialSubtype } from "../lib/archetype.mjs";
@@ -46,13 +46,30 @@ const graham = company.market !== "JP" && !isFin ? grahamTests(company) : null;
 // industry has enough peers carrying the metric (peerMedian withholds otherwise). Non-financials only for
 // now — each financial kind's return metric (ROE, ROTCE) is the next pass.
 const peerCtx = (() => {
-  if (isFin) return {};
   const peers = peersProp || selectPeers(company, fundamentals.companies || []).peers;
-  const roicMed = peerMedian(peers, (L) => roicValue(L));
-  const oeMed = peerMedian(peers, (L, c) => ownerEarningsMargin(L, c));
   const ctx = {};
-  if (roicMed != null) ctx["Return on invested capital"] = `Industry peers: median ${(roicMed * 100).toFixed(0)}%`;
-  if (oeMed != null) ctx["Owner-earnings margin"] = `Industry peers: median ${(oeMed * 100).toFixed(0)}%`;
+  // Add peer context to a check by its title: the median of the metric across the same-engine peers,
+  // each read through its own cycle. Withheld (no line) when too few peers carry it. A REIT's headline
+  // (FFO per share) is a per-share figure, not a peer-comparable ratio, so REITs wait for a dedicated pass.
+  const add = (title, fn) => { const m = peerMedian(peers, fn); if (m != null) ctx[title] = `Industry peers: median ${(m * 100).toFixed(0)}%`; };
+  if (!isFin) {
+    add("Return on invested capital", (L) => roicValue(L));
+    add("Owner-earnings margin", (L, c) => ownerEarningsMargin(L, c));
+  } else if (fk === "bank") {
+    add("Return on equity", (L) => returnOnEquity(L));
+    add("Return on tangible equity", (L) => returnOnTangibleEquity(L));
+    add("Efficiency ratio", (L) => efficiencyRatio(L));
+  } else if (fk === "insurer") {
+    add("Return on equity", (L) => returnOnEquity(L));
+    add("Combined ratio", (L) => combinedRatio(L));
+  } else if (fk === "managedCare") {
+    add("Return on equity", (L) => returnOnEquity(L));
+    add("Operating margin", (L) => operatingMargin(L));
+    add("Medical loss ratio", (L) => medicalLossRatio(L));
+  } else if (fk === "fee") {
+    add("Operating margin", (L) => operatingMargin(L));
+    add("Return on equity", (L) => returnOnEquity(L));
+  }
   return ctx;
 })();
 const withPeers = (sec) => ({ ...sec, checks: sec.checks.map((c) => (peerCtx[c.title] ? { ...c, peer: peerCtx[c.title] } : c)) });
