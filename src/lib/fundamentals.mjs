@@ -619,6 +619,12 @@ export function grossMargin(L) {
   // (cost of revenue more than double the top line) is never real — it means the cost line was
   // mis-tagged or the top line understated (Archer-Daniels printed −201%, Bunge −295%). Withhold it.
   if (gm < -1) return null;
+  // The same impossibility on the high side: an inventory-intensive goods business holding 15%+ of its
+  // revenue in inventory has a real, large cost of goods, so a near-100% gross margin means the cost
+  // line was mis-tagged near zero (Caterpillar's 2022+ printed 100% on $18B of inventory). Withhold it
+  // the way the negative side is withheld. A genuinely high-margin business — software, a drug — carries
+  // only token inventory and reads through untouched.
+  if (gm >= 0.92 && L.inventory != null && L.inventory > L.revenue * 0.15) return null;
   return gm;
 }
 
