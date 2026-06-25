@@ -566,9 +566,15 @@ async function main() {
       const niiBy = annualByYear(facts, CONCEPTS.netInterestIncome, "USD");
       const noniBy = annualByYear(facts, CONCEPTS.noninterestIncome, "USD");
       for (const fy of new Set([...Object.keys(niiBy), ...Object.keys(noniBy)])) {
-        if (revAnnualBy[fy]) continue; // a reported total tag wins
         const nii = niiBy[fy], noni = noniBy[fy];
-        if (nii && noni && nii.val != null && noni.val != null)
+        if (!(nii && noni && nii.val != null && noni.val != null)) continue;
+        // Fill a year with no total tag; also override a total that reads below net interest income
+        // alone — which a real total (NII + noninterest) can never be — since some banks tag "Revenues"
+        // with only a sub-total or fee sliver (Zions reads ~$0.66B against a true ~$3.4B). The
+        // replacement equals the reported total wherever that total is already right, so a correctly
+        // tagged bank (JPMorgan, Wells Fargo) is never disturbed.
+        const existing = revAnnualBy[fy];
+        if (!existing || existing.val < nii.val)
           revAnnualBy[fy] = { val: nii.val + noni.val, end: nii.end || noni.end, filed: (nii.filed || "") > (noni.filed || "") ? nii.filed : noni.filed, form: nii.form || noni.form };
       }
     }
