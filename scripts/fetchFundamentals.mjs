@@ -577,6 +577,20 @@ async function main() {
         if (!existing || existing.val < nii.val)
           revAnnualBy[fy] = { val: nii.val + noni.val, end: nii.end || noni.end, filed: (nii.filed || "") > (noni.filed || "") ? nii.filed : noni.filed, form: nii.form || noni.form };
       }
+    } else if (!isReitCo && !isInsurerCo) {
+      // A non-financial whose chosen revenue falls below its own cost of goods has tagged only its
+      // ASC 606 contract revenue — a partial that excludes, for a trader, the bulk of the top line
+      // (Archer-Daniels reads $25B of contract revenue against an $85B total; Bunge $17B against $53B).
+      // A real top line is never below its own cost, so where the gross "Revenues" tag is both larger
+      // and clears the cost, prefer it. Excise filers (tobacco) are untouched — their net contract
+      // revenue already clears cost, so the trigger never fires and their gross "Revenues" never wins.
+      const totalRevBy = annualByYear(facts, ["Revenues"], "USD");
+      const cogsBy = annualByYear(facts, CONCEPTS.costOfRevenue, "USD");
+      for (const fy of Object.keys(revAnnualBy)) {
+        const rev = revAnnualBy[fy]?.val, cogs = cogsBy[fy]?.val, tot = totalRevBy[fy]?.val;
+        if (rev != null && cogs != null && tot != null && rev < cogs && tot > rev && tot >= cogs)
+          revAnnualBy[fy] = totalRevBy[fy];
+      }
     }
     const latestRev = latestEntry(revAnnualBy);
     const revLatest = latestRev?.val ?? null;
