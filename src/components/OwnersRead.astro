@@ -6,7 +6,7 @@
 // arithmetic that tests them on the right.
 import language from "../data/language.json";
 import { fmtMoney, ownerEarningsMargin, operatingMargin, coverage, cashPosition, topLineRevenue } from "../lib/fundamentals.mjs";
-import { cleanOwnerFlags } from "../lib/business.mjs";
+import { cleanOwnerFlags, customerConcentration } from "../lib/business.mjs";
 
 const { company } = Astro.props;
 const $ = (v) => fmtMoney(v, company?.currency || "USD");
@@ -60,10 +60,22 @@ function spark(values, w = 108, h = 22) {
 }
 
 // Anchor every figure to a period found in the table. null = a judgment, not arithmetic.
-function bearing(lens) {
+function bearing(flag) {
+  const lens = flag.lens;
   switch (lens) {
-    case "Customer concentration":
-      return rev != null ? { label: `Revenue exposed (${curLabel})`, value: $(rev) } : null;
+    case "Customer concentration": {
+      // Turn the filing's disclosed share into dollars: how much of the top line — and so how many
+      // dollars — ride on the biggest buyer(s). The percentage is parsed conservatively from the
+      // company's own sentence; when it can't be read with confidence we fall back to the revenue line
+      // alone, never a guessed figure.
+      if (rev == null) return null;
+      const cc = customerConcentration(flag.quote);
+      if (cc) {
+        const exposed = rev * cc.pct;
+        return { label: `On its largest customer${cc.multi ? "s" : ""} (${curLabel})`, value: `≈${$(exposed)} · ${pc(cc.pct)} of revenue` };
+      }
+      return { label: `Revenue exposed (${curLabel})`, value: $(rev) };
+    }
     case "Pricing power & competition": {
       if (curOM != null && omPeak) {
         const atHigh = curOM >= omPeak.v - 0.01;
@@ -98,7 +110,7 @@ function bearing(lens) {
 }
 
 const items = flags.map((f) => {
-  const fig = bearing(f.lens);
+  const fig = bearing(f);
   return { ...f, fig, sp: fig?.series ? spark(fig.series) : null };
 });
 

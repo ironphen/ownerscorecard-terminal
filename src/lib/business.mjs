@@ -222,3 +222,54 @@ const MISTAGGED_FLAG = new RegExp([
 export function cleanOwnerFlags(flags) {
   return (Array.isArray(flags) ? flags : []).filter((f) => f && typeof f.quote === "string" && f.quote.length >= 30 && !MISTAGGED_FLAG.test(f.quote));
 }
+
+// Customer concentration, read off the filing's own sentence so the weld can turn "who the revenue
+// leans on" into dollars: what share of the top line — and so how many dollars — ride on the biggest
+// buyer(s). The extractor's Customer-concentration flag carries the share-of-revenue percentage in its
+// quote; this parses it conservatively, the integrity bar being precision over coverage. It must see a
+// real concentration phrase ("largest customer", "top N customers"), bind the percentage to revenue or
+// sales (never accounts receivable, backlog, new-insurance-written, a deposit or a loan book), and
+// reject the three things that wear concentration's clothes: a GEOGRAPHIC split ("revenue from
+// customers outside the U.S."), a customer-TYPE breakdown ("commercial and residential customers"),
+// and a DENIAL ("we did not have any customer over 10%"). A compound sentence that names both a single
+// largest customer and a separate top-N is ambiguous about which figure is which, so it is declined
+// rather than guessed. Returns { pct, multi } — the share of revenue and whether it leans on more than
+// one buyer — or null when no figure can be read with confidence and the number must stand alone.
+const CC_SINGLE = /\b(?:(?:our|its|the)\s+)?(?:single\s+)?(?:largest|biggest|principal|most\s+significant|number\s+one|#?\s?1)\s+(?:end[\s-]?)?customer\b/i;
+const CC_ONE = /\b(?:one|a\s+single)\s+(?:end[\s-]?)?customer\b/i;
+const CC_MULTI = /\b(?:top\s+(?:\w+|\d+)|(?:two|three|four|five|six|seven|eight|nine|ten|\d+|several|few)\s+(?:of\s+(?:these\s+|our\s+)?)?(?:end[\s-]?)?customers|(?:\w+|\d+)\s+largest\s+(?:end[\s-]?)?customers)\b/i;
+const CC_DENIAL = /\b(?:no|did\s+not\s+have|does\s+not\s+have|have\s+not\s+had|without|not)\s+(?:any\s+|a\s+|one\s+|had\s+any\s+)?(?:single\s+|individual\s+)?customers?\b/i;
+const CC_GEO_TYPE = /\bcustomers?\s+(?:located\s+|based\s+)?(?:in|outside|within)\b|\boutside\s+(?:of\s+)?(?:the\s+)?(?:u\.?s\.?|united states)\b|\bby\s+(?:geograph|region|customer\s+type)\b|\b(?:commercial|residential|industrial)\s+and\s+(?:commercial|residential|industrial)\s+customers\b|\bcustomer\s+type\b/i;
+const CC_NON_REVENUE = /\b(accounts?\s+receivable|receivables?|backlog|deferred|bookings?|niw|new\s+insurance\s+written|in\s?force|autopay|automatic|deposits?|loans?|aum|assets\s+under|capacity|proppant)\b/i;
+const CC_REV = "(?:net\\s+sales|net\\s+revenues?|total\\s+(?:net\\s+)?revenues?|consolidated\\s+(?:net\\s+)?(?:revenues?|sales)|company\\s+revenues?|revenues?|sales)";
+const CC_SEP = "\\s*(?:,\\s*and\\s+|,\\s*&\\s*|,\\s*|\\s+and\\s+|\\s*&\\s*)";
+function ccRevenueBoundPcts(quote) {
+  const out = [];
+  let m;
+  const fwd = new RegExp(`(\\d{1,3}(?:\\.\\d+)?)\\s*(?:%|percent)\\s*(?:to|of)\\s+([^.%]{0,28}?)\\b${CC_REV}\\b`, "gi");
+  while ((m = fwd.exec(quote))) { if (!CC_NON_REVENUE.test(m[2] || "")) out.push({ pct: parseFloat(m[1]), idx: m.index }); }
+  const lst = new RegExp(`((?:\\d{1,3}(?:\\.\\d+)?\\s*%${CC_SEP})+\\d{1,3}(?:\\.\\d+)?\\s*%)\\s*(?:to|of)\\s+([^.%]{0,28}?)\\b${CC_REV}\\b`, "gi");
+  while ((m = lst.exec(quote))) {
+    if (CC_NON_REVENUE.test(m[2] || "")) continue;
+    for (const x of m[1].matchAll(/(\d{1,3}(?:\.\d+)?)\s*%/g)) out.push({ pct: parseFloat(x[1]), idx: m.index });
+  }
+  const bwd = new RegExp(`\\b${CC_REV}\\b([^.%]{0,34}?)\\b(?:was|were|represent\\w*|account\\w*|comprised|attributable|attributed|derived)\\b([^.%]{0,18}?)(\\d{1,3}(?:\\.\\d+)?)\\s*(?:%|percent)`, "gi");
+  while ((m = bwd.exec(quote))) { if (!CC_NON_REVENUE.test((m[1] || "") + (m[2] || ""))) out.push({ pct: parseFloat(m[3]), idx: m.index }); }
+  return out.filter((o) => o.pct >= 5 && o.pct <= 99).sort((a, b) => a.idx - b.idx);
+}
+export function customerConcentration(quote) {
+  if (!quote || typeof quote !== "string") return null;
+  if (CC_GEO_TYPE.test(quote) || CC_DENIAL.test(quote)) return null;
+  const single = CC_SINGLE.test(quote) || CC_ONE.test(quote);
+  const multi = CC_MULTI.test(quote);
+  if (!single && !multi) return null;
+  if (single && multi) return null; // a compound statement — ambiguous which figure belongs to which
+  const bound = ccRevenueBoundPcts(quote);
+  if (!bound.length) return null;
+  // A multi-year series ("77%, 93%, 97% in fiscal 2025, 2024, 2023") leads with the latest period;
+  // distinct customers in one year ("23%, 19%, 12%, respectively") lead with the largest.
+  const years = new Set([...quote.matchAll(/\b(?:19|20)\d{2}\b/g)].map((x) => x[0]));
+  const pcts = bound.map((b) => b.pct);
+  const pct = (years.size >= 2 ? pcts[0] : Math.max(...pcts)) / 100;
+  return { pct, multi };
+}
