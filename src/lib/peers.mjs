@@ -36,7 +36,17 @@ export function selectPeers(company, all, n = 7) {
   const myRev = topLineRevenue(company.lines || {}, company) || 0;
   const myInt = intensityOf(company);
 
-  const pool = (all || []).filter((c) => c && c.ticker !== company.ticker && engineOf(c) === myEngine);
+  // The candidate pool: same economic engine, the company excluded — and one entry per ENTITY, so a
+  // multi-share-class company (Alphabet's GOOG/GOOGL, Berkshire's A/B) counts once and doesn't crowd out
+  // real peers with four copies of itself. Dedupe by CIK; the company's own sibling classes are excluded
+  // too, since they are the same business, not a peer.
+  const seen = new Set(company.cik != null ? [company.cik] : []);
+  const pool = [];
+  for (const c of all || []) {
+    if (!c || c.ticker === company.ticker || engineOf(c) !== myEngine) continue;
+    if (c.cik != null) { if (seen.has(c.cik)) continue; seen.add(c.cik); }
+    pool.push(c);
+  }
   if (!pool.length) return { peers: [], basis: "model" };
 
   // Sub-industry closeness: a shared 4-digit SIC is a tight match, 3-digit close, 2-digit loose, none far.
@@ -62,18 +72,24 @@ export function selectPeers(company, all, n = 7) {
   };
   const score = (c) => sicDist(c) * 1.0 + sizeDist(c) * 0.6 + intDist(c) * 0.5;
 
-  const peers = pool
+  // Prefer the same broad industry over mere size. If the engine pool holds enough peers sharing the
+  // 2-digit SIC — the same industry, not just the same model — draw only from those, so a computer maker
+  // isn't padded with drug distributors and an industrial isn't padded with airlines to fill a fixed count.
+  // Only when that industry bench is thin (under three) do we widen to the whole economic-model pool, and
+  // the heading then says "nearest by model" honestly. (A near-unique mega-cap, or a small sub-industry,
+  // takes the wider net; a deep industry like banking keeps a clean, same-industry bench.)
+  const sic2 = mySic.slice(0, 2);
+  const sameIndustry = sic2 ? pool.filter((c) => String(c.sic || "").slice(0, 2) === sic2) : [];
+  const drewFromIndustry = sameIndustry.length >= 3;
+  const peers = (drewFromIndustry ? sameIndustry : pool)
     .map((c) => ({ c, s: score(c) }))
     .sort((a, b) => a.s - b.s)
     .slice(0, n)
     .map((x) => x.c);
 
-  // Honest heading: if a majority of the chosen peers share the 3-digit industry, it is an industry group;
-  // otherwise it is the nearest by economic model, and the heading should say so rather than imply an
-  // industry the peers don't really share.
-  const sameSic = mySic ? peers.filter((c) => String(c.sic || "").slice(0, 3) === mySic.slice(0, 3)).length : 0;
-  const basis = peers.length && sameSic >= Math.ceil(peers.length / 2) ? "industry" : "model";
-  return { peers, basis };
+  // The heading is honest about the basis: an industry group where we drew from the same industry, the
+  // nearest by economic model where the industry bench was too thin and we widened the net.
+  return { peers, basis: drewFromIndustry ? "industry" : "model" };
 }
 
 // Where a value falls in the peer set: the group median, the company's percentile, and the min/max band.

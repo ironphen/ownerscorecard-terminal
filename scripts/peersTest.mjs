@@ -7,8 +7,8 @@ import { selectPeers, peerStat } from "../src/lib/peers.mjs";
 let pass = 0, fail = 0;
 const check = (name, cond) => { console.log((cond ? "ok   " : "FAIL ") + name); cond ? pass++ : fail++; };
 
-const co = (ticker, sic, revenue, capex, extra = {}) => ({
-  ticker, name: ticker, sic, history: [],
+const co = (ticker, sic, revenue, capex, extra = {}, cik) => ({
+  ticker, name: ticker, sic, cik, history: [],
   lines: { revenue, capex, netIncome: revenue * 0.1, operatingIncome: revenue * 0.15, ...extra },
 });
 const bank = (ticker, sic, nii) => co(ticker, sic, null, 0, { netInterestIncome: nii, noninterestIncome: nii * 0.4, deposits: nii * 18, totalAssets: nii * 22, stockholdersEquity: nii * 2 });
@@ -35,6 +35,21 @@ const BANK_A = bank("BANK_A", "6022", 8e9);
 const bankUniv = [BANK_A, bank("BANK_B", "6021", 9e9), bank("BANK_C", "6022", 3e9), SOFT1, co("REIT1", "6798", 4e9, 0.1e9, { depreciation: 0.2e9 })];
 const bp = selectPeers(BANK_A, bankUniv).peers.map((p) => p.ticker);
 check("a bank peers only with banks", bp.includes("BANK_B") && bp.includes("BANK_C") && !bp.includes("SOFT1") && !bp.includes("REIT1"));
+
+// Multi-share-class entities collapse to one peer (same CIK), and the company's own sibling classes are
+// not peers. (Microsoft's table once showed GOOG, GOOGL, GOOGM and GOOGN as four separate "peers".)
+const HW = co("HW", "3571", 10e9, 0.3e9, {}, 500);
+const dedupUniv = [
+  HW,
+  co("HW_B", "3571", 10e9, 0.3e9, {}, 500),    // the company's own B share — same CIK, must be excluded
+  co("PEERA", "3571", 8e9, 0.2e9, {}, 600),    // a peer, class A
+  co("PEERA2", "3571", 8e9, 0.2e9, {}, 600),   // the same peer's other class — same CIK, must count once
+  co("PEERB", "3572", 5e9, 0.15e9, {}, 700),
+  co("PEERC", "3576", 3e9, 0.1e9, {}, 800),
+];
+const dp = selectPeers(HW, dedupUniv).peers.map((p) => p.ticker);
+check("a company's own sibling share class is not a peer", !dp.includes("HW_B"));
+check("a multi-class peer entity appears once, not as both classes", (dp.includes("PEERA") || dp.includes("PEERA2")) && !(dp.includes("PEERA") && dp.includes("PEERA2")));
 
 // The distribution helper: median, the subject's percentile, the band — context, no winner.
 const s = peerStat([0.10, 0.12, 0.14, 0.16, 0.18], 0.16);
