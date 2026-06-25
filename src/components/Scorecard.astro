@@ -1,6 +1,6 @@
 ---
 import fundamentals from "../data/fundamentals.json";
-import { buildScorecard, TONE_COLOR, roicValue, ownerEarningsMargin, operatingMargin } from "../lib/fundamentals.mjs";
+import { buildScorecard, TONE_COLOR, roicValue, ownerEarningsMargin, operatingMargin, earningsQuality, earningsQualityReconciliation } from "../lib/fundamentals.mjs";
 import { selectPeers, peerMedian } from "../lib/peers.mjs";
 import { buildFinancialScorecard, returnOnEquity, returnOnTangibleEquity, efficiencyRatio } from "../lib/financials.mjs";
 import { buildReitScorecard, ffoPayout, debtToAssets, ebitdaCoverage } from "../lib/reits.mjs";
@@ -86,7 +86,36 @@ const peerCtx = (() => {
   }
   return ctx;
 })();
-const withPeers = (sec) => ({ ...sec, checks: sec.checks.map((c) => (peerCtx[c.title] ? { ...c, peer: peerCtx[c.title] } : c)) });
+
+// The earnings-quality tie: the filing's language about the numbers, brought to the cash-backing
+// check. Integrity admissions (a material weakness, a restatement) undermine the numbers themselves;
+// heavy "look past GAAP" steering is read against whether cash actually backs the GAAP profit. The
+// ratio stays the spine; the words say whether to trust it. Non-financial scorecard only, where the
+// "Are earnings backed by cash?" check lives; financials' admissions still surface in the owner read.
+const eqTie = (() => {
+  if (isFin) return null;
+  const lc = language?.companies?.[company.ticker] || null;
+  const integ = lc?.buffettRead?.integrity || null;
+  const adjusted = lc?.mdna?.candor?.adjusted ?? null;
+  if (!integ && adjusted == null) return null;
+  const q = earningsQuality(company);
+  return earningsQualityReconciliation(q?.tone || "none", {
+    adjusted,
+    materialWeakness: !!integ?.materialWeakness,
+    restatement: !!integ?.restatement,
+  });
+})();
+
+// Enrich each check with the context it earns: the peer median where the metric is peer-comparable,
+// and — on the cash-backing check — the filing's own language about the reliability of the numbers.
+const enrich = (sec) => ({
+  ...sec,
+  checks: sec.checks.map((c) => {
+    let cc = peerCtx[c.title] ? { ...c, peer: peerCtx[c.title] } : c;
+    if (eqTie && c.title === "Are earnings backed by cash?") cc = { ...cc, lang: eqTie.text, langTone: eqTie.tone };
+    return cc;
+  }),
+});
 ---
 
 <section class="scorecard">
@@ -107,7 +136,7 @@ const withPeers = (sec) => ({ ...sec, checks: sec.checks.map((c) => (peerCtx[c.t
     </div>
   ) : null}
 
-  {sections.map(withPeers).map((sec) => (
+  {sections.map(enrich).map((sec) => (
     <div class="section">
       <h3 class="secHead">{sec.heading}</h3>
       <ul class="checks">
@@ -120,6 +149,7 @@ const withPeers = (sec) => ({ ...sec, checks: sec.checks.map((c) => (peerCtx[c.t
             <div class="label" style={`color:${TONE_COLOR[c.tone]}`}>{c.label}</div>
             {c.formula ? <div class="formula">{c.formula}</div> : null}
             {c.peer ? <div class="peer">{c.peer}</div> : null}
+            {c.lang ? <p class="langTie" style={`border-color:${TONE_COLOR[c.langTone]}`}><span class="langMark" style={`color:${TONE_COLOR[c.langTone]}`}>In the filing’s words</span> {c.lang}</p> : null}
             <details class="why"><summary>What this means</summary><p class="note">{c.note}</p></details>
           </li>
         ))}

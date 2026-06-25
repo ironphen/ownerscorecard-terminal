@@ -164,6 +164,39 @@ export function earningsQuality(c) {
   };
 }
 
+// The catalog's 90th percentile for "look past GAAP" language — adjusted, non-GAAP, pro-forma,
+// one-time, excluding-certain-items — counted per 1,000 MD&A words. Above it, the filing leans on
+// adjusted numbers as heavily as the noisiest tenth of the catalog. Relative to the catalog's own
+// distribution, the way the Candor Read scales its bars, never an absolute the reader must calibrate.
+const ADJUSTED_HEAVY = 4.8;
+
+// Wire the filing's language about the numbers into the cash-backing judgment. The cash-conversion
+// ratio asks whether reported profit is real; the words say how management talks about that profit —
+// whether it had to admit the numbers themselves are unreliable (a material weakness or a
+// restatement, the gravest tells Graham's honesty test stops on), and how hard it steers you off
+// GAAP. Read together: a thin cash-backing under heavy non-GAAP steering is a compounding worry; the
+// same steering over cash-backed GAAP profit is a tension the cash itself resolves. The ratio stays
+// the spine; the words make it smarter. Present, never pronounce. Pure: the caller passes the
+// language signals in (qualityTone from earningsQuality, the rest from the language JSON), so this
+// lib still runs under plain node. Returns a clause and its tone, or null when there is nothing to add.
+export function earningsQualityReconciliation(qualityTone, lang) {
+  if (!lang) return null;
+  // The gravest admissions first: they undermine the numbers themselves, whatever the ratio says.
+  if (lang.materialWeakness)
+    return { tone: "bad", text: "The filing discloses a material weakness in its financial controls — this cash-backing figure, and the record built on it, is only as reliable as the system that produced the numbers." };
+  if (lang.restatement)
+    return { tone: "warn", text: "The filing discloses a restatement of previously reported figures — some numbers in the record have moved since they were first filed; read what changed, and why, before trusting the trend." };
+  // Then the non-GAAP steering, read against whether cash actually backs the GAAP profit.
+  const heavyAdjusted = lang.adjusted != null && lang.adjusted >= ADJUSTED_HEAVY;
+  if (heavyAdjusted) {
+    if (qualityTone === "warn" || qualityTone === "bad")
+      return { tone: "warn", text: "And the filing leans heavily on adjusted, non-GAAP earnings — steering you off the GAAP figure just where the cash is not backing it. Read the reconciliation in the notes before taking the adjusted number." };
+    if (qualityTone === "good")
+      return { tone: "ok", text: "The filing leans on adjusted, non-GAAP earnings, but the GAAP profit is itself cash-backed — the adjustments are not papering over a cash shortfall here." };
+  }
+  return null;
+}
+
 // Leverage: how many years of operating profit would repay the debt?
 export function leverage(c) {
   const $ = (v) => fmtMoney(v, c?.currency || "USD");
