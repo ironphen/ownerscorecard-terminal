@@ -7,18 +7,18 @@ import { ffoMargin, ffoPayout, ffoOnAssets, debtToAssets } from "../lib/reits.mj
 import { combinedRatio, lossRatio } from "../lib/insurers.mjs";
 import { medicalLossRatio } from "../lib/managedCare.mjs";
 import { financialKind, financialSubtype } from "../lib/archetype.mjs";
-import { selectPeers, peerStat } from "../lib/peers.mjs";
+import { selectPeers, peerStat, REIT_SUBSECTOR_LABELS } from "../lib/peers.mjs";
 import Term from "./Term.astro";
 
 // The peer set is computed once on the page and passed in, so the universe scan runs a single time per
 // page; selectPeers here is the fallback when the component is used on its own.
-const { company, peers: peersProp, basis: basisProp } = Astro.props;
+const { company, peers: peersProp, basis: basisProp, subsector: subsectorProp } = Astro.props;
 const all = fundamentals.companies || [];
 
 // Peers are drawn from the same economic engine and ranked by structural likeness — selectPeers lives in
 // lib/peers.mjs so the rule is one place and testable. The basis (a real industry group vs the nearest by
-// economic model) keeps the heading honest.
-const { peers, basis } = peersProp ? { peers: peersProp, basis: basisProp } : selectPeers(company, all);
+// economic model) keeps the heading honest; the subsector, when a REIT, names the property bench.
+const { peers, basis, subsector } = peersProp ? { peers: peersProp, basis: basisProp, subsector: subsectorProp } : selectPeers(company, all);
 const group = [company, ...peers].sort((a, b) => (b.lines?.revenue || 0) - (a.lines?.revenue || 0));
 const cls = classify(company);
 
@@ -127,7 +127,10 @@ for (const col of COLS) dist[col.key] = peerStat(rows.map((r) => r.m[col.key]), 
 const anyMed = COLS.some((col) => dist[col.key]);
 
 const lens = isReit ? "the REIT lens" : isLife ? "the spread-and-book-value lens" : isInsurer ? "the underwriting lens" : isBank ? "the bank lens" : isManagedCare ? "the medical-loss-ratio lens" : isFee ? "fee margins" : "owner economics";
-const heading = basis === "model" ? "Peers, nearest by economic model" : `Peers, ${cls.industry.label}`;
+// A REIT's heading names its property subsector ("Net-lease REITs"), not the generic "Real estate" SIC
+// label — that is the whole point of peering it within its own kind.
+const subLabel = subsector ? REIT_SUBSECTOR_LABELS[subsector] || cls.industry.label : null;
+const heading = basis === "model" ? "Peers, nearest by economic model" : `Peers, ${subLabel || cls.industry.label}`;
 const intro = basis === "model"
   ? `No close industry peers in the catalog yet, so these are the nearest by economic model (${cls.sector.label.toLowerCase()}), compared on ${lens}. Don't rank by a single number.`
   : `The same industry, side by side on ${lens}, compare, don't rank by a single number.`;

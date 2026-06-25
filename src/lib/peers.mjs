@@ -14,6 +14,26 @@
 
 import { classify, financialKind } from "./archetype.mjs";
 import { topLineRevenue } from "./fundamentals.mjs";
+import reitSubsectors from "../data/reit-subsectors.json" with { type: "json" };
+
+// REITs almost all carry the same SIC (~6798), so the 2-digit-SIC industry tier below can't tell a
+// net-lease trust from an apartment landlord or a cell-tower operator — it would seat Realty Income
+// beside Simon and American Tower. A curated property-type map (the NAREIT taxonomy) restores real
+// comparability: a REIT peers within its own subsector. The labels name the bench in the heading.
+export const REIT_SUBSECTOR_LABELS = {
+  "net-lease": "Net-lease REITs",
+  "retail": "Retail REITs",
+  "office": "Office REITs",
+  "industrial": "Industrial REITs",
+  "residential": "Residential REITs",
+  "healthcare": "Healthcare REITs",
+  "hotel": "Hotel & lodging REITs",
+  "self-storage": "Self-storage REITs",
+  "data-center": "Data-center REITs",
+  "tower": "Tower & infrastructure REITs",
+  "specialty": "Specialty REITs",
+  "diversified": "Diversified REITs",
+};
 
 // The economic engine: a financial kind (bank, insurer, REIT, managed-care, fee) where one applies, else
 // the operating-model sector (asset-light, consumer, capital-intensive, retail). This, not the SIC, is the
@@ -71,6 +91,29 @@ export function selectPeers(company, all, n = 7) {
     return myInt != null && i != null ? Math.abs(i - myInt) * 2 : 0.4;
   };
   const score = (c) => sicDist(c) * 1.0 + sizeDist(c) * 0.6 + intDist(c) * 0.5;
+
+  // A REIT peers within its own NAREIT subsector, not merely within SIC 6798: a net-lease trust
+  // sits beside other net-lease trusts, a tower operator beside towers — so the FFO, payout and
+  // leverage a reader compares are read against a like property model, not a grab-bag of "real
+  // estate". The curated map also keeps the misrouted non-REITs (a patent licensor, an audio-tech
+  // firm that happen to carry a 67xx SIC) out of the real-REIT benches entirely. Within the
+  // subsector we still rank by structural likeness (scale, intensity), and a thin subsector simply
+  // shows its few true peers rather than padding with a different property type. Only when the
+  // subject itself is unmapped or a flagged non-REIT do we fall back to the broad model pool.
+  if (myEngine === "reit") {
+    const mySub = reitSubsectors[company.ticker];
+    if (mySub && mySub !== "not-a-reit") {
+      const sameSub = pool.filter((c) => reitSubsectors[c.ticker] === mySub);
+      if (sameSub.length) {
+        const peers = sameSub
+          .map((c) => ({ c, s: score(c) }))
+          .sort((a, b) => a.s - b.s)
+          .slice(0, n)
+          .map((x) => x.c);
+        return { peers, basis: "industry", subsector: mySub };
+      }
+    }
+  }
 
   // Prefer the same broad industry over mere size. If the engine pool holds enough peers sharing the
   // 2-digit SIC — the same industry, not just the same model — draw only from those, so a computer maker

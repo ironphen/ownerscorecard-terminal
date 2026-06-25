@@ -51,6 +51,22 @@ const dp = selectPeers(HW, dedupUniv).peers.map((p) => p.ticker);
 check("a company's own sibling share class is not a peer", !dp.includes("HW_B"));
 check("a multi-class peer entity appears once, not as both classes", (dp.includes("PEERA") || dp.includes("PEERA2")) && !(dp.includes("PEERA") && dp.includes("PEERA2")));
 
+// A REIT peers within its own NAREIT subsector, not merely within SIC 6798: a net-lease trust sits beside
+// other net-lease trusts, never beside a mall (retail) or a cell-tower operator. All REITs share the same
+// SIC, so without the curated subsector map the table would seat Realty Income next to Simon and American
+// Tower. Depreciation present (so it reads as an equity REIT, not a mortgage REIT) and a slow asset turn.
+const reit = (ticker, rev) => co(ticker, "6798", rev, rev * 0.05, { depreciation: rev * 0.2, totalAssets: rev * 12, totalDebt: rev * 5 });
+const reitUniv = [
+  reit("O", 4e9), reit("NNN", 0.8e9), reit("ADC", 0.5e9), reit("WPC", 1.5e9),  // net-lease — the bench
+  reit("SPG", 5e9), reit("KIM", 1.7e9),   // retail — a different property model, must be excluded
+  reit("AMT", 11e9), reit("CCI", 7e9),    // towers — a different property model, must be excluded
+];
+const reitResult = selectPeers(reitUniv[0], reitUniv);  // O = Realty Income, net-lease
+const rt = reitResult.peers.map((p) => p.ticker);
+check("a REIT peers within its NAREIT subsector (net-lease with net-lease)", rt.includes("NNN") && rt.includes("ADC") && rt.includes("WPC"));
+check("a REIT is not peered across subsectors (no mall or tower beside a net-lease trust)", !rt.includes("SPG") && !rt.includes("KIM") && !rt.includes("AMT") && !rt.includes("CCI"));
+check("selectPeers reports the REIT subsector", reitResult.subsector === "net-lease");
+
 // The distribution helper: median, the subject's percentile, the band — context, no winner.
 const s = peerStat([0.10, 0.12, 0.14, 0.16, 0.18], 0.16);
 check("peerStat median is 0.14", s && Math.abs(s.median - 0.14) < 1e-9);

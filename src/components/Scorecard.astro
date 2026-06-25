@@ -3,7 +3,7 @@ import fundamentals from "../data/fundamentals.json";
 import { buildScorecard, TONE_COLOR, roicValue, ownerEarningsMargin, operatingMargin } from "../lib/fundamentals.mjs";
 import { selectPeers, peerMedian } from "../lib/peers.mjs";
 import { buildFinancialScorecard, returnOnEquity, returnOnTangibleEquity, efficiencyRatio } from "../lib/financials.mjs";
-import { buildReitScorecard } from "../lib/reits.mjs";
+import { buildReitScorecard, ffoPayout, debtToAssets, ebitdaCoverage } from "../lib/reits.mjs";
 import { buildInsurerScorecard, combinedRatio } from "../lib/insurers.mjs";
 import { buildFeeScorecard } from "../lib/feeFinancials.mjs";
 import { buildManagedCareScorecard, medicalLossRatio } from "../lib/managedCare.mjs";
@@ -43,18 +43,27 @@ const graham = company.market !== "JP" && !isFin ? grahamTests(company) : null;
 // means something only beside its peers — 18% ROIC is wonderful for a grocer and ordinary for software.
 // The same economic-engine peers the table below uses, each read through its own cycle, so the median is
 // the line this company's figure is set against. Factual context, never a verdict; shown only when the
-// industry has enough peers carrying the metric (peerMedian withholds otherwise). Non-financials only for
-// now — each financial kind's return metric (ROE, ROTCE) is the next pass.
+// industry has enough peers carrying the metric (peerMedian withholds otherwise). Every archetype is read
+// on its own measures — the operator on ROIC and owner earnings, a bank on ROE/ROTCE/efficiency, a REIT on
+// payout, leverage and coverage against its property subsector.
 const peerCtx = (() => {
   const peers = peersProp || selectPeers(company, fundamentals.companies || []).peers;
   const ctx = {};
   // Add peer context to a check by its title: the median of the metric across the same-engine peers,
-  // each read through its own cycle. Withheld (no line) when too few peers carry it. A REIT's headline
-  // (FFO per share) is a per-share figure, not a peer-comparable ratio, so REITs wait for a dedicated pass.
-  const add = (title, fn) => { const m = peerMedian(peers, fn); if (m != null) ctx[title] = `Industry peers: median ${(m * 100).toFixed(0)}%`; };
+  // each read through its own cycle. Withheld (no line) when too few peers carry it. Most metrics are
+  // percentages; an optional formatter handles the few that aren't (interest coverage, a multiple).
+  const pctFmt = (m) => `${(m * 100).toFixed(0)}%`;
+  const add = (title, fn, fmt = pctFmt) => { const m = peerMedian(peers, fn); if (m != null) ctx[title] = `Industry peers: median ${fmt(m)}`; };
   if (!isFin) {
     add("Return on invested capital", (L) => roicValue(L));
     add("Owner-earnings margin", (L, c) => ownerEarningsMargin(L, c));
+  } else if (fk === "reit") {
+    // A REIT's peers are now its property subsector (net-lease beside net-lease), so the payout,
+    // leverage and coverage read against a like property model — not a grab-bag of "real estate".
+    // FFO-per-share stays off the peer line (it's a per-share figure, not a comparable ratio).
+    add("Dividend / FFO (payout)", (L) => ffoPayout(L));
+    add("Debt / assets", (L) => debtToAssets(L));
+    add("Interest coverage (EBITDA)", (L) => ebitdaCoverage(L), (m) => `${m.toFixed(1)}×`);
   } else if (fk === "bank") {
     add("Return on equity", (L) => returnOnEquity(L));
     add("Return on tangible equity", (L) => returnOnTangibleEquity(L));
