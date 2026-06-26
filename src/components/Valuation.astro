@@ -10,6 +10,7 @@ import { fmtMoney, currencySymbol, liquidAssets, maintenanceCapex, ownerEarnings
 import { tangibleEquity } from "../lib/financials.mjs";
 import { ffoPerShare } from "../lib/reits.mjs";
 import { earningsPower } from "../lib/normalize.mjs";
+import { trendGrowth } from "../lib/valuationInputs.mjs";
 import DeliveredGrowth from "./DeliveredGrowth.astro";
 import Sparkline from "./Sparkline.astro";
 
@@ -48,25 +49,9 @@ const offModel = fk === "bank" || fk === "insurer" || fk === "reit";
 const isADR = company.market === "ADR";
 const cyclical = overlays.some((o) => o.key === "cyclical");
 const median = (xs) => { if (!xs.length) return null; const s = [...xs].sort((a, b) => a - b); const m = Math.floor(s.length / 2); return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
-// Delivered growth a series actually compounded at, fit across ALL its points by a log-linear
-// regression rather than two endpoints. A single trough or peak year cannot anchor the rate (a $27M
-// trough turning a real record into "+108%/yr"), and a structural step (a REIT's post-merger FFO
-// doubling) is read as the trend through it, not erased by which endpoint the window happens to land on.
-// Positive points only — a growth rate off a negative or zero value is undefined.
-const trendGrowth = (series) => {
-  let v = (series || []).filter((x) => x != null && x > 0);
-  if (v.length < 4) return null;
-  // Drop a near-zero outlier year — one below a tenth of the typical level — before the log fit. A $30M
-  // year sitting between billions (Blackstone, 2018) would otherwise dominate the regression and turn a
-  // normal record into a runaway rate; it is a trough, not a growth base.
-  const sorted = [...v].sort((a, b) => a - b), med = sorted[Math.floor(v.length / 2)];
-  if (med > 0) v = v.filter((x) => x >= med * 0.1);
-  if (v.length < 4) return null;
-  const n = v.length, ys = v.map((x) => Math.log(x)), mx = (n - 1) / 2, my = ys.reduce((a, b) => a + b, 0) / n;
-  let num = 0, den = 0;
-  for (let i = 0; i < n; i++) { num += (i - mx) * (ys[i] - my); den += (i - mx) ** 2; }
-  return den === 0 ? null : Math.exp(num / den) - 1;
-};
+// Delivered growth (trendGrowth) and the reverse-DCF math (pv/solve/justified multiples) live in
+// shared libs — lib/valuationInputs.mjs and lib/reverseDcf.mjs — so this page and the head-to-head
+// compare view read a business through identical arithmetic. trendGrowth is imported above.
 
 const L = company.ttm?.lines || company.lines || {};
 // Share count turns the price into a market cap. We fall back from the TTM block to the latest
@@ -547,7 +532,8 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
   }
 </style>
 
-<script is:inline>
+<script>
+  import { pv, solve } from "../lib/reverseDcf.mjs";
   (function () {
     const box = document.getElementById("valBox");
     if (!box) return;
@@ -574,16 +560,6 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
     const ops = document.getElementById("ops"), opsMc = document.getElementById("opsMc"), impOps = document.getElementById("impOps");
     const marginRow = document.getElementById("marginRow"), mmDial = document.getElementById("mmDial"), mmOut = document.getElementById("mmOut"), reqRev = document.getElementById("reqRev");
 
-    const pv = (gr, rr, N, gT) => { let p = 0, oe = 1; for (let y = 1; y <= N; y++) { oe *= 1 + gr; p += oe / Math.pow(1 + rr, y); } return p + (oe * (1 + gT)) / (rr - gT) / Math.pow(1 + rr, N); };
-    function solve(mult, rr, N, gT) {
-      if (rr <= gT) return null;
-      const f = (gr) => pv(gr, rr, N, gT) - mult;
-      let lo = -0.5, hi = 1.0;
-      if (f(lo) > 0) return { g: lo, floor: true };
-      if (f(hi) < 0) return { g: hi, cap: true };
-      for (let i = 0; i < 60; i++) { const m = (lo + hi) / 2; if (f(m) > 0) hi = m; else lo = m; }
-      return { g: (lo + hi) / 2 };
-    }
     const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
     const pcs = (v) => (v < 0 ? "−" : "") + Math.abs(v * 100).toFixed(1) + "%";
     const usd = (v) => { const a = Math.abs(v); const s = a >= 1e12 ? SYM + (a / 1e12).toFixed(2) + "T" : a >= 1e9 ? SYM + (a / 1e9).toFixed(1) + "B" : a >= 1e6 ? SYM + Math.round(a / 1e6) + "M" : SYM + Math.round(a); return v < 0 ? "(" + s + ")" : s; };
@@ -733,7 +709,8 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
   })();
 </script>
 
-<script is:inline>
+<script>
+  import { gordonMultiple } from "../lib/reverseDcf.mjs";
   (function () {
     const box = document.getElementById("valBoxNeg");
     if (!box) return;
@@ -756,7 +733,7 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
     function update() {
       const rr = parseFloat(r.value) / 100, N = parseInt(n.value, 10), g = parseFloat(gr.value) / 100, mgn = parseFloat(mm.value) / 100;
       rOut.textContent = r.value + "%"; nOut.textContent = N; grOut.textContent = gr.value + "%"; mmOut.textContent = mm.value + "%";
-      const M = 1 / (rr - 0.025);             // mature owner-earnings multiple at this discount rate (2.5% terminal)
+      const M = gordonMultiple(rr, 0.025) || 0; // mature owner-earnings multiple at this discount rate (2.5% terminal)
       const revN = REV * Math.pow(1 + g, N);  // revenue grown at your rate
 
       // From your belief: the mature margin you would credit, turned into owner earnings on
@@ -794,7 +771,8 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
   })();
 </script>
 
-<script is:inline>
+<script>
+  import { justifiedBookMultiple } from "../lib/reverseDcf.mjs";
   (function () {
     const box = document.getElementById("valBoxBank");
     if (!box) return;
@@ -816,7 +794,7 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
       coeOut.textContent = coe.value + "%"; gOutB.textContent = gB.value + "%";
       // The justified multiple and the reference value it implies depend only on the dials and
       // the normalized return, not on the price you type, so they stand on their own.
-      const justified = c > g ? Math.max(0, (ROTCE - g) / (c - g)) : null;
+      const justified = justifiedBookMultiple(ROTCE, c, g);
       just.textContent = justified != null ? justified.toFixed(2) + "×" : "—";
       if (justified != null && TBVPS > 0) {
         const fair = justified * TBVPS;
@@ -845,7 +823,8 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
   })();
 </script>
 
-<script is:inline>
+<script>
+  import { gordonMultiple } from "../lib/reverseDcf.mjs";
   (function () {
     const box = document.getElementById("valBoxReit");
     if (!box) return;
@@ -863,7 +842,7 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
       const rr = parseFloat(r.value) / 100, gg = parseFloat(g.value) / 100;
       rOut.textContent = r.value + "%"; gOut.textContent = g.value + "%";
       // The justified multiple and the reference value depend only on the dials, not the price.
-      const justified = rr > gg ? 1 / (rr - gg) : null;
+      const justified = gordonMultiple(rr, gg);
       just.textContent = justified != null ? justified.toFixed(1) + "×" : "—";
       if (justified != null && FFOPS > 0) {
         const fair = justified * FFOPS;

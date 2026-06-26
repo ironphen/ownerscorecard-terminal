@@ -5,7 +5,14 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 // mechanism to a real company, from primary-source filings. Add entries here as
 // tools ship. (The interest-coverage checker was folded into the Owner's
 // Scorecard once every company carried coverage as a line.)
-const tools = [];
+const tools = [
+  {
+    href: "/compare",
+    title: "Weigh one business against another",
+    blurb:
+      "Munger's first question is “compared to what?” Put two to four businesses side by side on the record an owner reads — quality, compounding, survival, stewardship, candour — and on what each one's price would have to assume. No score, no ranking; the judgment stays yours.",
+  },
+];
 ---
 
 <BaseLayout title="Tools, Owner Scorecard">

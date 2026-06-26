@@ -1,0 +1,578 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { SEARCH_ALIASES } from "../../lib/searchAliases.mjs";
+
+// Weigh against another business — the head-to-head compare view. Munger's first question about any
+// investment is "compared to what?", and the honest answer is the other things you could own. This
+// lays two-to-four businesses you already have in mind side by side on the figures an owner weighs —
+// quality, compounding, survival, stewardship, candour — and ends, as the company page does, on a
+// reader-supplied price run through the same reverse-DCF, so each column says what you'd have to
+// believe to pay today's price, set against what the business has delivered.
+//
+// It is NOT a screener and NOT a ranking. There is no score, no winner, no highlighted "better" cell,
+// no buy or sell. It lays facts in a row; which business is better — and which sit in your circle of
+// competence at all — is the reader's judgment, never ours. The whole table is client-rendered from
+// the slim /compare/<ticker>.json cards (built at build time), and every bit of state lives in the
+// URL, so a comparison is shareable and nothing is stored.
+---
+
+<BaseLayout title="Weigh one business against another, Owner Scorecard">
+  <div id="cmpAliases" hidden data-aliases={JSON.stringify(SEARCH_ALIASES)}></div>
+
+  <header class="hero">
+    <h1>Weigh one business against another</h1>
+    <p class="lede">
+      Munger&rsquo;s first question about anything you might own is <em>compared to what?</em> Put the
+      businesses you&rsquo;re weighing side by side — the record an owner reads, and what each one&rsquo;s
+      price would have to assume to make sense.
+    </p>
+    <p class="frame">
+      Two records, set side by side. The service won&rsquo;t tell you which is better, or whether either
+      belongs in your portfolio — that is circle-of-competence work only you can do. There is no score
+      and no ranking here: just the facts, in a row.
+    </p>
+  </header>
+
+  <section class="picker" aria-label="Choose businesses to compare">
+    <div class="pickField">
+      <svg class="pIcon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+      <input id="cmpInput" type="search" autocomplete="off" autocapitalize="off" spellcheck="false"
+        placeholder="Add a business by name or ticker…" aria-label="Add a business by name or ticker"
+        role="combobox" aria-expanded="false" aria-controls="cmpResults" aria-autocomplete="list" />
+    </div>
+    <ul class="pResults" id="cmpResults" role="listbox" aria-label="Matching businesses" hidden></ul>
+    <div class="chips" id="cmpChips" aria-live="polite"></div>
+    <p class="pHint" id="cmpHint">Add two to four businesses you already have in mind. (Up to four.)</p>
+  </section>
+
+  <section class="controls" id="cmpControls" hidden>
+    <div class="ctlRow">
+      <label class="ctl">
+        <span class="ctlLbl">Your required return</span>
+        <span class="ctlVal"><output id="rOut">9%</output></span>
+        <input id="rDial" type="range" min="4" max="15" step="0.5" value="9" aria-label="Required return (discount rate)" />
+      </label>
+      <div class="bases" role="group" aria-label="Owner-earnings base">
+        <span class="ctlLbl">Base</span>
+        <label class="tog"><input type="checkbox" id="bNorm" /> Normalize</label>
+        <label class="tog"><input type="checkbox" id="bSbc" /> Net of stock comp</label>
+        <label class="tog"><input type="checkbox" id="bMaint" /> Steady-state</label>
+      </div>
+    </div>
+    <p class="ctlNote">
+      One required return, applied to every column as its discount rate — the opportunity-cost hurdle,
+      held equal across the businesses. Owner-earnings columns then grow for ten years and 2.5%
+      thereafter; a bank is read on its return on tangible book, a REIT on its FFO. The base toggles
+      make the owner-earnings figure honest and apply where they fit.
+    </p>
+  </section>
+
+  <div id="cmpTable" class="tableWrap" aria-live="polite"></div>
+
+  <section class="empty" id="cmpEmpty">
+    <p>Nothing to compare yet. Add a business above — for example, weigh <button class="exLink" data-ex="KO,PEP">Coca-Cola against PepsiCo</button>, or <button class="exLink" data-ex="V,MA">Visa against Mastercard</button>.</p>
+  </section>
+
+  <p class="foot">
+    Every figure is recomputed from the company&rsquo;s own SEC or EDINET filings — the same record behind
+    each Owner&rsquo;s Scorecard. The reverse-DCF says what a price would have to <em>assume</em>, never what a
+    business is worth; a reference value is a yardstick, not a target. Absolute figures are shown in each
+    company&rsquo;s own reporting currency and are never differenced across columns; ratios and per-share
+    growth are what compare cleanly. A 5-year record (much of the Japanese pool) is not a 10-year one — the
+    span is on every column.
+  </p>
+
+  <style>
+    .hero h1 { margin: 0 0 8px; }
+    .lede { font-family: var(--serif); font-size: clamp(16px, 2.3vw, 19px); line-height: 1.5; color: var(--ink-soft); margin: 0 0 12px; max-width: 68ch; }
+    .lede em, .frame em { font-style: italic; }
+    .frame { font-size: 13.5px; line-height: 1.55; color: var(--muted); background: var(--surface-2); border-left: 2px solid var(--rule-strong); padding: 10px 14px; margin: 0; max-width: 74ch; }
+
+    .picker { margin: 22px 0 0; }
+    .pickField { display: flex; align-items: center; gap: 10px; border: 1px solid var(--rule-strong); border-radius: 10px; padding: 0 14px; background: var(--surface); max-width: 520px; }
+    .pickField:focus-within { border-color: var(--accent); }
+    .pIcon { width: 18px; height: 18px; color: var(--faint); flex: 0 0 auto; }
+    .pickField:focus-within .pIcon { color: var(--accent); }
+    #cmpInput { flex: 1 1 auto; min-width: 0; border: 0; background: none; outline: none; font-family: var(--sans); font-size: 16px; color: var(--ink); padding: 13px 0; }
+    #cmpInput::placeholder { color: var(--faint); }
+    #cmpInput::-webkit-search-cancel-button { -webkit-appearance: none; }
+
+    .pResults { list-style: none; margin: 6px 0 0; padding: 6px; max-width: 520px; max-height: 320px; overflow-y: auto; border: 1px solid var(--rule-strong); border-radius: 10px; background: var(--surface); box-shadow: 0 10px 32px var(--shadow); }
+    .pResults[hidden] { display: none; }
+    .pResults li { display: flex; align-items: baseline; gap: 10px; padding: 9px 11px; border-radius: 7px; cursor: pointer; }
+    .pResults li.is-active, .pResults li:hover { background: var(--accent-tint); }
+    .pResults .rName { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink); font-size: 14.5px; }
+    .pResults li.is-active .rName { color: var(--accent); }
+    .pResults .rTk { font-family: var(--sans); font-weight: 700; font-size: 11.5px; color: var(--muted); flex: 0 0 auto; }
+    .pResults .rPl { font-size: 10.5px; color: var(--tag-ink); background: var(--tag-bg); border-radius: 3px; padding: 2px 7px; flex: 0 0 auto; white-space: nowrap; }
+
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 0; }
+    .chip { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--rule-strong); border-radius: 999px; padding: 5px 6px 5px 12px; font-size: 13px; color: var(--ink); background: var(--surface); }
+    .chip b { font-family: var(--sans); font-weight: 700; }
+    .chip .x { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border: 0; border-radius: 999px; background: var(--surface-2); color: var(--muted); cursor: pointer; font-size: 14px; line-height: 1; }
+    .chip .x:hover { background: var(--bad); color: var(--accent-ink); }
+    .pHint { font-size: 12.5px; color: var(--muted); margin: 10px 0 0; }
+
+    .controls { margin: 20px 0 0; border-top: 1px solid var(--rule); padding-top: 14px; }
+    .controls[hidden] { display: none; }
+    .ctlRow { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 28px; }
+    .ctl { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--ink-dim); }
+    .ctlLbl { font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+    .ctlVal output { font-weight: 700; font-variant-numeric: tabular-nums; color: var(--ink); min-width: 38px; display: inline-block; }
+    .ctl input[type="range"] { width: 180px; accent-color: var(--accent); }
+    .bases { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+    .tog { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--ink-dim); cursor: pointer; }
+    .tog input { accent-color: var(--accent); cursor: pointer; }
+    .ctlNote { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); margin: 10px 0 0; line-height: 1.5; max-width: 76ch; }
+
+    .tableWrap { margin: 18px 0 0; overflow-x: auto; }
+    table.cmp { border-collapse: collapse; width: 100%; min-width: 100%; font-variant-numeric: tabular-nums; }
+    table.cmp th, table.cmp td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+    /* The row-label column is sticky so labels stay in view as columns scroll on a phone. */
+    table.cmp .rl { position: sticky; left: 0; z-index: 2; background: var(--paper); font-size: 12.5px; color: var(--ink-dim); font-weight: 500; min-width: 168px; }
+    table.cmp .rl .rsub { display: block; font-size: 10.5px; color: var(--faint); font-weight: 400; margin-top: 1px; }
+    table.cmp td.val { font-size: 14px; color: var(--ink); min-width: 132px; }
+    table.cmp td.val .vsub { display: block; font-size: 11px; color: var(--muted); margin-top: 1px; font-variant-numeric: tabular-nums; }
+    table.cmp td.val.dash { color: var(--faint); }
+    .bandRow th { background: var(--surface-2); font-family: var(--sans); font-size: 10.5px; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); font-weight: 700; padding: 7px 12px; position: sticky; left: 0; }
+
+    /* Column header: ticker, name, and the equal-weight context chips (archetype, currency, span). No
+       cell is ever highlighted as the "winner" — every column carries identical visual weight. */
+    thead .colh { min-width: 150px; border-bottom: 2px solid var(--rule-strong); }
+    .colTk { font-family: var(--sans); font-weight: 800; font-size: 15px; color: var(--ink); }
+    .colTk a { color: var(--ink); }
+    .colNm { font-size: 11.5px; color: var(--muted); margin-top: 1px; line-height: 1.3; max-width: 22ch; }
+    .colTags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+    .colTags span { font-size: 9.5px; letter-spacing: 0.03em; color: var(--tag-ink); background: var(--tag-bg); border-radius: 3px; padding: 1px 6px; white-space: nowrap; }
+    .colTags .ccy { color: var(--muted); }
+    .corner { position: sticky; left: 0; z-index: 3; background: var(--paper); border-bottom: 2px solid var(--rule-strong); min-width: 168px; }
+    .mixWarn { font-size: 12px; color: var(--warn-ink); background: var(--warn-bg); border: 1px solid var(--warn-border); border-radius: 6px; padding: 8px 12px; margin: 12px 0 0; }
+
+    /* Price band — the only interactive rows. */
+    .pxInput { width: 110px; padding: 6px 9px; border: 1px solid var(--rule-strong); border-radius: 6px; font-family: var(--sans); font-size: 14px; font-variant-numeric: tabular-nums; background: var(--surface); }
+    .pxWrap { display: flex; align-items: center; gap: 6px; }
+    .shWrap { margin-top: 5px; }
+    .shInput { width: 92px; }
+    .pxUnit { font-size: 11px; color: var(--muted); }
+    .pxSym { font-weight: 700; color: var(--ink); }
+    .pxNote { display: block; font-size: 10.5px; color: var(--muted); margin-top: 5px; line-height: 1.4; max-width: 26ch; }
+    .pxNote a { color: var(--accent); }
+    td.val.hot { color: var(--accent); font-weight: 700; }
+
+    .empty { margin: 18px 0 0; }
+    .empty[hidden] { display: none; }
+    .empty p { font-family: var(--serif); color: var(--ink-dim); }
+    .exLink { background: none; border: 0; color: var(--accent); cursor: pointer; font: inherit; padding: 0; text-decoration: underline; text-underline-offset: 2px; }
+
+    .foot { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); margin: 22px 0 0; line-height: 1.55; max-width: 78ch; border-top: 1px solid var(--rule); padding-top: 12px; }
+  </style>
+
+  <script>
+    import { pv, solve, justifiedBookMultiple, gordonMultiple } from "../../lib/reverseDcf.mjs";
+
+    (function () {
+      const MAX = 4;
+      const input = document.getElementById("cmpInput");
+      const resultsEl = document.getElementById("cmpResults");
+      const chipsEl = document.getElementById("cmpChips");
+      const tableEl = document.getElementById("cmpTable");
+      const emptyEl = document.getElementById("cmpEmpty");
+      const controlsEl = document.getElementById("cmpControls");
+      const hintEl = document.getElementById("cmpHint");
+      const rDial = document.getElementById("rDial"), rOut = document.getElementById("rOut");
+      const bNorm = document.getElementById("bNorm"), bSbc = document.getElementById("bSbc"), bMaint = document.getElementById("bMaint");
+
+      // ---- state, all mirrored into the URL ----
+      let cols = [];                 // tickers, in chosen order
+      const cards = {};              // ticker -> card JSON (cached)
+      const prices = {};             // ticker -> price string
+      const userShares = {};         // ticker -> shares in millions (only for filers whose count is untagged)
+      let rate = 9;
+      const base = { norm: false, sbc: false, maint: false };
+
+      // ---- formatting ----
+      const pctRate = (v, signed, dp = 0) => v == null || !isFinite(v) ? "—" : (signed ? (v >= 0 ? "+" : "−") : (v < 0 ? "−" : "")) + Math.abs(v * 100).toFixed(dp) + "%";
+      const xMult = (v, dp = 1) => v == null || !isFinite(v) ? "—" : v.toFixed(dp) + "×";
+      const moneyC = (v, sym) => {
+        if (v == null || !isFinite(v)) return "—";
+        const a = Math.abs(v);
+        const s = a >= 1e12 ? sym + (a / 1e12).toFixed(2) + "T" : a >= 1e9 ? sym + (a / 1e9).toFixed(1) + "B" : a >= 1e6 ? sym + Math.round(a / 1e6) + "M" : sym + Math.round(a);
+        return v < 0 ? "(" + s + ")" : s;
+      };
+      const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+      // ---- the row spec: each metric, how to pull and format it from a card. A row shows whenever any
+      // chosen column has a value; columns without it read "—". Order encodes how an owner reads a
+      // business: is it good, does it compound, can it die, is it run for me, how does it talk, the price.
+      const tc = (t, signed) => t && t.median != null ? { main: pctRate(t.median, signed, 0), sub: `${pctRate(t.lo, false, 0)}–${pctRate(t.hi, false, 0)} · ${t.n}y` } : null;
+      const ps = (m) => m && (m.full != null || m.five != null) ? { main: pctRate(m.full, true, 1), sub: m.five != null ? `5-yr ${pctRate(m.five, true, 1)}` : null } : null;
+      const cell = (main, sub) => main == null ? null : { main, sub: sub || null };
+
+      const BANDS = [
+        { band: "Quality — is it a good business?", rows: [
+          { label: "Return on capital", rsub: "through the cycle", get: (c) => tc(c.quality.roicThroughCycle, false) },
+          { label: "Return on equity", rsub: "through the cycle", get: (c) => tc(c.quality.roeThroughCycle, false) },
+          { label: "Return on tangible equity", rsub: "bank / insurer", get: (c) => c.quality.rotce != null ? cell(pctRate(c.quality.rotce, false, 0)) : null },
+          { label: "Operating margin", rsub: "through the cycle", get: (c) => tc(c.quality.operatingMarginThroughCycle, false) },
+          { label: "Owner-earnings margin", rsub: "through the cycle", get: (c) => tc(c.quality.ownerEarningsMarginThroughCycle, false) },
+          { label: "Gross margin", rsub: "latest", get: (c) => c.quality.grossMarginLatest != null ? cell(pctRate(c.quality.grossMarginLatest, false, 0)) : null },
+          { label: "FFO / share", rsub: "REIT", get: (c) => c.quality.ffoPerShare != null ? cell(c.sym + c.quality.ffoPerShare.toFixed(2)) : null },
+        ] },
+        { band: "Compounding — does it grow per share?", rows: [
+          { label: "Revenue / share", rsub: "annual growth", get: (c) => ps(c.compounding.perShare && c.compounding.perShare.revenuePS) },
+          { label: "Owner earnings / share", rsub: "annual growth", get: (c) => ps(c.compounding.perShare && c.compounding.perShare.ownerEarningsPS) },
+          { label: "EPS", rsub: "annual growth", get: (c) => ps(c.compounding.perShare && c.compounding.perShare.eps) },
+          { label: "Dividends / share", rsub: "annual growth", get: (c) => ps(c.compounding.perShare && c.compounding.perShare.dps) },
+          { label: "Book value / share", rsub: "annual growth", get: (c) => ps(c.compounding.perShare && c.compounding.perShare.bvps) },
+        ] },
+        { band: "Survival — can it die?", rows: [
+          { label: "Net debt / (cash)", get: (c) => { const v = c.survival.netDebt; return v == null ? null : cell(v < 0 ? "+" + moneyC(-v, c.sym) + " cash" : moneyC(v, c.sym)); } },
+          { label: "Debt / operating income", rsub: "years to repay", get: (c) => c.survival.leverageYears != null ? cell(xMult(c.survival.leverageYears)) : null },
+          { label: "Interest coverage", get: (c) => c.survival.interestCoverage != null ? cell(xMult(c.survival.interestCoverage)) : null },
+          { label: "Current ratio", get: (c) => c.survival.currentRatio != null ? cell(xMult(c.survival.currentRatio, 2)) : null },
+          { label: "Graham tests passed", get: (c) => c.survival.grahamTestable ? cell(`${c.survival.grahamPasses} of ${c.survival.grahamTestable}`) : null },
+          { label: "Profitable years", get: (c) => c.survival.recordYears ? cell(`${c.survival.profitableYears} of ${c.survival.recordYears}`) : null },
+        ] },
+        { band: "Stewardship — is it run for owners?", rows: [
+          { label: "Share count change", rsub: "over the record", get: (c) => c.stewardship.shareChange != null ? cell(pctRate(c.stewardship.shareChange, true, 1)) : null },
+          { label: "Return on retained earnings", get: (c) => c.stewardship.returnOnRetained != null ? cell(pctRate(c.stewardship.returnOnRetained, false, 0)) : null },
+          { label: "Payout of owner earnings", rsub: "dividends + buybacks", get: (c) => c.stewardship.payoutOfOwnerEarnings != null ? cell(pctRate(c.stewardship.payoutOfOwnerEarnings, false, 0)) : null },
+          { label: "Retained to equity", rsub: "latest", get: (c) => c.stewardship.retainedToEquity != null ? cell(pctRate(c.stewardship.retainedToEquity, true, 1)) : null },
+        ] },
+        { band: "Candour — how does it talk to owners?", rows: [
+          { label: "Owner's vocabulary", rsub: "per 1,000 words", get: (c) => c.candor && c.candor.owner != null ? cell(c.candor.owner.toFixed(1)) : null },
+          { label: "Promoter's vocabulary", rsub: "per 1,000 words", get: (c) => c.candor && c.candor.promoter != null ? cell(c.candor.promoter.toFixed(1)) : null },
+          { label: "Steered off GAAP", rsub: "per 1,000 words", get: (c) => c.candor && c.candor.nonGaap != null ? cell(c.candor.nonGaap.toFixed(1)) : null },
+        ] },
+      ];
+
+      // ---- the reverse-DCF for one column, by lens; the shared math (pv/solve/justified multiples).
+      // Effective share count: from the filing, or — for a multi-class / Up-C filer the pull can't tag
+      // (Visa, Shopify) — the count the reader brings, in millions, the same fallback the company page
+      // offers. null when neither is available, so the owner-earnings read honestly withholds.
+      function effShares(card) {
+        if (card.price.shares != null && card.price.shares > 0) return card.price.shares;
+        const u = parseFloat(userShares[card.ticker]);
+        return u > 0 ? u * 1e6 : null;
+      }
+
+      function priceRead(card) {
+        const p = card.price, sym = p.sym, rr = rate / 100, N = 10, gT = 0.025;
+        const out = { implies: "—", delivered: "—", reference: "—", impliesHot: false };
+        const price = parseFloat(prices[card.ticker]);
+        if (p.mode === "owner-earnings") {
+          // The honest base, by the global toggles, exactly as the company page's effOE.
+          const maint = base.maint && p.oeMaint != null && p.offerMaint;
+          const norm = base.norm;
+          let b = maint ? (norm && p.oe3Maint > 0 ? p.oe3Maint : p.oeMaint) : (norm && p.oeNormalized > 0 ? p.oeNormalized : p.oe);
+          if (base.sbc && p.sbc > 0) b -= p.sbc;
+          const SH = effShares(card);
+          out.delivered = p.gDeliv != null ? pctRate(p.gDeliv, true, 1) + "/yr" : "—";
+          if (p.gDeliv != null && p.gDeliv >= -0.05 && p.gDeliv <= 0.30 && b > 0 && SH > 0 && rr > gT) {
+            const refPS = (pv(p.gDeliv, rr, N, gT) * b - (p.netDebt || 0)) / SH;
+            out.reference = refPS > 0 ? sym + refPS.toFixed(2) : "—";
+          }
+          if (price > 0 && b > 0 && SH > 0) {
+            const res = solve((price * SH) / b, rr, N, gT);
+            out.implies = !res ? "—" : res.cap ? ">100%/yr" : pctRate(res.g, true, 1) + "/yr";
+            out.impliesHot = true;
+          }
+        } else if (p.mode === "bank") {
+          const coe = rr, g = 0.03;
+          out.delivered = p.tbvGrowth != null ? pctRate(p.tbvGrowth, true, 1) + "/yr" : "—";
+          const just = justifiedBookMultiple(p.rotce, coe, g);
+          if (just != null && p.tbvps > 0) out.reference = sym + (just * p.tbvps).toFixed(2);
+          if (price > 0 && p.tbvps > 0) { out.implies = (price / p.tbvps).toFixed(2) + "× book"; out.impliesHot = true; }
+        } else if (p.mode === "reit") {
+          const g = p.ffoGrowth != null ? Math.max(0, Math.min(0.08, p.ffoGrowth)) : 0.03;
+          out.delivered = p.ffoGrowth != null ? pctRate(p.ffoGrowth, true, 1) + "/yr" : "—";
+          const just = gordonMultiple(rr, g);
+          if (just != null && p.ffops > 0) out.reference = sym + (just * p.ffops).toFixed(2);
+          if (price > 0 && p.ffops > 0) { out.implies = (price / p.ffops).toFixed(1) + "× FFO"; out.impliesHot = true; }
+        }
+        return out;
+      }
+
+      function priceNote(card) {
+        const p = card.price;
+        const href = (card.pool === "JP" ? "/jp/" : "/c/") + card.ticker;
+        if (p.mode === "negative") return `Owner earnings are negative — the price read flips to the margin it must reach. <a href="${href}#sec-price">See the full read →</a>`;
+        if (p.mode === "off") return `Read on the balance sheet, not an owner-earnings DCF. <a href="${href}#sec-price">See the full read →</a>`;
+        let n = "";
+        if (p.mode === "owner-earnings" && p.shares == null) n = "The share count isn't tagged for this multi-class filer — enter it too (any quote page lists it). ";
+        if (p.adrBasis) n += `Enter the home-market price (${esc(card.currency)}, per ordinary share), not the US ADR quote.`;
+        return n;
+      }
+      const priceable = (card) => card.price.mode === "owner-earnings" || card.price.mode === "bank" || card.price.mode === "reit";
+
+      // ---- render the whole table when the column set changes ----
+      function renderTable() {
+        emptyEl.hidden = cols.length > 0;
+        controlsEl.hidden = cols.length === 0;
+        if (!cols.length) { tableEl.innerHTML = ""; return; }
+        const cs = cols.map((t) => cards[t]).filter(Boolean);
+        if (cs.length !== cols.length) { tableEl.innerHTML = '<p class="foot">Loading…</p>'; return; }
+
+        let h = '<table class="cmp"><thead><tr><th class="corner"></th>';
+        for (const c of cs) {
+          const href = (c.pool === "JP" ? "/jp/" : "/c/") + c.ticker;
+          h += `<th class="colh"><div class="colTk"><a href="${href}">${esc(c.ticker)}</a></div><div class="colNm">${esc(c.name)}</div><div class="colTags"><span>${esc(c.archetype.adj)}</span><span class="ccy">${esc(c.currency)}</span><span>${c.recordYears ? c.recordYears + "-yr record" : "—"}</span></div></th>`;
+        }
+        h += "</tr></thead><tbody>";
+
+        for (const grp of BANDS) {
+          // Keep a row only if some column has it (so a table of all-software names isn't padded with
+          // bank rows, and vice versa).
+          const liveRows = grp.rows.filter((r) => cs.some((c) => r.get(c) != null));
+          if (!liveRows.length) continue;
+          h += `<tr class="bandRow"><th colspan="${cs.length + 1}">${esc(grp.band)}</th></tr>`;
+          for (const r of liveRows) {
+            h += `<tr><th class="rl">${esc(r.label)}${r.rsub ? `<span class="rsub">${esc(r.rsub)}</span>` : ""}</th>`;
+            for (const c of cs) {
+              const v = r.get(c);
+              h += v ? `<td class="val">${esc(v.main)}${v.sub ? `<span class="vsub">${esc(v.sub)}</span>` : ""}</td>` : `<td class="val dash">—</td>`;
+            }
+            h += "</tr>";
+          }
+        }
+
+        // ---- the price band: the only interactive rows ----
+        h += `<tr class="bandRow"><th colspan="${cs.length + 1}">The price — what you&rsquo;d have to believe</th></tr>`;
+        h += `<tr><th class="rl">Today&rsquo;s price<span class="rsub">you bring it</span></th>`;
+        for (let i = 0; i < cs.length; i++) {
+          const c = cs[i];
+          if (priceable(c)) {
+            const note = priceNote(c);
+            const needShares = c.price.mode === "owner-earnings" && c.price.shares == null;
+            const shInput = needShares ? `<div class="pxWrap shWrap"><input class="pxInput shInput" id="sh-${i}" type="number" inputmode="decimal" step="0.1" min="0" placeholder="shares" value="${esc(userShares[c.ticker] || "")}" aria-label="Shares outstanding for ${esc(c.ticker)}, in millions" /><span class="pxUnit">M shares</span></div>` : "";
+            h += `<td class="val"><div class="pxWrap"><span class="pxSym">${esc(c.sym)}</span><input class="pxInput" id="px-${i}" type="number" inputmode="decimal" step="0.01" min="0" value="${esc(prices[c.ticker] || "")}" aria-label="Price for ${esc(c.ticker)}" /></div>${shInput}${note ? `<span class="pxNote">${note}</span>` : ""}</td>`;
+          } else {
+            h += `<td class="val dash">—<span class="pxNote">${priceNote(c)}</span></td>`;
+          }
+        }
+        h += "</tr>";
+        const pxRows = [
+          { key: "implies", label: "What the price implies", rsub: "growth, or the multiple paid" },
+          { key: "delivered", label: "What the record delivered", rsub: "set the implied beside this" },
+          { key: "reference", label: "Reference value / share", rsub: "a yardstick, never a target" },
+        ];
+        for (const pr of pxRows) {
+          h += `<tr><th class="rl">${esc(pr.label)}<span class="rsub">${esc(pr.rsub)}</span></th>`;
+          for (let i = 0; i < cs.length; i++) h += `<td class="val" id="pc-${i}-${pr.key}">—</td>`;
+          h += "</tr>";
+        }
+        h += "</tbody></table>";
+
+        // Mixed-archetype caution: when the columns aren't the same kind of business, the rows that
+        // dash out aren't gaps in the data — they're metrics that don't apply. Name it, don't hide it.
+        const kinds = new Set(cs.map((c) => c.price.mode === "bank" || c.price.mode === "reit" ? c.price.mode : c.archetype.financialKind ? "financial" : "operating"));
+        if (kinds.size > 1) h += `<p class="mixWarn">These aren&rsquo;t all the same kind of business, so some rows apply to one column and not another (a bank has no owner-earnings margin; a REIT is read on FFO). A dash there means the metric doesn&rsquo;t apply, not that it&rsquo;s missing.</p>`;
+
+        tableEl.innerHTML = h;
+
+        // wire the price (and, where needed, share-count) inputs
+        for (let i = 0; i < cs.length; i++) {
+          const el = document.getElementById("px-" + i);
+          if (el) el.addEventListener("input", () => { prices[cs[i].ticker] = el.value; syncURL(); updatePrices(); });
+          const sh = document.getElementById("sh-" + i);
+          if (sh) sh.addEventListener("input", () => { userShares[cs[i].ticker] = sh.value; syncURL(); updatePrices(); });
+        }
+        updatePrices();
+      }
+
+      // ---- recompute only the price-band cells (price / rate / base changed) ----
+      function updatePrices() {
+        const cs = cols.map((t) => cards[t]).filter(Boolean);
+        for (let i = 0; i < cs.length; i++) {
+          const r = priceRead(cs[i]);
+          const set = (key, txt, hot) => { const el = document.getElementById(`pc-${i}-${key}`); if (el) { el.textContent = txt; el.classList.toggle("hot", !!hot); } };
+          set("implies", r.implies, r.impliesHot);
+          set("delivered", r.delivered, false);
+          set("reference", r.reference, false);
+        }
+      }
+
+      // ---- chips ----
+      function renderChips() {
+        chipsEl.innerHTML = "";
+        cols.forEach((t) => {
+          const c = cards[t];
+          const chip = document.createElement("span");
+          chip.className = "chip";
+          chip.innerHTML = `<b>${esc(t)}</b>${c ? " · " + esc(c.name) : ""}`;
+          const x = document.createElement("button");
+          x.className = "x"; x.type = "button"; x.setAttribute("aria-label", "Remove " + t); x.textContent = "×";
+          x.addEventListener("click", () => removeCol(t));
+          chip.appendChild(x);
+          chipsEl.appendChild(chip);
+        });
+        hintEl.textContent = cols.length >= MAX ? "Four businesses — the most a head-to-head reads cleanly. Remove one to add another." : "Add two to four businesses you already have in mind. (Up to four.)";
+      }
+
+      // ---- load a card on demand ----
+      async function loadCard(ticker) {
+        if (cards[ticker]) return cards[ticker];
+        try {
+          const res = await fetch(`/compare/${encodeURIComponent(ticker)}.json`, { cache: "force-cache" });
+          if (!res.ok) throw new Error("404");
+          cards[ticker] = await res.json();
+          return cards[ticker];
+        } catch (e) { return null; }
+      }
+
+      async function addCol(ticker) {
+        ticker = String(ticker || "").toUpperCase();
+        if (!ticker || cols.includes(ticker) || cols.length >= MAX) return;
+        cols.push(ticker);
+        renderChips();
+        const card = await loadCard(ticker);
+        if (!card) { cols = cols.filter((t) => t !== ticker); renderChips(); return; }
+        syncURL(); renderChips(); renderTable();
+      }
+      function removeCol(ticker) {
+        cols = cols.filter((t) => t !== ticker);
+        delete prices[ticker];
+        syncURL(); renderChips(); renderTable();
+      }
+
+      // ---- URL state: ?c=KO,PEP&p=60,170&r=9&base=norm.sbc ----
+      function syncURL() {
+        try {
+          const u = new URL(location.href);
+          cols.length ? u.searchParams.set("c", cols.join(",")) : u.searchParams.delete("c");
+          const ps = cols.map((t) => prices[t] || "");
+          ps.some((x) => x) ? u.searchParams.set("p", ps.join(",")) : u.searchParams.delete("p");
+          const ss = cols.map((t) => userShares[t] || "");
+          ss.some((x) => x) ? u.searchParams.set("s", ss.join(",")) : u.searchParams.delete("s");
+          rate !== 9 ? u.searchParams.set("r", String(rate)) : u.searchParams.delete("r");
+          const bs = [base.norm ? "norm" : "", base.sbc ? "sbc" : "", base.maint ? "maint" : ""].filter(Boolean).join(".");
+          bs ? u.searchParams.set("base", bs) : u.searchParams.delete("base");
+          history.replaceState(null, "", u);
+        } catch (e) {}
+      }
+      function readURL() {
+        try {
+          const u = new URL(location.href);
+          const c = (u.searchParams.get("c") || "").split(",").map((s) => s.trim().toUpperCase()).filter(Boolean).slice(0, MAX);
+          const p = (u.searchParams.get("p") || "").split(",");
+          c.forEach((t, i) => { if (p[i]) prices[t] = p[i]; });
+          const s = (u.searchParams.get("s") || "").split(",");
+          c.forEach((t, i) => { if (s[i]) userShares[t] = s[i]; });
+          const r = parseFloat(u.searchParams.get("r")); if (r >= 4 && r <= 15) rate = r;
+          const bs = (u.searchParams.get("base") || "").split(".");
+          base.norm = bs.includes("norm"); base.sbc = bs.includes("sbc"); base.maint = bs.includes("maint");
+          return c;
+        } catch (e) { return []; }
+      }
+
+      // ---- picker (name/ticker search, mirroring the site search's ranking) ----
+      let INDEX = null, shown = [], active = -1, ALIAS = null;
+      const sq = (s) => s.replace(/[^a-z0-9]+/g, "");
+      const sortKey = (s) => String(s).replace(/^the\s+/i, "").replace(/^[^a-z0-9]+/i, "").trim().toLowerCase();
+      function getAlias() {
+        if (ALIAS) return ALIAS;
+        const el = document.getElementById("cmpAliases");
+        try { ALIAS = el ? JSON.parse(el.dataset.aliases) : {}; } catch (e) { ALIAS = {}; }
+        return ALIAS;
+      }
+      function aliasTargets(tq) {
+        const A = getAlias(), m = {};
+        for (const key in A) { const score = tq === key ? 1 : (tq.length >= 3 && key.indexOf(tq) === 0 ? 1.5 : -1); if (score < 0) continue; for (const tk of A[key]) { const tl = tk.toLowerCase(); if (m[tl] === undefined || score < m[tl]) m[tl] = score; } }
+        return m;
+      }
+      async function ensureIndex() {
+        if (INDEX) return INDEX;
+        try {
+          const res = await fetch("/company-index.json", { cache: "force-cache" });
+          const data = await res.json();
+          INDEX = (data.rows || []).map((r) => {
+            const ticker = String(r[0] || ""), name = String(r[1] || ticker), pool = r[2] || 0, prom = r[3] || 0, place = String(r[4] || "");
+            const nl = name.toLowerCase();
+            return { ticker, name, place, pool, prom, tl: ticker.toLowerCase(), words: nl.split(/[^a-z0-9]+/).filter(Boolean), nlsq: sq(nl), nksq: sq(sortKey(name)), haysq: sq(nl + " " + ticker.toLowerCase() + " " + place.toLowerCase()) };
+          });
+        } catch (e) { INDEX = []; }
+        return INDEX;
+      }
+      function rank(term) {
+        const t = term.trim().toLowerCase(), tq = sq(t);
+        if (!tq || !INDEX) return [];
+        const al = aliasTargets(tq), out = [];
+        for (const it of INDEX) {
+          let s = -1;
+          if (it.tl === tq) s = 0; else if (it.tl.indexOf(tq) === 0) s = 1;
+          else if (it.nlsq.indexOf(tq) === 0 || it.nksq.indexOf(tq) === 0) s = 2;
+          else if (it.words.some((w) => w.indexOf(t) === 0)) s = 3;
+          else if (it.nlsq.indexOf(tq) >= 0) s = 4; else if (it.haysq.indexOf(tq) >= 0) s = 5;
+          const a = al[it.tl]; if (a !== undefined && (s < 0 || a < s)) s = a;
+          if (s >= 0) out.push({ it, s });
+        }
+        out.sort((a, b) => a.s - b.s || a.it.pool - b.it.pool || b.it.prom - a.it.prom || a.it.name.length - b.it.name.length || a.it.nlsq.localeCompare(b.it.nlsq));
+        return out.slice(0, 30).map((m) => m.it);
+      }
+      function renderResults() {
+        resultsEl.innerHTML = ""; active = -1;
+        if (!shown.length) { resultsEl.hidden = true; input.setAttribute("aria-expanded", "false"); return; }
+        shown.forEach((it, i) => {
+          const li = document.createElement("li");
+          li.setAttribute("role", "option");
+          li.innerHTML = `<span class="rName">${esc(it.name)}</span><span class="rTk">${esc(it.ticker)}</span>${it.place ? `<span class="rPl">${esc(it.place)}</span>` : ""}`;
+          li.addEventListener("mouseenter", () => setActive(i));
+          li.addEventListener("click", () => pick(i));
+          resultsEl.appendChild(li);
+        });
+        resultsEl.hidden = false; input.setAttribute("aria-expanded", "true");
+      }
+      function setActive(i) {
+        const items = resultsEl.children;
+        if (active >= 0 && items[active]) items[active].classList.remove("is-active");
+        active = i;
+        if (active >= 0 && items[active]) { items[active].classList.add("is-active"); items[active].scrollIntoView({ block: "nearest" }); }
+      }
+      function pick(i) {
+        const it = shown[i >= 0 ? i : 0];
+        if (!it) return;
+        input.value = ""; shown = []; renderResults();
+        addCol(it.ticker);
+      }
+      async function onInput() {
+        await ensureIndex();
+        const term = (input.value || "").trim();
+        if (!term) { shown = []; renderResults(); return; }
+        shown = rank(term); renderResults();
+      }
+      input.addEventListener("input", onInput);
+      input.addEventListener("focus", ensureIndex);
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "ArrowDown") { e.preventDefault(); if (shown.length) setActive(Math.min(active + 1, shown.length - 1)); }
+        else if (e.key === "ArrowUp") { e.preventDefault(); if (shown.length) setActive(Math.max(active - 1, 0)); }
+        else if (e.key === "Enter") { if (shown.length) { e.preventDefault(); pick(active); } }
+        else if (e.key === "Escape") { shown = []; renderResults(); }
+      });
+      document.addEventListener("click", (e) => { if (!e.target.closest(".picker")) { shown = []; renderResults(); } });
+
+      // ---- controls ----
+      rDial.addEventListener("input", () => { rate = parseFloat(rDial.value); rOut.textContent = rate + "%"; syncURL(); updatePrices(); });
+      [["bNorm", "norm"], ["bSbc", "sbc"], ["bMaint", "maint"]].forEach(([id, key]) => {
+        document.getElementById(id).addEventListener("change", (e) => { base[key] = e.target.checked; syncURL(); updatePrices(); });
+      });
+
+      // ---- example links ----
+      document.querySelectorAll(".exLink").forEach((b) => b.addEventListener("click", () => {
+        const ts = (b.dataset.ex || "").split(",").map((s) => s.trim()).filter(Boolean);
+        ts.forEach(addCol);
+      }));
+
+      // ---- boot from the URL ----
+      const initial = readURL();
+      rDial.value = String(rate); rOut.textContent = rate + "%";
+      bNorm.checked = base.norm; bSbc.checked = base.sbc; bMaint.checked = base.maint;
+      renderChips();
+      if (initial.length) {
+        Promise.all(initial.map(loadCard)).then((loaded) => {
+          cols = initial.filter((t, i) => loaded[i]);   // drop any ticker without a card
+          renderChips(); renderTable();
+        });
+      }
+    })();
+  </script>
+</BaseLayout>
