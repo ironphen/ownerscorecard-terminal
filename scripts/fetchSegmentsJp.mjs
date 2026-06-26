@@ -64,7 +64,12 @@ function singleMember(ctx) {
 function segLabel(member) {
   let s = member.replace(/^jp[a-z0-9]+-[a-z]+_E\d+-\d+/i, ""); // company-extension prefix (jpcrp030000-asr_E01737-000)
   s = s.replace(/ReportableSegments?Member$/i, "").replace(/Segments?Member$/i, "").replace(/Member$/i, "");
-  return s.replace(/([a-z0-9])([A-Z])/g, "$1 $2").replace(/([A-Z]+)([A-Z][a-z])/g, "$1 $2").trim();
+  s = s.replace(/([a-z0-9])([A-Z])/g, "$1 $2").replace(/([A-Z]+)([A-Z][a-z])/g, "$1 $2");
+  // Split a glued all-caps region word the camelCase pass can't (UNIQLOJAPAN → UNIQLO Japan), and drop the
+  // generic "Business" suffix many filers append to every segment (Automobile Business → Automobile).
+  s = s.replace(/([A-Z])(JAPAN|USA|EMEA|APAC|ASEAN|EUCAN|UAE)\b/g, (_, a, w) => `${a} ${w[0]}${w.slice(1).toLowerCase()}`);
+  s = s.replace(/\s+Business$/i, "");
+  return s.trim();
 }
 const isExcludedMember = (member, label) =>
   !label || /ReconcilingItems|OperatingSegmentsNotIncluded|^ReportableSegmentsMember$/i.test(member);
