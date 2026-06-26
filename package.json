@@ -19,7 +19,8 @@
     "audit:coverage": "node scripts/auditCoverage.mjs",
     "audit:lang": "node scripts/auditLanguage.mjs",
     "audit:jp": "node scripts/auditJp.mjs",
-    "test": "node scripts/heroTest.mjs && node scripts/extractionTest.mjs && node scripts/edinetTest.mjs && node scripts/buffettReadTest.mjs && node scripts/fundamentalsTest.mjs && node scripts/universeTest.mjs && node scripts/fundamentalsAdrTest.mjs && node scripts/segmentTest.mjs && node scripts/peersTest.mjs && node scripts/durabilityTest.mjs && node scripts/businessTest.mjs && node scripts/synthesisTest.mjs && node scripts/lintNotes.mjs"
+    "probe:adr-dividends": "node scripts/probeAdrDividends.mjs",
+    "test": "node scripts/heroTest.mjs && node scripts/extractionTest.mjs && node scripts/edinetTest.mjs && node scripts/buffettReadTest.mjs && node scripts/fundamentalsTest.mjs && node scripts/universeTest.mjs && node scripts/fundamentalsAdrTest.mjs && node scripts/segmentTest.mjs && node scripts/peersTest.mjs && node scripts/durabilityTest.mjs && node scripts/businessTest.mjs && node scripts/synthesisTest.mjs && node scripts/probeAdrDividendsTest.mjs && node scripts/lintNotes.mjs"
   },
   "dependencies": {
     "@astrojs/mdx": "^6.0.3",
