@@ -23,13 +23,19 @@ jobs:
       - run: npm run fetch:wire
         env:
           SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT }}
+      # The 10-year Treasury yield, the risk-free anchor the valuation's Graham bond test prefills.
+      # Public-domain government data (FRED/Treasury), fetched here so the default stays current; it
+      # fails soft, so a yield-fetch hiccup never blocks the wire commit.
+      - run: npm run fetch:rates
+        env:
+          SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT }}
       - name: Commit if changed
         run: |
-          if ! git diff --quiet -- src/data/wire.json; then
+          if ! git diff --quiet -- src/data/wire.json src/data/rates.json; then
             git config user.name "github-actions[bot]"
             git config user.email "github-actions[bot]@users.noreply.github.com"
-            git add src/data/wire.json
-            git commit -m "Refresh the filing wire"
+            git add src/data/wire.json src/data/rates.json
+            git commit -m "Refresh the filing wire and the risk-free rate"
             git push
           else
             echo "No change."

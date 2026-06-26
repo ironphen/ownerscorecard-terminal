@@ -13,6 +13,7 @@
     "fetch:fundamentals:adr": "node scripts/fetchAdrFundamentals.mjs",
     "fetch:filings": "node scripts/fetchFilings.mjs",
     "fetch:wire": "node scripts/fetchWire.mjs",
+  "fetch:rates": "node scripts/fetchRates.mjs",
     "fetch:segments": "node scripts/fetchSegments.mjs",
     "fetch:segments:adr": "node scripts/fetchSegmentsAdr.mjs",
     "fetch:segments:jp": "node scripts/fetchSegmentsJp.mjs",

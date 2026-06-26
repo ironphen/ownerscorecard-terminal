@@ -11,6 +11,7 @@ import { tangibleEquity } from "../lib/financials.mjs";
 import { ffoPerShare } from "../lib/reits.mjs";
 import { earningsPower } from "../lib/normalize.mjs";
 import { trendGrowth } from "../lib/valuationInputs.mjs";
+import rates from "../data/rates.json";
 import DeliveredGrowth from "./DeliveredGrowth.astro";
 import Sparkline from "./Sparkline.astro";
 
@@ -227,6 +228,10 @@ const dValue = oeGrowth != null ? `${oeGrowth.replace("/yr", "")}/yr`
   : "—";
 const name = company.name || company.ticker;
 const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.abs(v * 100).toFixed(dp)}%`);
+// The risk-free anchor for Graham's bond test: the 10-year Treasury, fetched on the daily refresh
+// (public-domain government data), prefilled as an editable default. Dated, so it never reads as live.
+const bondDefault = rates?.tenYear != null ? rates.tenYear : null;
+const bondAsOf = rates?.asOf ? new Date(rates.asOf).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }) : null;
 ---
 
 <section class="val">
@@ -347,7 +352,7 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
       <p class="note">A reverse-DCF needs positive owner earnings, or at least revenue, to anchor to, there's no clean base here. Judge this one on assets or normalized earnings, not a growth model.</p>
     )
   ) : (
-    <div id="valBox" data-oe={ownerEarnings} data-oe3={oeNormalized ?? ""} data-oemaint={ownerEarningsMaint ?? ""} data-oemaint3={oe3Maint ?? ""} data-sbc={sbcLatest ?? ""} data-gdeliv={(gDeliv5 ?? gDeliv) ?? ""} data-netdebt={netDebt} data-shares={shares} data-haveshares={haveShares ? "1" : "0"} data-name={name} data-eps3={eps3 ?? ""} data-bvps={bvps ?? ""} data-rev={rev ?? ""} data-grev={gRevRaw ?? ""} data-ni={niNow ?? ""} data-sym={sym}>
+    <div id="valBox" data-oe={ownerEarnings} data-oe3={oeNormalized ?? ""} data-oemaint={ownerEarningsMaint ?? ""} data-oemaint3={oe3Maint ?? ""} data-sbc={sbcLatest ?? ""} data-gdeliv={(gDeliv5 ?? gDeliv) ?? ""} data-netdebt={netDebt} data-shares={shares} data-haveshares={haveShares ? "1" : "0"} data-name={name} data-eps3={eps3 ?? ""} data-bvps={bvps ?? ""} data-rev={rev ?? ""} data-grev={gRevRaw ?? ""} data-ni={niNow ?? ""} data-sym={sym} data-bonddefault={bondDefault ?? ""}>
       <p class="intro">
         A price is the one input we don't pull, <b>you bring it</b>. Type today's close (read it off any
         broker or quote site) and see the owner-earnings growth you'd have to believe to justify it, set
@@ -432,9 +437,10 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
       <div class="bondBox">
         <div class="bondHead">
           <span class="bondTitle">Against a high-grade bond — Graham’s yardstick</span>
-          <span class="bondField"><span class="bondLbl">today’s bond yield</span><input id="bondY" type="number" inputmode="decimal" step="0.1" min="0" placeholder="e.g. 4.5" aria-label="High-grade bond yield, percent" /><span class="bondPct">%</span></span>
+          <span class="bondField"><span class="bondLbl">bond yield</span><input id="bondY" type="number" inputmode="decimal" step="0.1" min="0" placeholder="e.g. 4.5" aria-label="High-grade bond yield, percent" /><span class="bondPct">%</span></span>
         </div>
-        <p class="bondLede" id="bondLede">Graham measured a stock against the bond you could own instead — the heart of his margin of safety. Enter today’s high-grade bond yield (the 10-year Treasury, or a AAA corporate) to weigh the owner-earnings yield against it. Nothing is stored.</p>
+        {bondAsOf ? <p class="bondAsOf">Prefilled with the 10-year Treasury ({bondDefault}%, as of {bondAsOf}) — the public-domain risk-free rate. Edit it for today’s exact figure, or a AAA corporate yield.</p> : null}
+        <p class="bondLede" id="bondLede">Graham measured a stock against the bond you could own instead — the heart of his margin of safety. Enter a price above to weigh the owner-earnings yield against this bond.</p>
         <div class="compare bondCmp" id="bondCmp" hidden>
           <div class="cmp"><span class="cl">Owner-earnings yield</span><span class="cv hot" id="eyB">—</span></div>
           <div class="cmp"><span class="cl">High-grade bond yield</span><span class="cv" id="bondYOut">—</span></div>
@@ -447,7 +453,7 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
         <label>Discount rate <output id="rOut">9%</output><input id="r" type="range" min="4" max="15" step="0.5" value="9" /></label>
         <label>Years of high growth <output id="nOut">10</output><input id="n" type="range" min="5" max="15" step="1" value="10" /></label>
         <label>Terminal growth <output id="gOut">2.5%</output><input id="g" type="range" min="0" max="4" step="0.25" value="2.5" /></label>
-        <p class="dialsNote">The discount rate is your interest rate, what a dollar years from now is worth today, anchored to the long-term Treasury yield (~4–5% today, plus whatever premium you want for risk). Drag it toward the risk-free rate and watch how much growth the price suddenly “needs”: interest rates are gravity on valuations.</p>
+        <p class="dialsNote">The discount rate is your interest rate, what a dollar years from now is worth today, anchored to the long-term Treasury yield ({bondDefault != null ? <>about {bondDefault}% as of {bondAsOf}</> : "~4–5% today"}, plus whatever premium you want for risk). Drag it toward the risk-free rate and watch how much growth the price suddenly “needs”: interest rates are gravity on valuations.</p>
       </div>
 
       <div class="sens" id="sens" hidden>
@@ -560,7 +566,8 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
   .bondLbl { font-size: 11.5px; color: var(--muted); letter-spacing: 0.02em; }
   .bondField input { width: 66px; padding: 5px 8px; border: 1px solid var(--rule-strong); font-family: var(--sans); font-size: 14px; font-variant-numeric: tabular-nums; background: var(--surface); }
   .bondPct { font-size: 16px; font-weight: 700; color: var(--ink); }
-  .bondLede { font-family: var(--serif); font-size: 13.5px; line-height: 1.55; color: var(--ink-soft); margin: 10px 0 0; max-width: 78ch; }
+  .bondAsOf { font-size: 11.5px; color: var(--muted); margin: 8px 0 0; line-height: 1.5; max-width: 78ch; }
+  .bondLede { font-family: var(--serif); font-size: 13.5px; line-height: 1.55; color: var(--ink-soft); margin: 8px 0 0; max-width: 78ch; }
   .bondCmp { margin-top: 12px; }
 
   .foot { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); margin: 14px 0 0; line-height: 1.5; max-width: 70ch; }
@@ -670,7 +677,7 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
       const rr = parseFloat(r.value) / 100;
       bondCmp.hidden = false;
       eyB.textContent = pcs(EY);
-      bondYOut.textContent = (BOND * 100).toFixed(1) + "%";
+      bondYOut.textContent = (BOND * 100).toFixed(2) + "%";
       const spread = EY - BOND;
       spreadB.textContent = (spread >= 0 ? "+" : "−") + Math.abs(spread * 100).toFixed(1) + " pts";
       spreadB.style.color = spread >= 0 ? "var(--good)" : "var(--bad)";
@@ -680,7 +687,7 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
       else if (EY >= BOND) s = `The owner-earnings yield sits above the bond, but short of the roughly 2× cushion Graham’s defensive rule asked for. The margin over the bond is your pay for the equity’s risk; weigh whether it is enough.`;
       else s = `The owner-earnings yield is below the bond — today, the riskless bond pays more. The equity has to grow into that gap to earn its risk, which is exactly the growth the reverse-DCF above asks you to believe.`;
       const prem = rr - BOND;
-      if (prem > 0.001) s += ` Your ${(rr * 100).toFixed(0)}% discount rate is this ${(BOND * 100).toFixed(1)}% bond plus about a ${(prem * 100).toFixed(1)}-point premium for the risk.`;
+      if (prem > 0.001) s += ` Your ${(rr * 100).toFixed(0)}% discount rate is this ${(BOND * 100).toFixed(2)}% bond plus about a ${(prem * 100).toFixed(1)}-point premium for the risk.`;
       bondLede.textContent = s;
     }
 
@@ -790,7 +797,10 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
     });
     try {
       const q = new URL(location.href).searchParams.get("px"); if (q) px.value = q;
-      const qb = new URL(location.href).searchParams.get("by"); if (qb && bondY) bondY.value = qb;
+      // The bond field opens on the build-time Treasury default (set programmatically, so it stays out
+      // of the URL until the reader overrides it); an explicit ?by= in the URL wins.
+      const qb = new URL(location.href).searchParams.get("by");
+      if (bondY) bondY.value = qb || box.dataset.bonddefault || "";
     } catch (e) {}
     update();
   })();
