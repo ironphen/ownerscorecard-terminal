@@ -358,3 +358,91 @@ const cellClass = (kind, c) => {
     .ls, .ys { display: inline; }
   }
 </style>
+
+<script>
+  // Freeze the record table's year row. The table scrolls horizontally inside an overflow wrapper, which
+  // makes it a scroll container — so a CSS `position: sticky` header would stick to the wrapper, not the
+  // page, and wouldn't freeze as the page scrolls. Instead we build a fixed-position copy of the year row
+  // that appears, tucked just under the sticky section bar, only while the table itself is on screen, and
+  // mirror the table's width and horizontal scroll so the years line up with the data beneath. The real
+  // table is untouched; the copy is decorative (aria-hidden, click-through).
+  (function () {
+    function setup(sec) {
+      const wrap = sec.querySelector(".wrap");
+      const table = wrap && wrap.querySelector("table");
+      const headRow = table && table.querySelector("thead tr");
+      if (!wrap || !table || !headRow) return;
+
+      const float = document.createElement("div");
+      float.className = "tyFloat";
+      float.setAttribute("aria-hidden", "true");
+      // Styled inline (not via the component's scoped CSS): the copy is appended to <body>, outside the
+      // component subtree, so the scope attribute wouldn't reach it. The cloned cells keep their own
+      // bottom border; a soft shadow lifts the frozen row off the data scrolling beneath it.
+      Object.assign(float.style, {
+        position: "fixed", top: "-9999px", left: "0", overflow: "hidden", zIndex: "30",
+        pointerEvents: "none", visibility: "hidden", background: "var(--paper)",
+        boxShadow: "0 6px 10px -8px rgba(0, 0, 0, 0.35)",
+      });
+      const ftable = table.cloneNode(false);                 // keeps the table's scoped-style identity
+      ftable.style.margin = "0";
+      const fthead = document.createElement("thead");
+      const frow = headRow.cloneNode(true);
+      fthead.appendChild(frow);
+      ftable.appendChild(fthead);
+      float.appendChild(ftable);
+      document.body.appendChild(float);                      // body: fixed positioning, no transformed ancestor
+
+      const cbar = document.querySelector(".cbar");
+      let shown = false;
+
+      function freezeTop() { return cbar ? Math.max(0, cbar.getBoundingClientRect().bottom) : 0; }
+
+      // Lock the copy's columns to the live table's measured widths, so the floating row lines up
+      // exactly with the data. A table column shares one width, so the header cell's width is the
+      // column's width.
+      function syncWidths() {
+        ftable.style.width = table.getBoundingClientRect().width + "px";
+        ftable.style.tableLayout = "fixed";
+        const live = headRow.children, clone = frow.children;
+        for (let i = 0; i < live.length && i < clone.length; i++) {
+          const w = live[i].getBoundingClientRect().width + "px";
+          clone[i].style.width = clone[i].style.minWidth = clone[i].style.maxWidth = w;
+        }
+      }
+
+      function position() {
+        const r = wrap.getBoundingClientRect();
+        const top = freezeTop();
+        const headH = frow.getBoundingClientRect().height || 36;
+        const want = r.top < top - 0.5 && r.bottom > top + headH;   // table crosses the freeze line, still on screen
+        if (want) {
+          if (!shown) { syncWidths(); shown = true; }
+          float.style.top = top + "px";
+          float.style.left = r.left + "px";
+          float.style.width = wrap.clientWidth + "px";
+          float.style.visibility = "visible";
+          float.scrollLeft = wrap.scrollLeft;
+        } else if (shown || float.style.visibility === "visible") {
+          float.style.visibility = "hidden";
+          float.style.top = "-9999px";
+          shown = false;
+        }
+      }
+
+      // Horizontal scroll of the table moves the floating row in lockstep; the copy's first cell stays
+      // pinned left exactly as the table's row-label column does, since `float` is itself a scroll box.
+      wrap.addEventListener("scroll", function () { if (shown) float.scrollLeft = wrap.scrollLeft; }, { passive: true });
+      let raf = 0;
+      function onScroll() { if (raf) return; raf = requestAnimationFrame(function () { raf = 0; position(); }); }
+      window.addEventListener("scroll", onScroll, { passive: true });
+      window.addEventListener("resize", function () { shown = false; float.style.visibility = "hidden"; syncWidths(); position(); }, { passive: true });
+
+      // Settle after layout and any late web-font reflow.
+      requestAnimationFrame(function () { syncWidths(); position(); });
+      setTimeout(function () { syncWidths(); position(); }, 450);
+      if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { syncWidths(); position(); });
+    }
+    document.querySelectorAll(".tenyear").forEach(setup);
+  })();
+</script>
