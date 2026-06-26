@@ -34,7 +34,8 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 async function fetchText(url) {
   for (let a = 1; a <= 4; a++) {
     try {
-      const res = await fetch(url, { headers: HEADERS });
+      // 60s per-attempt timeout so a hung server can't freeze the run; an abort retries like any failure.
+      const res = await fetch(url, { headers: HEADERS, signal: AbortSignal.timeout(60_000) });
       if (res.status === 429) { await sleep(1000 * a); continue; }
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       return await res.text();

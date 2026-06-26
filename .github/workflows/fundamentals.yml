@@ -135,6 +135,14 @@ jobs:
       - name: Audit believability
         if: ${{ github.event.inputs.debug == '' }}
         run: npm run audit:believe
+      # Ingestion guardrail: across all three pools (US, ADR, Japan), is the data GBM analysis needs
+      # actually PRESENT and FRESH — owner-earnings inputs, depreciation, a through-cycle record, a
+      # share count — or has a whole layer quietly cratered or a pool stopped refreshing? A coverage
+      # cliff or a stalled pool fails the step and blocks the commit, so the catalog can never thin out
+      # silently; known-thin source realities (ADR depth, Japan's ~5-year record) warn but don't block.
+      - name: Audit coverage
+        if: ${{ github.event.inputs.debug == '' }}
+        run: npm run audit:coverage
       - name: Commit if changed
         if: ${{ github.event.inputs.debug == '' }}
         run: |

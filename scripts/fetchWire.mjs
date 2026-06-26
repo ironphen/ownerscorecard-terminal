@@ -22,7 +22,8 @@ const DAYS = 150; // recency window
 async function getJSON(url) {
   for (let a = 1; a <= 4; a++) {
     try {
-      const res = await fetch(url, { headers: HEADERS });
+      // 60s per-attempt timeout so a hung server can't freeze the run; an abort retries like any failure.
+      const res = await fetch(url, { headers: HEADERS, signal: AbortSignal.timeout(60_000) });
       if (res.status === 429) { await sleep(1000 * a); continue; }
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       return await res.json();
@@ -134,6 +135,14 @@ async function main() {
 
       items.push({ ticker: c.ticker, name: c.name || c.ticker, form, date, label, grave, accn, url, whatChanged: changed });
     }
+  }
+  // Fail-safe: a run that found nothing (every submissions fetch failed, an EDGAR outage) must not
+  // blank the wire. Preserve the prior file and exit non-zero so the scheduled job surfaces the failure
+  // rather than committing an empty feed.
+  if (!items.length) {
+    let priorCount = 0;
+    try { priorCount = (JSON.parse(fs.readFileSync(wirePath, "utf8")).items || []).length; } catch {}
+    if (priorCount > 0) { console.error(`\n❌ Wire fetch returned no filings; preserving the prior ${priorCount}-item file.\n`); process.exit(1); }
   }
   items.sort((a, b) => b.date.localeCompare(a.date) || a.ticker.localeCompare(b.ticker));
   const out = { asOf: new Date().toISOString().slice(0, 10), source: "SEC EDGAR, recent filings", items: items.slice(0, 90) };

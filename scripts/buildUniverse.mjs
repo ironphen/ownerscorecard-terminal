@@ -50,7 +50,9 @@ async function fetchJson(url) {
           "Accept-Language": "en-US,en;q=0.9",
           Referer: "https://www.nasdaq.com/",
         },
+        signal: AbortSignal.timeout(60_000), // 60s timeout so a hung screener can't freeze the run
       });
+      if (res.status === 429) { await new Promise((r) => setTimeout(r, 1000 * a)); continue; } // back off on throttle, then retry
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       return await res.json();
     } catch (err) {

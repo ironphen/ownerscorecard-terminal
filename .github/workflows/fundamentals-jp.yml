@@ -21,7 +21,7 @@ on:
         type: string
         default: "2300"
   push:
-    branches: [claude/jolly-ride-nae81r]
+    branches: [main]
     paths:
       - "scripts/fetchEdinetFundamentals.mjs"
       - "src/data/universe.jp.json"
@@ -52,6 +52,11 @@ jobs:
           ONLY_JP: ${{ github.event.inputs.tickers }}
       - name: Audit JP data quality
         run: npm run audit:jp
+      # Ingestion guardrail (adds the depreciation and through-cycle owner-earnings checks the JP gate
+      # above doesn't cover). A coverage cliff blocks the commit; Japan's ~5-year EDINET record is held
+      # to its own realistic floor, not the SEC pools' deeper one.
+      - name: Audit coverage
+        run: npm run audit:coverage
       - name: Commit if changed
         run: |
           git config user.name "github-actions[bot]"

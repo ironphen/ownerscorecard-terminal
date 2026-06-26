@@ -140,7 +140,8 @@ const CONCEPTS = {
 async function getJSON(url) {
   for (let a = 1; a <= 4; a++) {
     try {
-      const res = await fetch(url, { headers: HEADERS });
+      // 60s per-attempt timeout: a hung server can't freeze the run; an abort is retried like any failure.
+      const res = await fetch(url, { headers: HEADERS, signal: AbortSignal.timeout(60_000) });
       if (res.status === 404) return null;
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       return await res.json();
