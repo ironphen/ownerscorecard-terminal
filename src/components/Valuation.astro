@@ -10,6 +10,7 @@ import { fmtMoney, currencySymbol, liquidAssets, maintenanceCapex, ownerEarnings
 import { tangibleEquity } from "../lib/financials.mjs";
 import { ffoPerShare } from "../lib/reits.mjs";
 import { earningsPower } from "../lib/normalize.mjs";
+import { trendGrowth } from "../lib/valuationInputs.mjs";
 import DeliveredGrowth from "./DeliveredGrowth.astro";
 import Sparkline from "./Sparkline.astro";
 
@@ -48,25 +49,9 @@ const offModel = fk === "bank" || fk === "insurer" || fk === "reit";
 const isADR = company.market === "ADR";
 const cyclical = overlays.some((o) => o.key === "cyclical");
 const median = (xs) => { if (!xs.length) return null; const s = [...xs].sort((a, b) => a - b); const m = Math.floor(s.length / 2); return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
-// Delivered growth a series actually compounded at, fit across ALL its points by a log-linear
-// regression rather than two endpoints. A single trough or peak year cannot anchor the rate (a $27M
-// trough turning a real record into "+108%/yr"), and a structural step (a REIT's post-merger FFO
-// doubling) is read as the trend through it, not erased by which endpoint the window happens to land on.
-// Positive points only — a growth rate off a negative or zero value is undefined.
-const trendGrowth = (series) => {
-  let v = (series || []).filter((x) => x != null && x > 0);
-  if (v.length < 4) return null;
-  // Drop a near-zero outlier year — one below a tenth of the typical level — before the log fit. A $30M
-  // year sitting between billions (Blackstone, 2018) would otherwise dominate the regression and turn a
-  // normal record into a runaway rate; it is a trough, not a growth base.
-  const sorted = [...v].sort((a, b) => a - b), med = sorted[Math.floor(v.length / 2)];
-  if (med > 0) v = v.filter((x) => x >= med * 0.1);
-  if (v.length < 4) return null;
-  const n = v.length, ys = v.map((x) => Math.log(x)), mx = (n - 1) / 2, my = ys.reduce((a, b) => a + b, 0) / n;
-  let num = 0, den = 0;
-  for (let i = 0; i < n; i++) { num += (i - mx) * (ys[i] - my); den += (i - mx) ** 2; }
-  return den === 0 ? null : Math.exp(num / den) - 1;
-};
+// Delivered growth (trendGrowth) and the reverse-DCF math (pv/solve/justified multiples) live in
+// shared libs — lib/valuationInputs.mjs and lib/reverseDcf.mjs — so this page and the head-to-head
+// compare view read a business through identical arithmetic. trendGrowth is imported above.
 
 const L = company.ttm?.lines || company.lines || {};
 // Share count turns the price into a market cap. We fall back from the TTM block to the latest
