@@ -74,8 +74,11 @@ if (primary && total) {
   }
   if (!takeaway) {
     if (primaryKind === "geography") {
-      const us = items.find((i) => /United States|Domestic/i.test(i.label));
-      if (us) takeaway = `${pct(1 - us.revenue / total)}% of revenue comes from outside ${/United States/i.test(us.label) ? "the United States" : "its home market"}.`;
+      // "% outside the United States" reads as home-vs-abroad only for a US filer. A foreign 20-F filer's
+      // home market isn't the US, so for the ADR/Japan pools fall through to the neutral largest-region line.
+      const foreign = company?.market === "ADR" || company?.market === "Japan";
+      const us = !foreign && items.find((i) => /United States|Domestic/i.test(i.label));
+      if (us) takeaway = `${pct(1 - us.revenue / total)}% of revenue comes from outside the United States.`;
     }
     if (!takeaway) {
       const second = items[1];
@@ -143,7 +146,7 @@ const sectionTitle = { segment: "by reportable segment", product: "by product li
       </div>
     ) : null}
 
-    <p class="foot">From the segment footnote of the company's own 10-K. Shares are of total revenue; the profit bar shows each segment's share of segment operating profit, before unallocated corporate costs.</p>
+    <p class="foot">From the segment footnote of the company's own {company?.market === "ADR" ? "20-F" : company?.market === "Japan" ? "annual securities report" : "10-K"}. Shares are of total revenue; the profit bar shows each segment's share of segment operating profit, before unallocated corporate costs.</p>
   </section>
 ) : null}
 
