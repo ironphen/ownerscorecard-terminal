@@ -272,7 +272,13 @@ function sectorFromShape(s) {
   if (loInv && hiGM) return "assetLight";     // IP-led, inventory-light, fat margins
   if (hiGM) return "consumer";                // fat margins on modest capex → a brand
   if (someInv) return "capital";              // makes physical goods at scale on thin margins
-  return "consumer";
+  // Nothing in the shape positively read as a model — typically a fee/service/holding business that
+  // reports no cost-of-revenue line (a payment network, a data franchise, a diversified holding company
+  // like Berkshire). Read it honestly as "general / diversified" rather than masquerade the unreadable
+  // shape as a confident "consumer brand" — which was wrong for ~3% of the universe, the famous capital
+  // allocators and networks worst of all. The default key-figures (operating + owner-earnings margin)
+  // then drop the "Gross margin —" a no-COGS business would otherwise show.
+  return "general";
 }
 
 function sectorReason(key, s) {

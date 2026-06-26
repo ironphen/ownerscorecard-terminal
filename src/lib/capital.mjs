@@ -80,7 +80,7 @@ export function capitalHistory(company) {
 
   const p = (x) => x / cfo;
   let character;
-  if (p(returned) >= 0.6) character = "a mature cash machine, most of what it earns goes straight back to owners";
+  if (p(returned) >= 0.6) character = "a cash returner, paying most of what it earns straight back to owners";
   else if (p(capex) >= 0.5) character = "a reinvestor, most operating cash is plowed back into the business";
   else if (debtChange != null && debtChange < -0.2 * cfo) character = "a deleverager, a meaningful share of cash went to paying down debt";
   else if (cashChange != null && cashChange > 0.25 * cfo) character = "a hoarder, a large share of cash simply built the balance sheet";

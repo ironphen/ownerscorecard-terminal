@@ -352,7 +352,7 @@ export function roic(c) {
       : `NOPAT ${$(nopat)} ÷ invested capital ${$(invested)} (debt + equity − cash)`,
     tone,
     label,
-    note: "The rate the business earns on the money tied up in it, Buffett's north star, because over time a stock tracks the ROIC beneath it. Above ~15% sustained hints at a moat; below ~8% the company may destroy value as it grows."
+    note: "The rate the business earns on the money tied up in it, Buffett's north star, because over time a stock tracks the ROIC beneath it. Above ~15% sustained hints at a moat; a return below the cost of capital (~8%) erodes value as a business grows rather than building it — the test Buffett weighs most."
       + (tc && r != null ? ` The headline is the median of the last ${tc.n} years (it ran ${pct(r)} most recently), so one peak or trough year doesn't set the verdict.` : tc ? ` The headline is the median of the last ${tc.n} years, so one peak or trough year doesn't set the verdict.` : "")
       + " Asset-light businesses (R&D expensed, little capital) read artificially high, pair this with Owner Earnings.",
   };
@@ -379,7 +379,7 @@ export function ownerCash(c) {
   const tc = throughCycle(c, (l) => ownerEarningsMargin(l, c));
   const j = tc ? tc.median : margin;
   const tone = j == null ? (oe <= 0 ? "bad" : "ok") : j <= 0 ? "bad" : j < 0.05 ? "warn" : j < 0.15 ? "ok" : "good";
-  const base = j == null ? (oe <= 0 ? "Consumes cash" : "Positive") : j <= 0 ? "Consumes cash" : j < 0.05 ? "Thin" : j < 0.15 ? "Solid" : "Cash machine";
+  const base = j == null ? (oe <= 0 ? "Consumes cash" : "Positive") : j <= 0 ? "Consumes cash" : j < 0.05 ? "Thin" : j < 0.15 ? "Solid" : "High";
   return {
     value: tc ? pct(j) : margin != null ? pct(margin) : $(oe),
     formula: tc
@@ -511,7 +511,7 @@ export function capitalAllocation(c) {
     note += buybacks - sbc <= 0
       ? ` But the buybacks barely exceed stock issued to employees (${$(sbc)} SBC), net of dilution, little was truly returned.`
       : ` Net of ${$(sbc)} stock comp, the real buyback was about ${$(buybacks - sbc)}.`;
-  note += " Returning most of it signals a mature cash machine; reinvesting most could mean a long runway, or empire-building. The split doesn't say which; the return earned on it (see ROIC) does.";
+  note += " Returning most of it is the mark of a mature business with little left to reinvest at a high return; reinvesting most could mean a long runway, or empire-building. The split doesn't say which; the return earned on it (see ROIC) does.";
   return { value: `${(payout * 100).toFixed(0)}%`, formula: `Dividends + buybacks ${$(returned)} ÷ Owner Earnings ${$(oc)}`, tone: "info", label, note };
 }
 

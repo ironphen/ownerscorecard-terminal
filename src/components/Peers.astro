@@ -110,13 +110,9 @@ const COLS = isReit
     ];
 
 const rows = group.map((c) => ({ c, m: metricsOf(c) }));
-const best = {};
-for (const col of COLS) {
-  if (col.better !== "high" && col.better !== "low") { best[col.key] = null; continue; }
-  let bt = null, bv = col.better === "low" ? Infinity : -Infinity;
-  for (const r of rows) { const v = r.m[col.key]; if (v == null) continue; if (col.better === "low" ? v < bv : v > bv) { bv = v; bt = r.c.ticker; } }
-  best[col.key] = bt;
-}
+// No "best" mark per column. Crowning a winner on a single measure is a verdict — and the same one
+// the compare view explicitly forbids ("no highlighted 'better' cell"). The group-median row below is
+// the honest context device: it shows where each figure sits in the distribution without ranking.
 
 // The group's distribution per column — the median the company is read against, so a figure is context
 // rather than a lone number. peerStat needs three readings (the company plus two peers); a thinner group
@@ -139,7 +135,7 @@ const intro = basis === "model"
 {group.length >= 2 ? (
   <section class="peers">
     <h3 class="secTitle pHead">{heading}</h3>
-    <p class="pNote">{intro} Each figure is a <b>through-cycle median</b>, so a peak or trough year can&rsquo;t distort it; the <b>group median</b> at the foot is the line to read each against. <span class="bestKey">●</span> marks the group&rsquo;s best on a single measure.</p>
+    <p class="pNote">{intro} Each figure is a <b>through-cycle median</b>, so a peak or trough year can&rsquo;t distort it; the <b>group median</b> at the foot is the line to read each against.</p>
     <div class="wrap">
       <table>
         <thead>
@@ -153,7 +149,7 @@ const intro = basis === "model"
             <tr class={c.ticker === company.ticker ? "me" : ""}>
               <th class="tl"><a href={`/c/${c.ticker}`}>{c.ticker}</a><span class="nm">{c.name}</span></th>
               <td>{m.revenue != null ? fmtMoney(m.revenue, c.currency || "USD") : "—"}</td>
-              {COLS.map((col) => <td class={best[col.key] === c.ticker ? "win" : ""}>{pr(m[col.key], col.dp)}</td>)}
+              {COLS.map((col) => <td>{pr(m[col.key], col.dp)}</td>)}
             </tr>
           ))}
         </tbody>
@@ -175,8 +171,6 @@ const intro = basis === "model"
   .peers { margin: 22px 0; }
   .pHead { border-bottom: 1px solid var(--rule-strong); padding-bottom: 6px; display: block; }
   .pNote { font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--muted); margin: 9px 0 6px; }
-  .bestKey { color: var(--good); font-style: normal; }
-
   .wrap { overflow-x: auto; }
   table { border-collapse: collapse; width: 100%; font-size: 13px; font-variant-numeric: tabular-nums; white-space: nowrap; }
   thead th { font-weight: 600; color: var(--muted); font-size: 12px; text-align: right; padding: 8px 10px 6px; border-bottom: 1px solid var(--rule); }
@@ -187,8 +181,6 @@ const intro = basis === "model"
   td { text-align: right; padding: 9px 10px; border-bottom: 1px solid var(--rule); }
   tr.me th.tl a, tr.me td { font-weight: 700; }
   tr.me { background: var(--accent-tint); }
-  td.win { color: var(--good); font-weight: 700; }
-  td.win::after { content: " ●"; font-size: 9px; vertical-align: middle; }
 
   /* The group-median row: the distribution line the company's figures are read against. Set off with a
      heavier rule and a muted, italic label so it reads as the yardstick, not another peer. */

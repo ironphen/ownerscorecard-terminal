@@ -185,9 +185,9 @@ export function moatReport(company, opts = {}) {
       } else {
         add("Reinvestment, incremental ROIC", pct(inc),
           inc >= 0.15 ? "good" : inc >= 0.08 ? "ok" : "warn",
-          inc >= 0.15 ? "Every extra dollar the company reinvested earned a high return, it is still compounding, not coasting on an old moat."
-            : inc >= 0 ? "Reinvested capital earned only a modest return, growth is getting expensive."
-            : "Reinvested capital earned a negative return, the business spent money to shrink its own economics.");
+          inc >= 0.15 ? "Every extra dollar the business reinvested came back at a high incremental return — the lens GBM read for a moat that reinvests rather than merely harvests. The record and the 10-K are where you check whether the rate holds."
+            : inc >= 0 ? "Reinvested capital came back at only a modest incremental return — near the cost of capital, where extra growth adds little per dollar. The record shows whether it is a soft stretch or a thinning moat."
+            : "Reinvested capital came back at a negative incremental return over this window — the invested base grew while operating profit did not. The filings show where it went.");
       }
     } else {
       add("Reinvestment, incremental ROIC", "returns capital", "info",
