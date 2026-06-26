@@ -2471,6 +2471,54 @@
         "currentAssets": 2853654000000,
         "currentLiabilities": 1543047000000
       }
+    },
+    "S100VY55": {
+      "2024": {
+        "capex": 48327000000,
+        "depreciation": 46702000000,
+        "dividendsPaid": -15361000000,
+        "buybacks": 4000000,
+        "receivables": 28845000000,
+        "inventory": 9381000000,
+        "accountsPayable": 23761000000,
+        "currentAssets": 452222000000,
+        "currentLiabilities": 246981000000
+      },
+      "2025": {
+        "capex": 100047000000,
+        "depreciation": 65422000000,
+        "dividendsPaid": -24670000000,
+        "buybacks": 61830000000,
+        "receivables": 30616000000,
+        "inventory": 15995000000,
+        "accountsPayable": 23609000000,
+        "currentAssets": 525366000000,
+        "currentLiabilities": 235882000000
+      }
+    },
+    "S100W73A": {
+      "2024": {
+        "capex": 16123000000,
+        "depreciation": 17856000000,
+        "dividendsPaid": -236240000000,
+        "buybacks": 2000000,
+        "receivables": 93608000000,
+        "inventory": 155987000000,
+        "accountsPayable": 58084000000,
+        "currentAssets": 2573302000000,
+        "currentLiabilities": 479276000000
+      },
+      "2025": {
+        "capex": 19008000000,
+        "depreciation": 15361000000,
+        "dividendsPaid": -193191000000,
+        "buybacks": 2000000,
+        "receivables": 65180000000,
+        "inventory": 486428000000,
+        "accountsPayable": 201091000000,
+        "currentAssets": 2752352000000,
+        "currentLiabilities": 597646000000
+      }
     }
   },
   "cfV": 3,
@@ -2775,6 +2823,13 @@
       }
     ],
     "4661": [
+      {
+        "docId": "S100YCJX",
+        "edinetCode": "E04707",
+        "secCode": "46610",
+        "periodEnd": "2026-03-31",
+        "submit": "2026-06-25 15:31"
+      },
       {
         "docId": "S100VY55",
         "edinetCode": "E04707",
@@ -3652,6 +3707,13 @@
     ],
     "7974": [
       {
+        "docId": "S100Y9NX",
+        "edinetCode": "E02367",
+        "secCode": "79740",
+        "periodEnd": "2026-03-31",
+        "submit": "2026-06-25 15:30"
+      },
+      {
         "docId": "S100W73A",
         "edinetCode": "E02367",
         "secCode": "79740",
@@ -4140,6 +4202,6 @@
       }
     ]
   },
-  "lastDate": "2026-06-24",
+  "lastDate": "2026-06-26",
   "crawledFrom": "2020-03-01"
 }
