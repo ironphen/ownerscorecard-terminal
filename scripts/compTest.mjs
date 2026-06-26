@@ -31,14 +31,32 @@ eq(extractInsiderOwnership(HEAD + "Directors and executive officers as a group (
 eq(extractInsiderOwnership(HEAD + "All directors and executive officers as a group (11 persons) 9,876,543 2.3 %"), 2.3, "space before percent sign");
 // 7. Controlled company, dual-class — first percent column captured.
 eq(extractInsiderOwnership(HEAD + "All directors and executive officers as a group (7 persons) 88,000,000 51.2% 9.8%"), 51.2, "controlled, first % column");
+// 8. Multi-column table (shares, options exercisable, total, percent) — the percent is several
+//    numeric columns past the share count, the shape big-cap proxies use.
+eq(extractInsiderOwnership(HEAD + "All directors and executive officers as a group (14 persons) 2,345,678 456,789 2,802,467 1.9%"), 1.9, "multi-column shares/options/total/percent");
+// 9. Long group label (nominees + named + other executives) before "as a group".
+eq(extractInsiderOwnership(HEAD + "All current directors, director nominees and named executive officers as a group (21 persons) 12,345,678 3.4%"), 3.4, "long nominee+officer label");
+// 10. The header appears FIRST in a table of contents, with the real table 13,000 chars later —
+//     a single window from the first hit would miss it. This is the large-cap recall fix.
+eq(
+  extractInsiderOwnership(
+    "Table of Contents. Security Ownership of Certain Beneficial Owners and Management 47. " +
+      "x".repeat(13000) + " " + HEAD +
+      "All directors and executive officers as a group (12 persons) 234,567 * Note: * Less than 1%."
+  ),
+  "<1%",
+  "TOC reference precedes the real table by >12k chars"
+);
 
 console.log("\nextractInsiderOwnership — must return null (precision over recall):");
-// 8. Prose use of "as a group" with a stray percent, no share count → no match.
+// 11. Prose use of "as a group" with a stray percent, no share count → no match.
 eq(extractInsiderOwnership("The directors, acting as a group, approved a 5% salary increase for the year."), null, "prose 'as a group ... 5%'");
-// 9. "the board ... as a group" — not directors/officers wording.
+// 12. "the board ... as a group" — not directors/officers wording.
 eq(extractInsiderOwnership("The board, as a group, met four times. Compensation rose 7% over the prior year."), null, "board prose");
-// 10. Ownership section present but no group line.
+// 13. Ownership section present but no group line.
 eq(extractInsiderOwnership(HEAD + "BlackRock, Inc. 12,345,678 8.1% Vanguard Group 11,000,000 7.2%"), null, "5%-holders only, no group row");
+// 14. Header present (e.g. a bare TOC entry) but no table anywhere → null, never a stray prose %.
+eq(extractInsiderOwnership("Security Ownership of Certain Beneficial Owners and Management 47. " + "Our board met as a group several times; pay rose 6% over the year. ".repeat(20)), null, "header but no table");
 
 console.log("\nextractPayRatio — unchanged regression:");
 eq(extractPayRatio("the ratio of the annual total compensation of our CEO to the median was 248 to 1 for fiscal 2024."), 248, "pay ratio sentence");

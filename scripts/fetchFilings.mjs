@@ -549,14 +549,34 @@ function extractPayRatio(text) {
 // a number (percent of class), the string "<1%" for the asterisk/"less than 1%" placeholder, or null
 // when there is no confident match — a wrong number here is worse than none.
 function extractInsiderOwnership(text) {
-  const secM = text.match(/security ownership|beneficial owner(?:s|ship)?|ownership of (?:certain )?(?:our )?(?:management|securities|common stock|equity)/i);
-  const scope = secM ? text.slice(secM.index, secM.index + 9000) : text;
-  const m = scope.match(/(?:directors?|executive officers?|named executive officers?)[^.\n]{0,100}?as a group[^%]{0,40}?[\d,]{5,}[^%]{0,40}?(\*|less than\s*1\s*%|under\s*1\s*%|<\s*1\s*%|\d{1,3}(?:\.\d+)?\s*%)/i);
-  if (!m) return null;
-  const raw = m[1].replace(/\s+/g, "");
-  if (raw === "*" || /lessthan|under|</i.test(raw)) return "<1%";
-  const n = parseFloat(raw);
-  return n >= 0 && n <= 100 ? Math.round(n * 10) / 10 : null;
+  // The group row: "directors/officers … as a group", a comma-grouped share count (the table's
+  // shape, which prose never has), then an explicit percent — or the */"less than 1%" placeholder.
+  // Tolerances are wide enough for long labels ("…director nominees and named executive officers…")
+  // and the extra numeric columns (options, total) that sit between shares and the percent.
+  const groupRe = /(?:directors?|executive officers?|named executive officers?)[^.\n]{0,140}?as a group[^%]{0,60}?[\d,]{5,}[^%]{0,60}?(\*|less than\s*1\s*%|under\s*1\s*%|<\s*1\s*%|\d{1,3}(?:\.\d+)?\s*%)/i;
+  const pick = (m) => {
+    const raw = m[1].replace(/\s+/g, "");
+    if (raw === "*" || /lessthan|under|</i.test(raw)) return "<1%";
+    const n = parseFloat(raw);
+    return n >= 0 && n <= 100 ? Math.round(n * 10) / 10 : null;
+  };
+  // The header ("Security Ownership of Certain Beneficial Owners and Management") usually appears
+  // first in the table of contents / a cross-reference, with the real Item 403 table tens of
+  // thousands of chars later — so a single window from the first hit misses the table on long
+  // (large-cap) proxies, the dominant cause of missed figures. Scan every header occurrence and
+  // take the first window carrying a real group row.
+  const headerRe = /security ownership|beneficial owner(?:s|ship)?|ownership of (?:certain )?(?:our )?(?:management|securities|common stock|equity)/gi;
+  let h, tries = 0;
+  while ((h = headerRe.exec(text)) !== null && tries < 24) {
+    tries++;
+    const m = text.slice(h.index, h.index + 12000).match(groupRe);
+    if (m) { const v = pick(m); if (v != null) return v; }
+  }
+  // Fallback: the whole document. groupRe is strict enough (directors/officers + "as a group" +
+  // a comma-grouped share count + an explicit percent) that unrelated prose can't satisfy it, so
+  // this only ever recovers a real table whose header didn't land within a scoped window.
+  const m = text.match(groupRe);
+  return m ? pick(m) : null;
 }
 
 async function getComp(cik, f) {
