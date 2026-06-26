@@ -9,6 +9,12 @@ import { inversionChecks } from "../lib/inversion.mjs";
 const { company } = Astro.props;
 const inv = inversionChecks(company);
 
+// Split the panel: the flags get the full read (the questions inversion actually surfaced), the
+// clean tests collapse to a compact "checked and clear" line. The section's job is to show what
+// inverting TURNED UP, not to re-list every figure already on the page through a darker frame.
+const flagged = inv ? inv.checks.filter((c) => c.flagged) : [];
+const clear = inv ? inv.checks.filter((c) => !c.flagged) : [];
+
 // A plain, descriptive read of the tally, never a grade: it counts which tests fired, not
 // how good or bad the stock is.
 let tally = null;
@@ -31,18 +37,31 @@ if (inv) {
 
     <p class="tally">{tally}</p>
 
-    <ul class="checks">
-      {inv.checks.map((c) => (
-        <li class={c.flagged ? "flag" : "clear"}>
-          <div class="crow">
-            <span class="chip">{c.flagged ? "Look here" : "Clear"}</span>
-            <span class="clabel">{c.label}</span>
-            <span class="cvalue">{c.value}</span>
-          </div>
-          <p class="cnote">{c.note}</p>
-        </li>
-      ))}
-    </ul>
+    {flagged.length ? (
+      <ul class="checks">
+        {flagged.map((c) => (
+          <li class="flag">
+            <div class="crow">
+              <span class="chip">Look here</span>
+              <span class="clabel">{c.label}</span>
+              <span class="cvalue">{c.value}</span>
+            </div>
+            <p class="cnote">{c.note}</p>
+          </li>
+        ))}
+      </ul>
+    ) : null}
+
+    {clear.length ? (
+      <div class="clears">
+        <span class="clearsHd">{flagged.length ? "And these came back clean" : "Each test came back clean"}</span>
+        <ul class="clearList">
+          {clear.map((c) => (
+            <li><span class="clabel">{c.label}</span><span class="cvalue">{c.value}</span></li>
+          ))}
+        </ul>
+      </div>
+    ) : null}
 
     <p class="foot">
       Each test is read straight from the filings and is noisy on its own; a single flag can be a cyclical
@@ -75,6 +94,15 @@ if (inv) {
   .cvalue { font-size: 17px; font-weight: 700; font-variant-numeric: tabular-nums; flex: 0 0 auto; letter-spacing: -0.01em; color: var(--ink); }
 
   .cnote { font-size: 13.5px; color: var(--ink-dim); margin: 6px 0 0; line-height: 1.55; max-width: 78ch; }
+
+  /* The clean tests, collapsed: what was checked and came back clear, named without re-listing the
+     full read of each (those figures live in the record, the scorecard, and the capital section). */
+  .clears { margin: 16px 0 0; padding: 12px 0 2px 12px; border-top: 1px solid var(--rule); border-left: 2px solid var(--rule-strong); }
+  .clearsHd { font-family: var(--sans); font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+  .clearList { list-style: none; padding: 0; margin: 9px 0 0; display: grid; gap: 6px 18px; }
+  .clearList li { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; font-size: 13.5px; }
+  .clearList .clabel { color: var(--ink-dim); font-weight: 500; font-size: 13.5px; }
+  .clearList .cvalue { font-size: 14px; color: var(--muted); }
 
   .foot { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--rule-strong); margin-top: 14px; padding-top: 11px; max-width: 74ch; line-height: 1.5; }
 

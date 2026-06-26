@@ -81,9 +81,14 @@ const oeHist = (company.history || []).map((h) => (h.lines.cashFromOps != null &
 const oe3vals = [...oeHist].reverse().filter((v) => v != null).slice(0, 3);
 const oe3 = oe3vals.length >= 2 ? oe3vals.reduce((a, b) => a + b, 0) / oe3vals.length : ownerEarnings;
 // The normalized base, Graham's through-cycle figure: the average owner-earnings margin of the
-// record applied to today's revenue (the same number the earnings-power section shows). Falls
-// back to a 3-year average where the record is too short to normalize.
-const oeNormalized = earningsPower(company)?.normOE ?? oe3;
+// record applied to today's revenue. Falls back to a 3-year average where the record is too short.
+const ep = earningsPower(company);
+const oeNormalized = ep?.normOE ?? oe3;
+// Graham's through-cycle (peak-vs-trough) read, surfaced here at the point of valuation rather than in
+// a separate "earnings power" section: where the latest year's owner-earnings margin sits against its
+// own through-cycle median, so a price typed on a peak year is flagged as one. Only when the
+// normalization is stable (a positive, meaningful through-cycle figure).
+const cycleRead = ep && ep.normOE != null && ep.cyclePos && !ep.normUnstable && !ep.structuralBreak ? ep.cyclePos : null;
 const sbcLatest = L.stockBasedComp ?? company.lines?.stockBasedComp ?? 0;
 // Steady-state owner earnings: Buffett's definition subtracts maintenance capex, not total
 // capex. For a business in a build-out (the AI capex wave most of all) total capex understates
@@ -372,6 +377,13 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
         </div>
       ) : null}
 
+      {cycleRead ? (
+        <p class="cyclenote">
+          Through the cycle, {name} earns about <b>{$(ep.normOE)}</b> on its {pctS(ep.normOeMargin, 1)} median
+          owner-earnings margin. This year&rsquo;s {pctS(ep.latestOeMargin, 1)} margin runs <b>{cycleRead === "at" ? "in line with" : cycleRead}</b> that{cycleRead === "above" ? " — so the reported figure may flatter a peak you'd be paying on" : cycleRead === "below" ? " — so the reported figure may understate a lean year" : ""}. <b>Normalize</b>, below, values the price on that through-cycle figure rather than the latest year.
+        </p>
+      ) : null}
+
       <div class="bases" role="group" aria-label="Make the owner-earnings base honest">
         <span class="basesLbl">Base</span>
         <label class="tog"><input type="checkbox" id="oeNorm" checked={defaultNorm} /> Normalize · through-cycle{oeNormalized != null ? <> (<b>{$(oeNormalized)}</b>)</> : null}</label>
@@ -433,7 +445,7 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
 
       <p class="foot">
         {offerMaint ? "Free cash flow" : "Owner earnings"} {$(ownerEarnings)} {haveShares ? `on ${(shares / 1e6).toFixed(0)}M diluted shares` : "on the share count you enter above"}; net {netDebt >= 0 ? `debt ${$(netDebt)}` : `cash ${$(-netDebt)}`}.
-        The base is the latest year by default; <b>Normalize</b> values it on the through-cycle average margin (the earnings-power figure above, Graham's method), and <b>Net of stock comp</b> treats option pay as the expense it is.{offerMaint ? (<> Capex ({$(Math.abs(capex))}) runs well above depreciation ({$(dep)}), so this is a build-out; <b>Steady-state</b> swaps total capex for maintenance (≈ depreciation), lifting the base to about {$(ownerEarningsMaint)}, the cash it would throw off if it stopped expanding.</>) : null}
+        The base is the latest year by default; <b>Normalize</b> values it on the through-cycle median owner-earnings margin (Graham's method, to avoid paying on a peak year), and <b>Net of stock comp</b> treats option pay as the expense it is.{offerMaint ? (<> Capex ({$(Math.abs(capex))}) runs well above depreciation ({$(dep)}), so this is a build-out; <b>Steady-state</b> swaps total capex for maintenance (≈ depreciation), lifting the base to about {$(ownerEarningsMaint)}, the cash it would throw off if it stopped expanding.</>) : null}
         The reference value extrapolates the owner-earnings growth the record actually delivered, netted against debt — a yardstick, never a price target. The tool says what you'd have to <em>believe</em>, not what the company is <em>worth</em>.
       </p>
     </div>
@@ -449,6 +461,10 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
   .note { font-family: var(--serif); font-style: italic; font-size: 14px; color: var(--ink-dim); margin: 12px 0 0; line-height: 1.5; max-width: 66ch; }
   .intro { font-family: var(--serif); font-style: italic; font-size: 14px; color: var(--muted); margin: 12px 0 0; line-height: 1.55; max-width: 68ch; }
   .basenote { font-family: var(--serif); font-size: 13.5px; line-height: 1.55; color: var(--ink-soft); background: var(--accent-tint); border-left: 2px solid var(--accent); padding: 9px 13px; margin: 12px 0 0; max-width: 72ch; }
+  /* Graham's through-cycle read, folded in from the former earnings-power section: where this year
+     sits against its own median margin, set quietly above the Normalize toggle it explains. */
+  .cyclenote { font-family: var(--serif); font-size: 13.5px; line-height: 1.55; color: var(--ink-soft); margin: 14px 0 0; max-width: 74ch; }
+  .cyclenote b { font-style: normal; color: var(--ink); font-weight: 600; }
   /* ADR price-basis warning: a foreign filer's figures are in its home currency on the ordinary-
      share count, so the reader must not enter a US ADR quote. Flagged, not hidden. */
   .adrWarn { font-size: 13.5px; line-height: 1.55; color: var(--ink-soft); background: var(--warn-tint, var(--accent-tint)); border-left: 3px solid var(--warn); padding: 10px 13px; margin: 14px 0 0; max-width: 74ch; }

@@ -270,12 +270,12 @@ export function cashPosition(c) {
 
   let note = netCash
     ? `Cash and short-term investments exceed every dollar of debt by ${$(-net)}, on net the company owes nothing, and can act from strength when others can't.`
-    : `Netting ${$(liquid)} of cash and short-term investments against ${$(gross)} of debt leaves ${$(net)} owed${years != null ? `, about ${years.toFixed(1)}× a year's operating profit, versus the gross figure above` : ""}.`;
+    : `Netting ${$(liquid)} of cash and short-term investments against ${$(gross)} of debt leaves ${$(net)} owed${years != null ? `, about ${years.toFixed(1)}× a year's operating profit, versus the gross figure beside it` : ""}.`;
   if (lt) {
     const full = net - lt;
     note += ` It also holds ${$(lt)} in longer-dated marketable securities; counting those, it sits at ${full < 0 ? `net cash of ${$(-full)}` : `${$(full)} of net debt`}.`;
   }
-  note += " Net debt is the leverage figure that matters; the gross ratio above ignores the cash already set against it. Strategic or illiquid investments aren't counted here.";
+  note += " Net debt is the leverage figure that matters; the gross ratio ignores the cash already set against it. Strategic or illiquid investments aren't counted here.";
   return { value, formula, tone, label, note };
 }
 
@@ -742,14 +742,25 @@ export function buildScorecard(company) {
     wrap("Investing or harvesting?", null, capexVsDepreciation(company)),
   ];
 
+  // One leverage read, not two adjacent checklist lines. Net debt is the figure that matters — the
+  // cash is already set against the debt — carried with the gross years-to-repay as a secondary
+  // number, so the survival section states the balance sheet once. (Was "How heavy is the debt?"
+  // (gross debt ÷ operating income) plus a separate "Debt, net of cash"; the gross-only ratio
+  // ignored the very cash beside it, which is exactly what the net figure corrects.)
+  const cp = cashPosition(company);
+  const lev = leverage(company);
+  const grossYears = lev && typeof lev.value === "string" && /^\d[\d.]*×$/.test(lev.value) ? ` · ${lev.value} gross` : "";
+  const debtCheck = cp
+    ? { title: "How heavy is the debt, net of cash?", concept: "net-debt", value: `${cp.value}${grossYears}`, formula: cp.formula, tone: cp.tone, label: cp.label, note: cp.note }
+    : wrap("How heavy is the debt, net of cash?", "net-debt", lev);
+
   return {
     sections: [
       {
         heading: "Will it survive?",
         checks: [
           coverageCheck,
-          wrap("How heavy is the debt?", "net-debt", leverage(company)),
-          wrap("Debt, net of cash", "net-debt", cashPosition(company)),
+          debtCheck,
           wrap("How long is cash tied up?", "cash-conversion-cycle", cashConversionCycle(company)),
         ],
       },

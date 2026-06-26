@@ -2,7 +2,6 @@
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import jp from "../../data/fundamentals.jp.json";
 import TenYear from "../../components/TenYear.astro";
-import NormalizedEarnings from "../../components/NormalizedEarnings.astro";
 import OwnerEarningsBridge from "../../components/OwnerEarningsBridge.astro";
 import Scorecard from "../../components/Scorecard.astro";
 import Capital from "../../components/Capital.astro";
@@ -126,9 +125,8 @@ const jpUnderstand = fund ? `${fund.industry}, read on the figures below — the
       <div id="sec-mix" class="sec"><Segments company={fund} /></div>
 
       <section class="actGroup">
-        <ActHeader n="I" title="The record" lede="What the business has done across the cycle, read straight from the EDINET filing: the multi-year record and, where the history allows, what it earns at mid-cycle." />
+        <ActHeader n="I" title="The record" lede="What the business has done across the cycle, read straight from the EDINET filing: the multi-year record, and the walk from reported profit to the cash an owner could take out." />
         <div id="sec-record" class="sec"><TenYear company={fund} /></div>
-        <div id="sec-power" class="sec"><NormalizedEarnings company={fund} /></div>
         <div id="sec-bridge" class="sec"><OwnerEarningsBridge company={fund} /></div>
       </section>
 

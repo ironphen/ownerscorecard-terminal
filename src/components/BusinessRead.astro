@@ -9,7 +9,7 @@
 // company's own description and the industry sit in the page header above this.
 import language from "../data/language.json";
 import segmentsData from "../data/segments.json";
-import { pickPrimaryBreakdown, compositionSentence } from "../lib/segments.mjs";
+import { compositionSentence } from "../lib/segments.mjs";
 import { classify } from "../lib/archetype.mjs";
 import { roicValue, ownerEarningsMargin, cashConversionCycle, debtReliable } from "../lib/fundamentals.mjs";
 import { financialQuality } from "../lib/financials.mjs";
@@ -43,22 +43,10 @@ const note = pickNote(notes, company.ticker);
 // lens, never a verdict on this one.
 const lever = note?.needle || businessLever(company);
 
-// Segment reality check: when the profit engine is not the biggest seller, say so,
-// so an archetype label (Amazon read as "retail") does not mislead about the needle.
-const cleanSeg = (s) => String(s || "").replace(/&amp;/gi, "&").replace(/\s+Segments?$/i, "").replace(/ And /g, " and ").trim();
-let leverExtra = "";
+// The profit-engine split (when the biggest seller isn't where the profit is made) lives in its
+// own "Where the money comes from" section below, which renders it as that section's headline. The
+// brief no longer pre-announces it here — one home for one fact.
 const seg = segmentsData?.companies?.[company.ticker];
-// Only when the segment breakdown actually informs (and so renders below), or the "see
-// the mix below" pointer would dangle at a section we suppressed.
-const segPick = pickPrimaryBreakdown(seg, ["segment"]);
-if (segPick?.raw?.hasOperatingIncome) {
-  const items = segPick.raw.items;
-  const oiSum = items.filter((i) => (i.operatingIncome ?? 0) > 0).reduce((a, b) => a + b.operatingIncome, 0);
-  const topRev = [...items].sort((a, b) => b.revenue - a.revenue)[0];
-  const topOI = [...items].sort((a, b) => (b.operatingIncome ?? 0) - (a.operatingIncome ?? 0))[0];
-  if (oiSum > 0 && topRev && topOI && topOI.label !== topRev.label)
-    leverExtra = ` In practice most of the profit now comes from ${cleanSeg(topOI.label)}, even though ${cleanSeg(topRev.label)} is the bigger seller, so that is the part to watch (see the mix below).`;
-}
 
 // Make the industry lens company-specific by pointing to the filing's own top flagged
 // driver, reusing the same ownerFlags the section below sets against the numbers. A
@@ -83,11 +71,16 @@ const composition = compositionSentence(seg) || "";
 // brief shows only the complement — the revenue mix when it actually informs — and never
 // repeats the prose. Without a note, the original chain: the segment mix or the computed
 // phrase, whichever the hero is not already showing.
-const goodVerbatim = !weakLede(L?.business);
+// Show the COMPLEMENT of the hero, never a second copy of it. The hero opens with, in order: the
+// filing's verbatim words, else the segment mix, else the computed industry phrase. So when the hero
+// is on the filing's words (or a reviewed note), the brief adds the mix; when the hero is on the mix,
+// the brief adds the industry lens; when the hero is already down to the computed phrase, the brief
+// has nothing left to add and the row drops — rather than printing the same phrase twice in 200px.
+const heroVerbatim = !!(L?.business && !weakLede(L?.business));
 const whatItIs = note
   ? (composition || null)
-  : goodVerbatim
-  ? (composition || businessPhrase(company))
+  : heroVerbatim
+  ? (composition || null)
   : (composition ? businessPhrase(company) : null);
 
 // Is it a good business? Read return on capital across the whole record, but treat
@@ -183,7 +176,7 @@ const overlays = cls.overlays || [];
     ) : null}
     <div class="r">
       <dt>What moves the needle</dt>
-      <dd>{lever}{note ? "" : leverExtra}{note ? "" : flagPointer}</dd>
+      <dd>{lever}{note ? "" : flagPointer}</dd>
     </div>
     {moat ? (
       <div class="r">

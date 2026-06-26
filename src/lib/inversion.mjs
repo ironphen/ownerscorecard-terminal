@@ -4,7 +4,7 @@
 // already pulls, returning the actual numbers and whether the fingerprint is present. None
 // is a verdict: a flag is a question to put to the filing, a clear test is one fewer way to
 // be wrong. Present, never pronounce.
-import { ownerEarningsMargin, ownerEarningsAbs, operatingMargin, fmtMoney, currencySymbol, debtReliable } from "./fundamentals.mjs";
+import { ownerEarningsMargin, ownerEarningsAbs, operatingMargin, fmtMoney, debtReliable } from "./fundamentals.mjs";
 import { capitalHistory } from "./capital.mjs";
 
 const avg = (xs) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null);
@@ -104,21 +104,9 @@ export function inversionChecks(company) {
     }
   }
 
-  // 4. Reinvestment that didn't compound: Buffett's one-dollar test, run on owner earnings.
-  // Each dollar the company kept should have produced more than a dollar could earn elsewhere.
-  if (cap && cap.returnOnRetained != null && cap.retainedEarnings > 0) {
-    const r = cap.returnOnRetained;
-    const flagged = r < 0.08;
-    checks.push({
-      key: "retention",
-      label: "Did the cash it kept earn its keep?",
-      value: `${pct(r, 0)} on each ${currencyUnit(ccy)}`,
-      flagged,
-      note: flagged
-        ? `Over ${cap.span} the company retained ${$(cap.retainedEarnings)} of earnings rather than paying it out, and annual owner earnings (first three years vs last three) changed by ${$(cap.incrementalOE)}: about ${pct(r, 0)} on each retained ${currencyUnit(ccy)}. That is below what the cash might have earned elsewhere, so ask whether the retained earnings are compounding, or whether owners would be better served by a dividend — and whether a build-out or a cyclical trough is holding the return down. Buffett's test for whether earnings were worth keeping.`
-        : `The earnings it kept compounded: ${$(cap.retainedEarnings)} retained over ${cap.span} turned into about ${$(cap.incrementalOE)} of added annual owner earnings (first three years vs last three), roughly ${pct(r, 0)} on each ${currencyUnit(ccy)}, so reinvestment cleared a reasonable bar.`,
-    });
-  }
+  // (Return on retained capital — Buffett's one-dollar test — lives in "How the cash was used,"
+  // its rightful home, where it is the climax of the capital-allocation read. It was duplicated
+  // here as a disconfirming check; removed so the figure is stated once, in one place.)
 
   // 5. Earnings quality, the long way: cumulative operating cash against cumulative net income
   // over the whole record. Accruals wash out year to year, so a multi-year shortfall is the
@@ -222,10 +210,4 @@ export function inversionChecks(company) {
     flaggedCount: checks.filter((c) => c.flagged).length,
     total: checks.length,
   };
-}
-
-// "$1" / "¥1" / "€1": the unit the one-dollar test is phrased in, in the company's home
-// currency, so the yen pool and the ADRs each read naturally rather than always in dollars.
-function currencyUnit(ccy) {
-  return `${currencySymbol(ccy)}1`;
 }
