@@ -1,17 +1,20 @@
 ---
-import { buildScorecard, TONE_COLOR } from "../lib/fundamentals.mjs";
-import { buildFinancialScorecard } from "../lib/financials.mjs";
-import { buildReitScorecard } from "../lib/reits.mjs";
-import { buildInsurerScorecard } from "../lib/insurers.mjs";
+import fundamentals from "../data/fundamentals.json";
+import { buildScorecard, TONE_COLOR, roicValue, ownerEarningsMargin, operatingMargin, earningsQuality, earningsQualityReconciliation } from "../lib/fundamentals.mjs";
+import { selectPeers, peerMedian } from "../lib/peers.mjs";
+import { buildFinancialScorecard, returnOnEquity, returnOnTangibleEquity, efficiencyRatio } from "../lib/financials.mjs";
+import { buildReitScorecard, ffoPayout, debtToAssets, ebitdaCoverage } from "../lib/reits.mjs";
+import { buildInsurerScorecard, combinedRatio } from "../lib/insurers.mjs";
 import { buildFeeScorecard } from "../lib/feeFinancials.mjs";
-import { buildManagedCareScorecard } from "../lib/managedCare.mjs";
+import { buildManagedCareScorecard, medicalLossRatio } from "../lib/managedCare.mjs";
 import { moatReport } from "../lib/durability.mjs";
 import { grahamTests } from "../lib/graham.mjs";
 import { financialKind, financialSubtype } from "../lib/archetype.mjs";
+import language from "../data/language.json";
 import MoatUnderAI from "./MoatUnderAI.astro";
 import Term from "./Term.astro";
 
-const { company, sample = false } = Astro.props;
+const { company, sample = false, peers: peersProp } = Astro.props;
 // Graham's defensive tests live inside the scorecard, so "is it safe" reads in one place
 // instead of split across a separate section. Run for the US pool and the ADRs, but not the
 // Japanese pool or the financials (the tests are industrial-shaped — a current-ratio and
@@ -34,8 +37,104 @@ const { sections } =
   : fk === "fee" ? buildFeeScorecard(company, financialSubtype(company))
   : fk === "bank" ? buildFinancialScorecard(company, financialSubtype(company))
   : buildScorecard(company);
-const report = isFin ? null : moatReport(company);
+// The filing's own pricing words, threaded into the moat report so the margin/pricing-power line
+// reads the number and the company's language together. Withheld for financials (where "pricing
+// power" and "input costs" are the wrong lens) — and moatReport runs for non-financials only anyway.
+const pricingLang = isFin ? null : (language?.companies?.[company.ticker]?.buffettRead?.pricing || null);
+// The candor register (owner vs promoter vocabulary), threaded into the moat report's closing read so
+// "how management talks" is reconciled with whether the business is actually compounding.
+const candorLang = isFin ? null : (language?.companies?.[company.ticker]?.mdna?.candor || null);
+const report = isFin ? null : moatReport(company, { pricing: pricingLang, candor: candorLang });
 const graham = company.market !== "JP" && !isFin ? grahamTests(company) : null;
+
+// Peer context on the two quality reads that are otherwise judged against an absolute band: a number
+// means something only beside its peers — 18% ROIC is wonderful for a grocer and ordinary for software.
+// The same economic-engine peers the table below uses, each read through its own cycle, so the median is
+// the line this company's figure is set against. Factual context, never a verdict; shown only when the
+// industry has enough peers carrying the metric (peerMedian withholds otherwise). Every archetype is read
+// on its own measures — the operator on ROIC and owner earnings, a bank on ROE/ROTCE/efficiency, a REIT on
+// payout, leverage and coverage against its property subsector.
+const peerCtx = (() => {
+  const peers = peersProp || selectPeers(company, fundamentals.companies || []).peers;
+  const ctx = {};
+  // Add peer context to a check by its title: the median of the metric across the same-engine peers,
+  // each read through its own cycle. Withheld (no line) when too few peers carry it. Most metrics are
+  // percentages; an optional formatter handles the few that aren't (interest coverage, a multiple).
+  const pctFmt = (m) => `${(m * 100).toFixed(0)}%`;
+  const add = (title, fn, fmt = pctFmt) => { const m = peerMedian(peers, fn); if (m != null) ctx[title] = `Industry peers: median ${fmt(m)}`; };
+  if (!isFin) {
+    add("Return on invested capital", (L) => roicValue(L));
+    add("Owner-earnings margin", (L, c) => ownerEarningsMargin(L, c));
+  } else if (fk === "reit") {
+    // A REIT's peers are now its property subsector (net-lease beside net-lease), so the payout,
+    // leverage and coverage read against a like property model — not a grab-bag of "real estate".
+    // FFO-per-share stays off the peer line (it's a per-share figure, not a comparable ratio).
+    add("Dividend / FFO (payout)", (L) => ffoPayout(L));
+    add("Debt / assets", (L) => debtToAssets(L));
+    add("Interest coverage (EBITDA)", (L) => ebitdaCoverage(L), (m) => `${m.toFixed(1)}×`);
+  } else if (fk === "bank") {
+    add("Return on equity", (L) => returnOnEquity(L));
+    add("Return on tangible equity", (L) => returnOnTangibleEquity(L));
+    add("Efficiency ratio", (L) => efficiencyRatio(L));
+  } else if (fk === "insurer") {
+    add("Return on equity", (L) => returnOnEquity(L));
+    add("Combined ratio", (L) => combinedRatio(L));
+  } else if (fk === "managedCare") {
+    add("Return on equity", (L) => returnOnEquity(L));
+    add("Operating margin", (L) => operatingMargin(L));
+    add("Medical loss ratio", (L) => medicalLossRatio(L));
+  } else if (fk === "fee") {
+    add("Operating margin", (L) => operatingMargin(L));
+    add("Return on equity", (L) => returnOnEquity(L));
+  }
+  return ctx;
+})();
+
+// The earnings-reliability tie: the filing's own language about whether the numbers can be trusted,
+// brought to the judgment it bears on. Integrity admissions — a material weakness in financial
+// controls, a restatement of past figures — are Graham's honesty test, the question that comes
+// before any ratio. For an operator we also read heavy "look past GAAP" steering against whether
+// cash actually backs the GAAP profit; for a financial, read on a balance sheet rather than a
+// cash-conversion ratio, only the integrity admission speaks. Present, never pronounce.
+const eqTie = (() => {
+  const lc = language?.companies?.[company.ticker] || null;
+  const integ = lc?.buffettRead?.integrity || null;
+  if (isFin) {
+    // A bank, insurer or REIT is read on the soundness of its balance sheet, so a deficient control
+    // system or a restatement undercuts the whole read. The non-GAAP/cash-conversion lens is the
+    // wrong one here (a financial's "adjusted" is a different animal; pricing/cost language is
+    // withheld for them too), so we pass no adjusted density and let only the integrity branch speak.
+    if (!integ) return null;
+    return earningsQualityReconciliation("none", { adjusted: null, materialWeakness: !!integ.materialWeakness, restatement: !!integ.restatement });
+  }
+  const adjusted = lc?.mdna?.candor?.adjusted ?? null;
+  if (!integ && adjusted == null) return null;
+  const q = earningsQuality(company);
+  return earningsQualityReconciliation(q?.tone || "none", {
+    adjusted,
+    materialWeakness: !!integ?.materialWeakness,
+    restatement: !!integ?.restatement,
+  });
+})();
+
+// Where the tie attaches: the cash-backing check for an operator, and — for a financial, which has
+// no such check — the first, most prominent check of its scorecard (ROE, the combined ratio, FFO),
+// because the soundness of the numbers is the question that comes before the ratio. Matched by object
+// identity, so the anchor is unambiguous whatever its title.
+const eqAnchor = isFin
+  ? (sections[0]?.checks?.[0] || null)
+  : sections.flatMap((s) => s.checks).find((c) => c.title === "Are earnings backed by cash?") || null;
+
+// Enrich each check with the context it earns: the peer median where the metric is peer-comparable,
+// and — on the anchor check — the filing's own language about the reliability of the numbers.
+const enrich = (sec) => ({
+  ...sec,
+  checks: sec.checks.map((c) => {
+    let cc = peerCtx[c.title] ? { ...c, peer: peerCtx[c.title] } : c;
+    if (eqTie && c === eqAnchor) cc = { ...cc, lang: eqTie.text, langTone: eqTie.tone };
+    return cc;
+  }),
+});
 ---
 
 <section class="scorecard">
@@ -56,7 +155,7 @@ const graham = company.market !== "JP" && !isFin ? grahamTests(company) : null;
     </div>
   ) : null}
 
-  {sections.map((sec) => (
+  {sections.map(enrich).map((sec) => (
     <div class="section">
       <h3 class="secHead">{sec.heading}</h3>
       <ul class="checks">
@@ -68,6 +167,8 @@ const graham = company.market !== "JP" && !isFin ? grahamTests(company) : null;
             </div>
             <div class="label" style={`color:${TONE_COLOR[c.tone]}`}>{c.label}</div>
             {c.formula ? <div class="formula">{c.formula}</div> : null}
+            {c.peer ? <div class="peer">{c.peer}</div> : null}
+            {c.lang ? <p class="langTie" style={`border-color:${TONE_COLOR[c.langTone]}`}><span class="langMark" style={`color:${TONE_COLOR[c.langTone]}`}>In the filing’s words</span> {c.lang}</p> : null}
             <details class="why"><summary>What this means</summary><p class="note">{c.note}</p></details>
           </li>
         ))}
@@ -105,6 +206,7 @@ const graham = company.market !== "JP" && !isFin ? grahamTests(company) : null;
               <span class="factLabel">{ft.label}</span>
               <span class="factValue" style={`color:${TONE_COLOR[ft.tone]}`}>{ft.value}</span>
             </div>
+            {ft.lang ? <p class="langTie" style={`border-color:${TONE_COLOR[ft.langTone]}`}><span class="langMark" style={`color:${TONE_COLOR[ft.langTone]}`}>In the filing’s words</span> {ft.lang}</p> : null}
             <details class="why"><summary>What this means</summary><p class="factNote">{ft.note}</p></details>
           </li>
         ))}
@@ -146,6 +248,9 @@ const graham = company.market !== "JP" && !isFin ? grahamTests(company) : null;
 
   .label { font-weight: 600; font-size: 13px; margin-top: 2px; }
   .formula { font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; margin-top: 4px; }
+  /* Peer context: where this figure sits against its industry, the line that gives the number meaning.
+     Set in the accent so the eye catches the comparison, but stated as fact — never a verdict. */
+  .peer { font-size: 12px; color: var(--accent); font-variant-numeric: tabular-nums; margin-top: 4px; letter-spacing: 0.01em; }
   .note { font-size: 13.5px; color: var(--ink-dim); margin: 6px 0 0; line-height: 1.5; }
 
   /* The explanatory paragraph under each row is collapsed by default for a clean, scannable
@@ -166,6 +271,12 @@ const graham = company.market !== "JP" && !isFin ? grahamTests(company) : null;
   .factLabel { font-weight: 600; font-size: 15px; }
   .factValue { font-weight: 700; font-size: 17px; font-variant-numeric: tabular-nums; flex: 0 0 auto; text-align: right; }
   .factNote { font-size: 13px; color: var(--ink-dim); margin: 4px 0 0; line-height: 1.5; }
+
+  /* The pricing-power tie: the filing's own words brought to the margin number, set off with a
+     tone-colored rule so it reads as a second voice corroborating, explaining or contesting the
+     record — not another data line. The marker names the source; the clause does the reasoning. */
+  .langTie { font-family: var(--serif); font-size: 13.5px; color: var(--ink-soft); line-height: 1.55; margin: 7px 0 0; padding: 1px 0 1px 12px; border-left: 2px solid var(--rule-strong); max-width: 74ch; }
+  .langMark { font-family: var(--sans); font-style: normal; font-weight: 700; font-size: 10.5px; letter-spacing: 0.05em; text-transform: uppercase; margin-right: 6px; }
 
   .gbadge { font-family: var(--sans); font-size: 10.5px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; border: 1px solid; border-radius: 2px; padding: 1px 7px; flex: 0 0 auto; }
   .gcrit { font-size: 13px; color: var(--muted); margin-top: 3px; font-variant-numeric: tabular-nums; }

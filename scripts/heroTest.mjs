@@ -133,6 +133,17 @@ const cases = [
   ["HUM-exec-overview", "Humana Inc.",
     ["Executive Overview General Humana Inc., headquartered in Louisville, Kentucky, is a leading health and well-being company focused on making it easy for people to achieve their best health."],
     /Humana Inc\..{0,60}is a leading health and well-being company/i],
+  // A mission-framed opener (Walmart) that names a concrete commerce channel must be accepted as the
+  // company's own description, not dropped for using "helps" instead of "designs/operates".
+  ["WMT", "Walmart Inc.",
+    ["Walmart Inc. helps people around the world save money and live better, anytime and anywhere, in retail stores and through eCommerce and our mobile apps.",
+     "We operate retail stores, warehouse clubs, and eCommerce websites under the Walmart and Sam's Club banners."],
+    /helps people around the world save money/i],
+  // But a bare service verb with no concrete channel is mission fluff, not a description: reject it so
+  // the page falls back to the segment mix or the computed phrase.
+  ["FLUFF-serve", "Acme Software Inc.",
+    ["We help businesses succeed with our innovative platform and solutions."],
+    null],
 ];
 
 let pass = 0, fail = 0;

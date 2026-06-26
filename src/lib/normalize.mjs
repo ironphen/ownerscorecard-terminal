@@ -29,22 +29,34 @@ export function earningsPower(company) {
   const rev = company.lines?.revenue && company.lines.revenue > 0 ? company.lines.revenue : Llatest.revenue;
   if (!rev || rev <= 0) return null;
 
+  // The latest fiscal year is shown as "Latest, reported," so the through-cycle window it is set beside
+  // must include it. The history's copy of the latest year can lag the curated company.lines (a capex
+  // line not yet posted in the stored history), which drops the latest year out of the owner-earnings
+  // window and leaves the range and span excluding the very figure shown next to them — Dominion showed
+  // a 2025 figure against a 2016–2019 range. So build the window off company.lines for its fiscal year,
+  // the authoritative latest, so the range, the span and the "latest reported" figure all agree.
+  const HN = company.lines && company.fy != null
+    ? (H.some((h) => h.fy === company.fy)
+        ? H.map((h) => (h.fy === company.fy ? { fy: h.fy, lines: company.lines } : h))
+        : [...H, { fy: company.fy, lines: company.lines }])
+    : H;
+
   // Structural break, not a cycle. A through-cycle median assumes the window's years repeat. When
   // revenue has fallen below half its in-window peak AND that peak is several years past — a one-time
   // windfall reversed (Moderna's COVID revenue collapsing ~90%), not a trough that recovers — the old
   // high-revenue years no longer describe the business, so applying their margins to today's revenue
   // would manufacture an earning power that is not real. Withhold the normalized figure, as for a
   // turnaround. A cyclical at a trough sits well above half its peak (oil, chemicals) and is unaffected.
-  const revs = H.map((h) => h.lines.revenue).filter((v) => v != null && v > 0);
+  const revs = HN.map((h) => h.lines.revenue).filter((v) => v != null && v > 0);
   const peakRev = revs.length ? Math.max(...revs) : null;
   const structuralBreak = peakRev != null && rev < peakRev * 0.5 && revs.lastIndexOf(peakRev) <= revs.length - 3;
 
   // Track which years actually carry a plausible owner-earnings margin, so the span and the year
   // count describe the series the median is built from, not the longer revenue history.
-  const oemEntries = H.filter((h) => plausible(ownerEarningsMargin(h.lines, company)));
+  const oemEntries = HN.filter((h) => plausible(ownerEarningsMargin(h.lines, company)));
   const oem = oemEntries.map((h) => ownerEarningsMargin(h.lines, company));
-  const opm = H.map((h) => operatingMargin(h.lines)).filter(plausible);
-  const nm = H.map((h) => netMargin(h.lines)).filter(plausible);
+  const opm = HN.map((h) => operatingMargin(h.lines)).filter(plausible);
+  const nm = HN.map((h) => netMargin(h.lines)).filter(plausible);
   // Normalizing owner earnings needs a real owner-earnings history. The Japanese pool now carries
   // about five years (the deepened EDINET capex history); below four years is not a cycle, so the
   // section is honestly withheld until the record is long enough.
@@ -53,7 +65,14 @@ export function earningsPower(company) {
   const normOeMargin = median(oem);
   const normOpMargin = median(opm);
   const normNetMargin = median(nm);
-  const oemRange = oem.length ? [Math.min(...oem), Math.max(...oem)] : null;
+  // The owner-earnings-margin range is shown beside the "Latest, reported" figure, so it must bracket
+  // that figure. A latest year extreme enough to be dropped from the median as an outlier (a −262%
+  // owner-earnings collapse, past the ±100% the median tolerates) is still a real part of the record
+  // and is still displayed, so the range widens to include it rather than print a band that excludes
+  // the very year beside it. A plausible latest year already sits inside, so this is a no-op there.
+  const latestOeMargin = ownerEarningsMargin(Llatest, company);
+  const rangeVals = latestOeMargin != null ? [...oem, latestOeMargin] : oem;
+  const oemRange = rangeVals.length ? [Math.min(...rangeVals), Math.max(...rangeVals)] : null;
 
   // A structural turnaround or chronic loss-maker has no single through-cycle earning power: its
   // through-cycle median owner-earnings margin sits at or below zero (the typical year is a loss).
@@ -66,7 +85,6 @@ export function earningsPower(company) {
   const crossesZero = oem.some((v) => v > 0) && oem.some((v) => v < 0);
   const normUnstable = normOeMargin == null || normOeMargin <= 0;
 
-  const latestOeMargin = ownerEarningsMargin(Llatest, company);
   const latestNetMargin = netMargin(Llatest);
   const normOE = !normUnstable && !structuralBreak && normOeMargin != null ? normOeMargin * rev : null;
   const latestOE = ownerEarningsAbs(Llatest, company);

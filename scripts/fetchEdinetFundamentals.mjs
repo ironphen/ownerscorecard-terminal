@@ -324,7 +324,7 @@ export function buildRecord(store, meta, entry) {
 async function getJSON(url) {
   for (let attempt = 1; attempt <= 4; attempt++) {
     try {
-      const res = await fetch(url);
+      const res = await fetch(url, { signal: AbortSignal.timeout(60_000) }); // 60s timeout: no hung EDINET request freezes the run
       if (res.status === 429) { await sleep(1000 * attempt); continue; }
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       return await res.json();
@@ -337,7 +337,7 @@ async function getJSON(url) {
 async function getBuffer(url) {
   for (let attempt = 1; attempt <= 4; attempt++) {
     try {
-      const res = await fetch(url);
+      const res = await fetch(url, { signal: AbortSignal.timeout(60_000) }); // 60s timeout: no hung EDINET request freezes the run
       if (res.status === 429) { await sleep(1000 * attempt); continue; }
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       return Buffer.from(await res.arrayBuffer());
