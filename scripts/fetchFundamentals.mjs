@@ -1105,14 +1105,29 @@ async function main() {
     prior = Object.fromEntries(priorCos.map((c) => [String(c.ticker).toUpperCase(), c]));
   } catch {}
   const fresh = Object.fromEntries(companies.map((c) => [String(c.ticker).toUpperCase(), c]));
+  // Field-level carry-over: a company can clear the quality floor (revenue + an earnings figure) yet
+  // still have a SECONDARY field come back null on a transient XBRL tag miss — capex, depreciation,
+  // debt, a share count — and the whole-record replace below would overwrite last week's good value
+  // with a hole. So when this run re-fetched the SAME fiscal year, keep the prior run's value for any
+  // field that came back null. Guarded on the fiscal year matching, so one year's figure is never
+  // carried into another; a genuinely new annual (fresh.fy ≠ prior.fy) is taken exactly as fetched.
+  let fieldsCarried = 0;
+  const carryFields = (f, p) => {
+    if (!p?.lines || !f?.lines || f.fy == null || f.fy !== p.fy) return f;
+    for (const k of Object.keys(p.lines)) {
+      if (f.lines[k] == null && p.lines[k] != null) { f.lines[k] = p.lines[k]; fieldsCarried++; }
+    }
+    return f;
+  };
   const merged = [];
   let carried = 0;
   for (const u of universe.tickers) {
     const T = u.ticker.toUpperCase();
-    if (fresh[T]) merged.push(fresh[T]);
+    if (fresh[T]) merged.push(carryFields(fresh[T], prior[T]));
     else if (withheld.has(T)) continue; // fetched but failed the quality floor → no page, no stale carry-over
     else if (prior[T]) { merged.push(prior[T]); carried++; }
   }
+  if (fieldsCarried) console.log(`   ${fieldsCarried} null field(s) carried over from the last good file (same fiscal year, transient tag misses)`);
 
   const out = {
     asOf: new Date().toISOString().slice(0, 10),

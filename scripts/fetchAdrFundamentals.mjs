@@ -538,7 +538,21 @@ async function main() {
   // Drop a ticker withheld this run (stale or below the floor) from the carry-over too, so a record
   // that just failed the staleness gate is removed rather than kept alive from the last good file.
   const byTicker = new Map(prior.filter((c) => inUniverse.has(String(c.ticker).toUpperCase()) && !withheld.has(c.ticker)).map((c) => [c.ticker, c]));
-  for (const c of companies) byTicker.set(c.ticker, c); // a freshly fetched record supersedes its prior one
+  // Field-level carry-over: keep last week's value for any secondary field (capex, depreciation, debt,
+  // a share count) that came back null on a transient tag miss, when this run re-fetched the SAME
+  // fiscal year — so a fresh record clearing the floor can't overwrite a good value with a hole.
+  // FY-guarded, so one year's figure is never carried into another; a new annual is taken as fetched.
+  const priorMap = new Map(prior.map((c) => [c.ticker, c]));
+  let fieldsCarried = 0;
+  const carryFields = (f, p) => {
+    if (!p?.lines || !f?.lines || f.fy == null || f.fy !== p.fy) return f;
+    for (const k of Object.keys(p.lines)) {
+      if (f.lines[k] == null && p.lines[k] != null) { f.lines[k] = p.lines[k]; fieldsCarried++; }
+    }
+    return f;
+  };
+  for (const c of companies) byTicker.set(c.ticker, carryFields(c, priorMap.get(c.ticker))); // a freshly fetched record supersedes its prior one
+  if (fieldsCarried) console.log(`   ${fieldsCarried} null field(s) carried over from the last good file (same fiscal year, transient tag misses)`);
   const merged = [...byTicker.values()].sort((a, b) => a.ticker.localeCompare(b.ticker));
   const carried = merged.length - companies.length;
   fs.writeFileSync(path.join(dataDir, "fundamentals.adr.json"), JSON.stringify({

@@ -23,6 +23,7 @@ import fs from "node:fs";
 import path from "node:path";
 import zlib from "node:zlib";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { passesQualityFloor } from "../src/lib/fundamentals.mjs";
 
 const API = "https://api.edinet-fsa.go.jp/api/v2";
 const KEY = process.env.EDINET_API_KEY || "";
@@ -595,6 +596,14 @@ async function main() {
 
     const rec = buildRecord(store, meta, byTickerEntry[entry.ticker]);
     const deepened = await deepenCashFlow(rec, reports, cache);
+    // Quality floor, the same one the US and ADR pools apply: a parse that came back without a top
+    // line or any earnings figure (an EDINET element rename, a context-naming change) must NOT be
+    // pushed — left out of `fresh`, it falls through to the prior good record in the merge below,
+    // so a degraded parse carries over rather than overwriting a company's whole record with holes.
+    if (!passesQualityFloor(rec)) {
+      console.log(`  ⊘ ${entry.ticker} ${entry.name} below the quality floor (rev ${rec.lines.revenue ?? "—"}) — carrying the prior record`);
+      continue;
+    }
     companies.push(rec);
     console.log(`  ✓ ${entry.ticker} ${entry.name} (FY${fy ?? "?"}, ${rec.history.length}yr, rev ${rec.lines.revenue ?? "—"}${deepened ? `, +${deepened}yr cf` : ""})`);
   }
