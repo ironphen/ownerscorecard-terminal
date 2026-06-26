@@ -9,8 +9,8 @@ import Peers from "../../components/Peers.astro";
 import BusinessRead from "../../components/BusinessRead.astro";
 import Segments from "../../components/Segments.astro";
 import OwnersRead from "../../components/OwnersRead.astro";
-import OwnerNotice from "../../components/OwnerNotice.astro";
 import CandorRead from "../../components/CandorRead.astro";
+import OwnerQuestions from "../../components/OwnerQuestions.astro";
 import Capital from "../../components/Capital.astro";
 import Inversion from "../../components/Inversion.astro";
 import ActHeader from "../../components/ActHeader.astro";
@@ -23,6 +23,7 @@ import segmentsData from "../../data/segments.json";
 import { classify } from "../../lib/archetype.mjs";
 import { businessPhrase, weakLede, pickNote } from "../../lib/business.mjs";
 import { compositionSentence } from "../../lib/segments.mjs";
+import { selectPeers } from "../../lib/peers.mjs";
 import notes from "../../data/notes.json";
 import adrFundamentals from "../../data/fundamentals.adr.json";
 import { getCollection } from "astro:content";
@@ -50,6 +51,10 @@ const ticker = String(Astro.params.ticker || "").toUpperCase();
 
 const fund =
   allCompanies.find((c) => String(c.ticker || "").toUpperCase() === ticker) || null;
+
+// Peers, found once and shared: both the peer table and the scorecard's peer context read the same set,
+// and the universe scan runs a single time per page rather than once per component.
+const peerResult = fund ? selectPeers(fund, fundamentals.companies || []) : { peers: [], basis: "model" };
 
 const related = (
   await getCollection("articles", ({ data }) =>
@@ -100,20 +105,10 @@ const fmtDate = (d) =>
   </header>
 
   {fund ? (
-    <p class="readguide">
-      Read top to bottom, in five acts, the owner's questions in the order an owner asks them:
-      <a href="#act-what">what the business is</a>,
-      <a href="#act-record">whether the record holds</a>,
-      <a href="#act-quality">whether it survives and is run for owners</a>, and
-      <a href="#act-price">what you would be paying</a>.
-      New to the terms? <a href="/concepts">Concepts</a> defines every one in plain language.
-    </p>
-  ) : null}
-
-  {fund ? (
     <div class="cbar">
       <a class="cbar-id" href="#top">{ticker}<span class="cbar-nm">{name ? ` · ${name}` : ""}</span></a>
       <nav class="secnav" aria-label="Sections">
+        <a href="#sec-questions">Questions</a>
         <a href="#act-what">What it is</a>
         <a href="#act-record">The record</a>
         <a href="#act-quality">Quality</a>
@@ -122,6 +117,8 @@ const fmtDate = (d) =>
       </nav>
     </div>
   ) : null}
+
+  {fund ? <div id="sec-questions" class="sec"><OwnerQuestions company={fund} /></div> : null}
 
   {fund ? (
     <section id="act-what" class="actGroup">
@@ -145,7 +142,7 @@ const fmtDate = (d) =>
   {fund ? (
     <section id="act-quality" class="actGroup">
       <ActHeader n="III" title="Quality &amp; stewardship" lede="Is it a good business, will it survive, and is it run for the owners? The checks that answer each, set beside how management is paid." />
-      <div id="sec-scorecard" class="sec"><Scorecard company={fund} sample={fundamentals.sample} /></div>
+      <div id="sec-scorecard" class="sec"><Scorecard company={fund} sample={fundamentals.sample} peers={peerResult.peers} /></div>
       {!isFin ? <div id="sec-capital" class="sec"><Capital company={fund} /></div> : null}
       <div id="sec-pay" class="sec"><Comp company={fund} /></div>
       {!isFin ? <div id="sec-inversion" class="sec"><Inversion company={fund} /></div> : null}
@@ -163,9 +160,8 @@ const fmtDate = (d) =>
     <section id="act-context" class="actGroup">
       <ActHeader n="V" title="Context" lede="The supporting record: what changed in the latest filing, how it stands against peers, and anything written about it here." />
       <div id="sec-changes" class="sec"><OwnersRead company={fund} /></div>
-      <div id="sec-notice" class="sec"><OwnerNotice company={fund} /></div>
       <div id="sec-candor" class="sec"><CandorRead company={fund} /></div>
-      <div id="sec-peers" class="sec"><Peers company={fund} /></div>
+      <div id="sec-peers" class="sec"><Peers company={fund} peers={peerResult.peers} basis={peerResult.basis} subsector={peerResult.subsector} /></div>
       {related.length ? (
         <div id="sec-writing" class="sec">
           <h2>Writing</h2>
@@ -198,10 +194,6 @@ const fmtDate = (d) =>
     .leadMore p { font-family: var(--serif); font-size: 14.5px; line-height: 1.55; color: var(--muted); margin: 6px 0 0; }
     .meta { color: var(--ink-dim); font-size: 13px; margin-top: 8px; }
 
-    /* A one-line walk through the method: the page asks the owner's questions in
-       order, each phrase jumping to the section that answers it. */
-    .readguide { font-family: var(--serif); font-style: italic; font-size: 13.5px; line-height: 1.6; color: var(--muted); margin: 14px 0 0; max-width: 74ch; }
-    .readguide a { color: var(--accent); }
 
     /* Sticky company bar, ticker always in view, plus section jump-nav. */
     .cbar {

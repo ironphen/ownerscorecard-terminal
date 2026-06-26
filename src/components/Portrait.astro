@@ -1,5 +1,5 @@
 ---
-import { fmtMoney, roicValue, operatingMargin, ownerEarningsMargin, freeCashFlowMargin, topLineRevenue, debtReliable, grossMargin } from "../lib/fundamentals.mjs";
+import { fmtMoney, roicValue, operatingMargin, ownerEarningsMargin, freeCashFlowMargin, topLineRevenue, debtReliable, grossMargin, grossMarginSwings } from "../lib/fundamentals.mjs";
 import { returnOnEquity, returnOnTangibleEquity, efficiencyRatio, equityToAssets, returnOnAssets } from "../lib/financials.mjs";
 import { ffoMargin, ffoPayout, debtToAssets } from "../lib/reits.mjs";
 import { combinedRatio, lossRatio } from "../lib/insurers.mjs";
@@ -47,7 +47,12 @@ const curLabel = company.ttm?.lines ? "TTM" : `FY${company.fy}`;
 // exchange), and reports no cost line at all. So on a goods business, treat a near-total gross margin
 // as the capture error it is and withhold it rather than print an impossible figure.
 const goodsSector = (() => { try { return ["capital", "consumer", "retail"].includes(classify(company).sector.key); } catch { return false; } })();
-const grossM = (l) => { const v = grossMargin(l); return v != null && v > 0.95 && goodsSector ? null : v; };
+// Withhold an impossible gross margin two ways: a near-total reading on a goods business (the cost line
+// missed), and a near-total reading on any business whose record swings between moderate and ~100% years
+// (the cost line captured near zero in those years) — matching the record table, so the strip and the
+// table never disagree.
+const gmSwings = grossMarginSwings(company);
+const grossM = (l) => { const v = grossMargin(l); if (v == null) return null; if (v > 0.95 && goodsSector) return null; if (gmSwings && v >= 0.85) return null; return v; };
 const hist5 = hist.slice(-5).map((h) => h.lines);
 const avgLabel = hist5.length >= 5 ? "5-yr average" : hist5.length >= 2 ? `${hist5.length}-yr average` : null;
 const avgShort = avgLabel ? avgLabel.replace("average", "avg") : "";

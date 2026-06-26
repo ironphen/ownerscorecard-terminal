@@ -1,12 +1,14 @@
 ---
-// The Candor Read, surfaced — how management talks to owners, the linguistic filter Buffett and
-// Munger actually apply to a filing. Three deterministic signals counted over the MD&A (the words
-// of an owner, the words of a promoter, and how often the company steers you off GAAP), each shown
-// with its year-over-year drift, and beneath them the rarest, most prized tell: the verbatim
-// sentences where management owns a miss. No bought sentiment lexicon — just the
-// vocabulary an owner cares about, counted. The detector lives in scripts/fetchFilings.mjs; this
-// presents the densities and the actual sentences and never grades the character. Present, never
-// pronounce.
+// The Candor Read, surfaced — how management talks to owners, and what it had to admit about the
+// numbers: the linguistic and disclosure filter Buffett and Munger actually apply to a filing. Three
+// deterministic signals counted over the MD&A (the words of an owner, the words of a promoter, and how
+// often the company steers you off GAAP), each with its year-over-year drift; then the verbatim tells —
+// where management owns a miss, where it disclosed its own numbers were unreliable (a material weakness,
+// a restatement), and where the reported figures rest on its own judgment. No bought sentiment lexicon —
+// just the vocabulary and the disclosures an owner cares about. The detectors live in
+// scripts/fetchFilings.mjs; this presents the densities and the company's own sentences and never grades
+// the character. Present, never pronounce. (The integrity admissions and critical-estimates read were
+// merged here from the retired OwnerNotice, so the candor signal lives in one place.)
 import language from "../data/language.json";
 import { TONE_COLOR } from "../lib/fundamentals.mjs";
 
@@ -15,6 +17,25 @@ const L = language?.companies?.[company.ticker] || null;
 const c = L?.mdna?.candor || null;
 const cp = L?.mdna?.candorPrior || null;
 const fy = L?.fy || company.fy;
+
+// What the filing had to admit about the numbers themselves — the gravest, rarest disclosures (a
+// deficient control system, a restatement of past figures), shown with the company's own sentence.
+// The Scorecard already ties these to the reliability of the numbers; here is the evidence beneath it.
+const integrity = L?.buffettRead?.integrity || null;
+const integrityItems = [];
+if (integrity?.materialWeakness)
+  integrityItems.push({
+    label: "Material weakness in financial controls", quote: integrity.materialWeakness,
+    note: "The company's own controls over its financial reporting were found deficient. Graham's honesty test: the figures in the record above are only as good as the system that produced them. The most serious thing in this read.",
+  });
+if (integrity?.restatement)
+  integrityItems.push({
+    label: "Restated past financials", quote: integrity.restatement,
+    note: "The company restated numbers it had previously reported. Figures in the record may have moved since they were first filed; read what was restated, and why, before trusting the trend.",
+  });
+// Where the reported numbers rest on management's own assumptions — the areas the filing itself names
+// as critical to its accounting. More is not worse; each is a number that is partly an opinion.
+const judgment = L?.buffettRead?.judgment && L.buffettRead.judgment.count >= 1 ? L.buffettRead.judgment : null;
 
 // The three signals, glossed so the bar teaches the lens rather than asking the reader to read a
 // raw number. Densities are per 1,000 words, so they compare across filings of any length. Each bar
@@ -46,7 +67,7 @@ function drift(value, prior) {
 }
 
 const admissions = c?.admissions || [];
-const hasContent = !!c;
+const hasContent = !!c || integrityItems.length || judgment;
 ---
 
 {hasContent ? (
@@ -55,42 +76,81 @@ const hasContent = !!c;
       <h3 class="secTitle">How management talks to owners{fy ? `, FY${fy}` : ""}</h3>
       {L?.sourceUrl ? <a class="src" href={L.sourceUrl} target="_blank" rel="noopener">read the 10-K →</a> : null}
     </div>
-    <p class="intro">
-      Buffett and Munger read a filing as much for <em>how</em> management talks as for what it reports.
-      Three kinds of language, counted over the MD&amp;A — the words of an owner, the words of a promoter,
-      and how often you are asked to look past GAAP. The counts and the company's own sentences; the
-      character is yours to read.
-    </p>
+    {c ? (
+      <>
+        <p class="intro">
+          Buffett and Munger read a filing as much for <em>how</em> management talks as for what it reports.
+          Three kinds of language, counted over the MD&amp;A — the words of an owner, the words of a promoter,
+          and how often you are asked to look past GAAP. The counts and the company's own sentences; the
+          character is yours to read.
+        </p>
 
-    <ul class="bars">
-      {signals.map((s) => {
-        const dr = drift(s.value, s.prior);
-        return (
-          <li>
-            <div class="barTop">
-              <span class="bLabel" style={`color:${TONE_COLOR[s.tone]}`}>{s.label}</span>
-              <span class="bVal">{s.value.toFixed(1)}<span class="per"> / 1,000 words</span>{dr ? <span class={`drift d${dr.dir}`}>· {dr.word}</span> : null}</span>
-            </div>
-            <div class="track"><span class="fill" style={`width:${pctOf(s.value, s.scale)}%; background:${TONE_COLOR[s.tone]}`}></span></div>
-            <p class="gloss">{s.gloss}</p>
-          </li>
-        );
-      })}
-    </ul>
+        <ul class="bars">
+          {signals.map((s) => {
+            const dr = drift(s.value, s.prior);
+            return (
+              <li>
+                <div class="barTop">
+                  <span class="bLabel" style={`color:${TONE_COLOR[s.tone]}`}>{s.label}</span>
+                  <span class="bVal">{s.value.toFixed(1)}<span class="per"> / 1,000 words</span>{dr ? <span class={`drift d${dr.dir}`}>· {dr.word}</span> : null}</span>
+                </div>
+                <div class="track"><span class="fill" style={`width:${pctOf(s.value, s.scale)}%; background:${TONE_COLOR[s.tone]}`}></span></div>
+                <p class="gloss">{s.gloss}</p>
+              </li>
+            );
+          })}
+        </ul>
 
-    <div class="admit">
-      <h4 class="aHead">Owned a miss, in its own words</h4>
-      {admissions.length ? (
-        <>
-          <p class="aIntro">The rarest tell in any filing: management saying plainly, in the first person and past tense, that something did not go as hoped. We surface every such sentence verbatim.</p>
-          <ul class="quotes">{admissions.map((q) => <li>“{q}{q.length >= 290 ? "…" : ""}”</li>)}</ul>
-        </>
-      ) : (
-        <p class="aNone">No first-person admission of a miss in this year's MD&amp;A. Common, and not damning — most managements never write one — but its presence elsewhere is worth more than any adjective.</p>
-      )}
-    </div>
+        <div class="admit">
+          <h4 class="aHead">Owned a miss, in its own words</h4>
+          {admissions.length ? (
+            <>
+              <p class="aIntro">The rarest tell in any filing: management saying plainly, in the first person and past tense, that something did not go as hoped. We surface every such sentence verbatim.</p>
+              <ul class="quotes">{admissions.map((q) => <li>“{q}{q.length >= 290 ? "…" : ""}”</li>)}</ul>
+            </>
+          ) : (
+            <p class="aNone">No first-person admission of a miss in this year's MD&amp;A. Common, and not damning — most managements never write one — but its presence elsewhere is worth more than any adjective.</p>
+          )}
+        </div>
+      </>
+    ) : null}
 
-    <p class="foot">Classic text analysis of the MD&amp;A itself, and every quote is the company's own. A lens on tone, never a score.</p>
+    {integrityItems.length ? (
+      <div class="integ">
+        <h4 class="aHead">What it had to disclose about the numbers</h4>
+        <p class="aIntro">The gravest, rarest tells in any filing — the company conceding its own figures may not be reliable. The scorecard above ties each to the numbers it bears on; here is the company's own sentence.</p>
+        <ul class="items">
+          {integrityItems.map((it) => (
+            <li>
+              <span class="ilabel" style={`color:${TONE_COLOR.bad}`}>{it.label}</span>
+              <p class="why">{it.note}</p>
+              <blockquote style={`border-color:${TONE_COLOR.bad}`}>“{it.quote}{it.quote.length >= 290 ? "…" : ""}”</blockquote>
+            </li>
+          ))}
+        </ul>
+      </div>
+    ) : null}
+
+    {judgment ? (
+      <div class="judge">
+        <div class="jhead">
+          <span class="aHead">Where the numbers rest on judgment</span>
+          <span class="count">{judgment.count} critical estimate{judgment.count === 1 ? "" : "s"}</span>
+        </div>
+        <p class="aIntro">
+          The figures above lean most on management's own assumptions in the {judgment.count} area{judgment.count === 1 ? "" : "s"} the
+          filing itself singles out as critical to its accounting:
+        </p>
+        <div class="topics">{judgment.topics.map((t) => <span class="topic">{t}</span>)}</div>
+        <p class="jnote">
+          More estimates is not worse — every business carries them — but each is a number that is partly an
+          opinion. When earnings turn on goodwill, reserves or the timing of revenue, that is where to read the
+          filing's notes hardest.
+        </p>
+      </div>
+    ) : null}
+
+    <p class="foot">Classic text analysis of the filing itself, and every quote is the company's own. A lens on tone and candor, never a score.</p>
   </section>
 ) : null}
 
@@ -119,6 +179,23 @@ const hasContent = !!c;
   .quotes { list-style: none; padding: 0; margin: 10px 0 0; }
   .quotes li { font-family: var(--serif); font-size: 14.5px; line-height: 1.5; color: var(--ink-soft); border-left: 2px solid var(--good); padding: 3px 0 3px 14px; margin: 9px 0; }
   .aNone { font-family: var(--serif); font-style: italic; font-size: 13.5px; color: var(--muted); margin: 7px 0 0; line-height: 1.55; max-width: 72ch; }
+
+  /* The integrity disclosures (merged from the retired OwnerNotice): the gravest tells, the company's
+     own sentence beneath each. */
+  .integ { margin: 16px 0 0; padding-top: 14px; border-top: 1px solid var(--rule); }
+  .integ .items { list-style: none; padding: 0; margin: 10px 0 0; }
+  .integ .items li { padding: 12px 0; border-bottom: 1px solid var(--rule); }
+  .ilabel { font-family: var(--sans); font-weight: 700; font-size: 15px; }
+  .integ .why { font-size: 13px; color: var(--ink-dim); margin: 5px 0 0; line-height: 1.55; max-width: 74ch; }
+  .integ blockquote { font-family: var(--serif); font-size: 14.5px; line-height: 1.5; color: var(--ink-soft); border-left: 2px solid var(--accent); padding: 3px 0 3px 14px; margin: 9px 0 0; max-width: 74ch; }
+
+  /* Where the numbers rest on judgment (merged from OwnerNotice): the critical-estimates read. */
+  .judge { margin: 16px 0 0; padding-top: 14px; border-top: 1px solid var(--rule); }
+  .jhead { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .count { font-family: var(--sans); font-size: 10.5px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); flex: 0 0 auto; }
+  .topics { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 0; }
+  .topic { font-family: var(--sans); font-size: 11.5px; letter-spacing: 0.02em; color: var(--ink); border: 1px solid var(--rule-strong); padding: 3px 9px; }
+  .jnote { font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--muted); margin: 10px 0 0; line-height: 1.6; max-width: 72ch; }
 
   .foot { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--rule-strong); margin-top: 16px; padding-top: 10px; max-width: 74ch; }
 </style>

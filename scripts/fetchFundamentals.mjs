@@ -58,7 +58,9 @@ function prettifyName(s) {
 async function getJSON(url) {
   for (let attempt = 1; attempt <= 4; attempt++) {
     try {
-      const res = await fetch(url, { headers: HEADERS });
+      // A 60s per-attempt timeout so a hung server can't freeze a scheduled run indefinitely; an
+      // abort throws, which the retry loop treats like any transient failure.
+      const res = await fetch(url, { headers: HEADERS, signal: AbortSignal.timeout(60_000) });
       if (res.status === 429) {
         await sleep(1000 * attempt);
         continue;

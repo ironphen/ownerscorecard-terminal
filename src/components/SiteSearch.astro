@@ -4,8 +4,12 @@
 // any company by name or ticker without first going home. It loads its index lazily, the one compact
 // /company-index.json file, fetched on first open and cached by the browser, so it adds nothing to
 // each page's HTML. The matching and ranking mirror the home page exactly: punctuation-insensitive,
-// a household name ahead of a tiny look-alike, a US listing ahead of a foreign duplicate.
+// a household name ahead of a tiny look-alike, a US listing ahead of a foreign duplicate, and a
+// curated alias bridge so "google", "facebook", "coke" and the like reach the right company.
+import { SEARCH_ALIASES } from "../lib/searchAliases.mjs";
 ---
+
+<div id="searchAliases" hidden data-aliases={JSON.stringify(SEARCH_ALIASES)}></div>
 
 <div id="siteSearch" class="ss" hidden>
   <div class="ssBackdrop" data-ss-close></div>
@@ -110,6 +114,29 @@
     const sortKey = (s) => String(s).replace(/^the\s+/i, "").replace(/^[^a-z0-9]+/i, "").trim().toLowerCase();
     const sq = (s) => s.replace(/[^a-z0-9]+/g, "");
 
+    // The curated alias bridge (searchAliases.mjs), emitted once as a JSON blob. For a typed query,
+    // return the tickers it should surface and the score to give them: an exact key match scores like a
+    // ticker prefix (1), a progressive prefix scores just behind (1.5). Resolved lazily, so the blob is
+    // read after the document is parsed rather than at script time.
+    let ALIAS = null;
+    function getAlias() {
+      if (ALIAS) return ALIAS;
+      const el = document.getElementById("searchAliases");
+      if (!el) return {};
+      try { ALIAS = JSON.parse(el.dataset.aliases); } catch (e) { ALIAS = {}; }
+      return ALIAS || {};
+    }
+    function aliasTargets(tq) {
+      const A = getAlias();
+      const m = {};
+      for (const key in A) {
+        const score = tq === key ? 1 : (tq.length >= 3 && key.indexOf(tq) === 0 ? 1.5 : -1);
+        if (score < 0) continue;
+        for (const tk of A[key]) { const tl = tk.toLowerCase(); if (m[tl] === undefined || score < m[tl]) m[tl] = score; }
+      }
+      return m;
+    }
+
     let INDEX = null;     // built lazily on first open
     let loadState = 0;    // 0 = not started, 1 = loading, 2 = ready, 3 = failed
     let shown = [];
@@ -152,6 +179,7 @@
       const t = term.trim().toLowerCase();
       const tq = sq(t);
       if (!tq || !INDEX) return [];
+      const al = aliasTargets(tq);
       const out = [];
       for (let i = 0; i < INDEX.length; i++) {
         const it = INDEX[i];
@@ -162,6 +190,11 @@
         else if (it.words.some((w) => w.indexOf(t) === 0)) s = 3;
         else if (it.nlsq.indexOf(tq) >= 0) s = 4;
         else if (it.haysq.indexOf(tq) >= 0) s = 5;
+        // A curated alias ("google" → Alphabet, "fb" → Meta) surfaces the household name where the
+        // legal name wouldn't match. An exact key scores like a ticker prefix so prominence puts it
+        // first; a progressive prefix scores just behind. Never demotes a stronger literal match.
+        const a = al[it.tl];
+        if (a !== undefined && (s < 0 || a < s)) s = a;
         if (s >= 0) out.push({ it, s });
       }
       out.sort((a, b) =>
