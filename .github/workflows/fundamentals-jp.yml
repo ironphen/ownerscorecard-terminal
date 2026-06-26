@@ -55,6 +55,7 @@ jobs:
         env:
           EDINET_API_KEY: ${{ secrets.EDINET_API_KEY }}
           ONLY_JP: ${{ github.event.inputs.tickers }}
+          SEG_RAW: ${{ github.event.inputs.debug }} # non-empty → dump raw dimensional contexts for the tickers
       - name: Fetch Japanese fundamentals
         if: ${{ github.event.inputs.probe_segments != 'true' }}
         run: npm run fetch:fundamentals:jp

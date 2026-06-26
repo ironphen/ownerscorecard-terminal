@@ -67,10 +67,38 @@ function scan(csvText, byElement) {
   }
 }
 
+// SEG_RAW diagnostic: dump every DIMENSIONAL context (any with a member suffix, single- or multi-part)
+// carrying a revenue fact, raw and uncapped — so we can see exactly how the real per-segment values are
+// encoded (a 2-D segment-note context vs the single-member roll-ups the main probe found).
+async function rawDump(c, entries) {
+  console.log(`\n=== RAW ${c.ticker} ${c.name} ===`);
+  const seen = new Map(); // context -> {element, val}
+  for (const f of entries) {
+    if (!/\.csv$/i.test(f.name)) continue;
+    let text; try { text = decodeCsv(f.data); } catch { continue; }
+    const lines = text.split(/\r?\n/);
+    for (let i = 1; i < lines.length; i++) {
+      const row = lines[i].split("\t");
+      if (row.length <= COL.value) continue;
+      const local = cell(row[COL.element]).split(":").pop();
+      if (!REV_RE.test(local)) continue;
+      const ctx = cell(row[COL.context]);
+      if (!/Member/.test(ctx) || /^CurrentYearDuration(_NonConsolidatedMember)?$/.test(ctx)) continue;
+      const val = num(cell(row[COL.value]));
+      if (val == null || !ctx.startsWith("CurrentYear")) continue;
+      if (!seen.has(ctx)) seen.set(ctx, { local, val });
+    }
+  }
+  const rows = [...seen.entries()].sort((a, b) => b[1].val - a[1].val).slice(0, 40);
+  for (const [ctx, { local, val }] of rows) console.log(`  ${(val / 1e9).toFixed(0).padStart(7)}B  ${local.padEnd(34)} ${ctx}`);
+  if (!rows.length) console.log("  (no dimensional revenue contexts at all)");
+}
+
 async function main() {
   if (!KEY) { console.error("❌ EDINET_API_KEY is not set."); process.exit(1); }
   const jp = JSON.parse(fs.readFileSync(path.join(dataDir, "fundamentals.jp.json"), "utf8")).companies || [];
   const only = (process.env.ONLY_JP || "").split(",").map((s) => s.trim()).filter(Boolean);
+  const RAW = !!process.env.SEG_RAW;
   const targets = jp.filter((c) => c.docId && (!only.length || only.includes(String(c.ticker))));
   console.log(`\nJP segment probe — ${targets.length} companies\n${"=".repeat(72)}`);
 
@@ -84,6 +112,7 @@ async function main() {
     catch (e) { console.log(`  ! download: ${e.message}`); tally.fetchFail++; continue; }
     let entries;
     try { entries = unzip(zip); } catch (e) { console.log(`  ! unzip: ${e.message}`); tally.fetchFail++; continue; }
+    if (RAW) { await rawDump(c, entries); continue; }
     const byElement = {};
     for (const f of entries) if (/\.csv$/i.test(f.name)) { try { scan(decodeCsv(f.data), byElement); } catch {} }
 
