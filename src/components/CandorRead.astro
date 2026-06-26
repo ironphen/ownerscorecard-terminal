@@ -104,6 +104,14 @@ if (integrity?.restatement)
 const judgment = L?.buffettRead?.judgment && L.buffettRead.judgment.count >= 1 ? L.buffettRead.judgment : null;
 
 const hasContent = !!c || told.length || integrityItems.length || judgment;
+
+// The intro promises only the pillars this filing actually offers. A thin filing — where the year-over-
+// year MD&A surfaced no plain performance sentence, common enough — then reads as the language bars it
+// has, not as a broken promise of a "what changed" account that was never there.
+const pillars = [];
+if (told.length) pillars.push("what it says changed");
+if (c) pillars.push("the language it chose");
+if (c || integrityItems.length || judgment) pillars.push("what it was willing to own");
 ---
 
 {hasContent ? (
@@ -117,8 +125,9 @@ const hasContent = !!c || told.length || integrityItems.length || judgment;
       Buffett's test for a report: imagine you own this business with a partner and you've been away a
       year. A straight partner tells you plainly what changed, how the business performed, and what went
       wrong — the things an owner needs to know, not a sales pitch. Here is this year's filing read against
-      that test: <em>what it says changed</em>, <em>the language it chose</em>, and <em>what it was willing
-      to own</em>. Every line below is the company's own; the character is yours to judge.
+      that test: {pillars.map((p, i) => (
+        <>{i > 0 ? (i === pillars.length - 1 ? (pillars.length > 2 ? ", and " : " and ") : ", ") : ""}<em>{p}</em></>
+      ))}. Every line below is the company's own; the character is yours to judge.
     </p>
 
     {told.length ? (
