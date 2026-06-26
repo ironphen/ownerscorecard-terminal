@@ -342,7 +342,7 @@ export function roic(c) {
   const j = tc ? tc.median : r;
   const pct = (x) => `${(x * 100).toFixed(0)}%`;
   const tone = j < 0.08 ? "warn" : j < 0.15 ? "ok" : "good";
-  const label = (j < 0.08 ? "Below average" : j < 0.15 ? "Solid" : j < 0.25 ? "High" : "Exceptional") + (tc ? " through the cycle" : "");
+  const label = (j < 0.08 ? "Below average" : j < 0.15 ? "Solid" : j < 0.25 ? "High" : "Very high (≥25%)") + (tc ? " through the cycle" : "");
   return {
     value: tc ? pct(j) : pct(r),
     formula: tc
@@ -377,16 +377,36 @@ export function ownerCash(c) {
   // Judge on the through-cycle median margin, so a heavy build-out year (or a one-off cash year)
   // doesn't set the verdict on a business that earns well across the record.
   const tc = throughCycle(c, (l) => ownerEarningsMargin(l, c));
-  const j = tc ? tc.median : margin;
-  const tone = j == null ? (oe <= 0 ? "bad" : "ok") : j <= 0 ? "bad" : j < 0.05 ? "warn" : j < 0.15 ? "ok" : "good";
-  const base = j == null ? (oe <= 0 ? "Consumes cash" : "Positive") : j <= 0 ? "Consumes cash" : j < 0.05 ? "Thin" : j < 0.15 ? "Solid" : "High";
+  // A through-cycle median dragged underwater by an early loss stretch the business has since grown out
+  // of (Carvana, Affirm) would read "consumes cash" here while the valuation panel runs on the
+  // now-positive base — the two contradicting each other on one page. A company is not "consuming cash"
+  // in a year it generates owner earnings. So when owner earnings are positive now but the cycle median
+  // is not: if the last three years are ALL positive it's a clean turn — judge on the recent margin;
+  // otherwise present both facts (positive this year, negative across the cycle) rather than a "bad"
+  // verdict the valuation flatly disagrees with. The judgment stays the reader's.
+  const recent3 = (c.history || []).map((h) => ownerEarningsAbs(h.lines, c)).filter((v) => v != null).slice(-3);
+  const fullTurn = tc != null && tc.median <= 0.05 && oe > 0 && recent3.length >= 3 && recent3.every((v) => v > 0);
+  const softTurn = tc != null && tc.median <= 0 && oe > 0 && !fullTurn;
+  const j = fullTurn ? margin : tc ? tc.median : margin;
+  let tone, base, suffix;
+  if (softTurn) {
+    tone = "warn";
+    base = "Positive this year, negative across the cycle";
+    suffix = "";
+  } else {
+    tone = j == null ? (oe <= 0 ? "bad" : "ok") : j <= 0 ? "bad" : j < 0.05 ? "warn" : j < 0.15 ? "ok" : "good";
+    base = j == null ? (oe <= 0 ? "Consumes cash" : "Positive") : j <= 0 ? "Consumes cash" : j < 0.05 ? "Thin" : j < 0.15 ? "Solid" : "High";
+    suffix = fullTurn ? ", recently turned positive" : tc ? " through the cycle" : "";
+  }
   return {
-    value: tc ? pct(j) : margin != null ? pct(margin) : $(oe),
-    formula: tc
+    value: fullTurn || softTurn ? (margin != null ? pct(margin) : $(oe)) : tc ? pct(j) : margin != null ? pct(margin) : $(oe),
+    formula: fullTurn || softTurn
+      ? `latest ${$(oe)} = operating cash ${$(cfo)} − maintenance capex ${$(maint)}${fullTurn ? `; positive each of the last ${recent3.length} years` : " (positive this year)"}, after an earlier loss stretch (${tc.n}-yr median ${pct(tc.median)})`
+      : tc
       ? `${tc.n}-yr median margin, range ${pct(tc.lo)}–${pct(tc.hi)}; latest ${$(oe)} = operating cash ${$(cfo)} − maintenance capex ${$(maint)}`
       : `Owner earnings ${$(oe)} = operating cash ${$(cfo)} − maintenance capex ${$(maint)}`,
     tone,
-    label: base + (tc ? " through the cycle" : ""),
+    label: base + suffix,
     note:
       `What an owner could take out without starving the business: operating cash less the maintenance capital it must spend to hold its position — Buffett's owner earnings.${margin != null ? ` That's ${pct(margin)} of revenue this year${tc ? `, a ${pct(tc.median)} median across ${tc.n} years` : ""}.` : ""}` +
       (growthGap ? ` It chose to put ${$(Math.abs(capex) - maint)} more into growth, so free cash flow this year was ${$(fcf)} — the gap is investment, not weakness.` : "") +
@@ -547,7 +567,7 @@ export function cashConversionCycle(c) {
   const dpo = (ap / cogs) * 365;
   const ccc = dso + dio - dpo;
   const tone = ccc < 0 ? "good" : ccc < 60 ? "ok" : "warn";
-  const label = ccc < 0 ? "Negative, funded by others" : ccc < 60 ? "Tight" : "Capital-hungry";
+  const label = ccc < 0 ? "Negative, funded by others" : ccc < 60 ? "Tight" : "Long (60+ days)";
   return {
     value: `${Math.round(ccc)}d`,
     formula: `DSO ${Math.round(dso)} + DIO ${Math.round(dio)} − DPO ${Math.round(dpo)} days`,

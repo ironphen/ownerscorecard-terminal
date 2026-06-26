@@ -48,7 +48,7 @@ export function buildFeeScorecard(company, subtype = "fee") {
     concept: "operating-margin",
     value: pc(om, 1), formula: `Operating income ${$(L.operatingIncome)} ÷ revenue ${$(L.revenue)}`,
     tone: om < 0.08 ? "bad" : om < 0.18 ? "warn" : om < 0.3 ? "ok" : "good",
-    label: om < 0.08 ? "Thin for a fee business" : om < 0.18 ? "Modest fee margin" : om < 0.3 ? "Healthy fee margin" : "Toll-booth economics",
+    label: om < 0.08 ? "Thin for a fee business" : om < 0.18 ? "Modest fee margin" : om < 0.3 ? "Solid fee margin" : "Wide fee margin (≥30%)",
     note: `The heart of a ${noun}: how much of each fee dollar survives the cost of running the business. ${driverOf(subtype)} A high margin held for years, through a market it does not control, is the operational mark of a real franchise.`,
   };
 
@@ -57,7 +57,7 @@ export function buildFeeScorecard(company, subtype = "fee") {
     title: "Net margin",
     value: pc(nm, 1), formula: `Net income ${$(L.netIncome)} ÷ revenue ${$(L.revenue)}`,
     tone: nm < 0.05 ? "warn" : nm < 0.15 ? "ok" : "good",
-    label: nm < 0.05 ? "Slim" : nm < 0.15 ? "Solid" : "Rich",
+    label: nm < 0.05 ? "Slim" : nm < 0.15 ? "Solid" : "Wide",
     note: "What reaches the owner after tax and interest. For a capital-light fee business this should be a wide share of revenue; when it is thin despite a high operating margin, debt taken on for acquisitions is usually the reason, so read it next to the balance sheet.",
   };
 
@@ -67,7 +67,7 @@ export function buildFeeScorecard(company, subtype = "fee") {
     concept: "return-on-equity",
     value: pc(roe), formula: `Net income ${$(L.netIncome)} ÷ equity ${$(L.stockholdersEquity)}`,
     tone: roe < 0.1 ? "warn" : roe < 0.15 ? "ok" : "good",
-    label: roe < 0.1 ? "Below the cost of equity" : roe < 0.15 ? "Solid" : roe < 0.25 ? "Strong" : "Exceptional",
+    label: roe < 0.1 ? "Below the cost of equity" : roe < 0.15 ? "Solid" : roe < 0.25 ? "Strong" : "Very high (≥25%)",
     note: "Because the business ties up little capital, a healthy fee stream throws off a high return on the equity behind it. Read it with the buyback record: returning capital lifts this ratio honestly, but heavy debt taken to do so can flatter it.",
   };
 
@@ -92,7 +92,7 @@ export function feeQuality(company, subtype = "fee") {
   const noun = KIND_NOUN[subtype] || KIND_NOUN.fee;
 
   let s1;
-  if (med >= 0.35) s1 = `Operating margin has run at toll-booth levels across the record (median ${pc(med)}, above 25% in ${above} of ${n} years), the economics of a franchise that takes a cut without carrying the risk`;
+  if (med >= 0.35) s1 = `Operating margin has run at the high end of fee-business margins across the record (median ${pc(med)}, above 25% in ${above} of ${n} years), the economics of a business that takes a cut without carrying the risk`;
   else if (med >= 0.22) s1 = `Operating margin has held high for a ${noun} (median ${pc(med)} across the record)`;
   else s1 = `Operating margin has been modest for a fee business (median ${pc(med)})`;
   s1 += ".";

@@ -74,7 +74,7 @@ export function buildFinancialScorecard(company, subtype = "bank") {
   const roe = returnOnEquity(L);
   const roeCheck = roe == null ? none("Return on equity", "Net income or equity wasn't found in the filing data.", "return-on-equity") : (() => {
     const tone = roe < 0 ? "bad" : roe < 0.1 ? "warn" : roe < 0.13 ? "ok" : "good";
-    const label = roe < 0 ? "Loss on equity" : roe < 0.1 ? "Below the cost of equity" : roe < 0.13 ? "Adequate" : roe < 0.17 ? "Strong" : "Exceptional";
+    const label = roe < 0 ? "Loss on equity" : roe < 0.1 ? "Below the cost of equity" : roe < 0.13 ? "Adequate" : roe < 0.17 ? "Strong" : "Very high (≥17%)";
     return {
       title: "Return on equity",
       concept: "return-on-equity",
@@ -89,7 +89,7 @@ export function buildFinancialScorecard(company, subtype = "bank") {
     concept: "rotce",
     value: pc(rotce), formula: `Net income ÷ (equity − goodwill ${$(L.goodwill || 0)} − intangibles ${$(L.intangibleAssets || 0)})`,
     tone: rotce < 0 ? "bad" : rotce < 0.12 ? "warn" : rotce < 0.15 ? "ok" : "good",
-    label: rotce < 0 ? "Loss" : rotce < 0.12 ? "Modest" : rotce < 0.18 ? "Strong" : "Exceptional",
+    label: rotce < 0 ? "Loss" : rotce < 0.12 ? "Modest" : rotce < 0.18 ? "Strong" : "Very high (≥18%)",
     note: "The cleaner return, stripping out the goodwill paid for past acquisitions. This is the number a buyer of the whole bank actually earns on the hard capital.",
   };
   const eff = efficiencyRatio(L);
@@ -103,7 +103,7 @@ export function buildFinancialScorecard(company, subtype = "bank") {
     concept: "efficiency-ratio",
     value: pc(eff), formula: `Noninterest expense ${$(L.noninterestExpense)} ÷ (net interest income + fees)`,
     tone: effAdr ? "info" : eff > 0.75 ? "bad" : eff > 0.65 ? "warn" : eff > 0.58 ? "ok" : "good",
-    label: effAdr ? "Cost-income, not comparable to the US grades" : eff > 0.75 ? "Bloated" : eff > 0.65 ? "Average" : eff > 0.58 ? "Efficient" : "Lean",
+    label: effAdr ? "Cost-income, not comparable to the US grades" : eff > 0.75 ? "High cost ratio (>75%)" : eff > 0.65 ? "Average" : eff > 0.58 ? "Efficient (<65%)" : "Low cost ratio (<58%)",
     note: effAdr
       ? "The share of revenue eaten by running costs. A 20-F/IFRS filer structures its income statement differently from a US bank, so this figure is not comparable to the US thresholds and is shown without a lean/bloated grade — read it against the bank's own history, not across the pool."
       : "The share of revenue eaten by running costs; lower is better, and below about 60% marks a genuinely efficient operation. A low ratio held for years is the operational side of a moat.",

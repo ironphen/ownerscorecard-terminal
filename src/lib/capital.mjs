@@ -83,7 +83,7 @@ export function capitalHistory(company) {
   if (p(returned) >= 0.6) character = "a cash returner, paying most of what it earns straight back to owners";
   else if (p(capex) >= 0.5) character = "a reinvestor, most operating cash is plowed back into the business";
   else if (debtChange != null && debtChange < -0.2 * cfo) character = "a deleverager, a meaningful share of cash went to paying down debt";
-  else if (cashChange != null && cashChange > 0.25 * cfo) character = "a hoarder, a large share of cash simply built the balance sheet";
+  else if (cashChange != null && cashChange > 0.25 * cfo) character = "a cash builder, a large share of cash simply built up on the balance sheet";
   else character = "a balanced allocator, splitting cash between the business, owners, and the balance sheet";
 
   // ---- the report-card facts ----

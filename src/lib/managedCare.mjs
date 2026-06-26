@@ -43,7 +43,7 @@ export function buildManagedCareScorecard(company) {
     concept: "operating-margin",
     value: pc(om, 1), formula: `Operating income ${$(L.operatingIncome)} ÷ revenue ${$(L.revenue)}`,
     tone: om < 0.02 ? "bad" : om < 0.04 ? "warn" : om < 0.06 ? "ok" : "good",
-    label: om < 0.02 ? "Wafer-thin" : om < 0.04 ? "Thin, as the model runs" : om < 0.06 ? "Healthy for a plan" : "Wide for a plan",
+    label: om < 0.02 ? "Very thin (<2%)" : om < 0.04 ? "Thin, as the model runs" : om < 0.06 ? "Typical for a plan" : "Wide for a plan",
     note: "Health plans earn a sliver on enormous revenue, so a few points of margin is the norm and the business is really a volume-and-cost-control game. Because the margin is so thin, a small miss on medical costs swings profit hard, which is why membership scale and cost management matter more than price.",
   };
 
@@ -54,7 +54,7 @@ export function buildManagedCareScorecard(company) {
     value: pc(roe), formula: `Net income ${$(L.netIncome)} ÷ equity ${$(L.stockholdersEquity)}`,
     tone: roe < 0 ? "bad" : roe < 0.1 ? "warn" : roe < 0.13 ? "ok" : "good",
     label: roe < 0 ? "Loss on equity" : roe < 0.1 ? "Below the cost of equity" : roe < 0.15 ? "Solid" : "Strong",
-    note: "The thin margin turns over fast on a modest capital base, so a healthy plan still earns a good return on equity. Durably above the ~10% cost of equity is what compounds value; a year below it usually means medical costs outran premiums.",
+    note: "The thin margin turns over fast on a modest capital base, so a plan earning its keep still shows a good return on equity. Durably above the ~10% cost of equity is what compounds value; a year below it usually means medical costs outran premiums.",
   };
 
   return {
