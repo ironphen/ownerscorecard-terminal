@@ -81,9 +81,20 @@ const CONCEPTS = {
     "PaymentsToAcquireMachineryAndEquipment",
     "PaymentsToAcquireOtherPropertyPlantAndEquipment",
   ],
-  depreciation: ["DepreciationAndAmortisationExpense", "DepreciationAmortisationAndImpairmentLossReversalOfImpairmentLossRecognisedInProfitOrLoss", "DepreciationDepletionAndAmortization", "DepreciationAndAmortization"],
+  // Depreciation, the owner-earnings linchpin (without it, maintenance capex falls back to TOTAL capex
+  // and owner earnings are overstated). The income-statement D&A tags come first; then the cash-flow
+  // add-backs that many IFRS filers use as their ONLY depreciation line — they report no separate
+  // income-statement D&A, only the add-back in the operating-cash reconciliation, so a list of
+  // income-statement tags alone misses them entirely (the larger of the ADR depreciation gaps).
+  // Appended, so a filer already matched by an earlier tag is untouched; these only fill a null.
+  depreciation: [
+    "DepreciationAndAmortisationExpense", "DepreciationAmortisationAndImpairmentLossReversalOfImpairmentLossRecognisedInProfitOrLoss",
+    "DepreciationDepletionAndAmortization", "DepreciationAndAmortization",
+    "AdjustmentsForDepreciationAndAmortisationExpense", "DepreciationAmortizationAndAccretionNet",
+    "AdjustmentsForDepreciationExpense", "DepreciationExpense", "Depreciation",
+  ],
   dividendsPaid: ["DividendsPaidClassifiedAsFinancingActivities", "DividendsPaid", "PaymentsOfDividendsCommonStock", "PaymentsOfDividends"],
-  buybacks: ["PaymentsToAcquireOrRedeemEntitysShares", "PaymentsForRepurchaseOfCommonStock"],
+  buybacks: ["PaymentsToAcquireOrRedeemEntitysShares", "PaymentsForRepurchaseOfCommonStock", "PaymentsForRepurchaseOfEquity"],
   // balance sheet (instants)
   totalAssets: ["Assets"],
   currentAssets: ["CurrentAssets", "AssetsCurrent"],
