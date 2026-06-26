@@ -730,18 +730,18 @@ const bondAsOf = rates?.asOf ? new Date(rates.asOf).toLocaleDateString("en-US", 
         baseUsed.innerHTML = "Base in use: <b>" + usd(base) + "</b>" + (SH > 0 && isFinite(base / SH) ? " · <b>" + SYM + (base / SH).toFixed(2) + "</b>/share" : "") + " — " + kind + (sbc ? ", net of " + usd(SBC) + " stock comp" : "") + ".";
       }
 
-      // Reference value: what the business is worth on the growth it actually delivered,
-      // valued at your dials. A reference to weigh your price against, never a target; shown
-      // only when the delivered growth is in a range it's honest to extrapolate.
+      // Reference value: the per-share figure the growth it actually delivered would imply, valued at
+      // your own dials — a yardstick to weigh your price against, never what the business is "worth"
+      // and never a target. Shown only when the delivered growth is in a range it's honest to extrapolate.
       if (refRow) {
         if (!isNaN(GDELIV) && GDELIV >= -0.05 && GDELIV <= 0.30 && base > 0 && SH > 0 && rr > gT) {
           const mult = pv(GDELIV, rr, N, gT);
-          const fairPx = (mult * base - NETDEBT) / SH;
+          const refPx = (mult * base - NETDEBT) / SH;
           refRow.hidden = false;
           refG.textContent = pcs(GDELIV) + "/yr";
           if (justMult) justMult.textContent = mult.toFixed(1) + "×";
-          refV.textContent = fairPx > 0 ? SYM + fairPx.toFixed(2) : "—";
-          refMos.textContent = fairPx > 0 ? SYM + (fairPx * 0.7).toFixed(2) : "—";
+          refV.textContent = refPx > 0 ? SYM + refPx.toFixed(2) : "—";
+          refMos.textContent = refPx > 0 ? SYM + (refPx * 0.7).toFixed(2) : "—";
           renderSens(gT, rr, N);
         } else { refRow.hidden = true; if (sens) sens.hidden = true; }
       }
@@ -877,10 +877,10 @@ const bondAsOf = rates?.asOf ? new Date(rates.asOf).toLocaleDateString("en-US", 
       reqM.textContent = reqMargin > 3 ? ">300%" : pcs(reqMargin);
       const P = SYM + price.toFixed(2);
       let verdict;
-      if (reqMargin > 1) verdict = `, <b class="bad">impossible</b>: more owner profit than it would have revenue.`;
-      else if (reqMargin > 0.45) verdict = `, an <b class="bad">extraordinary</b> margin almost no business on earth sustains, ${FROM}.`;
-      else if (reqMargin > 0.3) verdict = `, a <b>top-tier</b> margin (the most profitable software), ${FROM}.`;
-      else if (reqMargin > mgn) verdict = `, <b>above the ${mm.value}%</b> you would credit — you are paying for more than you believe.`;
+      if (reqMargin > 1) verdict = `, more owner earnings than the business would have revenue — a margin above 100%, which is arithmetically unreachable.`;
+      else if (reqMargin > 0.45) verdict = `, a margin higher than all but a handful of businesses have sustained; the filings and the peer set are where you weigh whether this one can, ${FROM}.`;
+      else if (reqMargin > 0.3) verdict = `, in the range of the most profitable software businesses; the record is where you weigh whether it gets there, ${FROM}.`;
+      else if (reqMargin > mgn) verdict = `, above the ${mm.value}% margin you set above — the price implies more than your own input credits.`;
       else verdict = `, at or below the ${mm.value}% you would credit, ${FROM}.`;
       lede.innerHTML = `At <b>${P}</b>, to earn you ${r.value}% a year, ${esc(NAME)} must be worth ${usd(valN)} in ${N} years. At ~${M.toFixed(0)}× owner earnings, that is <b class="hot">${usd(requiredOE)}</b> a year, on revenue grown ${g > 0 ? "at " + gr.value + "%/yr" : "flat"} to ${usd(revN)}: an owner-earnings margin of <b class="hot">${reqMargin > 3 ? ">300%" : pcs(reqMargin)}</b>${verdict}`;
       setURL(px.value);
@@ -915,10 +915,10 @@ const bondAsOf = rates?.asOf ? new Date(rates.asOf).toLocaleDateString("en-US", 
       // The justified multiple and the reference value it implies depend only on the dials and
       // the normalized return, not on the price you type, so they stand on their own.
       const justified = justifiedBookMultiple(ROTCE, c, g);
-      just.textContent = justified != null ? justified.toFixed(2) + "×" : "—";
+      just.textContent = justified != null ? justified.toFixed(1) + "×" : "—";
       if (justified != null && TBVPS > 0) {
-        const fair = justified * TBVPS;
-        refVB.textContent = SYM + fair.toFixed(2); refMosB.textContent = SYM + (fair * 0.7).toFixed(2);
+        const refValue = justified * TBVPS;
+        refVB.textContent = SYM + refValue.toFixed(2); refMosB.textContent = SYM + (refValue * 0.7).toFixed(2);
       } else { refVB.textContent = "—"; refMosB.textContent = "—"; }
       const price = parseFloat(px.value);
       if (!(price > 0)) { lede.textContent = "Enter a price above to run it."; [ptbv, pbB, eyB, peB].forEach((e) => (e.textContent = "—")); setURL(""); return; }
@@ -931,9 +931,9 @@ const bondAsOf = rates?.asOf ? new Date(rates.asOf).toLocaleDateString("en-US", 
       if (justified == null) { lede.textContent = "Set the cost of equity above the growth rate."; setURL(px.value); return; }
       const ratio = ptb / justified;
       let verdict;
-      if (ratio <= 0.85) verdict = `a <b class="hot">discount</b> to what its ${R}% return on tangible equity would justify (about ${justified.toFixed(2)}×). The market is doubting the return holds; the record is where you check whether that doubt is earned.`;
-      else if (ratio <= 1.15) verdict = `roughly <b>in line</b> with what its ${R}% return on tangible equity justifies (about ${justified.toFixed(2)}×).`;
-      else verdict = `a <b class="bad">premium</b> to what its ${R}% return justifies (about ${justified.toFixed(2)}×). You are paying for the return to rise, or to outlast the ${CYCLE}.`;
+      if (ratio <= 0.85) verdict = `below the about ${justified.toFixed(1)}× that a ${R}% return on tangible equity would support at the cost of equity and growth you set. Whether that return holds is what the record and the 10-K decide.`;
+      else if (ratio <= 1.15) verdict = `roughly in line with the about ${justified.toFixed(1)}× that its ${R}% return on tangible equity would support at the dials you set.`;
+      else verdict = `above the about ${justified.toFixed(1)}× that a ${R}% return on tangible equity would support at the dials you set — the price carries the return rising, or holding past the ${CYCLE}.`;
       lede.innerHTML = `At <b>${P}</b>, you pay <b class="hot">${ptb.toFixed(2)}×</b> tangible book for ${esc(NAME)}, ${verdict}`;
       setURL(px.value);
     }
@@ -965,8 +965,8 @@ const bondAsOf = rates?.asOf ? new Date(rates.asOf).toLocaleDateString("en-US", 
       const justified = gordonMultiple(rr, gg);
       just.textContent = justified != null ? justified.toFixed(1) + "×" : "—";
       if (justified != null && FFOPS > 0) {
-        const fair = justified * FFOPS;
-        refVR.textContent = SYM + fair.toFixed(2); refMosR.textContent = SYM + (fair * 0.7).toFixed(2);
+        const refValue = justified * FFOPS;
+        refVR.textContent = SYM + refValue.toFixed(2); refMosR.textContent = SYM + (refValue * 0.7).toFixed(2);
       } else { refVR.textContent = "—"; refMosR.textContent = "—"; }
       const price = parseFloat(px.value);
       if (!(price > 0)) { lede.textContent = "Enter a price above to run it."; [pffo, dyR].forEach((e) => (e.textContent = "—")); setURL(""); return; }
@@ -978,9 +978,9 @@ const bondAsOf = rates?.asOf ? new Date(rates.asOf).toLocaleDateString("en-US", 
       if (justified == null) { lede.textContent = "Set the discount rate above the growth rate."; setURL(px.value); return; }
       const ratio = pf / justified;
       let verdict;
-      if (ratio <= 0.85) verdict = `a <b class="hot">discount</b> to the about ${justified.toFixed(1)}× that ${g.value}% FFO growth justifies at an ${r.value}% discount rate.`;
-      else if (ratio <= 1.15) verdict = `roughly <b>in line</b> with the about ${justified.toFixed(1)}× that ${g.value}% FFO growth justifies.`;
-      else verdict = `a <b class="bad">premium</b> to the about ${justified.toFixed(1)}× that ${g.value}% FFO growth justifies; you are paying for faster growth or a lower rate.`;
+      if (ratio <= 0.85) verdict = `below the about ${justified.toFixed(1)}× that ${g.value}% FFO growth would support at an ${r.value}% discount rate.`;
+      else if (ratio <= 1.15) verdict = `roughly in line with the about ${justified.toFixed(1)}× that ${g.value}% FFO growth would support at an ${r.value}% discount rate.`;
+      else verdict = `above the about ${justified.toFixed(1)}× that ${g.value}% FFO growth would support at an ${r.value}% discount rate — the price carries faster growth, or a lower rate.`;
       const income = dy != null ? ` The income alone is a ${(dy * 100).toFixed(1)}% yield.` : "";
       lede.innerHTML = `At <b>${P}</b>, you pay <b class="hot">${pf.toFixed(1)}×</b> funds from operations for ${esc(NAME)}, ${verdict}${income}`;
       setURL(px.value);
