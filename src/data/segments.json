@@ -1,6 +1,6 @@
 {
-  "asOf": "2026-06-24",
-  "source": "SEC EDGAR XBRL, reportable-segment and geographic disclosures",
+  "asOf": "2026-06-26",
+  "source": "SEC EDGAR XBRL, reportable-segment and geographic disclosures (10-K + 20-F)",
   "companies": {
     "A": {
       "fy": 2025,
@@ -82058,6 +82058,550 @@
             "qname": "zws:OtherGeographicalAreasMember",
             "revenue": 47000000,
             "operatingIncome": null
+          }
+        ]
+      }
+    },
+    "ASML": {
+      "fy": 2025,
+      "periodEnd": "2025-12-31",
+      "sourceUrl": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0000937966&type=20-F",
+      "revenueTotal": 32667300000,
+      "operatingIncomeTotal": 11301400000,
+      "byGeography": {
+        "reconcile": 1,
+        "items": [
+          {
+            "label": "China",
+            "qname": "country:CN",
+            "revenue": 9519700000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Taiwan",
+            "qname": "country:TW",
+            "revenue": 8337900000,
+            "operatingIncome": null
+          },
+          {
+            "label": "South Korea",
+            "qname": "country:KR",
+            "revenue": 8159600000,
+            "operatingIncome": null
+          },
+          {
+            "label": "United States",
+            "qname": "country:US",
+            "revenue": 4089100000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Japan",
+            "qname": "country:JP",
+            "revenue": 1420900000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Singapore",
+            "qname": "country:SG",
+            "revenue": 608400000,
+            "operatingIncome": null
+          },
+          {
+            "label": "EMEA",
+            "qname": "asml:RestOfEuropeAndMiddleEastMember",
+            "revenue": 524300000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Netherlands",
+            "qname": "country:NL",
+            "revenue": 4700000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Rest of Asia",
+            "qname": "asml:RestOfAsiaMember",
+            "revenue": 2700000,
+            "operatingIncome": null
+          }
+        ]
+      },
+      "byProduct": {
+        "reconcile": 1,
+        "items": [
+          {
+            "label": "NXE",
+            "qname": "asml:NXEMember",
+            "revenue": 10445800000,
+            "operatingIncome": null
+          },
+          {
+            "label": "ArF immersion",
+            "qname": "asml:ArfImmersionMember",
+            "revenue": 10311400000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Service And Field Options",
+            "qname": "asml:ServiceAndFieldOptionsMember",
+            "revenue": 8193000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "EXE",
+            "qname": "asml:EXEMember",
+            "revenue": 1156900000,
+            "operatingIncome": null
+          },
+          {
+            "label": "KrF",
+            "qname": "asml:KrfMember",
+            "revenue": 1001300000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Metrology And Inspection",
+            "qname": "asml:MetrologyAndInspectionMember",
+            "revenue": 824600000,
+            "operatingIncome": null
+          },
+          {
+            "label": "ArF dry",
+            "qname": "asml:ArfDryMember",
+            "revenue": 427000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "I-line",
+            "qname": "asml:IlineMember",
+            "revenue": 307300000,
+            "operatingIncome": null
+          }
+        ]
+      }
+    },
+    "BP": {
+      "fy": 2025,
+      "periodEnd": "2025-12-31",
+      "sourceUrl": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0000313807&type=20-F",
+      "revenueTotal": 192549000000,
+      "operatingIncomeTotal": 12642000000,
+      "byProduct": {
+        "reconcile": 0.825,
+        "items": [
+          {
+            "label": "Oil products",
+            "qname": "bp:OilandGasOilProductsMember",
+            "revenue": 114207000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Natural Gas Products",
+            "qname": "bp:NaturalGasProductsMember",
+            "revenue": 27477000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Product And Service Other 1",
+            "qname": "bp:ProductAndServiceOther1Member",
+            "revenue": 15132000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Crude oil",
+            "qname": "bp:OilAndGasCrudeOilMember",
+            "revenue": 2063000000,
+            "operatingIncome": null
+          }
+        ]
+      }
+    },
+    "HMC": {
+      "fy": 2025,
+      "periodEnd": "2025-03-31",
+      "sourceUrl": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0000715153&type=20-F",
+      "revenueTotal": 21688767000000,
+      "operatingIncomeTotal": 1213486000000,
+      "byProduct": {
+        "reconcile": 1,
+        "items": [
+          {
+            "label": "automobiles and relevant parts",
+            "qname": "hmc:AutomobilesAndRelevantPartsMember",
+            "revenue": 15818947000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Motorcycles All Terrain Vehicles Side By Sides And Relevant Parts",
+            "qname": "hmc:MotorcyclesAllTerrainVehiclesSideBySidesAndRelevantPartsMember",
+            "revenue": 3626603000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "financial services",
+            "qname": "hmc:FinancialServicesMember",
+            "revenue": 1858059000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Power Products And Relevant Parts",
+            "qname": "hmc:PowerProductsAndRelevantPartsMember",
+            "revenue": 285253000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Others",
+            "qname": "hmc:OtherProductsAndServicesMember",
+            "revenue": 99905000000,
+            "operatingIncome": null
+          }
+        ]
+      }
+    },
+    "NVO": {
+      "fy": 2025,
+      "periodEnd": "2025-12-31",
+      "sourceUrl": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0000353278&type=20-F",
+      "revenueTotal": 309064000000,
+      "operatingIncomeTotal": 127658000000,
+      "bySegment": {
+        "reconcile": 1,
+        "hasOperatingIncome": false,
+        "items": [
+          {
+            "label": "Obesity and Diabetes care",
+            "qname": "nvo:ObesityAndDiabetesCareMember",
+            "revenue": 289456000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Rare disease",
+            "qname": "nvo:RareDiseaseMember",
+            "revenue": 19608000000,
+            "operatingIncome": null
+          }
+        ]
+      },
+      "byGeography": {
+        "reconcile": 1,
+        "items": [
+          {
+            "label": "United States",
+            "qname": "country:US",
+            "revenue": 173166000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "EUCAN",
+            "qname": "nvo:EUCANMember",
+            "revenue": 66091000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Emerging Markets",
+            "qname": "nvo:EmergingMarketsMember",
+            "revenue": 30436000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "APAC",
+            "qname": "nvo:APACMember",
+            "revenue": 20713000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "China",
+            "qname": "country:CN",
+            "revenue": 18658000000,
+            "operatingIncome": null
+          }
+        ]
+      }
+    },
+    "RIO": {
+      "fy": 2025,
+      "periodEnd": "2025-12-31",
+      "sourceUrl": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0000863064&type=20-F",
+      "revenueTotal": 57638000000,
+      "operatingIncomeTotal": 14936000000,
+      "byGeography": {
+        "reconcile": 1,
+        "items": [
+          {
+            "label": "Greater China",
+            "qname": "rio:GreaterChinaMember",
+            "revenue": 33038000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "United States",
+            "qname": "country:US",
+            "revenue": 9657000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Europe Excluding Uk",
+            "qname": "rio:EuropeExcludingUkMember",
+            "revenue": 3364000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Japan",
+            "qname": "country:JP",
+            "revenue": 3266000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Asia Excluding Greater China And Japan",
+            "qname": "rio:AsiaExcludingGreaterChinaAndJapanMember",
+            "revenue": 2007000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "South Korea",
+            "qname": "country:KR",
+            "revenue": 1958000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Canada",
+            "qname": "country:CA",
+            "revenue": 1722000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Other countries",
+            "qname": "rio:OtherCountriesMember",
+            "revenue": 1625000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Australia",
+            "qname": "country:AU",
+            "revenue": 909000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "United Kingdom",
+            "qname": "country:GB",
+            "revenue": 92000000,
+            "operatingIncome": null
+          }
+        ]
+      },
+      "byProduct": {
+        "reconcile": 1,
+        "items": [
+          {
+            "label": "Iron Ore",
+            "qname": "rio:IronOreMember",
+            "revenue": 28376000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Aluminium, alumina and bauxite",
+            "qname": "rio:AluminiumAluminaAndBauxiteMember",
+            "revenue": 15395000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Copper",
+            "qname": "rio:CopperRioTintoKennecottMember",
+            "revenue": 6664000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Industrial Minerals",
+            "qname": "rio:IndustrialMineralsMember",
+            "revenue": 2370000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Other products and freight services",
+            "qname": "rio:OtherProductsAndFreightServicesMember",
+            "revenue": 1967000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Gold",
+            "qname": "rio:Gold1Member",
+            "revenue": 1922000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Lithium",
+            "qname": "rio:LithiumMember",
+            "revenue": 944000000,
+            "operatingIncome": null
+          }
+        ]
+      }
+    },
+    "SHEL": {
+      "fy": 2025,
+      "periodEnd": "2025-12-31",
+      "sourceUrl": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0001306965&type=20-F",
+      "revenueTotal": 266886000000,
+      "operatingIncomeTotal": 34145000000,
+      "bySegment": {
+        "reconcile": 1,
+        "hasOperatingIncome": false,
+        "items": [
+          {
+            "label": "Marketing",
+            "qname": "shel:MarketingSegmentMember",
+            "revenue": 111855000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Chemicals and Products",
+            "qname": "shel:ChemicalsAndProductsSegmentMember",
+            "revenue": 77071000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Integrated Gas",
+            "qname": "shel:IntegratedGasMember",
+            "revenue": 38457000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Renewables and Energy Solutions",
+            "qname": "shel:RenewablesAndEnergySolutionsSegmentMember",
+            "revenue": 34359000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Upstream",
+            "qname": "shel:UpstreamMember",
+            "revenue": 5105000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Corporate",
+            "qname": "shel:CorporateSegment1Member",
+            "revenue": 39000000,
+            "operatingIncome": null
+          }
+        ]
+      },
+      "byGeography": {
+        "reconcile": 1,
+        "items": [
+          {
+            "label": "Europe",
+            "qname": "srt:EuropeMember",
+            "revenue": 91808000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Asia, Oceania, Africa",
+            "qname": "shel:AsiaOceaniaAndAfricaMember",
+            "revenue": 90838000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "United States",
+            "qname": "country:US",
+            "revenue": 57728000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Other Americas",
+            "qname": "shel:OtherAmericasMember",
+            "revenue": 26512000000,
+            "operatingIncome": null
+          }
+        ]
+      },
+      "byProduct": {
+        "reconcile": 0.964,
+        "items": [
+          {
+            "label": "Oil products",
+            "qname": "shel:OilProductsMember",
+            "revenue": 114660000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Crude oil",
+            "qname": "srt:CrudeOilMember",
+            "revenue": 35711000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "LNG",
+            "qname": "shel:LiquefiedNaturalGasLNGMember",
+            "revenue": 33467000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Natural gas and NGL",
+            "qname": "srt:NaturalGasPerThousandCubicFeetMember",
+            "revenue": 22825000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Other",
+            "qname": "shel:OtherContractsMember",
+            "revenue": 19963000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Power",
+            "qname": "shel:PowerMember",
+            "revenue": 12260000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Lubricants",
+            "qname": "shel:LubricantsMember",
+            "revenue": 11544000000,
+            "operatingIncome": null
+          },
+          {
+            "label": "Chemical Products",
+            "qname": "shel:ChemicalProductsMember",
+            "revenue": 6922000000,
+            "operatingIncome": null
+          }
+        ]
+      }
+    },
+    "UL": {
+      "fy": 2025,
+      "periodEnd": "2025-12-31",
+      "sourceUrl": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0000217410&type=20-F",
+      "revenueTotal": 50503000000,
+      "operatingIncomeTotal": 9037000000,
+      "bySegment": {
+        "reconcile": 1,
+        "hasOperatingIncome": true,
+        "items": [
+          {
+            "label": "Personal Care",
+            "qname": "ul:PersonalCareMember",
+            "revenue": 13161000000,
+            "operatingIncome": 2700000000
+          },
+          {
+            "label": "Foods",
+            "qname": "ul:FoodsMember",
+            "revenue": 12929000000,
+            "operatingIncome": 2748000000
+          },
+          {
+            "label": "Beauty And Wellbeing",
+            "qname": "ul:BeautyAndWellbeingMember",
+            "revenue": 12848000000,
+            "operatingIncome": 2077000000
+          },
+          {
+            "label": "Home Care",
+            "qname": "ul:HomeCareMember",
+            "revenue": 11565000000,
+            "operatingIncome": 1512000000
           }
         ]
       }
