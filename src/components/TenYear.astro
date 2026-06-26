@@ -66,6 +66,7 @@ const ROW = {
   revenuePS: { label: "Revenue / share", short: "Rev/sh", g: 4, get: (L) => perShare(topLineRevenue(L, company), L.sharesDiluted) },
   ownerEarningsPS: { label: "Owner earnings / share", short: "OE/sh", g: 4, get: (L) => perShare(ownerEarningsAbs(L, company), L.sharesDiluted) },
   fcfPS: { label: "Free cash flow / share", short: "FCF/sh", g: 4, get: (L) => perShare(freeCashFlowAbs(L), L.sharesDiluted) },
+  capexPS: { label: "Cap. spending / share", short: "Capex/sh", g: 4, get: (L) => perShare(L.capex != null ? Math.abs(L.capex) : null, L.sharesDiluted) },
   // --- group 2: the cash an owner can take, shown as Buffett's bridge so the figure is
   // transparent, operating cash flow, less capex, equals owner earnings. Capex is never
   // hidden: it is half the definition, and in the AI build-out increasingly the half that
@@ -80,6 +81,16 @@ const ROW = {
   fcfMargin: { label: "Free cash flow margin", short: "FCF mgn", g: 2, get: (L) => marginStr(freeCashFlowAbs(L), L.revenue) },
   roic: { label: "ROIC", short: "ROIC", g: 2, get: (L) => { if (!debtOk || !oiOk) return "—"; const r = roicValue(L); return r == null ? "—" : `${(r * 100).toFixed(0)}%`; } },
   roe: { label: "Return on equity", short: "ROE", g: 2, get: (L) => { const r = returnOnEquity(L); return r == null || !(L.stockholdersEquity > 0) ? "—" : `${(r * 100).toFixed(0)}%`; } },
+  // Retained to equity — Value Line's "Retained to Com Eq", and the engine behind the per-share growth
+  // block: earnings kept (net income less dividends) as a share of equity is the rate book value
+  // compounds from within, i.e. return on equity × the share of earnings retained. Neutral, not a verdict:
+  // a high rate means heavy reinvestment, a low or negative one means cash returned — good or bad only
+  // against the returns that reinvestment earns. Dividends-null reads as full retention (none paid).
+  retainedToEquity: { label: "Retained to equity", short: "Retained/eq", g: 2, kind: "neutral", get: (L) => {
+    if (L.netIncome == null || !(L.stockholdersEquity > 0)) return "—";
+    const div = L.dividendsPaid != null ? Math.abs(L.dividendsPaid) : 0;
+    return marginStr(L.netIncome - div, L.stockholdersEquity, 0);
+  } },
   roa: { label: "Return on assets", short: "ROA", g: 2, get: (L) => { const r = returnOnAssets(L); return r == null ? "—" : `${(r * 100).toFixed(1)}%`; } },
   rotce: { label: "Return on tangible equity", short: "ROTCE", g: 2, get: (L) => { const r = returnOnTangibleEquity(L); return r == null ? "—" : `${(r * 100).toFixed(0)}%`; } },
   efficiency: { label: "Efficiency ratio", short: "Effic.", g: 2, get: (L) => { const r = efficiencyRatio(L); return r == null ? "—" : `${(r * 100).toFixed(0)}%`; } },
@@ -168,26 +179,27 @@ const ROW = {
 // a retailer, no goodwill for one that never acquires).
 const FULL = [
   ROW.revenue, ROW.grossMargin, ROW.sga, ROW.rnd, ROW.opIncome, ROW.opMargin, ROW.netIncome, ROW.taxRate,
-  ROW.cashFromOps, ROW.depreciation, ROW.wcOther, ROW.capex, ROW.ownerEarnings, ROW.oeMargin, ROW.freeCashFlow, ROW.fcfMargin, ROW.acquisitions, ROW.dividendsPaidAbs, ROW.buybacksAbs, ROW.roic, ROW.roe,
+  ROW.cashFromOps, ROW.depreciation, ROW.wcOther, ROW.capex, ROW.ownerEarnings, ROW.oeMargin, ROW.freeCashFlow, ROW.fcfMargin, ROW.acquisitions, ROW.dividendsPaidAbs, ROW.buybacksAbs, ROW.roic, ROW.roe, ROW.retainedToEquity,
   ROW.cash, ROW.receivables, ROW.inventoryRow, ROW.accountsPayable, ROW.operatingWC, ROW.currentAssets, ROW.currentLiabilities, ROW.currentRatio, ROW.goodwillRow, ROW.totalAssets, ROW.totalDebt, ROW.netDebt, ROW.intCov, ROW.equity, ROW.sbcToRev, ROW.goodwillImp,
   // Per share: the share count leads (the divisor), then top line, earnings, the two cash measures, the
-  // dividend and book value — every figure above reduced to one share, so dilution or buybacks show.
-  ROW.shares, ROW.revenuePS, ROW.eps, ROW.ownerEarningsPS, ROW.fcfPS, ROW.dps, ROW.bvps,
+  // dividend, capital spending and book value — every figure above reduced to one share (Value Line's
+  // per-share array order), so dilution or buybacks show.
+  ROW.shares, ROW.revenuePS, ROW.eps, ROW.ownerEarningsPS, ROW.fcfPS, ROW.dps, ROW.capexPS, ROW.bvps,
 ];
 // Operating companies get the full snapshot above; banks, insurers and REITs each read on their
 // own measures, so they keep a curated set. Rows the data can't fill drop out below.
 const SETS = {
   assetLight: FULL, consumer: FULL, capital: FULL, retail: FULL,
-  financial: [ROW.revenue, ROW.nii, ROW.feeIncome, ROW.provision, ROW.netIncome, ROW.taxRate, ROW.roa, ROW.roe, ROW.rotce, ROW.efficiency, ROW.totalAssets, ROW.deposits, ROW.goodwillRow, ROW.equity, ROW.shares, ROW.eps, ROW.dps, ROW.bvps, ROW.tbvps],
+  financial: [ROW.revenue, ROW.nii, ROW.feeIncome, ROW.provision, ROW.netIncome, ROW.taxRate, ROW.roa, ROW.roe, ROW.retainedToEquity, ROW.rotce, ROW.efficiency, ROW.totalAssets, ROW.deposits, ROW.goodwillRow, ROW.equity, ROW.shares, ROW.eps, ROW.dps, ROW.bvps, ROW.tbvps],
   // Insurers read on the combined ratio and float, but they also generate cash, and a group
   // that owns operating businesses under an insurance SIC (a conglomerate, say) is read on its
   // owner economics too. So the owner-earnings bridge and cash sit beside the underwriting
   // measures; the sparse-row prune drops whichever a given filer doesn't support.
-  insurer: [ROW.revenue, ROW.premiums, ROW.invInc, ROW.netIncome, ROW.taxRate, ROW.cashFromOps, ROW.ownerEarnings, ROW.combined, ROW.lossRatio, ROW.roe, ROW.float, ROW.totalAssets, ROW.cash, ROW.equity, ROW.shares, ROW.eps, ROW.ownerEarningsPS, ROW.dps, ROW.bvps],
+  insurer: [ROW.revenue, ROW.premiums, ROW.invInc, ROW.netIncome, ROW.taxRate, ROW.cashFromOps, ROW.ownerEarnings, ROW.combined, ROW.lossRatio, ROW.roe, ROW.retainedToEquity, ROW.float, ROW.totalAssets, ROW.cash, ROW.equity, ROW.shares, ROW.eps, ROW.ownerEarningsPS, ROW.dps, ROW.bvps],
   // Life insurers: the spread-and-book-value story, no combined ratio (see insurers.mjs).
-  lifeInsurer: [ROW.revenue, ROW.premiums, ROW.invInc, ROW.netIncome, ROW.taxRate, ROW.cashFromOps, ROW.ownerEarnings, ROW.roe, ROW.float, ROW.totalAssets, ROW.cash, ROW.equity, ROW.shares, ROW.eps, ROW.ownerEarningsPS, ROW.dps, ROW.bvps],
-  fee: [ROW.revenue, ROW.opMargin, ROW.netMargin, ROW.netIncome, ROW.taxRate, ROW.ownerEarnings, ROW.roe, ROW.totalAssets, ROW.cash, ROW.equity, ROW.shares, ROW.revenuePS, ROW.eps, ROW.ownerEarningsPS, ROW.dps, ROW.bvps],
-  managedCare: [ROW.revenue, ROW.premiums, ROW.mlr, ROW.opMargin, ROW.netIncome, ROW.taxRate, ROW.roe, ROW.totalAssets, ROW.equity, ROW.shares, ROW.revenuePS, ROW.eps, ROW.dps, ROW.bvps],
+  lifeInsurer: [ROW.revenue, ROW.premiums, ROW.invInc, ROW.netIncome, ROW.taxRate, ROW.cashFromOps, ROW.ownerEarnings, ROW.roe, ROW.retainedToEquity, ROW.float, ROW.totalAssets, ROW.cash, ROW.equity, ROW.shares, ROW.eps, ROW.ownerEarningsPS, ROW.dps, ROW.bvps],
+  fee: [ROW.revenue, ROW.opMargin, ROW.netMargin, ROW.netIncome, ROW.taxRate, ROW.ownerEarnings, ROW.roe, ROW.retainedToEquity, ROW.totalAssets, ROW.cash, ROW.equity, ROW.shares, ROW.revenuePS, ROW.eps, ROW.ownerEarningsPS, ROW.dps, ROW.bvps],
+  managedCare: [ROW.revenue, ROW.premiums, ROW.mlr, ROW.opMargin, ROW.netIncome, ROW.taxRate, ROW.roe, ROW.retainedToEquity, ROW.totalAssets, ROW.equity, ROW.shares, ROW.revenuePS, ROW.eps, ROW.dps, ROW.bvps],
   reit: [ROW.revenue, ROW.netIncome, ROW.ffo, ROW.payout, ROW.realEstate, ROW.totalAssets, ROW.debtAssets, ROW.totalDebt, ROW.netDebt, ROW.intCov, ROW.equity, ROW.shares, ROW.ffoPS, ROW.dps, ROW.bvps],
   general: FULL,
 };
