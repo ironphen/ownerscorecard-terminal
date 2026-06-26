@@ -1113,10 +1113,12 @@ async function main() {
   // linger as stale qualitative text.
   for (const tk of Object.keys(out)) if (!inUniverse.has(tk.toUpperCase())) delete out[tk];
 
-  fs.writeFileSync(
-    path.join(dataDir, "language.json"),
-    JSON.stringify({ asOf: new Date().toISOString().slice(0, 10), source: "SEC EDGAR, 10-K and 20-F/40-F annual reports", sample: false, companies: out }, null, 2) + "\n"
-  );
+  // Atomic write (temp + rename), so an OOM or SIGKILL mid-write can't truncate the large language
+  // file into JSON the next run would fail to parse. Rename is atomic on a single volume.
+  const dest = path.join(dataDir, "language.json");
+  const tmp = dest + ".tmp";
+  fs.writeFileSync(tmp, JSON.stringify({ asOf: new Date().toISOString().slice(0, 10), source: "SEC EDGAR, 10-K and 20-F/40-F annual reports", sample: false, companies: out }, null, 2) + "\n");
+  fs.renameSync(tmp, dest);
   console.log(`\n✅ Wrote language analysis for ${ok} companies this run (${Object.keys(out).length} total across both pools)`);
 }
 

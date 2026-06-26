@@ -1,0 +1,20 @@
+# Heartbeat — the active alert behind the site's passive "data as of" masthead. Runs daily and FAILS
+# (which emails the repo owner via GitHub's default workflow-failure notification) if the whole data
+# pipeline has gone quiet, i.e. the freshest pool is older than the threshold. No commit, no write,
+# no secrets — it only reads the committed as-of stamps. See scripts/checkFreshness.mjs for the logic
+# and the 60-day-cron-disable caveat.
+name: Heartbeat
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 13 * * *" # daily 13:00 UTC, after the weekday wire refresh has had time to land
+
+jobs:
+  freshness:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: node scripts/checkFreshness.mjs
+        env:
+          MAX_FRESH_DAYS: "6"

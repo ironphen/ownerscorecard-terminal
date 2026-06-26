@@ -1136,7 +1136,12 @@ async function main() {
     note: "Latest annual (10-K) figures pulled from EDGAR. Values are raw USD.",
     companies: merged,
   };
-  fs.writeFileSync(path.join(dataDir, "fundamentals.json"), JSON.stringify(out, null, 2) + "\n");
+  // Atomic write: serialize to a temp file then rename over the target, so an OOM or SIGKILL mid-write
+  // can't leave a truncated 60 MB JSON the next run would fail to parse. Rename is atomic on one volume.
+  const dest = path.join(dataDir, "fundamentals.json");
+  const tmp = dest + ".tmp";
+  fs.writeFileSync(tmp, JSON.stringify(out, null, 2) + "\n");
+  fs.renameSync(tmp, dest);
   console.log(`\n✅ Wrote ${merged.length} companies (${companies.length} passed, ${withheld.size} withheld below the quality floor, ${carried} carried over from the last good file)`);
   if (withheld.size) console.log(`   withheld: ${[...withheld].sort().join(", ")}`);
 }

@@ -27,6 +27,9 @@ import { passesQualityFloor } from "../src/lib/fundamentals.mjs";
 
 const API = "https://api.edinet-fsa.go.jp/api/v2";
 const KEY = process.env.EDINET_API_KEY || "";
+// A declared User-Agent with a contact, as a courtesy to the EDINET service (the one SEC-adjacent
+// fetcher that was sending none). Reuses the SEC contact string the other pools already set.
+const UA = process.env.SEC_USER_AGENT || "ownerscorecard data pipeline";
 const THROTTLE_MS = Number(process.env.EDINET_THROTTLE_MS || 350);
 // ~3.3 years, enough to reach each company's FY-3 annual report, whose cash-flow statement
 // carries FY-3 and FY-4 capex. With the latest filing (FY, FY-1) and the FY-1 and FY-2 reports
@@ -325,7 +328,7 @@ export function buildRecord(store, meta, entry) {
 async function getJSON(url) {
   for (let attempt = 1; attempt <= 4; attempt++) {
     try {
-      const res = await fetch(url, { signal: AbortSignal.timeout(60_000) }); // 60s timeout: no hung EDINET request freezes the run
+      const res = await fetch(url, { headers: { "User-Agent": UA }, signal: AbortSignal.timeout(60_000) }); // 60s timeout: no hung EDINET request freezes the run
       if (res.status === 429) { await sleep(1000 * attempt); continue; }
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       return await res.json();
@@ -338,7 +341,7 @@ async function getJSON(url) {
 async function getBuffer(url) {
   for (let attempt = 1; attempt <= 4; attempt++) {
     try {
-      const res = await fetch(url, { signal: AbortSignal.timeout(60_000) }); // 60s timeout: no hung EDINET request freezes the run
+      const res = await fetch(url, { headers: { "User-Agent": UA }, signal: AbortSignal.timeout(60_000) }); // 60s timeout: no hung EDINET request freezes the run
       if (res.status === 429) { await sleep(1000 * attempt); continue; }
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       return Buffer.from(await res.arrayBuffer());

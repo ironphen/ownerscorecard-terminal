@@ -166,6 +166,10 @@ async function getJSON(url) {
       // 60s per-attempt timeout: a hung server can't freeze the run; an abort is retried like any failure.
       const res = await fetch(url, { headers: HEADERS, signal: AbortSignal.timeout(60_000) });
       if (res.status === 404) return null;
+      // Back off harder on an explicit rate-limit, the way the US, EDINET and wire fetchers do: a 429
+      // retried with the generic ~½s–2s backoff just burns the attempts and the company mass-skips
+      // under SEC throttling. Give it a full second per attempt before retrying.
+      if (res.status === 429) { if (a === 4) throw new Error("HTTP 429"); await sleep(1000 * a); continue; }
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       return await res.json();
     } catch (err) {
