@@ -15,6 +15,7 @@
     "fetch:wire": "node scripts/fetchWire.mjs",
     "fetch:segments": "node scripts/fetchSegments.mjs",
     "fetch:segments:adr": "node scripts/fetchSegmentsAdr.mjs",
+    "fetch:segments:jp": "node scripts/fetchSegmentsJp.mjs",
     "audit": "node scripts/auditData.mjs",
     "audit:believe": "node scripts/auditBelievability.mjs",
     "audit:coverage": "node scripts/auditCoverage.mjs",
