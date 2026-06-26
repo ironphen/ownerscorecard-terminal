@@ -540,12 +540,33 @@ function extractPayRatio(text) {
   return null;
 }
 
+// Insider ownership: the "directors and executive officers as a group" line of the Item 403
+// beneficial-ownership table — the skin-in-the-game figure GBM read first ("show me the incentives,
+// and I'll show you the outcome"). A table value, not a sentence, so we guard hard: confine to the
+// ownership section (so "as a group" in unrelated prose can't match), and require a comma-grouped
+// share count between the group line and the percent (the table's shape, which prose never has). The
+// tags-to-spaces htmlToText keeps cells separated, so the share count and percent never merge. Returns
+// a number (percent of class), the string "<1%" for the asterisk/"less than 1%" placeholder, or null
+// when there is no confident match — a wrong number here is worse than none.
+function extractInsiderOwnership(text) {
+  const secM = text.match(/security ownership|beneficial owner(?:s|ship)?|ownership of (?:certain )?(?:our )?(?:management|securities|common stock|equity)/i);
+  const scope = secM ? text.slice(secM.index, secM.index + 9000) : text;
+  const m = scope.match(/(?:directors?|executive officers?|named executive officers?)[^.\n]{0,100}?as a group[^%]{0,40}?[\d,]{5,}[^%]{0,40}?(\*|less than\s*1\s*%|under\s*1\s*%|<\s*1\s*%|\d{1,3}(?:\.\d+)?\s*%)/i);
+  if (!m) return null;
+  const raw = m[1].replace(/\s+/g, "");
+  if (raw === "*" || /lessthan|under|</i.test(raw)) return "<1%";
+  const n = parseFloat(raw);
+  return n >= 0 && n <= 100 ? Math.round(n * 10) / 10 : null;
+}
+
 async function getComp(cik, f) {
   const accnNoDash = f.accn.replace(/-/g, "");
   const url = `https://www.sec.gov/Archives/edgar/data/${Number(cik)}/${accnNoDash}/${f.doc}`;
   const text = htmlToText(await fetchText(url));
   const payRatio = extractPayRatio(text);
-  return payRatio != null ? { payRatio, fy: f.date?.slice(0, 4) || null, sourceUrl: url } : null;
+  const insiderOwnership = extractInsiderOwnership(text);
+  if (payRatio == null && insiderOwnership == null) return null;
+  return { payRatio, insiderOwnership, fy: f.date?.slice(0, 4) || null, sourceUrl: url };
 }
 
 // "New" = a prose sentence carrying a signal term whose wording doesn't closely
@@ -1073,7 +1094,7 @@ async function main() {
 }
 
 // Exported for the offline logic test; only hit EDGAR when run directly.
-export { ownerFlags, FLAG_THEMES, sentences, isProse, diff, extractPayRatio, htmlToText, section, fetchText, businessDescription, candorSignals, businessBrief, buffettRead };
+export { ownerFlags, FLAG_THEMES, sentences, isProse, diff, extractPayRatio, extractInsiderOwnership, htmlToText, section, fetchText, businessDescription, candorSignals, businessBrief, buffettRead };
 
 if (import.meta.url === pathToFileURL(process.argv[1] || "").href) {
   main().catch((e) => { console.error(`\n❌ ${e.message}\n`); process.exit(1); });

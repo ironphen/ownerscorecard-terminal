@@ -18,22 +18,31 @@ const pctOf = (n, d, dp = 0) => (n != null && d && d > 0 ? `${((n / d) * 100).to
 const sbcRev = sbc != null ? pctOf(sbc, rev) : null;
 const sbcOI = sbc != null ? pctOf(sbc, oi) : null;
 
-const show = (sbc != null && rev) || comp?.payRatio != null;
+const insider = comp?.insiderOwnership;
+const insiderStr = insider == null ? null : (typeof insider === "number" ? `${insider}%` : insider);
+const show = (sbc != null && rev) || comp?.payRatio != null || insider != null;
 ---
 
 {show ? (
   <section class="comp">
     <div class="head">
-      <h3 class="secTitle">Management &amp; pay</h3>
+      <h3 class="secTitle">Management, ownership &amp; pay</h3>
       {comp?.sourceUrl ? <a class="src" href={comp.sourceUrl} target="_blank" rel="noopener">read the proxy →</a> : null}
     </div>
     <p class="intro">
-      Two questions Buffett actually asks about pay: is stock compensation, a real expense, whatever the
-      income statement pretends, quietly large, and is the top wildly out of line with the floor. He's no
-      populist about it; he just wants pay that's rational and earned, and comp committees that aren't lapdogs.
+      Munger&rsquo;s rule was &ldquo;show me the incentives and I&rsquo;ll show you the outcome,&rdquo; so an owner reads
+      two things in the proxy: how much of the business the people running it actually own, and whether pay is
+      rational and earned. Buffett&rsquo;s no populist about it; he just wants skin in the game and a comp committee
+      that isn&rsquo;t a lapdog.
     </p>
 
     <ul class="rows">
+      {insiderStr != null ? (
+        <li>
+          <div class="r"><span class="k">Insider ownership</span><span class="v">{insiderStr}</span></div>
+          <p class="n">The stake all directors and executive officers hold together{comp?.fy ? `, per the ${comp.fy} proxy` : ""} — skin in the game, the first thing Munger reads. It cuts both ways: meaningful ownership ties managers&rsquo; fortunes to yours, while a near-zero stake means the people steering the business mostly don&rsquo;t own it, and are paid in salary and options instead. A founder-controlled stake brings its own trade-off: deep alignment, with less outside check. The figure is the fact; what it&rsquo;s worth is yours to weigh.</p>
+        </li>
+      ) : null}
       {comp?.payRatio != null ? (
         <li>
           <div class="r"><span class="k">CEO pay ratio</span><span class="v">{comp.payRatio.toLocaleString()}:1</span></div>
