@@ -113,6 +113,47 @@ for (const P of POOLS) {
   report.push({ pool: P.key, n, lead, checks, stale: stale.length });
 }
 
+// ---- catalog-shrink guard ----
+// The per-field ratio floors above pass even when a whole COHORT is dropped rather than degraded —
+// every surviving company still reads clean, so the percentages stay healthy while the catalog quietly
+// shrinks (a mass-withholding, a truncated fetch). Guard the absolute count against a committed
+// high-water baseline: a pool materially below its mark is a dropped cohort, not normal churn. Big
+// pools fail hard; small ones (Japan) warn, since a few names there is noise, not a cliff.
+const baseline = load("coverage-baseline.json");
+for (const P of POOLS) {
+  const n = (load(P.file).companies || []).length;
+  const base = Number(baseline[P.key]) || 0;
+  if (base >= 200 && n < base * 0.92)
+    note("error", P.key, "catalog-shrink", `${n} companies, down from a high of ${base} (${(100 * (1 - n / base)).toFixed(0)}% drop) — a cohort was dropped, not just degraded`);
+  else if (base >= 50 && n < base * 0.85)
+    note("warn", P.key, "catalog-shrink", `${n} companies, down from ${base} — check the fetch`);
+}
+
+// ---- incentive-layer guard (US + ADR proxies) ----
+// Insider ownership and the CEO pay ratio come from the DEF 14A — a different document and a
+// shape-fragile parse that can null across the whole pool on an EDGAR format shift, overwriting prior
+// good values while every other gate stays green. Floor each as a share of the proxy blocks present.
+// The business description (the 10-K Item 1 lede) is the same kind of HTML parse, and once collapsed
+// for the largest companies unnoticed — so floor it too, as a catastrophe line below today's coverage.
+const langCos = Object.values(language);
+const nLang = langCos.length;
+if (nLang >= 200) {
+  const withBiz = langCos.filter((c) => c?.business).length;
+  if (frac(withBiz, nLang) < 0.6) note("error", "LANG", "coverage-cliff", `business description: ${(100 * frac(withBiz, nLang)).toFixed(0)}% of ${nLang} (floor 60%) — the lede parse cratered`);
+}
+const comps = Object.values(language).map((c) => c?.comp).filter(Boolean);
+const nComp = comps.length;
+if (nComp >= 200) {
+  const withInsider = comps.filter((c) => c.insiderOwnership != null).length;
+  const withPay = comps.filter((c) => c.payRatio != null).length;
+  for (const [label, v, floor] of [
+    ["insider ownership (of proxy blocks)", frac(withInsider, nComp), 0.5],
+    ["CEO pay ratio (of proxy blocks)", frac(withPay, nComp), 0.25],
+  ]) {
+    if (v < floor) note("error", "INC", "coverage-cliff", `${label}: ${(100 * v).toFixed(0)}% of ${nComp} (floor ${(100 * floor).toFixed(0)}%) — the proxy parse cratered`);
+  }
+}
+
 // ---- report ----
 console.log(`\nOwner Scorecard, ingestion coverage guardrail`);
 for (const r of report) {

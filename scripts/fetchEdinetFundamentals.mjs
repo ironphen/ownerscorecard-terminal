@@ -468,15 +468,27 @@ async function discover(secToTicker, cache) {
         if (ticker) record(ticker, r, ds);
       }
       crawled++;
-    } catch (err) { console.warn(`  ! ${ds}: ${err.message}`); }
-    await sleep(THROTTLE_MS);
+      return true;
+    } catch (err) { console.warn(`  ! ${ds}: ${err.message}`); return false; }
+    finally { await sleep(THROTTLE_MS); }
   };
 
   // The cache tracks the crawled date range [crawledFrom, lastDate]. Crawl forward to today,
   // then backfill the gap down to targetEarliest once (the deep history a single run pays for).
   const haveFrom = cache.crawledFrom ? new Date(cache.crawledFrom) : null;
   const haveTo = cache.lastDate ? new Date(cache.lastDate) : null;
-  for (let day = new Date(haveTo ? haveTo.getTime() + 86400000 : targetEarliest.getTime()); day <= today; day = new Date(day.getTime() + 86400000)) await crawlDay(ymd(day));
+  // Advance the forward cursor only through an UNBROKEN run of successful days. A swallowed crawl
+  // failure (EDINET hiccup, an expired key) must not let lastDate jump past the failed day, or that
+  // day is cached as "done" and never re-crawled — a transient error becomes a permanent silent gap.
+  // Erring toward re-crawling (idempotent) is safe; skipping a day is not.
+  let forwardCursor = cache.lastDate || null;
+  let forwardBroke = false;
+  for (let day = new Date(haveTo ? haveTo.getTime() + 86400000 : targetEarliest.getTime()); day <= today; day = new Date(day.getTime() + 86400000)) {
+    const ds = ymd(day);
+    const ok = await crawlDay(ds);
+    if (forwardBroke) continue;
+    if (ok) forwardCursor = ds; else forwardBroke = true;
+  }
   const backStop = haveFrom || haveTo; // the earliest date crawled so far, if any
   if (backStop && targetEarliest < backStop) {
     for (let day = new Date(backStop.getTime() - 86400000); day >= targetEarliest; day = new Date(day.getTime() - 86400000)) await crawlDay(ymd(day));
@@ -484,7 +496,10 @@ async function discover(secToTicker, cache) {
 
   for (const t in byTicker) byTicker[t].sort((a, b) => ((a.periodEnd || "") < (b.periodEnd || "") ? 1 : (a.periodEnd || "") > (b.periodEnd || "") ? -1 : 0));
   cache.byTicker = byTicker;
-  cache.lastDate = ymd(today);
+  // Only as far as the last consecutively-successful forward day (see above), not blindly to today —
+  // so a failed day stays uncrawled and is retried next run rather than lost. Stays null until a first
+  // run succeeds (re-crawl from the earliest target next time); unchanged if nothing needed crawling.
+  cache.lastDate = forwardCursor;
   cache.crawledFrom = ymd(haveFrom && haveFrom < targetEarliest ? haveFrom : targetEarliest);
   const reports = Object.values(byTicker).reduce((a, l) => a + l.length, 0);
   console.log(`  crawled ${crawled} day(s); ${reports} annual reports for ${Object.keys(byTicker).length}/${Object.keys(secToTicker).length} companies`);

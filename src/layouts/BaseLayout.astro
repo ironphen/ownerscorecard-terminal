@@ -1,7 +1,10 @@
 ---
 import SiteSearch from "../components/SiteSearch.astro";
+import { dataAsOf, fmtAsOf } from "../lib/freshness.mjs";
 const { title = "Owner Scorecard" } = Astro.props;
-const today = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+// The masthead carries the DATA's vintage (the pipeline's own as-of stamps), not the build clock, so
+// stale data shows as stale rather than wearing today's date. Falls back to nothing if unstamped.
+const refreshed = fmtAsOf(dataAsOf);
 ---
 
 <html lang="en" data-theme="dark">
@@ -238,7 +241,7 @@ const today = new Date().toLocaleDateString("en-US", { year: "numeric", month: "
       <hr class="mastRule" />
       <div class="mastBar">
         <a class="brand" href="/">Owner Scorecard</a>
-        <div class="dateline">An independent research publication · {today}</div>
+        <div class="dateline">An independent research publication{refreshed ? ` · data as of ${refreshed}` : ""}</div>
       </div>
       <hr class="mastRuleThin" />
       <nav class="nav">

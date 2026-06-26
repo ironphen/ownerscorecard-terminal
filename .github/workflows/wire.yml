@@ -36,7 +36,14 @@ jobs:
             git config user.email "github-actions[bot]@users.noreply.github.com"
             git add src/data/wire.json src/data/rates.json
             git commit -m "Refresh the filing wire and the risk-free rate"
-            git push
+            # Rebase-and-retry so a concurrent push (an overlapping fundamentals run) can't silently
+            # drop the day's wire + risk-free-rate refresh, the way a bare push otherwise would.
+            for i in 1 2 3 4 5; do
+              git push && break
+              echo "push rejected; rebasing on origin/$GITHUB_REF_NAME and retrying ($i)…"
+              git pull --rebase origin "$GITHUB_REF_NAME" || { git rebase --abort; true; }
+              sleep $((i * 3))
+            done
           else
             echo "No change."
           fi

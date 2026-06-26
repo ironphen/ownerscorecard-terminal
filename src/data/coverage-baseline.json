@@ -1,0 +1,6 @@
+{
+  "_note": "High-water company counts for the catalog-shrink guard in auditCoverage.mjs. A fetch can drop a whole cohort (mass-withholding, a truncated response) rather than just degrade a field, and every surviving company still reads clean — so the per-field ratio floors pass while the catalog quietly shrinks. This guards the absolute count: a pool materially below its high-water mark fails the run. Bump these upward as the universe grows; the guard only protects, it never auto-lowers.",
+  "US": 2652,
+  "ADR": 862,
+  "JP": 34
+}
