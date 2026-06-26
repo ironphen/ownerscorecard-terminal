@@ -43,15 +43,21 @@ async function fetchText(url) {
 
 // ---- XBRL taxonomy: the concepts and axes we read ----
 const REV_TAGS = [
-  "RevenueFromContractWithCustomerExcludingAssessedTax",
+  "Revenue", "RevenueFromContractsWithCustomers",           // IFRS
+  "RevenueFromContractWithCustomerExcludingAssessedTax",    // US-GAAP (ASC 606)
   "RevenueFromContractWithCustomerIncludingAssessedTax",
   "Revenues",
-  "RevenueFromContractWithCustomerExcludingAssessedTaxMember", // never a tag; guard noop
 ];
-const OI_TAGS = ["OperatingIncomeLoss"];
-const SEG_AXIS = "StatementBusinessSegmentsAxis";
-const GEO_AXIS = "StatementGeographicalAxis";
-const PROD_AXIS = "ProductOrServiceAxis";
+const OI_TAGS = ["OperatingIncomeLoss", "ProfitLossFromOperatingActivities"]; // US-GAAP, IFRS
+// Segment / geographic / product axes across taxonomies. US-GAAP uses fixed axis names; IFRS has no
+// standard segment axis, so filers coin their own — but the ADR-pool probe showed they cluster on a
+// handful (SegmentsAxis, ProductsAndServicesAxis, GeographicalAreasAxis). For each bucket the richest
+// axis that reconciles to consolidated revenue wins; reconciliation is the safety net, so an unrelated
+// axis that merely matches a name (a markets-of-customers or legal-entity split that sums past 100%)
+// can't slip through.
+const SEG_AXES = ["StatementBusinessSegmentsAxis", "SegmentsAxis", "OperatingSegmentsAxis", "BusinessSegmentsAxis", "ReportableSegmentsAxis"];
+const GEO_AXES = ["StatementGeographicalAxis", "GeographicalAreasAxis"];
+const PROD_AXES = ["ProductOrServiceAxis", "ProductsAndServicesAxis"];
 
 // Standard XBRL namespaces, used to tell a company's own segment member from the
 // us-gaap roll-up members (OperatingSegmentsMember and friends) that would double count.
@@ -116,6 +122,19 @@ function bestRevenue(xml, contexts, axisLocal, companyOnly) {
   for (const tag of REV_TAGS) {
     const m = membersOnAxis(parseFacts(xml, tag), contexts, axisLocal, companyOnly);
     if (m.size > best.size) best = m;
+  }
+  return best;
+}
+
+// The best reconciling breakdown across a list of candidate axis names: each axis tried, subtotals
+// stripped, and the richest one that reconciles to consolidated revenue wins — so a 2-member geographic
+// split never beats a full reportable-segment one, and an axis that doesn't reconcile is dropped.
+function bestAxis(xml, contexts, axisNames, total) {
+  let best = null;
+  for (const ax of axisNames) {
+    const map = stripSubtotals(bestRevenue(xml, contexts, ax, false), total);
+    const r = reconcile(map, total);
+    if (r && (!best || map.size > best.map.size)) best = { map, axis: ax, ratio: r };
   }
   return best;
 }
@@ -264,31 +283,32 @@ async function forCompany(c) {
     console.log("");
   }
 
-  // Segment revenue and segment operating income. We keep every member on the
-  // segment axis except the named us-gaap roll-up subtotals (handled by AGGREGATE),
-  // because some filers (Apple) report their segments with standard srt geographic
-  // members rather than company-defined ones. Reconciliation is the real safety net.
-  const segRev = stripSubtotals(bestRevenue(xml, contexts, SEG_AXIS, false), total);
-  const segOI = membersOnAxis(parseFacts(xml, OI_TAGS[0]), contexts, SEG_AXIS, false);
-  const geoRev = stripSubtotals(bestRevenue(xml, contexts, GEO_AXIS, false), total);
-  const prodRev = stripSubtotals(bestRevenue(xml, contexts, PROD_AXIS, false), total);
+  return buildRecord(xml, contexts, labels, { fy: c.fy, periodEnd: c.periodEnd, sourceUrl: c.sourceUrl, total, oiTotal });
+}
 
-  const out = { fy: c.fy, periodEnd: c.periodEnd, sourceUrl: c.sourceUrl, revenueTotal: total, operatingIncomeTotal: oiTotal };
+// Extract the three breakdowns from a parsed instance — shared by the US (10-K) and ADR (20-F) fetchers,
+// since both are EDGAR XBRL once the instance and labels are in hand. We keep every member on each axis
+// except the named roll-up subtotals (handled by AGGREGATE), because some filers report segments with
+// standard geographic members rather than company-defined ones; reconciliation is the real safety net.
+function buildRecord(xml, contexts, labels, { fy, periodEnd, sourceUrl, total, oiTotal }) {
+  if (!total) return null;
+  const seg = bestAxis(xml, contexts, SEG_AXES, total);
+  const geo = bestAxis(xml, contexts, GEO_AXES, total);
+  const prod = bestAxis(xml, contexts, PROD_AXES, total);
+  const out = { fy, periodEnd, sourceUrl, revenueTotal: total, operatingIncomeTotal: oiTotal };
   let any = false;
 
-  const segR = reconcile(segRev, total);
-  if (segR) {
+  if (seg) {
     // Trust the OI split only if it covers most segments and isn't wildly off the consolidated.
+    const oiFacts = OI_TAGS.flatMap((t) => parseFacts(xml, t));
+    const segOI = membersOnAxis(oiFacts, contexts, seg.axis, false);
     const oiSum = [...segOI.values()].reduce((a, b) => a + Math.abs(b.value), 0);
-    const oiOk = segOI.size >= Math.ceil(segRev.size / 2) && oiTotal != null && oiSum > 0 && oiSum <= Math.abs(oiTotal) * 3;
-    out.bySegment = { reconcile: +segR.toFixed(3), hasOperatingIncome: !!oiOk, items: itemsFrom(segRev, labels, oiOk ? segOI : null) };
+    const oiOk = segOI.size >= Math.ceil(seg.map.size / 2) && oiTotal != null && oiSum > 0 && oiSum <= Math.abs(oiTotal) * 3;
+    out.bySegment = { reconcile: +seg.ratio.toFixed(3), hasOperatingIncome: !!oiOk, items: itemsFrom(seg.map, labels, oiOk ? segOI : null) };
     any = true;
   }
-  const geoR = reconcile(geoRev, total);
-  if (geoR) { out.byGeography = { reconcile: +geoR.toFixed(3), items: itemsFrom(geoRev, labels, null) }; any = true; }
-  const prodR = reconcile(prodRev, total);
-  if (prodR) { out.byProduct = { reconcile: +prodR.toFixed(3), items: itemsFrom(prodRev, labels, null) }; any = true; }
-
+  if (geo) { out.byGeography = { reconcile: +geo.ratio.toFixed(3), items: itemsFrom(geo.map, labels, null) }; any = true; }
+  if (prod) { out.byProduct = { reconcile: +prod.ratio.toFixed(3), items: itemsFrom(prod.map, labels, null) }; any = true; }
   return any ? out : null;
 }
 
@@ -313,13 +333,17 @@ async function main() {
   // Preserve companies we didn't process this run (subset/audit runs) so we never wipe data.
   let prior = {};
   try { prior = JSON.parse(fs.readFileSync(outPath, "utf8")).companies || {}; } catch {}
-  const merged = ONLY.length ? { ...prior, ...result } : result;
+  // Preserve entries from the OTHER pool (ADR writes its breakdowns into this same file), keyed by
+  // ticker: a full US run replaces only US tickers, never the ADR breakdowns.
+  const universe = new Set((fundamentals.companies || []).map((c) => String(c.ticker).toUpperCase()));
+  const otherPool = Object.fromEntries(Object.entries(prior).filter(([t]) => !universe.has(t.toUpperCase())));
+  const merged = ONLY.length ? { ...prior, ...result } : { ...otherPool, ...result };
   const out = { asOf: new Date().toISOString().slice(0, 10), source: "SEC EDGAR XBRL, reportable-segment and geographic disclosures", companies: merged };
   fs.writeFileSync(outPath, JSON.stringify(out, null, 2) + "\n");
   console.log(`\n✅ Segments: ${hit}/${companies.length} companies with a usable breakdown (${Object.keys(merged).length} total in file)`);
 }
 
-export { parseContexts, parseFacts, membersOnAxis, reconcile, prettify, AGGREGATE, isCompanyMember };
+export { parseContexts, parseFacts, membersOnAxis, reconcile, prettify, AGGREGATE, isCompanyMember, buildRecord, buildLabels };
 
 if (import.meta.url === pathToFileURL(process.argv[1] || "").href) {
   main().catch((e) => { console.error(`❌ ${e.message}`); process.exit(1); });

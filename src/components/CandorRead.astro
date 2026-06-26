@@ -1,14 +1,14 @@
 ---
-// The Candor Read, surfaced — how management talks to owners, and what it had to admit about the
-// numbers: the linguistic and disclosure filter Buffett and Munger actually apply to a filing. Three
-// deterministic signals counted over the MD&A (the words of an owner, the words of a promoter, and how
-// often the company steers you off GAAP), each with its year-over-year drift; then the verbatim tells —
-// where management owns a miss, where it disclosed its own numbers were unreliable (a material weakness,
-// a restatement), and where the reported figures rest on its own judgment. No bought sentiment lexicon —
-// just the vocabulary and the disclosures an owner cares about. The detectors live in
-// scripts/fetchFilings.mjs; this presents the densities and the company's own sentences and never grades
-// the character. Present, never pronounce. (The integrity admissions and critical-estimates read were
-// merged here from the retired OwnerNotice, so the candor signal lives in one place.)
+// The Candor Read — how management talks to owners, read against the test Buffett actually used: own a
+// business with a partner, be away a year, and a straight partner tells you plainly what changed, how it
+// performed, and what went wrong — not a sales pitch. So the section answers that test in three parts:
+//   1. What management SAYS CHANGED this year — the affirmative account an absent owner needs, taken from
+//      the year-over-year read of the MD&A (its own performance sentences, surfaced verbatim).
+//   2. HOW it says it — an owner's vocabulary vs a promoter's, and how often you're asked past GAAP.
+//   3. What it OWNED — a first-person admission of a miss, and the gravest disclosures about the numbers
+//      themselves (a material weakness, a restatement, the estimates the figures rest on).
+// All deterministic, all the company's own words; the detectors live in scripts/fetchFilings.mjs. This
+// presents the account and the tells and never grades the character. Present, never pronounce.
 import language from "../data/language.json";
 import { TONE_COLOR } from "../lib/fundamentals.mjs";
 
@@ -18,30 +18,46 @@ const c = L?.mdna?.candor || null;
 const cp = L?.mdna?.candorPrior || null;
 const fy = L?.fy || company.fy;
 
-// What the filing had to admit about the numbers themselves — the gravest, rarest disclosures (a
-// deficient control system, a restatement of past figures), shown with the company's own sentence.
-// The Scorecard already ties these to the reliability of the numbers; here is the evidence beneath it.
-const integrity = L?.buffettRead?.integrity || null;
-const integrityItems = [];
-if (integrity?.materialWeakness)
-  integrityItems.push({
-    label: "Material weakness in financial controls", quote: integrity.materialWeakness,
-    note: "The company's own controls over its financial reporting were found deficient. Graham's honesty test: the figures in the record above are only as good as the system that produced them. The most serious thing in this read.",
-  });
-if (integrity?.restatement)
-  integrityItems.push({
-    label: "Restated past financials", quote: integrity.restatement,
-    note: "The company restated numbers it had previously reported. Figures in the record may have moved since they were first filed; read what was restated, and why, before trusting the trend.",
-  });
-// Where the reported numbers rest on management's own assumptions — the areas the filing itself names
-// as critical to its accounting. More is not worse; each is a number that is partly an opinion.
-const judgment = L?.buffettRead?.judgment && L.buffettRead.judgment.count >= 1 ? L.buffettRead.judgment : null;
+// --- Part 1: what management says changed this year ---
+// An owner who's been away a year wants the performance account first. Our year-over-year MD&A read
+// already surfaces what's new; here we keep only the sentences that report on the business — a direction
+// or a cause (MOVE), best of all with a figure (NUM) — and rank those highest. We DEMOTE forward-looking,
+// hypothetical risk language (HYPO: "tariffs could adversely affect" is a warning, not a report of the
+// year), number-dominated table debris (a flattened EBIT bridge), and accounting-policy lines, so
+// "income fell 28% on lower volume" and "gross margin decreased to 71.1% from 75.0%" lead.
+const MOVE = /\b(increase|decrease|declin|grew|grow|grown|rose|risen|fell|fall|fallen|higher|lower|improv|impact|driven|drove|due to|offset|reduct|reduced|gain|loss|weaker|stronger|favorab|unfavorab|partially|primarily)\b/i;
+const NUM = /\$\s?[\d,]+(\.\d+)?|\b\d+(\.\d+)?\s?(%|percent|basis points|bps)\b/i;
+const HYPO = /\b(could|would|may |might|can have|cannot|uncertain|expect|anticipat|intend|potential|adversely|believe|our future|if a |if the|if we|risks?)\b/i;
+const tableLike = (s) => { const t = String(s).split(/\s+/); return t.length > 8 && t.filter((x) => /^[\$(]?-?[\d,]+(\.\d+)?\)?$/.test(x)).length / t.length > 0.18; };
+// Accounting-policy / definitional sentences ("we include … in Other income", "revenue is recognized
+// when …") describe how the books are kept, not how the year went — demote them too.
+const POLICY = /\b(is|are) defined as|\b(is|are) recognized|\bwe include\b|\bwe classify\b|\bwe account for\b|in accordance with|under the [a-z ]{0,24} model/i;
+const score = (s) => (NUM.test(s) ? 2 : 0) + (MOVE.test(s) ? 1 : 0) - (HYPO.test(s) ? 3 : 0) - (tableLike(s) ? 2 : 0) - (POLICY.test(s) ? 2 : 0);
+function tidy(s) {
+  s = String(s).replace(/\s+/g, " ").trim().replace(/^\d+\s+/, ""); // collapse space, drop a leading page number
+  const m = s.match(/[a-z\)][.](?=\s+[A-Z0-9])/); // cut at the first real sentence end (not "$1.0" or "U.S.")
+  if (m && m.index >= 60) s = s.slice(0, m.index + 1);
+  const cap = 260;
+  if (s.length > cap) { const cut = s.slice(0, cap); const sp = cut.lastIndexOf(" "); s = (sp > 150 ? cut.slice(0, sp) : cut) + "…"; }
+  return s;
+}
+const seenChange = new Set();
+const ranked = (L?.mdnaChange?.notable || [])
+  .map((s) => ({ t: tidy(s), sc: score(s) })) // score the source; tidy only for display
+  .filter((x) => x.sc >= 1 && x.t.length >= 60)
+  .sort((a, b) => b.sc - a.sc)
+  .filter((x) => { const k = x.t.slice(0, 50).toLowerCase(); if (seenChange.has(k)) return false; seenChange.add(k); return true; });
+// Lead with the single strongest performance sentence; add more only if they too clear the bar (sc ≥ 2),
+// so a noisy table or a policy line never pads the list beneath a clean lede. A company whose only real
+// change reads without a figure (Apple's margin line) still shows its one good sentence.
+const told = ranked.length ? [ranked[0].t, ...ranked.slice(1).filter((x) => x.sc >= 2).map((x) => x.t)].slice(0, 3) : [];
 
-// The three signals, glossed so the bar teaches the lens rather than asking the reader to read a
-// raw number. Densities are per 1,000 words, so they compare across filings of any length. Each bar
-// is scaled to its own real distribution across the catalog (roughly the 90th percentile: owner ≈ 3,
-// promoter ≈ 1, "adjusted" ≈ 5 per 1,000 words), so a full-ish bar means high FOR THAT KIND of
-// language — the three densities aren't comparable to each other, only each to its own norm.
+// --- Part 2: how management says it ---
+// The three signals, glossed so the bar teaches the lens rather than asking the reader to read a raw
+// number. Densities are per 1,000 words, so they compare across filings of any length. Each bar is scaled
+// to its own real distribution across the catalog (roughly the 90th percentile: owner ≈ 3, promoter ≈ 1,
+// "adjusted" ≈ 5 per 1,000 words), so a full-ish bar means high FOR THAT KIND of language — the three
+// densities aren't comparable to each other, only each to its own norm.
 const signals = c
   ? [
       { key: "owner", label: "An owner's language", tone: "good", scale: 4,
@@ -67,7 +83,27 @@ function drift(value, prior) {
 }
 
 const admissions = c?.admissions || [];
-const hasContent = !!c || integrityItems.length || judgment;
+
+// --- Part 3: what it had to disclose about the numbers ---
+// The gravest, rarest disclosures (a deficient control system, a restatement), shown with the company's
+// own sentence. The Scorecard already ties these to the reliability of the numbers; here is the evidence.
+const integrity = L?.buffettRead?.integrity || null;
+const integrityItems = [];
+if (integrity?.materialWeakness)
+  integrityItems.push({
+    label: "Material weakness in financial controls", quote: integrity.materialWeakness,
+    note: "The company's own controls over its financial reporting were found deficient. Graham's honesty test: the figures in the record above are only as good as the system that produced them. The most serious thing in this read.",
+  });
+if (integrity?.restatement)
+  integrityItems.push({
+    label: "Restated past financials", quote: integrity.restatement,
+    note: "The company restated numbers it had previously reported. Figures in the record may have moved since they were first filed; read what was restated, and why, before trusting the trend.",
+  });
+// Where the reported numbers rest on management's own assumptions — the areas the filing itself names as
+// critical to its accounting. More is not worse; each is a number that is partly an opinion.
+const judgment = L?.buffettRead?.judgment && L.buffettRead.judgment.count >= 1 ? L.buffettRead.judgment : null;
+
+const hasContent = !!c || told.length || integrityItems.length || judgment;
 ---
 
 {hasContent ? (
@@ -76,40 +112,62 @@ const hasContent = !!c || integrityItems.length || judgment;
       <h3 class="secTitle">How management talks to owners{fy ? `, FY${fy}` : ""}</h3>
       {L?.sourceUrl ? <a class="src" href={L.sourceUrl} target="_blank" rel="noopener">read the 10-K →</a> : null}
     </div>
+
+    <p class="intro">
+      Buffett's test for a report: imagine you own this business with a partner and you've been away a
+      year. A straight partner tells you plainly what changed, how the business performed, and what went
+      wrong — the things an owner needs to know, not a sales pitch. Here is this year's filing read against
+      that test: <em>what it says changed</em>, <em>the language it chose</em>, and <em>what it was willing
+      to own</em>. Every line below is the company's own; the character is yours to judge.
+    </p>
+
+    {told.length ? (
+      <div class="changed">
+        <h4 class="aHead">What management says changed this year</h4>
+        <p class="aIntro">
+          The first thing an absent owner asks: what actually moved, and why. From the year-over-year read
+          of the MD&amp;A — the sentences it added this year that report on the business, in its own words.
+        </p>
+        <ul class="quotes change">{told.map((q) => <li>“{q}”</li>)}</ul>
+      </div>
+    ) : null}
+
     {c ? (
       <>
-        <p class="intro">
-          Buffett and Munger read a filing as much for <em>how</em> management talks as for what it reports.
-          Three kinds of language, counted over the MD&amp;A — the words of an owner, the words of a promoter,
-          and how often you are asked to look past GAAP. The counts and the company's own sentences; the
-          character is yours to read.
-        </p>
-
-        <ul class="bars">
-          {signals.map((s) => {
-            const dr = drift(s.value, s.prior);
-            return (
-              <li>
-                <div class="barTop">
-                  <span class="bLabel" style={`color:${TONE_COLOR[s.tone]}`}>{s.label}</span>
-                  <span class="bVal">{s.value.toFixed(1)}<span class="per"> / 1,000 words</span>{dr ? <span class={`drift d${dr.dir}`}>· {dr.word}</span> : null}</span>
-                </div>
-                <div class="track"><span class="fill" style={`width:${pctOf(s.value, s.scale)}%; background:${TONE_COLOR[s.tone]}`}></span></div>
-                <p class="gloss">{s.gloss}</p>
-              </li>
-            );
-          })}
-        </ul>
+        <div class="how">
+          <h4 class="aHead">The language it chose</h4>
+          <p class="aIntro">
+            The second test is <em>how</em> it tells you. An owner reasons in per-share value, returns and
+            the long term; a promoter sells; and a filing that keeps steering you off GAAP is asking you to
+            measure earnings its way. Three kinds of language, counted over the MD&amp;A, each against its
+            own norm across the catalog.
+          </p>
+          <ul class="bars">
+            {signals.map((s) => {
+              const dr = drift(s.value, s.prior);
+              return (
+                <li>
+                  <div class="barTop">
+                    <span class="bLabel" style={`color:${TONE_COLOR[s.tone]}`}>{s.label}</span>
+                    <span class="bVal">{s.value.toFixed(1)}<span class="per"> / 1,000 words</span>{dr ? <span class={`drift d${dr.dir}`}>· {dr.word}</span> : null}</span>
+                  </div>
+                  <div class="track"><span class="fill" style={`width:${pctOf(s.value, s.scale)}%; background:${TONE_COLOR[s.tone]}`}></span></div>
+                  <p class="gloss">{s.gloss}</p>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
 
         <div class="admit">
-          <h4 class="aHead">Owned a miss, in its own words</h4>
+          <h4 class="aHead">What it owned, in its own words</h4>
           {admissions.length ? (
             <>
-              <p class="aIntro">The rarest tell in any filing: management saying plainly, in the first person and past tense, that something did not go as hoped. We surface every such sentence verbatim.</p>
+              <p class="aIntro">The rarest tell in any filing — and the one a part-owner trusts most: management saying plainly, in the first person and past tense, that something did not go as hoped. We surface every such sentence verbatim.</p>
               <ul class="quotes">{admissions.map((q) => <li>“{q}{q.length >= 290 ? "…" : ""}”</li>)}</ul>
             </>
           ) : (
-            <p class="aNone">No first-person admission of a miss in this year's MD&amp;A. Common, and not damning — most managements never write one — but its presence elsewhere is worth more than any adjective.</p>
+            <p class="aNone">No first-person admission of a miss in this year's MD&amp;A. Common, and not damning on its own — most managements never write one — but its presence, where it appears, is worth more than any adjective.</p>
           )}
         </div>
       </>
@@ -150,7 +208,7 @@ const hasContent = !!c || integrityItems.length || judgment;
       </div>
     ) : null}
 
-    <p class="foot">Classic text analysis of the filing itself, and every quote is the company's own. A lens on tone and candor, never a score.</p>
+    <p class="foot">Classic text analysis of the filing itself, and every quote is the company's own. A lens on what an owner would want told, never a score.</p>
   </section>
 ) : null}
 
@@ -160,8 +218,14 @@ const hasContent = !!c || integrityItems.length || judgment;
   .secTitle { margin: 0; }
   .src { font-size: 12px; color: var(--accent); flex: 0 0 auto; }
   .intro { font-family: var(--serif); font-style: italic; font-size: 13.5px; color: var(--muted); margin: 9px 0 0; max-width: 72ch; line-height: 1.6; }
+  .intro em { font-style: normal; font-weight: 600; color: var(--ink-soft); }
 
-  .bars { list-style: none; padding: 0; margin: 14px 0 0; }
+  /* Part 1 — what changed this year: the affirmative owner's account, led first. */
+  .changed { margin: 16px 0 0; padding-top: 14px; border-top: 1px solid var(--rule); }
+  .quotes.change li { border-left-color: var(--accent); color: var(--ink-soft); }
+
+  .how { margin: 16px 0 0; padding-top: 14px; border-top: 1px solid var(--rule); }
+  .bars { list-style: none; padding: 0; margin: 12px 0 0; }
   .bars li { padding: 11px 0; border-bottom: 1px solid var(--rule); }
   .barTop { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
   .bLabel { font-family: var(--sans); font-weight: 700; font-size: 14px; }
@@ -180,8 +244,7 @@ const hasContent = !!c || integrityItems.length || judgment;
   .quotes li { font-family: var(--serif); font-size: 14.5px; line-height: 1.5; color: var(--ink-soft); border-left: 2px solid var(--good); padding: 3px 0 3px 14px; margin: 9px 0; }
   .aNone { font-family: var(--serif); font-style: italic; font-size: 13.5px; color: var(--muted); margin: 7px 0 0; line-height: 1.55; max-width: 72ch; }
 
-  /* The integrity disclosures (merged from the retired OwnerNotice): the gravest tells, the company's
-     own sentence beneath each. */
+  /* The integrity disclosures: the gravest tells, the company's own sentence beneath each. */
   .integ { margin: 16px 0 0; padding-top: 14px; border-top: 1px solid var(--rule); }
   .integ .items { list-style: none; padding: 0; margin: 10px 0 0; }
   .integ .items li { padding: 12px 0; border-bottom: 1px solid var(--rule); }
@@ -189,7 +252,7 @@ const hasContent = !!c || integrityItems.length || judgment;
   .integ .why { font-size: 13px; color: var(--ink-dim); margin: 5px 0 0; line-height: 1.55; max-width: 74ch; }
   .integ blockquote { font-family: var(--serif); font-size: 14.5px; line-height: 1.5; color: var(--ink-soft); border-left: 2px solid var(--accent); padding: 3px 0 3px 14px; margin: 9px 0 0; max-width: 74ch; }
 
-  /* Where the numbers rest on judgment (merged from OwnerNotice): the critical-estimates read. */
+  /* Where the numbers rest on judgment: the critical-estimates read. */
   .judge { margin: 16px 0 0; padding-top: 14px; border-top: 1px solid var(--rule); }
   .jhead { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
   .count { font-family: var(--sans); font-size: 10.5px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); flex: 0 0 auto; }

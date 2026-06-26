@@ -49,5 +49,26 @@ check("IFRS current assets (instant, EUR)", latestObservation(ifrs, CONCEPTS.cur
 // Wrong currency must not match (guards against blindly reading USD off an EUR filer).
 check("no USD revenue on the EUR filer", !rowsFor(ifrs, CONCEPTS.revenue, "USD"), null);
 
+// Year-wise tag merge across a US-GAAP→IFRS reporting switch (Toyota/Sony/Honda-shaped): recent years
+// tagged ifrs-full:DividendsPaid, older years us-gaap:PaymentsOfDividendsCommonStock. The dividend
+// probe showed single-tag selection stranded whichever era the chosen tag didn't cover; annualByYear
+// must now bridge it — every fiscal year present, never summed, higher-priority tag winning an overlap.
+const split = { entityName: "Transitioned Co", facts: {
+  "ifrs-full": { DividendsPaid: { units: { JPY: [
+    { val: 970e9, start: "2024-01-01", end: "2024-12-31", form: "20-F", filed: "2025-06-01" },
+    { val: 1259e9, start: "2025-01-01", end: "2025-12-31", form: "20-F", filed: "2026-06-01" },
+  ] } } },
+  "us-gaap": { PaymentsOfDividendsCommonStock: { units: { JPY: [
+    { val: 600e9, start: "2022-01-01", end: "2022-12-31", form: "20-F", filed: "2023-06-01" },
+    { val: 700e9, start: "2023-01-01", end: "2023-12-31", form: "20-F", filed: "2024-06-01" },
+    { val: 800e9, start: "2024-01-01", end: "2024-12-31", form: "20-F", filed: "2025-06-01" }, // overlap year
+  ] } } },
+}};
+const dm = annualByYear(split, CONCEPTS.dividendsPaid, "JPY");
+check("merged dividends span both eras (2022–2025)", ["2022", "2023", "2024", "2025"].every((y) => dm[y]?.val != null), dm);
+check("US-GAAP fills the pre-IFRS years", dm["2022"]?.val === 600e9 && dm["2023"]?.val === 700e9, dm);
+check("higher-priority IFRS tag wins the overlap year (2024)", dm["2024"]?.val === 970e9, dm["2024"]);
+check("never summed — overlap is one tag's value, not 970e9+800e9", dm["2024"]?.val !== 1770e9, dm["2024"]);
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

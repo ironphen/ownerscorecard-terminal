@@ -16,6 +16,14 @@ on:
         description: "Limit the run to these tickers (comma-separated; blank = all). The rest carry over."
         type: string
         default: ""
+      probe_segments:
+        description: "Diagnostic: probe JP segment extractability instead of the fetch (writes nothing)"
+        type: boolean
+        default: false
+      fetch_segments:
+        description: "Fetch JP segments only (reads the existing fundamentals.jp.json; skips the fundamentals refresh)"
+        type: boolean
+        default: false
       lookback:
         description: "Days of EDINET document index to crawl (~2300 reaches the ~10-year history; cached after the first run)"
         type: string
@@ -43,27 +51,51 @@ jobs:
       - run: npm ci
       - name: Parser self-test
         run: node scripts/edinetTest.mjs
+      # Diagnostic: measure JP segment extractability and print to the log; writes/commits nothing. When
+      # set, the fetch/audit/commit steps below are skipped so it's a pure probe.
+      - name: Probe JP segments (live)
+        if: ${{ github.event.inputs.probe_segments == 'true' }}
+        run: npm run probe:segments:jp
+        env:
+          EDINET_API_KEY: ${{ secrets.EDINET_API_KEY }}
+          ONLY_JP: ${{ github.event.inputs.tickers }}
+          SEG_RAW: ${{ github.event.inputs.debug }} # non-empty → dump raw dimensional contexts for the tickers
       - name: Fetch Japanese fundamentals
+        if: ${{ github.event.inputs.probe_segments != 'true' && github.event.inputs.fetch_segments != 'true' }}
         run: npm run fetch:fundamentals:jp
         env:
           EDINET_API_KEY: ${{ secrets.EDINET_API_KEY }}
           EDINET_DEBUG: ${{ github.event.inputs.debug }}
           EDINET_LOOKBACK_DAYS: ${{ github.event.inputs.lookback }}
           ONLY_JP: ${{ github.event.inputs.tickers }}
+      # JP segments (reportable-segment revenue from EDINET): reads fundamentals.jp.json and writes its
+      # breakdowns into the shared segments.json, preserving the US and ADR entries. Cheap (one zip per
+      # company), so it runs on every normal refresh; skipped only during a probe.
+      - name: Fetch JP segments
+        if: ${{ github.event.inputs.probe_segments != 'true' }}
+        continue-on-error: true
+        run: npm run fetch:segments:jp
+        env:
+          EDINET_API_KEY: ${{ secrets.EDINET_API_KEY }}
+          ONLY_JP: ${{ github.event.inputs.tickers }}
+          SEG_DEBUG: ${{ github.event.inputs.debug }}
       - name: Audit JP data quality
+        if: ${{ github.event.inputs.probe_segments != 'true' && github.event.inputs.fetch_segments != 'true' }}
         run: npm run audit:jp
       # Ingestion guardrail (adds the depreciation and through-cycle owner-earnings checks the JP gate
       # above doesn't cover). A coverage cliff blocks the commit; Japan's ~5-year EDINET record is held
       # to its own realistic floor, not the SEC pools' deeper one.
       - name: Audit coverage
+        if: ${{ github.event.inputs.probe_segments != 'true' }}
         run: npm run audit:coverage
       - name: Commit if changed
+        if: ${{ github.event.inputs.probe_segments != 'true' }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           # Stage first, then check the index: git diff alone ignores untracked files, so a
           # brand-new fundamentals.jp.json (the first run) would otherwise read as no change.
-          git add src/data/fundamentals.jp.json src/data/edinet-index.json
+          git add src/data/fundamentals.jp.json src/data/edinet-index.json src/data/segments.json
           if git diff --cached --quiet; then
             echo "No change."
           else

@@ -10,6 +10,8 @@ import Inversion from "../../components/Inversion.astro";
 import Valuation from "../../components/Valuation.astro";
 import ActHeader from "../../components/ActHeader.astro";
 import OwnerQuestions from "../../components/OwnerQuestions.astro";
+import Segments from "../../components/Segments.astro";
+import segments from "../../data/segments.json";
 import notes from "../../data/notes.json";
 import { pickNote } from "../../lib/business.mjs";
 
@@ -34,6 +36,8 @@ const name = fund?.name || "";
 // note instead, grounded in the filing and the company's established facts. Absent a
 // note, the page stays quantitative-only and says so.
 const note = fund ? pickNote(notes, ticker) : null;
+// Whether EDINET gave us a reportable-segment breakdown for this filer (keyed by the 4-digit code).
+const hasSegments = !!(fund && segments?.companies?.[fund.ticker] && segments.companies[fund.ticker].bySegment);
 
 const SECTOR_LABEL = {
   assetLight: "Asset-light compounder",
@@ -49,7 +53,7 @@ const sectorLabel = fund ? SECTOR_LABEL[fund.sector] || "Diversified" : null;
 // the management question is answered on capital allocation and routed there. noLanguage tells the
 // synthesis the Japanese narrative isn't machine-read, so it never claims to read the candor of words.
 const jpRoutes = {
-  understand: note ? { href: "#sec-business", label: "The business in brief" } : { href: null, label: null },
+  understand: note ? { href: "#sec-business", label: "The business in brief" } : hasSegments ? { href: "#sec-mix", label: "Where the money comes from" } : { href: null, label: null },
   moat: { href: "#sec-scorecard", label: "Quality & the record" },
   survive: { href: "#sec-scorecard", label: "Will it survive" },
   management: { href: "#sec-capital", label: "Capital allocation" },
@@ -117,6 +121,8 @@ const jpUnderstand = fund ? `${fund.industry}, read on the figures below — the
       ) : null}
 
       <div id="sec-questions" class="sec"><OwnerQuestions company={fund} routes={jpRoutes} noLanguage={true} understandText={jpUnderstand} /></div>
+
+      <div id="sec-mix" class="sec"><Segments company={fund} /></div>
 
       <section class="actGroup">
         <ActHeader n="I" title="The record" lede="What the business has done across the cycle, read straight from the EDINET filing: the multi-year record and, where the history allows, what it earns at mid-cycle." />

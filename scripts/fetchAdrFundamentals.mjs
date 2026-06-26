@@ -93,7 +93,19 @@ const CONCEPTS = {
     "AdjustmentsForDepreciationAndAmortisationExpense", "DepreciationAmortizationAndAccretionNet",
     "AdjustmentsForDepreciationExpense", "DepreciationExpense", "Depreciation",
   ],
-  dividendsPaid: ["DividendsPaidClassifiedAsFinancingActivities", "DividendsPaid", "PaymentsOfDividendsCommonStock", "PaymentsOfDividends"],
+  // Cash dividends PAID (outflow) only — never a dividend RECEIVED, a per-share figure, or a proposed-
+  // but-unpaid declaration. Ordered most-comparable-first (the financing-statement cash line), with the
+  // US-GAAP names that carry a filer's pre-IFRS years as fallbacks; the year-wise merge in annualByYear
+  // fills each year from the first of these that has it, bridging a US-GAAP→IFRS reporting switch.
+  dividendsPaid: [
+    "DividendsPaidClassifiedAsFinancingActivities",
+    "DividendsPaidToEquityHoldersOfParentClassifiedAsFinancingActivities",
+    "DividendsPaid",
+    "PaymentsOfDividendsCommonStock",
+    "PaymentsOfDividends",
+    "DividendsPaidOrdinaryShares",
+    "DividendsCommonStockCash",
+  ],
   buybacks: ["PaymentsToAcquireOrRedeemEntitysShares", "PaymentsForRepurchaseOfCommonStock", "PaymentsForRepurchaseOfEquity"],
   // balance sheet (instants)
   totalAssets: ["Assets"],
@@ -201,32 +213,54 @@ function detectStandard(facts) {
   return n(ifrs) >= n(gaap) && n(ifrs) > 0 ? "IFRS" : "US-GAAP";
 }
 
-// Annual (full-year duration) value per fiscal year, latest filing winning a restatement.
+// Annual (full-year duration) value per fiscal year, MERGED across tags the way the US fetcher does:
+// a higher-priority tag (and, within a tag, the IFRS namespace before US-GAAP) wins a year; lower-
+// priority tags only FILL the years it lacks. Never summed — at most one tag supplies a given year.
+//
+// Why this matters: a foreign issuer that moved from US-GAAP to IFRS reporting tags its older years
+// under one taxonomy and its recent years under another. Toyota, Sony and Honda book recent dividends
+// as ifrs-full:DividendsPaid and older ones as us-gaap:PaymentsOfDividendsCommonStock; ASML and SAP
+// split a single concept across eras. Selecting one tag and stopping (the old rowsFor behaviour)
+// stranded whichever era that tag didn't cover — a measured, pool-wide gap the dividend probe surfaced
+// (8 of 10 sampled names), affecting every multi-tag concept, not just dividends. Filling year-by-year
+// bridges the transition. Within a (tag, namespace), the latest filing wins, so restatements still land.
 function annualByYear(facts, tags, unit) {
-  const units = rowsFor(facts, tags, unit);
-  if (!units) return {};
   const out = {};
-  for (const u of units) {
-    if (!u.form || !isForm(u.form, ANNUAL_FORMS) || !u.start || !u.end) continue;
-    const dur = days(u.start, u.end);
-    if (dur < 350 || dur > 380) continue;
-    const fy = new Date(u.end).getUTCFullYear();
-    if (!(fy in out) || (u.filed || "") > (out[fy].filed || "")) out[fy] = { val: u.val, end: u.end, filed: u.filed || "", form: u.form };
+  for (const tag of tags) {
+    for (const ns of NAMESPACES) {
+      const units = facts?.facts?.[ns]?.[tag]?.units?.[unit];
+      if (!units || !units.length) continue;
+      const perTag = {};
+      for (const u of units) {
+        if (!u.form || !isForm(u.form, ANNUAL_FORMS) || !u.start || !u.end) continue;
+        const dur = days(u.start, u.end);
+        if (dur < 350 || dur > 380) continue;
+        const fy = new Date(u.end).getUTCFullYear();
+        if (!(fy in perTag) || (u.filed || "") > (perTag[fy].filed || "")) perTag[fy] = { val: u.val, end: u.end, filed: u.filed || "", form: u.form };
+      }
+      for (const fy in perTag) if (!(fy in out)) out[fy] = perTag[fy]; // higher-priority tag/ns already there wins
+    }
   }
   return out;
 }
 function instantByYear(facts, tags, unit) {
-  const units = rowsFor(facts, tags, unit);
-  if (!units) return {};
   const out = {};
-  for (const u of units) {
-    if (!u.form || !isAnyForm(u.form) || !u.end || u.start) continue;
-    const fy = new Date(u.end).getUTCFullYear();
-    // Prefer the annual (fiscal year-end) instant; a 6-K interim only fills a year with no annual.
-    const annual = isForm(u.form, ANNUAL_FORMS);
-    const cur = out[fy];
-    if (!cur || (annual && !cur.annual) || ((annual === !!cur.annual) && (u.filed || "") > cur.filed))
-      out[fy] = { val: u.val, end: u.end, filed: u.filed || "", annual };
+  for (const tag of tags) {
+    for (const ns of NAMESPACES) {
+      const units = facts?.facts?.[ns]?.[tag]?.units?.[unit];
+      if (!units || !units.length) continue;
+      const perTag = {};
+      for (const u of units) {
+        if (!u.form || !isAnyForm(u.form) || !u.end || u.start) continue;
+        const fy = new Date(u.end).getUTCFullYear();
+        // Prefer the annual (fiscal year-end) instant; a 6-K interim only fills a year with no annual.
+        const annual = isForm(u.form, ANNUAL_FORMS);
+        const cur = perTag[fy];
+        if (!cur || (annual && !cur.annual) || ((annual === !!cur.annual) && (u.filed || "") > cur.filed))
+          perTag[fy] = { val: u.val, end: u.end, filed: u.filed || "", annual };
+      }
+      for (const fy in perTag) if (!(fy in out)) out[fy] = perTag[fy]; // higher-priority tag/ns wins the year
+    }
   }
   return out;
 }

@@ -1,20 +1,27 @@
-# Diagnostic only — runs the ADR dividend probe in CI (which can reach SEC) to answer, on live data,
-# WHERE the dividends our pipeline misses actually go: a tag we don't read (cheap fix), a dimensioned-
-# only fact the companyfacts API omits (needs the full-XBRL extractor), or genuinely nowhere. It writes
-# NOTHING and commits NOTHING — the verdict is the job log. Run it before building any dividend fix, so
-# the fix is decided by ground truth, not a guess. Kick it from the Actions tab.
+# Diagnostics only — runs a chosen probe in CI (which can reach SEC) and prints the verdict to the job
+# log. Writes NOTHING and commits NOTHING. Run a probe before building the corresponding extractor, so
+# the build is decided by ground truth, not a guess. Kick it from the Actions tab.
+#   probe=dividends → where the ADR pipeline's missing dividends actually live (tag vs dimensioned-only)
+#   probe=segments  → how much ADR segment data is extractable, and the IFRS axis names to target
 # Set an Actions variable SEC_USER_AGENT with a contact string (SEC requests one).
-name: Probe ADR Dividends
+name: Probes (diagnostics)
 
 on:
   workflow_dispatch:
     inputs:
+      probe:
+        description: "Which diagnostic to run"
+        type: choice
+        options:
+          - dividends
+          - segments
+        default: dividends
       tickers:
-        description: "Override the curated probe set (comma-separated tickers; blank = curated)"
+        description: "Override the probe's sample (comma-separated tickers; blank = curated default)"
         type: string
         default: ""
       skip_filing:
-        description: "Companyfacts only — skip the per-filing XBRL ground-truth fetch (faster)"
+        description: "Dividends probe only: companyfacts-only, skip the per-filing XBRL fetch (faster)"
         type: boolean
         default: false
 
@@ -30,11 +37,17 @@ jobs:
         with:
           node-version: 22
       - run: npm ci
-      # Prove the parsing/verdict logic first (synthetic XBRL, no network), then run live.
-      - run: node scripts/probeAdrDividendsTest.mjs
+      # Prove each probe's pure parsing/verdict logic first (synthetic, no network), then run live.
       - name: Probe ADR dividends (live)
-        run: npm run probe:adr-dividends
+        if: ${{ github.event.inputs.probe == 'dividends' }}
+        run: node scripts/probeAdrDividendsTest.mjs && npm run probe:adr-dividends
         env:
           SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT }}
           PROBE_TICKERS: ${{ github.event.inputs.tickers }}
           PROBE_SKIP_FILING: ${{ github.event.inputs.skip_filing == 'true' && '1' || '' }}
+      - name: Probe ADR segments (live)
+        if: ${{ github.event.inputs.probe == 'segments' }}
+        run: npm run probe:segments
+        env:
+          SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT }}
+          ONLY_ADR: ${{ github.event.inputs.tickers }}
