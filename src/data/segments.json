@@ -1,7 +1,383 @@
 {
   "asOf": "2026-06-26",
-  "source": "SEC EDGAR XBRL, reportable-segment and geographic disclosures (10-K + 20-F)",
+  "source": "SEC EDGAR XBRL (10-K + 20-F) and EDINET (Japanese securities reports), reportable-segment / geographic disclosures",
   "companies": {
+    "2914": {
+      "fy": 2025,
+      "periodEnd": "2025-12-31",
+      "sourceUrl": "https://disclosure2.edinet-fsa.go.jp/WEEK0010.aspx",
+      "revenueTotal": 3467675000000,
+      "operatingIncomeTotal": 867038000000,
+      "bySegment": {
+        "reconcile": 0.999,
+        "hasOperatingIncome": true,
+        "items": [
+          {
+            "label": "Tobacco",
+            "revenue": 3305408000000,
+            "operatingIncome": 952161000000
+          },
+          {
+            "label": "Processed Food",
+            "revenue": 159547000000,
+            "operatingIncome": 8589000000
+          }
+        ]
+      }
+    },
+    "4063": {
+      "fy": 2026,
+      "periodEnd": "2026-03-31",
+      "sourceUrl": "https://disclosure2.edinet-fsa.go.jp/WEEK0010.aspx",
+      "revenueTotal": 2573969000000,
+      "operatingIncomeTotal": 635204000000,
+      "bySegment": {
+        "reconcile": 1.076,
+        "hasOperatingIncome": true,
+        "items": [
+          {
+            "label": "Electronics Materials",
+            "revenue": 1021779000000,
+            "operatingIncome": 344537000000
+          },
+          {
+            "label": "Infrastructure Materials",
+            "revenue": 985618000000,
+            "operatingIncome": 164890000000
+          },
+          {
+            "label": "Functional Materials",
+            "revenue": 452599000000,
+            "operatingIncome": 100955000000
+          },
+          {
+            "label": "Diversified Business",
+            "revenue": 310264000000,
+            "operatingIncome": 27338000000
+          }
+        ]
+      }
+    },
+    "4543": {
+      "fy": 2025,
+      "periodEnd": "2025-03-31",
+      "sourceUrl": "https://disclosure2.edinet-fsa.go.jp/WEEK0010.aspx",
+      "revenueTotal": 1036171000000,
+      "operatingIncomeTotal": 157668000000,
+      "bySegment": {
+        "reconcile": 1,
+        "hasOperatingIncome": true,
+        "items": [
+          {
+            "label": "Cardiac And Vascular Company",
+            "revenue": 624357000000,
+            "operatingIncome": 154682000000
+          },
+          {
+            "label": "Medical Care Solutions Company",
+            "revenue": 211235000000,
+            "operatingIncome": 22993000000
+          },
+          {
+            "label": "Blood And Cell Technologies Company",
+            "revenue": 200280000000,
+            "operatingIncome": 26482000000
+          }
+        ]
+      }
+    },
+    "6326": {
+      "fy": 2025,
+      "periodEnd": "2025-12-31",
+      "sourceUrl": "https://disclosure2.edinet-fsa.go.jp/WEEK0010.aspx",
+      "revenueTotal": 3018891000000,
+      "operatingIncomeTotal": 265470000000,
+      "bySegment": {
+        "reconcile": 1.01,
+        "hasOperatingIncome": true,
+        "items": [
+          {
+            "label": "Machinery",
+            "revenue": 2628861000000,
+            "operatingIncome": 253638000000
+          },
+          {
+            "label": "Water And Environment",
+            "revenue": 374385000000,
+            "operatingIncome": 32983000000
+          },
+          {
+            "label": "Other",
+            "revenue": 46264000000,
+            "operatingIncome": 824000000
+          }
+        ]
+      }
+    },
+    "6501": {
+      "fy": 2026,
+      "periodEnd": "2026-03-31",
+      "sourceUrl": "https://disclosure2.edinet-fsa.go.jp/WEEK0010.aspx",
+      "revenueTotal": 10586781000000,
+      "operatingIncomeTotal": 212071000000,
+      "bySegment": {
+        "reconcile": 1.065,
+        "hasOperatingIncome": true,
+        "items": [
+          {
+            "label": "Connective Industries",
+            "revenue": 3262791000000,
+            "operatingIncome": 367396000000
+          },
+          {
+            "label": "Energy",
+            "revenue": 3219953000000,
+            "operatingIncome": 416015000000
+          },
+          {
+            "label": "Digital Systems And Services",
+            "revenue": 2940057000000,
+            "operatingIncome": 450059000000
+          },
+          {
+            "label": "Mobility",
+            "revenue": 1321571000000,
+            "operatingIncome": 108115000000
+          },
+          {
+            "label": "Other",
+            "revenue": 531089000000,
+            "operatingIncome": 22966000000
+          }
+        ]
+      }
+    },
+    "6758": {
+      "fy": 2026,
+      "periodEnd": "2026-03-31",
+      "sourceUrl": "https://disclosure2.edinet-fsa.go.jp/WEEK0010.aspx",
+      "revenueTotal": 12479620000000,
+      "operatingIncomeTotal": 1447507000000,
+      "bySegment": {
+        "reconcile": 1.026,
+        "hasOperatingIncome": true,
+        "items": [
+          {
+            "label": "Game And Network Services",
+            "revenue": 4685651000000,
+            "operatingIncome": 463258000000
+          },
+          {
+            "label": "Entertainment Technology And Services",
+            "revenue": 2260532000000,
+            "operatingIncome": 158584000000
+          },
+          {
+            "label": "Imaging And Sensing Solutions",
+            "revenue": 2151533000000,
+            "operatingIncome": 357318000000
+          },
+          {
+            "label": "Music",
+            "revenue": 2120110000000,
+            "operatingIncome": 446986000000
+          },
+          {
+            "label": "Pictures",
+            "revenue": 1499290000000,
+            "operatingIncome": 104872000000
+          },
+          {
+            "label": "Other",
+            "revenue": 89072000000,
+            "operatingIncome": -74646000000
+          }
+        ]
+      }
+    },
+    "6857": {
+      "fy": 2025,
+      "periodEnd": "2025-03-31",
+      "sourceUrl": "https://disclosure2.edinet-fsa.go.jp/WEEK0010.aspx",
+      "revenueTotal": 779707000000,
+      "operatingIncomeTotal": 228161000000,
+      "bySegment": {
+        "reconcile": 1,
+        "hasOperatingIncome": true,
+        "items": [
+          {
+            "label": "Semiconductor And Component Test System Business",
+            "revenue": 598128000000,
+            "operatingIncome": 244021000000
+          },
+          {
+            "label": "Services Support And Others",
+            "revenue": 108399000000,
+            "operatingIncome": -10914000000
+          },
+          {
+            "label": "Mechatronics System Business",
+            "revenue": 73180000000,
+            "operatingIncome": 16786000000
+          }
+        ]
+      }
+    },
+    "6902": {
+      "fy": 2026,
+      "periodEnd": "2026-03-31",
+      "sourceUrl": "https://disclosure2.edinet-fsa.go.jp/WEEK0010.aspx",
+      "revenueTotal": 7539975000000,
+      "operatingIncomeTotal": 552538000000,
+      "bySegment": {
+        "reconcile": 0.983,
+        "hasOperatingIncome": true,
+        "items": [
+          {
+            "label": "Japan",
+            "revenue": 3087881000000,
+            "operatingIncome": 185913000000
+          },
+          {
+            "label": "North America",
+            "revenue": 2012358000000,
+            "operatingIncome": 132314000000
+          },
+          {
+            "label": "Asia",
+            "revenue": 1622176000000,
+            "operatingIncome": 178843000000
+          },
+          {
+            "label": "Europe",
+            "revenue": 691545000000,
+            "operatingIncome": 27801000000
+          }
+        ]
+      }
+    },
+    "6981": {
+      "fy": 2025,
+      "periodEnd": "2025-03-31",
+      "sourceUrl": "https://disclosure2.edinet-fsa.go.jp/WEEK0010.aspx",
+      "revenueTotal": 1743352000000,
+      "operatingIncomeTotal": 279702000000,
+      "bySegment": {
+        "reconcile": 1.037,
+        "hasOperatingIncome": true,
+        "items": [
+          {
+            "label": "Components",
+            "revenue": 1043956000000,
+            "operatingIncome": 275150000000
+          },
+          {
+            "label": "Devices And Modules",
+            "revenue": 697176000000,
+            "operatingIncome": 9995000000
+          },
+          {
+            "label": "Other",
+            "revenue": 67274000000,
+            "operatingIncome": -5443000000
+          }
+        ]
+      }
+    },
+    "7269": {
+      "fy": 2025,
+      "periodEnd": "2025-03-31",
+      "sourceUrl": "https://disclosure2.edinet-fsa.go.jp/WEEK0010.aspx",
+      "revenueTotal": 5825161000000,
+      "operatingIncomeTotal": 642851000000,
+      "bySegment": {
+        "reconcile": 1,
+        "hasOperatingIncome": true,
+        "items": [
+          {
+            "label": "Automobile Business",
+            "revenue": 5305217000000,
+            "operatingIncome": 567634000000
+          },
+          {
+            "label": "Motorcycle Business",
+            "revenue": 398131000000,
+            "operatingIncome": 40822000000
+          },
+          {
+            "label": "Marine Business",
+            "revenue": 109684000000,
+            "operatingIncome": 30568000000
+          },
+          {
+            "label": "Other Business",
+            "revenue": 12128000000,
+            "operatingIncome": 3825000000
+          }
+        ]
+      }
+    },
+    "7309": {
+      "fy": 2025,
+      "periodEnd": "2025-12-31",
+      "sourceUrl": "https://disclosure2.edinet-fsa.go.jp/WEEK0010.aspx",
+      "revenueTotal": 466243000000,
+      "operatingIncomeTotal": 51677000000,
+      "bySegment": {
+        "reconcile": 1,
+        "hasOperatingIncome": true,
+        "items": [
+          {
+            "label": "Bicycle Components",
+            "revenue": 354972000000,
+            "operatingIncome": 42841000000
+          },
+          {
+            "label": "Fishing Tackle",
+            "revenue": 110832000000,
+            "operatingIncome": 8865000000
+          },
+          {
+            "label": "Other",
+            "revenue": 439000000,
+            "operatingIncome": -29000000
+          }
+        ]
+      }
+    },
+    "9983": {
+      "fy": 2025,
+      "periodEnd": "2025-08-31",
+      "sourceUrl": "https://disclosure2.edinet-fsa.go.jp/WEEK0010.aspx",
+      "revenueTotal": 3400539000000,
+      "operatingIncomeTotal": 564265000000,
+      "bySegment": {
+        "reconcile": 0.999,
+        "hasOperatingIncome": true,
+        "items": [
+          {
+            "label": "UNIQLO International",
+            "revenue": 1910289000000,
+            "operatingIncome": 309319000000
+          },
+          {
+            "label": "UNIQLOJAPAN",
+            "revenue": 1026096000000,
+            "operatingIncome": 184451000000
+          },
+          {
+            "label": "GU",
+            "revenue": 330701000000,
+            "operatingIncome": 30506000000
+          },
+          {
+            "label": "Global Brands",
+            "revenue": 131542000000,
+            "operatingIncome": -950000000
+          }
+        ]
+      }
+    },
     "A": {
       "fy": 2025,
       "periodEnd": "2025-10-31",
