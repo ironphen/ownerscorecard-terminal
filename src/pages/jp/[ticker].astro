@@ -9,6 +9,7 @@ import Capital from "../../components/Capital.astro";
 import Inversion from "../../components/Inversion.astro";
 import Valuation from "../../components/Valuation.astro";
 import ActHeader from "../../components/ActHeader.astro";
+import OwnerQuestions from "../../components/OwnerQuestions.astro";
 import notes from "../../data/notes.json";
 import { pickNote } from "../../lib/business.mjs";
 
@@ -42,6 +43,22 @@ const SECTOR_LABEL = {
   general: "Diversified",
 };
 const sectorLabel = fund ? SECTOR_LABEL[fund.sector] || "Diversified" : null;
+
+// The owner's-questions synthesis, routed for a quantitative-only page: there is no business or candor
+// read here, so "understand it" points to the hand-written brief when one exists (else no jump), and
+// the management question is answered on capital allocation and routed there. noLanguage tells the
+// synthesis the Japanese narrative isn't machine-read, so it never claims to read the candor of words.
+const jpRoutes = {
+  understand: note ? { href: "#sec-business", label: "The business in brief" } : { href: null, label: null },
+  moat: { href: "#sec-scorecard", label: "Quality & the record" },
+  survive: { href: "#sec-scorecard", label: "Will it survive" },
+  management: { href: "#sec-capital", label: "Capital allocation" },
+  price: { href: "#sec-price", label: "What the price implies" },
+};
+// "What it is" from the EDINET industry the page actually has — not the US shape read, which
+// misclassifies a Japanese automaker as a consumer brand. The full description is in the filing
+// (and the hand-written brief, when one exists); here we name the industry and read the numbers.
+const jpUnderstand = fund ? `${fund.industry}, read on the figures below — the Japanese-language business description is in the EDINET filing itself, not machine-read here.` : null;
 ---
 
 <BaseLayout title={`${ticker} ${name}, Owner Scorecard (Japan)`}>
@@ -81,7 +98,7 @@ const sectorLabel = fund ? SECTOR_LABEL[fund.sector] || "Diversified" : null;
       </section>
 
       {note ? (
-        <section class="brief">
+        <section id="sec-business" class="brief sec">
           <h3 class="secTitle">The business in brief</h3>
           <dl class="reads">
             {note.whatItIs ? (
@@ -98,6 +115,8 @@ const sectorLabel = fund ? SECTOR_LABEL[fund.sector] || "Diversified" : null;
           </p>
         </section>
       ) : null}
+
+      <div id="sec-questions" class="sec"><OwnerQuestions company={fund} routes={jpRoutes} noLanguage={true} understandText={jpUnderstand} /></div>
 
       <section class="actGroup">
         <ActHeader n="I" title="The record" lede="What the business has done across the cycle, read straight from the EDINET filing: the multi-year record and, where the history allows, what it earns at mid-cycle." />

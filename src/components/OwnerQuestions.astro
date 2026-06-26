@@ -6,9 +6,12 @@
 import language from "../data/language.json";
 import { ownerQuestions } from "../lib/synthesis.mjs";
 
-const { company } = Astro.props;
+// routes / noLanguage let a page that doesn't carry a business or candor read (the Japanese pool)
+// point the questions at the sections it does have, and answer the management question on capital
+// allocation alone — never linking to a section that isn't there.
+const { company, routes, noLanguage = false, understandText } = Astro.props;
 const lang = language?.companies?.[company.ticker] || null;
-const questions = ownerQuestions(company, lang);
+const questions = ownerQuestions(company, lang, { routes, noLanguage, understandText });
 ---
 
 {questions.length ? (
@@ -28,9 +31,9 @@ const questions = ownerQuestions(company, lang);
         <li>
           <span class="n">{i + 1}</span>
           <div class="body">
-            <a class="q" href={it.href}>{it.q}</a>
+            {it.href ? <a class="q" href={it.href}>{it.q}</a> : <span class="q">{it.q}</span>}
             <p class="a">{it.a}</p>
-            <a class="jump" href={it.href}>{it.hrefLabel} →</a>
+            {it.href && it.hrefLabel ? <a class="jump" href={it.href}>{it.hrefLabel} →</a> : null}
           </div>
         </li>
       ))}

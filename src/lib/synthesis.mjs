@@ -35,7 +35,22 @@ const registerWord = (candor) => {
   return null;
 };
 
-export function ownerQuestions(company, lang) {
+// Where each question's answer is settled, by section anchor. The US page carries a business read and
+// a candor read; a page that doesn't (the Japanese pool, quantitative by design, with no machine-read
+// narrative) passes its own routes and sets noLanguage, so the synthesis answers the management
+// question on capital allocation alone and never links to a section that isn't there.
+const DEFAULT_ROUTES = {
+  understand: { href: "#sec-business", label: "What it is" },
+  moat: { href: "#sec-scorecard", label: "Quality & the record" },
+  survive: { href: "#sec-scorecard", label: "Will it survive" },
+  management: { href: "#sec-candor", label: "How management talks" },
+  price: { href: "#sec-price", label: "What the price implies" },
+};
+
+export function ownerQuestions(company, lang, opts = {}) {
+  const R = { ...DEFAULT_ROUTES };
+  for (const k of Object.keys(opts.routes || {})) R[k] = { ...R[k], ...opts.routes[k] };
+  const noLanguage = !!opts.noLanguage;
   const fk = financialKind(company);
   const candor = lang?.mdna?.candor || null;
   const integ = lang?.buffettRead?.integrity || null;
@@ -44,11 +59,14 @@ export function ownerQuestions(company, lang) {
   const out = [];
 
   // 1 — Can you understand how it makes money? The business and the one lever that decides it.
+  // The "what it is" answer is the computed business phrase (SIC-driven, reliable for the US/ADR pool).
+  // A page whose companies carry no SIC — the Japanese pool, where a shape read misclassifies an
+  // automaker as a consumer brand — passes its own text from the EDINET industry it does have.
   out.push({
     key: "understand",
     q: "Can you understand how it makes money?",
-    a: businessPhrase(company),
-    href: "#sec-business", hrefLabel: "What it is",
+    a: opts.understandText || businessPhrase(company),
+    href: R.understand.href, hrefLabel: R.understand.label,
   });
 
   // 2 — Does it have a durable moat? A high return on capital that has lasted, and where the margin went.
@@ -66,7 +84,7 @@ export function ownerQuestions(company, lang) {
     const roe = pctTC(company, (L) => returnOnEquity(L));
     moatA = roe ? `Return on equity has run about ${roe} through the cycle — the engine of book-value compounding for this kind of business.` : "Read on the returns it earns on its balance sheet through the cycle.";
   }
-  out.push({ key: "moat", q: "Does it have a durable moat?", a: moatA, href: "#sec-scorecard", hrefLabel: "Quality & the record" });
+  out.push({ key: "moat", q: "Does it have a durable moat?", a: moatA, href: R.moat.href, hrefLabel: R.moat.label });
 
   // 3 — Will it survive a bad year? Stability across the record and the balance sheet at the trough.
   let soundA = null;
@@ -84,7 +102,7 @@ export function ownerQuestions(company, lang) {
     const ea = pctTC(company, (L) => equityToAssets(L), 1);
     soundA = ea ? `Equity has been about ${ea} of assets — the capital cushion that absorbs a bad year for a lender.` : "Weigh the capital cushion that absorbs a credit or underwriting cycle.";
   }
-  out.push({ key: "survive", q: "Will it survive a bad year?", a: soundA, href: "#sec-scorecard", hrefLabel: "Will it survive" });
+  out.push({ key: "survive", q: "Will it survive a bad year?", a: soundA, href: R.survive.href, hrefLabel: R.survive.label });
 
   // 4 — Is it run by able, honest people for the owners? Candor in the words, and what they did with the cash.
   const reg = registerWord(candor);
@@ -102,11 +120,22 @@ export function ownerQuestions(company, lang) {
   }
   if (mgmtA && shareClause) mgmtA = `${mgmtA}; ${shareClause}`;
   else if (!mgmtA && shareClause) mgmtA = capitalize(shareClause);
+  // Without a machine-read narrative (the Japanese pool), the candor of management's words can't be
+  // counted, so the question is answered on what they did with the cash, and the words are left to the
+  // filing itself — said plainly, never guessed.
+  let mgmtFinal;
+  if (noLanguage) {
+    mgmtFinal = shareClause
+      ? `${capitalize(shareClause)}; how candidly management speaks is in the filing itself, not machine-read here.`
+      : "What management did with the cash is in the capital-allocation read; how candidly it speaks is in the filing itself, not machine-read here.";
+  } else {
+    mgmtFinal = mgmtA ? finish(mgmtA) : "How management talks, what it admits, and what it does with the cash — the candor read settles it.";
+  }
   out.push({
     key: "management",
     q: "Is it run by able, honest people for the owners?",
-    a: mgmtA ? finish(mgmtA) : "How management talks, what it admits, and what it does with the cash — the candor read settles it.",
-    href: "#sec-candor", hrefLabel: "How management talks",
+    a: mgmtFinal,
+    href: R.management.href, hrefLabel: R.management.label,
   });
 
   // 5 — What would you have to believe to pay the price? The reverse-DCF, anchored to delivered growth.
@@ -119,7 +148,7 @@ export function ownerQuestions(company, lang) {
   } else {
     priceA = "Bring a price — the tool weighs it against what the record would have to keep delivering, on the lens this kind of business is valued on, never a target.";
   }
-  out.push({ key: "price", q: "What would you have to believe to pay the price?", a: priceA, href: "#sec-price", hrefLabel: "What the price implies" });
+  out.push({ key: "price", q: "What would you have to believe to pay the price?", a: priceA, href: R.price.href, hrefLabel: R.price.label });
 
   return out;
 }
