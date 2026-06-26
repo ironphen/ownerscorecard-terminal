@@ -1,0 +1,40 @@
+# Diagnostic only — runs the ADR dividend probe in CI (which can reach SEC) to answer, on live data,
+# WHERE the dividends our pipeline misses actually go: a tag we don't read (cheap fix), a dimensioned-
+# only fact the companyfacts API omits (needs the full-XBRL extractor), or genuinely nowhere. It writes
+# NOTHING and commits NOTHING — the verdict is the job log. Run it before building any dividend fix, so
+# the fix is decided by ground truth, not a guess. Kick it from the Actions tab.
+# Set an Actions variable SEC_USER_AGENT with a contact string (SEC requests one).
+name: Probe ADR Dividends
+
+on:
+  workflow_dispatch:
+    inputs:
+      tickers:
+        description: "Override the curated probe set (comma-separated tickers; blank = curated)"
+        type: string
+        default: ""
+      skip_filing:
+        description: "Companyfacts only — skip the per-filing XBRL ground-truth fetch (faster)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      # Prove the parsing/verdict logic first (synthetic XBRL, no network), then run live.
+      - run: node scripts/probeAdrDividendsTest.mjs
+      - name: Probe ADR dividends (live)
+        run: npm run probe:adr-dividends
+        env:
+          SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT }}
+          PROBE_TICKERS: ${{ github.event.inputs.tickers }}
+          PROBE_SKIP_FILING: ${{ github.event.inputs.skip_filing == 'true' && '1' || '' }}
