@@ -442,6 +442,31 @@ const STARTERS = ["Apple", "Coca-Cola", "Berkshire", "Costco", "Toyota", "Visa"]
       // Coca-Cola — a reader shouldn't have to guess a company's exact spacing or hyphens.
       const sq = (s) => s.replace(/[^a-z0-9]+/g, "");
 
+      // The curated alias bridge (searchAliases.mjs), emitted once as a JSON blob by the site-wide
+      // search (in the base layout, so it's on this page too). Maps a typed query to the tickers it
+      // should surface and the score to give them — an exact key like a ticker prefix (1), a
+      // progressive prefix just behind (1.5) — so "google", "facebook", "coke" reach the right name.
+      // Read lazily: this is an inline script that runs during parsing, before the blob is emitted at
+      // end-of-body, so we resolve it on first use (a keystroke, long after load), never at init.
+      let ALIAS = null;
+      function getAlias() {
+        if (ALIAS) return ALIAS;
+        const el = document.getElementById("searchAliases");
+        if (!el) return {};
+        try { ALIAS = JSON.parse(el.dataset.aliases); } catch (e) { ALIAS = {}; }
+        return ALIAS || {};
+      }
+      function aliasTargets(tq) {
+        const A = getAlias();
+        const m = {};
+        for (const key in A) {
+          const score = tq === key ? 1 : (tq.length >= 3 && key.indexOf(tq) === 0 ? 1.5 : -1);
+          if (score < 0) continue;
+          for (const tk of A[key]) { const tl = tk.toLowerCase(); if (m[tl] === undefined || score < m[tl]) m[tl] = score; }
+        }
+        return m;
+      }
+
       // Harvest the index from the rendered catalog (US + Japan + ADRs). Tagging each row with its pool
       // lets a US listing rank ahead of a foreign duplicate of the same name (Coca-Cola Co. before a
       // Mexican bottler), and keeps the revenue-magnitude prominence comparable within one currency.
@@ -481,6 +506,7 @@ const STARTERS = ["Apple", "Coca-Cola", "Berkshire", "Costco", "Toyota", "Visa"]
         const t = term.trim().toLowerCase();
         const tq = sq(t);
         if (!tq) return [];
+        const al = aliasTargets(tq);
         const out = [];
         for (let i = 0; i < INDEX.length; i++) {
           const it = INDEX[i];
@@ -491,6 +517,10 @@ const STARTERS = ["Apple", "Coca-Cola", "Berkshire", "Costco", "Toyota", "Visa"]
           else if (it.words.some((w) => w.indexOf(t) === 0)) s = 3;         // a word in the name starts with it
           else if (it.nlsq.indexOf(tq) >= 0) s = 4;                         // name contains
           else if (it.haysq.indexOf(tq) >= 0) s = 5;                        // ticker or place contains
+          // A curated alias surfaces the household name where the legal name wouldn't match; never
+          // demotes a stronger literal match (an exact ticker like COKE still leads its own query).
+          const a = al[it.tl];
+          if (a !== undefined && (s < 0 || a < s)) s = a;
           if (s >= 0) out.push({ it, s });
         }
         // Best match first: closeness of match, then a US listing over a foreign duplicate, then the
