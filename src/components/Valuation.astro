@@ -429,6 +429,19 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
         </>
       ) : null}
 
+      <div class="bondBox">
+        <div class="bondHead">
+          <span class="bondTitle">Against a high-grade bond — Graham’s yardstick</span>
+          <span class="bondField"><span class="bondLbl">today’s bond yield</span><input id="bondY" type="number" inputmode="decimal" step="0.1" min="0" placeholder="e.g. 4.5" aria-label="High-grade bond yield, percent" /><span class="bondPct">%</span></span>
+        </div>
+        <p class="bondLede" id="bondLede">Graham measured a stock against the bond you could own instead — the heart of his margin of safety. Enter today’s high-grade bond yield (the 10-year Treasury, or a AAA corporate) to weigh the owner-earnings yield against it. Nothing is stored.</p>
+        <div class="compare bondCmp" id="bondCmp" hidden>
+          <div class="cmp"><span class="cl">Owner-earnings yield</span><span class="cv hot" id="eyB">—</span></div>
+          <div class="cmp"><span class="cl">High-grade bond yield</span><span class="cv" id="bondYOut">—</span></div>
+          <div class="cmp"><span class="cl">Margin over the bond</span><span class="cv" id="spreadB">—</span></div>
+        </div>
+      </div>
+
       <div class="dials">
         <span class="dialsLbl">The assumptions, turn the dials</span>
         <label>Discount rate <output id="rOut">9%</output><input id="r" type="range" min="4" max="15" step="0.5" value="9" /></label>
@@ -538,6 +551,18 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
   .sensNote { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); margin: 9px 0 0; line-height: 1.5; max-width: 72ch; }
 
   .gatenote { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); margin: 8px 0 0; line-height: 1.5; max-width: 70ch; }
+
+  /* Graham's bond yardstick: the owner-earnings yield against the bond the reader could hold instead. */
+  .bondBox { margin: 18px 0 0; padding: 13px 0 0; border-top: 1px solid var(--rule); }
+  .bondHead { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .bondTitle { font-size: 11.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+  .bondField { display: inline-flex; align-items: baseline; gap: 6px; }
+  .bondLbl { font-size: 11.5px; color: var(--muted); letter-spacing: 0.02em; }
+  .bondField input { width: 66px; padding: 5px 8px; border: 1px solid var(--rule-strong); font-family: var(--sans); font-size: 14px; font-variant-numeric: tabular-nums; background: var(--surface); }
+  .bondPct { font-size: 16px; font-weight: 700; color: var(--ink); }
+  .bondLede { font-family: var(--serif); font-size: 13.5px; line-height: 1.55; color: var(--ink-soft); margin: 10px 0 0; max-width: 78ch; }
+  .bondCmp { margin-top: 12px; }
+
   .foot { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); margin: 14px 0 0; line-height: 1.5; max-width: 70ch; }
 
   /* On a phone the price input wraps under its label rather than overflowing, and each dial's
@@ -566,6 +591,9 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
     const rOut = document.getElementById("rOut"), nOut = document.getElementById("nOut"), gOut = document.getElementById("gOut");
     const lede = document.getElementById("lede"), impG = document.getElementById("impG"), oeY = document.getElementById("oeY");
     const pe = document.getElementById("pe"), pb = document.getElementById("pb"), ggate = document.getElementById("ggate");
+    // Graham's bond yardstick: the reader's high-grade bond yield, the owner-earnings yield set against it.
+    const bondY = document.getElementById("bondY"), bondLede = document.getElementById("bondLede"), bondCmp = document.getElementById("bondCmp");
+    const eyB = document.getElementById("eyB"), bondYOut = document.getElementById("bondYOut"), spreadB = document.getElementById("spreadB");
     const oeNorm = document.getElementById("oeNorm"), oeSbc = document.getElementById("oeSbc"), oeMaint = document.getElementById("oeMaint");
     const refRow = document.getElementById("refRow"), refG = document.getElementById("refG"), refV = document.getElementById("refV"), refMos = document.getElementById("refMos");
     const EPS3 = parseFloat(box.dataset.eps3), BVPS = parseFloat(box.dataset.bvps);
@@ -622,7 +650,42 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
     }
     function setURL(v) { try { const u = new URL(location.href); v ? u.searchParams.set("px", v) : u.searchParams.delete("px"); history.replaceState(null, "", u); } catch (e) {} }
 
+    // Graham's central test, made live: the owner-earnings yield (the equity yield a price buys) set
+    // against the high-grade bond yield the reader supplies — the bond you could hold instead. The
+    // margin between them is the margin of safety Graham measured in yield terms; and the discount
+    // rate reads as that bond plus the premium you demand, Buffett's "interest rates are gravity."
+    function bondView() {
+      if (!bondY || !bondCmp || !bondLede) return;
+      const BOND = parseFloat(bondY.value) / 100;
+      const price = parseFloat(px.value), SH = curSH(), base = effOE();
+      const haveEY = price > 0 && base > 0 && SH > 0;
+      const EY = haveEY ? base / (price * SH) : null;
+      if (!(BOND > 0) || !haveEY) {
+        bondCmp.hidden = true;
+        bondLede.textContent = !(BOND > 0)
+          ? "Graham measured a stock against the bond you could own instead — the heart of his margin of safety. Enter today’s high-grade bond yield (the 10-year Treasury, or a AAA corporate) to weigh the owner-earnings yield against it. Nothing is stored."
+          : "Enter a price above to set the owner-earnings yield, then this weighs it against the bond.";
+        return;
+      }
+      const rr = parseFloat(r.value) / 100;
+      bondCmp.hidden = false;
+      eyB.textContent = pcs(EY);
+      bondYOut.textContent = (BOND * 100).toFixed(1) + "%";
+      const spread = EY - BOND;
+      spreadB.textContent = (spread >= 0 ? "+" : "−") + Math.abs(spread * 100).toFixed(1) + " pts";
+      spreadB.style.color = spread >= 0 ? "var(--good)" : "var(--bad)";
+      const ratio = EY / BOND;
+      let s;
+      if (EY >= 2 * BOND) s = `The owner-earnings yield is about ${ratio.toFixed(1)}× the bond — comfortably above it, the wide cushion Graham looked for: you are paid far more to own the business than to hold the bond.`;
+      else if (EY >= BOND) s = `The owner-earnings yield sits above the bond, but short of the roughly 2× cushion Graham’s defensive rule asked for. The margin over the bond is your pay for the equity’s risk; weigh whether it is enough.`;
+      else s = `The owner-earnings yield is below the bond — today, the riskless bond pays more. The equity has to grow into that gap to earn its risk, which is exactly the growth the reverse-DCF above asks you to believe.`;
+      const prem = rr - BOND;
+      if (prem > 0.001) s += ` Your ${(rr * 100).toFixed(0)}% discount rate is this ${(BOND * 100).toFixed(1)}% bond plus about a ${(prem * 100).toFixed(1)}-point premium for the risk.`;
+      bondLede.textContent = s;
+    }
+
     function update() {
+      bondView();
       const { rr, N, gT } = dials();
       const base = effOE();
       const SH = curSH();
@@ -720,7 +783,15 @@ const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.ab
     }
     [px, r, n, g, shInput, mmDial].forEach((el) => el && el.addEventListener("input", update));
     [oeNorm, oeSbc, oeMaint].forEach((el) => el && el.addEventListener("change", update));
-    try { const q = new URL(location.href).searchParams.get("px"); if (q) px.value = q; } catch (e) {}
+    // The bond yield carries in the URL (like the price), so a shared link keeps the whole comparison.
+    if (bondY) bondY.addEventListener("input", () => {
+      try { const u = new URL(location.href); bondY.value ? u.searchParams.set("by", bondY.value) : u.searchParams.delete("by"); history.replaceState(null, "", u); } catch (e) {}
+      bondView();
+    });
+    try {
+      const q = new URL(location.href).searchParams.get("px"); if (q) px.value = q;
+      const qb = new URL(location.href).searchParams.get("by"); if (qb && bondY) bondY.value = qb;
+    } catch (e) {}
     update();
   })();
 </script>
