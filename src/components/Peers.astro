@@ -1,7 +1,7 @@
 ---
 import fundamentals from "../data/fundamentals.json";
 import { classify } from "../lib/archetype.mjs";
-import { fmtMoney, roicValue, topLineRevenue, ownerEarningsMargin, grossMargin } from "../lib/fundamentals.mjs";
+import { fmtMoney, roicValue, topLineRevenue, ownerEarningsMargin, grossMargin, gmCorrupt } from "../lib/fundamentals.mjs";
 import { returnOnEquity, returnOnTangibleEquity, efficiencyRatio, netInterestMargin } from "../lib/financials.mjs";
 import { ffoMargin, ffoPayout, ffoOnAssets, debtToAssets } from "../lib/reits.mjs";
 import { combinedRatio, lossRatio } from "../lib/insurers.mjs";
@@ -42,7 +42,7 @@ const norm = (c, fn) => {
 };
 const metricsOf = (c) => ({
   revenue: topLineRevenue(c.lines || {}, c),
-  grossMargin: norm(c, (L) => grossMargin(L)),
+  grossMargin: norm(c, (L, co) => { const v = grossMargin(L); return gmCorrupt(v, co) ? null : v; }),
   opMargin: norm(c, (L) => (L.operatingIncome != null && L.revenue ? L.operatingIncome / L.revenue : null)),
   roic: norm(c, (L) => roicValue(L)),
   oeMargin: norm(c, (L, co) => ownerEarningsMargin(L, co)),

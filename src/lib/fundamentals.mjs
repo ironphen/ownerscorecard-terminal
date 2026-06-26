@@ -700,9 +700,23 @@ export function grossMarginSwings(company) {
   const ser = grossMarginRecord(company);
   return ser.length >= 3 && Math.min(...ser.map((r) => r.gm)) < 0.6;
 }
+// True when a gross-margin reading sits anomalously high against a record that already dips to a
+// moderate year — the cost-of-revenue-captured-near-zero artifact. A sticky cost structure does not
+// double overnight, so a year at least twice the record's median and 25+ points above it (or simply
+// near-total, ≥85%) is a tagging error, not a real jump. Keying off the full-series median tells a
+// temporary spike (a minority of years; the median stays low, so the spike is flagged — Worthington's
+// 81%, AAR's 50%) from a genuine step-up (the new level becomes the majority, the median rises with
+// it, nothing is flagged). Shared so the record table can judge a TTM cell, which carries no fiscal
+// year to look up, by exactly the same rule as the dated years.
+export function gmCorrupt(gm, company) {
+  if (gm == null || !grossMarginSwings(company)) return false;
+  const ms = grossMarginRecord(company).map((r) => r.gm).sort((a, b) => a - b);
+  const med = ms[Math.floor(ms.length / 2)];
+  return gm >= 0.85 || (med != null && gm >= med * 2 && gm >= med + 0.25);
+}
 export function corruptGrossMarginYears(company) {
   if (!grossMarginSwings(company)) return new Set();
-  return new Set(grossMarginRecord(company).filter((r) => r.gm >= 0.85).map((r) => r.fy));
+  return new Set(grossMarginRecord(company).filter((r) => gmCorrupt(r.gm, company)).map((r) => r.fy));
 }
 
 export function ownerEarningsMargin(L, company) {

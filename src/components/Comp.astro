@@ -18,7 +18,13 @@ const pctOf = (n, d, dp = 0) => (n != null && d && d > 0 ? `${((n / d) * 100).to
 const sbcRev = sbc != null ? pctOf(sbc, rev) : null;
 const sbcOI = sbc != null ? pctOf(sbc, oi) : null;
 
-const insider = comp?.insiderOwnership;
+// A directors-and-officers economic stake above ~80% implies a public float under 20% — almost always
+// a super-voting-class / voting-power column captured in place of economic ownership (Regeneron reads
+// 97% but insiders own ~1–2%). We can't disambiguate from the number alone, so suppress it rather than
+// show a wrong incentives figure on a marquee name; genuine owner-operators below that read through.
+// (Belt-and-suspenders to the same ceiling in the parser, so already-committed data is safe at once.)
+const insiderRaw = comp?.insiderOwnership;
+const insider = typeof insiderRaw === "number" && insiderRaw > 80 ? null : insiderRaw;
 const insiderStr = insider == null ? null : (typeof insider === "number" ? `${insider}%` : insider);
 const show = (sbc != null && rev) || comp?.payRatio != null || insider != null;
 ---

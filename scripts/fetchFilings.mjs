@@ -558,12 +558,14 @@ function extractInsiderOwnership(text) {
     const raw = m[1].replace(/\s+/g, "");
     if (raw === "*" || /lessthan|under|</i.test(raw)) return "<1%";
     const n = parseFloat(raw);
-    // A proxy-filing public company has public holders, so an insider *economic* stake can never
-    // reach 100%. A captured 100% is the signature of a "% of a super-voting class" / "% of voting
-    // power" column (dual-class controlled companies) or a stray non-ownership table — overstating
-    // skin in the game. Reject it (and let the caller keep scanning for the real row). Genuine
-    // founder control in the 90s is kept; only the impossible 100 is cut.
-    return n >= 0 && n < 100 ? Math.round(n * 10) / 10 : null;
+    // A directors-and-officers *economic* stake above ~80% means a public float under 20% — vanishingly
+    // rare for a listed company, and overwhelmingly the dual-class artifact: a "% of a super-voting
+    // class" / "% of total voting power" column captured instead of economic ownership (Regeneron's
+    // insiders own ~1–2%, not the 97% a Class A column shows; Sinclair, Bentley, Movado the same). We
+    // can't tell a genuine thin-float owner-operator (Ubiquiti's real ~93%) from the artifact by the
+    // number alone and can't reach the proxy to read the economic column, so precision wins: reject it
+    // (and let the scan continue to a lower row), since a wrong incentives figure is worse than none.
+    return n >= 0 && n <= 80 ? Math.round(n * 10) / 10 : null;
   };
   // The header ("Security Ownership of Certain Beneficial Owners and Management") usually appears
   // first in the table of contents / a cross-reference, with the real Item 403 table tens of

@@ -60,8 +60,12 @@ eq(extractInsiderOwnership("Security Ownership of Certain Beneficial Owners and 
 // 15. Exactly 100% is impossible as an economic stake for a proxy-filing public company (it's a
 //     super-voting-class / voting-power column, or a parse artifact) → null, not an overstated stake.
 eq(extractInsiderOwnership(HEAD + "All directors and executive officers as a group (5 persons) 3,263,659 100%"), null, "100% (voting-class/error artifact) → null");
-// 16. Genuine founder control in the 90s is real ownership — kept, only the impossible 100 is cut.
-eq(extractInsiderOwnership(HEAD + "All directors and executive officers as a group (6 persons) 56,000,000 93.1%"), 93.1, "genuine 93.1% founder control kept");
+// 16. Above ~80% implies a <20% public float — almost always the dual-class voting-column artifact
+//     (Regeneron reads 97% but insiders own ~1–2%); we can't tell it from a genuine thin-float
+//     owner-operator by the number alone, so precision wins and it's suppressed.
+eq(extractInsiderOwnership(HEAD + "All directors and executive officers as a group (6 persons) 56,000,000 93.1%"), null, "above-80% (likely voting-class artifact) → null");
+// 17. A genuine high-but-plausible owner-operator stake at/below the ceiling reads through.
+eq(extractInsiderOwnership(HEAD + "All directors and executive officers as a group (4 persons) 41,000,000 74.6%"), 74.6, "genuine 74.6% owner-operator kept");
 
 console.log("\nextractPayRatio — unchanged regression:");
 eq(extractPayRatio("the ratio of the annual total compensation of our CEO to the median was 248 to 1 for fiscal 2024."), 248, "pay ratio sentence");

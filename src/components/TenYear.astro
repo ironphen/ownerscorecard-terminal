@@ -1,6 +1,6 @@
 ---
 import { classify, financialKind, financialSubtype } from "../lib/archetype.mjs";
-import { fmtMoney, currencySymbol, roicValue, liquidAssets, topLineRevenue, debtReliable, oiReliable, effectiveTaxRate, ownerEarningsAbs, freeCashFlowAbs, grossMargin, corruptGrossMarginYears } from "../lib/fundamentals.mjs";
+import { fmtMoney, currencySymbol, roicValue, liquidAssets, topLineRevenue, debtReliable, oiReliable, effectiveTaxRate, ownerEarningsAbs, freeCashFlowAbs, grossMargin, corruptGrossMarginYears, gmCorrupt } from "../lib/fundamentals.mjs";
 import { returnOnEquity, returnOnTangibleEquity, returnOnAssets, efficiencyRatio, tangibleEquity } from "../lib/financials.mjs";
 import { ffo, ffoPerShare, ffoPayout, debtToAssets } from "../lib/reits.mjs";
 import { combinedRatio, lossRatio } from "../lib/insurers.mjs";
@@ -31,7 +31,15 @@ const oiOk = oiReliable(company);
 const ccy = company.currency || "USD";
 const sym = currencySymbol(ccy);
 const money = (v) => (v == null ? "—" : fmtMoney(v, ccy));
-const marginStr = (n, d, dp = 1) => (n != null && d ? `${(n / d) * 100 < 0 ? "−" : ""}${(Math.abs((n / d) * 100)).toFixed(dp)}%` : "—");
+const marginStr = (n, d, dp = 1) => {
+  if (n == null || !d) return "—";
+  const r = n / d;
+  // Above ~1000% the denominator (a sliver of revenue, a hair of equity) is immaterial and the ratio
+  // carries nothing beyond "≈ divide by zero" — a pre-revenue company otherwise prints a −243,100%
+  // "operating margin." Say it isn't meaningful rather than print noise as if it were a figure.
+  if (Math.abs(r) > 10) return "n/m";
+  return `${r * 100 < 0 ? "−" : ""}${Math.abs(r * 100).toFixed(dp)}%`;
+};
 const perShare = (n, sh) => (n != null && sh ? `${sym}${(n / sh).toFixed(2)}` : "—");
 // A plain count (shares), so the buyback-or-dilution record reads across the row.
 const fmtCount = (v) => {
@@ -246,7 +254,7 @@ const lastI = cols.length - 1;
 {
   const corruptGM = corruptGrossMarginYears(company);
   if (corruptGM.size) cols.forEach((c) => {
-    const corrupt = c.ttm ? (c.lines && grossMargin(c.lines) >= 0.85) : corruptGM.has(Number(c.label));
+    const corrupt = c.ttm ? (c.lines && gmCorrupt(grossMargin(c.lines), company)) : corruptGM.has(Number(c.label));
     if (corrupt && c.lines && c.lines.costOfRevenue != null) c.lines = { ...c.lines, costOfRevenue: null };
   });
 }
