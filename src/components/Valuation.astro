@@ -50,6 +50,11 @@ const offModel = fk === "bank" || fk === "insurer" || fk === "reit";
 const isADR = company.market === "ADR";
 const cyclical = overlays.some((o) => o.key === "cyclical");
 const median = (xs) => { if (!xs.length) return null; const s = [...xs].sort((a, b) => a - b); const m = Math.floor(s.length / 2); return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
+// A fiscal year as a two-digit tick (’25), and the inclusive span of a delivered-growth window —
+// the last `n` points its CAGR and sparkline are read over — labelled ’20→’25, so every record
+// anchor names the years it covers rather than leaving a bare count's start year to guess.
+const yy = (fy) => (fy == null ? "" : `’${String(fy).slice(-2)}`);
+const winRangeYrs = (pairs, n = 6) => { const w = (pairs || []).slice(-n); return w.length >= 2 ? `${yy(w[0].fy)}→${yy(w[w.length - 1].fy)}` : null; };
 // Delivered growth (trendGrowth) and the reverse-DCF math (pv/solve/justified multiples) live in
 // shared libs — lib/valuationInputs.mjs and lib/reverseDcf.mjs — so this page and the head-to-head
 // compare view read a business through identical arithmetic. trendGrowth is imported above.
@@ -147,20 +152,24 @@ const rotceH = (company.history || [])
 const rotceMed = rotceH.length >= 3 ? median(rotceH) : null;
 const bankRunnable = isBank && tbvps != null && tbvps > 0 && rotceMed != null;
 // Delivered tangible-book-per-share growth, the record anchor for the bank/insurer growth dial.
-const tbvpsH = (company.history || [])
-  .map((h) => { const t = tangibleEquity(h.lines); const s = h.lines.sharesDiluted; return t != null && s ? t / s : null; })
-  .filter((v) => v != null);
+const tbvpsPairs = (company.history || [])
+  .map((h) => { const t = tangibleEquity(h.lines); const s = h.lines.sharesDiluted; return { fy: h.fy, v: t != null && s ? t / s : null }; })
+  .filter((p) => p.v != null);
+const tbvpsH = tbvpsPairs.map((p) => p.v);
 const tbvGrowthRaw = trendGrowth(tbvpsH.slice(-6));
 const tbvWin = sparkWin(tbvpsH, 5, tbvps);
+const tbvRange = winRangeYrs(tbvpsPairs);
 
 // REIT valuation: a property trust is priced on a multiple of funds from operations,
 // its cash earnings once property depreciation is added back.
 const isReit = fk === "reit";
 const ffops = ffoPerShare(L);
 const dpsReit = L.dividendsPaid != null && shares ? Math.abs(L.dividendsPaid) / shares : null;
-const ffopsH = (company.history || []).map((h) => ffoPerShare(h.lines)).filter((v) => v != null);
+const ffopsPairs = (company.history || []).map((h) => ({ fy: h.fy, v: ffoPerShare(h.lines) })).filter((p) => p.v != null);
+const ffopsH = ffopsPairs.map((p) => p.v);
 const ffoGrowthRaw = trendGrowth(ffopsH.slice(-6));
 const ffoWin = sparkWin(ffopsH, 5, ffops);
+const ffoRange = winRangeYrs(ffopsPairs);
 const reitGrowthPct = ffoGrowthRaw == null ? 3 : Math.max(0, Math.min(8, Math.round(ffoGrowthRaw * 100)));
 const reitRunnable = isReit && ffops != null && ffops > 0 && shares != null && shares > 0;
 
@@ -168,9 +177,11 @@ const reitRunnable = isReit && ffops != null && ffops > 0 && shares != null && s
 // the question to the future profitability the price demands. Inputs: revenue and its
 // recent growth, the only honest base when there are no earnings yet.
 const rev = L.revenue;
-const revH = (company.history || []).map((h) => h.lines.revenue).filter((v) => v != null);
+const revPairs = (company.history || []).map((h) => ({ fy: h.fy, v: h.lines.revenue })).filter((p) => p.v != null);
+const revH = revPairs.map((p) => p.v);
 const gRevRaw = trendGrowth(revH.slice(-6));
 const revWin = sparkWin(revH, 5, company.ttm?.lines?.revenue);
+const revRange = winRangeYrs(revPairs);
 const negMode = !runnable && !offModel && rev != null && rev > 0 && shares != null && shares > 0;
 const gRevPct = gRevRaw == null ? 15 : Math.max(0, Math.min(45, Math.round((gRevRaw * 100) / 5) * 5));
 const oeMarginNow = ownerEarnings != null && rev ? ownerEarnings / rev : null;
@@ -221,7 +232,6 @@ const recentOe = (oeGrowth == null) ? (() => {
 // "5 yr" / "10 yr" so the reader sees exactly which years the CAGR was read over (e.g. ’16→’25),
 // rather than a trailing count whose start year is left to guess. Each range is the inclusive span
 // of the same window its CAGR is computed over: the recent five-point window, and the full record.
-const yy = (fy) => (fy == null ? "" : `’${String(fy).slice(-2)}`);
 const range5 = gDeliv5 != null && oeAbsHist.length >= 5
   ? `${yy(oeAbsHist[oeAbsHist.length - 5].fy)}→${yy(oeAbsHist[oeAbsHist.length - 1].fy)}`
   : null;
@@ -287,7 +297,7 @@ const bondAsOf = rates?.asOf ? new Date(rates.asOf).toLocaleDateString("en-US", 
           <span class="dialsLbl">The assumptions, turn the dials</span>
           <label>Discount rate <output id="rOutR">8%</output><input id="rR" type="range" min="5" max="12" step="0.5" value="8" /></label>
           <label>FFO / share growth <output id="gOutR">{reitGrowthPct}%</output><input id="gR" type="range" min="0" max="8" step="0.5" value={reitGrowthPct} /></label>
-          <DeliveredGrowth cagr={ffoGrowthRaw} series={ffoWin} label="FFO / share, delivered" />
+          <DeliveredGrowth cagr={ffoGrowthRaw} series={ffoWin} label="FFO / share, delivered" range={ffoRange} />
         </div>
         <p class="dialsNote">The justified multiple is 1 ÷ (discount rate − growth), a perpetuity on FFO. At an 8% discount and 3% growth, a REIT is worth about 20× FFO. Raise the discount rate and the multiple falls: the same interest-rate gravity that pulls on every yield asset.</p>
         <p class="foot">FFO about ${ffops.toFixed(2)} per share on {(shares / 1e6).toFixed(0)}M shares. The reference value applies the multiple the dials justify to FFO per share — a yardstick, not a price target. FFO here adds back depreciation and removes property-sale gains, the NAREIT method; it does not net out maintenance capex (AFFO), occupancy or lease terms, which the 10-K does.</p>
@@ -319,7 +329,7 @@ const bondAsOf = rates?.asOf ? new Date(rates.asOf).toLocaleDateString("en-US", 
           <span class="dialsLbl">The assumptions, turn the dials</span>
           <label>Cost of equity <output id="coeOut">10%</output><input id="coeB" type="range" min="8" max="14" step="0.5" value="10" /></label>
           <label>Long-term growth <output id="gOutB">3%</output><input id="gB" type="range" min="0" max="6" step="0.5" value="3" /></label>
-          <DeliveredGrowth cagr={tbvGrowthRaw} series={tbvWin} label="Tangible book / share, delivered" />
+          <DeliveredGrowth cagr={tbvGrowthRaw} series={tbvWin} label="Tangible book / share, delivered" range={tbvRange} />
           <p class="dialsNote">The justified multiple is (return on tangible equity − growth) ÷ (cost of equity − growth). {isInsurer ? "An" : "A"} {finKind} earning exactly its cost of equity is worth about one times tangible book; every point of durable excess return above that is worth paying up for. Raise the cost of equity and the justified multiple falls: that is interest-rate gravity on {isInsurer ? "an" : "a"} {finKind}.</p>
         </div>
         <p class="foot">Tangible book {$(tEq)} on {(shares / 1e6).toFixed(0)}M shares, a {pctS(rotceMed)} normalized return on it. The reference value applies the multiple that return justifies to tangible book — a yardstick to weigh the price against, never a target. It assumes the {finKind} keeps earning that return; {bankRisk} changes it, which is what the record and the 10-K are for.</p>
@@ -356,7 +366,7 @@ const bondAsOf = rates?.asOf ? new Date(rates.asOf).toLocaleDateString("en-US", 
           <label>Discount rate <output id="rOutN">9%</output><input id="rN" type="range" min="4" max="15" step="0.5" value="9" /></label>
           <label>Years to get there <output id="nOutN">10</output><input id="nN" type="range" min="5" max="15" step="1" value="10" /></label>
           <label>Revenue growth <output id="grOutN">{gRevPct}%</output><input id="grN" type="range" min="0" max="45" step="5" value={gRevPct} /></label>
-          <DeliveredGrowth cagr={gRevRaw} series={revWin} label="Revenue, delivered" />
+          <DeliveredGrowth cagr={gRevRaw} series={revWin} label="Revenue, delivered" range={revRange} />
           <label>Mature owner-earnings margin <output id="mmOutN">15%</output><input id="mmN" type="range" min="3" max="40" step="1" value="15" /></label>
         </div>
         <p class="foot">Two reads of one future. From your price: the owner earnings the company must reach, valued at a mature multiple and discounted back at your rate, expressed as the margin it implies on revenue grown at your rate. From your belief: the mature margin you would credit, turned into a reference value per share and netted against {netDebt >= 0 ? `net debt ${$(netDebt)}` : `net cash ${$(-netDebt)}`} — a yardstick, never a target. When the margin the price demands runs above the one you would believe, you are paying for a future taken on faith. For a deep cyclical at a trough, normalized through-cycle earnings are the better lens; this mode is for the genuinely unprofitable, and for the profitable business whose capital spending currently outruns its cash.</p>

@@ -5,18 +5,21 @@
 // is too short to read.
 import Sparkline from "./Sparkline.astro";
 
-const { cagr = null, series = [], label = "Delivered" } = Astro.props;
+const { cagr = null, series = [], label = "Delivered", range = null } = Astro.props;
 const xs = (series || []).filter((v) => v != null);
 const pct = (v) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.abs(v * 100).toFixed(0)}%`);
 const show = cagr != null && xs.length >= 3;
+// Name the years the rate is read over (’20→’25) when the caller supplies them, else fall back to
+// a bare count, so the reader isn't left guessing where the window starts.
+const span = range ?? `${xs.length}-yr record`;
 ---
 
 {show ? (
-  <p class="deliv" title={`What ${label.toLowerCase()} actually did over the last ${xs.length} years on record, the dial's starting point`}>
+  <p class="deliv" title={`What ${label.toLowerCase()} actually did over ${range ? `${range} on record` : `the last ${xs.length} years on record`}, the dial's starting point`}>
     <span class="dl">{label}</span>
     <b>{pct(cagr)}/yr</b>
     <Sparkline series={xs} />
-    <span class="dn">{xs.length}-yr record</span>
+    <span class="dn">{span}</span>
   </p>
 ) : null}
 
