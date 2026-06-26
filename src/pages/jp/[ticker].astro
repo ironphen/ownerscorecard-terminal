@@ -8,6 +8,7 @@ import Scorecard from "../../components/Scorecard.astro";
 import Capital from "../../components/Capital.astro";
 import Inversion from "../../components/Inversion.astro";
 import Valuation from "../../components/Valuation.astro";
+import CompareLink from "../../components/CompareLink.astro";
 import ActHeader from "../../components/ActHeader.astro";
 import OwnerQuestions from "../../components/OwnerQuestions.astro";
 import Segments from "../../components/Segments.astro";
@@ -140,7 +141,7 @@ const jpUnderstand = fund ? `${fund.industry}, read on the figures below — the
 
       <section class="actGroup">
         <ActHeader n="III" title="The price" lede="What you would be paying, and what a price would have to assume to make sense, set against the record above." />
-        <div id="sec-price" class="sec"><Valuation company={fund} /></div>
+        <div id="sec-price" class="sec"><Valuation company={fund} /><CompareLink company={fund} /></div>
       </section>
 
       <p class="foot">

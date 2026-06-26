@@ -1,0 +1,19 @@
+---
+// "Weigh this against another business" — the bridge from a company page to the head-to-head compare
+// view, seeded with this company alone. We seed only the one the reader is already on; the business to
+// weigh it against is theirs to bring (the compare view is a place to think, not a list of suggestions).
+const { company } = Astro.props;
+const ticker = String(company?.ticker || "").toUpperCase();
+---
+{ticker ? (
+  <p class="cmpLink">
+    <a href={`/compare?c=${encodeURIComponent(ticker)}`}>Weigh {ticker} against another business →</a>
+    <span class="note">Opportunity cost is the real test of a price: the question is never &ldquo;is this good?&rdquo; but &ldquo;is it better than the other things you could own?&rdquo; Set this record beside one.</span>
+  </p>
+) : null}
+
+<style>
+  .cmpLink { margin: 18px 0 0; padding-top: 12px; border-top: 1px solid var(--rule-strong); }
+  .cmpLink a { font-family: var(--sans); font-weight: 600; font-size: 14.5px; }
+  .note { display: block; font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); margin-top: 5px; line-height: 1.5; max-width: 66ch; }
+</style>
