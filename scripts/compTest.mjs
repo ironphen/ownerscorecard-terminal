@@ -57,6 +57,11 @@ eq(extractInsiderOwnership("The board, as a group, met four times. Compensation 
 eq(extractInsiderOwnership(HEAD + "BlackRock, Inc. 12,345,678 8.1% Vanguard Group 11,000,000 7.2%"), null, "5%-holders only, no group row");
 // 14. Header present (e.g. a bare TOC entry) but no table anywhere → null, never a stray prose %.
 eq(extractInsiderOwnership("Security Ownership of Certain Beneficial Owners and Management 47. " + "Our board met as a group several times; pay rose 6% over the year. ".repeat(20)), null, "header but no table");
+// 15. Exactly 100% is impossible as an economic stake for a proxy-filing public company (it's a
+//     super-voting-class / voting-power column, or a parse artifact) → null, not an overstated stake.
+eq(extractInsiderOwnership(HEAD + "All directors and executive officers as a group (5 persons) 3,263,659 100%"), null, "100% (voting-class/error artifact) → null");
+// 16. Genuine founder control in the 90s is real ownership — kept, only the impossible 100 is cut.
+eq(extractInsiderOwnership(HEAD + "All directors and executive officers as a group (6 persons) 56,000,000 93.1%"), 93.1, "genuine 93.1% founder control kept");
 
 console.log("\nextractPayRatio — unchanged regression:");
 eq(extractPayRatio("the ratio of the annual total compensation of our CEO to the median was 248 to 1 for fiscal 2024."), 248, "pay ratio sentence");
