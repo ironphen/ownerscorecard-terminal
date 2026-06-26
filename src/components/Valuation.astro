@@ -217,10 +217,23 @@ const recentOe = (oeGrowth == null) ? (() => {
   const yrs = run[run.length - 1].fy - run[0].fy;
   return yrs > 0 ? { g: Math.pow(run[run.length - 1].v / run[0].v, 1 / yrs) - 1, fromFy: run[0].fy } : null;
 })() : null;
+// The actual fiscal-year endpoints behind each delivered-growth window, shown in place of a bare
+// "5 yr" / "10 yr" so the reader sees exactly which years the CAGR was read over (e.g. ’16→’25),
+// rather than a trailing count whose start year is left to guess. Each range is the inclusive span
+// of the same window its CAGR is computed over: the recent five-point window, and the full record.
+const yy = (fy) => (fy == null ? "" : `’${String(fy).slice(-2)}`);
+const range5 = gDeliv5 != null && oeAbsHist.length >= 5
+  ? `${yy(oeAbsHist[oeAbsHist.length - 5].fy)}→${yy(oeAbsHist[oeAbsHist.length - 1].fy)}`
+  : null;
+const recRange = oeGrowth != null && oeAbsHist.length >= 2
+  ? `${yy(oeAbsHist[0].fy)}→${yy(oeAbsHist[oeAbsHist.length - 1].fy)}`
+  : null;
 // Label and value for the delivered-growth row: the full record where a CAGR exists, else the
 // recent positive run for a turnaround, else withheld.
 const dLabel = oeGrowth != null
-  ? (gDeliv5 != null ? `Owner-earnings growth · ${recYrs} yr` : "Owner-earnings growth, delivered")
+  ? (recRange ? `Owner-earnings growth · ${recRange}`
+     : gDeliv5 != null ? `Owner-earnings growth · ${recYrs} yr`
+     : "Owner-earnings growth, delivered")
   : recentOe != null ? `Owner-earnings growth · since FY${recentOe.fromFy}`
   : "Owner-earnings growth, delivered";
 const dValue = oeGrowth != null ? `${oeGrowth.replace("/yr", "")}/yr`
@@ -401,7 +414,7 @@ const bondAsOf = rates?.asOf ? new Date(rates.asOf).toLocaleDateString("en-US", 
 
       <div class="compare">
         <div class="cmp"><span class="cl">Implied by the price</span><span class="cv hot" id="impG">—</span></div>
-        {gDeliv5 != null ? <div class="cmp"><span class="cl">Owner-earnings growth · 5 yr</span><span class="cv">{gFmt(gDeliv5)}</span></div> : null}
+        {gDeliv5 != null ? <div class="cmp"><span class="cl">Owner-earnings growth · {range5 ?? "5 yr"}</span><span class="cv">{gFmt(gDeliv5)}</span></div> : null}
         <div class="cmp"><span class="cl">{dLabel}</span><span class="cv">{dValue}</span>{oeWin ? <Sparkline series={oeWin} klass="cmpSpark" /> : null}</div>
         <div class="cmp"><span class="cl">Multiple paid</span><span class="cv" id="multPaid">—</span></div>
         <div class="cmp"><span class="cl">Owner-earnings yield</span><span class="cv" id="oeY">—</span></div>

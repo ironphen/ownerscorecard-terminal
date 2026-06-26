@@ -198,8 +198,15 @@ export function moatReport(company, opts = {}) {
   // 5, How fast did owner earnings compound? Buffett's figure (operating cash less the
   // maintenance capex), not free cash flow, so a builder's growth spending isn't read as shrinkage.
   const oe = L.map((x) => ownerEarningsAbs(x, company));
+  // Annualize over the span the owner-earnings data actually covers, not the full revenue record:
+  // when early years lack a cash-flow statement in the data (a filer captured only from a later
+  // year, e.g. Nvidia's owner earnings begin FY2022), the first non-null owner-earnings year is
+  // later than the first revenue year, and dividing the growth by the longer revenue span understates
+  // the compounding. Use the first and last years that actually carry owner earnings.
+  const oeYears = years.filter((_, i) => oe[i] != null);
+  const oeSpan = oeYears.length >= 2 ? oeYears[oeYears.length - 1] - oeYears[0] : span;
   const oeE = avgFirst(oe, 2), oeL = avgLast(oe, 2);
-  const g = oeE != null && oeL != null ? cagr(oeE, oeL, span) : null;
+  const g = oeE != null && oeL != null ? cagr(oeE, oeL, oeSpan) : null;
   if (g != null) add("Owner earnings growth", `${g >= 0 ? "+" : "−"}${pct(Math.abs(g))}/yr`,
     g >= 0.1 ? "good" : g >= 0 ? "ok" : "warn",
     `Owner earnings ${g >= 0 ? "grew" : "shrank"} about ${pct(Math.abs(g))} a year over the record.`);
