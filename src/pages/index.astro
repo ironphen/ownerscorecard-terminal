@@ -103,28 +103,34 @@ const STARTERS = ["Apple", "Coca-Cola", "Berkshire", "Costco", "Toyota", "Visa"]
       <a class="browse" href="#catalog" data-to="catalog">Browse all {totalLabel} companies →</a>
     </p>
 
-    <!-- A light map of the reading, for the newcomer; the full method is the Principles page. -->
-    <section class="how" aria-label="How to read a company">
-      <h2 class="howH">What a reading looks like</h2>
+    <!-- The five questions every page asks, in the order an owner asks them — the same questions that
+         open each company's Owner Scorecard, so the method a newcomer learns here is the one every page
+         executes. The full method is the Principles page. -->
+    <section class="how" aria-label="The questions an owner asks">
+      <h2 class="howH">The questions an owner asks</h2>
       <ol class="steps">
         <li>
           <span class="stepN" aria-hidden="true">1</span>
-          <span class="stepBody"><b>What is it?</b> What the company sells, and where the money truly comes from — said in one plain sentence.</span>
+          <span class="stepBody"><b>Can you understand it?</b> What the business sells, and the one lever that decides it — in a plain sentence.</span>
         </li>
         <li>
           <span class="stepN" aria-hidden="true">2</span>
-          <span class="stepBody"><b>Does it earn?</b> The return on the capital it employs, and how much of the profit reaches owners as cash.</span>
+          <span class="stepBody"><b>Does it have a moat?</b> A high return on capital, and whether it has lasted across the record, not just one good year.</span>
         </li>
         <li>
           <span class="stepN" aria-hidden="true">3</span>
-          <span class="stepBody"><b>Will it last?</b> The balance sheet — debt, liquidity, the staying power to get through a bad year whole.</span>
+          <span class="stepBody"><b>Will it survive a bad year?</b> The balance sheet and the worst year on record — the staying power to come through whole.</span>
         </li>
         <li>
           <span class="stepN" aria-hidden="true">4</span>
-          <span class="stepBody"><b>What's the price?</b> What you'd pay for the earnings — the one place a bargain, or a folly, hides.</span>
+          <span class="stepBody"><b>Is it run for the owners?</b> How candidly management talks in its own filing, and what it does with the cash.</span>
+        </li>
+        <li class="cap">
+          <span class="stepN" aria-hidden="true">5</span>
+          <span class="stepBody"><b>What would you pay?</b> Bring a price — the page shows what you'd have to believe to justify it, never a target. The one place a bargain, or a folly, hides.</span>
         </li>
       </ol>
-      <p class="howFoot">Each page answers these in turn and leaves the verdict to you. The full method is in the <a href="/concepts">principles</a>.</p>
+      <p class="howFoot">Every page answers these five in turn, from the company's own filing, and leaves the verdict to you. The full method is in the <a href="/concepts">principles</a>.</p>
     </section>
 
     {articles.length ? (
@@ -295,6 +301,8 @@ const STARTERS = ["Apple", "Coca-Cola", "Berkshire", "Costco", "Toyota", "Visa"]
     }
     .stepBody { font-size: 14px; line-height: 1.5; color: var(--ink-dim); }
     .stepBody b { color: var(--ink); font-weight: 600; }
+    /* The price question is the culmination, so it spans the full width beneath the four that pair up. */
+    .steps .cap { grid-column: 1 / -1; }
     .howFoot { text-align: center; font-family: var(--serif); font-style: italic; font-size: 13.5px; color: var(--muted); margin: 22px 0 0; }
     @media (max-width: 560px) { .steps { grid-template-columns: 1fr; gap: 14px; } }
 
