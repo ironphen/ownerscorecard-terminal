@@ -294,6 +294,40 @@ const cellClass = (kind, c) => {
   if (kind === "neutral" || kind === "leverage") return ""; // a provision or leverage figure isn't a loss
   return neg ? "neg" : "";
 };
+
+// --- Per-share growth: Value Line's "annual rates of change (per sh)", the one part of its page GBM
+// actually used that the record lacked. Buffett's lens — over the long run a share compounds at roughly
+// return on equity times the share of earnings retained — so the realized per-share CAGR is the record's
+// bottom line. Past only, never an estimate; computed off the same split-normalized shares as the table.
+const psVal = (n, L) => (n != null && L && L.sharesDiluted ? n / L.sharesDiluted : null);
+const PS_GROWTH = [
+  { label: "Revenue / share", f: (L) => psVal(topLineRevenue(L, company), L) },
+  { label: "Owner earnings / share", f: (L) => psVal(ownerEarningsAbs(L, company), L) },
+  { label: "EPS", f: (L) => psVal(L.netIncome, L) },
+  { label: "Dividends / share", f: (L) => psVal(L.dividendsPaid != null ? Math.abs(L.dividendsPaid) : null, L) },
+  { label: "Book value / share", f: (L) => psVal(L.stockholdersEquity, L) },
+];
+const fyCols = cols.filter((c) => !c.ttm && c.lines); // CAGR reads realized fiscal years, not the TTM stub
+// Compound annual rate between the first and last fiscal year a metric has (within an optional window).
+// Needs two positive endpoints and a real span — a series that starts at or below zero has no meaningful
+// CAGR, so it reads "—" rather than a fabricated number.
+function cagrOver(f, windowYears) {
+  const pts = fyCols.map((c) => ({ fy: Number(c.label), v: f(c.lines) })).filter((p) => p.v != null && isFinite(p.v));
+  if (pts.length < 2) return null;
+  const b = pts[pts.length - 1];
+  let a = pts[0];
+  if (windowYears) { const cand = pts.filter((p) => p.fy >= b.fy - windowYears && p.fy < b.fy); a = cand.length ? cand[0] : null; }
+  if (!a) return null;
+  const yrs = b.fy - a.fy;
+  if (yrs <= 0 || a.v <= 0 || b.v <= 0) return null;
+  return { rate: Math.pow(b.v / a.v, 1 / yrs) - 1, yrs };
+}
+const fullSpan = fyCols.length ? Number(fyCols[fyCols.length - 1].label) - Number(fyCols[0].label) : 0;
+const growth = PS_GROWTH
+  .map((m) => ({ label: m.label, concept: ROW_CONCEPT[m.label] || null, full: cagrOver(m.f, null), five: cagrOver(m.f, 5) }))
+  .filter((g) => g.full || g.five);
+const showGrowth = growth.length >= 2 && fullSpan >= 3;
+const pctRate = (g) => (g == null ? "—" : `${g.rate >= 0 ? "+" : "−"}${(Math.abs(g.rate) * 100).toFixed(1)}%`);
 ---
 
 {hist.length >= 3 ? (
@@ -332,6 +366,26 @@ const cellClass = (kind, c) => {
         </tbody>
       </table>
     </div>
+    {showGrowth ? (
+      <div class="growth">
+        <div class="ghead">
+          <span class="gtitle">Per-share growth</span>
+          <span class="gnote">the rate an owner's share actually compounded — realized, never an estimate</span>
+        </div>
+        <table class="gtab">
+          <thead><tr><th class="rowlabel"></th><th>{fullSpan}-yr</th><th>5-yr</th></tr></thead>
+          <tbody>
+            {growth.map((g) => (
+              <tr>
+                <th class="rowlabel">{g.concept ? <Term id={g.concept}>{g.label}</Term> : g.label}</th>
+                <td class={g.full ? (g.full.rate < 0 ? "neg" : "pos") : ""}>{pctRate(g.full)}{g.full ? <span class="yr">/yr</span> : null}</td>
+                <td class={g.five ? (g.five.rate < 0 ? "neg" : "pos") : ""}>{pctRate(g.five)}{g.five ? <span class="yr">/yr</span> : null}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    ) : null}
   </section>
 ) : null}
 
@@ -358,6 +412,19 @@ const cellClass = (kind, c) => {
   td.neg { color: var(--bad); }
   td.pos { color: var(--good, #1a7a3c); }
   tbody tr:hover td, tbody tr:hover th.rowlabel { background: var(--surface-2); }
+
+  /* Per-share growth (Value Line's "annual rates of change per sh"): a compact CAGR block under the
+     record, the compounding an owner actually earned. Sits apart from the year grid since it summarizes
+     the whole span rather than reading a column. */
+  .growth { margin: 16px 0 0; max-width: 420px; }
+  .ghead { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap; border-top: 2px solid var(--rule-strong); padding-top: 9px; }
+  .gtitle { font-family: var(--serif); font-style: italic; font-weight: 600; color: var(--muted); font-size: 13px; }
+  .gnote { font-family: var(--serif); font-style: italic; font-size: 11.5px; color: var(--muted); }
+  .gtab { width: 100%; margin-top: 7px; white-space: nowrap; }
+  .gtab thead th { text-align: right; font-size: 11px; color: var(--muted); padding: 3px 10px 5px; border-bottom: 1px solid var(--rule); }
+  .gtab tbody th.rowlabel { text-align: left; font-weight: 600; color: var(--ink); padding: 6px 14px 6px 0; position: static; background: none; font-size: 13px; }
+  .gtab td { text-align: right; padding: 6px 10px; border-bottom: 1px solid var(--rule); font-variant-numeric: tabular-nums; }
+  .gtab .yr { color: var(--muted); font-size: 10.5px; margin-left: 1px; }
 
   /* Short labels are hidden until the screen is narrow, where they buy column room. */
   .ls, .ys { display: none; }
