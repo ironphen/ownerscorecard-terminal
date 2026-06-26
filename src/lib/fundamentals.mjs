@@ -467,18 +467,21 @@ function revenueGrowing(c) {
 // less maintenance capex) and, after growth capex too, free cash flow — the figure the scorecard's
 // "free cash" margin reads, so the page never contradicts itself. Raw numbers (the component formats
 // in the company's currency); null unless net income, operating cash and capex are all present.
-export function ownerEarningsBridge(c) {
-  const L = c?.lines || {};
-  const ni = L.netIncome, cfo = L.cashFromOps, capex = L.capex;
+// One year of the bridge from a lines object + its fiscal year, read in the company's context
+// (which decides whether the year is genuinely growing, and so the maintenance-capex split). Shared
+// by the single-year bridge and the multi-year series so every column reads the identical Buffett
+// arithmetic. Null unless the year carries the three anchors: net income, operating cash, capex.
+export function ownerEarningsBridgeFor(L, fy, company) {
+  const ni = L?.netIncome, cfo = L?.cashFromOps, capex = L?.capex;
   if (ni == null || cfo == null || capex == null) return null;
   const dep = L.depreciation != null ? L.depreciation : null;
   const sbc = L.stockBasedComp != null ? L.stockBasedComp : null;
   const capexAbs = Math.abs(capex);
   const other = cfo - ni - (dep || 0) - (sbc || 0);
-  const maint = maintenanceCapex(c) ?? capexAbs;
+  const maint = maintenanceCapexFor(L, company) ?? capexAbs;
   const growth = Math.max(0, capexAbs - maint);
   return {
-    fy: c.fy ?? null,
+    fy: fy ?? null,
     revenue: L.revenue ?? null,
     netIncome: ni,
     depreciation: dep,
@@ -491,6 +494,22 @@ export function ownerEarningsBridge(c) {
     ownerEarnings: cfo - maint,    // Buffett owner earnings: operating cash less maintenance capex
     freeCashFlow: cfo - capexAbs,  // after the discretionary growth capex too
   };
+}
+
+export function ownerEarningsBridge(c) {
+  return ownerEarningsBridgeFor(c?.lines || {}, c?.fy ?? null, c);
+}
+
+// The bridge across the last `maxCols` fiscal years (returned oldest→newest), so an owner reads the
+// trend of each step — whether owner earnings is growing and whether the gap to reported profit is
+// widening or holding — not a single snapshot. Same per-year arithmetic; years missing an anchor
+// drop out. `company.history` already includes the latest annual as its final entry.
+export function ownerEarningsBridgeSeries(c, maxCols = 5) {
+  const hist = Array.isArray(c?.history) ? c.history : [];
+  return hist
+    .map((h) => ownerEarningsBridgeFor(h?.lines || {}, h?.fy ?? null, c))
+    .filter(Boolean)
+    .slice(-maxCols);
 }
 
 // Capital allocation: of the Owner Earnings, how much was returned, and was it real?
