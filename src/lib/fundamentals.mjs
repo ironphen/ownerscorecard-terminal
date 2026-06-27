@@ -51,14 +51,19 @@ export function resolveInsiderOwnership(comp, totalShares) {
   const pct = comp?.insiderOwnership;
   if (pct == null) return null;
   if (typeof pct !== "number") return pct;        // "<1%" placeholder
-  if (pct <= 80) return pct;                        // plausible economic range
   const sh = comp.insiderShares;
-  if (sh != null && totalShares > 0) {
-    const econ = sh / totalShares;
-    if (econ >= 0.6 && econ <= 1.1) return pct;     // shares corroborate genuine thin-float control
-    return null;                                     // captured percent is a voting-class column
-  }
-  return null;                                       // no shares to corroborate a >80% reading
+  const econ = sh != null && totalShares > 0 ? sh / totalShares : null;
+  // When the group's beneficially-owned shares are a reliable fraction of the shares outstanding, that
+  // economic stake is the check on the proxy's stated percent. A percent sitting well ABOVE it (more
+  // than 25 points — a tolerance that absorbs share-count basis/date noise) is a super-voting-CLASS or
+  // voting-power column, not economic ownership, in any band: Regeneron's 97% against a ~1.6% stake,
+  // but also a sub-80 reading like 74% against a 31% stake. Suppress those; show the rest, since a
+  // percent at or below the economic stake doesn't overstate it (Ubiquiti's 93% against a ~93% stake).
+  if (econ != null && econ >= 0 && econ <= 1.1) return econ * 100 < pct - 25 ? null : pct;
+  // No reliable share count to corroborate (missing, or more shares than outstanding): a high (>80%)
+  // reading is too likely a voting-class column to trust, so suppress it; a sub-80 reading is in the
+  // plausible economic range and shown as before.
+  return pct > 80 ? null : pct;
 }
 
 // Compact money formatting, currency-aware so the same compute serves the US pool (USD)

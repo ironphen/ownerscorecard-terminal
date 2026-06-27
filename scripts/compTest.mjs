@@ -75,17 +75,21 @@ eq(g2 && g2.shares, 56000000, "high-stake group shares captured (for the cross-c
 const g3 = extractInsiderGroup(HEAD + "All directors and executive officers as a group (10 persons) 234,567 * Note: * Less than 1%.");
 eq(g3 && g3.pct, "<1%", "asterisk pct"); eq(g3 && g3.shares, 234567, "asterisk-row shares still captured");
 
-console.log("\nresolveInsiderOwnership — the share-count cross-check on a high percent:");
-// Below 80%: shown as-is, no cross-check needed.
-eq(resolveInsiderOwnership({ insiderOwnership: 40, insiderShares: 1 }, 100), 40, "≤80% shown as-is");
-// 93% corroborated by shares (56M of 60M ≈ 93% of the float) — a genuine thin-float owner-operator, kept.
-eq(resolveInsiderOwnership({ insiderOwnership: 93.1, insiderShares: 56_000_000 }, 60_000_000), 93.1, "93% corroborated by shares → kept (Ubiquiti-shape)");
-// 97% NOT corroborated (1.6M of 110M ≈ 1.5% economically) — a super-voting-class column, suppressed.
-eq(resolveInsiderOwnership({ insiderOwnership: 97.4, insiderShares: 1_600_000 }, 110_000_000), null, "97% with low economic share → suppressed (Regeneron-shape)");
+console.log("\nresolveInsiderOwnership — the share-count cross-check (any band):");
+// Corroborated: shares ≈ the stated percent → shown (the economic stake backs the figure).
+eq(resolveInsiderOwnership({ insiderOwnership: 40, insiderShares: 40_000_000 }, 100_000_000), 40, "40% corroborated → shown");
+// 93% corroborated by shares (56M of 60M ≈ 93%) — a genuine thin-float owner-operator, kept.
+eq(resolveInsiderOwnership({ insiderOwnership: 93.1, insiderShares: 56_000_000 }, 60_000_000), 93.1, "93% corroborated → kept (Ubiquiti-shape)");
+// 97% NOT corroborated (1.6M of 110M ≈ 1.5%) — a super-voting-class column, suppressed.
+eq(resolveInsiderOwnership({ insiderOwnership: 97.4, insiderShares: 1_600_000 }, 110_000_000), null, "97% vs 1.5% economic → suppressed (Regeneron-shape)");
+// Sub-80 artifact now caught too: 74% stated against a ~31% economic stake → suppressed.
+eq(resolveInsiderOwnership({ insiderOwnership: 74.6, insiderShares: 31_000_000 }, 100_000_000), null, "74% vs 31% economic → suppressed (sub-80 voting column)");
+// A percent at/below the economic stake doesn't overstate it → shown (econ even exceeds raw here).
+eq(resolveInsiderOwnership({ insiderOwnership: 66.9, insiderShares: 90_000_000 }, 100_000_000), 66.9, "raw ≤ economic stake → shown");
 // 90% with no share count to corroborate (old data) → suppressed.
 eq(resolveInsiderOwnership({ insiderOwnership: 90, insiderShares: null }, 100_000_000), null, "high % with no shares → suppressed");
-// A garbage share count (more shares than outstanding) can't corroborate → suppressed.
-eq(resolveInsiderOwnership({ insiderOwnership: 95, insiderShares: 999_000_000 }, 100_000_000), null, "shares > outstanding → suppressed");
+// Garbage share count (more shares than outstanding) → unreliable; sub-80 shown, can't disprove.
+eq(resolveInsiderOwnership({ insiderOwnership: 61.7, insiderShares: 163_000_000 }, 100_000_000), 61.7, "shares > outstanding (unreliable) → sub-80 shown");
 // The "<1%" placeholder is always low and always kept.
 eq(resolveInsiderOwnership({ insiderOwnership: "<1%" }, 100_000_000), "<1%", "\"<1%\" kept");
 
