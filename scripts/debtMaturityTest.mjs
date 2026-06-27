@@ -86,6 +86,17 @@ console.log("\nReconciliation gate — must return null (precision over recall):
 // No fiscal year → can't bound the schedule, withheld.
 eq(extractDebtMaturity("2026 $ 1 2027 2 2028 3 2029 4 long-term debt", null, 1000), null, "no fiscal year → null");
 
+console.log("\nBalance-sheet sanity ceiling — an absurd total vs the real debt is withheld (Barrick-shape):");
+{
+  // A table the parser locked onto by mistake — internally consistent (sums to its own declared total),
+  // but that total is hundreds of times the company's actual debt. Withhold, never emit the absurd wall.
+  const garbage = "aggregate maturities of long-term debt (in millions): 2026 $ 100,000 2027 100,000 2028 100,000 2029 100,000 2030 100,000 Thereafter 100,000 Total $ 600,000 .";
+  eq(extractDebtMaturity(garbage, 2025, 500), null, "declared $600,000M vs $500M debt (>3×) → withheld");
+  // The same shape at a plausible scale reconciles to the debt → kept.
+  const fine = "aggregate maturities of long-term debt (in millions): 2026 $ 100 2027 100 2028 100 2029 100 2030 100 Thereafter 100 Total $ 600 .";
+  eq(extractDebtMaturity(fine, 2025, 500)?.total, 600, "same shape near the real debt ($600M vs $500M) → kept");
+}
+
 console.log("\nLayout A — multi-column contractual-obligations table, debt column taken (J&J shape):");
 {
   // Each year carries three columns — debt, interest, total — and the tail reads "After 2030 …" then

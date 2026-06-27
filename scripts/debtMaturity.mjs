@@ -156,6 +156,13 @@ export function extractDebtMaturity(text, fy, totalDebtMillions = null) {
       ok = thereafter != null; basis = "summed";
     }
     if (!ok) continue;
+    // Balance-sheet sanity ceiling (every basis, including a self-consistent declared total): a maturity
+    // schedule sums to roughly the company's actual debt, so a total several times the balance-sheet debt
+    // means the parser locked onto the wrong table — a revenue or share-count ladder on an obscure filing,
+    // not the debt note. Withhold rather than emit an absurd wall (Barrick's "$413T", etc.). This matches
+    // the 3× bound the believability gate enforces on the committed data, so the extractor never emits a
+    // wall that gate would have to reject — turning a refresh-blocking error into a quiet, correct blank.
+    if (totalDebtMillions && totalDebtMillions > 0 && total > totalDebtMillions * 3) continue;
     scored.push({ layout: c.layout, schedule, thereafter, declaredTotal, total, basis });
   }
   if (!scored.length) return null;
