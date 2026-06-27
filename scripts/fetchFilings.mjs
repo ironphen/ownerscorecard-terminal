@@ -548,24 +548,24 @@ function extractPayRatio(text) {
 // tags-to-spaces htmlToText keeps cells separated, so the share count and percent never merge. Returns
 // a number (percent of class), the string "<1%" for the asterisk/"less than 1%" placeholder, or null
 // when there is no confident match — a wrong number here is worse than none.
-function extractInsiderOwnership(text) {
-  // The group row: "directors/officers … as a group", a comma-grouped share count (the table's
-  // shape, which prose never has), then an explicit percent — or the */"less than 1%" placeholder.
-  // Tolerances are wide enough for long labels ("…director nominees and named executive officers…")
-  // and the extra numeric columns (options, total) that sit between shares and the percent.
-  const groupRe = /(?:directors?|executive officers?|named executive officers?)[^.\n]{0,140}?as a group[^%]{0,60}?[\d,]{5,}[^%]{0,60}?(\*|less than\s*1\s*%|under\s*1\s*%|<\s*1\s*%|\d{1,3}(?:\.\d+)?\s*%)/i;
+function extractInsiderGroup(text) {
+  // The group row: "directors/officers … as a group", a comma-grouped share count (group 1 — the
+  // table's shape, which prose never has), then an explicit percent (group 2) — or the */"less than
+  // 1%" placeholder. Tolerances are wide enough for long labels ("…director nominees and named
+  // executive officers…") and the extra numeric columns (options, total) between shares and percent.
+  const groupRe = /(?:directors?|executive officers?|named executive officers?)[^.\n]{0,140}?as a group[^%]{0,60}?([\d,]{5,})[^%]{0,60}?(\*|less than\s*1\s*%|under\s*1\s*%|<\s*1\s*%|\d{1,3}(?:\.\d+)?\s*%)/i;
   const pick = (m) => {
-    const raw = m[1].replace(/\s+/g, "");
-    if (raw === "*" || /lessthan|under|</i.test(raw)) return "<1%";
+    const sh = parseInt(m[1].replace(/,/g, ""), 10);
+    const shares = Number.isFinite(sh) ? sh : null;
+    const raw = m[2].replace(/\s+/g, "");
+    if (raw === "*" || /lessthan|under|</i.test(raw)) return { pct: "<1%", shares };
     const n = parseFloat(raw);
-    // A directors-and-officers *economic* stake above ~80% means a public float under 20% — vanishingly
-    // rare for a listed company, and overwhelmingly the dual-class artifact: a "% of a super-voting
-    // class" / "% of total voting power" column captured instead of economic ownership (Regeneron's
-    // insiders own ~1–2%, not the 97% a Class A column shows; Sinclair, Bentley, Movado the same). We
-    // can't tell a genuine thin-float owner-operator (Ubiquiti's real ~93%) from the artifact by the
-    // number alone and can't reach the proxy to read the economic column, so precision wins: reject it
-    // (and let the scan continue to a lower row), since a wrong incentives figure is worse than none.
-    return n >= 0 && n <= 80 ? Math.round(n * 10) / 10 : null;
+    // Keep the raw captured percent. A listed company can't be 100%+ insider-owned, so reject that as a
+    // parse/voting artifact; but whether a high-but-under-100 percent is genuine economic ownership or a
+    // super-voting-CLASS column is decided downstream (resolveInsiderOwnership), where the group share
+    // count can be checked against the shares outstanding — a check the proxy text alone can't make.
+    if (!(n >= 0 && n < 100)) return null;
+    return { pct: Math.round(n * 10) / 10, shares };
   };
   // The header ("Security Ownership of Certain Beneficial Owners and Management") usually appears
   // first in the table of contents / a cross-reference, with the real Item 403 table tens of
@@ -585,15 +585,24 @@ function extractInsiderOwnership(text) {
   const m = text.match(groupRe);
   return m ? pick(m) : null;
 }
+// The percent alone — the parser test asserts on this; the share-count cross-check lives at the
+// display layer (resolveInsiderOwnership), which has the shares-outstanding the proxy text doesn't.
+function extractInsiderOwnership(text) {
+  const g = extractInsiderGroup(text);
+  return g ? g.pct : null;
+}
 
 async function getComp(cik, f) {
   const accnNoDash = f.accn.replace(/-/g, "");
   const url = `https://www.sec.gov/Archives/edgar/data/${Number(cik)}/${accnNoDash}/${f.doc}`;
   const text = htmlToText(await fetchText(url));
   const payRatio = extractPayRatio(text);
-  const insiderOwnership = extractInsiderOwnership(text);
+  const grp = extractInsiderGroup(text);
+  const insiderOwnership = grp ? grp.pct : null;
   if (payRatio == null && insiderOwnership == null) return null;
-  return { payRatio, insiderOwnership, fy: f.date?.slice(0, 4) || null, sourceUrl: url };
+  // insiderShares is the group's beneficially-owned share count, kept so the display can corroborate a
+  // high percent against the shares outstanding (genuine thin-float control vs. a voting-class column).
+  return { payRatio, insiderOwnership, insiderShares: grp ? grp.shares : null, fy: f.date?.slice(0, 4) || null, sourceUrl: url };
 }
 
 // "New" = a prose sentence carrying a signal term whose wording doesn't closely
@@ -1123,7 +1132,7 @@ async function main() {
 }
 
 // Exported for the offline logic test; only hit EDGAR when run directly.
-export { ownerFlags, FLAG_THEMES, sentences, isProse, diff, extractPayRatio, extractInsiderOwnership, htmlToText, section, fetchText, businessDescription, candorSignals, businessBrief, buffettRead };
+export { ownerFlags, FLAG_THEMES, sentences, isProse, diff, extractPayRatio, extractInsiderOwnership, extractInsiderGroup, htmlToText, section, fetchText, businessDescription, candorSignals, businessBrief, buffettRead };
 
 if (import.meta.url === pathToFileURL(process.argv[1] || "").href) {
   main().catch((e) => { console.error(`\n❌ ${e.message}\n`); process.exit(1); });

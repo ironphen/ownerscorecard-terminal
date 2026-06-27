@@ -5,7 +5,8 @@
 // precision is checked. The bar is precision over recall: it must extract the right number or nothing,
 // never a wrong one, so the false-match cases assert null.
 
-import { extractInsiderOwnership, extractPayRatio } from "./fetchFilings.mjs";
+import { extractInsiderOwnership, extractInsiderGroup, extractPayRatio } from "./fetchFilings.mjs";
+import { resolveInsiderOwnership } from "../src/lib/fundamentals.mjs";
 
 let fails = 0;
 const eq = (got, exp, name) => {
@@ -60,12 +61,33 @@ eq(extractInsiderOwnership("Security Ownership of Certain Beneficial Owners and 
 // 15. Exactly 100% is impossible as an economic stake for a proxy-filing public company (it's a
 //     super-voting-class / voting-power column, or a parse artifact) → null, not an overstated stake.
 eq(extractInsiderOwnership(HEAD + "All directors and executive officers as a group (5 persons) 3,263,659 100%"), null, "100% (voting-class/error artifact) → null");
-// 16. Above ~80% implies a <20% public float — almost always the dual-class voting-column artifact
-//     (Regeneron reads 97% but insiders own ~1–2%); we can't tell it from a genuine thin-float
-//     owner-operator by the number alone, so precision wins and it's suppressed.
-eq(extractInsiderOwnership(HEAD + "All directors and executive officers as a group (6 persons) 56,000,000 93.1%"), null, "above-80% (likely voting-class artifact) → null");
-// 17. A genuine high-but-plausible owner-operator stake at/below the ceiling reads through.
-eq(extractInsiderOwnership(HEAD + "All directors and executive officers as a group (4 persons) 41,000,000 74.6%"), 74.6, "genuine 74.6% owner-operator kept");
+// 16. Above 80% is now KEPT as the raw percent — the share-count cross-check that decides whether it's
+//     genuine economic ownership or a voting-class column lives downstream (resolveInsiderOwnership).
+eq(extractInsiderOwnership(HEAD + "All directors and executive officers as a group (6 persons) 56,000,000 93.1%"), 93.1, "above-80% kept as raw percent (resolved downstream)");
+// 17. A genuine high-but-plausible owner-operator stake reads through.
+eq(extractInsiderOwnership(HEAD + "All directors and executive officers as a group (4 persons) 41,000,000 74.6%"), 74.6, "74.6% owner-operator kept");
+
+console.log("\nextractInsiderGroup — captures the group share count beside the percent:");
+const g1 = extractInsiderGroup(HEAD + "All directors and executive officers as a group (12 persons) 3,456,789 2.3% ");
+eq(g1 && g1.pct, 2.3, "group pct"); eq(g1 && g1.shares, 3456789, "group shares");
+const g2 = extractInsiderGroup(HEAD + "All directors and executive officers as a group (6 persons) 56,000,000 93.1%");
+eq(g2 && g2.shares, 56000000, "high-stake group shares captured (for the cross-check)");
+const g3 = extractInsiderGroup(HEAD + "All directors and executive officers as a group (10 persons) 234,567 * Note: * Less than 1%.");
+eq(g3 && g3.pct, "<1%", "asterisk pct"); eq(g3 && g3.shares, 234567, "asterisk-row shares still captured");
+
+console.log("\nresolveInsiderOwnership — the share-count cross-check on a high percent:");
+// Below 80%: shown as-is, no cross-check needed.
+eq(resolveInsiderOwnership({ insiderOwnership: 40, insiderShares: 1 }, 100), 40, "≤80% shown as-is");
+// 93% corroborated by shares (56M of 60M ≈ 93% of the float) — a genuine thin-float owner-operator, kept.
+eq(resolveInsiderOwnership({ insiderOwnership: 93.1, insiderShares: 56_000_000 }, 60_000_000), 93.1, "93% corroborated by shares → kept (Ubiquiti-shape)");
+// 97% NOT corroborated (1.6M of 110M ≈ 1.5% economically) — a super-voting-class column, suppressed.
+eq(resolveInsiderOwnership({ insiderOwnership: 97.4, insiderShares: 1_600_000 }, 110_000_000), null, "97% with low economic share → suppressed (Regeneron-shape)");
+// 90% with no share count to corroborate (old data) → suppressed.
+eq(resolveInsiderOwnership({ insiderOwnership: 90, insiderShares: null }, 100_000_000), null, "high % with no shares → suppressed");
+// A garbage share count (more shares than outstanding) can't corroborate → suppressed.
+eq(resolveInsiderOwnership({ insiderOwnership: 95, insiderShares: 999_000_000 }, 100_000_000), null, "shares > outstanding → suppressed");
+// The "<1%" placeholder is always low and always kept.
+eq(resolveInsiderOwnership({ insiderOwnership: "<1%" }, 100_000_000), "<1%", "\"<1%\" kept");
 
 console.log("\nextractPayRatio — unchanged regression:");
 eq(extractPayRatio("the ratio of the annual total compensation of our CEO to the median was 248 to 1 for fiscal 2024."), 248, "pay ratio sentence");

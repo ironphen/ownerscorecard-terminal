@@ -38,6 +38,29 @@ export function passesQualityFloor(company) {
   return true;
 }
 
+// Decide what insider-ownership figure to surface from the proxy `comp` block, using the group's
+// beneficially-owned share count as an independent check on its stated percent. Below ~80% the percent
+// is in the plausible economic range and shown as-is. Above ~80% it is trusted ONLY when the group's
+// shares really are most of the shares outstanding — a genuine thin-float owner-operator (Ubiquiti's
+// founder owns ~93% of a tiny float); when the percent is a super-voting-CLASS column the group's
+// shares are a small slice of the total (Regeneron: ~97% of Class A, ~1.5% economically) and the check
+// exposes it, so it's suppressed rather than shown as a wrong incentives figure. The "<1%" placeholder
+// is always low and kept. Returns a number, "<1%", or null. `totalShares` is the diluted shares
+// outstanding; when it's unavailable a high percent can't be corroborated and is suppressed.
+export function resolveInsiderOwnership(comp, totalShares) {
+  const pct = comp?.insiderOwnership;
+  if (pct == null) return null;
+  if (typeof pct !== "number") return pct;        // "<1%" placeholder
+  if (pct <= 80) return pct;                        // plausible economic range
+  const sh = comp.insiderShares;
+  if (sh != null && totalShares > 0) {
+    const econ = sh / totalShares;
+    if (econ >= 0.6 && econ <= 1.1) return pct;     // shares corroborate genuine thin-float control
+    return null;                                     // captured percent is a voting-class column
+  }
+  return null;                                       // no shares to corroborate a >80% reading
+}
+
 // Compact money formatting, currency-aware so the same compute serves the US pool (USD)
 // and the Japanese pool (JPY, which reaches trillions): 123e9 -> "$123.0B", 50.7e12 ->
 // "¥50.7T". The symbol is chosen by currency code; everything else is identical.
