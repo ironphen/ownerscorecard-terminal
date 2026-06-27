@@ -45,6 +45,10 @@ const pools = [
 let companies = pools.flatMap(([pool, list]) => list.map((c) => ({ ...c, _pool: pool })));
 if (ONLY.length) companies = companies.filter((c) => ONLY.includes(String(c.ticker).toUpperCase()));
 
+// The debt-maturity wall lives in language.json (US pool), keyed by ticker; the lease wall lives on the
+// company in fundamentals.json. Both are read here so the gate can verify each ladder still ties out.
+const language = load("language.json");
+
 // ---- findings ----
 const findings = [];
 const flag = (level, code, c, msg) => findings.push({ level, code, ticker: String(c.ticker || "?").toUpperCase(), pool: c._pool, msg });
@@ -168,6 +172,44 @@ for (const c of companies) {
     if (allLoss && oem != null && oem > 0.05 && fcf != null && fcf < 0) {
       WARN(c, "owner-earnings-on-loss-maker", `owner-earnings margin reads +${pct(oem)} though net income was negative in all ${niAll.length} years on record and free cash flow is ${$(fcf)} — a cash-machine read on a cash burner`);
     }
+  }
+
+  // ---- B6. Lease ladder must still tie out (the figure the lease wall renders) ----
+  // leaseObligations() shows a ladder only when it reconciles, but a regression or a stale carry-over
+  // could pair one with figures it no longer matches. The invariants are exact and use the extractor's
+  // own tolerance, so they can only fire on data corrupted AFTER extraction: the yearly buckets plus the
+  // thereafter sum to the undiscounted total, the present value never exceeds those undiscounted
+  // payments, and no payment is negative.
+  for (const [kn, ladder] of [["operating", c.leases?.operating], ["finance", c.leases?.finance]]) {
+    if (!ladder?.schedule) continue;
+    const sum = ladder.schedule.reduce((a, b) => a + b, 0) + (ladder.after || 0);
+    if (ladder.schedule.some((v) => v < 0) || ladder.after < 0)
+      ERR(c, "lease-ladder-negative", `${kn}-lease ladder carries a negative payment`);
+    else if (ladder.undiscounted != null && Math.abs(sum - ladder.undiscounted) > Math.max(2e6, ladder.undiscounted * 0.01))
+      ERR(c, "lease-ladder-unreconciled", `${kn}-lease buckets sum to ${$(sum)} but the stored undiscounted total is ${$(ladder.undiscounted)} — the ladder no longer ties out`);
+    else if (ladder.liability != null && ladder.undiscounted != null && ladder.liability > ladder.undiscounted * 1.02)
+      ERR(c, "lease-pv-exceeds-payments", `${kn}-lease present value ${$(ladder.liability)} exceeds its undiscounted payments ${$(ladder.undiscounted)} — impossible`);
+  }
+
+  // ---- B7. Debt-maturity wall internal consistency (the figure the debt wall renders) ----
+  // Mirrors DebtMaturity.astro. Years consecutive and ascending, amounts non-negative, a declared total
+  // ties to the schedule, the near figure bounded by the total, and the whole wall in the same world as
+  // the balance-sheet debt — a wall several times the debt on the books is a mis-parse the reconciliation
+  // gate should already have refused, so seeing one is the regression alarm.
+  const dm = c._pool === "US" ? language?.companies?.[String(c.ticker).toUpperCase()]?.debtMaturity : null;
+  if (dm?.schedule?.length) {
+    const yrs = dm.schedule.map((s) => s.year);
+    const schedSum = dm.schedule.reduce((a, s) => a + s.amount, 0) + (dm.thereafter || 0);
+    if (yrs.some((y, i) => i > 0 && y !== yrs[i - 1] + 1))
+      ERR(c, "debt-wall-years-noncontiguous", `debt-wall years are not consecutive (${yrs.join(", ")})`);
+    else if (dm.schedule.some((s) => s.amount < 0) || (dm.thereafter != null && dm.thereafter < 0))
+      ERR(c, "debt-wall-negative", `debt wall carries a negative maturity`);
+    else if (dm.declaredTotal != null && Math.abs(schedSum - dm.declaredTotal) > Math.max(2e6, dm.declaredTotal * 0.02))
+      ERR(c, "debt-wall-unreconciled", `debt-wall schedule sums to ${$(schedSum)} but the declared total is ${$(dm.declaredTotal)}`);
+    else if (dm.total != null && dm.within2yr != null && dm.within2yr > dm.total * 1.001)
+      ERR(c, "debt-wall-near-exceeds-total", `debt due within two years ${$(dm.within2yr)} exceeds the wall total ${$(dm.total)}`);
+    else if (L.totalDebt > 0 && dm.total > L.totalDebt * 3)
+      ERR(c, "debt-wall-vs-balance-sheet", `debt-wall total ${$(dm.total)} is more than 3× the balance-sheet debt ${$(L.totalDebt)} — likely the wrong table`);
   }
 }
 
