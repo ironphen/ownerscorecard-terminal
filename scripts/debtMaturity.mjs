@@ -27,7 +27,10 @@ const num = (s) => {
 
 // A caption is about debt — not leases, pensions, purchase commitments, intangibles, revenue, benefits,
 // which are the look-alike "year amount year amount" ladders the same filing is full of.
-const DEBT = /\b(long[- ]?term debt|senior notes|term debt|notes payable|principal (?:payment|maturit)|aggregate (?:annual )?(?:principal )?maturit|maturities of (?:long-term )?debt|future principal|debt maturit|debt repayment|long-term borrowings|debt and other notes|scheduled principal|fixed[- ]rate debt|maturities of total debt)\b/i;
+// Note the absence of a trailing \b: these are word STEMS, and a trailing boundary would refuse the
+// very inflections the footnotes use — "maturit" wouldn't match "maturities", "payment" wouldn't match
+// "payments". The leading \b still anchors each stem to a word start.
+const DEBT = /\b(long[- ]?term debt|senior notes|term debt|notes payable|principal (?:payment|maturit)|aggregate (?:annual )?(?:principal )?maturit|maturities of (?:long-term )?debt|future principal|debt maturit|debt obligation|debt repayment|long-term borrowings|debt and other notes|scheduled principal|fixed[- ]rate debt|maturities of total debt)/i;
 const NOTDEBT = /\b(lease|pension|benefit|amortization|intangible|purchase oblig|unconditional|minimum rental|revenue|receivable|deposit|guarantee|contribution|repurchase)\b/i;
 
 // Pull the amounts that follow a debt label, dropping the stray footnote-reference digits that sit
@@ -54,7 +57,11 @@ function amountsAfter(s, n) {
 }
 
 // Layout A — interleaved, one row per year: "YEAR amount YEAR amount … [Thereafter amount] [Total amount]".
-// The most common shape (Apple, CVS, Microsoft, Home Depot, Verizon, Coca-Cola, Southwest).
+// The most common shape (Apple, CVS, Microsoft, Home Depot, Verizon, Coca-Cola, Southwest). Also the
+// SEC contractual-obligations table, where each year carries extra columns — "2026 2,000 1,458 3,458"
+// (debt, interest, total) — and the tail reads "After 2030 …" then "Total …"; there the FIRST amount
+// per year is the debt principal, and the reconciliation gate confirms it (a wrong column won't tie out).
+const COLUMNS_ONLY = /^[\s$,.():;\d—-]*$/; // between two years: only numeric columns/separators, never prose
 function layoutA(text, fy) {
   const out = [];
   const pairRe = /(20[2-4]\d)\s+(\$?\s?(?:[\d,]+(?:\.\d+)?|—))(?=\s)/g;
@@ -63,19 +70,25 @@ function layoutA(text, fy) {
   for (let i = 0; i < pairs.length; i++) {
     const run = [pairs[i]];
     for (let j = i + 1; j < pairs.length; j++) {
-      if (pairs[j].year === run[run.length - 1].year + 1 && pairs[j].idx <= run[run.length - 1].end + 12) run.push(pairs[j]);
+      const prev = run[run.length - 1];
+      if (pairs[j].year !== prev.year + 1) break;
+      const gap = pairs[j].idx - prev.end;
+      // adjacent (single column), or separated only by this year's extra numeric columns (multi-column table)
+      if (gap <= 12 || (gap <= 44 && COLUMNS_ONLY.test(text.slice(prev.end, pairs[j].idx)))) run.push(pairs[j]);
       else break;
     }
     if (run.length < 4) continue;          // a schedule is at least four consecutive years
     if (run[0].year < fy) continue;        // it starts at/after the fiscal year, never before
     if (run.some((p) => /^20[2-4]\d$/.test(p.raw))) continue; // a bare year sitting where an amount should be → not a schedule
     const cap = text.slice(Math.max(0, run[0].idx - 340), run[0].idx).replace(/\s+/g, " ");
-    const tail = text.slice(run[run.length - 1].end, run[run.length - 1].end + 90);
+    const tail = text.slice(run[run.length - 1].end, run[run.length - 1].end + 150);
+    // Thereafter ("Thereafter" or "After 2030"), allowing the last year's extra columns to precede it,
+    // but never prose — so a stray "after 2030, the company…" sentence can't be mistaken for a bucket.
     let thereafter = null, after = tail;
-    const tm = tail.match(/^\s*Thereafter\s+(\$?\s?[\d,]+(?:\.\d+)?)/i);
-    if (tm) { thereafter = num(tm[1]); after = tail.slice(tm[0].length); }
-    const totM = after.match(/^\s*(?:Total[^$\d]{0,40}|Subtotal[^$\d]{0,20})(\$?\s?[\d,]+(?:\.\d+)?)/i);
-    const declaredTotal = totM ? num(totM[1]) : null;
+    const tm = tail.match(/(?:Thereafter|After\s+20\d\d)[\s—-]+(\$?\s?\d[\d,]*(?:\.\d+)?)/i); // dash: htmlToText column-break artifact ("Thereafter-$ 25,130")
+    if (tm && tm.index <= 60 && COLUMNS_ONLY.test(tail.slice(0, tm.index))) { thereafter = num(tm[1]); after = tail.slice(tm.index + tm[0].length); }
+    const totM = after.match(/(?:Total|Subtotal)[^$\d\n]{0,30}(\$?\s?\d[\d,]*(?:\.\d+)?)/i);
+    const declaredTotal = totM && totM.index <= 60 && COLUMNS_ONLY.test(after.slice(0, totM.index)) ? num(totM[1]) : null;
     i = pairs.indexOf(run[run.length - 1]);
     out.push({ layout: "A", cap, schedule: run.map((p) => ({ year: p.year, amount: p.amount })), thereafter, declaredTotal, billions: /\(in billions\)/i.test(cap) });
   }
@@ -94,7 +107,7 @@ function layoutB(text, fy) {
     const hasT = /^\s*Thereafter/i.test(win);
     const hasTot = /\bTotal\b/i.test(win.slice(0, 60));
     const hasFV = /fair value/i.test(win.slice(0, 80)); // Comcast's market-risk table carries a fair-value column after Total
-    const labM = win.match(/(fixed[- ]rate debt|long-term debt maturities|debt repayments?|debt and other notes|scheduled principal[^$\d]{0,40}|long-term debt|term debt|total debt|notes payable)/i);
+    const labM = win.match(/(fixed[- ]rate debt|long-term debt maturities|debt maturit(?:y|ies)|debt obligations?|debt repayments?|debt and other notes|scheduled principal[^$\d]{0,40}|principal payments?(?:\s+(?:on|of)\s+(?:long-term\s+)?debt)?|long-term debt|term debt|total debt|notes payable)/i);
     if (!labM) continue;
     if (/lease/i.test(labM[0])) continue;
     const rest = win.slice(labM.index + labM[0].length);

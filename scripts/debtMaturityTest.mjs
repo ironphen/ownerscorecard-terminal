@@ -86,5 +86,39 @@ console.log("\nReconciliation gate — must return null (precision over recall):
 // No fiscal year → can't bound the schedule, withheld.
 eq(extractDebtMaturity("2026 $ 1 2027 2 2028 3 2029 4 long-term debt", null, 1000), null, "no fiscal year → null");
 
+console.log("\nLayout A — multi-column contractual-obligations table, debt column taken (J&J shape):");
+{
+  // Each year carries three columns — debt, interest, total — and the tail reads "After 2030 …" then
+  // "Total …". The FIRST amount per year is the debt principal; the reconciliation confirms it.
+  const t = "The Company's aggregate maturities as of December 28, 2025: (Dollars in Millions) Debt Obligations Interest on Debt Obligations Total 2026 2,000 1,458 3,458 2027 3,216 1,368 4,584 2028 3,128 1,273 4,401 2029 2,153 1,208 3,361 2030 2,689 1,118 3,807 After 2030 28,252 10,306 38,558 Total 41,438 16,731 58,169 For tax matters";
+  const r = extractDebtMaturity(t, 2025, 41438);
+  eq(sched(r), [[2026, 2000], [2027, 3216], [2028, 3128], [2029, 2153], [2030, 2689]], "J&J debt column (not interest/total)");
+  eq(r && [r.thereafter, r.total, r.basis], [28252, 41438, "declared"], "J&J 'After 2030' thereafter + total reconciles");
+}
+
+console.log("\nInflection — 'aggregate maturities'/'payments' must be recognised as debt (the \\b-stem fix):");
+{
+  // A plural caption with no other debt keyword: the regex stem must still fire (it didn't when a
+  // trailing word-boundary refused "maturit·ies").
+  const t = "Aggregate maturities of debt for each of the next five years are as follows (in millions): 2026 $ 500 2027 600 2028 700 2029 800 2030 900 Thereafter 1,500 Total $ 5,000 .";
+  eq(extractDebtMaturity(t, 2025, 5000)?.total, 5000, "'Aggregate maturities' caption recognised");
+}
+
+console.log("\nLayout B — 'Debt maturities' row label (P&G shape), five-year-only:");
+{
+  const t = "Long-term debt maturities during the next five fiscal years are as follows: Fiscal years ending June 30 2026 2027 2028 2029 2030 Debt maturities $ 5,377 $ 4,606 $ 2,142 $ 2,027 $ 3,996 Credit Facilities";
+  const r = extractDebtMaturity(t, 2025, 30400);
+  eq(sched(r), [[2026, 5377], [2027, 4606], [2028, 2142], [2029, 2027], [2030, 3996]], "P&G 'Debt maturities' label caught");
+  eq(r && r.fiveYearOnly, true, "P&G five-year-only");
+}
+
+console.log("\nSeparators — semicolon-delimited rows and a 'Thereafter-$' dash artifact (McDonald's shape):");
+{
+  const t = "Aggregate maturities for debt balances are as follows (in millions): 2026 $ 0 ; 2027 $ 3,201 ; 2028 $ 5,166 ; 2029 $ 3,637 ; 2030 $ 3,011 ; Thereafter-$ 25,130 . These amounts";
+  const r = extractDebtMaturity(t, 2025, 40700);
+  eq(sched(r), [[2026, 0], [2027, 3201], [2028, 5166], [2029, 3637], [2030, 3011]], "McDonald's semicolon rows, $0 year kept");
+  eq(r && r.thereafter, 25130, "McDonald's 'Thereafter-$' dash artifact captured");
+}
+
 if (fails) { console.error(`\n❌ debtMaturityTest: ${fails} failure(s)`); process.exit(1); }
 console.log("\n✅ debtMaturityTest passed");
