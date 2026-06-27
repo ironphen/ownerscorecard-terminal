@@ -129,6 +129,23 @@ for (const P of POOLS) {
     note("warn", P.key, "catalog-shrink", `${n} companies, down from ${base} — check the fetch`);
 }
 
+// ---- file-size guard (keeps the $0 git-based pipeline under GitHub's push ceiling) ----
+// The data is committed to the repo and served static, so a file GitHub refuses to accept on a push —
+// its hard limit is 100 MB per file; it warns past 50 MB — would break the self-maintaining refresh,
+// silently, at the push. So the size is watched HERE, with margin: an error well before the ceiling, so
+// there is time to act (trim history, tighten the universe cap) before a push can fail; a warning at the
+// same 50 MB GitHub flags. The universe is already bounded (top-N by market cap), so what this really
+// guards is the per-company data growing as the product gains layers (debt walls, lease ladders, …).
+const SIZE_WARN = 50e6, SIZE_FAIL = 80e6;
+for (const f of ["fundamentals.json", "language.json", "fundamentals.adr.json", "segments.json", "fundamentals.jp.json"]) {
+  let bytes = 0;
+  try { bytes = fs.statSync(path.join(dataDir, f)).size; } catch { continue; }
+  if (bytes > SIZE_FAIL)
+    note("error", "ALL", "file-size", `${f} is ${(bytes / 1e6).toFixed(0)} MB — past the ${SIZE_FAIL / 1e6} MB guard and nearing GitHub's 100 MB push limit; trim the data before it blocks the refresh`);
+  else if (bytes > SIZE_WARN)
+    note("warn", "ALL", "file-size", `${f} is ${(bytes / 1e6).toFixed(0)} MB — past ${SIZE_WARN / 1e6} MB; headroom to GitHub's 100 MB push limit is shrinking`);
+}
+
 // ---- incentive-layer guard (US + ADR proxies) ----
 // Insider ownership and the CEO pay ratio come from the DEF 14A — a different document and a
 // shape-fragile parse that can null across the whole pool on an EDGAR format shift, overwriting prior
