@@ -1,0 +1,112 @@
+---
+// "Acquisitions & goodwill" — Munger's death-by-indigestion lens. Goodwill is the running tally of what a
+// company has paid ABOVE the identifiable value of everything it bought; it grows when it acquires and
+// falls only when it concedes it overpaid. So an owner reads the size of the bet (against assets and
+// equity), the cash put into buying rather than building, and how much has already been written off — the
+// deals already conceded as mistakes. Derivation in lib/acquisitions.mjs; this presents and never grades.
+// Withheld when a business grew by building, not buying (its story is told by the other panels).
+import { fmtMoney } from "../lib/fundamentals.mjs";
+import { acquisitionRecord } from "../lib/acquisitions.mjs";
+
+const { company } = Astro.props;
+const $ = (v) => fmtMoney(v, company?.currency || "USD");
+const a = acquisitionRecord(company);
+const pct = (v, dp = 0) => (v == null ? "—" : `${Math.round(v * 100 * 10 ** dp) / 10 ** dp}%`);
+const impYears = a ? a.impByYear.map((x) => x.fy).filter(Boolean) : [];
+// Compose the write-down sentence in the frontmatter so spacing is unambiguous, and show the
+// "share of acquisition cash" clause ONLY when it's meaningful — when impairments exceed the cash put
+// into deals, the deals were largely stock-funded and the ratio (2000%+) misleads rather than informs.
+const impCount = impYears.length;
+const impSpan = impCount ? `across ${impCount} ${impCount === 1 ? "year" : "years"} (${impYears.join(", ")})` : "";
+const shareClause =
+  a && a.writtenDownShare != null && a.writtenDownShare >= 0.15 && a.writtenDownShare <= 1
+    ? ` That is roughly ${pct(a.writtenDownShare)} of the cash it put into acquisitions over the span.`
+    : "";
+---
+
+{a ? (
+  <section class="acq">
+    <div class="head">
+      <h3 class="secTitle">Acquisitions &amp; goodwill</h3>
+      <span class="srcnote">from the balance sheet &amp; the {a.span}-year cash-flow record</span>
+    </div>
+    <p class="intro">
+      Munger&rsquo;s warning was that more good businesses die of indigestion than starvation — of overpaying
+      for other companies. Goodwill is the running record of that risk: the price paid <em>above</em> the
+      identifiable value of everything ever bought, a number that only grows when a company acquires and only
+      falls when it concedes it paid too much. Here is the size of that bet, the cash put into buying rather
+      than building, and how much has already been written off.
+    </p>
+
+    <div class="reads">
+      <div class="rd">
+        <span class="rlab">Goodwill{a.intangibles ? " &amp; intangibles" : ""}</span>
+        <span class="rval">{$(a.intangibles ? a.gwPlusInt : a.goodwill)}</span>
+        <span class="rnote">{pct(a.intangibles ? a.gwIntPctAssets : a.gwPctAssets)} of all assets — the premium carried on the balance sheet for businesses acquired</span>
+      </div>
+      <div class="rd">
+        <span class="rlab">Against book equity</span>
+        <span class="rval">{a.exceedsEquity ? "exceeds it" : a.gwVsEquity != null ? `${pct(a.gwVsEquity)}` : "—"}</span>
+        <span class="rnote">
+          {a.exceedsEquity
+            ? `goodwill alone is larger than the company’s entire book equity${a.equity != null && a.equity <= 0 ? ", which is itself negative" : ""} — strip the acquisition premium and there is no net book worth`
+            : `goodwill is this share of book equity; the rest is the company’s own retained and paid-in capital`}
+        </span>
+      </div>
+      <div class="rd">
+        <span class="rlab">Cash spent acquiring</span>
+        <span class="rval">{$(a.cumAcq)}</span>
+        <span class="rnote">over {a.span} years buying other businesses{a.cumCapex > 0 ? `, against ${$(a.cumCapex)} of capital spent building` : ""}</span>
+      </div>
+    </div>
+
+    <div class={a.cumImp > 0 ? "verdict charge" : "verdict clean"}>
+      {a.cumImp > 0 ? (
+        <p>
+          <b>{$(a.cumImp)} written down</b>{" "}{impSpan} — goodwill the company has already conceded it
+          overpaid for, charged against earnings.{shareClause} A write-down doesn&rsquo;t cost cash — the cash
+          left when the deal was signed — but it is management marking its own past judgement to market.
+        </p>
+      ) : (
+        <p>
+          <b>None written down</b> over the record — the goodwill is still carried at full cost. That is the
+          deals holding their value on the books so far; whether they keep doing so is the test an owner
+          watches, since the write-down, when it comes, is the admission the price was too high.
+        </p>
+      )}
+    </div>
+
+    <p class="foot">
+      Goodwill, acquired intangibles and equity from the latest balance sheet; acquisition spend and
+      write-downs summed across the {a.span}-year record. Arithmetic on the company&rsquo;s own filings;
+      nothing here is scored. What the acquisitions were worth is yours to weigh.
+    </p>
+  </section>
+) : null}
+
+<style>
+  .acq { margin: 24px 0; }
+  .head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; border-bottom: 1px solid var(--rule-strong); padding-bottom: 6px; }
+  .secTitle { margin: 0; }
+  .srcnote { font-size: 11.5px; letter-spacing: 0.03em; text-transform: uppercase; color: var(--muted); flex: 0 0 auto; }
+  .intro { font-family: var(--serif); font-style: italic; font-size: 13.5px; color: var(--muted); margin: 9px 0 0; max-width: 74ch; line-height: 1.6; }
+  .intro em { font-style: normal; }
+
+  .reads { margin: 16px 0 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; }
+  .rd { border-left: 2px solid var(--rule-strong); padding: 2px 0 2px 11px; }
+  .rlab { display: block; font-family: var(--sans); font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+  .rval { display: block; font-size: 19px; font-variant-numeric: tabular-nums; color: var(--ink); margin: 3px 0; }
+  .rnote { display: block; font-size: 11.5px; color: var(--ink-dim); line-height: 1.4; }
+
+  .verdict { margin: 16px 0 0; padding: 11px 14px; font-family: var(--serif); font-size: 13px; line-height: 1.6; color: var(--ink-soft); max-width: 82ch; }
+  .verdict p { margin: 0; }
+  .verdict b { font-variant-numeric: tabular-nums; }
+  .verdict.charge { background: var(--warn-tint, var(--accent-tint)); border-left: 2px solid var(--warn, var(--accent)); }
+  .verdict.clean { background: var(--accent-tint); border-left: 2px solid var(--accent); }
+
+  .foot { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--rule-strong); margin-top: 16px; padding-top: 10px; max-width: 78ch; }
+
+  @media (max-width: 620px) {
+    .reads { grid-template-columns: 1fr 1fr; }
+  }
+</style>

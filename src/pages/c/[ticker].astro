@@ -20,6 +20,7 @@ import CompareLink from "../../components/CompareLink.astro";
 import OwnerEarningsBridge from "../../components/OwnerEarningsBridge.astro";
 import DebtMaturity from "../../components/DebtMaturity.astro";
 import LeaseObligations from "../../components/LeaseObligations.astro";
+import Acquisitions from "../../components/Acquisitions.astro";
 import language from "../../data/language.json";
 import segmentsData from "../../data/segments.json";
 import { classify } from "../../lib/archetype.mjs";
@@ -147,6 +148,7 @@ const fmtDate = (d) =>
       <div id="sec-debt" class="sec"><DebtMaturity company={fund} /></div>
       <div id="sec-leases" class="sec"><LeaseObligations company={fund} /></div>
       {!isFin ? <div id="sec-capital" class="sec"><Capital company={fund} /></div> : null}
+      <div id="sec-acq" class="sec"><Acquisitions company={fund} /></div>
       <div id="sec-pay" class="sec"><Comp company={fund} /></div>
       {!isFin ? <div id="sec-inversion" class="sec"><Inversion company={fund} /></div> : null}
     </section>
