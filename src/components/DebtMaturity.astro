@@ -1,0 +1,164 @@
+---
+// "Debt maturity" — the wall, read from the debt footnote of the 10-K. Current Position answers the
+// one-year question (debt due vs. cash this year); this answers the multi-year one Buffett never stops
+// asking: WHEN does the debt come due, how lumpy is the ladder, and against what cash and earnings does
+// it stand? The schedule is extracted deterministically at fetch time and reconciled against the
+// company's own declared total or its balance-sheet debt — so a figure that doesn't tie out is withheld,
+// never shown wrong (scripts/debtMaturity.mjs). Present-never-pronounce: the ladder and the coverage are
+// facts; whether the wall is a danger is the reader's to judge. Withheld when no clean schedule exists.
+import language from "../data/language.json";
+import { fmtMoney, ownerEarningsAbs } from "../lib/fundamentals.mjs";
+
+const { company } = Astro.props;
+const $ = (v) => fmtMoney(v, company?.currency || "USD");
+const L = company?.lines || {};
+const dm = language?.companies?.[company?.ticker]?.debtMaturity || null;
+
+// Coverage frame: what the business has on hand and earns in a year, set against the nearest maturities.
+const cash = (L.cashAndEquivalents ?? 0) + (L.shortTermInvestments ?? 0);
+const oe = ownerEarningsAbs(L, company); // one year of owner earnings (null if not computable)
+const hasCash = L.cashAndEquivalents != null || L.shortTermInvestments != null;
+const oePos = oe != null && oe > 0 ? oe : 0;
+const coverNum = (hasCash ? cash : 0) + oePos;        // cash + a year of owner earnings
+const nearWall = dm?.dueNextYear ?? null;
+const coverMult = nearWall && nearWall > 0 && coverNum > 0 ? coverNum / nearWall : null;
+
+// The bars: each listed year scaled to the biggest single year, so the SHAPE of the ladder is legible.
+// Thereafter is shown apart on its own — for a long-dated borrower it dwarfs every year and would
+// otherwise flatten them — clearly labelled as sitting beyond the listed window.
+const yearMax = dm ? Math.max(...dm.schedule.map((s) => s.amount), 1) : 1;
+const pctW = (v) => `${Math.max(2, Math.round((v / yearMax) * 100))}%`;
+const yy = (y) => `'${String(y).slice(2)}`;
+const fmtDate = (s) => { try { return new Date(s + "T00:00:00Z").toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric", timeZone: "UTC" }); } catch { return s; } };
+
+// Honest framing of the "total" line: a five-year-only table is just the near slice of the debt, not
+// the whole of it, so we never call it total debt — and where the balance sheet carries a debt figure
+// we show it as the anchor the ladder sits inside.
+const bsDebt = L.totalDebt ?? null;
+---
+
+{dm ? (
+  <section class="debt">
+    <div class="head">
+      <h3 class="secTitle">Debt maturity</h3>
+      {dm.sourceUrl ? <a class="src" href={dm.sourceUrl} target="_blank" rel="noopener">the debt note, SEC EDGAR →</a> : null}
+    </div>
+    <p class="intro">
+      Not how much it owes, but when it must be paid — and against what. A heavy load that matures far out,
+      with the cash still coming in, is carried safely; a smaller one that all falls due at once, into a
+      shut credit window, is how a solvent business fails. Here is the ladder the company files, set beside
+      the cash on hand and a year&rsquo;s owner earnings.
+    </p>
+
+    <div class="wall">
+      {dm.schedule.map((s) => (
+        <div class="bar">
+          <span class="yr">{yy(s.year)}</span>
+          <span class="track"><span class="fill" style={`width:${pctW(s.amount)}`} /></span>
+          <span class="amt">{$(s.amount)}</span>
+        </div>
+      ))}
+      {dm.thereafter != null && dm.thereafter > 0 ? (
+        <div class="bar after">
+          <span class="yr">later</span>
+          <span class="track"><span class="fill" style="width:100%" /></span>
+          <span class="amt">{$(dm.thereafter)}</span>
+        </div>
+      ) : null}
+    </div>
+    <p class="scalenote">Bars scaled to the largest single year{dm.thereafter != null && dm.thereafter > 0 ? `; “later” is everything due after ${dm.schedule[dm.schedule.length - 1].year}, shown apart since it dwarfs the years` : ""}.</p>
+
+    <div class="reads">
+      <div class="rd">
+        <span class="rlab">Due in the next 12 months</span>
+        <span class="rval">{$(dm.dueNextYear)}</span>
+        <span class="rnote">the first rung — what must be repaid or rolled over within the year</span>
+      </div>
+      <div class="rd">
+        <span class="rlab">Within two years</span>
+        <span class="rval">{$(dm.within2yr)}</span>
+        <span class="rnote">the near wall, the part most exposed to today&rsquo;s credit conditions</span>
+      </div>
+      {dm.peakYear != null ? (
+        <div class="rd">
+          <span class="rlab">Biggest single year</span>
+          <span class="rval">{$(dm.peakAmount)} <i>in {dm.peakYear}</i></span>
+          <span class="rnote">the lumpiest maturity — where a refinancing, if needed, is largest</span>
+        </div>
+      ) : null}
+      <div class="rd">
+        <span class="rlab">{dm.fiveYearOnly ? "Due over the next five years" : "Total scheduled principal"}</span>
+        <span class="rval">{$(dm.total)}</span>
+        <span class="rnote">
+          {dm.fiveYearOnly
+            ? (bsDebt ? `the near slice; the balance sheet carries ${$(bsDebt)} of debt in all` : "the maturities the filing lists for the coming five years")
+            : (dm.thereafter != null ? "every year plus what lies beyond, as the footnote totals it" : "the schedule as the footnote totals it")}
+        </span>
+      </div>
+    </div>
+
+    {coverMult != null ? (
+      <div class="cover">
+        <p class="ctitle">Against what the business has and earns</p>
+        <div class="cgrid">
+          {hasCash ? <div class="c"><span>Cash &amp; short-term investments</span><b>{$(cash)}</b></div> : null}
+          {oePos > 0 ? <div class="c"><span>One year of owner earnings</span><b>{$(oe)}</b></div> : null}
+          <div class="c tot"><span>Together, against {$(dm.dueNextYear)} due next year</span><b>{coverMult >= 1 ? `${coverMult.toFixed(1)}×` : `${coverMult.toFixed(2)}×`}</b></div>
+        </div>
+        <p class="cnote">
+          Cash on hand{oePos > 0 ? " plus a year’s owner earnings" : ""} comes to {$(coverNum)} against the {$(dm.dueNextYear)} due
+          within twelve months — {coverMult >= 1
+            ? `${coverMult.toFixed(coverMult >= 10 ? 0 : 1)} times it`
+            : `about ${Math.round(coverMult * 100)}% of it, so the near maturities lean on refinancing or the rest of the year’s cash`}.
+          The figure is the fact; whether the coverage is comfortable is yours to weigh.
+        </p>
+      </div>
+    ) : null}
+
+    <p class="foot">
+      Maturity schedule extracted from the company&rsquo;s {dm.asOf ? fmtDate(dm.asOf) : "latest"} annual report and
+      reconciled to {dm.basis === "declared" ? "the total the table states" : dm.basis === "balance-sheet" ? "the balance-sheet debt" : "the schedule’s own arithmetic"};
+      nothing here is scored. Read it beside the Current Position above.
+    </p>
+  </section>
+) : null}
+
+<style>
+  .debt { margin: 24px 0; }
+  .head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; border-bottom: 1px solid var(--rule-strong); padding-bottom: 6px; }
+  .secTitle { margin: 0; }
+  .src { font-size: 12px; color: var(--accent); flex: 0 0 auto; }
+  .intro { font-family: var(--serif); font-style: italic; font-size: 13.5px; color: var(--muted); margin: 9px 0 0; max-width: 74ch; line-height: 1.6; }
+
+  .wall { margin: 16px 0 0; display: grid; gap: 6px; }
+  .bar { display: grid; grid-template-columns: 38px 1fr auto; align-items: center; gap: 10px; }
+  .yr { font-family: var(--sans); font-size: 12px; font-weight: 600; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .track { height: 14px; background: var(--rule); border-radius: 2px; overflow: hidden; }
+  .fill { display: block; height: 100%; background: var(--ink); border-radius: 2px; }
+  .bar.after .fill { background: repeating-linear-gradient(90deg, var(--faint) 0 6px, transparent 6px 10px); }
+  .bar.after .yr { font-style: italic; }
+  .amt { font-variant-numeric: tabular-nums; font-size: 13px; color: var(--ink); flex: 0 0 auto; min-width: 56px; text-align: right; }
+  .scalenote { font-size: 11px; color: var(--ink-dim); margin: 7px 0 0; font-style: italic; }
+
+  .reads { margin: 18px 0 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; }
+  .rd { border-left: 2px solid var(--rule-strong); padding: 2px 0 2px 11px; }
+  .rlab { display: block; font-family: var(--sans); font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+  .rval { display: block; font-size: 19px; font-variant-numeric: tabular-nums; color: var(--ink); margin: 3px 0; }
+  .rval i { font-style: normal; font-size: 13px; color: var(--muted); }
+  .rnote { display: block; font-size: 11.5px; color: var(--ink-dim); line-height: 1.4; }
+
+  .cover { margin: 18px 0 0; padding: 12px 14px; background: var(--accent-tint); border-left: 2px solid var(--accent); }
+  .ctitle { font-family: var(--sans); font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--accent); margin: 0; }
+  .cgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin: 10px 0 0; }
+  .c span { display: block; font-family: var(--sans); font-size: 11.5px; color: var(--muted); }
+  .c b { display: block; font-size: 17px; font-variant-numeric: tabular-nums; color: var(--ink); margin: 2px 0; }
+  .c.tot b { color: var(--accent-strong, var(--ink)); }
+  .cnote { font-family: var(--serif); font-size: 13px; line-height: 1.6; color: var(--ink-soft); margin: 11px 0 0; max-width: 80ch; }
+
+  .foot { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--rule-strong); margin-top: 16px; padding-top: 10px; max-width: 78ch; }
+
+  @media (max-width: 620px) {
+    .reads { grid-template-columns: 1fr 1fr; }
+    .amt { font-size: 12px; min-width: 48px; }
+  }
+</style>

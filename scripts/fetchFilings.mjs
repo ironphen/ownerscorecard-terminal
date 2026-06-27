@@ -18,6 +18,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
+import { extractDebtMaturity } from "./debtMaturity.mjs";
 
 const UA = process.env.SEC_USER_AGENT || "Owner Scorecard research (ryanreinsant@gmail.com)";
 const HEADERS = { "User-Agent": UA, "Accept-Encoding": "gzip, deflate" };
@@ -493,7 +494,7 @@ const SECTION_ANCHORS = {
 };
 SECTION_ANCHORS["40-F"] = SECTION_ANCHORS["20-F"];
 
-async function getFiling(cik, f) {
+async function getFiling(cik, f, totalDebtMillions = null) {
   const accnNoDash = f.accn.replace(/-/g, "");
   const url = `https://www.sec.gov/Archives/edgar/data/${Number(cik)}/${accnNoDash}/${f.doc}`;
   const html = await fetchText(url);
@@ -503,7 +504,13 @@ async function getFiling(cik, f) {
   const mdna = section(text, a.mdna[0], a.mdna[1]);
   const risk = section(text, a.risk[0], a.risk[1]);
   const md = metrics(mdna);
-  return { url, business: { ...metrics(business), lead: leadSentences(business), head: business.slice(0, 800) }, mdna: { ...md, lead: leadSentences(mdna), candor: candorSignals(mdna, md.sents) }, risk: metrics(risk), reportDate: f.reportDate };
+  // The debt-maturity ladder lives in the financial-statement notes, past the three narrative sections,
+  // so it reads from the full filing text — no extra EDGAR fetch. fy is the report year (the schedule
+  // starts at/after it); totalDebt anchors the reconciliation when a table states no total of its own.
+  const fy = f.reportDate ? parseInt(f.reportDate.slice(0, 4)) : null;
+  let debtMaturity = null;
+  try { debtMaturity = fy ? extractDebtMaturity(text, fy, totalDebtMillions) : null; } catch { debtMaturity = null; }
+  return { url, business: { ...metrics(business), lead: leadSentences(business), head: business.slice(0, 800) }, mdna: { ...md, lead: leadSentences(mdna), candor: candorSignals(mdna, md.sents) }, risk: metrics(risk), reportDate: f.reportDate, debtMaturity };
 }
 
 // ---- executive pay (proxy statement / DEF 14A) ----
@@ -1024,10 +1031,12 @@ async function main() {
     } catch (e) { console.warn(`  ! ${tk}: submissions ${e.message}`); continue; }
     if (!filings.length) { console.warn(`  ! ${tk}: no annual report found`); continue; }
 
+    // Balance-sheet long-term debt ($ millions), the reconciliation anchor for the maturity ladder.
+    const totalDebtMillions = c.lines?.totalDebt != null ? c.lines.totalDebt / 1e6 : null;
     let cur, prior;
     try {
       await sleep(THROTTLE);
-      cur = await getFiling(c.cik, filings[0]);
+      cur = await getFiling(c.cik, filings[0], totalDebtMillions);
       if (filings[1]) { await sleep(THROTTLE); prior = await getFiling(c.cik, filings[1]); }
     } catch (e) { console.warn(`  ! ${tk}: filing ${e.message}`); continue; }
 
@@ -1073,6 +1082,21 @@ async function main() {
       const bizLead = cur.business.lead?.length ? cur.business.lead : (cur.business.sents || []);
       const bizSents = [...bizLead, ...(cur.mdna?.lead || [])];
       const bizLede = businessDescription(bizSents, c.name, c.ticker);
+      // The debt-maturity ladder, normalised from $ millions to whole dollars so the page formats it
+      // with the same fmtMoney as every other line item, dated and sourced to this filing.
+      const dm = cur.debtMaturity;
+      const debtMaturity = dm ? {
+        ...dm,
+        schedule: dm.schedule.map((s) => ({ year: s.year, amount: Math.round(s.amount * 1e6) })),
+        thereafter: dm.thereafter != null ? Math.round(dm.thereafter * 1e6) : null,
+        total: Math.round(dm.total * 1e6),
+        declaredTotal: dm.declaredTotal != null ? Math.round(dm.declaredTotal * 1e6) : null,
+        dueNextYear: dm.dueNextYear != null ? Math.round(dm.dueNextYear * 1e6) : null,
+        within2yr: Math.round(dm.within2yr * 1e6),
+        peakAmount: dm.peakAmount != null ? Math.round(dm.peakAmount * 1e6) : null,
+        asOf: cur.reportDate || null,
+        sourceUrl: cur.url,
+      } : null;
       out[tk] = {
         fy: cur.reportDate?.slice(0, 4) || null,
         priorFy: prior?.reportDate?.slice(0, 4) || null,
@@ -1110,9 +1134,10 @@ async function main() {
         aiRead: aiSignal(cur, prior),
         buffettRead: buffettRead(cur, isFinancialSic(c.sic)),
         comp,
+        debtMaturity,
       };
       ok++;
-      console.log(`  ✓ ${tk}: ${flags.length} owner-flags, MD&A ${cur.mdna.words}w` + (comp ? `, payRatio ${comp.payRatio}:1` : ""));
+      console.log(`  ✓ ${tk}: ${flags.length} owner-flags, MD&A ${cur.mdna.words}w` + (comp ? `, payRatio ${comp.payRatio}:1` : "") + (debtMaturity ? `, debt-wall $${(debtMaturity.total / 1e9).toFixed(1)}B` : ""));
     } catch (e) {
       console.warn(`  ! ${tk}: record assembly ${e.message}`);
     }
