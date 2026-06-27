@@ -17,6 +17,7 @@
 //   ONLY_JP=6501,9983 EDINET_API_KEY=... npm run fetch:segments:jp   (audit a subset)
 
 import fs from "node:fs";
+import { compactJson } from "../src/lib/dataFile.mjs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { unzip, decodeCsv } from "./fetchEdinetFundamentals.mjs";
@@ -156,7 +157,7 @@ async function main() {
   const preserved = Object.fromEntries(Object.entries(prior).filter(([t]) => ONLY.length ? true : !jpTickers.has(t)));
   const merged = { ...preserved, ...result };
   const out = { asOf: new Date().toISOString().slice(0, 10), source: "SEC EDGAR XBRL (10-K + 20-F) and EDINET (Japanese securities reports), reportable-segment / geographic disclosures", companies: merged };
-  fs.writeFileSync(outPath, JSON.stringify(out, null, 2) + "\n");
+  fs.writeFileSync(outPath, compactJson(out));
   console.log(`\n✅ JP segments: ${hit}/${companies.length} with a usable breakdown (${Object.keys(merged).length} total in file)`);
 }
 

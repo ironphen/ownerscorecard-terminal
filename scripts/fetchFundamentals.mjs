@@ -17,6 +17,7 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { passesQualityFloor } from "../src/lib/fundamentals.mjs";
 import { reconcileLeaseLadder } from "../src/lib/leases.mjs";
+import { compactJson } from "../src/lib/dataFile.mjs";
 
 const UA =
   process.env.SEC_USER_AGENT ||
@@ -1180,10 +1181,12 @@ async function main() {
     companies: merged,
   };
   // Atomic write: serialize to a temp file then rename over the target, so an OOM or SIGKILL mid-write
-  // can't leave a truncated 60 MB JSON the next run would fail to parse. Rename is atomic on one volume.
+  // can't leave a truncated JSON the next run would fail to parse. Rename is atomic on one volume. The
+  // file is written compact (null-stripped, minified) to stay well under GitHub's push size limit as the
+  // universe grows — lossless to every reader (see lib/dataFile.mjs).
   const dest = path.join(dataDir, "fundamentals.json");
   const tmp = dest + ".tmp";
-  fs.writeFileSync(tmp, JSON.stringify(out, null, 2) + "\n");
+  fs.writeFileSync(tmp, compactJson(out));
   fs.renameSync(tmp, dest);
   console.log(`\n✅ Wrote ${merged.length} companies (${companies.length} passed, ${withheld.size} withheld below the quality floor, ${carried} carried over from the last good file)`);
   if (withheld.size) console.log(`   withheld: ${[...withheld].sort().join(", ")}`);

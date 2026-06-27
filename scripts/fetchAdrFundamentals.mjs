@@ -24,6 +24,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { passesQualityFloor } from "../src/lib/fundamentals.mjs";
+import { compactJson } from "../src/lib/dataFile.mjs";
 
 const UA = process.env.SEC_USER_AGENT || "Owner Scorecard research (ryanreinsant@gmail.com)";
 const HEADERS = { "User-Agent": UA, "Accept-Encoding": "gzip, deflate" };
@@ -559,9 +560,9 @@ async function main() {
   if (fieldsCarried) console.log(`   ${fieldsCarried} null field(s) carried over from the last good file (same fiscal year, transient tag misses)`);
   const merged = [...byTicker.values()].sort((a, b) => a.ticker.localeCompare(b.ticker));
   const carried = merged.length - companies.length;
-  fs.writeFileSync(path.join(dataDir, "fundamentals.adr.json"), JSON.stringify({
+  fs.writeFileSync(path.join(dataDir, "fundamentals.adr.json"), compactJson({
     asOf: new Date().toISOString().slice(0, 10), source: "SEC EDGAR companyfacts (Form 20-F/40-F; IFRS or US-GAAP)", sample: false, companies: merged,
-  }, null, 2) + "\n");
+  }));
   console.log(`\n✅ Wrote ${merged.length} ADR companies (${companies.length} fetched/updated, ${carried} carried over, ${withheld.size} withheld)`);
 }
 

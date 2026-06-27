@@ -19,6 +19,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { extractDebtMaturity } from "./debtMaturity.mjs";
+import { compactJson } from "../src/lib/dataFile.mjs";
 
 const UA = process.env.SEC_USER_AGENT || "Owner Scorecard research (ryanreinsant@gmail.com)";
 const HEADERS = { "User-Agent": UA, "Accept-Encoding": "gzip, deflate" };
@@ -1151,7 +1152,7 @@ async function main() {
   // file into JSON the next run would fail to parse. Rename is atomic on a single volume.
   const dest = path.join(dataDir, "language.json");
   const tmp = dest + ".tmp";
-  fs.writeFileSync(tmp, JSON.stringify({ asOf: new Date().toISOString().slice(0, 10), source: "SEC EDGAR, 10-K and 20-F/40-F annual reports", sample: false, companies: out }, null, 2) + "\n");
+  fs.writeFileSync(tmp, compactJson({ asOf: new Date().toISOString().slice(0, 10), source: "SEC EDGAR, 10-K and 20-F/40-F annual reports", sample: false, companies: out }));
   fs.renameSync(tmp, dest);
   console.log(`\n✅ Wrote language analysis for ${ok} companies this run (${Object.keys(out).length} total across both pools)`);
 }

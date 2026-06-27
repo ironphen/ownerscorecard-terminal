@@ -19,6 +19,7 @@
 // Needs outbound access to sec.gov / data.sec.gov. Free, no key. Runs unattended in CI.
 
 import fs from "node:fs";
+import { compactJson } from "../src/lib/dataFile.mjs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { parseContexts, buildRecord, buildLabels } from "./fetchSegments.mjs";
@@ -126,7 +127,7 @@ async function main() {
   const preserved = Object.fromEntries(Object.entries(prior).filter(([t]) => ONLY.length ? true : !adrTickers.has(t.toUpperCase())));
   const merged = { ...preserved, ...result };
   const out = { asOf: new Date().toISOString().slice(0, 10), source: "SEC EDGAR XBRL, reportable-segment and geographic disclosures (10-K + 20-F)", companies: merged };
-  fs.writeFileSync(outPath, JSON.stringify(out, null, 2) + "\n");
+  fs.writeFileSync(outPath, compactJson(out));
   console.log(`\n✅ ADR segments: ${hit}/${companies.length} with a usable breakdown (${Object.keys(merged).length} total in file)`);
 }
 

@@ -20,6 +20,7 @@
 // map below is first-pass and refined against real output via EDINET_DEBUG=<ticker>.
 
 import fs from "node:fs";
+import { compactJson } from "../src/lib/dataFile.mjs";
 import path from "node:path";
 import zlib from "node:zlib";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -642,7 +643,7 @@ async function main() {
     note: "Latest annual securities-report figures from EDINET, in yen. Quantitative only; the Japanese-language narrative is not parsed.",
     companies: merged,
   };
-  fs.writeFileSync(path.join(dataDir, "fundamentals.jp.json"), JSON.stringify(out, null, 2) + "\n");
+  fs.writeFileSync(path.join(dataDir, "fundamentals.jp.json"), compactJson(out));
   console.log(`\n✅ Wrote ${merged.length} Japanese companies (${companies.length} fetched, ${carried} carried over)`);
 }
 

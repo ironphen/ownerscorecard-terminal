@@ -16,6 +16,7 @@
 //   ONLY_TICKERS=AMZN,AAPL npm run fetch:segments   (audit a subset)
 
 import fs from "node:fs";
+import { compactJson } from "../src/lib/dataFile.mjs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
@@ -339,7 +340,7 @@ async function main() {
   const otherPool = Object.fromEntries(Object.entries(prior).filter(([t]) => !universe.has(t.toUpperCase())));
   const merged = ONLY.length ? { ...prior, ...result } : { ...otherPool, ...result };
   const out = { asOf: new Date().toISOString().slice(0, 10), source: "SEC EDGAR XBRL, reportable-segment and geographic disclosures", companies: merged };
-  fs.writeFileSync(outPath, JSON.stringify(out, null, 2) + "\n");
+  fs.writeFileSync(outPath, compactJson(out));
   console.log(`\n✅ Segments: ${hit}/${companies.length} companies with a usable breakdown (${Object.keys(merged).length} total in file)`);
 }
 
