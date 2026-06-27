@@ -1,0 +1,160 @@
+---
+// "Lease obligations" — the companion to the debt wall. Since ASC 842 (2019) the lease liability sits on
+// the balance sheet, but the SCHEDULE of when those payments come due lives in the footnote, and the
+// combined debt-plus-lease claim an owner actually faces is shown nowhere. Buffett adds leases back to
+// debt to see the true fixed-claim schedule; for a retailer, airline or restaurant the lease ladder IS
+// the leverage, and for a data-center operator the finance leases can exceed the bonds. Built from the
+// clean ASC 842 XBRL buckets and self-reconciled (lib/leases.mjs), present-never-pronounce. Shown only
+// when leases are a material share of total fixed obligations, so a token office lease never adds noise.
+import { fmtMoney } from "../lib/fundamentals.mjs";
+import { leaseObligations } from "../lib/leases.mjs";
+
+const { company } = Astro.props;
+const $ = (v) => fmtMoney(v, company?.currency || "USD");
+const lo = leaseObligations(company);
+const debt = company?.lines?.totalDebt ?? null;
+
+// Materiality gate (editorial, not a verdict): leases earn their own section when they are at least a
+// tenth of total fixed obligations and at least $300M — the retailer/airline/data-center case — so a
+// company whose only leases are a sliver against its debt isn't cluttered with a near-empty wall.
+const liability = lo?.liability ?? null;
+const totalFixed = (debt || 0) + (liability || 0);
+const material = lo && liability != null && totalFixed > 0 && liability / totalFixed >= 0.10 && liability >= 3e8;
+
+// Bars scaled to the biggest combined year; "later" shown apart so a long-dated tail doesn't flatten them.
+const yearMax = material ? Math.max(...lo.schedule.map((s) => s.total), 1) : 1;
+const w = (v) => `${Math.max(0, (v / yearMax) * 100)}%`;
+const yy = (y, i) => (y != null ? `'${String(y).slice(2)}` : `yr ${i + 1}`);
+const fmtDate = (s) => { try { return new Date(s + "T00:00:00Z").toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric", timeZone: "UTC" }); } catch { return s; } };
+const bothKinds = material && lo.hasOperating && lo.hasFinance;
+const leasePctFixed = material ? Math.round((liability / totalFixed) * 100) : null;
+---
+
+{material ? (
+  <section class="lease">
+    <div class="head">
+      <h3 class="secTitle">Lease obligations</h3>
+      {company?.sourceUrl ? <a class="src" href={company.sourceUrl} target="_blank" rel="noopener">the lease note, SEC EDGAR →</a> : null}
+    </div>
+    <p class="intro">
+      Debt by another name. What the business owes on the property, aircraft, stores and equipment it
+      rents rather than owns is a fixed claim that comes due on a schedule, the same as a bond — Buffett
+      adds it back to debt to see the true leverage. Here is that ladder{bothKinds ? ", operating and finance leases together" : ""}, and what it adds to the debt on the page above.
+    </p>
+
+    {bothKinds ? (
+      <div class="legend">
+        <span><i class="sw op" />Operating leases</span>
+        <span><i class="sw fin" />Finance leases</span>
+      </div>
+    ) : null}
+
+    <div class="wall">
+      {lo.schedule.map((s) => (
+        <div class="bar">
+          <span class="yr">{yy(s.year, s.idx)}</span>
+          <span class="track">
+            {s.op > 0 ? <span class="seg op" style={`width:${w(s.op)}`} /> : null}
+            {s.fin > 0 ? <span class="seg fin" style={`width:${w(s.fin)}`} /> : null}
+          </span>
+          <span class="amt">{$(s.total)}</span>
+        </div>
+      ))}
+      {lo.after.total > 0 ? (
+        <div class="bar after">
+          <span class="yr">later</span>
+          <span class="track"><span class="seg laterfill" style="width:100%" /></span>
+          <span class="amt">{$(lo.after.total)}</span>
+        </div>
+      ) : null}
+    </div>
+    <p class="scalenote">Lease payments by year, scaled to the largest{lo.after.total > 0 ? "; “later” is everything beyond year five, shown apart" : ""}. These are the contractual cash payments, before the interest the filing imputes back out to the balance-sheet liability.</p>
+
+    <div class="reads">
+      <div class="rd">
+        <span class="rlab">Due in the next 12 months</span>
+        <span class="rval">{$(lo.dueNextYear)}</span>
+        <span class="rnote">a fixed cash payment, owed whether or not the business has a good year</span>
+      </div>
+      <div class="rd">
+        <span class="rlab">Total lease payments</span>
+        <span class="rval">{$(lo.totalPayments)}</span>
+        <span class="rnote">every year plus the tail, undiscounted — the full cash the leases will take</span>
+      </div>
+      {liability != null ? (
+        <div class="rd">
+          <span class="rlab">On the balance sheet</span>
+          <span class="rval">{$(liability)}</span>
+          <span class="rnote">the present value of those payments, the recognised lease liability</span>
+        </div>
+      ) : null}
+    </div>
+
+    <div class="cover">
+      <p class="ctitle">True leverage — debt plus leases</p>
+      <div class="cgrid">
+        <div class="c"><span>On-balance-sheet debt</span><b>{$(debt || 0)}</b></div>
+        <div class="c"><span>Lease obligations (present value)</span><b>{$(liability)}</b></div>
+        <div class="c tot"><span>Total fixed claims on the business</span><b>{$(totalFixed)}</b></div>
+      </div>
+      <p class="cnote">
+        Counting the leases the way Buffett does, the fixed claims on this business come to {$(totalFixed)} — of which
+        the leases are {leasePctFixed}%{leasePctFixed >= 50 ? ", more than the debt itself" : ""}. Read the maturity wall above beside the debt
+        schedule: together they are the calendar of what must be paid, and when. The figures are the fact; what the
+        leverage is worth is yours to weigh.
+      </p>
+    </div>
+
+    <p class="foot">
+      Lease ladder read from the ASC 842 tags in the company’s {lo.asOf ? fmtDate(lo.asOf) : "latest"} annual
+      report and reconciled — the yearly buckets sum to the undiscounted total, which less the imputed
+      interest equals the balance-sheet liability; a ladder that doesn’t tie out is withheld. Nothing here is scored.
+    </p>
+  </section>
+) : null}
+
+<style>
+  .lease { margin: 24px 0; }
+  .head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; border-bottom: 1px solid var(--rule-strong); padding-bottom: 6px; }
+  .secTitle { margin: 0; }
+  .src { font-size: 12px; color: var(--accent); flex: 0 0 auto; }
+  .intro { font-family: var(--serif); font-style: italic; font-size: 13.5px; color: var(--muted); margin: 9px 0 0; max-width: 74ch; line-height: 1.6; }
+
+  .legend { display: flex; gap: 18px; margin: 13px 0 0; font-family: var(--sans); font-size: 11.5px; color: var(--muted); }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .sw { width: 11px; height: 11px; border-radius: 2px; display: inline-block; }
+  .sw.op { background: var(--ink); }
+  .sw.fin { background: repeating-linear-gradient(45deg, var(--ink) 0 2px, var(--rule) 2px 4px); }
+
+  .wall { margin: 12px 0 0; display: grid; gap: 6px; }
+  .bar { display: grid; grid-template-columns: 38px 1fr auto; align-items: center; gap: 10px; }
+  .yr { font-family: var(--sans); font-size: 12px; font-weight: 600; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .track { height: 14px; background: var(--rule); border-radius: 2px; overflow: hidden; display: flex; }
+  .seg { display: block; height: 100%; }
+  .seg.op { background: var(--ink); }
+  .seg.fin { background: repeating-linear-gradient(45deg, var(--ink) 0 2px, var(--rule) 2px 4px); }
+  .seg.laterfill { background: repeating-linear-gradient(90deg, var(--faint) 0 6px, transparent 6px 10px); width: 100%; }
+  .bar.after .yr { font-style: italic; }
+  .amt { font-variant-numeric: tabular-nums; font-size: 13px; color: var(--ink); flex: 0 0 auto; min-width: 56px; text-align: right; }
+  .scalenote { font-size: 11px; color: var(--ink-dim); margin: 7px 0 0; font-style: italic; max-width: 74ch; line-height: 1.45; }
+
+  .reads { margin: 18px 0 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; }
+  .rd { border-left: 2px solid var(--rule-strong); padding: 2px 0 2px 11px; }
+  .rlab { display: block; font-family: var(--sans); font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+  .rval { display: block; font-size: 19px; font-variant-numeric: tabular-nums; color: var(--ink); margin: 3px 0; }
+  .rnote { display: block; font-size: 11.5px; color: var(--ink-dim); line-height: 1.4; }
+
+  .cover { margin: 18px 0 0; padding: 12px 14px; background: var(--accent-tint); border-left: 2px solid var(--accent); }
+  .ctitle { font-family: var(--sans); font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--accent); margin: 0; }
+  .cgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin: 10px 0 0; }
+  .c span { display: block; font-family: var(--sans); font-size: 11.5px; color: var(--muted); }
+  .c b { display: block; font-size: 17px; font-variant-numeric: tabular-nums; color: var(--ink); margin: 2px 0; }
+  .cnote { font-family: var(--serif); font-size: 13px; line-height: 1.6; color: var(--ink-soft); margin: 11px 0 0; max-width: 80ch; }
+
+  .foot { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--rule-strong); margin-top: 16px; padding-top: 10px; max-width: 78ch; }
+
+  @media (max-width: 620px) {
+    .reads { grid-template-columns: 1fr 1fr; }
+    .amt { font-size: 12px; min-width: 48px; }
+  }
+</style>

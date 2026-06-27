@@ -16,6 +16,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { passesQualityFloor } from "../src/lib/fundamentals.mjs";
+import { reconcileLeaseLadder } from "../src/lib/leases.mjs";
 
 const UA =
   process.env.SEC_USER_AGENT ||
@@ -200,6 +201,30 @@ const CONCEPTS = {
   // leases to debt; captured so true leverage (debt + leases) can be shown.
   operatingLeaseCurrent: ["OperatingLeaseLiabilityCurrent"],
   operatingLeaseNoncurrent: ["OperatingLeaseLiabilityNoncurrent"],
+  // The lease-maturity ladder (ASC 842): when the lease payments come due, by year. These are cleanly,
+  // non-dimensionally tagged in XBRL — one consolidated value per bucket — so the lease wall is recovered
+  // from structured data, not footnote text, and self-reconciles (sum of the buckets = the undiscounted
+  // total; that less the imputed interest = the discounted liability on the balance sheet). The companion
+  // to the debt wall: a retailer's, airline's or restaurant's real-estate leverage, the obligation Buffett
+  // adds back to debt to see the true fixed-claim schedule.
+  operatingLeaseLiability: ["OperatingLeaseLiability"],
+  opLeaseY1: ["LesseeOperatingLeaseLiabilityPaymentsDueNextTwelveMonths"],
+  opLeaseY2: ["LesseeOperatingLeaseLiabilityPaymentsDueYearTwo"],
+  opLeaseY3: ["LesseeOperatingLeaseLiabilityPaymentsDueYearThree"],
+  opLeaseY4: ["LesseeOperatingLeaseLiabilityPaymentsDueYearFour"],
+  opLeaseY5: ["LesseeOperatingLeaseLiabilityPaymentsDueYearFive"],
+  opLeaseAfter: ["LesseeOperatingLeaseLiabilityPaymentsDueAfterYearFive"],
+  opLeaseUndiscounted: ["LesseeOperatingLeaseLiabilityPaymentsDue"],
+  opLeaseImputed: ["LesseeOperatingLeaseLiabilityUndiscountedExcessAmount"],
+  financeLeaseLiability: ["FinanceLeaseLiability"],
+  finLeaseY1: ["FinanceLeaseLiabilityPaymentsDueNextTwelveMonths"],
+  finLeaseY2: ["FinanceLeaseLiabilityPaymentsDueYearTwo"],
+  finLeaseY3: ["FinanceLeaseLiabilityPaymentsDueYearThree"],
+  finLeaseY4: ["FinanceLeaseLiabilityPaymentsDueYearFour"],
+  finLeaseY5: ["FinanceLeaseLiabilityPaymentsDueYearFive"],
+  finLeaseAfter: ["FinanceLeaseLiabilityPaymentsDueAfterYearFive"],
+  finLeaseUndiscounted: ["FinanceLeaseLiabilityPaymentsDue"],
+  finLeaseImputed: ["FinanceLeaseLiabilityUndiscountedExcessAmount"],
   // Net property, plant & equipment, and the operating-lease right-of-use asset (the leased plant a
   // retailer, airline, theater or warehouse operator runs on — on the balance sheet since ASC 842).
   // Together these measure how asset-heavy the operation truly is: the signal that separates a
@@ -1069,6 +1094,24 @@ async function main() {
         investmentIncome: pick(CONCEPTS.investmentIncome),
         lossReserves: inst(CONCEPTS.lossReserves),
       },
+      // The lease-maturity ladder (operating + finance), from the clean ASC 842 XBRL buckets. Each ladder
+      // is reconciled (buckets sum to the undiscounted total; total less imputed interest = the discounted
+      // liability) and stored only if it ties out — a self-validating wall, the companion to the debt one.
+      leases: (() => {
+        const op = reconcileLeaseLadder({
+          y1: inst(CONCEPTS.opLeaseY1), y2: inst(CONCEPTS.opLeaseY2), y3: inst(CONCEPTS.opLeaseY3),
+          y4: inst(CONCEPTS.opLeaseY4), y5: inst(CONCEPTS.opLeaseY5), after: inst(CONCEPTS.opLeaseAfter),
+          undiscounted: inst(CONCEPTS.opLeaseUndiscounted), imputed: inst(CONCEPTS.opLeaseImputed),
+          liability: inst(CONCEPTS.operatingLeaseLiability),
+        });
+        const fin = reconcileLeaseLadder({
+          y1: inst(CONCEPTS.finLeaseY1), y2: inst(CONCEPTS.finLeaseY2), y3: inst(CONCEPTS.finLeaseY3),
+          y4: inst(CONCEPTS.finLeaseY4), y5: inst(CONCEPTS.finLeaseY5), after: inst(CONCEPTS.finLeaseAfter),
+          undiscounted: inst(CONCEPTS.finLeaseUndiscounted), imputed: inst(CONCEPTS.finLeaseImputed),
+          liability: inst(CONCEPTS.financeLeaseLiability),
+        });
+        return op || fin ? { asOf: anchor?.end ?? null, operating: op, finance: fin } : null;
+      })(),
       history,
       ttm,
       quarterly,
