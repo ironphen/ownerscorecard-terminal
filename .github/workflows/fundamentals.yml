@@ -96,9 +96,22 @@ jobs:
           ONLY_FUND: ${{ github.event.inputs.tickers }}
       # Filing language and segments only change when a company files a new annual report, so the
       # weekly Monday cron skips them; they refresh on the monthly cron and on demand.
-      - run: npm run fetch:filings
+      # Retry the whole fetch on a transient crash. Node's built-in HTTP client (undici) can throw an
+      # internal "assert(!this.paused)" from a TLS socket tearing down mid-parse — an async, event-loop
+      # error that escapes the per-company try/catch and would otherwise kill the hour-long run and lose
+      # every company parsed before it. The fetch is idempotent (it rebuilds from scratch and carries
+      # over the prior file), so a fresh attempt is safe; up to three before giving up. Still
+      # continue-on-error, so even three failures leave the prior good data and never block the refresh.
+      - name: Run fetch:filings
         if: ${{ github.event.inputs.segments_only != 'true' && github.event.inputs.fundamentals_only != 'true' && github.event.schedule != '0 7 * * 1' }}
         continue-on-error: true # qualitative layer; never fail the fundamentals refresh
+        run: |
+          for i in 1 2 3; do
+            npm run fetch:filings && exit 0
+            echo "fetch:filings attempt $i failed (likely a transient undici/network crash); retrying…"
+            sleep 10
+          done
+          echo "fetch:filings failed after 3 attempts; the prior good language file carries over."
         env:
           SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT }}
           BIZ_DEBUG: ${{ github.event.inputs.debug }}
