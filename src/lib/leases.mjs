@@ -28,13 +28,16 @@ export function reconcileLeaseLadder(raw) {
   const undiscounted = raw.undiscounted == null ? sum : raw.undiscounted;
   const tol = Math.max(2e6, undiscounted * 0.01);
   if (Math.abs(sum - undiscounted) > tol) return null;
-  // Secondary: undiscounted total less imputed interest should equal the discounted balance-sheet
-  // liability. Kept as context; not a hard gate, since a filer may tag the liability under a split tag.
+  // Secondary: the discounted balance-sheet liability. It is the present value of the same payments, so
+  // it can never EXCEED the undiscounted total — when the tagged value does (the OperatingLeaseLiability /
+  // FinanceLeaseLiability tag occasionally has a current/noncurrent or period scope that the maturity
+  // buckets don't share), the tag is untrustworthy and we fall back to the value the schedule implies:
+  // undiscounted less imputed interest. Null only when there's nothing to imply it from.
   const imputed = raw.imputed == null ? null : raw.imputed;
-  const liability = raw.liability == null
-    ? (imputed != null ? undiscounted - imputed : null)
-    : raw.liability;
-  return { schedule: sched, after, undiscounted: Math.round(undiscounted), imputed, liability };
+  const computed = imputed != null ? undiscounted - imputed : null;
+  let liability = raw.liability;
+  if (liability == null || liability > undiscounted * 1.02) liability = computed;
+  return { schedule: sched, after, undiscounted: Math.round(undiscounted), imputed, liability: liability == null ? null : Math.round(liability) };
 }
 
 // Approximate the calendar year of the first ("next twelve months") bucket from the balance-sheet date,

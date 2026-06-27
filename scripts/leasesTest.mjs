@@ -34,6 +34,12 @@ eq(reconcileLeaseLadder(null), null, "no data → null");
   const r = reconcileLeaseLadder({ y1: 300 * M, y2: 250 * M, y3: 200 * M, y4: 150 * M, y5: 100 * M, after: 0, undiscounted: null, imputed: 50 * M, liability: null });
   eq(r && [r.undiscounted, r.liability], [1000 * M, 950 * M], "no declared total → summed; liability = undiscounted − imputed");
 }
+// The tagged liability can't exceed the undiscounted payments (present value never does). When the source
+// tag does — a current/noncurrent or period scope mismatch — fall back to the schedule-implied value.
+{
+  const r = reconcileLeaseLadder({ y1: 100 * M, y2: 100 * M, y3: 100 * M, y4: 0, y5: 0, after: 110 * M, undiscounted: 410 * M, imputed: 50 * M, liability: 450 * M });
+  eq(r && r.liability, 360 * M, "impossible liability (> undiscounted) recomputed to undiscounted − imputed");
+}
 
 console.log("\nleaseObligations — combined operating + finance display model (Microsoft shape):");
 {
