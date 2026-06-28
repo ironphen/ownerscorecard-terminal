@@ -4,7 +4,7 @@
 // already pulls, returning the actual numbers and whether the fingerprint is present. None
 // is a verdict: a flag is a question to put to the filing, a clear test is one fewer way to
 // be wrong. Present, never pronounce.
-import { ownerEarningsMargin, ownerEarningsAbs, operatingMargin, fmtMoney, debtReliable } from "./fundamentals.mjs";
+import { ownerEarningsMargin, ownerEarningsAbs, operatingMargin, fmtMoney, debtReliable, normalizedTrend } from "./fundamentals.mjs";
 import { capitalHistory } from "./capital.mjs";
 
 const avg = (xs) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null);
@@ -35,14 +35,16 @@ export function inversionChecks(company) {
     const useOpm = oem.filter((v) => v != null).length < 4;
     const raw = useOpm ? lines.map((L) => operatingMargin(L)) : oem;
     const series = raw.filter((v) => v != null && Math.abs(v) <= 1.5);
-    if (series.length >= 4) {
-      const early = avg(firstN(series, 3));
-      const recent = avg(lastN(series, 3));
-      const latest = lastN(series, 1)[0] ?? null;
-      // A deep cyclical's last-three-year window is dragged below the early window by a single
-      // trough year even when the latest year has fully recovered. So flag a fade only when the
-      // recent average AND the most recent single year are both below the early baseline; a
-      // recovered latest year is a cycle, not a slide. And the note asks rather than pronounces.
+    // Through-cycle windowing via the shared normalizer: averaged, non-overlapping early/recent ends
+    // sized to the record (so a five-year history doesn't double-count its middle years the way a fixed
+    // three-year window would), with the latest single year carried for the cyclical-recovery read.
+    const mt = normalizedTrend(series, { band: 0.02 });
+    if (mt && mt.n >= 4) {
+      const { early, recent, latest } = mt;
+      // A deep cyclical's recent window is dragged below the early window by a single trough year even
+      // when the latest year has fully recovered. So flag a fade only when the recent average AND the
+      // most recent single year are both below the early baseline; a recovered latest year is a cycle,
+      // not a slide. And the note asks rather than pronounces.
       const recovered = latest != null && early > 0 && latest >= early * 0.9;
       const faded = early > 0 && recent < early * 0.9;
       const flagged = faded && !recovered;

@@ -791,6 +791,54 @@ export function throughCycle(company, metricFn, n = 12) {
   return { median: sorted[Math.floor((sorted.length - 1) / 2)], n: recent.length, lo: sorted[0], hi: sorted[sorted.length - 1] };
 }
 
+// Read a yearly series the way an owner does — through the cycle, not on the endpoints. The single-year
+// reporting calendar is an accident of accounting that GBM look through, so "this year's margin vs the
+// one ten years ago" is a trap: a lone trough, a peak, or a one-off charge at either endpoint can make
+// a flat business look like it's falling apart (or the reverse). Instead this compares the AVERAGE of the
+// early years to the AVERAGE of the recent years, with the smoothing window adapting to how much record
+// exists, and reports the through-cycle MEDIAN as the representative level. It also separates a cyclical
+// dip — the recent average dragged down by a trough year the latest year has already climbed back out of
+// — from a structural drift, where the level itself has moved and stayed.
+//
+// `values` are chronological (oldest→newest); nulls are dropped. `band` is the change, in the series'
+// own units, below which the trend reads flat (e.g. 0.02 for a two-point margin move). Returns null when
+// the record is too short to normalize at all (under three years); returns a level with a null direction
+// when there's enough to state a level but too little (under four years) to call a trend without leaning
+// on the very endpoints this exists to avoid. Window adapts: 3-year ends on a decade, down to 2 on a
+// half-decade, never overlapping.
+export function normalizedTrend(values, { band = 0.02, maxWindow = 3 } = {}) {
+  const v = (values || []).filter((x) => x != null && Number.isFinite(x));
+  if (v.length < 3) return null;
+  const n = v.length;
+  const sorted = [...v].sort((a, b) => a - b);
+  const level = sorted[Math.floor((n - 1) / 2)]; // through-cycle median: where the metric actually runs
+  const w = Math.min(maxWindow, Math.floor(n / 2)); // non-overlapping smoothed ends, sized to the record
+  const mean = (xs) => xs.reduce((a, b) => a + b, 0) / xs.length;
+  const early = mean(v.slice(0, w)), recent = mean(v.slice(-w)), latest = v[n - 1];
+  const delta = recent - early;
+  let direction = null, cyclical = false;
+  if (n >= 4) { // four years buys two non-overlapping ends; below that, a level only, never endpoints
+    // Material move: meaningful in absolute points OR as a fraction of where the metric runs. A fat
+    // margin drifting a single point isn't over-read; a thin margin that halves — small in points, large
+    // in truth — isn't dismissed as "steady". The absolute floor stops a near-zero level (3 bps → 9 bps)
+    // from reading as a "tripling".
+    const aLevel = Math.abs(level);
+    const material = Math.abs(delta) >= band || (aLevel > band && Math.abs(delta) >= aLevel * 0.2);
+    if (!material) direction = "flat";
+    else if (delta > 0) direction = "up";
+    else {
+      // a recent-average drop the latest year has already recovered from is a trough dragging the window,
+      // not a one-way slide — name it cyclical and read across the cycle, don't cry decline. Recovery is
+      // judged relative to the early level, so a thin margin isn't called "recovered" merely because
+      // everything sits within a couple of points of everything else.
+      const recovered = early > 0 ? latest >= early * 0.9 : latest >= early - band;
+      if (recovered) { direction = "flat"; cyclical = true; }
+      else direction = "down";
+    }
+  }
+  return { n, window: w, level, early, recent, latest, delta, direction, cyclical };
+}
+
 // (The former durability() export was removed: it was dead code, and being the one consumer of
 // roicValue() that did not re-apply the oiReliable/financial-kind gate the rendered surfaces use,
 // it was also the only place a Japanese trading house's meaningless operating line could have

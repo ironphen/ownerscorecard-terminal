@@ -7,7 +7,7 @@
 // Both corroborate when they agree, explain when the words explain the number, surface tension when
 // they disagree, and withhold when there is no signal so the number stands alone. Run with `npm test`.
 import { pricingReconciliation, registerReconciliation } from "../src/lib/durability.mjs";
-import { earningsQualityReconciliation } from "../src/lib/fundamentals.mjs";
+import { earningsQualityReconciliation, normalizedTrend } from "../src/lib/fundamentals.mjs";
 
 let pass = 0, fail = 0;
 const check = (name, cond) => { console.log((cond ? "ok   " : "FAIL ") + name); cond ? pass++ : fail++; };
@@ -109,6 +109,36 @@ check("REG: owner + holding → words and results of a piece (ok)", registerReco
 // The thresholds are the catalog's top decile (owner 2.9, promoter 0.8).
 check("REG: owner just below 2.9 with low promoter → withhold", registerReconciliation("compounding", { owner: 2.8, promo: 0.2 }) === null);
 check("REG: promoter just below 0.8 with low owner → withhold", registerReconciliation("fading", { owner: 1.0, promo: 0.7 }) === null);
+
+// normalizedTrend — read margins through the cycle, not on two endpoints (the GBM normalization).
+const NT = normalizedTrend;
+// The endpoint trap: first year a peak, last year a trough, but the business is flat. Naive last−first
+// would read −8 points ("falling"); the averaged ends read flat. This is the whole point.
+check("NT: endpoint trap reads flat, not falling", NT([0.25, 0.18, 0.19, 0.20, 0.20, 0.20, 0.20, 0.20, 0.20, 0.17]).direction === "flat");
+// A genuine structural decline still reads down.
+check("NT: structural decline reads down", NT([0.30, 0.29, 0.28, 0.25, 0.22, 0.20, 0.18, 0.16, 0.15, 0.14]).direction === "down");
+// A cyclical trough the latest year recovered from: recent average is dragged down, but it's flagged
+// cyclical and read flat, not a one-way slide.
+{
+  const c = NT([0.20, 0.21, 0.20, 0.21, 0.20, 0.20, 0.08, 0.10, 0.21, 0.22]);
+  check("NT: cyclical trough flagged, not called down", c.cyclical === true && c.direction === "flat");
+}
+check("NT: a real rise reads up", NT([0.10, 0.11, 0.12, 0.14, 0.16, 0.18, 0.20, 0.22, 0.24, 0.25]).direction === "up");
+// Thin-margin honesty: a 4%→2% halving is under the 2-point absolute band but large as a fraction of the
+// level, so it reads down, not "steady" — and a one-point drift on a fat 40% margin is NOT over-read.
+check("NT: thin-margin halving reads down (relative materiality)", NT([0.04, 0.04, 0.04, 0.04, 0.04, 0.03, 0.03, 0.025, 0.022, 0.020]).direction === "down");
+check("NT: a 1-point drift on a fat margin stays flat", NT([0.40, 0.40, 0.40, 0.40, 0.40, 0.39, 0.39, 0.395, 0.39, 0.39]).direction === "flat");
+// The through-cycle median is the representative level.
+check("NT: level is the through-cycle median", NT([0.10, 0.20, 0.30, 0.20, 0.20]).level === 0.20);
+// Data-availability: window adapts and never overlaps (decade → 3-yr ends; half-decade → 2-yr ends).
+check("NT: 10-year record uses 3-year ends", NT(Array(10).fill(0.2)).window === 3);
+check("NT: 4-year record uses non-overlapping 2-year ends", NT([0.30, 0.28, 0.10, 0.12]).window === 2);
+// Too short to call a trend (3 yrs): a level, but no direction — never falls back to endpoints.
+{
+  const s = NT([0.20, 0.18, 0.22]);
+  check("NT: 3-year record gives a level but no direction", s.direction === null && s.level === 0.20 && s.n === 3);
+}
+check("NT: under three years → null (cannot normalize)", NT([0.20, 0.18]) === null);
 
 console.log(`\n${pass} passed, ${fail} failed`);
 if (fail) process.exit(1);

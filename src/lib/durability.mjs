@@ -5,7 +5,7 @@
 // the capital the business plowed back, which separates a compounding moat from
 // one that's merely being milked.
 
-import { debtReliable, ownerEarningsAbs } from "./fundamentals.mjs";
+import { debtReliable, ownerEarningsAbs, normalizedTrend } from "./fundamentals.mjs";
 
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 const firstN = (arr, n) => arr.filter((x) => x != null).slice(0, n);
@@ -149,22 +149,32 @@ export function moatReport(company, opts = {}) {
       "A moat shows up as a high return on invested capital that holds year after year, not one good vintage.");
   }
 
-  // 3, Pricing power: where did the operating margin go? Anchored to the first
-  // and last years on record (both findable in the table), not hidden averages.
+  // 3, Pricing power: where did the operating margin go? Read through the cycle — the average of the
+  // early years against the average of the recent years, anchored on the through-cycle median — not this
+  // year's figure against one a decade ago, which a single trough, peak or one-off charge at either
+  // endpoint can make lie. A cyclical trough the latest year has already climbed back out of is named as
+  // such, not mistaken for structural decline (the distinction that separates a moat from a melting one).
   const om = L.map((x) => (x.operatingIncome != null && x.revenue ? x.operatingIncome / x.revenue : null));
-  const fI = om.findIndex((v) => v != null);
-  const lI = om.length - 1 - [...om].reverse().findIndex((v) => v != null);
-  if (fI >= 0 && lI > fI) {
-    const d = om[lI] - om[fI];
-    marginDelta = d;
-    const dir = d > 0.02 ? "good" : d < -0.02 ? "warn" : "ok";
-    add("Operating margin", `${pct(om[fI])} (FY${years[fI]}) → ${pct(om[lI])} (FY${years[lI]})`, dir,
-      d > 0.02 ? "Margins widened over the record, pricing power intact or improving."
-        : d < -0.02 ? "Margins slipped over the record, competition or costs are biting in."
-        : "Margins held roughly steady across the record.");
+  const mt = normalizedTrend(om, { band: 0.02 });
+  if (mt) {
+    marginDelta = mt.cyclical ? 0 : mt.delta; // a cyclical trough is not pricing-power loss; don't fade on it
+    const dir = mt.direction === "up" ? "good" : mt.direction === "down" ? "warn" : "ok";
+    const value = mt.direction == null
+      ? `${pct(mt.level)} (median, ${mt.n} yrs)`
+      : `${pct(mt.early)} → ${pct(mt.recent)} (${mt.window}-yr avg ends)`;
+    add("Operating margin", value, dir,
+      mt.direction == null
+        ? `Over the ${mt.n} years on record the operating margin has run around ${pct(mt.level)} — too short a record to call a through-cycle trend, but that is the level the business earns at.`
+        : mt.direction === "up"
+          ? `Through the cycle the operating margin widened — about ${pct(mt.early)} early to ${pct(mt.recent)} lately, median ${pct(mt.level)} — pricing power intact or improving.`
+          : mt.cyclical
+            ? `The recent-years average (${pct(mt.recent)}) sits below the early years (${pct(mt.early)}), but the latest year (${pct(mt.latest)}) is back near the early level: a cyclical trough dragging the window down, not a one-way slide. The through-cycle median is ${pct(mt.level)} — read it across the cycle, not on the dip.`
+            : mt.direction === "down"
+              ? `Through the cycle the operating margin slipped — about ${pct(mt.early)} early to ${pct(mt.recent)} lately, median ${pct(mt.level)} — competition or costs are biting in.`
+              : `Through the cycle the operating margin held roughly steady — about ${pct(mt.early)} early, ${pct(mt.recent)} lately, median ${pct(mt.level)}.`);
     // Bring the filing's own pricing words to the margin number, so the moat's defining
     // question reads the record and the company's language together, not in two sections.
-    const recon = pricingReconciliation(d, pricing);
+    const recon = pricingReconciliation(marginDelta, pricing);
     if (recon) { const f = facts[facts.length - 1]; f.lang = recon.text; f.langTone = recon.tone; }
   }
 
