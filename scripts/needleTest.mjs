@@ -18,25 +18,27 @@ const check = (name, cond) => { console.log((cond ? "ok   " : "FAIL ") + name); 
 // oldest→newest); a single number means a flat record. Lines are scaled to revenue 1000 each year so the
 // ratios are exact. Only the fields a fixture sets are present, so an unset line reads as missing (null),
 // exactly as a real filing that doesn't tag it would.
-function co({ sic = "3571", market, om, gm = null, inv = null, capex = null, dep = null, sbc = null, recv = null, ap = null }) {
-  const oms = Array.isArray(om) ? om : Array(10).fill(om);
-  // `gm` may be a single number (a steady gross margin) or a per-year series (a swinging one — a commodity
-  // or demand cycle moving the price through the gross line). A series lets a fixture exercise the
-  // grossSwings gate that separates a true cycle from a one-off charge below a steady gross line.
-  const gms = Array.isArray(gm) ? gm : gm == null ? null : Array(oms.length).fill(gm);
-  const mk = (m, g) => {
-    const rev = 1000, L = { revenue: rev, operatingIncome: Math.round(m * rev) };
-    if (g != null) L.costOfRevenue = Math.round((1 - g) * rev);
-    if (inv != null) L.inventory = Math.round(inv * rev);
-    if (capex != null) L.capex = -Math.round(capex * rev);
-    if (dep != null) L.depreciation = Math.round(dep * rev);
-    if (sbc != null) L.stockBasedComp = Math.round(sbc * rev);
-    if (recv != null) L.receivables = Math.round(recv * rev);
-    if (ap != null) L.accountsPayable = Math.round(ap * rev);
+function co(opts) {
+  const { sic = "3571", market } = opts;
+  const oms = Array.isArray(opts.om) ? opts.om : Array(10).fill(opts.om);
+  const n = oms.length;
+  // Any field may be a single number (steady across the record) or a per-year series. A series lets a
+  // fixture exercise the through-cycle gates: a swinging gross margin (commodity cycle vs steady-gross
+  // charge), or a payables/capex spike in one year that the median must look past.
+  const ser = (v) => (Array.isArray(v) ? v : v == null ? null : Array(n).fill(v));
+  const F = { gm: ser(opts.gm), inv: ser(opts.inv), capex: ser(opts.capex), dep: ser(opts.dep), sbc: ser(opts.sbc), recv: ser(opts.recv), ap: ser(opts.ap) };
+  const mk = (i) => {
+    const rev = 1000, L = { revenue: rev, operatingIncome: Math.round(oms[i] * rev) };
+    if (F.gm) L.costOfRevenue = Math.round((1 - F.gm[i]) * rev);
+    if (F.inv) L.inventory = Math.round(F.inv[i] * rev);
+    if (F.capex) L.capex = -Math.round(F.capex[i] * rev);
+    if (F.dep) L.depreciation = Math.round(F.dep[i] * rev);
+    if (F.sbc) L.stockBasedComp = Math.round(F.sbc[i] * rev);
+    if (F.recv) L.receivables = Math.round(F.recv[i] * rev);
+    if (F.ap) L.accountsPayable = Math.round(F.ap[i] * rev);
     return L;
   };
-  const n = oms.length;
-  return { ticker: "TEST", sic, market, lines: mk(oms[n - 1], gms ? gms[n - 1] : null), history: oms.map((m, i) => ({ fy: 2015 + i, lines: mk(m, gms ? gms[i] : null) })) };
+  return { ticker: "TEST", sic, market, lines: mk(n - 1), history: oms.map((_, i) => ({ fy: 2015 + i, lines: mk(i) })) };
 }
 const txt = (c) => { const r = needleReport(c); return r ? r.text : null; };
 
@@ -136,22 +138,36 @@ check("thin spread where gross ≈ operating → cost-plus/program read, not a v
 
 // ---- the dominant sink, chosen by materiality, described not crowned ----
 
-// A negative cash cycle is DESCRIBED mechanically — never "a structural edge" or "other people's money".
+// A STRUCTURALLY negative cash cycle (negative every year of the record) is DESCRIBED mechanically —
+// never "a structural edge" or "other people's money" — and read through the cycle (a median), not on one
+// year. This is Buffett's float: paid before it pays, year in and year out (Apple).
 const negWC = txt(co({ gm: 0.14, om: 0.05, inv: 0.20, recv: 0.02, ap: 0.40 }));
-check("negative cash cycle described mechanically, no verdict words", /cash cycle runs negative/.test(negWC) && !/structural edge/.test(negWC) && !/other people's money/.test(negWC));
-check("negative cash cycle outranks a heavy inventory book as the sink", /cash cycle runs negative/.test(negWC) && !/Inventory runs near/.test(negWC));
+check("structural negative cash cycle, through the cycle, no verdict words", /cash cycle has run negative through the cycle \(a median of/.test(negWC) && !/structural edge/.test(negWC) && !/other people's money/.test(negWC));
+check("negative cash cycle outranks a heavy inventory book as the sink", /cash cycle has run negative/.test(negWC) && !/Inventory runs near/.test(negWC));
+
+// The single-year trap, the whole point: a cycle negative ONLY in the latest year (a year-end swing in
+// payables) but positive across the record is NOT a float business — the median, not the snapshot,
+// decides it. Under a latest-year read this would falsely claim Buffett's float.
+const flukeWC = txt(co({ gm: 0.14, om: 0.05, inv: 0.20, recv: 0.10, ap: [0.10, 0.10, 0.10, 0.10, 0.10, 0.10, 0.10, 0.10, 0.10, 0.60] }));
+check("a cycle negative in only the latest year is NOT called structural float", !/cash cycle has run negative/.test(flukeWC));
 
 // A marginal cycle (≈ −1 day) claims no float, so the line does not fire.
 const flatWC = txt(co({ gm: 0.30, om: 0.10, recv: 0.20, ap: 0.142 }));
-check("a ≈ −1 day cycle does not fire the cash-cycle line", !/cash cycle runs negative/.test(flatWC));
+check("a ≈ −1 day median cycle does not fire the cash-cycle line", !/cash cycle has run negative/.test(flatWC));
 
 // An impossible cycle (more negative than a year: a data artifact, Oracle's −1,838d) is suppressed.
 const artifactWC = txt(co({ gm: 0.30, om: 0.10, recv: 0.02, ap: 4.0 }));
-check("a cycle beyond −365 days is a data artifact, suppressed", !/cash cycle runs negative/.test(artifactWC));
+check("a cycle beyond −365 days is a data artifact, suppressed", !/cash cycle has run negative/.test(artifactWC));
 
-// Capital spending well above depreciation is named with its multiple of depreciation.
+// Capital spending well above depreciation is named with its multiple of depreciation — read through the
+// cycle, so a single year's lumpy capex plan cannot flip the qualifier.
 const heavyCapex = txt(co({ gm: 0.40, om: 0.39, capex: 0.15, dep: 0.10 }));
 check("heavy capex → 'Capital spending runs about 15%' and 'well above depreciation'", /Capital spending runs about 15% of sales/.test(heavyCapex) && /well above depreciation/.test(heavyCapex));
+
+// A one-year capex spike does not flip the capex-vs-depreciation qualifier: the median (1.0×) is in line,
+// so "well above depreciation" must NOT appear even though the latest year alone is 3×.
+const flukeCapex = txt(co({ gm: 0.40, om: 0.39, capex: [0.10, 0.10, 0.10, 0.10, 0.10, 0.10, 0.10, 0.10, 0.10, 0.30], dep: 0.10 }));
+check("a one-year capex spike does not flip 'well above depreciation' (through-cycle qualifier)", /Capital spending runs about 10% of sales/.test(flukeCapex) && !/well above depreciation/.test(flukeCapex));
 
 // ---- precision over recall: withhold where a shape can't be read ----
 

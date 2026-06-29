@@ -13,7 +13,7 @@
 // cycle sets more than the company does", never "the price it commands"), and for a negative cash cycle
 // (the mechanical fact, not "a structural edge"). Present, never pronounce. Returns null when the record
 // is too thin to read a shape, where the caller falls back to the archetype lever — precision over recall.
-import { grossMargin, operatingMargin, throughCycle, cashConversionCycle } from "./fundamentals.mjs";
+import { grossMargin, operatingMargin, throughCycle } from "./fundamentals.mjs";
 import { classify, financialKind } from "./archetype.mjs";
 
 // A margin as a percent: one decimal where the level is thin (precision is the whole point on a 3.8%
@@ -28,22 +28,33 @@ const median = (xs) => {
 // One sentence, the single most material of inventory, capital spending, a negative cash cycle, or
 // stock-based pay — through the cycle so a lumpy year doesn't decide it. Returns { text, weight } or null.
 function dominantSink(company, L, H) {
-  const ccc = cashConversionCycle(company);
-  // A materially negative cycle, not a marginal one: −1 day is essentially balanced and claims no float.
-  // The upper bound (−365) is a sanity clamp: a cycle more negative than a full year is a data artifact
-  // (a mis-scaled payables or COGS line — Oracle's stored −1,838 days), not a real funding position, so
-  // it is suppressed rather than surfaced as a garbage figure.
-  const cccDays = ccc ? parseInt(ccc.value, 10) : null;
-  const negWC = cccDays != null && cccDays <= -5 && cccDays >= -365;
-  const invToRev = median(H.map((h) => (h.lines.inventory != null && h.lines.revenue ? h.lines.inventory / h.lines.revenue : null)));
-  const capexToRev = median(H.map((h) => (h.lines.capex != null && h.lines.revenue ? Math.abs(h.lines.capex) / h.lines.revenue : null)));
-  const sbcToRev = median(H.map((h) => (h.lines.stockBasedComp != null && h.lines.revenue ? h.lines.stockBasedComp / h.lines.revenue : null)));
-  const capexVsDep = L.capex != null && L.depreciation ? Math.abs(L.capex) / L.depreciation : null;
+  // Every sink is read THROUGH THE CYCLE — the median across the record — so a single lumpy year (a glut
+  // of inventory, a one-off project, a year-end swing in payables) cannot decide it. That is the GBM
+  // discipline: a structural feature of the business shows up year in and year out, not in one snapshot.
+  const medOf = (fn) => median(H.map((h) => fn(h.lines)));
+  const invToRev = medOf((l) => (l.inventory != null && l.revenue ? l.inventory / l.revenue : null));
+  const capexToRev = medOf((l) => (l.capex != null && l.revenue ? Math.abs(l.capex) / l.revenue : null));
+  const sbcToRev = medOf((l) => (l.stockBasedComp != null && l.revenue ? l.stockBasedComp / l.revenue : null));
+  // Capex against depreciation, the median of the yearly ratios — whether it reinvests above what it
+  // consumes (growth or replacement) or harvests below it — not one year's lumpy capital plan.
+  const capexVsDep = medOf((l) => (l.capex != null && l.depreciation > 0 ? Math.abs(l.capex) / l.depreciation : null));
+  // The cash-conversion cycle, also through the cycle: a negative cycle is Buffett's float only when it is
+  // STRUCTURAL — paid before it pays, year in and year out (Apple, every year of the record) — not a
+  // one-year timing quirk in the payables balance. Compute each year's cycle and take the median.
+  const cccDaysFor = (l) => {
+    const { revenue: rev, costOfRevenue: cogs, receivables: recv, accountsPayable: ap, inventory: inv } = l;
+    if (rev == null || cogs == null || recv == null || ap == null || cogs <= 0 || rev <= 0) return null;
+    return (recv / rev) * 365 + (inv != null && inv > 0 ? (inv / cogs) * 365 : 0) - (ap / cogs) * 365;
+  };
+  const cccMed = median(H.map((h) => cccDaysFor(h.lines)));
+  // Materially negative, not marginal (−1 day claims no float); the −365 floor drops a mis-scaled payables
+  // or COGS line (a stored −1,838 days), a data artifact rather than a real funding position.
+  const negWC = cccMed != null && cccMed <= -5 && cccMed >= -365;
 
   const cands = [];
   // The negative cash cycle is described mechanically — what it IS — and weighed for its distinctiveness,
   // but its durability is left to the reader: no "structural edge", no "advantage", no verdict.
-  if (negWC) cands.push({ weight: 0.5, text: `The cash cycle runs negative (${ccc.value}): the operation is paid before it pays, so working capital releases cash as the business grows rather than tying it up.` });
+  if (negWC) cands.push({ weight: 0.5, text: `The cash cycle has run negative through the cycle (a median of −${Math.round(-cccMed)} days): the operation is paid before it pays, so working capital releases cash as the business grows rather than tying it up.` });
   if (invToRev != null && invToRev >= 0.12) cands.push({ weight: invToRev, text: `Inventory runs near ${pm(invToRev)} of sales, so how fast it turns back into cash — and the risk of writing it down when demand softens — sits alongside the margin.` });
   if (capexToRev != null && capexToRev >= 0.08) {
     const dep = capexVsDep == null ? "" : capexVsDep < 0.85 ? ", below what it charges for depreciation" : capexVsDep > 1.3 ? ", well above depreciation" : "";
