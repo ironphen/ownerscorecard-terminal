@@ -47,7 +47,7 @@ function dominantSink(company, L, H) {
   if (invToRev != null && invToRev >= 0.12) cands.push({ weight: invToRev, text: `Inventory runs near ${pm(invToRev)} of sales, so how fast it turns back into cash — and the risk of writing it down when demand softens — sits alongside the margin.` });
   if (capexToRev != null && capexToRev >= 0.08) {
     const dep = capexVsDep == null ? "" : capexVsDep < 0.85 ? ", below what it charges for depreciation" : capexVsDep > 1.3 ? ", well above depreciation" : "";
-    cands.push({ weight: capexToRev + 0.05, text: `Capital spending runs about ${pm(capexToRev)} of sales${dep}, so the return earned on what it sinks into plant — and the discipline not to over-build at the top — weighs as much as the margin.` });
+    cands.push({ weight: capexToRev + 0.05, text: `Capital spending runs about ${pm(capexToRev)} of sales${dep}, so the return earned on what it sinks into that plant weighs as much as the margin.` });
   }
   if (sbcToRev != null && sbcToRev >= 0.05) cands.push({ weight: sbcToRev, text: `Stock-based pay runs about ${pm(sbcToRev)} of sales, a real and recurring claim on owners that the GAAP margin understates.` });
 
@@ -99,7 +99,7 @@ export function needleReport(company) {
     const everProfitable = omHi != null && omHi >= 0.1;
     const onGM = gmMed != null ? ` on a ${pm(gmMed)} gross margin` : "";
     if (everProfitable) {
-      sentences.push(`Operating margin has reached ${pm(omHi)} at its best but run negative through the cycle (median ${pm(omMed)})${onGM} — so the question is which reading is truer: whether one-off charges, the cycle, or spending it is still growing into pulled the median below zero, and whether it settles back at a profit.`);
+      sentences.push(`Operating margin has reached ${pm(omHi)} at its best but run negative through the cycle (median ${pm(omMed)})${onGM} — so the question is which reading is truer: whether the median was pulled below zero by one-off charges, by the cycle, or by spending it is still growing into, and whether it settles back at a profit.`);
     } else if (gmMed != null && gmMed >= 0.4) {
       sentences.push(`Operating margin has run around ${pm(omMed)} through the cycle on a ${pm(gmMed)} gross margin, the operating line in the red even at its best — so the lever is whether the spending below the gross line can come down enough to clear a profit: revenue growth against the cost curve, and the cash runway until it does.`);
     } else {
@@ -162,9 +162,9 @@ export function needleReport(company) {
     } else if (wide) {
       sentences.push(`The operating margin has swung widely — from ${pm(omLo)} to ${pm(omHi)} over the years — so the through-cycle figure carries more than any single year, and the worst year more than the best.`);
     } else if (steady && narrow) {
-      sentences.push(`That margin has held in a narrow ${pm(omLo)}–${pm(omHi)} band over the years, so steadiness itself is the evidence — the lever is unit growth and cost discipline, not a shifting margin.`);
+      sentences.push(`That margin has held in a narrow ${pm(omLo)}–${pm(omHi)} band over the years, so steadiness itself is the evidence — the lever is unit growth and cost discipline, not a moving line.`);
     } else if (steady) {
-      sentences.push(`That margin has stayed fairly steady relative to where it runs (${pm(omLo)}–${pm(omHi)} over the years), so unit growth and cost discipline, not a shifting margin, are the lever.`);
+      sentences.push(`That margin has stayed fairly steady relative to where it runs (${pm(omLo)}–${pm(omHi)} over the years), so unit growth and cost discipline, not a moving line, are the lever.`);
     }
   }
 
