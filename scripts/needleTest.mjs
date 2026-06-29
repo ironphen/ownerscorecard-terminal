@@ -20,9 +20,13 @@ const check = (name, cond) => { console.log((cond ? "ok   " : "FAIL ") + name); 
 // exactly as a real filing that doesn't tag it would.
 function co({ sic = "3571", market, om, gm = null, inv = null, capex = null, dep = null, sbc = null, recv = null, ap = null }) {
   const oms = Array.isArray(om) ? om : Array(10).fill(om);
-  const mk = (m) => {
+  // `gm` may be a single number (a steady gross margin) or a per-year series (a swinging one — a commodity
+  // or demand cycle moving the price through the gross line). A series lets a fixture exercise the
+  // grossSwings gate that separates a true cycle from a one-off charge below a steady gross line.
+  const gms = Array.isArray(gm) ? gm : gm == null ? null : Array(oms.length).fill(gm);
+  const mk = (m, g) => {
     const rev = 1000, L = { revenue: rev, operatingIncome: Math.round(m * rev) };
-    if (gm != null) L.costOfRevenue = Math.round((1 - gm) * rev);
+    if (g != null) L.costOfRevenue = Math.round((1 - g) * rev);
     if (inv != null) L.inventory = Math.round(inv * rev);
     if (capex != null) L.capex = -Math.round(capex * rev);
     if (dep != null) L.depreciation = Math.round(dep * rev);
@@ -31,7 +35,8 @@ function co({ sic = "3571", market, om, gm = null, inv = null, capex = null, dep
     if (ap != null) L.accountsPayable = Math.round(ap * rev);
     return L;
   };
-  return { ticker: "TEST", sic, market, lines: mk(oms[oms.length - 1]), history: oms.map((m, i) => ({ fy: 2015 + i, lines: mk(m) })) };
+  const n = oms.length;
+  return { ticker: "TEST", sic, market, lines: mk(oms[n - 1], gms ? gms[n - 1] : null), history: oms.map((m, i) => ({ fy: 2015 + i, lines: mk(m, gms ? gms[i] : null) })) };
 }
 const txt = (c) => { const r = needleReport(c); return r ? r.text : null; };
 
@@ -54,9 +59,9 @@ const mid = txt(co({ gm: 0.39, om: [0.24, 0.27, 0.27, 0.25, 0.24, 0.30, 0.30, 0.
 check("mid non-cyclical → 'solid spread between what it charges…', never 'commands'", /a solid spread between what it charges and what the product costs to make/.test(mid) && !/commands/.test(mid));
 check("8-pt range on a fat level → 'fairly steady', not 'narrow band'", /fairly steady relative to where it runs/.test(mid) && !/narrow/.test(mid));
 
-// A mid spread on a CYCLICAL price-taker (Chevron/Micron shape): the spread is "set by the cycle", never
-// "commanded" — and the swing reads as the cycle, not a thin-margin cost story.
-const midCyc = txt(co({ gm: 0.40, om: [0.10, 0.02, 0.12, 0.26, 0.27, 0.37, 0.03, 0.20, 0.25, 0.22] }));
+// A mid spread on a CYCLICAL price-taker whose GROSS margin itself swings (Micron shape): the spread is
+// "set by the cycle", never "commanded" — and the swing reads as the cycle, not a thin-margin cost story.
+const midCyc = txt(co({ gm: [0.45, 0.40, 0.42, 0.30, 0.28, 0.46, 0.32, 0.44, 0.43, 0.41], om: [0.10, 0.02, 0.12, 0.26, 0.27, 0.37, 0.03, 0.20, 0.25, 0.22] }));
 check("mid cyclical price-taker → 'a spread the cycle sets', never 'the price it commands'", /a spread the cycle sets more than the company does/.test(midCyc) && !/commands/.test(midCyc));
 check("cyclical → 'margin is cyclical', weigh the trough", /margin is cyclical/.test(midCyc) && /balance sheet at the trough/.test(midCyc));
 
@@ -73,12 +78,13 @@ check("fat secular margin is NOT mislabelled cyclical", !/cyclical/.test(noCogs)
 // No gross line, THIN operating margin (Chipotle shape): does NOT deny pricing — "what it can charge"
 // bears on the result alongside volume and cost.
 const noCogsThin = txt(co({ gm: null, om: [0.06, 0.07, 0.08, 0.08, 0.079, 0.08, 0.085, 0.09, 0.07, 0.075] }));
-check("no-COGS thin margin does not deny pricing", /what it can charge all bear on the result/.test(noCogsThin) && !/more than the price of any one sale/.test(noCogsThin));
+check("no-COGS thin margin does not deny pricing, nor grant agency to a price-taker", /the price it gets all bear on the result/.test(noCogsThin) && !/more than the price of any one sale/.test(noCogsThin) && !/what it can charge/.test(noCogsThin));
 
 // ---- the swing mechanism must match the business ----
 
-// A deep cyclical with a fat headline margin (Nvidia shape): the record collapses repeatedly → cyclical.
-const cyc = txt(co({ gm: 0.62, om: [0.28, 0.10, 0.32, 0.26, 0.27, 0.37, 0.12, 0.54, 0.62, 0.60] }));
+// A deep cyclical whose gross margin swings with the cycle (memory/chip shape): the record collapses
+// repeatedly AND the gross line itself moves → genuine commodity cycle, weigh the trough.
+const cyc = txt(co({ gm: [0.55, 0.50, 0.60, 0.52, 0.56, 0.66, 0.50, 0.64, 0.66, 0.64], om: [0.28, 0.10, 0.32, 0.26, 0.27, 0.37, 0.12, 0.54, 0.62, 0.60] }));
 check("repeated collapses → 'margin is cyclical', weigh the trough", /margin is cyclical/.test(cyc) && /balance sheet at the trough/.test(cyc));
 
 // A wide swing on a STEADY high gross margin, NOT flagged cyclical (Salesforce / 3M-charge shape): the
@@ -92,8 +98,8 @@ check("wide swing on a steady fat gross → 'below the gross line', not the pric
 // Charge-driven / turning-the-corner: a clearly positive operating-margin HIGH but a negative median
 // (GE absorbing charges; Palantir turning) — NOT a never-earned-a-profit name, and NO "cash runway".
 const chargeDriven = txt(co({ gm: 0.36, om: [-0.149, -0.05, -0.04, -0.03, -0.02, -0.01, 0.02, 0.05, 0.10, 0.186] }));
-check("loss median but a real profit at the high → 'reached … at its best … truer picture', no startup framing",
-  /reached 19% at its best but run negative through the cycle/.test(chargeDriven) && /the truer picture/.test(chargeDriven) && !/cash runway/.test(chargeDriven) && !/has not yet earned/.test(chargeDriven));
+check("loss median but a real profit at the high → 'reached … at its best … which reading is truer', no startup framing",
+  /reached 19% at its best but run negative through the cycle/.test(chargeDriven) && /which reading is truer/.test(chargeDriven) && !/the lever is which is/.test(chargeDriven) && !/cash runway/.test(chargeDriven) && !/has not yet earned/.test(chargeDriven));
 
 // Never cleared a profit but a high gross margin (Snowflake shape): the loss is below the gross line.
 // No "the unit economics work" verdict, no evaluative "healthy".
