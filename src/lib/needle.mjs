@@ -70,13 +70,20 @@ export function needleReport(company) {
   const gmTC = throughCycle(company, grossMargin);
   const gmMed = gmTC?.median ?? null;
   const omMed = omTC.median, omLo = omTC.lo, omHi = omTC.hi;
-  const cyclical = (classify(company).overlays || []).some((o) => o.key === "cyclical");
+  const cls = classify(company);
+  const cyclical = (cls.overlays || []).some((o) => o.key === "cyclical");
   // Whether the GROSS margin itself swings widely (≥ 15 points) — the signature of a commodity/demand
   // cycle, where the price moves through the cost of goods. A steady gross margin under a wide operating
-  // swing is charges or operating spend below the line, not a cycle. Used to keep the "the cycle sets the
-  // spread" lead and the "balance sheet at the trough" swing reading to genuine price-takers, so a staples
-  // or pharma name the margin-shape overlay mislabels "cyclical" doesn't inherit a commodity frame.
+  // swing is charges or operating spend below the line, not a cycle.
   const grossSwings = gmTC && gmTC.lo != null && gmTC.hi != null && gmTC.hi - gmTC.lo >= 0.15;
+  // A genuine commodity / demand cycle, distinct from a one-off charge the margin-shape overlay mislabels
+  // "cyclical". Two ways to know it is real: the gross margin itself swings (memory, copper — the price
+  // moves through COGS), OR the business is capital-intensive (an oil major, a metals miner, a chemicals
+  // maker), whose earnings swing on a commodity price it takes — even when its integrated gross margin is
+  // comparatively steady (Chevron, gross 38–48%, but the −8% trough is the oil collapse, not opex). A
+  // staples or pharma name (Kraft Heinz, Merck) is neither: its "cyclical" flag is a writedown or an R&D
+  // charge below a steady gross line, so it stays out of the commodity frame and reads below the line.
+  const commodityCycle = cyclical && (grossSwings || cls.sector?.key === "capital");
 
   const sentences = [];
 
@@ -92,9 +99,9 @@ export function needleReport(company) {
     const everProfitable = omHi != null && omHi >= 0.1;
     const onGM = gmMed != null ? ` on a ${pm(gmMed)} gross margin` : "";
     if (everProfitable) {
-      sentences.push(`Operating margin has reached ${pm(omHi)} at its best but run negative through the cycle (median ${pm(omMed)})${onGM} — so the question is which reading is truer: what pulled the median below zero, whether one-off charges, the cycle, or spending it is still growing into, and whether it settles at a profit.`);
+      sentences.push(`Operating margin has reached ${pm(omHi)} at its best but run negative through the cycle (median ${pm(omMed)})${onGM} — so the question is which reading is truer: whether one-off charges, the cycle, or spending it is still growing into pulled the median below zero, and whether it settles back at a profit.`);
     } else if (gmMed != null && gmMed >= 0.4) {
-      sentences.push(`Operating margin has run around ${pm(omMed)} through the cycle on a ${pm(gmMed)} gross margin, the operating line in the red even at its best — so the lever is whether the spending below the gross line can fall back to a profit: revenue growth against the cost curve, and the cash runway until it does.`);
+      sentences.push(`Operating margin has run around ${pm(omMed)} through the cycle on a ${pm(gmMed)} gross margin, the operating line in the red even at its best — so the lever is whether the spending below the gross line can come down enough to clear a profit: revenue growth against the cost curve, and the cash runway until it does.`);
     } else {
       sentences.push(`Operating margin has run around ${pm(omMed)} through the cycle${onGM}, the operating line deeply negative — so the lever is the path to a margin at all: revenue growth against the cost curve and the cash runway, not the level of a margin that isn't there yet.`);
     }
@@ -107,7 +114,7 @@ export function needleReport(company) {
     const tail =
       costPlus ? ", a thin spread, but one where almost nothing separates the gross and operating lines — the mark of cost-plus or fixed-price program work, so the contract structure and the order book set the result more than unit volume against a price" :
       band === "thin" ? ", a thin spread that turns the result on volume and the cost of what it sells far more than on the price it sets" :
-      band === "mid" ? (cyclical && grossSwings
+      band === "mid" ? (commodityCycle
         ? ", a spread the cycle sets more than the company does"
         : ", a solid spread between what it charges and what the product costs to make") :
       ", a wide spread between price and the cost of what it sells — whether that advantage is durable pricing power or a margin that can erode is the question the record is for";
@@ -117,7 +124,7 @@ export function needleReport(company) {
     const tail =
       omMed >= 0.25 ? ", a wide margin for the work it does — whether that reflects a durable edge or one that can fade is what the record weighs" :
       omMed >= 0.1 ? ", a solid margin the cost base and competition set as much as the price does" :
-      ", a thin operating margin, where volume, cost discipline and the price it gets all bear on the result";
+      ", a thin margin, where volume, cost discipline and the price it gets all bear on the result";
     sentences.push(`Operating margin has run about ${pm(omMed)} through the cycle${tail}.`);
   }
 
@@ -143,18 +150,21 @@ export function needleReport(company) {
     // charges and operating spend below the line. The omHi < gmMed guard catches the case where the gross
     // margin itself expanded (Nvidia, operating high ≈ gross median), where "below a steady gross line"
     // would be false — that routes to the neutral wide read instead.
-    if (cyclical && grossSwings) {
-      sentences.push(`The margin is cyclical, swinging between ${pm(omLo)} and ${pm(omHi)} across the record, so the through-cycle figure carries more than any single year — and the balance sheet at the trough more than the peak.`);
-    } else if (wide && gmMed != null && gmMed >= 0.25 && omHi < gmMed) {
+    if (commodityCycle) {
+      sentences.push(`The margin is cyclical, swinging between ${pm(omLo)} and ${pm(omHi)} over the years, so the through-cycle figure carries more than any single year — and the balance sheet at the trough more than the peak.`);
+    } else if (wide && gmMed != null && gmMed >= 0.25 && omHi < gmMed && !grossSwings) {
+      // a steady fat-ish gross line under a wide operating swing → the swing is below the line (Salesforce's
+      // S&M, 3M's litigation charge). The !grossSwings guard keeps this off a name whose gross ALSO swung
+      // (Pfizer, 51→80% on COVID mix), where "a steadier gross margin" would overstate the case.
       sentences.push(`The operating margin has swung widely — from ${pm(omLo)} to ${pm(omHi)} — on a steadier ${pm(gmMed)} gross margin, so what moves it sits below the gross line, in operating spend and one-off charges more than in the cost of the product itself.`);
     } else if (wide && gmMed != null && gmMed < 0.25) {
-      sentences.push(`On a spread this thin the operating result swings hard on small moves in cost or volume — it has ranged from ${pm(omLo)} to ${pm(omHi)} across the record, so the cost line is where the needle moves.`);
+      sentences.push(`On a spread this thin the operating result swings hard on small moves in cost or volume — it has ranged from ${pm(omLo)} to ${pm(omHi)} over the years, so the cost line is where the needle moves.`);
     } else if (wide) {
-      sentences.push(`The operating margin has swung widely — from ${pm(omLo)} to ${pm(omHi)} across the record — so the through-cycle figure carries more than any single year, and the worst year more than the best.`);
+      sentences.push(`The operating margin has swung widely — from ${pm(omLo)} to ${pm(omHi)} over the years — so the through-cycle figure carries more than any single year, and the worst year more than the best.`);
     } else if (steady && narrow) {
-      sentences.push(`That margin has held in a narrow ${pm(omLo)}–${pm(omHi)} band across the record, so steadiness itself is the evidence — the lever is unit growth and cost discipline, not a shifting margin.`);
+      sentences.push(`That margin has held in a narrow ${pm(omLo)}–${pm(omHi)} band over the years, so steadiness itself is the evidence — the lever is unit growth and cost discipline, not a shifting margin.`);
     } else if (steady) {
-      sentences.push(`That margin has stayed fairly steady relative to where it runs (${pm(omLo)}–${pm(omHi)} across the record), so unit growth and cost discipline, not a shifting margin, are the lever.`);
+      sentences.push(`That margin has stayed fairly steady relative to where it runs (${pm(omLo)}–${pm(omHi)} over the years), so unit growth and cost discipline, not a shifting margin, are the lever.`);
     }
   }
 

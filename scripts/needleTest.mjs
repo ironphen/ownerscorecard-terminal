@@ -93,6 +93,21 @@ const belowGross = txt(co({ gm: 0.74, om: [0.02, 0.025, 0.03, 0.03, 0.033, 0.035
 check("wide swing on a steady fat gross → 'below the gross line', not the price-taker cost line",
   /swung widely/.test(belowGross) && /below the gross line, in operating spend and one-off charges/.test(belowGross) && !/the cost line is where the needle moves/.test(belowGross));
 
+// A CAPITAL-intensive commodity price-taker whose integrated gross margin is comparatively steady
+// (Chevron shape: SIC 2911 → capital sector, gross 38–46%, but the trough is the oil collapse): the
+// SECTOR, not a swinging gross line, marks the cycle — so it must read commodity-cyclical, not "below
+// the gross line". This is the case a gross-range gate alone gets wrong.
+const capCommodity = txt(co({ sic: "2911", gm: [0.42, 0.40, 0.38, 0.44, 0.46, 0.43, 0.41, 0.45, 0.40, 0.42], om: [0.12, 0.16, 0.08, -0.08, 0.05, 0.14, 0.10, 0.16, 0.13, 0.08] }));
+check("capital-intensive commodity taker (steady gross) reads cyclical via sector, not 'below the gross line'",
+  /a spread the cycle sets more than the company does/.test(capCommodity) && /margin is cyclical/.test(capCommodity) && !/below the gross line/.test(capCommodity));
+
+// A high-gross name whose GROSS margin ALSO swung, not flagged cyclical (Pfizer shape: COVID mix moved
+// the gross line 51→80%): "a steadier gross margin" would overstate it, so it routes to the neutral wide
+// read, not the below-the-gross-line one.
+const grossAlsoSwung = txt(co({ sic: "2834", gm: [0.55, 0.60, 0.80, 0.78, 0.65, 0.51, 0.70, 0.74, 0.76, 0.72], om: [0.063, 0.10, 0.12, 0.12, 0.13, 0.14, 0.15, 0.44, 0.40, 0.30] }));
+check("a swinging gross line is not called 'steadier' → neutral wide read",
+  /swung widely/.test(grossAlsoSwung) && !/steadier/.test(grossAlsoSwung) && !/below the gross line/.test(grossAlsoSwung));
+
 // ---- loss-makers: split three ways by whether (and how) a profit has ever been earned ----
 
 // Charge-driven / turning-the-corner: a clearly positive operating-margin HIGH but a negative median
@@ -104,8 +119,8 @@ check("loss median but a real profit at the high → 'reached … at its best �
 // Never cleared a profit but a high gross margin (Snowflake shape): the loss is below the gross line.
 // No "the unit economics work" verdict, no evaluative "healthy".
 const lossGoodGM = txt(co({ gm: 0.62, om: [-0.9, -0.8, -0.7, -0.6, -0.6, -0.55, -0.5, -0.5, -0.45, -0.59], sbc: 0.40 }));
-check("loss + high gross, never profitable → 'in the red even at its best', not 'unit economics work'",
-  /in the red even at its best/.test(lossGoodGM) && /whether the spending below the gross line can fall back to a profit/.test(lossGoodGM) && !/unit economics work/.test(lossGoodGM) && !/healthy/.test(lossGoodGM));
+check("loss + high gross, never profitable → 'in the red even at its best', forward-looking (no 'fall back')",
+  /in the red even at its best/.test(lossGoodGM) && /can come down enough to clear a profit/.test(lossGoodGM) && !/fall back/.test(lossGoodGM) && !/unit economics work/.test(lossGoodGM) && !/healthy/.test(lossGoodGM));
 check("heavy stock-based pay surfaced as a claim on owners", /Stock-based pay runs about 40% of sales/.test(lossGoodGM));
 
 // No gross profit yet (Rivian shape): the harder question of a margin at all.
