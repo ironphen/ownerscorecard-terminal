@@ -123,7 +123,7 @@ export function capitalHistory(company) {
     // year so it cannot poison the blend (the source of the $0.00-per-share artifacts).
     .filter((q) => q.shares == null || q.repShares <= q.shares * 1.05)
     .sort((a, b) => a.fy - b.fy);
-  let bbSpentPriced = 0, bbSharesPriced = 0, avgBuybackPrice = null, bbPriceUnreliable = false;
+  let bbSpentPriced = 0, bbSharesPriced = 0, avgBuybackPrice = null, bbPriceUnreliable = false, keptPriced = [];
   if (bbYears.length) {
     const priced = bbYears.map((q) => ({ fy: q.fy, spent: q.bb, baseShares: q.repShares * fac(q.fy) }));
     const n = priced.length;
@@ -160,6 +160,7 @@ export function capitalHistory(company) {
     const pl = priced.map((q) => q.price).filter((v) => v > 0).sort((a, b) => a - b);
     const medPrice = pl.length ? pl[Math.floor((pl.length - 1) / 2)] : null;
     if (medPrice) kept = priced.filter((q) => q.price > 0 && q.price <= medPrice * 10 && q.price >= medPrice / 10);
+    keptPriced = kept; // the per-year split-corrected prices, surfaced only when the blended average survives
     if (!bbPriceUnreliable && kept.length) {
       bbSpentPriced = kept.reduce((a, q) => a + q.spent, 0);
       bbSharesPriced = kept.reduce((a, q) => a + q.shares, 0);
@@ -221,10 +222,14 @@ export function capitalHistory(company) {
     pReinvest: p(capex), pDiv: p(div), pBB: p(bb), pReturn: p(returned), pRetained: Math.max(0, p(retained)),
     overspent: retained < 0,
     debtChange, cashChange, character,
+    debtStart: H[0].lines.totalDebt ?? null, debtEnd: endL.totalDebt ?? null,
     // report-card facts
     oeTotal,
     returnedOfOE: oeTotal > 0 ? returned / oeTotal : null,
     avgBuybackPrice, bbSharesPriced, bbSpentPriced, bbPriceUnreliable,
+    // The per-year price paid, only when the blended average survived every reliability gate — so the
+    // year-to-year range and the heaviest-buyback year (did it buy most at the top?) can be read off.
+    bbYearly: avgBuybackPrice != null && keptPriced.length ? keptPriced.map((q) => ({ fy: Math.round(q.fy), price: q.price, spent: q.spent })).sort((a, b) => a.fy - b.fy) : null,
     firstShares, lastShares, shareChange,
     divYears, dpsFirst, dpsLast, dpsGrowth, everCut,
     divReported: per.some((q) => q.divPresent), // was a dividend line present at all in the span?

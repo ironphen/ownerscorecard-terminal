@@ -22,6 +22,49 @@ const segs = cap
 const totalUse = segs.reduce((a, s) => a + s.amt, 0) || 1;
 segs.forEach((s) => (s.w = (s.amt / totalUse) * 100));
 
+// Year-to-year buyback price: the spread from cheapest to dearest, and whether the heaviest-spending
+// year was also near the top — the buy-high tell. Stated as facts; the reader judges the discipline.
+let bbRange = "";
+if (cap?.bbYearly && cap.bbYearly.length >= 3) {
+  const ys = cap.bbYearly;
+  const hi = ys.reduce((a, b) => (b.price > a.price ? b : a));
+  const lo = ys.reduce((a, b) => (b.price < a.price ? b : a));
+  const heaviest = ys.reduce((a, b) => (b.spent > a.spent ? b : a));
+  if (hi.price / lo.price >= 1.25) {
+    bbRange = ` Year to year the price paid ranged from ${per(lo.price)} (${lo.fy}) to ${per(hi.price)} (${hi.fy})` +
+      (heaviest.fy === hi.fy
+        ? `, and ${hi.fy} — near the top of that range — was also its heaviest buyback year (${$(heaviest.spent)}).`
+        : `; its heaviest year, ${heaviest.fy}, paid ${per(heaviest.price)} (${$(heaviest.spent)}).`);
+  }
+}
+
+// The funding question Buffett asks of any payout: did the cash come from the business, or the balance
+// sheet? When reinvestment plus returns ran MATERIALLY past operating cash, the shortfall was financed —
+// and the honest read attributes it to whatever actually moved: debt rising, OR a cash/investment hoard
+// drawn down (Apple returned more than it earned without borrowing). A trivial overspend (Exxon's $1.8B on
+// a decade of cash) isn't worth flagging, so require the gap to clear ~3% of operating cash.
+const shortfall = cap && cap.overspent ? cap.capex + cap.returned - cap.cfo : 0;
+const materialOverspend = !!cap && cap.overspent && shortfall > 0.03 * cap.cfo;
+let fundingNote = "";
+if (cap) {
+  if (materialOverspend) {
+    const src = [];
+    if (cap.debtChange != null && cap.debtChange > 0.15 * shortfall && cap.debtStart != null && cap.debtEnd != null)
+      src.push(`debt rose from ${$(cap.debtStart)} to ${$(cap.debtEnd)}`);
+    if (cap.cashChange != null && cap.cashChange < -0.15 * shortfall)
+      src.push(`cash and investments drew down ${$(Math.abs(cap.cashChange))}`);
+    fundingNote = `Reinvestment and shareholder returns ran ${$(shortfall)} beyond the operating cash the business generated, so the gap was financed off the balance sheet${src.length ? ` — ${src.join(", and ")}` : ""}.`;
+  } else {
+    const moves = [];
+    if (cap.debtChange != null) moves.push(`debt ${cap.debtChange < 0 ? "fell" : "rose"} ${$(Math.abs(cap.debtChange))}`);
+    if (cap.cashChange != null) moves.push(`cash ${cap.cashChange >= 0 ? "rose" : "fell"} ${$(Math.abs(cap.cashChange))}`);
+    fundingNote = `Operating cash covered reinvestment and returns${moves.length ? `; over the span ${moves.join(" and ")}` : ""}.`;
+  }
+}
+const fundingShow = !!cap && (materialOverspend
+  || (cap.debtChange != null && Math.abs(cap.debtChange) > 0.15 * cap.cfo)
+  || (cap.cashChange != null && Math.abs(cap.cashChange) > 0.2 * cap.cfo));
+
 // The report-card facts, each a value and one plain line of context. No grade: the row
 // states what happened and stops. Rows the data can't fill drop out.
 const facts = cap
@@ -34,11 +77,21 @@ const facts = cap
         show: cap.returned > 0,
       },
       {
+        key: "funding",
+        label: "Funded by the business, or the balance sheet?",
+        value: cap.debtChange != null ? `${cap.debtChange >= 0 ? "+" : "−"}${$(Math.abs(cap.debtChange))} debt` : (materialOverspend ? `−${$(shortfall)}` : "—"),
+        // No grade: debt-funded buybacks can build or destroy value depending on the price paid and the
+        // durability of the business — both questions the rest of the page is for. The facts carry it.
+        cls: "",
+        note: fundingNote,
+        show: fundingShow,
+      },
+      {
         key: "bbprice",
         label: "Average price paid for buybacks",
         value: cap.avgBuybackPrice != null ? per(cap.avgBuybackPrice) : "—",
         note: cap.avgBuybackPrice != null
-          ? `Across the years the filing reports a share count, ${(cap.bbSharesPriced / 1e6).toFixed(0)}M shares were bought for ${$(cap.bbSpentPriced)}, about ${per(cap.avgBuybackPrice)} each. Compare that to the price you bring and to the per-share figures above.`
+          ? `Across the years the filing reports a share count, ${(cap.bbSharesPriced / 1e6).toFixed(0)}M shares were bought for ${$(cap.bbSpentPriced)}, about ${per(cap.avgBuybackPrice)} each.${bbRange} Compare that to the price you bring and to the per-share figures above.`
           : cap.bbPriceUnreliable
           ? `Buybacks ran ${$(cap.bb)} over the span, but a stock split in the window left the reported buyback-share counts on a basis the diluted-share count doesn't match, so a comparable average price can't be deduced honestly here.`
           : `Buybacks ran ${$(cap.bb)} over the span, but the filings don't tag the share count needed to deduce the average price paid.`,
