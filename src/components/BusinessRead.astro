@@ -18,7 +18,8 @@ import { insurerQuality } from "../lib/insurers.mjs";
 import { feeQuality } from "../lib/feeFinancials.mjs";
 import { managedCareQuality } from "../lib/managedCare.mjs";
 import { financialKind, financialSubtype } from "../lib/archetype.mjs";
-import { businessLever, businessPhrase, weakLede, pickNote, cleanOwnerFlags } from "../lib/business.mjs";
+import { businessLever, businessPhrase, industryLensClause, weakLede, pickNote, cleanOwnerFlags } from "../lib/business.mjs";
+import { needleReport } from "../lib/needle.mjs";
 import notes from "../data/notes.json";
 
 const { company } = Astro.props;
@@ -38,10 +39,15 @@ const median = (xs) => { if (!xs.length) return null; const s = [...xs].sort((a,
 // figure on the page stays arithmetic in the sections below.
 const note = pickNote(notes, company.ticker);
 
-// What moves the needle: the reviewed note when present, else one lever per business,
-// finer than the model where the industry warrants it (lib/business.mjs). Teaches the
-// lens, never a verdict on this one.
-const lever = note?.needle || businessLever(company);
+// What moves the needle: the reviewed note when present; else, for a non-financial with a readable
+// margin record, the data-grounded needle computed from THIS company's own fingerprint (lib/needle.mjs),
+// capstoned by the one industry lens the margins can't show (patent cliff, operating ratio, commodity
+// price); else the archetype lever — financials, whose lens is statement-specific, and names too thin to
+// read a shape. Teaches the lens, never a verdict.
+const computedNeedle = (note?.needle || fk) ? null : needleReport(company);
+const lensClause = computedNeedle ? industryLensClause(company) : null;
+const lever = note?.needle
+  || (computedNeedle ? computedNeedle.text + (lensClause ? " " + lensClause : "") : businessLever(company));
 
 // The profit-engine split (when the biggest seller isn't where the profit is made) lives in its
 // own "Where the money comes from" section below, which renders it as that section's headline. The

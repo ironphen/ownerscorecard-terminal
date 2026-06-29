@@ -118,6 +118,19 @@ export function businessLever(company) {
   const ind = indEntryOf(company);
   return (ind && ind.l) || LEVER[modelKeyOf(company)] || LEVER.general;
 }
+// The lens clause for a SPECIFIC industry, to capstone the data-grounded needle (lib/needle.mjs) with
+// the one thing the margins can't show: the freight railroad's operating ratio, the drugmaker's patent
+// cliff, the oil major's commodity price, the data franchise's recurring subscriptions. Only the named
+// industries earn a clause — the eight generic economic models (the source of the repetition) get none,
+// so a thin-margin assembler reads its own numbers and nothing canned. Returns the lever's lead lens
+// sentence (the part before "What decides it:"), or null. Financials route to their statement-specific
+// lever instead and never reach here.
+export function industryLensClause(company) {
+  const ind = indEntryOf(company);
+  if (!ind || !ind.l) return null;
+  const lead = ind.l.split(/\.\s/)[0];
+  return lead ? lead.replace(/\.*$/, "") + "." : null;
+}
 // A one-line characterization of what the business is, the computed fallback for the
 // hero when the filing has no clean description, and the brief's "what it is".
 export function businessPhrase(company) {
