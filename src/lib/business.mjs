@@ -129,7 +129,12 @@ export function industryLensClause(company) {
   const ind = indEntryOf(company);
   if (!ind || !ind.l) return null;
   const lead = ind.l.split(/\.\s/)[0];
-  return lead ? lead.replace(/\.*$/, "") + "." : null;
+  if (!lead) return null;
+  // Wrap the lever's lead noun-phrase ("Volume and pricing against the operating ratio") into a complete
+  // sentence, so it reads as a deliberate capstone rather than a dangling, verbless fragment grafted onto
+  // the needle's finished prose. Lower-case the first letter so the lead-in carries the sentence.
+  const clause = lead.replace(/\.*$/, "");
+  return `Read this kind of business on ${clause.charAt(0).toLowerCase()}${clause.slice(1)}.`;
 }
 // A one-line characterization of what the business is, the computed fallback for the
 // hero when the filing has no clean description, and the brief's "what it is".

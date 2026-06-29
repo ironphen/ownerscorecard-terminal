@@ -7,10 +7,12 @@
 // that moves THIS company's owner economics, in its own figures. The same shape, two different companies,
 // two different needles — without re-litigating the SIC→sector map every other read depends on.
 //
-// It teaches the lens; it never pronounces a verdict — the durability question is handed to the reader,
-// not answered ("whether that is durable pricing power or a margin that can erode is the question").
-// Present, never pronounce. Returns null when the record is too thin to read a shape, where the caller
-// falls back to the archetype lever — precision over recall, the product's bar everywhere.
+// It teaches the lens; it never pronounces a verdict. Durability is handed to the reader as an open
+// question, never asserted as a moat — that holds for a fat margin ("whether that advantage is durable
+// pricing power or a margin that can erode is the question"), for a price-taker's spread ("a spread the
+// cycle sets more than the company does", never "the price it commands"), and for a negative cash cycle
+// (the mechanical fact, not "a structural edge"). Present, never pronounce. Returns null when the record
+// is too thin to read a shape, where the caller falls back to the archetype lever — precision over recall.
 import { grossMargin, operatingMargin, throughCycle, cashConversionCycle } from "./fundamentals.mjs";
 import { classify, financialKind } from "./archetype.mjs";
 
@@ -27,19 +29,21 @@ const median = (xs) => {
 // stock-based pay — through the cycle so a lumpy year doesn't decide it. Returns { text, weight } or null.
 function dominantSink(company, L, H) {
   const ccc = cashConversionCycle(company);
-  // A materially negative cycle, not a marginal one: −1 day is essentially balanced and claims no float,
-  // so require the operation to be funded by others by a real margin before naming it a structural edge.
+  // A materially negative cycle, not a marginal one: −1 day is essentially balanced and claims no float.
+  // The upper bound (−365) is a sanity clamp: a cycle more negative than a full year is a data artifact
+  // (a mis-scaled payables or COGS line — Oracle's stored −1,838 days), not a real funding position, so
+  // it is suppressed rather than surfaced as a garbage figure.
   const cccDays = ccc ? parseInt(ccc.value, 10) : null;
-  const negWC = cccDays != null && cccDays <= -5;
+  const negWC = cccDays != null && cccDays <= -5 && cccDays >= -365;
   const invToRev = median(H.map((h) => (h.lines.inventory != null && h.lines.revenue ? h.lines.inventory / h.lines.revenue : null)));
   const capexToRev = median(H.map((h) => (h.lines.capex != null && h.lines.revenue ? Math.abs(h.lines.capex) / h.lines.revenue : null)));
   const sbcToRev = median(H.map((h) => (h.lines.stockBasedComp != null && h.lines.revenue ? h.lines.stockBasedComp / h.lines.revenue : null)));
   const capexVsDep = L.capex != null && L.depreciation ? Math.abs(L.capex) / L.depreciation : null;
 
   const cands = [];
-  // A negative cash cycle is distinctive enough to lead when present — it is the closest thing on the
-  // statements to Buffett's float — so it carries a weight that beats a merely heavy inventory book.
-  if (negWC) cands.push({ weight: 0.5, text: `Customers and suppliers fund the operation through a negative cash cycle (${ccc.value}), a structural edge that lets it grow on other people's money rather than its own.` });
+  // The negative cash cycle is described mechanically — what it IS — and weighed for its distinctiveness,
+  // but its durability is left to the reader: no "structural edge", no "advantage", no verdict.
+  if (negWC) cands.push({ weight: 0.5, text: `The cash cycle runs negative (${ccc.value}): the operation is paid before it pays, so working capital releases cash as the business grows rather than tying it up.` });
   if (invToRev != null && invToRev >= 0.12) cands.push({ weight: invToRev, text: `Inventory runs near ${pm(invToRev)} of sales, so how fast it turns back into cash — and the risk of writing it down when demand softens — sits alongside the margin.` });
   if (capexToRev != null && capexToRev >= 0.08) {
     const dep = capexVsDep == null ? "" : capexVsDep < 0.85 ? ", below what it charges for depreciation" : capexVsDep > 1.3 ? ", well above depreciation" : "";
@@ -72,20 +76,34 @@ export function needleReport(company) {
 
   // 1 — the margin structure: where each sales dollar stands, and what that makes the lever.
   if (omMed <= 0) {
-    // A loss-making business with a HEALTHY gross margin (a young software or platform name) has working
-    // unit economics — the loss is the spending below the gross line, a choice — so the lever is whether
-    // that spending falls back to a profit, not the unit margin. One with no gross profit yet (an EV maker
-    // selling below cost) faces the harder question of a margin at all. The split is the gross margin.
-    if (gmMed != null && gmMed >= 0.4) {
-      sentences.push(`Operating margin has run around ${pm(omMed)} through the cycle on a healthy ${pm(gmMed)} gross margin — the unit economics work, so the lever is whether the spending below the gross line falls back to a profit: revenue growth against the cost curve, and the cash runway until it does.`);
+    // A negative through-cycle median is three different stories, and the wrong one misreads the business:
+    //  • A company that HAS posted a clearly positive margin (operating-margin high ≥ 10%) but runs negative
+    //    on the median — a mature industrial absorbing one-off charges (GE), or a grower just turning the
+    //    corner (Palantir) — is NOT a never-earned-a-profit name; the lever is which is the truer picture.
+    //  • One that has never cleared a profit but carries a high gross margin (Snowflake) keeps the loss
+    //    below the gross line; the lever is whether that spending can fall back to a profit.
+    //  • One with no gross profit yet (an EV maker selling below cost) faces the path to a margin at all.
+    const everProfitable = omHi != null && omHi >= 0.1;
+    const onGM = gmMed != null ? ` on a ${pm(gmMed)} gross margin` : "";
+    if (everProfitable) {
+      sentences.push(`Operating margin has reached ${pm(omHi)} at its best but run negative through the cycle (median ${pm(omMed)})${onGM} — so the lever is which is the truer picture: what pulled the median below zero, whether one-off charges, the cycle, or spending it is still growing into, and whether it settles at a profit.`);
+    } else if (gmMed != null && gmMed >= 0.4) {
+      sentences.push(`Operating margin has run around ${pm(omMed)} through the cycle on a ${pm(gmMed)} gross margin, the operating line in the red even at its best — so the lever is whether the spending below the gross line can fall back to a profit: revenue growth against the cost curve, and the cash runway until it does.`);
     } else {
-      sentences.push(`Operating margin has run around ${pm(omMed)} through the cycle — the business has not yet earned a steady operating profit, so the lever is the path to a margin at all: revenue growth set against the cost curve and the cash runway, not the level of a margin that isn't there yet.`);
+      sentences.push(`Operating margin has run around ${pm(omMed)} through the cycle${onGM}, the operating line deeply negative — so the lever is the path to a margin at all: revenue growth against the cost curve and the cash runway, not the level of a margin that isn't there yet.`);
     }
   } else if (gmMed != null) {
     const band = gmMed < 0.25 ? "thin" : gmMed < 0.5 ? "mid" : "fat";
+    // Cost-plus / fixed-price program signature: almost nothing sits between the gross and operating lines
+    // (a defense prime), so the thin-spread "volume against a price" read misfits — the contract structure
+    // sets the margin, not unit volume. Named descriptively, with no claim on the quality of those returns.
+    const costPlus = band === "thin" && omMed > 0.05 && gmMed > 0 && omMed / gmMed > 0.8;
     const tail =
+      costPlus ? ", a thin spread, but one where almost nothing separates the gross and operating lines — the mark of cost-plus or fixed-price program work, so the contract structure and the order book set the result more than unit volume against a price" :
       band === "thin" ? ", a thin spread that turns the result on volume and the cost of what it sells far more than on the price it sets" :
-      band === "mid" ? ", a solid spread carried by both the price it commands and the costs it keeps in check" :
+      band === "mid" ? (cyclical
+        ? ", a spread the cycle sets more than the company does"
+        : ", a solid spread between what it charges and what the product costs to make") :
       ", a wide spread between price and the cost of what it sells — whether that advantage is durable pricing power or a margin that can erode is the question the record is for";
     sentences.push(`Gross margin has run about ${pm(gmMed)} and operating margin about ${pm(omMed)} through the cycle${tail}.`);
   } else {
@@ -93,24 +111,31 @@ export function needleReport(company) {
     const tail =
       omMed >= 0.25 ? ", a wide margin for the work it does — whether that reflects a durable edge or one that can fade is what the record weighs" :
       omMed >= 0.1 ? ", a solid margin the cost base and competition set as much as the price does" :
-      ", a thin margin, so volume and cost discipline move the result more than the price of any one sale";
+      ", a thin operating margin, where volume, cost discipline and what it can charge all bear on the result";
     sentences.push(`Operating margin has run about ${pm(omMed)} through the cycle${tail}.`);
   }
 
   // 2 — the swing: operating leverage and the cycle, read off the through-cycle range, not two endpoints.
-  // "Wide" means the margin genuinely swings relative to where it runs (the operating-leverage signature)
-  // or the record already reads cyclical — NOT a large absolute move on a fat, secularly-rising margin,
-  // which would mislabel a steady compounder (Visa, 52→66%) as cyclical.
+  // The mechanism of the swing must match the business, not a template: a genuine demand/commodity cycle
+  // reads cyclical; a wide swing on a STEADY gross margin (a software firm, or an industrial taking a
+  // one-off charge) sits below the gross line, in operating spend or charges, NOT in the cost of the
+  // product; only a swing on a truly thin GROSS spread is the price-taker's cost-line story. "Wide" is a
+  // swing relative to where the margin runs, or the cyclical flag — never a large absolute move on a fat,
+  // secularly-rising margin, which would mislabel a steady compounder (Visa, 52→66%) as cyclical.
   if (omMed > 0 && omLo != null && omHi != null) {
     const swing = omHi - omLo;
     const relSwing = Math.abs(omMed) > 0.005 ? swing / Math.abs(omMed) : null;
     const wide = cyclical || (relSwing != null && relSwing >= 1.0);
     const steady = !wide && (swing <= 0.04 || (relSwing != null && relSwing <= 0.4));
     const narrow = swing <= 0.04; // a true narrow band, not merely steady relative to a fat level
-    if (wide && omMed < 0.1) {
-      sentences.push(`On a margin this thin the operating result swings hard on small moves in price or cost — it has ranged from ${pm(omLo)} to ${pm(omHi)} across the record, so the cost line, not a price list, is where the needle moves.`);
-    } else if (wide) {
+    if (cyclical) {
       sentences.push(`The margin is cyclical, swinging between ${pm(omLo)} and ${pm(omHi)} across the record, so the through-cycle figure carries more than any single year — and the balance sheet at the trough more than the peak.`);
+    } else if (wide && gmMed != null && gmMed >= 0.25) {
+      sentences.push(`The operating margin has swung widely — from ${pm(omLo)} to ${pm(omHi)} — on a steadier ${pm(gmMed)} gross margin, so what moves it sits below the gross line, in operating spend and one-off charges more than in the cost of the product itself.`);
+    } else if (wide && gmMed != null) {
+      sentences.push(`On a spread this thin the operating result swings hard on small moves in cost or volume — it has ranged from ${pm(omLo)} to ${pm(omHi)} across the record, so the cost line is where the needle moves.`);
+    } else if (wide) {
+      sentences.push(`The operating margin has swung widely — from ${pm(omLo)} to ${pm(omHi)} across the record — so the through-cycle figure carries more than any single year, and the worst year more than the best.`);
     } else if (steady && narrow) {
       sentences.push(`That margin has held in a narrow ${pm(omLo)}–${pm(omHi)} band across the record, so steadiness itself is the evidence — the lever is unit growth and cost discipline, not a shifting margin.`);
     } else if (steady) {

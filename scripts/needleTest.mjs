@@ -2,10 +2,12 @@
 // read that replaced the repetitive archetype template with a fingerprint computed from the company's own
 // record. The bar is the product's bar — PRECISION OVER RECALL and PRESENT, NEVER PRONOUNCE — so the
 // fixtures assert: the right lever for the shape (a thin-margin assembler reads on volume and cost, never
-// "pricing power"); the swing read through the cycle, not on two endpoints; the dominant capital sink
-// chosen by materiality; loss-makers split by whether the unit economics already work; financials and
-// thin records withheld (the caller falls back to the lever); and never a verdict word. The fixtures are
-// modelled on real shapes (SMCI, Apple, Coca-Cola, Visa, Nvidia, Snowflake, Rivian). Run with `npm test`.
+// "pricing power"); the swing read through the cycle by its true MECHANISM (a commodity cycle, operating
+// spend below a fat gross line, or a thin spread's cost arithmetic — never one template for all three); a
+// negative cash cycle described, never crowned "a structural edge"; a price-taker's spread "set by the
+// cycle", never "commanded"; loss-makers split three ways (charge-driven, healthy-gross burner, no-gross
+// burner); financials and thin records withheld; and never a verdict. Fixtures are modelled on real shapes
+// (SMCI, Apple, Coca-Cola, Visa, Nvidia, Chevron, 3M, Salesforce, Snowflake, GE, Lockheed). Run with `npm test`.
 import { needleReport } from "../src/lib/needle.mjs";
 import { industryLensClause } from "../src/lib/business.mjs";
 
@@ -38,18 +40,25 @@ const txt = (c) => { const r = needleReport(c); return r ? r.text : null; };
 // A thin-margin assembler (SMCI shape): the lever is volume and cost, NOT pricing power — the whole point.
 const thin = txt(co({ gm: 0.14, om: [0.026, 0.03, 0.03, 0.03, 0.04, 0.05, 0.06, 0.08, 0.11, 0.038] }));
 check("thin spread reads on volume and cost, not pricing", /thin spread/.test(thin) && /volume and the cost/.test(thin) && !/pricing power/.test(thin));
-check("thin + high operating leverage → 'swings hard … cost line, not a price list'", /swings hard/.test(thin) && /cost line, not a price list/.test(thin));
+check("thin + high operating leverage → 'the cost line is where the needle moves' (no self-contradicting denial)",
+  /the operating result swings hard on small moves in cost or volume/.test(thin) && /the cost line is where the needle moves/.test(thin) && !/not a price list/.test(thin));
 
 // A fat-margin franchise (Coca-Cola shape): the spread is named precisely as a price-vs-cost spread, and
 // the durability is handed to the reader as a QUESTION, never asserted as a moat.
 const fat = txt(co({ gm: 0.61, om: [0.21, 0.21, 0.27, 0.27, 0.27, 0.27, 0.25, 0.25, 0.21, 0.29] }));
 check("fat spread named as price-vs-cost, durability left a question", /wide spread between price and the cost/.test(fat) && /is the question the record is for/.test(fat));
 
-// A mid spread (Apple shape): a solid spread, and an 8-point range on a fat level is "fairly steady",
-// not falsely called a "narrow band".
+// A mid spread, non-cyclical (Apple shape): a solid spread named as a neutral price-vs-cost gap with NO
+// agency verb ("commands"), and an 8-point range on a fat level is "fairly steady", not a "narrow band".
 const mid = txt(co({ gm: 0.39, om: [0.24, 0.27, 0.27, 0.25, 0.24, 0.30, 0.30, 0.30, 0.32, 0.28] }));
-check("mid spread → 'solid spread'", /solid spread/.test(mid));
+check("mid non-cyclical → 'solid spread between what it charges…', never 'commands'", /a solid spread between what it charges and what the product costs to make/.test(mid) && !/commands/.test(mid));
 check("8-pt range on a fat level → 'fairly steady', not 'narrow band'", /fairly steady relative to where it runs/.test(mid) && !/narrow/.test(mid));
+
+// A mid spread on a CYCLICAL price-taker (Chevron/Micron shape): the spread is "set by the cycle", never
+// "commanded" — and the swing reads as the cycle, not a thin-margin cost story.
+const midCyc = txt(co({ gm: 0.40, om: [0.10, 0.02, 0.12, 0.26, 0.27, 0.37, 0.03, 0.20, 0.25, 0.22] }));
+check("mid cyclical price-taker → 'a spread the cycle sets', never 'the price it commands'", /a spread the cycle sets more than the company does/.test(midCyc) && !/commands/.test(midCyc));
+check("cyclical → 'margin is cyclical', weigh the trough", /margin is cyclical/.test(midCyc) && /balance sheet at the trough/.test(midCyc));
 
 // A genuinely narrow band (Costco shape): held inside a few points → "narrow … band".
 const narrow = txt(co({ gm: 0.13, om: [0.031, 0.033, 0.033, 0.033, 0.033, 0.033, 0.033, 0.033, 0.038, 0.038] }));
@@ -61,17 +70,36 @@ const noCogs = txt(co({ gm: null, om: [0.52, 0.66, 0.63, 0.65, 0.64, 0.66, 0.64,
 check("no gross line → reads on operating margin ('for the work it does')", /Operating margin has run about 64%/.test(noCogs) && /for the work it does/.test(noCogs));
 check("fat secular margin is NOT mislabelled cyclical", !/cyclical/.test(noCogs) && /fairly steady/.test(noCogs));
 
-// A deep cyclical with a fat headline margin (Nvidia shape): the record collapses repeatedly, so it reads
-// cyclical and points to the through-cycle figure and the trough balance sheet.
+// No gross line, THIN operating margin (Chipotle shape): does NOT deny pricing — "what it can charge"
+// bears on the result alongside volume and cost.
+const noCogsThin = txt(co({ gm: null, om: [0.06, 0.07, 0.08, 0.08, 0.079, 0.08, 0.085, 0.09, 0.07, 0.075] }));
+check("no-COGS thin margin does not deny pricing", /what it can charge all bear on the result/.test(noCogsThin) && !/more than the price of any one sale/.test(noCogsThin));
+
+// ---- the swing mechanism must match the business ----
+
+// A deep cyclical with a fat headline margin (Nvidia shape): the record collapses repeatedly → cyclical.
 const cyc = txt(co({ gm: 0.62, om: [0.28, 0.10, 0.32, 0.26, 0.27, 0.37, 0.12, 0.54, 0.62, 0.60] }));
 check("repeated collapses → 'margin is cyclical', weigh the trough", /margin is cyclical/.test(cyc) && /balance sheet at the trough/.test(cyc));
 
-// ---- loss-makers: split by whether the unit economics already work ----
+// A wide swing on a STEADY high gross margin, NOT flagged cyclical (Salesforce / 3M-charge shape): the
+// swing sits below the gross line in operating spend and charges — never the price-taker "cost line".
+const belowGross = txt(co({ gm: 0.74, om: [0.02, 0.025, 0.03, 0.03, 0.033, 0.035, 0.04, 0.20, 0.18, 0.017] }));
+check("wide swing on a steady fat gross → 'below the gross line', not the price-taker cost line",
+  /swung widely/.test(belowGross) && /below the gross line, in operating spend and one-off charges/.test(belowGross) && !/the cost line is where the needle moves/.test(belowGross));
 
-// Healthy gross, operating loss (Snowflake shape): the unit economics work; the lever is whether the
-// spending below the gross line falls back to a profit — not "a margin at all".
+// ---- loss-makers: split three ways by whether (and how) a profit has ever been earned ----
+
+// Charge-driven / turning-the-corner: a clearly positive operating-margin HIGH but a negative median
+// (GE absorbing charges; Palantir turning) — NOT a never-earned-a-profit name, and NO "cash runway".
+const chargeDriven = txt(co({ gm: 0.36, om: [-0.149, -0.05, -0.04, -0.03, -0.02, -0.01, 0.02, 0.05, 0.10, 0.186] }));
+check("loss median but a real profit at the high → 'reached … at its best … truer picture', no startup framing",
+  /reached 19% at its best but run negative through the cycle/.test(chargeDriven) && /the truer picture/.test(chargeDriven) && !/cash runway/.test(chargeDriven) && !/has not yet earned/.test(chargeDriven));
+
+// Never cleared a profit but a high gross margin (Snowflake shape): the loss is below the gross line.
+// No "the unit economics work" verdict, no evaluative "healthy".
 const lossGoodGM = txt(co({ gm: 0.62, om: [-0.9, -0.8, -0.7, -0.6, -0.6, -0.55, -0.5, -0.5, -0.45, -0.59], sbc: 0.40 }));
-check("loss + healthy gross → 'unit economics work'", /unit economics work/.test(lossGoodGM) && /falls back to a profit/.test(lossGoodGM));
+check("loss + high gross, never profitable → 'in the red even at its best', not 'unit economics work'",
+  /in the red even at its best/.test(lossGoodGM) && /whether the spending below the gross line can fall back to a profit/.test(lossGoodGM) && !/unit economics work/.test(lossGoodGM) && !/healthy/.test(lossGoodGM));
 check("heavy stock-based pay surfaced as a claim on owners", /Stock-based pay runs about 40% of sales/.test(lossGoodGM));
 
 // No gross profit yet (Rivian shape): the harder question of a margin at all.
@@ -79,16 +107,26 @@ const lossNoGM = txt(co({ sic: "3711", gm: -0.24, om: [-2.0, -1.8, -1.5, -1.3, -
 check("loss + no gross profit → 'path to a margin at all'", /path to a margin at all/.test(lossNoGM));
 check("heavy inventory surfaced alongside", /Inventory runs near 59% of sales/.test(lossNoGM));
 
-// ---- the dominant sink, chosen by materiality ----
+// ---- cost-plus / program economics (Lockheed shape): thin spread, but gross ≈ operating ----
 
-// A negative cash cycle outranks a heavy inventory book — it is the closest thing on the statements to float.
+const costPlus = txt(co({ sic: "3760", gm: 0.14, om: [0.11, 0.12, 0.13, 0.13, 0.127, 0.13, 0.135, 0.12, 0.10, 0.13] }));
+check("thin spread where gross ≈ operating → cost-plus/program read, not a volume price-taker",
+  /the mark of cost-plus or fixed-price program work/.test(costPlus) && /the contract structure and the order book set the result/.test(costPlus));
+
+// ---- the dominant sink, chosen by materiality, described not crowned ----
+
+// A negative cash cycle is DESCRIBED mechanically — never "a structural edge" or "other people's money".
 const negWC = txt(co({ gm: 0.14, om: 0.05, inv: 0.20, recv: 0.02, ap: 0.40 }));
-check("negative cash cycle wins over inventory as the sink", /negative cash cycle/.test(negWC) && !/Inventory runs near/.test(negWC));
+check("negative cash cycle described mechanically, no verdict words", /cash cycle runs negative/.test(negWC) && !/structural edge/.test(negWC) && !/other people's money/.test(negWC));
+check("negative cash cycle outranks a heavy inventory book as the sink", /cash cycle runs negative/.test(negWC) && !/Inventory runs near/.test(negWC));
 
-// A marginal cycle (≈ −1 day: DSO 73 − DPO 74 on a 30% gross margin) claims no float, so it is NOT
-// named a structural edge — only a materially negative cycle (≤ −5 days) earns the line.
+// A marginal cycle (≈ −1 day) claims no float, so the line does not fire.
 const flatWC = txt(co({ gm: 0.30, om: 0.10, recv: 0.20, ap: 0.142 }));
-check("a ≈ −1 day cycle does not claim float", !/negative cash cycle/.test(flatWC));
+check("a ≈ −1 day cycle does not fire the cash-cycle line", !/cash cycle runs negative/.test(flatWC));
+
+// An impossible cycle (more negative than a year: a data artifact, Oracle's −1,838d) is suppressed.
+const artifactWC = txt(co({ gm: 0.30, om: 0.10, recv: 0.02, ap: 4.0 }));
+check("a cycle beyond −365 days is a data artifact, suppressed", !/cash cycle runs negative/.test(artifactWC));
 
 // Capital spending well above depreciation is named with its multiple of depreciation.
 const heavyCapex = txt(co({ gm: 0.40, om: 0.39, capex: 0.15, dep: 0.10 }));
@@ -103,22 +141,24 @@ check("no revenue → null", needleReport({ ticker: "X", sic: "3571", lines: { r
 // ---- present, never pronounce ----
 
 const BANNED = /\b(buy|sell|undervalued|overvalued|cheap|expensive|great company|excellent company|must own|guaranteed|will outperform|strong buy)\b/i;
-for (const [name, t] of [["thin", thin], ["fat", fat], ["mid", mid], ["cyclical", cyc], ["loss", lossGoodGM]]) {
-  check(`no verdict word in the ${name} read`, t && !BANNED.test(t));
+// And the SEMANTIC verdicts the regex above can't see, that the adversarial review caught: a moat/edge
+// asserted as fact, pricing agency given to a price-taker, the business model declared validated.
+const PRONOUNCE = /\b(structural edge|the price it commands|the unit economics work|has a moat|is a great|is a good business|other people's money)\b/i;
+for (const [name, t] of [["thin", thin], ["fat", fat], ["mid", mid], ["midCyc", midCyc], ["cyclical", cyc], ["belowGross", belowGross], ["chargeDriven", chargeDriven], ["lossGoodGM", lossGoodGM], ["costPlus", costPlus], ["negWC", negWC]]) {
+  check(`no verdict, banned or semantic, in the ${name} read`, t && !BANNED.test(t) && !PRONOUNCE.test(t));
 }
-// A fat spread is the one place tempted to assert a moat; it must hand the durability over as a question.
 check("the fat-margin moat read is handed over as a question, never asserted", /is the question the record is for/.test(fat) && !/\b(a moat|durable moat|has a moat)\b/.test(fat));
-// The no-COGS fat margin (Visa shape) likewise raises the durability as a question to weigh.
 check("a fat operating-only margin raises durability as a question", /is what the record weighs/.test(noCogs));
 
-// ---- the industry-lens capstone: the one thing the margins can't show, named industries only ----
+// ---- the industry-lens capstone: a complete sentence, the one thing the margins can't show, named industries only ----
 
-check("a railroad keeps its operating-ratio lens", /operating ratio/i.test(industryLensClause(co({ sic: "4011", om: 0.39, gm: null })) || ""));
+check("a railroad keeps its operating-ratio lens, as a full sentence", /operating ratio/i.test(industryLensClause(co({ sic: "4011", om: 0.39, gm: null })) || ""));
 check("a drugmaker keeps its patent-cliff lens", /patent cliff/i.test(industryLensClause(co({ sic: "2834", om: 0.26, gm: 0.74 })) || ""));
 check("a generic computer-hardware SIC gets NO canned clause (the repetition source)", industryLensClause(co({ sic: "3571", om: 0.05, gm: 0.14 })) === null);
 check("a financial gets no industry clause here", industryLensClause(co({ sic: "6022", om: 0.30 })) === null);
 const railClause = industryLensClause(co({ sic: "4011", om: 0.39, gm: null }));
-check("an industry clause is a single, terminated sentence", railClause && /\.$/.test(railClause) && (railClause.match(/\./g) || []).length === 1);
+check("the capstone is a single, complete, terminated sentence (no dangling fragment)",
+  railClause && /^Read this kind of business on /.test(railClause) && /\.$/.test(railClause) && (railClause.match(/\./g) || []).length === 1);
 
 console.log(`\n${pass} passed, ${fail} failed`);
 if (fail) process.exit(1);
