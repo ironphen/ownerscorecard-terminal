@@ -26,11 +26,11 @@ const allRows = isConfluence ? confluence : byLens[key] || [];
 const rows = allRows.slice(0, CAP);
 const truncated = allRows.length - rows.length;
 
-const title = isConfluence ? "Where the tests agree" : lens?.title || "Find";
+const title = isConfluence ? "Where the tests agree" : lens?.title || "Archetypes";
 ---
 
-<BaseLayout title={`${title}, Find · Owner Scorecard`}>
-  <p class="back"><a href="/find">← Find</a></p>
+<BaseLayout title={`${title}, Archetypes · Owner Scorecard`}>
+  <p class="back"><a href="/archetypes">← Archetypes</a></p>
 
   {isConfluence ? (
     <header class="hero">
@@ -70,8 +70,8 @@ const title = isConfluence ? "Where the tests agree" : lens?.title || "Find";
           <a class="tk" href={`/c/${r.ticker}`}>{r.ticker}</a>
           <span class="nm">{r.name}</span>
           <span class="lensChips">
-            {r.lenses.map((k) => <a class="chip" href={`/find/${k}`}>{LENS_BY_KEY[k].title}</a>)}
-            {r.caution ? <a class="chip cautionChip" href="/find/handle-with-care">also handle with care</a> : null}
+            {r.lenses.map((k) => <a class="chip" href={`/archetypes/${k}`}>{LENS_BY_KEY[k].title}</a>)}
+            {r.caution ? <a class="chip cautionChip" href="/archetypes/handle-with-care">also handle with care</a> : null}
           </span>
         </li>
       ))}

@@ -90,8 +90,8 @@ const brief = fund ? (language?.companies?.[ticker]?.brief || []).filter((s) => 
 const fmtDate = (d) =>
   d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric", timeZone: "UTC" });
 
-// The lens-trail: which of the discovery lenses ("Find") this company clears, so discovery and evaluation
-// are one loop. Same memoized computation the Find pages run, so the trail can never disagree with them.
+// The archetype-trail: which of the discovery archetypes this company fits, so discovery and evaluation
+// are one loop. Same memoized computation the Archetypes pages run, so the trail can never disagree with them.
 const lensTrail = fund ? (computeLenses(allCompanies, language.companies).byTicker[ticker] || []) : [];
 ---
 
@@ -112,9 +112,9 @@ const lensTrail = fund ? (computeLenses(allCompanies, language.companies).byTick
     {fund ? <div class="meta">Latest filing: FY{fund.fy} {fund.form}</div> : null}
     {lensTrail.length ? (
       <div class="lensTrail">
-        <span class="ltLabel">Found in <a href="/find">Find</a></span>
+        <span class="ltLabel">Fits <a href="/archetypes">archetypes</a></span>
         {lensTrail.map((k) => (
-          <a class={LENS_BY_KEY[k].positive ? "ltChip" : "ltChip ltCaution"} href={`/find/${k}`}>{LENS_BY_KEY[k].title}</a>
+          <a class={LENS_BY_KEY[k].positive ? "ltChip" : "ltChip ltCaution"} href={`/archetypes/${k}`}>{LENS_BY_KEY[k].title}</a>
         ))}
       </div>
     ) : null}

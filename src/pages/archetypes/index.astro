@@ -1,10 +1,10 @@
 ---
-// "Find" — the discovery hub. Not a screener with fifty sliders, but a small set of named lenses, each a
-// real test Graham, Buffett or Munger applied, that teaches as it filters. The hub explains the idea and
-// the division of labour (a lens finds the businesses worth pricing, using only price-independent quality;
-// the company page does the pricing, where you bring the price), then lays out the lenses by thinker and
-// leads with the Confluence — where the independent tests agree. Present, never pronounce: each lens is a
-// factual membership in a test, never a recommendation.
+// "Archetypes" — the discovery hub. Not a screener with fifty sliders, but a small set of named lenses,
+// each a recognizable type of business Graham, Buffett or Munger hunted for — a real test, that teaches as
+// it filters. The hub explains the idea and the division of labour (a lens finds the businesses worth
+// pricing, using only price-independent quality; the company page does the pricing, where you bring the
+// price), then lays out the archetypes by thinker and leads with the Confluence — where the independent
+// tests agree. Present, never pronounce: each lens is a factual membership in a test, never a recommendation.
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import fundamentals from "../../data/fundamentals.json";
 import adr from "../../data/fundamentals.adr.json";
@@ -19,24 +19,24 @@ const lensesOf = (g) => LENSES.filter((l) => l.group === g);
 const count = (k) => byLens[k]?.length || 0;
 ---
 
-<BaseLayout title="Find, Owner Scorecard">
+<BaseLayout title="Archetypes, Owner Scorecard">
   <header class="hero">
-    <h1>Find</h1>
+    <h1>Archetypes</h1>
     <p class="lede">
-      Not a screener with fifty sliders — that was never how Graham, Buffett and Munger worked. They applied
-      a few decisive tests. So this is a small set of <em>lenses</em>, each one a test they actually used,
-      that teaches as it filters.
+      Not a screener with fifty sliders — that was never how Graham, Buffett and Munger worked. They hunted
+      for a handful of recognizable <em>types</em> of business. So this is a small set of archetypes, each
+      one a test they actually used, that teaches as it filters.
     </p>
     <p class="sub">
-      Each lens finds the businesses worth a closer look using only what the balance sheet, the returns and
-      the filings say — no price, no recommendation, no “best stocks.” A company appears in a lens because it
+      Each archetype finds the businesses worth a closer look using only what the balance sheet, the returns
+      and the filings say — no price, no recommendation, no “best stocks.” A company appears in one because it
       <em>passes that test</em>, ranked on the test's own figure. You bring the price on its page, where the
       valuation tools live. Discovery here; judgment there.
     </p>
   </header>
 
   {confluence.length ? (
-    <a class="confluence" href="/find/confluence">
+    <a class="confluence" href="/archetypes/confluence">
       <div class="cTop">
         <span class="cKick">Where the tests agree</span>
         <span class="cN">{confluence.length} companies</span>
@@ -45,7 +45,7 @@ const count = (k) => byLens[k]?.length || 0;
         The rarest thing in any of these lists isn't passing one test — it's passing several
         <em>independent</em> ones at once. A business that compounds, holds a fortress balance sheet, and
         talks to owners straight is a different animal from one that merely screens cheap. Here are the
-        companies that clear two or more lenses together — the count is a count of tests met, never a rating. →
+        companies that fit two or more archetypes at once — the count is a count of tests met, never a rating. →
       </p>
     </a>
   ) : null}
@@ -59,7 +59,7 @@ const count = (k) => byLens[k]?.length || 0;
       <ul class="lenses">
         {lensesOf(g).map((l) => (
           <li class={l.positive ? "lens" : "lens caution"}>
-            <a href={`/find/${l.key}`}>
+            <a href={`/archetypes/${l.key}`}>
               <div class="lTop">
                 <span class="lTitle">{l.title}</span>
                 <span class="lN">{count(l.key).toLocaleString()}</span>
