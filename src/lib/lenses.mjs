@@ -10,7 +10,8 @@
 import { currentPosition } from "./currentPosition.mjs";
 import { grahamTests } from "./graham.mjs";
 import { capitalHistory } from "./capital.mjs";
-import { forensicScreen, fmtMoney } from "./fundamentals.mjs";
+import { forensicScreen, fmtMoney, roicValue, operatingMargin, cashPosition } from "./fundamentals.mjs";
+import { classify } from "./archetype.mjs";
 
 const safe = (fn, c) => {
   try {
@@ -26,6 +27,11 @@ const SYM = { USD: "$", EUR: "€", GBP: "£", JPY: "¥", CAD: "C$", AUD: "A$", 
 const perShareStr = (v, cur = "USD") => {
   const s = SYM[cur] || "";
   return s ? `${s}${v.toFixed(2)}` : `${v.toFixed(2)} ${cur}`;
+};
+const median = (a) => (a.length ? [...a].sort((x, y) => x - y)[Math.floor((a.length - 1) / 2)] : null);
+const profitableMost = (H) => {
+  const ni = H.map((h) => h.lines.netIncome).filter((v) => v != null);
+  return ni.length >= 4 && ni.filter((v) => v > 0).length / ni.length >= 0.7;
 };
 
 // The per-company facts each lens reads, computed once per company (the heavy library calls run a single
@@ -43,7 +49,43 @@ function companyFacts(company, langMap) {
   const cd = lang?.mdna?.candor || null;
   const integrity = lang?.buffettRead?.integrity || null;
   const ncav = cp?.ncav ?? null;
-  return { company, shares, ta, cp, g, cap, f, cd, integrity, ncav };
+
+  // A wide operating margin and a net-cash balance sheet are OPERATING-company concepts: for a bank, an
+  // insurer or a REIT they are category errors (a bank's "operating margin" and "net cash" mean nothing
+  // like a manufacturer's), and they're what polluted these lists with financials reading 137% margins.
+  // The company page already withholds these reads from financials; the lenses follow the same line.
+  const cls = safe(classify, company);
+  const isFin = !!cls && ["financial", "reit"].includes(cls.sector?.key);
+  const H = (company.history || []).filter((h) => h?.lines?.revenue != null);
+
+  // Durable economics: a wide through-cycle operating margin AND a high return on capital in most years
+  // (the moat signature). roicValue self-guards (it declines an unknowable or inflated base), so a year it
+  // can't read is simply not counted; an implausible median margin above 60% is a mis-tagged top line, not
+  // a moat, so it's withheld.
+  let durable = null;
+  if (!isFin && H.length >= 4) {
+    const medOM = median(H.map((h) => operatingMargin(h.lines)).filter((v) => v != null));
+    const roics = H.map((h) => roicValue(h.lines)).filter((v) => v != null);
+    if (medOM != null && medOM >= 0.15 && medOM <= 0.6 && roics.length >= 3) {
+      const hiRoic = roics.filter((r) => r >= 0.15).length;
+      if (hiRoic / roics.length >= 0.7) durable = { medOM, hiRoic, nRoic: roics.length };
+    }
+  }
+
+  // Fortress balance sheet: net cash (cash + short-term investments exceed all debt) behind a durably
+  // profitable record. cashPosition reads tone "good" only when net cash and the debt is reliably captured,
+  // so an under-tagged balance sheet can never read as a fictional fortress; a net-cash cushion above 90%
+  // of all assets is a cash shell or a corrupt asset base, not an operating fortress, so it's withheld.
+  let fortress = null;
+  const cpos = !isFin ? safe(cashPosition, company) : null;
+  if (cpos && cpos.tone === "good" && profitableMost(H)) {
+    const Lc = company.lines || {};
+    const netCash = (Lc.cashAndEquivalents || 0) + (Lc.shortTermInvestments || 0) - (Lc.totalDebt || 0);
+    const ratio = Lc.totalAssets > 0 ? netCash / Lc.totalAssets : null;
+    if (netCash > 0 && ratio != null && ratio <= 0.9) fortress = { label: cpos.label, ratio };
+  }
+
+  return { company, shares, ta, cp, g, cap, f, cd, integrity, ncav, durable, fortress };
 }
 
 // ---- the lenses ----
@@ -68,6 +110,41 @@ export const LENSES = [
       const r = F.cap?.returnOnRetained;
       if (r == null || r < 0.4 || r > 1.5) return null;
       return { sort: r, figure: `$${r.toFixed(2)} more annual owner earnings per $1 retained` };
+    },
+  },
+  {
+    key: "durable",
+    group: "buffett",
+    title: "Durable economics",
+    tagline: "Wide margins held through the cycle, on capital that earns its keep.",
+    principle:
+      "The moat shows up in the numbers. A business with real pricing power holds a wide operating margin across the whole cycle — not one good year — and earns a high return on the capital it employs. This lens surfaces the records where both are true: margins that stay wide, and returns on invested capital that clear Buffett's rough 15% bar in most years.",
+    quote:
+      "The key to investing is determining the competitive advantage of any given company and, above all, the durability of that advantage.",
+    quoteWho: "Warren Buffett",
+    test: "Through-cycle median operating margin of at least 15%, and a return on invested capital of 15% or better in at least seven of every ten years the record can measure it (the years it can't are not counted).",
+    positive: true,
+    pick(F) {
+      const d = F.durable;
+      if (!d) return null;
+      return { sort: d.medOM, figure: `operating margin ${pctStr(d.medOM)} through the cycle · ROIC ≥15% in ${d.hiRoic} of ${d.nRoic} yrs` };
+    },
+  },
+  {
+    key: "fortress",
+    group: "buffett",
+    title: "Fortress balance sheets",
+    tagline: "More cash than debt, behind a durably profitable business.",
+    principle:
+      "Buffett keeps Berkshire un-levered so that no lender, and no panic, can ever force its hand. A fortress balance sheet is the same idea: cash and short-term investments that exceed every dollar of debt, behind a business that has actually made money through the record. Net cash means it can act from strength when others can't — and can't be broken by a bad year or a credit window that slams shut.",
+    quote: "We will reject interesting opportunities rather than over-leverage our balance sheet.",
+    quoteWho: "Warren Buffett, Owner's Manual",
+    test: "Cash and short-term investments exceed all debt (net cash), behind a record profitable in at least seven of every ten years. Ranked by how large that net-cash cushion is against the whole balance sheet.",
+    positive: true,
+    pick(F) {
+      const f = F.fortress;
+      if (!f) return null;
+      return { sort: f.ratio, figure: `${f.label} · ${pctStr(f.ratio)} of assets in net cash` };
     },
   },
   {

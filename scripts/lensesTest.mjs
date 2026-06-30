@@ -38,6 +38,22 @@ ok("net-net incoherent (CA>TA) withheld", L["net-nets"].pick({ ...co({ currentAs
 ok("net-net negative NCAV withheld", L["net-nets"].pick({ ...co({ currentAssets: 40, totalAssets: 200, stockholdersEquity: 150 }), shares: 10 }) === null);
 ok("net-net thin cushion withheld", L["net-nets"].pick({ ...co({ currentAssets: 60, totalAssets: 200, stockholdersEquity: 150 }), shares: 10 }) === null); // ncav 10 → cushion 5%
 
+// Durable economics: precomputed facts drive the verdict.
+{
+  const m = L.durable.pick({ durable: { medOM: 0.28, hiRoic: 9, nRoic: 10 } });
+  ok("durable lands", !!m);
+  ok("durable figure shows margin + roic years", /28% through the cycle/.test(m.figure) && /9 of 10/.test(m.figure));
+}
+ok("durable absent withheld", L.durable.pick({ durable: null }) === null);
+
+// Fortress: net cash behind a profitable record, ranked by cushion.
+{
+  const m = L.fortress.pick({ fortress: { label: "Net cash, debt-free", ratio: 0.4 } });
+  ok("fortress lands", !!m);
+  ok("fortress figure shows label + cushion", /Net cash, debt-free/.test(m.figure) && /40% of assets/.test(m.figure));
+}
+ok("fortress absent withheld", L.fortress.pick({ fortress: null }) === null);
+
 // Defensive: needs >=5 testable AND >=5 passes.
 ok("defensive 5/6 lands", !!L.defensive.pick({ g: { passes: 5, testable: 6 } }));
 ok("defensive 4/6 withheld", L.defensive.pick({ g: { passes: 4, testable: 6 } }) === null);
@@ -76,6 +92,8 @@ for (const lens of LENSES) {
 // Population bands — wide enough to survive a data refresh, tight enough to catch a broken predicate.
 const within = (k, lo, hi) => ok(`${k} population ${lo}–${hi} (got ${byLens[k].length})`, byLens[k].length >= lo && byLens[k].length <= hi);
 within("compounders", 80, 450);
+within("durable", 100, 450);
+within("fortress", 250, 900);
 within("defensive", 50, 350);
 within("net-nets", 300, 1200);
 within("owner-minded", 60, 500);
