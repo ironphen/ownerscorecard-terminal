@@ -37,12 +37,8 @@ const title = isConfluence ? "Where the tests agree" : lens?.title || "Archetype
       <span class="kicker">The Confluence</span>
       <h1>Where the tests agree</h1>
       <p class="principle">
-        The rarest thing isn't passing one test — it's passing several <em>independent</em> ones at once. A
-        business that compounds, holds a fortress balance sheet, and talks to owners straight is a different
-        animal from one that merely screens cheap. These are the companies that clear two or more of the
-        positive lenses together. The number beside each is a <em>count of tests met — not a rating</em>, and
-        where a company also tripped Handle-with-care, that's named, because a cheap business with a red flag
-        is exactly what an owner needs to see.
+        Companies that clear two or more of the positive archetypes at once. The number beside each is a
+        count of tests met, not a rating; a co-occurring flag is named alongside.
       </p>
     </header>
   ) : (
@@ -50,10 +46,6 @@ const title = isConfluence ? "Where the tests agree" : lens?.title || "Archetype
       <span class="kicker">{GROUP_LABEL[lens.group]}</span>
       <h1 class={lens.positive ? "" : "cautionTitle"}>{lens.title}</h1>
       <p class="principle">{lens.principle}</p>
-      <blockquote class="quote">
-        “{lens.quote}”
-        <cite>— {lens.quoteWho}</cite>
-      </blockquote>
       <p class="test"><span class="testLabel">The test</span>{lens.test}</p>
     </header>
   )}
@@ -71,7 +63,7 @@ const title = isConfluence ? "Where the tests agree" : lens?.title || "Archetype
           <span class="nm">{r.name}</span>
           <span class="lensChips">
             {r.lenses.map((k) => <a class="chip" href={`/archetypes/${k}`}>{LENS_BY_KEY[k].title}</a>)}
-            {r.caution ? <a class="chip cautionChip" href="/archetypes/handle-with-care">also handle with care</a> : null}
+            {r.caution ? <a class="chip cautionChip" href="/archetypes/red-flags">red flags</a> : null}
           </span>
         </li>
       ))}
@@ -89,8 +81,8 @@ const title = isConfluence ? "Where the tests agree" : lens?.title || "Archetype
   )}
 
   <p class="foot">
-    Computed from primary-source SEC filings with the same libraries the company pages run. A place to begin
-    looking, not a recommendation; bring your own price and read the filing before you act.
+    From the company's SEC filings, computed the same way as on its page. A place to start, not a
+    recommendation; bring the price and read the filing.
   </p>
 
   <style>
@@ -100,8 +92,6 @@ const title = isConfluence ? "Where the tests agree" : lens?.title || "Archetype
     .cautionTitle { color: var(--warn, #b4690e); }
     .principle { font-family: var(--serif); font-size: 15px; line-height: 1.62; color: var(--ink-soft); margin: 10px 0 0; max-width: 76ch; }
     .principle em { font-style: italic; color: var(--ink); }
-    .quote { font-family: var(--serif); font-style: italic; font-size: 15px; line-height: 1.55; color: var(--ink-dim); border-left: 2px solid var(--rule-strong); margin: 14px 0 0; padding: 2px 0 2px 16px; max-width: 70ch; }
-    .quote cite { display: block; font-style: normal; font-size: 12.5px; color: var(--muted); margin-top: 5px; }
     .test { font-size: 13.5px; line-height: 1.6; color: var(--ink-dim); margin: 12px 0 0; max-width: 76ch; }
     .testLabel { font-family: var(--sans); font-weight: 700; font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink); margin-right: 9px; }
 

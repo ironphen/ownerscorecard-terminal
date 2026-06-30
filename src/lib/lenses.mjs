@@ -1,12 +1,9 @@
-// The discovery layer — "Find." Not a screener with fifty sliders (the opposite of how Graham, Buffett
-// and Munger worked) but a small set of NAMED LENSES, each a real GBM test that teaches as it filters. The
-// division of labour keeps the whole thing true to the no-price-feed doctrine: a lens finds the businesses
-// worth pricing using only price-INDEPENDENT quality (balance sheet, returns, durability, candor, accounting
-// integrity); the company page does the pricing, where the reader brings the price. So every lens is a
-// factual membership in a test ("these clear Graham's defensive criteria"), ranked on the lens's own
-// business figure — never on "attractiveness," never with a return or a recommendation. Present, never
-// pronounce. The computations reuse the same libraries the company page already runs, so a lens can never
-// disagree with the page it links to.
+// The discovery layer — "Archetypes." A small set of business types, each defined by a test verifiable from
+// the filings. Membership uses only price-INDEPENDENT quality (balance sheet, returns, durability, candor,
+// accounting integrity); the company page does the pricing, where the reader brings the price. Each entry is
+// a factual membership in a test, ranked on the test's own figure — never on "attractiveness," never a
+// return or a recommendation. The computations reuse the same libraries the company page runs, so an
+// archetype can never disagree with the page it links to.
 import { currentPosition } from "./currentPosition.mjs";
 import { grahamTests } from "./graham.mjs";
 import { capitalHistory } from "./capital.mjs";
@@ -88,23 +85,20 @@ function companyFacts(company, langMap) {
   return { company, shares, ta, cp, g, cap, f, cd, integrity, ncav, durable, fortress };
 }
 
-// ---- the lenses ----
-// Each lens: identity + the teaching copy (principle, a real GBM line, the precise test), a `group` (which
-// of the three the lens belongs to), and `pick(facts)` returning the display figure + a numeric `sort` when
-// the company is a member, or null when it is not. `positive` marks the lenses that count toward the
-// Confluence (Handle-with-care is a caution, not a virtue, so it is excluded from the agreement count).
+// ---- the archetypes ----
+// Each entry: identity, a one-line description, the precise test, the `group` it sits under, and
+// `pick(facts)` returning the display figure + a numeric `sort` when the company is a member, else null.
+// `positive` marks the archetypes that count toward the Confluence (the flags do not). Copy stays factual:
+// what the test measures and what trips it, never a verdict.
 export const LENSES = [
   {
     key: "compounders",
     group: "buffett",
     title: "Compounders",
-    tagline: "Each dollar retained that came back as more owner earnings.",
+    tagline: "Each retained dollar that came back as more owner earnings.",
     principle:
-      "Buffett's one-dollar test: a company should keep earnings rather than pay them out only when each retained dollar creates at least a dollar of value. Run here on owner earnings instead of market price — no price needed — by asking how much annual owner earnings grew for every dollar the business kept.",
-    quote:
-      "Unrestricted earnings should be retained only when there is a reasonable prospect that for every dollar retained, at least one dollar of market value will be created for owners.",
-    quoteWho: "Warren Buffett, 1984 letter",
-    test: "Owner earnings (first three years of the record vs. the last three) grew by $0.40 to $1.50 for every dollar the company retained rather than paid out. The upper bound is deliberate: a ratio far above that is a small-denominator artifact, not a compounder, so it is withheld rather than shown as a fiction.",
+      "How much annual owner earnings grew for each dollar the business retained instead of paying out. Measured on owner earnings, so no market price is needed.",
+    test: "Owner earnings (first three years of the record vs. the last three) grew $0.40–$1.50 for every dollar retained. Above that band the ratio is a small-denominator artifact and is withheld.",
     positive: true,
     pick(F) {
       const r = F.cap?.returnOnRetained;
@@ -118,11 +112,8 @@ export const LENSES = [
     title: "Durable economics",
     tagline: "Wide margins held through the cycle, on capital that earns its keep.",
     principle:
-      "The moat shows up in the numbers. A business with real pricing power holds a wide operating margin across the whole cycle — not one good year — and earns a high return on the capital it employs. This lens surfaces the records where both are true: margins that stay wide, and returns on invested capital that clear Buffett's rough 15% bar in most years.",
-    quote:
-      "The key to investing is determining the competitive advantage of any given company and, above all, the durability of that advantage.",
-    quoteWho: "Warren Buffett",
-    test: "Through-cycle median operating margin of at least 15%, and a return on invested capital of 15% or better in at least seven of every ten years the record can measure it (the years it can't are not counted).",
+      "A wide operating margin sustained across the cycle, and a high return on the capital employed — pricing power that holds, not one good year.",
+    test: "Median operating margin ≥15% through the cycle, and return on invested capital ≥15% in at least seven of every ten years it can be measured. Financials excluded; a median margin above 60% is withheld as a mis-tagged top line.",
     positive: true,
     pick(F) {
       const d = F.durable;
@@ -136,10 +127,8 @@ export const LENSES = [
     title: "Fortress balance sheets",
     tagline: "More cash than debt, behind a durably profitable business.",
     principle:
-      "Buffett keeps Berkshire un-levered so that no lender, and no panic, can ever force its hand. A fortress balance sheet is the same idea: cash and short-term investments that exceed every dollar of debt, behind a business that has actually made money through the record. Net cash means it can act from strength when others can't — and can't be broken by a bad year or a credit window that slams shut.",
-    quote: "We will reject interesting opportunities rather than over-leverage our balance sheet.",
-    quoteWho: "Warren Buffett, Owner's Manual",
-    test: "Cash and short-term investments exceed all debt (net cash), behind a record profitable in at least seven of every ten years. Ranked by how large that net-cash cushion is against the whole balance sheet.",
+      "Cash and short-term investments above all debt, behind a record that has made money. Net cash leaves the business beholden to no lender — a bad year or a closed credit window can't force its hand.",
+    test: "Net cash, behind a record profitable in at least seven of every ten years. Financials excluded; a cushion above 90% of assets is withheld as a shell or corrupt data. Ranked by cushion strength.",
     positive: true,
     pick(F) {
       const f = F.fortress;
@@ -151,13 +140,10 @@ export const LENSES = [
     key: "defensive",
     group: "graham",
     title: "The defensive checklist",
-    tagline: "Clears most of Graham's criteria for the defensive investor.",
+    tagline: "Size, liquidity, debt, an unbroken earnings and dividend record.",
     principle:
-      "Graham's seven tests for the defensive investor (The Intelligent Investor, ch. 14): adequate size, a strong current ratio, debt within working capital, an unbroken earnings record, a dividend record, and earnings growth over the decade. Passing them is a floor of safety, not a buy signal — and many fine modern businesses fail his strictest liquidity tests by design.",
-    quote:
-      "The defensive investor must confine himself to the shares of important companies with a long record of profitable operations and in strong financial condition.",
-    quoteWho: "Benjamin Graham, The Intelligent Investor",
-    test: "Passes at least five of the criteria the record can test (the price-based test is left to the company page, where you bring the price).",
+      "The price-independent defensive-investor tests: adequate size, a current ratio of two, debt within working capital, an unbroken earnings record, a paid dividend, and a decade of growth. A floor of safety, not a buy signal.",
+    test: "Clears at least five of the testable criteria. The price test is left to the company page, where you bring the price.",
     positive: true,
     pick(F) {
       const g = F.g;
@@ -171,11 +157,8 @@ export const LENSES = [
     title: "Net-net candidates",
     tagline: "Current assets alone cover every liability, with money left over.",
     principle:
-      "Graham's net current asset value: subtract ALL liabilities from current assets alone — ignoring the factories, the brands, the goodwill — and see what's left for the owner. When that figure is positive, the business could in principle pay off everything it owes from its liquid assets and still have value in your hands. Whether it's an actual net-net depends on the price you bring.",
-    quote:
-      "We feel on very safe ground when buying at a price two-thirds or less of net current asset value.",
-    quoteWho: "Benjamin Graham",
-    test: "Net current asset value (current assets minus every liability, from the latest annual balance sheet) is positive and at least a tenth of the whole balance sheet. Ranked by how strong that cushion is.",
+      "Net current asset value — current assets minus every liability, ignoring plant and goodwill. Positive means liquid assets alone could clear all debt with something left for the owner. Whether it trades below that is for the price you bring.",
+    test: "Net current asset value (latest annual balance sheet) is positive and at least a tenth of total assets. Ranked by cushion strength.",
     positive: true,
     pick(F) {
       // Compute NCAV and the cushion from ONE coherent balance sheet (the latest annual lines), so the
@@ -200,13 +183,10 @@ export const LENSES = [
     key: "owner-minded",
     group: "buffett",
     title: "Owner-minded managements",
-    tagline: "Talks to owners plainly — no sales pitch, no steering past GAAP.",
+    tagline: "Reports plainly — an owner's vocabulary, no sales pitch, no steering past GAAP.",
     principle:
-      "Buffett reads a report for how management talks to its owners: does it reason in per-share value and returns, or sell? Does it let the GAAP numbers stand, or keep steering you to its own adjusted figures? This lens surfaces the filings whose MD&A leans on an owner's vocabulary, reaches for no promoter's superlatives, and stays faithful to GAAP.",
-    quote:
-      "We will be candid in our reporting to you, emphasizing the pluses and minuses important in appraising business value.",
-    quoteWho: "Warren Buffett, Owner's Manual",
-    test: "The MD&A uses an owner's vocabulary, carries little or no promotional language, and does not lean on non-GAAP measures.",
+      "The MD&A reasons in per-share value and returns, carries little or no promotional language, and leans on no non-GAAP measures.",
+    test: "Owner's vocabulary present, promotional language minimal, no reliance on non-GAAP figures.",
     positive: true,
     pick(F) {
       const c = F.cd;
@@ -217,15 +197,13 @@ export const LENSES = [
     },
   },
   {
-    key: "handle-with-care",
+    key: "red-flags",
     group: "munger",
-    title: "Handle with care",
-    tagline: "Tripped a test GBM used to AVOID — understand why before going further.",
+    title: "Red flags",
+    tagline: "A restatement, a control weakness, earnings ahead of cash, or heavy dilution.",
     principle:
-      "Munger's inversion: invert, always invert — to find what to seek, study what to avoid. This is the only lens that surfaces a caution rather than a quality. It collects the filings that tripped a red flag: earnings running ahead of the cash behind them, a restatement or a control weakness, owners diluted year after year, or a report that sells hard and steers past GAAP. Not a verdict, and not a short list — a place to read harder before anything else.",
-    quote: "All I want to know is where I'm going to die, so I'll never go there.",
-    quoteWho: "Charlie Munger",
-    test: "Tripped at least one: a restatement or material weakness (the gravest, from the filing itself), earnings running ahead of the cash behind them (corroborated by both the accrual and Beneish reads, not one alone), the share count more than doubled over the record, or heavy promotional AND off-GAAP language together.",
+      "Companies that tripped an accounting-integrity or capital-structure flag. Stated as facts to read harder, not a verdict.",
+    test: "Tripped at least one: a restatement or material weakness, earnings ahead of cash (on both the accrual and Beneish reads), the share count more than doubled, or heavy promotional plus off-GAAP language.",
     positive: false,
     pick(F) {
       // Severity-weighted, and deliberately selective: the grave, filing-stated tells (a restatement, a
@@ -247,11 +225,11 @@ export const LENSES = [
 ];
 
 export const LENS_BY_KEY = Object.fromEntries(LENSES.map((l) => [l.key, l]));
-export const GROUP_LABEL = { graham: "Through Graham's eyes", buffett: "Through Buffett's eyes", munger: "Through Munger's eyes" };
+export const GROUP_LABEL = { graham: "Value & safety", buffett: "Quality & durability", munger: "Flags" };
 export const GROUP_SUB = {
-  graham: "The floor of safety, and value you can verify from the balance sheet.",
-  buffett: "The compounding machine — quality, returns, and a management that talks straight.",
-  munger: "Invert. Study what to avoid.",
+  graham: "Asset value and balance-sheet strength, verifiable from the filings.",
+  buffett: "Wide durable returns, a clean balance sheet, plain reporting.",
+  munger: "Accounting and capital-structure warning signs.",
 };
 
 // Compute every lens over the whole universe, once. Memoized globally for the build: the hub, each lens
@@ -291,7 +269,7 @@ export function computeLenses(companies, langMap) {
       ticker: tk,
       name: (byLens[pos[0]].find((r) => r.ticker === tk)?.name) || "",
       lenses: pos,
-      caution: cleared.includes("handle-with-care"),
+      caution: cleared.includes("red-flags"),
       sort: pos.length,
     });
   }

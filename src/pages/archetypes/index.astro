@@ -1,10 +1,8 @@
 ---
-// "Archetypes" — the discovery hub. Not a screener with fifty sliders, but a small set of named lenses,
-// each a recognizable type of business Graham, Buffett or Munger hunted for — a real test, that teaches as
-// it filters. The hub explains the idea and the division of labour (a lens finds the businesses worth
-// pricing, using only price-independent quality; the company page does the pricing, where you bring the
-// price), then lays out the archetypes by thinker and leads with the Confluence — where the independent
-// tests agree. Present, never pronounce: each lens is a factual membership in a test, never a recommendation.
+// "Archetypes" — the discovery hub. A small set of business types, each defined by a test verifiable from
+// the filings, using only price-independent quality; the company page does the pricing, where the reader
+// brings the price. Lays them out by group and leads with the Confluence (companies that fit more than one).
+// Present, never pronounce: each is a factual membership in a test, never a recommendation.
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import fundamentals from "../../data/fundamentals.json";
 import adr from "../../data/fundamentals.adr.json";
@@ -23,15 +21,11 @@ const count = (k) => byLens[k]?.length || 0;
   <header class="hero">
     <h1>Archetypes</h1>
     <p class="lede">
-      Not a screener with fifty sliders — that was never how Graham, Buffett and Munger worked. They hunted
-      for a handful of recognizable <em>types</em> of business. So this is a small set of archetypes, each
-      one a test they actually used, that teaches as it filters.
+      A handful of business types, each defined by a test you can verify from the filings.
     </p>
     <p class="sub">
-      Each archetype finds the businesses worth a closer look using only what the balance sheet, the returns
-      and the filings say — no price, no recommendation, no “best stocks.” A company appears in one because it
-      <em>passes that test</em>, ranked on the test's own figure. You bring the price on its page, where the
-      valuation tools live. Discovery here; judgment there.
+      A company appears because it passes the test, not because anyone judged it cheap or good. Ranked on the
+      test's own figure. No price here; bring that to the company page, where the valuation tools are.
     </p>
   </header>
 
@@ -42,10 +36,7 @@ const count = (k) => byLens[k]?.length || 0;
         <span class="cN">{confluence.length} companies</span>
       </div>
       <p class="cBlurb">
-        The rarest thing in any of these lists isn't passing one test — it's passing several
-        <em>independent</em> ones at once. A business that compounds, holds a fortress balance sheet, and
-        talks to owners straight is a different animal from one that merely screens cheap. Here are the
-        companies that fit two or more archetypes at once — the count is a count of tests met, never a rating. →
+        Companies that fit more than one archetype at once. The number is a count of tests met, not a rating. →
       </p>
     </a>
   ) : null}
@@ -73,9 +64,8 @@ const count = (k) => byLens[k]?.length || 0;
   ))}
 
   <p class="foot">
-    Every figure is computed from primary-source SEC filings, the same libraries the company pages run, so a
-    lens can never disagree with the page it links to. Membership in a test is not a verdict on the business
-    or its price. The judgment, as ever, stays yours.
+    Every figure comes from the company's SEC filings, computed the same way as on its page. Membership is a
+    fact about a test, not a verdict on the business or its price.
   </p>
 
   <style>
