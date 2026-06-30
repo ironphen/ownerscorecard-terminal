@@ -1,0 +1,127 @@
+---
+// A single lens (or the Confluence). The header teaches — the GBM principle, a real line from the thinker,
+// and the precise test — then the companies that clear it, ranked on the lens's own figure and each linking
+// to its page, where the reader brings the price. The Confluence is the same page shape with a different
+// body: the companies that clear two or more independent positive lenses, with the lenses they cleared (and
+// a caution if they also landed in Handle-with-care). Present, never pronounce throughout.
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import fundamentals from "../../data/fundamentals.json";
+import adr from "../../data/fundamentals.adr.json";
+import language from "../../data/language.json";
+import { computeLenses, LENSES, LENS_BY_KEY, GROUP_LABEL } from "../../lib/lenses.mjs";
+
+export function getStaticPaths() {
+  return [...LENSES.map((l) => ({ params: { lens: l.key } })), { params: { lens: "confluence" } }];
+}
+
+const { lens: key } = Astro.params;
+const companies = [...(fundamentals.companies || []), ...(adr.companies || [])];
+const { byLens, confluence } = computeLenses(companies, language.companies);
+
+const isConfluence = key === "confluence";
+const lens = isConfluence ? null : LENS_BY_KEY[key];
+
+const CAP = 200; // the strongest CAP by the lens figure; the rest clear the same test, named honestly below
+const allRows = isConfluence ? confluence : byLens[key] || [];
+const rows = allRows.slice(0, CAP);
+const truncated = allRows.length - rows.length;
+
+const title = isConfluence ? "Where the tests agree" : lens?.title || "Find";
+---
+
+<BaseLayout title={`${title}, Find · Owner Scorecard`}>
+  <p class="back"><a href="/find">← Find</a></p>
+
+  {isConfluence ? (
+    <header class="hero">
+      <span class="kicker">The Confluence</span>
+      <h1>Where the tests agree</h1>
+      <p class="principle">
+        The rarest thing isn't passing one test — it's passing several <em>independent</em> ones at once. A
+        business that compounds, holds a fortress balance sheet, and talks to owners straight is a different
+        animal from one that merely screens cheap. These are the companies that clear two or more of the
+        positive lenses together. The number beside each is a <em>count of tests met — not a rating</em>, and
+        where a company also tripped Handle-with-care, that's named, because a cheap business with a red flag
+        is exactly what an owner needs to see.
+      </p>
+    </header>
+  ) : (
+    <header class="hero">
+      <span class="kicker">{GROUP_LABEL[lens.group]}</span>
+      <h1 class={lens.positive ? "" : "cautionTitle"}>{lens.title}</h1>
+      <p class="principle">{lens.principle}</p>
+      <blockquote class="quote">
+        “{lens.quote}”
+        <cite>— {lens.quoteWho}</cite>
+      </blockquote>
+      <p class="test"><span class="testLabel">The test</span>{lens.test}</p>
+    </header>
+  )}
+
+  <div class="countBar">
+    <span class="total">{allRows.length.toLocaleString()} {allRows.length === 1 ? "company" : "companies"}</span>
+    {truncated > 0 ? <span class="trunc">showing the {isConfluence ? "first" : "strongest"} {CAP.toLocaleString()} — the other {truncated.toLocaleString()} clear the same test</span> : null}
+  </div>
+
+  {isConfluence ? (
+    <ul class="rows conf">
+      {rows.map((r) => (
+        <li>
+          <a class="tk" href={`/c/${r.ticker}`}>{r.ticker}</a>
+          <span class="nm">{r.name}</span>
+          <span class="lensChips">
+            {r.lenses.map((k) => <a class="chip" href={`/find/${k}`}>{LENS_BY_KEY[k].title}</a>)}
+            {r.caution ? <a class="chip cautionChip" href="/find/handle-with-care">also handle with care</a> : null}
+          </span>
+        </li>
+      ))}
+    </ul>
+  ) : (
+    <ul class="rows">
+      {rows.map((r) => (
+        <li>
+          <a class="tk" href={`/c/${r.ticker}`}>{r.ticker}</a>
+          <span class="nm">{r.name}</span>
+          <span class="fig">{r.figure}</span>
+        </li>
+      ))}
+    </ul>
+  )}
+
+  <p class="foot">
+    Computed from primary-source SEC filings with the same libraries the company pages run. A place to begin
+    looking, not a recommendation; bring your own price and read the filing before you act.
+  </p>
+
+  <style>
+    .back { margin: 0 0 10px; font-size: 13px; }
+    .kicker { font-family: var(--sans); font-size: 11px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--accent); }
+    .hero h1 { margin: 4px 0 0; }
+    .cautionTitle { color: var(--warn, #b4690e); }
+    .principle { font-family: var(--serif); font-size: 15px; line-height: 1.62; color: var(--ink-soft); margin: 10px 0 0; max-width: 76ch; }
+    .principle em { font-style: italic; color: var(--ink); }
+    .quote { font-family: var(--serif); font-style: italic; font-size: 15px; line-height: 1.55; color: var(--ink-dim); border-left: 2px solid var(--rule-strong); margin: 14px 0 0; padding: 2px 0 2px 16px; max-width: 70ch; }
+    .quote cite { display: block; font-style: normal; font-size: 12.5px; color: var(--muted); margin-top: 5px; }
+    .test { font-size: 13.5px; line-height: 1.6; color: var(--ink-dim); margin: 12px 0 0; max-width: 76ch; }
+    .testLabel { font-family: var(--sans); font-weight: 700; font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink); margin-right: 9px; }
+
+    .countBar { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; border-bottom: 1px solid var(--rule-strong); margin: 20px 0 0; padding-bottom: 7px; }
+    .total { font-family: var(--sans); font-weight: 700; font-size: 14px; color: var(--ink); }
+    .trunc { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); }
+
+    .rows { list-style: none; padding: 0; margin: 0; }
+    .rows li { display: flex; align-items: baseline; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--rule); }
+    .tk { font-family: var(--sans); font-weight: 700; font-size: 14px; flex: 0 0 64px; }
+    .nm { font-family: var(--serif); font-size: 14px; color: var(--ink-soft); flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .fig { font-family: var(--sans); font-variant-numeric: tabular-nums; font-size: 12.5px; color: var(--ink-dim); flex: 0 0 auto; text-align: right; max-width: 46%; }
+
+    .conf li { flex-wrap: wrap; }
+    .lensChips { display: flex; flex-wrap: wrap; gap: 5px; flex: 1 1 100%; margin-top: 2px; }
+    @media (min-width: 680px) { .lensChips { flex: 0 0 auto; margin-top: 0; justify-content: flex-end; margin-left: auto; } .conf .nm { flex: 1 1 200px; } }
+    .chip { font-family: var(--sans); font-size: 11px; letter-spacing: 0.01em; color: var(--ink-soft); border: 1px solid var(--rule-strong); padding: 2px 8px; text-decoration: none; }
+    .chip:hover { border-color: var(--accent); color: var(--accent); }
+    .cautionChip { color: var(--warn, #b4690e); border-color: var(--warn, #b4690e); }
+
+    .foot { font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--muted); border-top: 1px solid var(--rule-strong); margin-top: 20px; padding-top: 12px; max-width: 78ch; line-height: 1.6; }
+  </style>
+</BaseLayout>

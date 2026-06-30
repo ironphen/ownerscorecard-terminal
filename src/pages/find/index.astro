@@ -1,0 +1,113 @@
+---
+// "Find" — the discovery hub. Not a screener with fifty sliders, but a small set of named lenses, each a
+// real test Graham, Buffett or Munger applied, that teaches as it filters. The hub explains the idea and
+// the division of labour (a lens finds the businesses worth pricing, using only price-independent quality;
+// the company page does the pricing, where you bring the price), then lays out the lenses by thinker and
+// leads with the Confluence — where the independent tests agree. Present, never pronounce: each lens is a
+// factual membership in a test, never a recommendation.
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import fundamentals from "../../data/fundamentals.json";
+import adr from "../../data/fundamentals.adr.json";
+import language from "../../data/language.json";
+import { computeLenses, LENSES, GROUP_LABEL, GROUP_SUB } from "../../lib/lenses.mjs";
+
+const companies = [...(fundamentals.companies || []), ...(adr.companies || [])];
+const { byLens, confluence } = computeLenses(companies, language.companies);
+
+const groups = ["graham", "buffett", "munger"];
+const lensesOf = (g) => LENSES.filter((l) => l.group === g);
+const count = (k) => byLens[k]?.length || 0;
+---
+
+<BaseLayout title="Find, Owner Scorecard">
+  <header class="hero">
+    <h1>Find</h1>
+    <p class="lede">
+      Not a screener with fifty sliders — that was never how Graham, Buffett and Munger worked. They applied
+      a few decisive tests. So this is a small set of <em>lenses</em>, each one a test they actually used,
+      that teaches as it filters.
+    </p>
+    <p class="sub">
+      Each lens finds the businesses worth a closer look using only what the balance sheet, the returns and
+      the filings say — no price, no recommendation, no “best stocks.” A company appears in a lens because it
+      <em>passes that test</em>, ranked on the test's own figure. You bring the price on its page, where the
+      valuation tools live. Discovery here; judgment there.
+    </p>
+  </header>
+
+  {confluence.length ? (
+    <a class="confluence" href="/find/confluence">
+      <div class="cTop">
+        <span class="cKick">Where the tests agree</span>
+        <span class="cN">{confluence.length} companies</span>
+      </div>
+      <p class="cBlurb">
+        The rarest thing in any of these lists isn't passing one test — it's passing several
+        <em>independent</em> ones at once. A business that compounds, holds a fortress balance sheet, and
+        talks to owners straight is a different animal from one that merely screens cheap. Here are the
+        companies that clear two or more lenses together — the count is a count of tests met, never a rating. →
+      </p>
+    </a>
+  ) : null}
+
+  {groups.map((g) => (
+    <section class="group">
+      <div class="gHead">
+        <h2>{GROUP_LABEL[g]}</h2>
+        <p class="gSub">{GROUP_SUB[g]}</p>
+      </div>
+      <ul class="lenses">
+        {lensesOf(g).map((l) => (
+          <li class={l.positive ? "lens" : "lens caution"}>
+            <a href={`/find/${l.key}`}>
+              <div class="lTop">
+                <span class="lTitle">{l.title}</span>
+                <span class="lN">{count(l.key).toLocaleString()}</span>
+              </div>
+              <p class="lTag">{l.tagline}</p>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </section>
+  ))}
+
+  <p class="foot">
+    Every figure is computed from primary-source SEC filings, the same libraries the company pages run, so a
+    lens can never disagree with the page it links to. Membership in a test is not a verdict on the business
+    or its price. The judgment, as ever, stays yours.
+  </p>
+
+  <style>
+    .hero h1 { margin: 0 0 8px; }
+    .lede { font-family: var(--serif); font-size: 18px; line-height: 1.55; color: var(--ink-soft); margin: 0 0 10px; max-width: 68ch; }
+    .lede em, .sub em { font-style: italic; color: var(--ink); }
+    .sub { color: var(--ink-dim); margin: 0; max-width: 68ch; line-height: 1.6; font-size: 14.5px; }
+
+    .confluence { display: block; border: 1px solid var(--rule-strong); border-left: 3px solid var(--accent); padding: 16px 18px; margin: 22px 0 8px; text-decoration: none; transition: border-color 0.15s; }
+    .confluence:hover { border-color: var(--accent); }
+    .cTop { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+    .cKick { font-family: var(--sans); font-weight: 700; font-size: 16px; color: var(--ink); }
+    .cN { font-family: var(--sans); font-variant-numeric: tabular-nums; font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--accent); flex: 0 0 auto; }
+    .cBlurb { font-family: var(--serif); font-size: 14px; line-height: 1.6; color: var(--ink-dim); margin: 8px 0 0; max-width: 76ch; }
+    .cBlurb em { font-style: italic; color: var(--ink-soft); }
+
+    .group { margin: 26px 0 0; }
+    .gHead { border-bottom: 1px solid var(--rule); padding-bottom: 6px; }
+    .gHead h2 { margin: 0; font-size: 19px; }
+    .gSub { margin: 3px 0 0; color: var(--muted); font-style: italic; font-family: var(--serif); font-size: 13.5px; }
+    .lenses { list-style: none; padding: 0; margin: 6px 0 0; display: grid; grid-template-columns: 1fr 1fr; gap: 0 22px; }
+    @media (max-width: 640px) { .lenses { grid-template-columns: 1fr; } }
+    .lens { border-bottom: 1px solid var(--rule); }
+    .lens a { display: block; padding: 13px 0; text-decoration: none; }
+    .lTop { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+    .lTitle { font-family: var(--serif); font-weight: 600; font-size: 17px; color: var(--ink); }
+    .lens a:hover .lTitle { color: var(--accent); }
+    .lN { font-family: var(--sans); font-variant-numeric: tabular-nums; font-size: 13px; color: var(--muted); flex: 0 0 auto; }
+    .lTag { margin: 4px 0 0; color: var(--ink-dim); font-size: 13.5px; line-height: 1.5; }
+    .lens.caution .lTitle { color: var(--warn, #b4690e); }
+    .lens.caution a:hover .lTitle { filter: brightness(1.15); }
+
+    .foot { font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--muted); border-top: 1px solid var(--rule-strong); margin-top: 28px; padding-top: 12px; max-width: 78ch; line-height: 1.6; }
+  </style>
+</BaseLayout>
