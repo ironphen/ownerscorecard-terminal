@@ -277,7 +277,7 @@ const bondAsOf = rates?.asOf ? new Date(rates.asOf).toLocaleDateString("en-US", 
   {offModel ? (
     reitRunnable ? (
       <div id="valBoxReit" data-ffops={ffops} data-dps={dpsReit ?? ""} data-name={name} data-sym={sym}>
-        <p class="intro">A REIT is priced on a multiple of its <b>funds from operations</b> (FFO), the cash it earns once the depreciation on its buildings is added back. Type today&rsquo;s price; we show the multiple you would pay and the income and growth it implies. Nothing is stored.</p>
+        <p class="intro">A REIT is priced on a multiple of its <b>funds from operations</b> (FFO), the cash it earns once the depreciation on its buildings is added back. Type today&rsquo;s price; we show the multiple you would pay and the income and growth it implies.</p>
         <div class="priceRow">
           <label for="pxr">Today&rsquo;s price</label>
           <span class="dollar">{sym}</span>
@@ -304,7 +304,7 @@ const bondAsOf = rates?.asOf ? new Date(rates.asOf).toLocaleDateString("en-US", 
       </div>
     ) : bankRunnable ? (
       <div id="valBoxBank" data-tbvps={tbvps} data-bvps={bvpsB} data-rotce={rotceMed} data-eps={epsB ?? ""} data-name={name} data-cycle={isInsurer ? "underwriting cycle" : "credit cycle"} data-sym={sym}>
-        <p class="intro">{isInsurer ? "An" : "A"} {finKind} is worth a multiple of its <b>tangible book value</b>, and the multiple it deserves is set by the return it earns on that book. Type today&rsquo;s price; we show what you would be paying against what {name}&rsquo;s record justifies. Nothing is stored; the number stays in your browser.</p>
+        <p class="intro">{isInsurer ? "An" : "A"} {finKind} is worth a multiple of its <b>tangible book value</b>, and the multiple it deserves is set by the return it earns on that book. Type today&rsquo;s price; we show what you would be paying against what {name}&rsquo;s record justifies.</p>
         <div class="priceRow">
           <label for="pxb">Today&rsquo;s price</label>
           <span class="dollar">{sym}</span>
@@ -377,9 +377,8 @@ const bondAsOf = rates?.asOf ? new Date(rates.asOf).toLocaleDateString("en-US", 
   ) : (
     <div id="valBox" data-oe={ownerEarnings} data-oe3={oeNormalized ?? ""} data-oemaint={ownerEarningsMaint ?? ""} data-oemaint3={oe3Maint ?? ""} data-sbc={sbcLatest ?? ""} data-gdeliv={(gDeliv5 ?? gDeliv) ?? ""} data-netdebt={netDebt} data-shares={shares} data-haveshares={haveShares ? "1" : "0"} data-name={name} data-eps3={eps3 ?? ""} data-bvps={bvps ?? ""} data-rev={rev ?? ""} data-grev={gRevRaw ?? ""} data-ni={niNow ?? ""} data-sym={sym} data-bonddefault={bondDefault ?? ""}>
       <p class="intro">
-        A price is the one input we don't pull, <b>you bring it</b>. Type today's close (read it off any
-        broker or quote site) and see the owner-earnings growth you'd have to believe to justify it, set
-        beside what {name} has actually delivered. Nothing is stored; the number stays in your browser.
+        A price is the one input we don't pull — <b>you bring it</b>. Type today's close and see the
+        owner-earnings growth you'd have to believe to justify it, beside what {name} has actually delivered.
       </p>
 
       {(defaultMaint || defaultNorm) ? (
@@ -487,7 +486,7 @@ const bondAsOf = rates?.asOf ? new Date(rates.asOf).toLocaleDateString("en-US", 
 
       <p class="foot">
         {offerMaint ? "Free cash flow" : "Owner earnings"} {$(ownerEarnings)} {haveShares ? `on ${(shares / 1e6).toFixed(0)}M diluted shares` : "on the share count you enter above"}; net {netDebt >= 0 ? `debt ${$(netDebt)}` : `cash ${$(-netDebt)}`}.
-        The base is the latest year by default; <b>Normalize</b> values it on the through-cycle median owner-earnings margin (Graham's method, to avoid paying on a peak year), and <b>Net of stock comp</b> treats option pay as the expense it is.{offerMaint ? (<> Capex ({$(Math.abs(capex))}) runs well above depreciation ({$(dep)}), so this is a build-out; <b>Steady-state</b> swaps total capex for maintenance (≈ depreciation), lifting the base to about {$(ownerEarningsMaint)}, the cash it would throw off if it stopped expanding.</>) : null}
+        The base is the latest year by default; <b>Normalize</b> values it on the through-cycle median owner-earnings margin (to avoid paying on a peak year), and <b>Net of stock comp</b> treats option pay as the expense it is.{offerMaint ? (<> Capex ({$(Math.abs(capex))}) runs well above depreciation ({$(dep)}), so this is a build-out; <b>Steady-state</b> swaps total capex for maintenance (≈ depreciation), lifting the base to about {$(ownerEarningsMaint)}, the cash it would throw off if it stopped expanding.</>) : null}
         The reference value extrapolates the owner-earnings growth the record actually delivered, netted against debt — a yardstick, never a price target. The tool says what you'd have to <em>believe</em>, not what the company is <em>worth</em>.
       </p>
     </div>

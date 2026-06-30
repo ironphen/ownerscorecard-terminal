@@ -120,21 +120,15 @@ if (admissions.length || integrityItems.length || judgment) pillars.push("what i
     </div>
 
     <p class="intro">
-      Buffett's test for a report: imagine you own this business with a partner and you've been away a
-      year. A straight partner tells you plainly what changed, how the business performed, and what went
-      wrong — the things an owner needs to know, not a sales pitch. Here is this year's filing read against
-      that test: {pillars.map((p, i) => (
+      How management reports to owners, from this year's filing: {pillars.map((p, i) => (
         <>{i > 0 ? (i === pillars.length - 1 ? (pillars.length > 2 ? ", and " : " and ") : ", ") : ""}<em>{p}</em></>
-      ))}. Every line below is the company's own; the character is yours to judge.
+      ))}. Every line below is the company's own.
     </p>
 
     {told.length ? (
       <div class="changed">
         <h4 class="aHead">What management says changed this year</h4>
-        <p class="aIntro">
-          The first thing an absent owner asks: what actually moved, and why. From the year-over-year read
-          of the MD&amp;A — the sentences it added this year that report on the business, in its own words.
-        </p>
+        <p class="aIntro">The sentences this year's MD&amp;A added that report on the business — in its own words.</p>
         <ul class="quotes change">{told.map((q) => <li>“{q}”</li>)}</ul>
       </div>
     ) : null}
@@ -142,11 +136,7 @@ if (admissions.length || integrityItems.length || judgment) pillars.push("what i
     {c ? (
       <div class="how">
         <h4 class="aHead">The words it reached for</h4>
-        <p class="aIntro">
-          The second test is <em>how</em> it tells you. An owner reasons in per-share value, returns and the
-          long term; a promoter sells; a filing that keeps steering you off GAAP is asking you to measure
-          earnings its way. Here are the actual words this filing reached for — and where it stayed plain.
-        </p>
+        <p class="aIntro">An owner's vocabulary, a promoter's, and how often it steers off GAAP — the actual words used, and where it stayed plain.</p>
         {shownRegisters.length ? (
           <ul class="regs">
             {shownRegisters.map((r) => (
@@ -166,9 +156,7 @@ if (admissions.length || integrityItems.length || judgment) pillars.push("what i
         ) : null}
         {plainspoken ? (
           <p class="plain" style={`border-color:${TONE_COLOR.good}`}>
-            <strong>Plainspoken.</strong> No marketing superlatives, and the filing never steered you off GAAP to
-            measure earnings its own way — plainer than four in five filings. Graham's preference was exactly this:
-            a report that lets the numbers carry the argument.
+            <strong>Plainspoken.</strong> No marketing superlatives, and no steering off GAAP — plainer than four in five filings.
           </p>
         ) : null}
       </div>
@@ -177,7 +165,7 @@ if (admissions.length || integrityItems.length || judgment) pillars.push("what i
     {admissions.length ? (
       <div class="admit">
         <h4 class="aHead">What it owned, in its own words</h4>
-        <p class="aIntro">The rarest tell in any filing — and the one a part-owner trusts most: management saying plainly, in the first person and past tense, that something did not go as hoped. Worth more than any adjective. Every such sentence, verbatim.</p>
+        <p class="aIntro">Management saying plainly, in the first person, that something did not go as hoped — every such sentence, verbatim.</p>
         <ul class="quotes">{admissions.map((q) => <li>“{q}{q.length >= 290 ? "…" : ""}”</li>)}</ul>
       </div>
     ) : null}
@@ -185,7 +173,7 @@ if (admissions.length || integrityItems.length || judgment) pillars.push("what i
     {integrityItems.length ? (
       <div class="integ">
         <h4 class="aHead">What it had to disclose about the numbers</h4>
-        <p class="aIntro">The gravest, rarest tells in any filing — the company conceding its own figures may not be reliable. The scorecard above ties each to the numbers it bears on; here is the company's own sentence.</p>
+        <p class="aIntro">The company conceding its own figures may not be reliable — its own sentence, with the numbers it bears on.</p>
         <ul class="items">
           {integrityItems.map((it) => (
             <li>
@@ -204,20 +192,13 @@ if (admissions.length || integrityItems.length || judgment) pillars.push("what i
           <span class="aHead">Where the numbers rest on judgment</span>
           <span class="count">{judgment.count} critical estimate{judgment.count === 1 ? "" : "s"}</span>
         </div>
-        <p class="aIntro">
-          The figures above lean most on management's own assumptions in the {judgment.count} area{judgment.count === 1 ? "" : "s"} the
-          filing itself singles out as critical to its accounting:
-        </p>
+        <p class="aIntro">The {judgment.count} area{judgment.count === 1 ? "" : "s"} the filing names as critical to its accounting — where the figures lean most on management's assumptions:</p>
         <div class="topics">{judgment.topics.map((t) => <span class="topic">{t}</span>)}</div>
-        <p class="jnote">
-          More estimates is not worse — every business carries them — but each is a number that is partly an
-          opinion. When earnings turn on goodwill, reserves or the timing of revenue, that is where to read the
-          filing's notes hardest.
-        </p>
+        <p class="jnote">Each is partly an opinion. Where earnings turn on goodwill, reserves or revenue timing, read the notes hardest.</p>
       </div>
     ) : null}
 
-    <p class="foot">Classic text analysis of the filing itself, and every quote is the company's own. A lens on what an owner would want told, never a score.</p>
+    <p class="foot">Text analysis of the filing; every quote is the company's own.</p>
   </section>
 ) : null}
 

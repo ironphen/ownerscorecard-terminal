@@ -44,10 +44,9 @@ const bsDebt = L.totalDebt ?? null;
       {dm.sourceUrl ? <a class="src" href={dm.sourceUrl} target="_blank" rel="noopener">the debt note, SEC EDGAR →</a> : null}
     </div>
     <p class="intro">
-      Not how much it owes, but when it must be paid — and against what. A heavy load that matures far out,
-      with the cash still coming in, is carried safely; a smaller one that all falls due at once, into a
-      shut credit window, is how a solvent business fails. Here is the ladder the company files, set beside
-      the cash on hand and a year&rsquo;s owner earnings.
+      Not how much it owes, but when it falls due — and against what. Debt that matures far out with cash
+      still coming in is carried safely; a load that all comes due at once into a shut credit window is how a
+      solvent business fails. The ladder the company files, beside cash on hand and a year's owner earnings.
     </p>
 
     <div class="wall">
@@ -117,8 +116,8 @@ const bsDebt = L.totalDebt ?? null;
 
     <p class="foot">
       Maturity schedule extracted from the company&rsquo;s {dm.asOf ? fmtDate(dm.asOf) : "latest"} annual report and
-      reconciled to {dm.basis === "declared" ? "the total the table states" : dm.basis === "balance-sheet" ? "the balance-sheet debt" : "the schedule’s own arithmetic"};
-      nothing here is scored. Read it beside the Current Position above.
+      reconciled to {dm.basis === "declared" ? "the total the table states" : dm.basis === "balance-sheet" ? "the balance-sheet debt" : "the schedule’s own arithmetic"}.
+      Read it beside the Current Position above.
     </p>
   </section>
 ) : null}

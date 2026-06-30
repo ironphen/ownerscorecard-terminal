@@ -37,9 +37,9 @@ const leasePctFixed = material ? Math.round((liability / totalFixed) * 100) : nu
       {company?.sourceUrl ? <a class="src" href={company.sourceUrl} target="_blank" rel="noopener">the lease note, SEC EDGAR →</a> : null}
     </div>
     <p class="intro">
-      Debt by another name. What the business owes on the property, aircraft, stores and equipment it
-      rents rather than owns is a fixed claim that comes due on a schedule, the same as a bond — Buffett
-      adds it back to debt to see the true leverage. Here is that ladder{bothKinds ? ", operating and finance leases together" : ""}, and what it adds to the debt on the page above.
+      Debt by another name. What the business owes on the property, aircraft, stores and equipment it rents
+      rather than owns is a fixed claim due on a schedule, the same as a bond — add it back to debt to see the
+      true leverage. That ladder{bothKinds ? ", operating and finance leases together" : ""}, and what it adds to the debt on the page above.
     </p>
 
     {bothKinds ? (
@@ -108,7 +108,7 @@ const leasePctFixed = material ? Math.round((liability / totalFixed) * 100) : nu
     <p class="foot">
       Lease ladder read from the ASC 842 tags in the company’s {lo.asOf ? fmtDate(lo.asOf) : "latest"} annual
       report and reconciled — the yearly buckets sum to the undiscounted total, which less the imputed
-      interest equals the balance-sheet liability; a ladder that doesn’t tie out is withheld. Nothing here is scored.
+      interest equals the balance-sheet liability; a ladder that doesn’t tie out is withheld.
     </p>
   </section>
 ) : null}

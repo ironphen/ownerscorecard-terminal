@@ -92,10 +92,8 @@ if (b) {
       </span>
     </div>
     <p class="intro">
-      Net income is the accountant's number; owner earnings is the cash an owner could actually
-      take out. The walk from one to the other, every step off the company's own cash-flow
-      statement, across the last few years — whether the gap between reported profit and owner cash
-      is widening or holding is where a business is read.
+      Net income is the accountant's number; owner earnings is the cash an owner could take out. The walk
+      between them, off the cash-flow statement — and whether the gap is widening or holding.
     </p>
 
     {takeaway ? <p class="take">{takeaway}</p> : null}
@@ -138,7 +136,7 @@ if (b) {
     </div>
 
     <p class="note">
-      Owner earnings is what Buffett called the cash you could pull out without starving the business:
+      Owner earnings is the cash you could pull out without starving the business:
       operating cash less the {hasGrowth ? "maintenance " : ""}capital it must spend to hold its position
       {hasGrowth ? <> — here about {$(b.maintCapex)}, roughly its depreciation, the rate its assets wear out</> : null}.
       {hasGrowth ? (
@@ -153,16 +151,15 @@ if (b) {
 
     {bigGap ? (
       <p class="gapnote">
-        Mind the gap: much of this year's profit didn't arrive as operating cash — it sits in
-        “working capital &amp; other” above. That can be a real inventory or timing swing, or profit
-        that doesn't run through operating cash at all: a heavy tax year, equity-method earnings, or
-        investment income a company earns on its cash pile and books through investing rather than
-        operations. For a year like this, owner earnings understates the cash an owner truly earned;
-        read it against the full cash-flow statement.
+        Much of this year's profit didn't arrive as operating cash — it sits in “working capital &amp;
+        other” above. That can be a real inventory or timing swing, or profit that doesn't run through
+        operating cash at all: a heavy tax year, equity-method earnings, or investment income booked
+        through investing. For a year like this, owner earnings understates the cash earned; read it
+        against the full cash-flow statement.
       </p>
     ) : null}
 
-    <p class="foot">Arithmetic on the company's own cash-flow statement; nothing here is scored. Maintenance capex is estimated as depreciation only where a growing business invests above it (Buffett's proxy, with no property-and-equipment line to do better); free cash flow is the figure the scorecard's free-cash margin reads.</p>
+    <p class="foot">Maintenance capex is estimated as depreciation where a growing business invests above it; free cash flow is the figure the scorecard's free-cash margin reads.</p>
   </section>
 ) : null}
 
