@@ -220,6 +220,29 @@ const NOT_ADMIT = /\b(may|might|could|would|if\s|risk that|in the event|to the e
 // Owning a miss means OWNING it. When the failure is pinned on someone else — a supplier, a partner,
 // a customer who "failed to meet its obligations" — it is the opposite of candor, so it is excluded.
 const BLAME_OTHERS = /\b(supplier|vendor|manufacturer|co-?manufacturer|co-?packer|partner|customer|client|counterparty|contractor|subcontractor|licensee|licensor|third[- ]party|distributor|borrower|tenant|reseller|franchisee|joint venture|other party)\b[\s\S]{0,30}\b(failed to|did not (meet|deliver|perform|pay|complete)|fell short|breached|defaulted|was unable)/i;
+// A matched phrase, tidied for display: collapsed, lower-cased so a sentence-initial "World-class" and a
+// mid-sentence "world-class" read as one word, with the few acronyms an owner expects restored.
+function tidyPhrase(m) {
+  return String(m)
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase()
+    .replace(/\bgaap\b/g, "GAAP")
+    .replace(/\bebitda\b/g, "EBITDA")
+    .replace(/\beps\b/g, "EPS");
+}
+// The distinct phrases a detector actually matched, ranked by how often the filing used them and capped —
+// the evidence, not a frequency. Buffett doesn't count "owner words per 1,000"; he reads the actual word
+// the management reached for. This is what lets the page show "world-class, best-in-class, paradigm" rather
+// than an abstract bar.
+function distinctPhrases(text, re, cap) {
+  const freq = new Map();
+  for (const m of text.match(re) || []) {
+    const p = tidyPhrase(m);
+    if (p) freq.set(p, (freq.get(p) || 0) + 1);
+  }
+  return [...freq.entries()].sort((a, b) => b[1] - a[1]).slice(0, cap).map((e) => e[0]);
+}
 function candorSignals(text, sents) {
   if (!text) return null;
   sents = sents || sentences(text);
@@ -230,7 +253,13 @@ function candorSignals(text, sents) {
     .filter((s) => s.length >= 30 && s.length < 300 && /\b(we|our|management)\b/i.test(s) && ADMIT.test(s) && !NOT_ADMIT.test(s) && !BLAME_OTHERS.test(s))
     .filter((s, i, a) => a.indexOf(s) === i)
     .slice(0, 3);
-  return { owner: per1k(OWNER_TALK), promo: per1k(PROMO), adjusted: per1k(ADJUSTED), admissions };
+  return {
+    owner: per1k(OWNER_TALK), promo: per1k(PROMO), adjusted: per1k(ADJUSTED), admissions,
+    // The verbatim words behind each density, so the page can show the language itself.
+    ownerWords: distinctPhrases(text, OWNER_TALK, 6),
+    promoWords: distinctPhrases(text, PROMO, 8),
+    adjustedWords: distinctPhrases(text, ADJUSTED, 8),
+  };
 }
 
 // The company's own one-sentence account of what it does, lifted verbatim from the

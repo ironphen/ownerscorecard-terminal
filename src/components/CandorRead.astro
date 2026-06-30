@@ -4,7 +4,9 @@
 // performed, and what went wrong — not a sales pitch. So the section answers that test in three parts:
 //   1. What management SAYS CHANGED this year — the affirmative account an absent owner needs, taken from
 //      the year-over-year read of the MD&A (its own performance sentences, surfaced verbatim).
-//   2. HOW it says it — an owner's vocabulary vs a promoter's, and how often you're asked past GAAP.
+//   2. The WORDS it reached for — the actual phrases it used, surfaced verbatim: an owner's vocabulary, a
+//      promoter's, and the off-GAAP measures that ask you to read earnings its way. No abstract density bar;
+//      the words themselves, the way Buffett reads a letter.
 //   3. What it OWNED — a first-person admission of a miss, and the gravest disclosures about the numbers
 //      themselves (a material weakness, a restatement, the estimates the figures rest on).
 // All deterministic, all the company's own words; the detectors live in scripts/fetchFilings.mjs. This
@@ -15,7 +17,6 @@ import { TONE_COLOR } from "../lib/fundamentals.mjs";
 const { company } = Astro.props;
 const L = language?.companies?.[company.ticker] || null;
 const c = L?.mdna?.candor || null;
-const cp = L?.mdna?.candorPrior || null;
 const fy = L?.fy || company.fy;
 
 // --- Part 1: what management says changed this year ---
@@ -52,35 +53,32 @@ const ranked = (L?.mdnaChange?.notable || [])
 // change reads without a figure (Apple's margin line) still shows its one good sentence.
 const told = ranked.length ? [ranked[0].t, ...ranked.slice(1).filter((x) => x.sc >= 2).map((x) => x.t)].slice(0, 3) : [];
 
-// --- Part 2: how management says it ---
-// The three signals, glossed so the bar teaches the lens rather than asking the reader to read a raw
-// number. Densities are per 1,000 words, so they compare across filings of any length. Each bar is scaled
-// to its own real distribution across the catalog (roughly the 90th percentile: owner ≈ 3, promoter ≈ 1,
-// "adjusted" ≈ 5 per 1,000 words), so a full-ish bar means high FOR THAT KIND of language — the three
-// densities aren't comparable to each other, only each to its own norm.
-const signals = c
+// --- Part 2: the words it reached for ---
+// The per-1,000-word bars are gone. A density against a hidden norm taught an owner nothing, and for most
+// filings the bars sat near-empty (the catalog medians are owner 1.2, promoter 0.2, adjusted 0.3 — a third
+// of filings score a flat zero on the latter two). Buffett doesn't count owner-words per 1,000; he catches
+// the management in the actual word it chose. So we surface the verbatim phrases each detector matched, and
+// gloss frequency in plain English only at the extreme — the catalog's top decile (owner ≥ 2.9, promoter ≥
+// 0.8, adjusted ≥ 4.8 per 1,000 words). A filing that reaches for neither a promoter's vocabulary nor an
+// off-GAAP measure is plainspoken, itself a finding (18% of filings clear that bar). The phrase arrays
+// appear once the scorer that captures them has run; until then a present register degrades to a plain
+// "used in the MD&A" line from its density alone — never a bar.
+const PCTL = { owner: 2.9, promo: 0.8, adjusted: 4.8 };
+const arr = (v) => (Array.isArray(v) ? v : null);
+const registers = c
   ? [
-      { key: "owner", label: "An owner's language", tone: "good", scale: 4,
-        gloss: "Per-share thinking, return on capital, intrinsic value, free cash flow, the long term — the vocabulary of someone who reasons like a part-owner.",
-        value: c.owner, prior: cp?.owner ?? null },
-      { key: "promo", label: "A promoter's language", tone: "warn", scale: 1.5,
-        gloss: "World-class, best-in-class, paradigm, synergies, disruptive — the vocabulary of selling rather than accounting.",
-        value: c.promo, prior: cp?.promo ?? null },
-      { key: "adjusted", label: "“Look past GAAP”", tone: "info", scale: 6,
-        gloss: "Adjusted, non-GAAP, pro-forma, one-time, excluding certain items — how often the filing asks you to measure earnings its way.",
-        value: c.adjusted, prior: cp?.adjusted ?? null },
-    ]
+      { key: "owner", tone: "good", label: "An owner's vocabulary", words: arr(c.ownerWords), density: c.owner ?? 0, top: (c.owner ?? 0) >= PCTL.owner },
+      { key: "promo", tone: "warn", label: "A promoter's vocabulary", words: arr(c.promoWords), density: c.promo ?? 0, top: (c.promo ?? 0) >= PCTL.promo },
+      { key: "adjusted", tone: "info", label: "“Look past GAAP”", words: arr(c.adjustedWords), density: c.adjusted ?? 0, top: (c.adjusted ?? 0) >= PCTL.adjusted },
+    ].map((r) => ({ ...r, present: r.words ? r.words.length > 0 : r.density > 0 }))
   : [];
-
-const pctOf = (v, scale) => Math.max(2, Math.min(100, (v / scale) * 100));
-// Year-over-year drift, stated in words, not a number — "more/less/about the same" is what an owner
-// takes from it. A meaningful move is a fifth of the prior level (and at least 0.3/1,000).
-function drift(value, prior) {
-  if (prior == null || value == null) return null;
-  const d = value - prior;
-  if (Math.abs(d) < Math.max(0.3, prior * 0.2)) return { word: "about the same as last year", dir: 0 };
-  return { word: `${d > 0 ? "more" : "less"} than last year`, dir: d > 0 ? 1 : -1 };
-}
+const shownRegisters = registers.filter((r) => r.present);
+// Plainspoken is a positive tell — a filing that neither sells nor steers you off GAAP. We judge it on the
+// two "selling" registers (promoter + adjusted); an owner's vocabulary is a different axis and its absence
+// is no virtue.
+const promoReg = registers.find((r) => r.key === "promo");
+const adjReg = registers.find((r) => r.key === "adjusted");
+const plainspoken = !!c && !!promoReg && !!adjReg && !promoReg.present && !adjReg.present;
 
 const admissions = c?.admissions || [];
 
@@ -110,8 +108,8 @@ const hasContent = !!c || told.length || integrityItems.length || judgment;
 // has, not as a broken promise of a "what changed" account that was never there.
 const pillars = [];
 if (told.length) pillars.push("what it says changed");
-if (c) pillars.push("the language it chose");
-if (c || integrityItems.length || judgment) pillars.push("what it was willing to own");
+if (c) pillars.push("the words it reached for");
+if (admissions.length || integrityItems.length || judgment) pillars.push("what it was willing to own");
 ---
 
 {hasContent ? (
@@ -142,44 +140,46 @@ if (c || integrityItems.length || judgment) pillars.push("what it was willing to
     ) : null}
 
     {c ? (
-      <>
-        <div class="how">
-          <h4 class="aHead">The language it chose</h4>
-          <p class="aIntro">
-            The second test is <em>how</em> it tells you. An owner reasons in per-share value, returns and
-            the long term; a promoter sells; and a filing that keeps steering you off GAAP is asking you to
-            measure earnings its way. Three kinds of language, counted over the MD&amp;A, each against its
-            own norm across the catalog.
-          </p>
-          <ul class="bars">
-            {signals.map((s) => {
-              const dr = drift(s.value, s.prior);
-              return (
-                <li>
-                  <div class="barTop">
-                    <span class="bLabel" style={`color:${TONE_COLOR[s.tone]}`}>{s.label}</span>
-                    <span class="bVal">{s.value.toFixed(1)}<span class="per"> / 1,000 words</span>{dr ? <span class={`drift d${dr.dir}`}>· {dr.word}</span> : null}</span>
-                  </div>
-                  <div class="track"><span class="fill" style={`width:${pctOf(s.value, s.scale)}%; background:${TONE_COLOR[s.tone]}`}></span></div>
-                  <p class="gloss">{s.gloss}</p>
-                </li>
-              );
-            })}
+      <div class="how">
+        <h4 class="aHead">The words it reached for</h4>
+        <p class="aIntro">
+          The second test is <em>how</em> it tells you. An owner reasons in per-share value, returns and the
+          long term; a promoter sells; a filing that keeps steering you off GAAP is asking you to measure
+          earnings its way. Here are the actual words this filing reached for — and where it stayed plain.
+        </p>
+        {shownRegisters.length ? (
+          <ul class="regs">
+            {shownRegisters.map((r) => (
+              <li class="reg">
+                <div class="regHead">
+                  <span class="rLabel" style={`color:${TONE_COLOR[r.tone]}`}>{r.label}</span>
+                  {r.top ? <span class="rFreq">heavier than 9 in 10 filings</span> : null}
+                </div>
+                {r.words && r.words.length ? (
+                  <div class="chips">{r.words.map((w) => <span class="chip" style={`border-color:${TONE_COLOR[r.tone]}`}>“{w}”</span>)}</div>
+                ) : (
+                  <p class="rDeg">{r.top ? "A recurring feature of this year's MD&A." : "Used in this year's MD&A."}</p>
+                )}
+              </li>
+            ))}
           </ul>
-        </div>
+        ) : null}
+        {plainspoken ? (
+          <p class="plain" style={`border-color:${TONE_COLOR.good}`}>
+            <strong>Plainspoken.</strong> No marketing superlatives, and the filing never steered you off GAAP to
+            measure earnings its own way — plainer than four in five filings. Graham's preference was exactly this:
+            a report that lets the numbers carry the argument.
+          </p>
+        ) : null}
+      </div>
+    ) : null}
 
-        <div class="admit">
-          <h4 class="aHead">What it owned, in its own words</h4>
-          {admissions.length ? (
-            <>
-              <p class="aIntro">The rarest tell in any filing — and the one a part-owner trusts most: management saying plainly, in the first person and past tense, that something did not go as hoped. We surface every such sentence verbatim.</p>
-              <ul class="quotes">{admissions.map((q) => <li>“{q}{q.length >= 290 ? "…" : ""}”</li>)}</ul>
-            </>
-          ) : (
-            <p class="aNone">No first-person admission of a miss in this year's MD&amp;A. Common, and not damning on its own — most managements never write one — but its presence, where it appears, is worth more than any adjective.</p>
-          )}
-        </div>
-      </>
+    {admissions.length ? (
+      <div class="admit">
+        <h4 class="aHead">What it owned, in its own words</h4>
+        <p class="aIntro">The rarest tell in any filing — and the one a part-owner trusts most: management saying plainly, in the first person and past tense, that something did not go as hoped. Worth more than any adjective. Every such sentence, verbatim.</p>
+        <ul class="quotes">{admissions.map((q) => <li>“{q}{q.length >= 290 ? "…" : ""}”</li>)}</ul>
+      </div>
     ) : null}
 
     {integrityItems.length ? (
@@ -234,24 +234,22 @@ if (c || integrityItems.length || judgment) pillars.push("what it was willing to
   .quotes.change li { border-left-color: var(--accent); color: var(--ink-soft); }
 
   .how { margin: 16px 0 0; padding-top: 14px; border-top: 1px solid var(--rule); }
-  .bars { list-style: none; padding: 0; margin: 12px 0 0; }
-  .bars li { padding: 11px 0; border-bottom: 1px solid var(--rule); }
-  .barTop { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
-  .bLabel { font-family: var(--sans); font-weight: 700; font-size: 14px; }
-  .bVal { font-family: var(--sans); font-variant-numeric: tabular-nums; font-size: 13px; color: var(--ink); flex: 0 0 auto; }
-  .per { color: var(--muted); font-size: 11px; }
-  .drift { margin-left: 6px; color: var(--muted); font-weight: 400; font-style: italic; }
-  .drift.d1 { color: var(--ink-dim); }
-  .track { height: 6px; background: var(--rule); margin: 7px 0 0; overflow: hidden; }
-  .fill { display: block; height: 100%; }
-  .gloss { font-size: 12.5px; color: var(--ink-dim); margin: 7px 0 0; line-height: 1.5; max-width: 76ch; }
+  .regs { list-style: none; padding: 0; margin: 12px 0 0; }
+  .reg { padding: 11px 0; border-bottom: 1px solid var(--rule); }
+  .regHead { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+  .rLabel { font-family: var(--sans); font-weight: 700; font-size: 14px; }
+  .rFreq { font-family: var(--sans); font-style: italic; font-size: 11px; letter-spacing: 0.02em; color: var(--muted); flex: 0 0 auto; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 9px 0 0; }
+  .chip { font-family: var(--serif); font-size: 13.5px; color: var(--ink-soft); border: 1px solid var(--rule-strong); border-left-width: 2px; padding: 2px 9px; line-height: 1.5; }
+  .rDeg { font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--muted); margin: 8px 0 0; }
+  .plain { font-family: var(--serif); font-size: 13.5px; color: var(--ink-soft); border-left: 2px solid var(--good); padding: 6px 0 6px 14px; margin: 14px 0 0; line-height: 1.6; max-width: 74ch; }
+  .plain strong { font-weight: 700; color: var(--ink); font-style: normal; }
 
   .admit { margin: 16px 0 0; padding-top: 14px; border-top: 1px solid var(--rule); }
   .aHead { font-family: var(--sans); font-weight: 700; font-size: 12px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--ink); margin: 0; }
   .aIntro { font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--muted); margin: 6px 0 0; max-width: 72ch; line-height: 1.55; }
   .quotes { list-style: none; padding: 0; margin: 10px 0 0; }
   .quotes li { font-family: var(--serif); font-size: 14.5px; line-height: 1.5; color: var(--ink-soft); border-left: 2px solid var(--good); padding: 3px 0 3px 14px; margin: 9px 0; }
-  .aNone { font-family: var(--serif); font-style: italic; font-size: 13.5px; color: var(--muted); margin: 7px 0 0; line-height: 1.55; max-width: 72ch; }
 
   /* The integrity disclosures: the gravest tells, the company's own sentence beneath each. */
   .integ { margin: 16px 0 0; padding-top: 14px; border-top: 1px solid var(--rule); }

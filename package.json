@@ -25,7 +25,7 @@
     "probe:adr-dividends": "node scripts/probeAdrDividends.mjs",
     "probe:segments": "node scripts/probeSegments.mjs",
     "probe:segments:jp": "node scripts/probeSegmentsJp.mjs",
-    "test": "node scripts/heroTest.mjs && node scripts/extractionTest.mjs && node scripts/edinetTest.mjs && node scripts/buffettReadTest.mjs && node scripts/fundamentalsTest.mjs && node scripts/universeTest.mjs && node scripts/fundamentalsAdrTest.mjs && node scripts/segmentTest.mjs && node scripts/peersTest.mjs && node scripts/durabilityTest.mjs && node scripts/businessTest.mjs && node scripts/needleTest.mjs && node scripts/synthesisTest.mjs && node scripts/probeAdrDividendsTest.mjs && node scripts/compareCardTest.mjs && node scripts/compTest.mjs && node scripts/debtMaturityTest.mjs && node scripts/leasesTest.mjs && node scripts/acquisitionsTest.mjs && node scripts/lintNotes.mjs"
+    "test": "node scripts/heroTest.mjs && node scripts/extractionTest.mjs && node scripts/edinetTest.mjs && node scripts/buffettReadTest.mjs && node scripts/candorTest.mjs && node scripts/fundamentalsTest.mjs && node scripts/universeTest.mjs && node scripts/fundamentalsAdrTest.mjs && node scripts/segmentTest.mjs && node scripts/peersTest.mjs && node scripts/durabilityTest.mjs && node scripts/businessTest.mjs && node scripts/needleTest.mjs && node scripts/synthesisTest.mjs && node scripts/probeAdrDividendsTest.mjs && node scripts/compareCardTest.mjs && node scripts/compTest.mjs && node scripts/debtMaturityTest.mjs && node scripts/leasesTest.mjs && node scripts/acquisitionsTest.mjs && node scripts/lintNotes.mjs"
   },
   "dependencies": {
     "@astrojs/mdx": "^6.0.3",
