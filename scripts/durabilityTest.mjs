@@ -7,7 +7,7 @@
 // Both corroborate when they agree, explain when the words explain the number, surface tension when
 // they disagree, and withhold when there is no signal so the number stands alone. Run with `npm test`.
 import { pricingReconciliation, registerReconciliation } from "../src/lib/durability.mjs";
-import { earningsQualityReconciliation, normalizedTrend } from "../src/lib/fundamentals.mjs";
+import { earningsQualityReconciliation, normalizedTrend, forensicScreen } from "../src/lib/fundamentals.mjs";
 
 let pass = 0, fail = 0;
 const check = (name, cond) => { console.log((cond ? "ok   " : "FAIL ") + name); cond ? pass++ : fail++; };
@@ -83,6 +83,32 @@ check("EQ(financial): material weakness speaks with no ratio and no non-GAAP (ba
 check("EQ(financial): restatement speaks with no ratio (warn)", earningsQualityReconciliation("none", { adjusted: null, materialWeakness: false, restatement: true })?.tone === "warn");
 check("EQ(financial): a clean financial filing adds nothing", earningsQualityReconciliation("none", { adjusted: null, materialWeakness: false, restatement: false }) === null);
 check("EQ(financial): the non-GAAP branch never fires without an adjusted density", earningsQualityReconciliation("none", { adjusted: null, materialWeakness: false, restatement: false }) === null);
+
+// ---- the forensic screen folded into the EQ reconciliation (Munger's no-flim-flam, through the cycle) ----
+
+const clean = { adjusted: null, materialWeakness: false, restatement: false };
+// Earnings persistently ahead of cash (a high positive through-cycle accrual) raise the question — a
+// present-never-pronounce clause that names the benign (inventory/content growth) and concerning readings.
+const ahead = earningsQualityReconciliation("none", clean, { accrualTC: 0.17, mScore: null, mElevated: false });
+check("FORENSIC: profit far ahead of cash → info clause, names where to look", ahead?.tone === "info" && /run ahead of the operating cash/.test(ahead.text) && /lean on accounting estimates/.test(ahead.text) && !/manipulation screen/.test(ahead.text));
+// Corroborated by the manipulation screen (and cash not backing it) → warn, and the screen is named.
+const corrob = earningsQualityReconciliation("none", clean, { accrualTC: 0.10, mScore: -1.5, mElevated: true });
+check("FORENSIC: accruals high AND screen trips → warn, screen named", corrob?.tone === "warn" && /manipulation screen of eight balance-sheet ratios/.test(corrob.text));
+// The screen trips but cash BACKS the profit through the cycle (Nvidia's growth) → stay SILENT, never
+// introduce manipulation talk on a cash-backed compounder.
+check("FORENSIC: screen trips but cash-backed → no clause (no false alarm)", earningsQualityReconciliation("none", clean, { accrualTC: -0.06, mScore: -1.16, mElevated: true }) === null);
+check("FORENSIC: clean (cash-backed, screen quiet) → no clause", earningsQualityReconciliation("none", clean, { accrualTC: -0.05, mScore: -2.6, mElevated: false }) === null);
+check("FORENSIC: no forensic data → reconciliation unchanged", earningsQualityReconciliation("none", clean, null) === null);
+// The gravest admission still outranks the forensic clause.
+check("FORENSIC: a material weakness outranks the forensic clause", earningsQualityReconciliation("none", { ...clean, materialWeakness: true }, { accrualTC: 0.2, mElevated: true })?.tone === "bad");
+
+// forensicScreen itself, on synthetic records: profit ahead of cash reads positive, cash-backed negative.
+const mkCo = (niCfo) => ({ history: niCfo.map(([ni, cfo], i) => ({ fy: 2016 + i, lines: { revenue: 1000, netIncome: ni, cashFromOps: cfo, totalAssets: 1000 } })) });
+const fAhead = forensicScreen(mkCo([[100, 40], [110, 50], [120, 55], [130, 60], [140, 70]]));
+check("forensicScreen: profit above cash → positive through-cycle accrual", fAhead && fAhead.accrualTC > 0.05);
+const fBacked = forensicScreen(mkCo([[100, 160], [110, 170], [120, 180], [130, 190], [140, 200]]));
+check("forensicScreen: cash above profit → negative accrual (the norm)", fBacked && fBacked.accrualTC < 0);
+check("forensicScreen: under four years → null (too short to normalize)", forensicScreen(mkCo([[100, 40], [110, 50]])) === null);
 
 // ---- registerReconciliation: the language register (owner vs promoter) against the record's trajectory ----
 

@@ -209,22 +209,91 @@ const ADJUSTED_HEAVY = 4.8;
 // lib still runs under plain node. For a financial — read on a balance sheet, not a cash-conversion
 // ratio — the caller passes qualityTone "none" and no adjusted density, so only the integrity branch
 // speaks: Graham's honesty test, which comes before any ratio. Returns a clause and its tone, or null.
-export function earningsQualityReconciliation(qualityTone, lang) {
+export function earningsQualityReconciliation(qualityTone, lang, forensic = null) {
   if (!lang) return null;
   // The gravest admissions first: they undermine the numbers themselves, whatever the ratio says.
   if (lang.materialWeakness)
     return { tone: "bad", text: "The filing discloses a material weakness in its financial controls — the reported numbers here, and the record built on them, are only as reliable as the controls that produced them." };
   if (lang.restatement)
     return { tone: "warn", text: "The filing discloses a restatement of previously reported figures — some numbers in the record have moved since they were first filed; read what changed, and why, before trusting the trend." };
+  const clauses = [], tones = [];
+  // The forensic screen (Munger's no-flim-flam, read through the cycle, never a verdict): when reported
+  // earnings have run materially ahead of the operating cash they generated over the record — or a
+  // manipulation screen of eight balance-sheet ratios trips where cash is not backing the profit — the
+  // gap is named as a place to look, with the benign reading (an inventory- or content-heavy grower ties
+  // up cash in real assets as it expands) set beside the concerning one (earnings leaning on estimates).
+  if (forensic) {
+    const aheadOfCash = forensic.accrualTC != null && forensic.accrualTC > 0.05;
+    const corroborated = forensic.mElevated && forensic.accrualTC != null && forensic.accrualTC > 0.02;
+    if (aheadOfCash || corroborated) {
+      const screen = forensic.mElevated ? (aheadOfCash ? ", and a manipulation screen of eight balance-sheet ratios trips here too" : ", and a manipulation screen of eight balance-sheet ratios trips on it") : "";
+      clauses.push(`Read against the cash, reported earnings have run ahead of the operating cash the business generated over the record${aheadOfCash ? ` — about ${(forensic.accrualTC * 100).toFixed(0)}% of assets a year, among the widest gaps in the catalogue` : ""}${screen}. For an inventory- or content-heavy grower that can be cash tied up in real assets as it expands; elsewhere it can mean the earnings lean on accounting estimates — the cash-flow statement against the income statement is where to tell which.`);
+      tones.push(corroborated ? "warn" : "info");
+    }
+  }
   // Then the non-GAAP steering, read against whether cash actually backs the GAAP profit.
   const heavyAdjusted = lang.adjusted != null && lang.adjusted >= ADJUSTED_HEAVY;
   if (heavyAdjusted) {
-    if (qualityTone === "warn" || qualityTone === "bad")
-      return { tone: "warn", text: "And the filing leans heavily on adjusted, non-GAAP earnings — steering you off the GAAP figure just where the cash is not backing it. Read the reconciliation in the notes before taking the adjusted number." };
-    if (qualityTone === "good")
-      return { tone: "ok", text: "The filing leans on adjusted, non-GAAP earnings, but the GAAP profit is itself cash-backed — the adjustments are not papering over a cash shortfall here." };
+    if (qualityTone === "warn" || qualityTone === "bad") {
+      clauses.push("And the filing leans heavily on adjusted, non-GAAP earnings — steering you off the GAAP figure just where the cash is not backing it. Read the reconciliation in the notes before taking the adjusted number.");
+      tones.push("warn");
+    } else if (qualityTone === "good") {
+      clauses.push("The filing leans on adjusted, non-GAAP earnings, but the GAAP profit is itself cash-backed — the adjustments are not papering over a cash shortfall here.");
+      tones.push("ok");
+    }
   }
-  return null;
+  if (!clauses.length) return null;
+  const order = { bad: 3, warn: 2, ok: 1, info: 0 };
+  return { tone: tones.sort((a, b) => order[b] - order[a])[0], text: clauses.join(" ") };
+}
+
+// The forensic screen behind the reconciliation above — read THROUGH THE CYCLE, so a single growth year's
+// working-capital swing can't drive it. Two deterministic, primary-source signals, no runtime model:
+//  • Accruals: the median gap between reported net income and operating cash, scaled by assets (Sloan's
+//    earnings-quality measure in its cash-flow form). Most businesses run negative — cash exceeds reported
+//    profit — so a persistently POSITIVE gap (profit ahead of cash) is the rare tell.
+//  • The Beneish M-score: eight year-over-year ratios (receivables vs sales, margin, asset quality, sales
+//    growth, depreciation, overhead, leverage, accruals) that statistically separated past earnings
+//    manipulators from honest filers. It also trips on fast growth and heavy acquisitions, so the caller
+//    reconciles it against the cash-backing rather than pronouncing on it. Returns null when the record is
+//    too short, or (for the M-score) when any input year is missing — precision over recall.
+function beneishMScore(t, p) {
+  if (!t || !p) return null;
+  const r = (n, d) => (n != null && d != null && d !== 0 ? n / d : null);
+  const gm = (L) => (L.revenue ? (L.revenue - (L.costOfRevenue ?? 0)) / L.revenue : null);
+  const aq = (L) => (L.totalAssets ? 1 - ((L.currentAssets || 0) + (L.netPPE || 0)) / L.totalAssets : null);
+  const depr = (L) => r(L.depreciation, (L.depreciation || 0) + (L.netPPE || 0));
+  const lev = (L) => r((L.totalDebt || 0) + (L.currentLiabilities || 0), L.totalAssets);
+  const gmt = gm(t), gmp = gm(p);
+  const v = {
+    dsri: r(r(t.receivables, t.revenue), r(p.receivables, p.revenue)),
+    gmi: gmt != null && gmp != null && gmt !== 0 ? gmp / gmt : null,
+    aqi: r(aq(t), aq(p)),
+    sgi: r(t.revenue, p.revenue),
+    depi: r(depr(p), depr(t)),
+    sgai: r(r(t.sgaExpense, t.revenue), r(p.sgaExpense, p.revenue)),
+    lvgi: r(lev(t), lev(p)),
+    tata: t.netIncome != null && t.cashFromOps != null && t.totalAssets ? (t.netIncome - t.cashFromOps) / t.totalAssets : null,
+  };
+  for (const k of Object.keys(v)) if (v[k] == null || !Number.isFinite(v[k])) return null; // need all eight
+  return -4.84 + 0.92 * v.dsri + 0.528 * v.gmi + 0.404 * v.aqi + 0.892 * v.sgi + 0.115 * v.depi - 0.172 * v.sgai + 4.679 * v.tata - 0.327 * v.lvgi;
+}
+export function forensicScreen(company) {
+  const H = (company?.history || []).filter((h) => h?.lines?.revenue != null);
+  if (H.length < 4) return null;
+  const accs = [];
+  for (let i = 0; i < H.length; i++) {
+    const L = H[i].lines, P = i > 0 ? H[i - 1].lines : null;
+    if (L.netIncome == null || L.cashFromOps == null || L.totalAssets == null) continue;
+    const avgTA = P && P.totalAssets != null ? (L.totalAssets + P.totalAssets) / 2 : L.totalAssets;
+    if (!(avgTA > 0)) continue;
+    accs.push((L.netIncome - L.cashFromOps) / avgTA);
+  }
+  if (accs.length < 3) return null;
+  const s = [...accs].sort((a, b) => a - b);
+  const accrualTC = s[Math.floor((s.length - 1) / 2)]; // through-cycle median
+  const m = beneishMScore(H[H.length - 1].lines, H[H.length - 2]?.lines);
+  return { accrualTC, mScore: m, mElevated: m != null && m > -2.22 };
 }
 
 // Leverage: how many years of operating profit would repay the debt?
