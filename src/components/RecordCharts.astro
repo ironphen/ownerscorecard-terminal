@@ -12,7 +12,7 @@
 // doing the work of the whole margin pile), and GROSS MARGIN (pricing power, upstream of ROIC).
 // The relational feature charts — capital allocation, and owner earnings vs. net income — are
 // built separately, where the SVG is a stack and a two-line gap rather than a single sparkline.
-import { fmtMoney, topLineRevenue, roicValue, grossMargin, gmCorrupt, debtReliable } from "../lib/fundamentals.mjs";
+import { fmtMoney, topLineRevenue, roicValue, grossMargin, gmCorrupt, debtReliable, ownerEarningsAbs } from "../lib/fundamentals.mjs";
 import { financialKind } from "../lib/archetype.mjs";
 
 const { company } = Astro.props;
@@ -31,6 +31,10 @@ const num = (v) => {
 const pc = (v) => (v == null ? "—" : `${v < 0 ? "−" : ""}${(Math.abs(v) * 100).toFixed(0)}%`);
 const serOf = (fn) => hist.map((h) => fn(h.lines));
 const grossM = (l) => { const g = grossMargin(l); return g == null || gmCorrupt(g, company) ? null : g; };
+// Net debt = total debt less cash + marketable securities; withheld when the debt figure is unreliable.
+const netDebtOf = (l) => (!debtReliable(l) || l.totalDebt == null ? null : l.totalDebt - ((l.cashAndEquivalents || 0) + (l.shortTermInvestments || 0) + (l.longTermMarketable || 0)));
+const latestNetDebt = netDebtOf(company.ttm?.lines || company.lines || {});
+const leveraged = latestNetDebt != null && latestNetDebt > 0;
 
 // Financials run on a balance sheet, not on margins/ROIC, so they get the universally-honest
 // lines (revenue) plus share count; non-financials get the durability + per-share engine set.
@@ -43,6 +47,10 @@ const metrics = fk
       { label: "Share count", series: serOf((l) => l.sharesDiluted), fmt: "count", worse: "high" },
       { label: "ROIC", series: debtOk ? serOf(roicValue) : [], fmt: "pct", worse: "low" },
       { label: "Gross margin", series: serOf(grossM), fmt: "pct", worse: "low" },
+      // Survival, only where it bites — a leveraged name; a net-cash fortress skips it (a flat, boring line).
+      ...(leveraged
+        ? [{ label: "Net debt ÷ owner earnings", series: serOf((l) => { const nd = netDebtOf(l); const oe = ownerEarningsAbs(l, company); return nd != null && oe != null && oe > 0 ? nd / oe : null; }), fmt: "mult", worse: "high" }]
+        : []),
     ];
 
 const W = 128, H = 40, PAD = 4;
@@ -66,7 +74,7 @@ function build(series, worse) {
   };
 }
 
-const fmtVal = (v, fmt) => (fmt === "pct" ? pc(v) : fmt === "money" ? $(v) : num(v));
+const fmtVal = (v, fmt) => (v == null ? "—" : fmt === "pct" ? pc(v) : fmt === "money" ? $(v) : fmt === "mult" ? `${v.toFixed(1)}×` : num(v));
 const charts = metrics
   .map((m) => ({ ...m, g: build(m.series, m.worse), last: [...m.series].reverse().find((v) => v != null) }))
   .filter((m) => m.g);
