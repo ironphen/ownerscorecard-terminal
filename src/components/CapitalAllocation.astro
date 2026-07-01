@@ -1,0 +1,100 @@
+---
+// Where the cash went — capital allocation over the record. Buffett (1984): allocating the
+// company's cash is management's single most important job. Each year's operating cash, split by
+// what management chose to do with it: reinvestment (capex), buybacks (net of stock comp, so an
+// SBC-funded "return" doesn't overstate), dividends, acquisitions, and what was retained. Plotted
+// as the MIX — each year normalized to a full bar — so the signal is the composition and its drift
+// over time, not "big got bigger." Present, never pronounce: the bands are the decisions, sourced
+// from the cash-flow statement; no grade, no good/bad color. A year with no operating surplus shows
+// blank rather than a false split. Skipped for financials, whose capex/operating-cash framing differs.
+import { financialKind } from "../lib/archetype.mjs";
+
+const { company } = Astro.props;
+const hist = company.history || [];
+const abs = (v) => (v == null ? 0 : Math.abs(v));
+
+const USES = [
+  { key: "reinvest", of: (l) => abs(l.capex) },
+  { key: "buyback", of: (l) => Math.max(0, abs(l.buybacks) - abs(l.stockBasedComp)) },
+  { key: "div", of: (l) => abs(l.dividendsPaid) },
+  { key: "acq", of: (l) => abs(l.acquisitionSpend) },
+];
+
+const W = 320, H = 120, PADT = 6, PADB = 14, GAP = 3;
+
+const rows = hist.map((h) => {
+  const l = h.lines;
+  const oc = l.cashFromOps;
+  if (oc == null || oc <= 0) return { fy: h.fy, ok: false };
+  const uses = USES.map((u) => u.of(l));
+  const usesTotal = uses.reduce((a, b) => a + b, 0);
+  const denom = Math.max(oc, usesTotal) || 1;
+  return { fy: h.fy, ok: true, frac: uses.map((v) => v / denom), retainFrac: Math.max(0, oc - usesTotal) / denom };
+});
+
+const solid = rows.filter((r) => r.ok);
+const skip = !!financialKind(company) || solid.length < 3;
+
+const n = rows.length;
+const bw = n > 0 ? (W - GAP * (n - 1)) / n : W;
+const bh = H - PADT - PADB;
+const bars = rows.map((r, i) => {
+  const x = i * (bw + GAP);
+  if (!r.ok) return { ok: false, x };
+  let cum = 0;
+  const segs = [];
+  USES.forEach((u, k) => {
+    const f = r.frac[k];
+    if (f > 0.002) { const h = f * bh; segs.push({ cls: u.key, y: (H - PADB) - (cum + h), h }); cum += h; }
+  });
+  if (r.retainFrac > 0.002) { const h = r.retainFrac * bh; segs.push({ cls: "retain", y: (H - PADB) - (cum + h), h }); cum += h; }
+  return { ok: true, x, segs };
+});
+---
+
+{!skip ? (
+  <section class="ca">
+    <div class="head">
+      <h3 class="secTitle">Where the cash went</h3>
+      <span class="legend">
+        <span class="lg"><i class="sw reinvest"></i>Reinvest</span>
+        <span class="lg"><i class="sw buyback"></i>Buybacks</span>
+        <span class="lg"><i class="sw div"></i>Dividends</span>
+        <span class="lg"><i class="sw acq"></i>Acquisitions</span>
+        <span class="lg"><i class="sw retain"></i>Retained</span>
+      </span>
+    </div>
+    <p class="note">Each year's operating cash, by what management did with it — the mix, and how it drifts.</p>
+    <svg class="chart" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" role="img" aria-label="Capital allocation mix over the record">
+      {bars.map((b) => (b.ok ? b.segs.map((s) => (
+        <rect class={`bar ${s.cls}`} x={b.x.toFixed(1)} width={bw.toFixed(1)} y={s.y.toFixed(1)} height={s.h.toFixed(1)} />
+      )) : null))}
+    </svg>
+    {solid.length ? (
+      <div class="axis"><span>FY{solid[0].fy}</span><span>FY{solid[solid.length - 1].fy}</span></div>
+    ) : null}
+  </section>
+) : null}
+
+<style>
+  .ca { margin: 22px 0; }
+  .head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; border-bottom: 1px solid var(--rule-strong); padding-bottom: 6px; }
+  .secTitle { margin: 0; }
+  .legend { display: inline-flex; align-items: center; gap: 4px 12px; flex-wrap: wrap; font-size: 11px; color: var(--muted); }
+  .lg { display: inline-flex; align-items: center; gap: 5px; }
+  .sw { width: 10px; height: 10px; display: inline-block; border-radius: 1px; flex: 0 0 auto; }
+  .sw.reinvest { background: var(--ink); }
+  .sw.buyback { background: var(--accent); }
+  .sw.div { background: var(--ink-dim); }
+  .sw.acq { background: var(--muted); }
+  .sw.retain { background: var(--rule-strong); }
+  .note { font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--muted); margin: 8px 0 0; }
+  .chart { width: 100%; height: 120px; display: block; margin: 12px 0 4px; }
+  .chart .bar { stroke: var(--paper); stroke-width: 0.5; }
+  .chart .reinvest { fill: var(--ink); }
+  .chart .buyback { fill: var(--accent); }
+  .chart .div { fill: var(--ink-dim); }
+  .chart .acq { fill: var(--muted); }
+  .chart .retain { fill: var(--rule-strong); }
+  .axis { display: flex; justify-content: space-between; font-size: 10.5px; color: var(--muted); letter-spacing: 0.04em; font-variant-numeric: tabular-nums; }
+</style>
