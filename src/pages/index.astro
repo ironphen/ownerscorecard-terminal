@@ -7,6 +7,7 @@ import AdrCatalog from "../components/AdrCatalog.astro";
 import jpData from "../data/fundamentals.jp.json";
 import adrData from "../data/fundamentals.adr.json";
 import language from "../data/language.json";
+import wire from "../data/wire.json";
 import { computeLenses, LENSES, GROUP_LABEL } from "../lib/lenses.mjs";
 const jpCount = (jpData.companies || []).length;
 const adrCount = (adrData.companies || []).length;
@@ -63,6 +64,31 @@ const archGroups = ["graham", "buffett", "munger"].map((g) => ({
   items: LENSES.filter((l) => l.group === g).map((l) => ({ key: l.key, title: l.title, n: byLens[l.key].length, positive: l.positive })),
 }));
 const confluenceN = confluence.length;
+
+// The wire, distilled for the front door: the newest filings across the catalog, results and reports
+// first, so the reader lands on something CURRENT and can step straight into the company. Not a screener
+// and not a market ticker — just what companies disclosed, one row per company (its most significant
+// recent filing), earnings ahead of housekeeping, capped as a teaser onto the full wire.
+const KNOWN = new Set(rows.map((r) => r.ticker.toUpperCase()));
+const isEarnings = (it) =>
+  it.form === "10-K" || it.form === "10-Q" ||
+  /reported results|results of operations|quarterly report|annual report/i.test(it.label || "");
+const filingSig = (it) => (isEarnings(it) ? 2 : it.grave ? 1 : 0);
+const wireByTicker = new Map();
+for (const it of wire?.items || []) {
+  const tk = String(it.ticker || "").toUpperCase();
+  if (!tk || !KNOWN.has(tk)) continue;
+  const prev = wireByTicker.get(tk);
+  if (!prev || filingSig(it) > filingSig(prev) || (filingSig(it) === filingSig(prev) && it.date > prev.date))
+    wireByTicker.set(tk, it);
+}
+const wireFeed = [...wireByTicker.values()]
+  .sort((a, b) =>
+    filingSig(b) - filingSig(a) ||
+    (a.date < b.date ? 1 : a.date > b.date ? -1 : 0) ||
+    String(a.ticker).localeCompare(String(b.ticker)))
+  .slice(0, 8);
+const fmtWireDate = (s) => new Date(s + "T00:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
 ---
 
 <BaseLayout title="Owner Scorecard, read a company the way an owner would">
@@ -134,6 +160,33 @@ const confluenceN = confluence.length;
       <span class="sep" aria-hidden="true">·</span>
       <a href="/archetypes">Browse by archetype →</a>
     </p>
+
+    {wireFeed.length ? (
+      <section class="wire">
+        <div class="bandHead">
+          <h2>Fresh from the wire</h2>
+          <a class="all" href="/wire">The full wire →</a>
+        </div>
+        <p class="wireLede">
+          Not what the market did — what companies just <em>disclosed</em>. The newest filings across the
+          catalog{wire?.asOf ? `, as of ${fmtWireDate(wire.asOf)}` : ""}, the ones reporting results first.
+        </p>
+        <ul class="wireList">
+          {wireFeed.map((it) => (
+            <li class={isEarnings(it) ? "wf earn" : "wf"}>
+              <a class="wfCo" href={`/c/${it.ticker}`}>
+                <span class="wfTkr">{it.ticker}</span>
+                <span class="wfName">{it.name}</span>
+              </a>
+              <span class="wfWhat">{it.label}</span>
+              <span class="wfForm">{it.form}</span>
+              <span class="wfDate">{fmtWireDate(it.date)}</span>
+              {it.url ? <a class="wfSrc" href={it.url} target="_blank" rel="noopener">filing →</a> : null}
+            </li>
+          ))}
+        </ul>
+      </section>
+    ) : null}
 
     {articles.length ? (
       <section class="writing">
@@ -318,6 +371,22 @@ const confluenceN = confluence.length;
     .cardMeta { font-size: 11.5px; color: var(--muted); letter-spacing: 0.02em; }
     .cardMeta .sec { text-transform: uppercase; letter-spacing: 0.06em; border: 1px solid var(--rule); padding: 1px 5px; margin-right: 6px; font-size: 10px; }
 
+    /* ---- fresh-from-the-wire band ---- */
+    .wire { margin: 46px 0 0; }
+    .wireLede { font-family: var(--serif); font-style: italic; font-size: 14px; color: var(--ink-dim); margin: 10px 0 0; max-width: 70ch; line-height: 1.5; }
+    .wireList { list-style: none; padding: 0; margin: 12px 0 0; }
+    .wf { display: flex; align-items: baseline; gap: 10px 12px; flex-wrap: wrap; padding: 9px 0 9px 12px; border-bottom: 1px solid var(--rule); border-left: 2px solid transparent; }
+    .wf.earn { border-left-color: var(--accent); }
+    .wfCo { display: inline-flex; align-items: baseline; gap: 9px; flex: 1 1 240px; min-width: 0; }
+    .wfCo:hover { text-decoration: none; }
+    .wfTkr { font-family: var(--sans); font-weight: 700; font-variant-numeric: tabular-nums; font-size: 11.5px; letter-spacing: 0.03em; color: var(--accent); flex: 0 0 auto; }
+    .wfName { font-size: 14px; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+    .wfCo:hover .wfName { color: var(--accent); }
+    .wfWhat { font-size: 13px; color: var(--ink-soft); flex: 0 1 auto; }
+    .wfForm { font-size: 10px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); border: 1px solid var(--rule); padding: 1px 6px; flex: 0 0 auto; }
+    .wfDate { font-size: 11.5px; font-variant-numeric: tabular-nums; letter-spacing: 0.02em; color: var(--muted); flex: 0 0 auto; }
+    .wfSrc { font-size: 11.5px; color: var(--accent); flex: 0 0 auto; }
+
     /* ---------------------------------- catalog view ---------------------------------- */
     .backRow { margin: 8px 0 0; }
     .back { font-size: 12.5px; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; }
@@ -366,6 +435,7 @@ const confluenceN = confluence.length;
     @media (max-width: 640px) {
       .cards { grid-template-columns: 1fr; gap: 14px; }
       .cards li { border-left: 0; border-top: 1px solid var(--rule); padding: 10px 0 0; }
+      .wfCo { flex-basis: 100%; }
     }
   </style>
 
