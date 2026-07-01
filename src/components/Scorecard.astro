@@ -45,6 +45,12 @@ const pricingLang = isFin ? null : (language?.companies?.[company.ticker]?.buffe
 // "how management talks" is reconciled with whether the business is actually compounding.
 const candorLang = isFin ? null : (language?.companies?.[company.ticker]?.mdna?.candor || null);
 const report = isFin ? null : moatReport(company, { pricing: pricingLang, candor: candorLang });
+// The cockroach: the single most disconfirming fact a filing can carry — a declared material weakness
+// in internal controls, or a restatement of past figures. Elevated to a prominent banner at the top of
+// the Scorecard (Graham's honesty test comes before any ratio) rather than buried in the earnings-
+// quality note. Verbatim, with a pointer to verify; present, never pronounce.
+const cockroach = language?.companies?.[company.ticker]?.buffettRead?.integrity || null;
+const ckTrim = (s) => { s = String(s || "").replace(/\s+/g, " ").trim(); return s.length > 260 ? s.slice(0, 260).replace(/\s+\S*$/, "") + "…" : s; };
 const graham = company.market !== "JP" && !isFin ? grahamTests(company) : null;
 
 // Peer context on the two quality reads that are otherwise judged against an absolute band: a number
@@ -148,6 +154,14 @@ const enrich = (sec) => ({
     </div>
   </div>
 
+  {cockroach && (cockroach.materialWeakness || cockroach.restatement) ? (
+    <div class="cockroach">
+      {cockroach.materialWeakness ? <div class="ck"><span class="ckLabel">Material weakness in financial controls</span><blockquote class="ckq">“{ckTrim(cockroach.materialWeakness)}”</blockquote></div> : null}
+      {cockroach.restatement ? <div class="ck"><span class="ckLabel">Restated past financials</span><blockquote class="ckq">“{ckTrim(cockroach.restatement)}”</blockquote></div> : null}
+      <p class="ckNote">The figures below are only as sound as the controls that produced them — the honesty test comes before any ratio.{company.sourceUrl ? <> <a href={company.sourceUrl} target="_blank" rel="noopener">read the note →</a></> : null}</p>
+    </div>
+  ) : null}
+
   {sample ? (
     <div class="sample">
       <strong>Sample data.</strong> Illustrative placeholders until the EDGAR pipeline runs.
@@ -229,6 +243,15 @@ const enrich = (sec) => ({
   .src a { color: var(--accent); }
 
   .sample { background: var(--warn-bg); border: 1px solid var(--warn-border); padding: 6px 10px; font-size: 12px; color: var(--warn-ink); margin-top: 12px; }
+
+  /* The cockroach banner: a material weakness / restatement is a disclosed FACT, elevated so it can't
+     be missed, but restrained — a border and a colored label, not a shouting box. Present, never pronounce. */
+  .cockroach { border: 1px solid var(--warn, #b4690e); border-left-width: 3px; padding: 11px 14px; margin: 14px 0 0; }
+  .cockroach .ck { margin: 0 0 7px; }
+  .ckLabel { font-family: var(--sans); font-weight: 700; font-size: 13.5px; color: var(--warn, #b4690e); letter-spacing: 0.01em; }
+  .ckq { font-family: var(--serif); font-size: 13.5px; line-height: 1.5; color: var(--ink-soft); margin: 4px 0 0; border-left: 0; padding: 0; max-width: 78ch; }
+  .ckNote { font-size: 12.5px; color: var(--ink-dim); margin: 6px 0 0; line-height: 1.5; max-width: 78ch; }
+  .ckNote a { color: var(--accent); white-space: nowrap; }
 
   .section { margin-top: 18px; }
   .secHead {
