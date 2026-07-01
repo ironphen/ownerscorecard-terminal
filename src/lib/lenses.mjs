@@ -7,7 +7,7 @@
 import { currentPosition } from "./currentPosition.mjs";
 import { grahamTests } from "./graham.mjs";
 import { capitalHistory } from "./capital.mjs";
-import { forensicScreen, fmtMoney, roicValue, operatingMargin, cashPosition } from "./fundamentals.mjs";
+import { forensicScreen, fmtMoney, roicValue, operatingMargin, cashPosition, grossMargin, ownerEarningsAbs } from "./fundamentals.mjs";
 import { classify } from "./archetype.mjs";
 
 const safe = (fn, c) => {
@@ -82,7 +82,52 @@ function companyFacts(company, langMap) {
     if (netCash > 0 && ratio != null && ratio <= 0.9) fortress = { label: cpos.label, ratio };
   }
 
-  return { company, shares, ta, cp, g, cap, f, cd, integrity, ncav, durable, fortress };
+  // Gross profitability (Novy-Marx): gross profit as a share of total assets — the quality signal a wide
+  // margin alone misses (a fat margin on a bloated asset base is not gross profit working its capital
+  // hard). Median through the record; a gross margin outside a plausible band is a mis-tagged or missing
+  // cost line, so that year is not counted.
+  let grossProf = null;
+  if (!isFin && H.length >= 4) {
+    const gpas = [];
+    for (const h of H) {
+      const L2 = h.lines, gm = grossMargin(L2);
+      if (gm == null || gm <= 0.05 || gm >= 0.95 || !(L2.revenue > 0) || !(L2.totalAssets > 0)) continue;
+      gpas.push((gm * L2.revenue) / L2.totalAssets);
+    }
+    if (gpas.length >= 3) { const m = median(gpas); if (m != null && m >= 0.4) grossProf = { gpa: m }; }
+  }
+
+  // Capital-light compounding: owner earnings that grew faster than the asset base behind them — growth
+  // that doesn't gorge on capital (the mirror of the asset-growth anomaly). Owner earnings must have grown
+  // from a positive base, on total assets rising no more than 8% a year.
+  let capitalLight = null;
+  if (!isFin && H.length >= 5) {
+    const span = (H[H.length - 1].fy ?? 0) - (H[0].fy ?? 0);
+    const taFirst = H[0]?.lines?.totalAssets;
+    const taLast = company.lines?.totalAssets ?? H[H.length - 1]?.lines?.totalAssets;
+    const oeMed = (hs) => { const xs = hs.map((h) => ownerEarningsAbs(h.lines, company)).filter((v) => v != null); return xs.length ? median(xs) : null; };
+    const oeFirst = oeMed(H.slice(0, 3)), oeLast = oeMed(H.slice(-3));
+    if (span >= 4 && taFirst > 0 && taLast > 0 && oeFirst != null && oeFirst > 0 && oeLast != null && oeLast > oeFirst) {
+      const assetCAGR = Math.pow(taLast / taFirst, 1 / span) - 1;
+      const oeCAGR = Math.pow(oeLast / oeFirst, 1 / span) - 1;
+      if (assetCAGR <= 0.08 && oeCAGR > assetCAGR) capitalLight = { assetCAGR, oeCAGR };
+    }
+  }
+
+  // Cash-backed earnings (the positive side of Sloan's accrual signal): operating cash at or above
+  // reported profit across the record — earnings that show up as cash, not accruals. The opposite of the
+  // red-flags accrual test. Only profitable years count toward the ratio.
+  let cashBacked = null;
+  if (!isFin && profitableMost(H)) {
+    const ratios = [];
+    for (const h of H) {
+      const ni = h.lines.netIncome, cfo = h.lines.cashFromOps;
+      if (ni != null && cfo != null && ni > 0) ratios.push(cfo / ni);
+    }
+    if (ratios.length >= 4) { const m = median(ratios); if (m != null && m >= 1.05) cashBacked = { ratio: m }; }
+  }
+
+  return { company, shares, ta, cp, g, cap, f, cd, integrity, ncav, durable, fortress, grossProf, capitalLight, cashBacked };
 }
 
 // ---- the archetypes ----
@@ -194,6 +239,52 @@ export const LENSES = [
       const owner = c.owner || 0, promo = c.promo || 0, adjusted = c.adjusted || 0;
       if (owner < 2 || promo > 0.2 || adjusted > 0.5) return null;
       return { sort: owner - promo, figure: "owner's vocabulary, plainspoken, GAAP-faithful" };
+    },
+  },
+  {
+    key: "gross-profitability",
+    group: "buffett",
+    title: "High gross profitability",
+    tagline: "Gross profit that works the whole asset base hard, not just a fat headline margin.",
+    principle:
+      "Gross profit as a share of total assets — the quality signal a margin alone misses. A wide margin on a bloated asset base is not the same as gross profit that earns its keep on the capital employed. Price-independent, from the record.",
+    test: "Median gross profit ÷ total assets ≥40% through the record. Financials excluded; a gross margin outside a plausible band is withheld as a mis-tagged cost line.",
+    positive: true,
+    pick(F) {
+      const g = F.grossProf;
+      if (!g) return null;
+      return { sort: g.gpa, figure: `gross profit ${pctStr(g.gpa)} of assets through the record` };
+    },
+  },
+  {
+    key: "capital-light",
+    group: "buffett",
+    title: "Capital-light compounding",
+    tagline: "Owner earnings grew while the asset base barely did — growth that doesn't gorge on capital.",
+    principle:
+      "Owner earnings that compounded faster than the assets behind them — Buffett's ideal of a business that grows without swallowing capital, and the mirror of the asset-growth anomaly (a bloating balance sheet is the warning, not the goal).",
+    test: "Owner earnings grew, and grew faster than a total-asset base rising ≤8% a year, across the record. Financials excluded.",
+    positive: true,
+    pick(F) {
+      const c = F.capitalLight;
+      if (!c) return null;
+      const a = `${c.assetCAGR >= 0 ? "+" : ""}${pctStr(c.assetCAGR)}`;
+      return { sort: c.oeCAGR - c.assetCAGR, figure: `owner earnings +${pctStr(c.oeCAGR)}/yr on assets ${a}/yr` };
+    },
+  },
+  {
+    key: "cash-backed",
+    group: "buffett",
+    title: "Cash-backed earnings",
+    tagline: "Operating cash has met or beaten reported profit, year after year — earnings you can bank.",
+    principle:
+      "Reported profit that shows up as cash rather than accruals — the positive side of the accrual signal the red-flags screen catches in reverse. Operating cash comfortably at or above net income across the record.",
+    test: "Median operating cash ÷ net income ≥1.05, over profitable years, across the record. Financials excluded.",
+    positive: true,
+    pick(F) {
+      const c = F.cashBacked;
+      if (!c) return null;
+      return { sort: c.ratio, figure: `operating cash ${c.ratio.toFixed(2)}× reported earnings through the record` };
     },
   },
   {
