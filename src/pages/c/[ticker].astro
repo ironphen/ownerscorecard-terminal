@@ -123,7 +123,7 @@ const lensTrail = fund ? (computeLenses(allCompanies, language.companies).byTick
     <div class="cbar">
       <a class="cbar-id" href="#top">{ticker}<span class="cbar-nm">{name ? ` · ${name}` : ""}</span></a>
       <nav class="secnav" aria-label="Sections">
-        <a href="#act-what">What it is</a>
+        <a href="#act-what">The business</a>
         <a href="#act-record">The record</a>
         <a href="#act-quality">Quality</a>
         <a href="#act-price">Price</a>
@@ -134,7 +134,7 @@ const lensTrail = fund ? (computeLenses(allCompanies, language.companies).byTick
 
   {fund ? (
     <section id="act-what" class="actGroup">
-      <ActHeader n="I" title="What it is" lede="What it sells, where the money comes from, the kind of company it is." />
+      <ActHeader n="I" title="The business" lede="What it sells, where the money comes from, the kind of company it is." />
       <div id="sec-snapshot" class="sec"><Portrait company={fund} /></div>
       <div id="sec-business" class="sec"><BusinessRead company={fund} /></div>
       <div id="sec-mix" class="sec"><Segments company={fund} /></div>
