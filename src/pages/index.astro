@@ -135,36 +135,6 @@ const confluenceN = confluence.length;
       <a href="/archetypes">Browse by archetype →</a>
     </p>
 
-    <!-- The five questions every page asks, in the order an owner asks them — the same questions that
-         open each company's Owner Scorecard, so the method a newcomer learns here is the one every page
-         executes. The full method is the Principles page. -->
-    <section class="how" aria-label="The questions an owner asks">
-      <h2 class="howH">The questions an owner asks</h2>
-      <ol class="steps">
-        <li>
-          <span class="stepN" aria-hidden="true">1</span>
-          <span class="stepBody"><b>Can you understand it?</b> What the business sells, and the one lever that decides it — in a plain sentence.</span>
-        </li>
-        <li>
-          <span class="stepN" aria-hidden="true">2</span>
-          <span class="stepBody"><b>Does it have a moat?</b> A high return on capital, and whether it has lasted across the record, not just one good year.</span>
-        </li>
-        <li>
-          <span class="stepN" aria-hidden="true">3</span>
-          <span class="stepBody"><b>Will it survive a bad year?</b> The balance sheet and the worst year on record — the staying power to come through whole.</span>
-        </li>
-        <li>
-          <span class="stepN" aria-hidden="true">4</span>
-          <span class="stepBody"><b>Is it run for the owners?</b> How candidly management talks in its own filing, and what it does with the cash.</span>
-        </li>
-        <li class="cap">
-          <span class="stepN" aria-hidden="true">5</span>
-          <span class="stepBody"><b>What would you pay?</b> Bring a price — the page shows what you'd have to believe to justify it, never a target. The one place a bargain, or a folly, hides.</span>
-        </li>
-      </ol>
-      <p class="howFoot">Every page answers these five in turn, from the company's own filing, and leaves the verdict to you. The full method is in the <a href="/concepts">principles</a>.</p>
-    </section>
-
     {articles.length ? (
       <section class="writing">
         <div class="bandHead">
@@ -337,23 +307,6 @@ const confluenceN = confluence.length;
     .entry { text-align: center; font-size: 13.5px; color: var(--muted); margin: 22px auto 0; max-width: 640px; line-height: 1.7; }
     .entry .sep { margin: 0 10px; color: var(--faint); }
     .browse { font-weight: 600; }
-
-    /* ---- how to read one ---- */
-    .how { max-width: 720px; margin: 46px auto 0; }
-    .howH { font-size: clamp(18px, 2.6vw, 22px); text-align: center; margin: 0; }
-    .steps { list-style: none; counter-reset: none; margin: 20px 0 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 16px 28px; }
-    .steps li { display: flex; gap: 12px; align-items: flex-start; }
-    .stepN {
-      flex: 0 0 auto; width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--rule-strong);
-      display: inline-flex; align-items: center; justify-content: center;
-      font-family: var(--serif); font-weight: 600; font-size: 14px; color: var(--accent); margin-top: 1px;
-    }
-    .stepBody { font-size: 14px; line-height: 1.5; color: var(--ink-dim); }
-    .stepBody b { color: var(--ink); font-weight: 600; }
-    /* The price question is the culmination, so it spans the full width beneath the four that pair up. */
-    .steps .cap { grid-column: 1 / -1; }
-    .howFoot { text-align: center; font-family: var(--serif); font-style: italic; font-size: 13.5px; color: var(--muted); margin: 22px 0 0; }
-    @media (max-width: 560px) { .steps { grid-template-columns: 1fr; gap: 14px; } }
 
     /* ---- writing band ---- */
     .writing { margin: 46px 0 0; }

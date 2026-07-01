@@ -10,7 +10,6 @@ import BusinessRead from "../../components/BusinessRead.astro";
 import Segments from "../../components/Segments.astro";
 import OwnersRead from "../../components/OwnersRead.astro";
 import CandorRead from "../../components/CandorRead.astro";
-import OwnerQuestions from "../../components/OwnerQuestions.astro";
 import Capital from "../../components/Capital.astro";
 import Inversion from "../../components/Inversion.astro";
 import ActHeader from "../../components/ActHeader.astro";
@@ -124,7 +123,6 @@ const lensTrail = fund ? (computeLenses(allCompanies, language.companies).byTick
     <div class="cbar">
       <a class="cbar-id" href="#top">{ticker}<span class="cbar-nm">{name ? ` · ${name}` : ""}</span></a>
       <nav class="secnav" aria-label="Sections">
-        <a href="#sec-questions">Questions</a>
         <a href="#act-what">What it is</a>
         <a href="#act-record">The record</a>
         <a href="#act-quality">Quality</a>
@@ -133,8 +131,6 @@ const lensTrail = fund ? (computeLenses(allCompanies, language.companies).byTick
       </nav>
     </div>
   ) : null}
-
-  {fund ? <div id="sec-questions" class="sec"><OwnerQuestions company={fund} /></div> : null}
 
   {fund ? (
     <section id="act-what" class="actGroup">
