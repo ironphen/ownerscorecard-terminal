@@ -288,11 +288,25 @@ needs no adapter.)
 **Phase 1 — Audience machine (zero revenue, no paywall):** Supabase Auth (magic-link + OTP);
 `profiles`, `follows`, `wire_subscriptions` tables; path-scoped `src/middleware.ts`; split
 transactional/broadcast email with SPF/DKIM/DMARC; Follow-button island on `/c/[ticker]`; wire-email
-in `wire.yml`; **rename Articles → Notes** (+ 301, + rss.xml fix); publish a few free sample Notes.
+in `wire.yml`; **rename Articles → Notes** (+ 301, + rss.xml fix — DONE 2026-07-01, on
+`claude/charts`); publish free Notes on a steady cadence. **The free product keeps improving
+throughout** — the free instrument is the hook and the marketing; every hour spent making it more
+thoughtful than any other free equity-research surface IS the customer acquisition.
 
-**→ Willingness-to-pay kill-gate (before building checkout):** get **N founding members to prepay a
-real annual price via a plain Stripe payment link** (zero custom code). If they don't, do not build
-the paywall. This is the "don't gate before an audience" guardrail made concrete.
+**→ Willingness-to-pay kill-gate (locked 2026-07-01 — before a line of checkout code is written):**
+
+- **Clock:** Phase 1 runs ~**6 months** from the wire-email going live.
+- **Audience target:** on the order of **1,000+ engaged email subscribers** (the conventional ~2–5%
+  paid-conversion base for a few-hundred-member launch).
+- **The money gate:** **25–50 founding members prepay a real annual price via a plain Stripe payment
+  link** — zero custom code, real dollars from strangers. Strangers' prepaid money is the only
+  evidence that counts; everything else is vibes.
+- **Honor the gate.** If the date arrives and the number isn't there, the honest reading is that the
+  audience isn't forming at a living-wage rate — stop or pivot; do NOT build the billing machine
+  anyway. This discipline is what bounds the downside to ~six months and makes the venture a serious
+  business regardless of outcome. (Why the target is credible at all: at ~$400/yr, **~250 subscribers
+  is a ~$100k/yr living** on a ~$0 cost base — the destination is hundreds of trusting readers, not
+  millions of users.)
 
 **Phase 2 — Paid wing (built, not switched on):** `is_member()` + RLS on `notes`; `subscriptions`
 (+ `cancel_at_period_end`, `grace_until`); Stripe annual product; `/api/checkout|portal|stripe-webhook`
