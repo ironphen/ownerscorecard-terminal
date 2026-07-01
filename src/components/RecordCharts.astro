@@ -1,0 +1,106 @@
+---
+// The record, charted — the operating lines over the whole history, so durability reads at
+// a glance. Chart the business, never the price: built to SVG at build time from the same
+// record the table shows (no library, no runtime). Y-anchored at zero, so a rock-steady
+// margin reads steady and a real swing reads as a swing — the level, not just the wiggle.
+// Present, never pronounce: the line, the current point, and the worst year on record marked
+// (Buffett judges a business by its trough); no grade, no color of good or bad.
+import { fmtMoney, topLineRevenue, operatingMargin, roicValue, ownerEarningsMargin, freeCashFlowMargin, debtReliable } from "../lib/fundamentals.mjs";
+import { financialKind } from "../lib/archetype.mjs";
+
+const { company } = Astro.props;
+const hist = company.history || [];
+const fk = financialKind(company);
+const debtOk = debtReliable(company.lines || {}) && debtReliable(company.ttm?.lines || {});
+const $ = (v) => fmtMoney(v, company?.currency || "USD");
+const serOf = (fn) => hist.map((h) => fn(h.lines));
+
+// Financials run on a balance sheet, not on margins or ROIC, so for them chart only the two
+// universally-honest lines (revenue, operating margin); non-financials get the full engine.
+const candidates = fk
+  ? [
+      { label: "Revenue", series: serOf((l) => topLineRevenue(l, company)) },
+      { label: "Operating margin", series: serOf(operatingMargin), pct: true },
+    ]
+  : [
+      { label: "Revenue", series: serOf((l) => topLineRevenue(l, company)) },
+      { label: "Operating margin", series: serOf(operatingMargin), pct: true },
+      { label: "ROIC", series: debtOk ? serOf(roicValue) : [], pct: true },
+      { label: "Owner-earnings margin", series: serOf((l) => ownerEarningsMargin(l, company)), pct: true },
+      { label: "Free cash flow margin", series: serOf(freeCashFlowMargin), pct: true },
+    ];
+
+const W = 128, H = 40, PAD = 4;
+function build(series) {
+  const idx = series.map((v, i) => ({ v, i })).filter((p) => p.v != null);
+  if (idx.length < 3) return null; // need a shape, not two dots
+  const vs = idx.map((p) => p.v);
+  const lo = Math.min(0, ...vs), hi = Math.max(0, ...vs), span = hi - lo || 1;
+  const n = series.length;
+  const x = (i) => (n > 1 ? PAD + (W - 2 * PAD) * (i / (n - 1)) : W / 2);
+  const y = (v) => H - PAD - (H - 2 * PAD) * ((v - lo) / span);
+  const d = idx.map((p, k) => `${k ? "L" : "M"}${x(p.i).toFixed(1)},${y(p.v).toFixed(1)}`).join("");
+  const last = idx[idx.length - 1];
+  const trough = idx.reduce((a, b) => (b.v < a.v ? b : a), idx[0]);
+  return {
+    d,
+    lastX: x(last.i), lastY: y(last.v),
+    troughX: x(trough.i), troughY: y(trough.v), troughFy: hist[trough.i]?.fy,
+    zeroY: lo < 0 && hi > 0 ? y(0) : null,
+  };
+}
+
+const pc = (v) => (v == null ? "—" : `${v < 0 ? "−" : ""}${(Math.abs(v) * 100).toFixed(0)}%`);
+const charts = candidates
+  .map((c) => ({ ...c, g: build(c.series), last: [...c.series].reverse().find((v) => v != null) }))
+  .filter((c) => c.g);
+
+const fy0 = hist.find((h) => h.fy)?.fy;
+const fyN = [...hist].reverse().find((h) => h.fy)?.fy;
+---
+
+{charts.length ? (
+  <section class="rc">
+    <div class="head">
+      <h3 class="secTitle">The record, charted</h3>
+      {fy0 && fyN && fy0 !== fyN ? <span class="span">FY{fy0}–{fyN}</span> : null}
+    </div>
+    <p class="note">Each measure over its full record — the current point, and the worst year marked.</p>
+    <div class="grid">
+      {charts.map((c) => (
+        <div class="cell">
+          <div class="cLbl">{c.label}</div>
+          <svg class="chart" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" role="img" aria-label={`${c.label} over the record`}>
+            {c.g.zeroY != null ? <line class="zero" x1="0" x2={W} y1={c.g.zeroY} y2={c.g.zeroY} /> : null}
+            <path d={c.g.d} />
+            <circle class="trough" cx={c.g.troughX} cy={c.g.troughY} r="2.2" />
+            <circle class="last" cx={c.g.lastX} cy={c.g.lastY} r="2.4" />
+          </svg>
+          <div class="cVal">
+            <span class="cNow">{c.pct ? pc(c.last) : $(c.last)}</span>
+            {c.g.troughFy ? <span class="cLow">low FY{c.g.troughFy}</span> : null}
+          </div>
+        </div>
+      ))}
+    </div>
+  </section>
+) : null}
+
+<style>
+  .rc { margin: 22px 0; }
+  .head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--rule-strong); padding-bottom: 6px; }
+  .secTitle { margin: 0; }
+  .span { font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); font-variant-numeric: tabular-nums; flex: 0 0 auto; }
+  .note { font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--muted); margin: 8px 0 0; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 18px 26px; margin: 16px 0 0; }
+  .cell { min-width: 0; }
+  .cLbl { font-size: 12px; color: var(--muted); }
+  .chart { width: 100%; height: 40px; overflow: visible; display: block; margin: 5px 0 4px; }
+  .chart path { fill: none; stroke: var(--ink); stroke-width: 1.4; vector-effect: non-scaling-stroke; }
+  .chart .last { fill: var(--accent); }
+  .chart .trough { fill: var(--paper); stroke: var(--muted); stroke-width: 1; vector-effect: non-scaling-stroke; }
+  .chart .zero { stroke: var(--faint); stroke-width: 0.75; stroke-dasharray: 2 2; vector-effect: non-scaling-stroke; }
+  .cVal { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+  .cNow { font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--ink); }
+  .cLow { font-size: 10.5px; color: var(--muted); letter-spacing: 0.02em; font-variant-numeric: tabular-nums; }
+</style>

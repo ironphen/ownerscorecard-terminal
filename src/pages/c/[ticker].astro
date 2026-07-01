@@ -4,6 +4,7 @@ import fundamentals from "../../data/fundamentals.json";
 import Scorecard from "../../components/Scorecard.astro";
 import Portrait from "../../components/Portrait.astro";
 import TenYear from "../../components/TenYear.astro";
+import RecordCharts from "../../components/RecordCharts.astro";
 import CurrentPosition from "../../components/CurrentPosition.astro";
 import Peers from "../../components/Peers.astro";
 import BusinessRead from "../../components/BusinessRead.astro";
@@ -143,6 +144,7 @@ const lensTrail = fund ? (computeLenses(allCompanies, language.companies).byTick
     <section id="act-record" class="actGroup">
       <ActHeader n="II" title="The record" lede="Ten years of arithmetic, read across the cycle." />
       <div id="sec-record" class="sec"><TenYear company={fund} /></div>
+      <div id="sec-recordcharts" class="sec"><RecordCharts company={fund} /></div>
       {!isFin ? <div id="sec-bridge" class="sec"><OwnerEarningsBridge company={fund} /></div> : null}
     </section>
   ) : null}
