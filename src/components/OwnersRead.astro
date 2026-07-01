@@ -1,190 +1,109 @@
 ---
-// The weld: each thing the company's own 10-K flags as worth worrying about, set
-// against the figure from the same filings that bears on it, and crucially, that
-// figure is ANCHORED to a period you can find in the record table below (a number
-// you can't locate is worse than none). The company's words on the left, the
-// arithmetic that tests them on the right.
+// What an owner would ask — the owner-initiated interrogation. NOT "what the filing warns about"
+// (risk-factor boilerplate a company is required to print, which Buffett and Munger distrust): the
+// selection is driven by a NUMBER firing or a rare, specific admission the filing can't retract —
+// never by the filing's own risk language. Each line is a question an owner puts to the business,
+// welded to a figure OSC computes or to a verbatim sentence, with a pointer to verify. Present,
+// never pronounce.
+//
+// Deliberately NARROW to avoid duplicating the page. Durability, solvency, dilution, capital
+// allocation, goodwill-on-equity, pricing power, and the owner/promoter candor tally already live
+// in the Scorecard, Inversion, Acquisitions, Capital and the record charts. This section carries
+// ONLY the owner questions nothing else surfaces: who the revenue depends on, whether management
+// plainly owned its misses, and which reported numbers rest on management's own judgment.
 import language from "../data/language.json";
-import { fmtMoney, ownerEarningsMargin, operatingMargin, coverage, cashPosition, topLineRevenue, grossMargin, gmCorrupt } from "../lib/fundamentals.mjs";
+import { fmtMoney, topLineRevenue } from "../lib/fundamentals.mjs";
 import { cleanOwnerFlags, customerConcentration } from "../lib/business.mjs";
 
 const { company } = Astro.props;
-const $ = (v) => fmtMoney(v, company?.currency || "USD");
 const L = language?.companies?.[company.ticker] || null;
-const flags = cleanOwnerFlags(L?.ownerFlags);
-
-const H = (company.history || []).filter((h) => h?.lines?.revenue != null);
+const $ = (v) => fmtMoney(v, company?.currency || "USD");
+const src = L?.sourceUrl || null;
 const cur = company.ttm?.lines || company.lines || {};
 const curLabel = company.ttm?.lines ? "TTM" : company.fy ? `FY${company.fy}` : "latest";
 const rev = topLineRevenue(cur, company) ?? topLineRevenue(company.lines, company);
-const curGMraw = grossMargin(cur);
-const curGM = gmCorrupt(curGMraw, company) ? null : curGMraw;
-const curOEM = ownerEarningsMargin(cur, company);
-const cov = coverage(company);
-const cash = cashPosition(company);
 
-// Operating-margin trajectory, the anchored series behind pricing-power and cyclicality.
-const omSeries = H.map((h) => operatingMargin(h.lines));
-const curOM = operatingMargin(cur);
-let omPeak = null, omWorst = null;
-H.forEach((h) => {
-  const m = operatingMargin(h.lines);
-  if (m == null) return;
-  if (!omPeak || m > omPeak.v) omPeak = { v: m, fy: h.fy };
-  if (!omWorst || m < omWorst.v) omWorst = { v: m, fy: h.fy };
-});
+const items = [];
 
-// Diluted-share trajectory (split-guarded) for dilution.
-const shVals = H.map((h) => h.lines.sharesDiluted);
-const fyF = H.find((h) => h.lines.sharesDiluted != null)?.fy ?? null;
-const shF = shVals.find((x) => x != null) ?? null;
-const shL = cur.sharesDiluted ?? [...shVals].reverse().find((x) => x != null) ?? null;
-let shCagr = null;
-if (shF && shL && Math.max(shF, shL) / Math.min(shF, shL) <= 1.8 && fyF) {
-  const endYr = company.ttm?.asOf ? new Date(company.ttm.asOf + "T00:00:00Z").getUTCFullYear() : H[H.length - 1]?.fy ?? fyF;
-  if (endYr - fyF > 0) shCagr = Math.pow(shL / shF, 1 / (endYr - fyF)) - 1;
-}
-
-const pc = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${(Math.abs(v) * 100).toFixed(dp)}%`);
-
-function spark(values, w = 108, h = 22) {
-  const vs = values.filter((v) => v != null);
-  if (vs.length < 3) return null;
-  const min = Math.min(...vs), max = Math.max(...vs), span = max - min || 1;
-  const x = (i) => (w * i) / (values.length - 1);
-  const y = (v) => h - 2 - (h - 4) * ((v - min) / span);
-  let d = "", started = false;
-  values.forEach((v, i) => { if (v == null) return; d += `${started ? "L" : "M"}${x(i).toFixed(1)},${y(v).toFixed(1)}`; started = true; });
-  const zeroY = min < 0 && max > 0 ? y(0) : null;
-  return { d, w, h, zeroY };
-}
-
-// Anchor every figure to a period found in the table. null = a judgment, not arithmetic.
-function bearing(flag) {
-  const lens = flag.lens;
-  switch (lens) {
-    case "Customer concentration": {
-      // Turn the filing's disclosed share into dollars: how much of the top line — and so how many
-      // dollars — ride on the biggest buyer(s). The percentage is parsed conservatively from the
-      // company's own sentence; when it can't be read with confidence we fall back to the revenue line
-      // alone, never a guessed figure.
-      if (rev == null) return null;
-      const cc = customerConcentration(flag.quote);
-      if (cc) {
-        const exposed = rev * cc.pct;
-        return { label: `On its largest customer${cc.multi ? "s" : ""} (${curLabel})`, value: `≈${$(exposed)} · ${pc(cc.pct)} of revenue` };
-      }
-      return { label: `Revenue exposed (${curLabel})`, value: $(rev) };
-    }
-    case "Pricing power & competition": {
-      if (curOM != null && omPeak) {
-        const atHigh = curOM >= omPeak.v - 0.01;
-        return {
-          label: "Operating margin",
-          value: atHigh ? `${pc(curOM, 1)} (${curLabel}), near a ${H.length}-yr high` : `${pc(curOM, 1)} now (${curLabel}), off a ${pc(omPeak.v, 1)} peak (FY${omPeak.fy})`,
-          series: omSeries,
-        };
-      }
-      return curGM != null ? { label: `Gross margin (${curLabel})`, value: pc(curGM) } : null;
-    }
-    case "Supplier & input dependence":
-      return curGM != null ? { label: `Gross-margin cushion (${curLabel})`, value: pc(curGM) } : null;
-    case "Concentrated dependence":
-      return curOEM != null ? { label: `Owner-earnings margin at stake (${curLabel})`, value: pc(curOEM) } : rev != null ? { label: `Revenue (${curLabel})`, value: $(rev) } : null;
-    case "Debt terms & refinancing":
-    case "Going-concern doubt": {
-      if (!cash) return null;
-      let cp = "";
-      if (cov && cov.ratio != null && cov.ratio >= 0) cp = ` · interest covered ${cov.ratio.toFixed(1)}×`;
-      else if (cov && cov.noBurden) cp = " · no real interest burden";
-      else if (cov) cp = " · operating profit doesn't cover interest";
-      return { label: `Balance sheet (${curLabel})`, value: `${cash.value} ${cash.label.toLowerCase()}${cp}` };
-    }
-    case "Dilution":
-      return shCagr != null ? { label: "Diluted share count", value: `${shCagr >= 0 ? "+" : "−"}${pc(Math.abs(shCagr), 1)}/yr (FY${fyF}→${curLabel})` } : null;
-    case "Cyclicality & demand":
-      return omWorst ? { label: "Worst year on record", value: `${pc(omWorst.v, 1)} operating margin (FY${omWorst.fy})` } : null;
-    default:
-      return null; // litigation, regulation, read, don't compute
+// 1. Concentration — how much of the top line rides on one buyer. The one genuinely owner-grade weld
+// kept from the old section: parsed conservatively from the company's own disclosure (the parser
+// rejects geographic / receivable / backlog bases), so it fires only where a dominant buyer is real.
+const concFlag = cleanOwnerFlags(L?.ownerFlags).find((f) => f.lens === "Customer concentration");
+if (concFlag && rev != null) {
+  const cc = customerConcentration(concFlag.quote);
+  if (cc) {
+    items.push({
+      q: "How much of the revenue rides on one buyer?",
+      fig: `≈${$(rev * cc.pct)} · ${(cc.pct * 100).toFixed(0)}% of revenue on the largest customer${cc.multi ? "s" : ""} (${curLabel})`,
+      quote: concFlag.quote,
+    });
   }
 }
 
-const items = flags.map((f) => {
-  const fig = bearing(f);
-  return { ...f, fig, sp: fig?.series ? spark(fig.series) : null };
-});
+// 2. Candor — did management plainly own a miss, in the first person? A rare tell (~2% of filings), so
+// its presence is itself the signal. Buffett's owner-report standard; the sentence the filing can't
+// take back.
+const admissions = L?.mdna?.candor?.admissions || [];
+if (admissions.length) {
+  items.push({
+    q: "Does management own its misses?",
+    fig: `${admissions.length} plain admission${admissions.length === 1 ? "" : "s"} in this year's filing`,
+    quote: admissions[0],
+  });
+}
 
+// 3. Critical estimates — which reported numbers rest on management's own judgment. Led by the NAMED
+// topics (specific to this filing, so differential — an insurer's reserves are not a software firm's
+// revenue timing), with GOODWILL excluded because Acquisitions already carries the goodwill read.
+// Points at the note; it welds nothing itself — the size is read in the record.
+const judgment = L?.buffettRead?.judgment;
+const critTopics = judgment && judgment.count >= 1
+  ? (judgment.topics || []).filter((t) => !/goodwill/i.test(t))
+  : [];
+if (critTopics.length) {
+  items.push({
+    q: "Which reported numbers are a judgment call?",
+    fig: `Management names ${critTopics.slice(0, 4).join(", ")} as critical estimates`,
+    note: "each is partly an opinion — read the note before trusting the figure",
+  });
+}
 ---
 
 {items.length ? (
-  <section class="oread">
+  <section class="ask">
     <div class="head">
-      <h3 class="secTitle">What the filing emphasizes{L.fy ? `, FY${L.fy}` : ""}</h3>
-      {L.sourceUrl ? <a class="src" href={L.sourceUrl} target="_blank" rel="noopener">read the 10-K →</a> : null}
+      <h3 class="secTitle">What an owner would ask{L?.fy ? `, FY${L.fy}` : ""}</h3>
+      {src ? <a class="src" href={src} target="_blank" rel="noopener">read the 10-K →</a> : null}
     </div>
-    {items.length ? (<>
-    <p class="intro">
-      The risks the filing flags, each set against the figure from the record that bears on it.
-    </p>
-
-    <ul class="items">
+    <ul class="qs">
       {items.map((it) => (
         <li>
-          <div class="lensRow">
-            <span class="lens">{it.lens}</span>
-            <span class="sec">{it.section}</span>
-          </div>
-          <p class="why">{it.why}</p>
-          <blockquote>“{it.quote}{it.quote.length >= 300 ? "…" : ""}”</blockquote>
-          {it.fig ? (
-            <div class="weld">
-              <span class="eyebrow">From the record</span>
-              <span class="fl">{it.fig.label}</span>
-              {it.sp ? (
-                <svg class="wspark" viewBox={`0 0 ${it.sp.w} ${it.sp.h}`} preserveAspectRatio="none" aria-hidden="true">
-                  {it.sp.zeroY != null ? <line x1="0" x2={it.sp.w} y1={it.sp.zeroY} y2={it.sp.zeroY} class="zero" /> : null}
-                  <path d={it.sp.d} />
-                </svg>
-              ) : null}
-              <span class="fv">{it.fig.value}</span>
-            </div>
-          ) : (
-            <div class="weld judgment">A judgment, not a number, weigh it against the filing yourself.</div>
-          )}
+          <div class="q">{it.q}</div>
+          <div class="fig">{it.fig}</div>
+          {it.quote ? (
+            <blockquote>“{it.quote}{it.quote.length >= 300 ? "…" : ""}”{src ? <a class="verify" href={src} target="_blank" rel="noopener">verify →</a> : null}</blockquote>
+          ) : null}
+          {it.note ? (
+            <p class="note">{it.note}{src ? <a class="verify" href={src} target="_blank" rel="noopener">verify →</a> : null}</p>
+          ) : null}
         </li>
       ))}
     </ul>
-    </>) : null}
-    <p class="foot">Classic text analysis of the filing itself, and every quote is the company's own.</p>
+    <p class="foot">The questions the record and the charts don't answer on their own — the figure and the place to look, never a verdict.</p>
   </section>
 ) : null}
 
 <style>
-  .oread { margin: 24px 0; }
+  .ask { margin: 24px 0; }
   .head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; border-bottom: 1px solid var(--rule-strong); padding-bottom: 6px; }
-  .head h2 { margin: 0; }
+  .secTitle { margin: 0; }
   .src { font-size: 12px; color: var(--accent); flex: 0 0 auto; }
-  .intro { font-family: var(--serif); font-style: italic; font-size: 13.5px; color: var(--muted); margin: 9px 0 0; max-width: 68ch; }
-
-  .items { list-style: none; padding: 0; margin: 12px 0 0; }
-  .items li { padding: 14px 0; border-bottom: 1px solid var(--rule); }
-  .lensRow { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
-  .lens { font-family: var(--sans); font-weight: 700; font-size: 15px; color: var(--ink); }
-  .sec { font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); flex: 0 0 auto; }
-  .why { font-size: 13px; color: var(--ink-dim); margin: 4px 0 0; line-height: 1.5; }
-  blockquote {
-    font-family: var(--serif); font-size: 14.5px; line-height: 1.5; color: var(--ink-soft);
-    border-left: 2px solid var(--accent); padding: 3px 0 3px 14px; margin: 8px 0 0;
-  }
-
-  .weld { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 10px 0 0; padding: 8px 12px; background: var(--accent-tint); }
-  .eyebrow { font-size: 10px; letter-spacing: 0.07em; text-transform: uppercase; color: var(--accent); font-weight: 700; flex: 0 0 auto; }
-  .weld .fl { font-size: 13px; color: var(--muted); }
-  .wspark { width: 92px; height: 20px; overflow: visible; opacity: 0.9; }
-  .wspark path { fill: none; stroke: var(--ink); stroke-width: 1.3; vector-effect: non-scaling-stroke; }
-  .wspark .zero { stroke: var(--faint); stroke-width: 0.75; stroke-dasharray: 2 2; vector-effect: non-scaling-stroke; }
-  .weld .fv { font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--ink); margin-left: auto; text-align: right; }
-  .weld.judgment { font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--muted); display: block; }
-
-  .foot { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--rule-strong); margin-top: 16px; padding-top: 10px; }
+  .qs { list-style: none; padding: 0; margin: 12px 0 0; }
+  .qs li { padding: 13px 0; border-bottom: 1px solid var(--rule); }
+  .q { font-family: var(--sans); font-weight: 700; font-size: 15.5px; color: var(--ink); line-height: 1.35; }
+  .fig { font-size: 15px; font-variant-numeric: tabular-nums; color: var(--ink-soft); margin: 4px 0 0; }
+  blockquote { font-family: var(--serif); font-size: 14px; line-height: 1.5; color: var(--ink-soft); border-left: 2px solid var(--accent); padding: 3px 0 3px 14px; margin: 8px 0 0; max-width: 78ch; }
+  .note { font-size: 13px; color: var(--ink-dim); margin: 6px 0 0; line-height: 1.5; max-width: 78ch; }
+  .verify { font-family: var(--sans); font-size: 11px; letter-spacing: 0.03em; color: var(--accent); margin-left: 8px; white-space: nowrap; }
+  .foot { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--rule-strong); margin-top: 14px; padding-top: 10px; max-width: 78ch; }
 </style>
