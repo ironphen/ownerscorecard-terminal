@@ -9,7 +9,6 @@ import Peers from "../../components/Peers.astro";
 import BusinessRead from "../../components/BusinessRead.astro";
 import Segments from "../../components/Segments.astro";
 import OwnersRead from "../../components/OwnersRead.astro";
-import CandorRead from "../../components/CandorRead.astro";
 import Capital from "../../components/Capital.astro";
 import Inversion from "../../components/Inversion.astro";
 import ActHeader from "../../components/ActHeader.astro";
@@ -127,7 +126,6 @@ const lensTrail = fund ? (computeLenses(allCompanies, language.companies).byTick
         <a href="#act-record">The record</a>
         <a href="#act-quality">Quality</a>
         <a href="#act-price">Price</a>
-        <a href="#act-context">Context</a>
       </nav>
     </div>
   ) : null}
@@ -160,6 +158,8 @@ const lensTrail = fund ? (computeLenses(allCompanies, language.companies).byTick
       <div id="sec-acq" class="sec"><Acquisitions company={fund} /></div>
       <div id="sec-pay" class="sec"><Comp company={fund} /></div>
       {!isFin ? <div id="sec-inversion" class="sec"><Inversion company={fund} /></div> : null}
+      <div id="sec-changes" class="sec"><OwnersRead company={fund} /></div>
+      <div id="sec-peers" class="sec"><Peers company={fund} peers={peerResult.peers} basis={peerResult.basis} subsector={peerResult.subsector} /></div>
     </section>
   ) : null}
 
@@ -170,25 +170,17 @@ const lensTrail = fund ? (computeLenses(allCompanies, language.companies).byTick
     </section>
   ) : null}
 
-  {fund ? (
-    <section id="act-context" class="actGroup">
-      <ActHeader n="V" title="Context" lede="Latest-filing changes, peers, and related writing." />
-      <div id="sec-changes" class="sec"><OwnersRead company={fund} /></div>
-      <div id="sec-candor" class="sec"><CandorRead company={fund} /></div>
-      <div id="sec-peers" class="sec"><Peers company={fund} peers={peerResult.peers} basis={peerResult.basis} subsector={peerResult.subsector} /></div>
-      {related.length ? (
-        <div id="sec-writing" class="sec">
-          <h2>Writing</h2>
-          <ul class="history">
-            {related.map((a) => (
-              <li>
-                <span class="hDate">{fmtDate(a.data.date)}</span>
-                <span class="hLinks"><a href={`/articles/${a.id}`}>{a.data.title}</a></span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
+  {fund && related.length ? (
+    <section id="sec-writing" class="sec">
+      <h2>Writing</h2>
+      <ul class="history">
+        {related.map((a) => (
+          <li>
+            <span class="hDate">{fmtDate(a.data.date)}</span>
+            <span class="hLinks"><a href={`/articles/${a.id}`}>{a.data.title}</a></span>
+          </li>
+        ))}
+      </ul>
     </section>
   ) : null}
 
