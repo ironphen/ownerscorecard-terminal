@@ -13,9 +13,9 @@ const fmtDate = (d) =>
   d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric", timeZone: "UTC" });
 ---
 
-<BaseLayout title="Articles, Owner Scorecard">
+<BaseLayout title="Notes, Owner Scorecard">
   <header class="hero">
-    <h1>Articles</h1>
+    <h1>Notes</h1>
   </header>
 
   {articles.length ? (
@@ -23,7 +23,7 @@ const fmtDate = (d) =>
       {articles.map((a) => (
         <li>
           <div class="top">
-            <a class="title" href={`/articles/${a.id}`}>{a.data.title}</a>
+            <a class="title" href={`/notes/${a.id}`}>{a.data.title}</a>
             <span class="meta">
               <span class="section">{a.data.section}</span>
               {a.data.draft ? <span class="draft">draft</span> : null}

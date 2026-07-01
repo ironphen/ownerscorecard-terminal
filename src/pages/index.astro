@@ -191,13 +191,13 @@ const fmtWireDate = (s) => new Date(s + "T00:00:00Z").toLocaleDateString("en-US"
     {articles.length ? (
       <section class="writing">
         <div class="bandHead">
-          <h2>Latest writing</h2>
-          <a class="all" href="/articles">All articles →</a>
+          <h2>Latest notes</h2>
+          <a class="all" href="/notes">All notes →</a>
         </div>
         <ul class="cards">
           {articles.map((a) => (
             <li>
-              <a class="cardTitle" href={`/articles/${a.id}`}>{a.data.title}</a>
+              <a class="cardTitle" href={`/notes/${a.id}`}>{a.data.title}</a>
               <p class="dek">{a.data.description}</p>
               <div class="cardMeta"><span class="sec">{a.data.section}</span> {fmtDate(a.data.date)}</div>
             </li>
