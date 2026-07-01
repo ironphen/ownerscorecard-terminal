@@ -1,0 +1,88 @@
+---
+// Owner earnings vs. net income — the earnings-quality chart, and the record's most important
+// relationship. Two lines on one shared $ scale across the record: reported net income (the
+// accountant's number) and owner earnings (the cash an owner can actually take out). The GAP
+// between them is the signal — it hugs tight on a clean cash business and separates on a heavy-
+// accrual or heavy-stock-comp one. Buffett, 1986: reported earnings "often fail to reflect economic
+// reality." Present, never pronounce: two sourced lines and the wedge between them, the worst owner-
+// earnings year marked; the businessman reads the gap. Skipped for financials, where owner earnings
+// is not the honest lens.
+import { fmtMoney, ownerEarningsAbs } from "../lib/fundamentals.mjs";
+import { financialKind } from "../lib/archetype.mjs";
+
+const { company } = Astro.props;
+const hist = company.history || [];
+const $ = (v) => fmtMoney(v, company?.currency || "USD");
+
+const pts = hist
+  .map((h) => ({ fy: h.fy, oe: ownerEarningsAbs(h.lines, company), ni: h.lines.netIncome }))
+  .filter((r) => r.oe != null && r.ni != null);
+const skip = !!financialKind(company) || pts.length < 3;
+
+const W = 320, H = 108, PADX = 6, PADT = 10, PADB = 14;
+let g = null;
+if (!skip) {
+  const n = pts.length;
+  const vs = pts.flatMap((r) => [r.oe, r.ni]);
+  const lo = Math.min(0, ...vs), hi = Math.max(0, ...vs), span = hi - lo || 1;
+  const x = (i) => PADX + (W - 2 * PADX) * (n > 1 ? i / (n - 1) : 0.5);
+  const y = (v) => (H - PADB) - (H - PADT - PADB) * ((v - lo) / span);
+  const path = (key) => pts.map((r, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(r[key]).toFixed(1)}`).join("");
+  const oe = path("oe"), ni = path("ni");
+  let back = "";
+  for (let i = n - 1; i >= 0; i--) back += `L${x(i).toFixed(1)},${y(pts[i].ni).toFixed(1)}`;
+  const trough = pts.reduce((a, b) => (b.oe < a.oe ? b : a), pts[0]);
+  const ti = pts.indexOf(trough);
+  g = {
+    oe, ni, gap: oe + back + "Z",
+    zeroY: lo < 0 && hi > 0 ? y(0) : null,
+    tx: x(ti), ty: y(trough.oe), tfy: trough.fy,
+    lastOe: pts[n - 1].oe, lastNi: pts[n - 1].ni,
+  };
+}
+---
+
+{g ? (
+  <section class="oeq">
+    <div class="head">
+      <h3 class="secTitle">Owner earnings vs. net income</h3>
+      <span class="legend"><i class="d oe"></i>Owner earnings<i class="d ni"></i>Net income</span>
+    </div>
+    <p class="note">The accountant's number, and the cash an owner can take — the gap is the tell.</p>
+    <svg class="chart" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" role="img" aria-label="Owner earnings versus net income over the record">
+      <path class="gap" d={g.gap} />
+      {g.zeroY != null ? <line class="zero" x1="0" x2={W} y1={g.zeroY} y2={g.zeroY} /> : null}
+      <path class="ni" d={g.ni} />
+      <path class="oe" d={g.oe} />
+      <circle class="mark" cx={g.tx} cy={g.ty} r="2.4" />
+    </svg>
+    <div class="vals">
+      <span class="kOe">{$(g.lastOe)}</span><span class="sep">owner earnings</span>
+      <span class="vs">vs.</span>
+      <span class="kNi">{$(g.lastNi)}</span><span class="sep">net income</span>
+      <span class="low">low FY{g.tfy}</span>
+    </div>
+  </section>
+) : null}
+
+<style>
+  .oeq { margin: 22px 0; }
+  .head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; border-bottom: 1px solid var(--rule-strong); padding-bottom: 6px; }
+  .secTitle { margin: 0; }
+  .legend { font-size: 11px; letter-spacing: 0.03em; color: var(--muted); display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .legend .d { width: 14px; height: 0; border-top: 2px solid; display: inline-block; }
+  .legend .d.oe { border-color: var(--accent); }
+  .legend .d.ni { border-color: var(--muted); }
+  .note { font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--muted); margin: 8px 0 0; }
+  .chart { width: 100%; height: 108px; overflow: visible; display: block; margin: 10px 0 6px; }
+  .chart .oe { fill: none; stroke: var(--accent); stroke-width: 1.6; vector-effect: non-scaling-stroke; }
+  .chart .ni { fill: none; stroke: var(--muted); stroke-width: 1.3; vector-effect: non-scaling-stroke; }
+  .chart .gap { fill: var(--accent); opacity: 0.08; stroke: none; }
+  .chart .zero { stroke: var(--faint); stroke-width: 0.75; stroke-dasharray: 2 2; vector-effect: non-scaling-stroke; }
+  .chart .mark { fill: var(--paper); stroke: var(--muted); stroke-width: 1; vector-effect: non-scaling-stroke; }
+  .vals { display: flex; align-items: baseline; gap: 4px 8px; flex-wrap: wrap; font-size: 13px; }
+  .vals .kOe { font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; }
+  .vals .kNi { font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .vals .sep, .vals .vs { color: var(--muted); }
+  .vals .low { margin-left: auto; font-size: 10.5px; color: var(--muted); letter-spacing: 0.02em; font-variant-numeric: tabular-nums; }
+</style>
