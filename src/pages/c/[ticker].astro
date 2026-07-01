@@ -149,7 +149,7 @@ const lensTrail = fund ? (computeLenses(allCompanies, language.companies).byTick
 
   {fund ? (
     <section id="act-quality" class="actGroup">
-      <ActHeader n="III" title="Quality &amp; stewardship" lede="Whether it's a good business, whether it survives, whether it's run for owners — and how management is paid." />
+      <ActHeader n="III" title="Quality &amp; stewardship" lede="Returns, the balance sheet, capital allocation, and pay." />
       <div id="sec-scorecard" class="sec"><Scorecard company={fund} sample={fundamentals.sample} peers={peerResult.peers} /></div>
       <div id="sec-current" class="sec"><CurrentPosition company={fund} /></div>
       <div id="sec-debt" class="sec"><DebtMaturity company={fund} /></div>
@@ -165,7 +165,7 @@ const lensTrail = fund ? (computeLenses(allCompanies, language.companies).byTick
 
   {fund ? (
     <section id="act-price" class="actGroup">
-      <ActHeader n="IV" title="The price" lede="What you'd pay, and what a price has to assume to make sense." />
+      <ActHeader n="IV" title="The price" lede="What a price has to assume." />
       <div id="sec-price" class="sec"><Valuation company={fund} /><CompareLink company={fund} /></div>
     </section>
   ) : null}
