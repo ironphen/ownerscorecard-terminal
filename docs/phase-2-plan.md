@@ -31,13 +31,15 @@ red-team found.
    not an answer"). Trust instead rests on what OSC actually has: primary-source scorecards, the
    published method, and freshness. The paid **research** is where the analyst's reasoning lives.
 
-3. **Investing stays personal — the business is not an investment vehicle.** This removes the
-   deferred-revenue "float trap" the red-team flagged as a blocker. Prepaid annual revenue is an
-   *unearned liability*, not spendable equity; deploying it into securities risks forced liquidation
-   in a churn/refund/chargeback wave. Resolution: the business holds its deferred balance as ordinary
-   **working capital**; the founder draws **operating earnings** and invests those in his **personal
-   brokerage**. Subscriber cash never enters the market. (Consistent with the prior venture decision
-   that investing stays personal, outside the operating entity.)
+3. **Float is the intent — invested to match the liability, not the ambition (§6).** Prepaid annual
+   revenue *is* genuine float and the business should put it to work; the red-team's blocker was
+   narrower than "don't invest it." Because that float is short-dated and refundable, the business
+   invests it in **short-duration, liquid instruments** (T-bills / money-market) matched to the
+   ≤12-month earn-out, minus a refund reserve — real yield, no forced-liquidation trap. The founder's
+   **concentrated equity investing (his edge) stays personal**, funded by **drawn operating earnings**
+   in his own brokerage — permanent capital that can ride a drawdown, which refundable float cannot.
+   The trap is *float → volatile equities* on a small/lumpy early sub base, not float itself; the
+   equity-float ambition scales in as the renewal base grows large and low-churn.
 
 4. **Content = ONE "Notes" publication, tiered per item (~99% subscriber-only, a few free-to-all).**
    Replaces v1's separate "free essays vs paid dossiers." Each Note carries a `tier` flag. The free,
@@ -195,17 +197,29 @@ subscriptions changed in the last 48h and re-upserts rows — idempotent, same c
 
 ---
 
-## 6. Money structure — the "float", resolved
+## 6. Money structure — the float, done responsibly
 
-The business is **not** an investment vehicle, so there is no float to "deploy."
+Float **is** the intent, and it's real — the design rule is that it must be invested to match the
+liability, not the ambition.
 
-- Deferred (prepaid) annual revenue is held as ordinary **working capital / operating reserve** — it
-  smooths the business and is available for refunds, disputes, and operating costs.
-- The founder draws **operating earnings** (recognized profit) and invests those, personally, in his
-  **own brokerage account.** Investment operations are entirely separate from the operating entity.
-- Net effect: the timing benefit of annual prepay is real (a cash cushion, cheap working capital),
-  but it is **never** at risk of a forced-liquidation trap, because subscriber cash is never in the
-  market. Keep a prudent liquid reserve against refunds/churn as normal working-capital hygiene.
+- **Prepaid annual revenue is genuine float:** the business's cash, cheaply funded by subscribers,
+  and the business should put it to work. The difference from Buffett's insurance float is duration
+  and stability, not kind — insurance float is long-tailed, huge, diversified, and cushioned by
+  excess capital; a young annual-subscription float is small, lumpy, short-dated (all of it earns out
+  or is refundable within 12 months), and disputable. Same idea, different risk profile.
+- **So the business sweeps the deferred balance into short-duration, liquid instruments** — T-bills /
+  money-market — matched to the ≤12-month earn-out, minus a refund/dispute reserve. At current rates
+  that still throws off ~4–5% the business keeps: real, low-cost income. That is float, responsibly.
+- **The trap to avoid** is funding concentrated equity positions (the founder's personal edge) with
+  refundable subscriber cash — a drawdown coinciding with a churn/refund wave forces selling at the
+  bottom to make subscribers whole. That specific *pairing* is what the red-team flagged, not "float."
+- **The founder's alpha-seeking investing stays personal** — funded by **drawn operating earnings**,
+  in his own brokerage. That is permanent capital that can't be clawed back, so it can ride volatile
+  positions through a drawdown; the float cannot.
+- **Upgrade path:** as the annual-renewal base grows large and low-churn, the durably-permanent floor
+  of the float grows with it, and a defined fraction can take incrementally more duration/risk over
+  time — the "invest the float in real positions" ambition becomes viable at scale, deliberately, not
+  at launch.
 
 ---
 
