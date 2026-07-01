@@ -1,7 +1,7 @@
 // REITs: a property trust is read on funds from operations (FFO), not GAAP earnings.
 // The depreciation a REIT charges against buildings that usually hold or grow their
 // value buries the real cash earnings, so FFO adds it back: net income + real-estate
-// depreciation − gains on property sales. The questions an owner asks: is FFO per
+// depreciation − gains on property sales. What to read for: is FFO per
 // share growing, is the dividend covered by it, and is the leverage every REIT
 // carries kept sound. Pure arithmetic on the filings. Net asset value and occupancy
 // need cap rates and operating detail we do not force.
