@@ -17,10 +17,10 @@ red-team found.
 ## 0. What changed from v1 — four decisions locked 2026-07-01
 
 1. **Repo: ONE public repo** (not a second private app repo). Privacy comes from *where things live*
-   (env secrets + Supabase Row-Level Security), never from hiding code (Kerckhoffs). A clean
-   split-seam is pre-cut so a private app is a *mechanical* lift later — but only if a concrete
-   trigger appears (a co-developer who touches billing but not the brand asset; a genuinely separate
-   app product; paid traffic large enough to isolate). Absent a trigger, do not split. All three
+   (env secrets + Supabase Row-Level Security), never from hiding code (Kerckhoffs). No split is
+   built; two lightweight code conventions (§1) would keep a future split mechanical, but it is
+   revisited only if a concrete trigger appears (a co-developer who touches billing but not the brand
+   asset; a genuinely separate app product; paid traffic large enough to isolate). All three
    independent judges converged on this.
 
 2. **The paid product is a subscription marketable-security RESEARCH business — NOT a graded-calls
@@ -62,18 +62,21 @@ keeps prerendering static exactly as today.
 | Paid (new) | Full per-company Notes + premium topic Notes | On-demand SSR, gated | Subscribers |
 | Accounts (new) | Auth, follow, wire-email, billing | SSR + API | Per-user |
 
-**The pre-cut split-seam** (captured at ~zero marginal cost during the adapter change, so a future
-private-app split is mechanical):
+**We are not splitting the repo** (§0.1), so the elaborate four-part "split seam" from the design pass
+is deliberately *not* built. Skip the two pieces that only pay off if a private app is ever spun up — a
+`src/styles/tokens.css` extraction and a `/c/[ticker].json` data-contract endpoint. Keep only two
+conventions, and only because they are good hygiene at any repo count — neither is an up-front task,
+both are just *where code lives* when the backend is built:
 
-1. **Extract design tokens now.** The ~35 tokens (Fraunces/Inter, light + `data-theme=dark`) live
-   inline in `src/layouts/BaseLayout.astro` as one `<style is:global> :root` block. Pull them into
-   `src/styles/tokens.css` — a plain same-repo refactor that also hardens the current build.
-2. **Corral all SSR** under `src/pages/api/*`, `src/pages/notes/*` (the gated reader), `/account`,
-   `/auth/*`. Every `prerender = false` route lives here and nowhere else.
-3. **One gate module:** all Supabase/Stripe SDK access behind `src/lib/gate/`. No `.astro` page
+1. **Corral all SSR** under `src/pages/api/*`, `src/pages/notes/*` (the gated reader), `/account`,
+   `/auth/*`. Every `prerender = false` route lives here and nowhere else — so it's always obvious
+   which routes are on-demand.
+2. **One gate module:** all Supabase/Stripe SDK access behind `src/lib/gate/`. No `.astro` page
    reaches the SDK directly; no SSR route imports `src/data/*.json`.
-4. **A static data contract:** a build-time `/c/[ticker].json` endpoint so a future app could read
-   figures over HTTPS without new coupling.
+
+Revisit a split only on a concrete trigger (a co-developer who should touch billing but not the brand
+asset; a genuinely separate app product). Absent that, one repo — and these two conventions make a
+split mechanical if the day ever comes.
 
 **Honest caveat the red-team corrected:** adding the adapter + any SSR route **re-hosts the whole
 site through a Cloudflare Worker.** The free pages are still cheap and still CDN-cached, but the claim
@@ -277,9 +280,10 @@ keeping your best top-of-funnel content CDN-cached and immune to backend outages
 
 ## 9. Phased build sequence
 
-**Phase 0 — Platform change, additive (no features):** extract tokens → `tokens.css`; add
-`@astrojs/cloudflare` (leave `output` default); land both CI tripwires in the same commit; deploy
-adapter-only and confirm the free site is unchanged and cheap.
+**Phase 0 — Platform change, additive (no features):** add `@astrojs/cloudflare` (leave `output`
+default); land both CI tripwires in the same commit; deploy adapter-only and confirm the free site is
+unchanged and cheap. (Do this only when the first SSR route is imminent — a static rename like Notes
+needs no adapter.)
 
 **Phase 1 — Audience machine (zero revenue, no paywall):** Supabase Auth (magic-link + OTP);
 `profiles`, `follows`, `wire_subscriptions` tables; path-scoped `src/middleware.ts`; split
