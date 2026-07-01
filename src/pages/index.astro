@@ -173,7 +173,7 @@ const fmtWireDate = (s) => new Date(s + "T00:00:00Z").toLocaleDateString("en-US"
         </p>
         <ul class="wireList">
           {wireFeed.map((it) => (
-            <li class={isEarnings(it) ? "wf earn" : "wf"}>
+            <li class={`wf${isEarnings(it) ? " earn" : ""}${it.grave ? " grave" : ""}`}>
               <a class="wfCo" href={`/c/${it.ticker}`}>
                 <span class="wfTkr">{it.ticker}</span>
                 <span class="wfName">{it.name}</span>
@@ -386,6 +386,10 @@ const fmtWireDate = (s) => new Date(s + "T00:00:00Z").toLocaleDateString("en-US"
     .wfForm { font-size: 10px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); border: 1px solid var(--rule); padding: 1px 6px; flex: 0 0 auto; }
     .wfDate { font-size: 11.5px; font-variant-numeric: tabular-nums; letter-spacing: 0.02em; color: var(--muted); flex: 0 0 auto; }
     .wfSrc { font-size: 11.5px; color: var(--accent); flex: 0 0 auto; }
+    /* The grave ones announce themselves — a restatement, default, auditor change or impairment reads
+       in red, the same alarm the full wire uses. Placed after .earn so it wins the left-border colour. */
+    .wf.grave { border-left-color: var(--bad); }
+    .wf.grave .wfTkr, .wf.grave .wfWhat { color: var(--bad); }
 
     /* ---------------------------------- catalog view ---------------------------------- */
     .backRow { margin: 8px 0 0; }
