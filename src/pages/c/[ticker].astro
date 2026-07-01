@@ -6,6 +6,7 @@ import Portrait from "../../components/Portrait.astro";
 import TenYear from "../../components/TenYear.astro";
 import RecordCharts from "../../components/RecordCharts.astro";
 import OwnerEarningsVsIncome from "../../components/OwnerEarningsVsIncome.astro";
+import CapitalAllocation from "../../components/CapitalAllocation.astro";
 import CurrentPosition from "../../components/CurrentPosition.astro";
 import Peers from "../../components/Peers.astro";
 import BusinessRead from "../../components/BusinessRead.astro";
@@ -147,6 +148,7 @@ const lensTrail = fund ? (computeLenses(allCompanies, language.companies).byTick
       <div id="sec-record" class="sec"><TenYear company={fund} /></div>
       <div id="sec-recordcharts" class="sec"><RecordCharts company={fund} /></div>
       {!isFin ? <div id="sec-oeq" class="sec"><OwnerEarningsVsIncome company={fund} /></div> : null}
+      {!isFin ? <div id="sec-capalloc" class="sec"><CapitalAllocation company={fund} /></div> : null}
       {!isFin ? <div id="sec-bridge" class="sec"><OwnerEarningsBridge company={fund} /></div> : null}
     </section>
   ) : null}
