@@ -216,10 +216,21 @@ liability, not the ambition.
 - **The founder's alpha-seeking investing stays personal** — funded by **drawn operating earnings**,
   in his own brokerage. That is permanent capital that can't be clawed back, so it can ride volatile
   positions through a drawdown; the float cannot.
-- **Upgrade path:** as the annual-renewal base grows large and low-churn, the durably-permanent floor
-  of the float grows with it, and a defined fraction can take incrementally more duration/risk over
-  time — the "invest the float in real positions" ambition becomes viable at scale, deliberately, not
-  at launch.
+- **Why the equity edge stays personal — permanently, not "until scale" (the reason Berkshire doesn't
+  port down):** keeping the entity's float in Government securities isn't only prudence, it's what
+  keeps the business clear of two statutory lines a solo operator can't manage. **(1) Investment
+  Company Act of 1940 — the 40% test:** a company is a regulated "investment company" (heavy SEC
+  compliance) if *investment securities* exceed 40% of its total assets *excluding cash and Government
+  securities*. T-bills are excluded, so short-Treasury float never counts toward it — but an equity
+  book inside a light-asset publication trips it fast. Berkshire escapes only because controlled
+  operating subsidiaries dominate its balance sheet (also excluded) at scale, with legal
+  infrastructure to match. **(2) Personal Holding Company tax — the "60% rule":** a closely-held
+  corporation whose income is ≥60% passive (dividends/interest/etc.) owes a penalty tax (~20%) on
+  undistributed passive income. Both rules mean the same thing: **do not let investing dominate the
+  entity, by assets or by income.** So the entity holds operating assets + Government-securities float
+  only; the equity compounding runs in the founder's personal account, funded by drawn earnings —
+  this does *not* unlock inside the business as it grows (a larger equity book trips the 40% test
+  *sooner*). *(Not legal advice — confirm the entity/structure with a securities attorney + CPA.)*
 
 ---
 
