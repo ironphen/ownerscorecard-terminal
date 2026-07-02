@@ -22,6 +22,7 @@ import OwnerEarningsBridge from "../../components/OwnerEarningsBridge.astro";
 import DebtMaturity from "../../components/DebtMaturity.astro";
 import LeaseObligations from "../../components/LeaseObligations.astro";
 import Acquisitions from "../../components/Acquisitions.astro";
+import FollowButton from "../../components/FollowButton.astro";
 import language from "../../data/language.json";
 import segmentsData from "../../data/segments.json";
 import { classify } from "../../lib/archetype.mjs";
@@ -110,7 +111,7 @@ const lensTrail = fund ? (computeLenses(allCompanies, language.companies).byTick
     ) : null}
     {bizLine ? <p class="lede">{bizLine}</p> : null}
     {brief.length ? <div class="leadMore">{brief.map((s) => <p>{s}</p>)}</div> : null}
-    {fund ? <div class="meta">Latest filing: FY{fund.fy} {fund.form}</div> : null}
+    {fund ? <div class="meta">Latest filing: FY{fund.fy} {fund.form} <FollowButton ticker={ticker} /></div> : null}
     {lensTrail.length ? (
       <div class="lensTrail">
         <span class="ltLabel">Fits <a href="/archetypes">archetypes</a></span>

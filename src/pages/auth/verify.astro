@@ -1,0 +1,76 @@
+---
+// Enter the six-digit code — static page, script posts to the API. The emailed link works too;
+// the typed code exists because corporate link-scanners consume single-use links.
+import BaseLayout from "../../layouts/BaseLayout.astro";
+---
+
+<BaseLayout title="Enter your code, Owner Scorecard">
+  <section class="auth">
+    <h1>Check your email</h1>
+    <p class="sub">We sent a six-digit code to <strong id="addr">your address</strong>. Enter it here — or use the sign-in link in the same email; both work.</p>
+
+    <form id="f" novalidate>
+      <label for="token">Six-digit code</label>
+      <div class="row">
+        <input id="token" name="token" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" placeholder="000000" />
+        <button type="submit" id="go">Sign in</button>
+      </div>
+      <p class="err" id="err" hidden></p>
+    </form>
+
+    <p class="again"><a href="/auth/login">Use a different address or request a new code →</a></p>
+  </section>
+
+  <style>
+    .auth { max-width: 480px; margin: 40px auto 0; }
+    h1 { margin: 0; }
+    .sub { color: var(--ink-dim); font-size: 14.5px; line-height: 1.55; margin: 12px 0 22px; }
+    label { font-family: var(--sans); font-size: 12px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 6px; }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; }
+    input { flex: 0 1 180px; padding: 11px 12px; border: 1.5px solid var(--rule-strong); border-radius: 6px; font-family: var(--sans); font-size: 20px; letter-spacing: 0.35em; background: var(--surface); color: var(--ink); font-variant-numeric: tabular-nums; }
+    input:focus { outline: none; border-color: var(--accent); }
+    button { font-family: var(--sans); font-size: 14px; font-weight: 600; padding: 11px 18px; border: 0; border-radius: 6px; background: var(--solid); color: var(--solid-ink); cursor: pointer; }
+    button[disabled] { opacity: 0.6; cursor: default; }
+    .err { color: var(--bad); font-size: 13.5px; margin: 10px 0 0; }
+    .again { margin-top: 20px; font-size: 13.5px; }
+  </style>
+
+  <script is:inline>
+    (function () {
+      var qs = new URLSearchParams(location.search);
+      var email = qs.get("email") || "";
+      if (email) document.getElementById("addr").textContent = email;
+      var f = document.getElementById("f");
+      var err = document.getElementById("err");
+      var go = document.getElementById("go");
+      f.addEventListener("submit", function (e) {
+        e.preventDefault();
+        err.hidden = true;
+        var token = document.getElementById("token").value.trim();
+        if (!/^[0-9]{6}$/.test(token)) {
+          err.textContent = "enter the six-digit code from the email";
+          err.hidden = false;
+          return;
+        }
+        go.disabled = true;
+        fetch("/api/auth/verify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: email, token: token }),
+        })
+          .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+          .then(function (res) {
+            if (!res.ok) throw new Error(res.j && res.j.error || "that code didn't work");
+            var next = qs.get("next") || "/account";
+            if (next.charAt(0) !== "/" || next.charAt(1) === "/") next = "/account";
+            location.href = next;
+          })
+          .catch(function (ex) {
+            err.textContent = ex.message;
+            err.hidden = false;
+            go.disabled = false;
+          });
+      });
+    })();
+  </script>
+</BaseLayout>

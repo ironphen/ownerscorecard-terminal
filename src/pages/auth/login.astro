@@ -1,0 +1,74 @@
+---
+// Sign in — static page, tiny script, no password. The API does the work; this page stays in
+// the prerendered corpus. Plain and businesslike: an account powers exactly two things
+// (following companies, the wire by email) and gates nothing that is free today.
+import BaseLayout from "../../layouts/BaseLayout.astro";
+---
+
+<BaseLayout title="Sign in, Owner Scorecard">
+  <section class="auth">
+    <h1>Sign in</h1>
+    <p class="sub">
+      We'll email you a six-digit code and a sign-in link — no password to remember. An account does
+      two things: follow the companies you're reading, and receive the filing wire by email. Every
+      page on this site stays free either way.
+    </p>
+
+    <p class="stale" id="stale" hidden>That sign-in link had already been used or expired — request a fresh one below.</p>
+
+    <form id="f" novalidate>
+      <label for="email">Email</label>
+      <div class="row">
+        <input id="email" name="email" type="email" autocomplete="email" spellcheck="false" required placeholder="you@example.com" />
+        <button type="submit" id="go">Email me a code</button>
+      </div>
+      <p class="err" id="err" hidden></p>
+    </form>
+  </section>
+
+  <style>
+    .auth { max-width: 480px; margin: 40px auto 0; }
+    h1 { margin: 0; }
+    .sub { color: var(--ink-dim); font-size: 14.5px; line-height: 1.55; margin: 12px 0 22px; }
+    .stale { color: var(--warn); font-size: 14px; border: 1px solid var(--warn-border); background: var(--warn-bg); padding: 8px 12px; }
+    label { font-family: var(--sans); font-size: 12px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 6px; }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; }
+    input { flex: 1 1 220px; padding: 11px 12px; border: 1.5px solid var(--rule-strong); border-radius: 6px; font-family: var(--sans); font-size: 15px; background: var(--surface); color: var(--ink); }
+    input:focus { outline: none; border-color: var(--accent); }
+    button { font-family: var(--sans); font-size: 14px; font-weight: 600; padding: 11px 18px; border: 0; border-radius: 6px; background: var(--solid); color: var(--solid-ink); cursor: pointer; }
+    button[disabled] { opacity: 0.6; cursor: default; }
+    .err { color: var(--bad); font-size: 13.5px; margin: 10px 0 0; }
+  </style>
+
+  <script is:inline>
+    (function () {
+      var qs = new URLSearchParams(location.search);
+      if (qs.get("stale")) document.getElementById("stale").hidden = false;
+      var f = document.getElementById("f");
+      var err = document.getElementById("err");
+      var go = document.getElementById("go");
+      f.addEventListener("submit", function (e) {
+        e.preventDefault();
+        err.hidden = true;
+        var email = document.getElementById("email").value.trim();
+        if (!email) return;
+        go.disabled = true;
+        fetch("/api/auth/send", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: email, next: qs.get("next") || "/account" }),
+        })
+          .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+          .then(function (res) {
+            if (!res.ok) throw new Error(res.j && res.j.error || "could not send the email — try again");
+            location.href = "/auth/verify?email=" + encodeURIComponent(email) + "&next=" + encodeURIComponent(qs.get("next") || "/account");
+          })
+          .catch(function (ex) {
+            err.textContent = ex.message;
+            err.hidden = false;
+            go.disabled = false;
+          });
+      });
+    })();
+  </script>
+</BaseLayout>
