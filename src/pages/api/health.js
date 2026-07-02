@@ -12,6 +12,11 @@ export async function GET() {
     url = (env && env.SUPABASE_URL) || null;
     anonPresent = !!(env && env.SUPABASE_ANON_KEY);
   } catch (e) {}
+  // Normalize the same way the gate does, so the host reflects the tolerant behavior.
+  if (url) {
+    url = String(url).trim().replace(/^["']+/, "").replace(/["']+$/, "").trim();
+    if (url && !/^https?:\/\//i.test(url)) url = "https://" + url;
+  }
   let host = null;
   try { host = url ? new URL(url).host : null; } catch (e) {}
   const body = {
