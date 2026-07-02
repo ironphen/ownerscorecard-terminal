@@ -1,5 +1,5 @@
 // Post-build tripwires for the hybrid (static + on-demand) build — docs/phase-2-plan.md §1.
-// Runs as part of `npm run build`, so every deploy (Cloudflare Pages included) is guarded:
+// Runs as part of `npm run build`, so every deploy (Cloudflare Workers Builds included) is guarded:
 //
 //   1. The static corpus must not silently shrink. With the Cloudflare adapter present, a stray
 //      `export const prerender = false` on a shared layout — or an accidental `output: 'server'` —
@@ -46,15 +46,12 @@ if (htmlCount < HTML_FLOOR) {
   process.exit(1);
 }
 
-// The adapter emits the worker as dist/_worker.js — a single file or a directory, by version.
+// Adapter v13 (the Astro 6 line) emits a Workers-format build: static assets under dist/client/,
+// server (worker) code under dist/server/ — which stays empty until a route declares
+// `export const prerender = false`. The ceiling watches that directory.
 let workerBytes = 0;
-for (const w of ["_worker.js"]) {
-  const p = join(DIST, w);
-  if (!existsSync(p)) continue;
-  const s = statSync(p);
-  if (s.isDirectory()) walk(p, (_, size) => { workerBytes += size; });
-  else workerBytes += s.size;
-}
+const serverDir = join(DIST, "server");
+if (existsSync(serverDir)) walk(serverDir, (_, size) => { workerBytes += size; });
 
 if (workerBytes > WORKER_CEILING_BYTES) {
   console.error(
