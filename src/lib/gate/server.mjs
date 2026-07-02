@@ -29,12 +29,14 @@ export function supabaseServer(context) {
       },
       setAll(cookiesToSet) {
         for (const { name, value, options } of cookiesToSet) {
+          // Security flags come AFTER the spread so a caller-supplied option can never downgrade
+          // them (no non-httpOnly, non-Secure, or SameSite=None session cookie can slip through).
           context.cookies.set(name, value, {
             path: "/",
+            ...options,
             httpOnly: true,
             secure: true,
             sameSite: "lax",
-            ...options,
           });
         }
       },
@@ -78,10 +80,24 @@ export function json(body, status = 200) {
   });
 }
 
-// Only ever redirect to a path on this site — a `next` parameter from a query string must not
-// become an open redirect to elsewhere.
-export function safeNext(raw, fallback = "/account") {
-  if (typeof raw !== "string") return fallback;
-  if (!raw.startsWith("/") || raw.startsWith("//")) return fallback;
-  return raw;
+// Only ever redirect to a path on THIS site. A prefix check ("/…" and not "//…") is not enough:
+// browsers normalize a backslash to a slash under WHATWG URL rules, so "/\evil.com" becomes
+// "//evil.com" (protocol-relative → offsite). So validate by resolving against our own origin and
+// confirming the result stays on it — the same normalization the browser will apply — and reject
+// control/whitespace characters outright.
+export function safeNext(raw, origin, fallback = "/account") {
+  if (typeof raw !== "string" || !raw) return fallback;
+  // Reject backslashes (browsers fold them to "/") and ASCII control chars; ordinary path
+  // characters — letters, digits, hyphens, dots — must pass so "/notes/the-melting-arr" survives.
+  for (let i = 0; i < raw.length; i++) {
+    const c = raw.charCodeAt(i);
+    if (c < 0x20 || c === 0x7f || c === 0x5c) return fallback;  // control chars + backslash (0x5c)
+  }
+  try {
+    const u = new URL(raw, origin);
+    if (u.origin !== origin) return fallback;
+    return u.pathname + u.search + u.hash;
+  } catch {
+    return fallback;
+  }
 }

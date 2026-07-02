@@ -61,9 +61,11 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
           .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
           .then(function (res) {
             if (!res.ok) throw new Error(res.j && res.j.error || "that code didn't work");
-            var next = qs.get("next") || "/account";
-            if (next.charAt(0) !== "/" || next.charAt(1) === "/") next = "/account";
-            location.href = next;
+            // Resolve against our own origin and only follow it if it stays on-site — mirrors the
+            // server's safeNext, so a backslash/protocol-relative payload can't bounce us offsite.
+            var dest = "/account";
+            try { var u = new URL(qs.get("next") || "/account", location.origin); if (u.origin === location.origin) dest = u.pathname + u.search; } catch (e) {}
+            location.href = dest;
           })
           .catch(function (ex) {
             err.textContent = ex.message;
