@@ -12,18 +12,25 @@ import { env as cfEnv } from "cloudflare:workers";
 // (populated from the Worker's Variables and Secrets). import.meta.env is a local-dev/build
 // fallback. Never hardcoded, never committed.
 function envOf(name) {
+  let v;
   try {
-    if (cfEnv && cfEnv[name] != null) return cfEnv[name];
+    if (cfEnv && cfEnv[name] != null) v = cfEnv[name];
   } catch (e) {}
-  return import.meta.env[name] ?? undefined;
+  if (v == null) v = import.meta.env[name];
+  if (v == null) return undefined;
+  // Tolerate a value pasted with surrounding quotes or stray whitespace (a common dashboard error).
+  v = String(v).trim().replace(/^["']+/, "").replace(/["']+$/, "").trim();
+  return v || undefined;
 }
 
 export function supabaseServer(context) {
-  const url = envOf("SUPABASE_URL");
+  let url = envOf("SUPABASE_URL");
   const key = envOf("SUPABASE_ANON_KEY");
   if (!url || !key) {
     throw new Error("Supabase is not configured (SUPABASE_URL / SUPABASE_ANON_KEY).");
   }
+  // Tolerate a scheme-less host ("abc.supabase.co") — the client needs an absolute URL.
+  if (!/^https?:\/\//i.test(url)) url = "https://" + url;
   return createServerClient(url, key, {
     cookies: {
       getAll() {
