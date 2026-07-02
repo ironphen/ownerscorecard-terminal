@@ -9,7 +9,7 @@ export async function GET(context) {
   const url = context.url;
   const tokenHash = url.searchParams.get("token_hash");
   const type = url.searchParams.get("type") ?? "email";
-  const next = safeNext(url.searchParams.get("next"));
+  const next = safeNext(url.searchParams.get("next"), context.url.origin);
 
   if (tokenHash) {
     const supabase = supabaseServer(context);

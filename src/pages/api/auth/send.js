@@ -21,7 +21,7 @@ export async function POST(context) {
     return json({ error: "enter a valid email address" }, 400);
   }
 
-  const next = safeNext(body?.next);
+  const next = safeNext(body?.next, context.url.origin);
   const callback = new URL("/api/auth/callback", context.url.origin);
   callback.searchParams.set("next", next);
 

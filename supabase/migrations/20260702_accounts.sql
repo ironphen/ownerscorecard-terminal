@@ -22,9 +22,10 @@ create policy "profiles: read own"
   on public.profiles for select
   using (auth.uid() = id);
 
-create policy "profiles: update own"
-  on public.profiles for update
-  using (auth.uid() = id);
+-- No UPDATE policy on purpose: a profile is read-only to its owner. The row is written only by the
+-- signup trigger (below), so `email` stays authoritative-by-construction — a user can't rewrite it
+-- to spoof the recipient the future wire-mailer sends to. (Add an update policy later WITH a CHECK
+-- that excludes email if profiles ever gains user-editable fields.)
 
 -- Signup trigger: provision the profile row the moment auth.users gets the user,
 -- so the app never has to "get or create" (and a failed first request can't leave
@@ -71,6 +72,24 @@ create policy "follows: insert own"
 create policy "follows: delete own"
   on public.follows for delete
   using (auth.uid() = user_id);
+
+-- The follow cap lives in the database, not just the API, so a reader can't bypass it by POSTing
+-- directly to PostgREST with their own JWT (RLS permits their own inserts; this bounds the count).
+create or replace function public.enforce_follow_cap()
+returns trigger
+language plpgsql
+as $$
+begin
+  if (select count(*) from public.follows where user_id = new.user_id) >= 200 then
+    raise exception 'follow limit reached';
+  end if;
+  return new;
+end;
+$$;
+
+create trigger follows_cap
+  before insert on public.follows
+  for each row execute function public.enforce_follow_cap();
 
 -- ---------------------------------------------------------------------------
 -- wire_subscriptions — the wire-by-email preference. One row per user; the

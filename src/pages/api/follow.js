@@ -59,6 +59,13 @@ export async function POST(context) {
   const { error } = await supabase
     .from("follows")
     .insert({ user_id: user.id, ticker });
-  if (error) return json({ error: "try again" }, 500);
+  if (error) {
+    // 23505 = unique violation: a concurrent request already added it — that's success, not failure.
+    if (error.code === "23505") return json({ ok: true, following: true });
+    // The database also caps follows (a trigger, so a direct PostgREST insert can't bypass it);
+    // surface that as a clean limit message rather than a 500.
+    if (/limit|cap/i.test(error.message || "")) return json({ error: `follow limit reached (${MAX_FOLLOWS})` }, 400);
+    return json({ error: "try again" }, 500);
+  }
   return json({ ok: true, following: true });
 }
