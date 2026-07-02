@@ -2,9 +2,9 @@
 // On success @supabase/ssr writes the session cookies (httpOnly, Secure, SameSite=Lax).
 export const prerender = false;
 
-import { supabaseServer, assertSameOrigin, json } from "../../../lib/gate/server.mjs";
+import { supabaseServer, assertSameOrigin, json, apiHandler } from "../../../lib/gate/server.mjs";
 
-export async function POST(context) {
+export const POST = apiHandler(async (context) => {
   if (!assertSameOrigin(context)) return json({ error: "forbidden" }, 403);
 
   let body;
@@ -26,4 +26,4 @@ export async function POST(context) {
     return json({ error: "that code didn't work — it may have expired; request a new one" }, 401);
   }
   return json({ ok: true });
-}
+});

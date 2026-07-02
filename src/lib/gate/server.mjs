@@ -80,6 +80,25 @@ export function json(body, status = 200) {
   });
 }
 
+// Wrap a JSON API handler so a thrown error becomes a clean JSON response, never an empty 500 the
+// browser can't even parse. A missing-configuration error is surfaced distinctly (so the operator
+// sees "not configured" instead of a generic failure); everything else is logged to the worker's
+// observability and returned as a safe generic message (never leak internals to the client).
+export function apiHandler(fn) {
+  return async (context) => {
+    try {
+      return await fn(context);
+    } catch (err) {
+      const msg = String((err && err.message) || err || "");
+      if (/not configured/i.test(msg)) {
+        return json({ error: "sign-in is temporarily unavailable" }, 503);
+      }
+      console.error("[api]", (context.url && context.url.pathname) || "", msg);
+      return json({ error: "something went wrong — please try again" }, 500);
+    }
+  };
+}
+
 // Only ever redirect to a path on THIS site. A prefix check ("/…" and not "//…") is not enough:
 // browsers normalize a backslash to a slash under WHATWG URL rules, so "/\evil.com" becomes
 // "//evil.com" (protocol-relative → offsite). So validate by resolving against our own origin and

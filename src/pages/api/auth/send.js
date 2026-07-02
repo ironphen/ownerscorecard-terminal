@@ -2,11 +2,11 @@
 // magic link (the code survives corporate link-scanners that consume single-use links; both work).
 export const prerender = false;
 
-import { supabaseServer, assertSameOrigin, json, safeNext } from "../../../lib/gate/server.mjs";
+import { supabaseServer, assertSameOrigin, json, safeNext, apiHandler } from "../../../lib/gate/server.mjs";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export async function POST(context) {
+export const POST = apiHandler(async (context) => {
   if (!assertSameOrigin(context)) return json({ error: "forbidden" }, 403);
 
   let body;
@@ -41,4 +41,4 @@ export async function POST(context) {
     );
   }
   return json({ ok: true });
-}
+});
