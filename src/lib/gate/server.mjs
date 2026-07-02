@@ -5,20 +5,22 @@
 // decision starts from supabase.auth.getUser() (validates the JWT against the auth server),
 // never getSession() (which trusts the cookie unverified).
 import { createServerClient, parseCookieHeader } from "@supabase/ssr";
+import { env as cfEnv } from "cloudflare:workers";
 
-// Runtime configuration. On Cloudflare the secrets live on the Worker (locals.runtime.env);
-// in local dev they come from .dev.vars / import.meta.env. Never hardcoded, never committed.
-function envOf(context, name) {
-  return (
-    context.locals?.runtime?.env?.[name] ??
-    import.meta.env[name] ??
-    undefined
-  );
+// Runtime configuration. @astrojs/cloudflare v13 REMOVED Astro.locals.runtime — reading it now
+// throws — so Cloudflare vars and secrets are read from the `cloudflare:workers` module's `env`
+// (populated from the Worker's Variables and Secrets). import.meta.env is a local-dev/build
+// fallback. Never hardcoded, never committed.
+function envOf(name) {
+  try {
+    if (cfEnv && cfEnv[name] != null) return cfEnv[name];
+  } catch (e) {}
+  return import.meta.env[name] ?? undefined;
 }
 
 export function supabaseServer(context) {
-  const url = envOf(context, "SUPABASE_URL");
-  const key = envOf(context, "SUPABASE_ANON_KEY");
+  const url = envOf("SUPABASE_URL");
+  const key = envOf("SUPABASE_ANON_KEY");
   if (!url || !key) {
     throw new Error("Supabase is not configured (SUPABASE_URL / SUPABASE_ANON_KEY).");
   }
