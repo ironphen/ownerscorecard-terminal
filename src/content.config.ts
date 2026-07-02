@@ -1,8 +1,9 @@
 import { defineCollection, z } from "astro:content";
 import { glob } from "astro/loaders";
 
-// Articles are MDX/Markdown files in src/content/articles/.
-// Filename becomes the URL: my-piece.mdx → /articles/my-piece
+// The "Notes" publication — MDX/Markdown files in src/content/articles/ (the collection id stays
+// "articles" to avoid churn and to keep clear of notes.json; the public section lives at /notes).
+// Filename becomes the URL: my-piece.mdx → /notes/my-piece
 const articles = defineCollection({
   loader: glob({ pattern: "**/*.{md,mdx}", base: "./src/content/articles" }),
   schema: z.object({

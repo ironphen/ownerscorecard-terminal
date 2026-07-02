@@ -178,12 +178,12 @@ const lensTrail = fund ? (computeLenses(allCompanies, language.companies).byTick
 
   {fund && related.length ? (
     <section id="sec-writing" class="sec">
-      <h2>Writing</h2>
+      <h2>Notes</h2>
       <ul class="history">
         {related.map((a) => (
           <li>
             <span class="hDate">{fmtDate(a.data.date)}</span>
-            <span class="hLinks"><a href={`/articles/${a.id}`}>{a.data.title}</a></span>
+            <span class="hLinks"><a href={`/notes/${a.id}`}>{a.data.title}</a></span>
           </li>
         ))}
       </ul>
