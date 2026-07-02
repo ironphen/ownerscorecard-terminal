@@ -1,0 +1,6 @@
+# Copy to .dev.vars for local dev (gitignored; the adapter's .assetsignore keeps it out of
+# deployed assets). In production these live on the Worker: Settings → Variables and Secrets.
+# The anon key is the publishable client key — RLS is the gate, not key secrecy. The service
+# role key is NOT needed by the site; only the wire-mailer script (GitHub Actions secret) uses it.
+SUPABASE_URL="https://YOUR-PROJECT-REF.supabase.co"
+SUPABASE_ANON_KEY="YOUR-ANON-PUBLISHABLE-KEY"

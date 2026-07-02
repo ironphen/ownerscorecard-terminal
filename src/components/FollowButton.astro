@@ -1,0 +1,49 @@
+---
+// Follow — one plain button on the company page. Following a company routes its new filings
+// into the reader's wire email; it changes nothing else and gates nothing. The page stays
+// fully static: the button is inert HTML until clicked, state is remembered locally, and a
+// visitor who isn't signed in is sent to sign in and brought back here.
+const { ticker } = Astro.props;
+---
+
+<button class="follow" id="followBtn" data-ticker={ticker} type="button" title="Follow this company — its new filings reach you on the wire">Follow</button>
+
+<style>
+  .follow {
+    font-family: var(--sans); font-size: 12px; font-weight: 600; letter-spacing: 0.05em;
+    color: var(--accent); background: none; border: 1px solid var(--accent); border-radius: 999px;
+    padding: 4px 14px; cursor: pointer; transition: background 0.1s, color 0.1s;
+  }
+  .follow:hover { background: var(--accent-tint); }
+  .follow.is-on { color: var(--solid-ink); background: var(--solid); border-color: var(--solid); }
+</style>
+
+<script is:inline>
+  (function () {
+    var b = document.getElementById("followBtn");
+    if (!b) return;
+    var t = b.dataset.ticker;
+    var key = "osc-follow-" + t;
+    function paint(on) { b.classList.toggle("is-on", on); b.textContent = on ? "Following" : "Follow"; }
+    try { paint(localStorage.getItem(key) === "1"); } catch (e) {}
+    b.addEventListener("click", function () {
+      b.disabled = true;
+      fetch("/api/follow", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ticker: t }),
+      })
+        .then(function (r) {
+          if (r.status === 401) { location.href = "/auth/login?next=" + encodeURIComponent(location.pathname); return null; }
+          return r.json();
+        })
+        .then(function (j) {
+          if (!j) return;
+          paint(!!j.following);
+          try { localStorage.setItem(key, j.following ? "1" : "0"); } catch (e) {}
+        })
+        .catch(function () {})
+        .finally(function () { b.disabled = false; });
+    });
+  })();
+</script>
