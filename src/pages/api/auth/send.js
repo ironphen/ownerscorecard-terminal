@@ -1,4 +1,4 @@
-// POST /api/auth/send { email, next? } — start a sign-in: Supabase emails a six-digit code and a
+// POST /api/auth/send { email, next? } — start a sign-in: Supabase emails a one-time code and a
 // magic link (the code survives corporate link-scanners that consume single-use links; both work).
 export const prerender = false;
 

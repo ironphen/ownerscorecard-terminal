@@ -1,18 +1,19 @@
 ---
-// Enter the six-digit code — static page, script posts to the API. The emailed link works too;
-// the typed code exists because corporate link-scanners consume single-use links.
+// Enter the emailed code — static page, script posts to the API. The emailed link works too; the
+// typed code exists because corporate link-scanners consume single-use links. The code length is
+// not hard-coded (Supabase's OTP length is configurable, 6–10) — we accept whatever it sends.
 import BaseLayout from "../../layouts/BaseLayout.astro";
 ---
 
 <BaseLayout title="Enter your code, Owner Scorecard">
   <section class="auth">
     <h1>Check your email</h1>
-    <p class="sub">We sent a six-digit code to <strong id="addr">your address</strong>. Enter it here — or use the sign-in link in the same email; both work.</p>
+    <p class="sub">We sent a one-time code to <strong id="addr">your address</strong>. Enter it here — or use the sign-in link in the same email; both work.</p>
 
     <form id="f" novalidate>
-      <label for="token">Six-digit code</label>
+      <label for="token">Code from the email</label>
       <div class="row">
-        <input id="token" name="token" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" placeholder="000000" />
+        <input id="token" name="token" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6,10}" maxlength="10" placeholder="Enter the code" />
         <button type="submit" id="go">Sign in</button>
       </div>
       <p class="err" id="err" hidden></p>
@@ -27,7 +28,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
     .sub { color: var(--ink-dim); font-size: 14.5px; line-height: 1.55; margin: 12px 0 22px; }
     label { font-family: var(--sans); font-size: 12px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 6px; }
     .row { display: flex; gap: 8px; flex-wrap: wrap; }
-    input { flex: 0 1 180px; padding: 11px 12px; border: 1.5px solid var(--rule-strong); border-radius: 6px; font-family: var(--sans); font-size: 20px; letter-spacing: 0.35em; background: var(--surface); color: var(--ink); font-variant-numeric: tabular-nums; }
+    input { flex: 1 1 220px; padding: 11px 12px; border: 1.5px solid var(--rule-strong); border-radius: 6px; font-family: var(--sans); font-size: 20px; letter-spacing: 0.2em; background: var(--surface); color: var(--ink); font-variant-numeric: tabular-nums; }
     input:focus { outline: none; border-color: var(--accent); }
     button { font-family: var(--sans); font-size: 14px; font-weight: 600; padding: 11px 18px; border: 0; border-radius: 6px; background: var(--solid); color: var(--solid-ink); cursor: pointer; }
     button[disabled] { opacity: 0.6; cursor: default; }
@@ -46,9 +47,9 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       f.addEventListener("submit", function (e) {
         e.preventDefault();
         err.hidden = true;
-        var token = document.getElementById("token").value.trim();
-        if (!/^[0-9]{6}$/.test(token)) {
-          err.textContent = "enter the six-digit code from the email";
+        var token = document.getElementById("token").value.replace(/\s/g, "");
+        if (!/^[0-9]{6,10}$/.test(token)) {
+          err.textContent = "enter the numeric code from the email";
           err.hidden = false;
           return;
         }

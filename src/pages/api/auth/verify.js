@@ -1,4 +1,4 @@
-// POST /api/auth/verify { email, token } — complete a sign-in with the emailed six-digit code.
+// POST /api/auth/verify { email, token } — complete a sign-in with the emailed one-time code.
 // On success @supabase/ssr writes the session cookies (httpOnly, Secure, SameSite=Lax).
 export const prerender = false;
 
@@ -15,9 +15,10 @@ export const POST = apiHandler(async (context) => {
   }
 
   const email = String(body?.email ?? "").trim().toLowerCase();
-  const token = String(body?.token ?? "").trim();
-  if (!email || !/^\d{6}$/.test(token)) {
-    return json({ error: "enter the six-digit code from the email" }, 400);
+  // Supabase's OTP length is configurable (6–10 digits) — accept the range, don't hard-code 6.
+  const token = String(body?.token ?? "").replace(/\s/g, "");
+  if (!email || !/^\d{6,10}$/.test(token)) {
+    return json({ error: "enter the numeric code from the email" }, 400);
   }
 
   const supabase = supabaseServer(context);
