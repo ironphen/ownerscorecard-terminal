@@ -2,9 +2,9 @@
 // the mailer (service role, run from the wire GitHub Action) reads enabled rows.
 export const prerender = false;
 
-import { getUser, assertSameOrigin, json } from "../../lib/gate/server.mjs";
+import { getUser, assertSameOrigin, json, apiHandler } from "../../lib/gate/server.mjs";
 
-export async function POST(context) {
+export const POST = apiHandler(async (context) => {
   if (!assertSameOrigin(context)) return json({ error: "forbidden" }, 403);
 
   const { supabase, user } = await getUser(context);
@@ -28,4 +28,4 @@ export async function POST(context) {
     );
   if (error) return json({ error: "try again" }, 500);
   return json({ ok: true, enabled, frequency });
-}
+});

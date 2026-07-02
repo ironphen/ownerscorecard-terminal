@@ -8,12 +8,12 @@
 // item — harmless by construction.
 export const prerender = false;
 
-import { getUser, assertSameOrigin, json } from "../../lib/gate/server.mjs";
+import { getUser, assertSameOrigin, json, apiHandler } from "../../lib/gate/server.mjs";
 
 const TICKER_RE = /^[A-Z][A-Z0-9.\-]{0,9}$/;
 const MAX_FOLLOWS = 200;
 
-export async function POST(context) {
+export const POST = apiHandler(async (context) => {
   if (!assertSameOrigin(context)) return json({ error: "forbidden" }, 403);
 
   const { supabase, user } = await getUser(context);
@@ -68,4 +68,4 @@ export async function POST(context) {
     return json({ error: "try again" }, 500);
   }
   return json({ ok: true, following: true });
-}
+});
