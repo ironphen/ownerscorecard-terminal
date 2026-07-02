@@ -1,2 +1,4 @@
 # Articles was renamed to Notes (2026-07-01). Preserve old links + citation equity.
+# The bare path needs its own rule: the splat pattern only matches paths beneath it.
+/articles    /notes         301
 /articles/*  /notes/:splat  301
