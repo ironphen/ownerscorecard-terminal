@@ -1,0 +1,28 @@
+# Daily uptime probe + Supabase keep-alive. The /api/health hit queries the database through
+# PostgREST, which both verifies the auth/follow/wire spine end-to-end AND counts as activity,
+# so the free Supabase project never auto-pauses (~7 idle days). A failing run notifies via
+# GitHub's workflow-failure email, same alerting channel as the data heartbeat.
+name: uptime
+on:
+  schedule:
+    - cron: "17 11 * * *" # daily, 11:17 UTC
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pages answer
+        run: |
+          set -e
+          for path in / /c/ADBE/ /notes/ /rss.xml; do
+            code=$(curl -s -o /dev/null -w "%{http_code}" -L --max-time 30 "https://ownerscorecard-terminal.ryanreinsant.workers.dev${path}")
+            echo "${path} -> ${code}"
+            [ "$code" = "200" ] || { echo "::error::${path} returned ${code}"; exit 1; }
+          done
+      - name: Health (worker env + database)
+        run: |
+          set -e
+          body=$(curl -s --max-time 30 "https://ownerscorecard-terminal.ryanreinsant.workers.dev/api/health")
+          echo "$body"
+          echo "$body" | grep -q '"ok":true' || { echo "::error::health check failed"; exit 1; }

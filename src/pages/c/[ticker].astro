@@ -34,6 +34,7 @@ import notes from "../../data/notes.json";
 import adrFundamentals from "../../data/fundamentals.adr.json";
 import { getCollection } from "astro:content";
 import { ORG } from "../../lib/seo.mjs";
+import { dataAsOf } from "../../lib/freshness.mjs";
 
 // ADRs (foreign 20-F filers) carry US-style tickers and the same record shape, so they get the same
 // /c/[ticker] page as a US company; only the data source and currency differ. The two pools are
@@ -110,6 +111,11 @@ const pageJsonLd = fund
       description: pageDescription,
       about: { "@type": "Corporation", name, tickerSymbol: ticker },
       publisher: ORG,
+      // Freshness from the pipeline's own stamp, never the build clock: crawlers learn to trust
+      // (or distrust) lastmod-style signals fast, and 3,550 pages "updated today" every deploy
+      // would poison the signal.
+      ...(dataAsOf ? { dateModified: dataAsOf } : {}),
+      ...(fund.fy ? { temporalCoverage: `FY${fund.fy}` } : {}),
     }
   : null;
 ---
@@ -129,6 +135,12 @@ const pageJsonLd = fund
     {bizLine ? <p class="lede">{bizLine}</p> : null}
     {brief.length ? <div class="leadMore">{brief.map((s) => <p>{s}</p>)}</div> : null}
     {fund ? <div class="meta">Latest filing: FY{fund.fy} {fund.form} <FollowButton ticker={ticker} /></div> : null}
+    {!fund && related.length ? <p class="lede">Not yet in the catalog. The Notes below discuss it.</p> : null}
+    {fund && related.length ? (
+      <p class="noteFlag">
+        Read in Notes: <a href={`/notes/${related[0].id}`}>{related[0].data.title}</a>, {fmtDate(related[0].data.date)}
+      </p>
+    ) : null}
     {lensTrail.length ? (
       <div class="lensTrail">
         <span class="ltLabel">Fits <a href="/archetypes">archetypes</a></span>
@@ -147,6 +159,7 @@ const pageJsonLd = fund
         <a href="#act-record">The record</a>
         <a href="#act-quality">Quality</a>
         <a href="#act-price">Price</a>
+        {related.length ? <a href="#sec-writing">Notes</a> : null}
       </nav>
     </div>
   ) : null}
@@ -194,7 +207,7 @@ const pageJsonLd = fund
     </section>
   ) : null}
 
-  {fund && related.length ? (
+  {related.length ? (
     <section id="sec-writing" class="sec">
       <h2>Notes</h2>
       <ul class="history">
@@ -223,6 +236,8 @@ const pageJsonLd = fund
     .leadMore { margin: 8px 0 0; max-width: 72ch; }
     .leadMore p { font-family: var(--serif); font-size: 14.5px; line-height: 1.55; color: var(--muted); margin: 6px 0 0; }
     .meta { color: var(--ink-dim); font-size: 13px; margin-top: 8px; }
+    .noteFlag { font-family: var(--serif); font-size: 14.5px; color: var(--ink-soft); margin: 10px 0 0; }
+    .noteFlag a { font-weight: 600; }
     .lensTrail { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
     .ltLabel { font-family: var(--sans); font-size: 10.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
     .ltLabel a { color: var(--accent); }

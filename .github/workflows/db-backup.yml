@@ -1,0 +1,39 @@
+# Weekly logical backup of the Supabase database (profiles, follows, wire_subscriptions —
+# the publication's entire reader-relationship graph, which the free tier does not back up).
+# Stored as a workflow artifact, 90-day retention: ~13 restore points at $0.
+# Requires the SUPABASE_DB_URL repo secret (Supabase dashboard -> Project Settings -> Database
+# -> Connection string, URI form). The job skips cleanly until the secret exists.
+name: db-backup
+on:
+  schedule:
+    - cron: "43 9 * * 1" # weekly, Monday 09:43 UTC
+  workflow_dispatch:
+
+jobs:
+  dump:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+    steps:
+      - name: Skip if secret not configured
+        if: env.SUPABASE_DB_URL == ''
+        run: echo "SUPABASE_DB_URL secret not set; skipping backup."
+      - name: Install postgres client
+        if: env.SUPABASE_DB_URL != ''
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client
+      - name: Dump public schema
+        if: env.SUPABASE_DB_URL != ''
+        run: |
+          set -e
+          pg_dump "$SUPABASE_DB_URL" --schema=public --no-owner --no-privileges -f backup.sql
+          gzip backup.sql
+          ls -la backup.sql.gz
+      - name: Upload artifact
+        if: env.SUPABASE_DB_URL != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: supabase-backup-${{ github.run_id }}
+          path: backup.sql.gz
+          retention-days: 90

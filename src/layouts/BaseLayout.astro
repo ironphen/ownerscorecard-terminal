@@ -21,18 +21,23 @@ const jsonLdBlocks = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
 <html lang="en" data-theme="dark">
   <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" id="themeColorMeta" content="#15161a" />
     <script is:inline>
       /* Set the theme before first paint to avoid a flash. Dark is the default;
-         a reader's saved choice (light) is honored. */
+         a reader's saved choice (light) is honored. The theme-color meta (declared above, so
+         it exists when this runs) is synced here too, not just in the end-of-body script, so a
+         light-theme reader never sees dark browser chrome while the page parses. */
       (function () {
         try {
           var t = localStorage.getItem("oss-theme");
-          document.documentElement.dataset.theme = t === "light" ? "light" : "dark";
+          var light = t === "light";
+          document.documentElement.dataset.theme = light ? "light" : "dark";
+          var m = document.querySelector('meta[name="theme-color"]');
+          if (m && light) m.setAttribute("content", "#fcfcfa");
         } catch (e) {}
       })();
     </script>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" id="themeColorMeta" content="#15161a" />
     <title>{title}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
@@ -46,6 +51,7 @@ const jsonLdBlocks = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
     {jsonLdBlocks.map((block) => (
       <script type="application/ld+json" is:inline set:html={JSON.stringify(block)} />
     ))}
+    <link rel="alternate" type="application/rss+xml" title="Owner Scorecard" href="/rss.xml" />
 
     <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
@@ -256,10 +262,47 @@ const jsonLdBlocks = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
         body { font-size: 16px; padding: 0 14px 48px; }
         .nav { gap: 16px; }
       }
+
+      /* Cross-document view transitions, CSS only: a soft cross-fade with the masthead held
+         steady across navigations, in browsers that support it; others ignore it entirely.
+         Deliberately NOT Astro's ClientRouter — the inline scripts assume full-page lifecycle. */
+      @view-transition { navigation: auto; }
+      .masthead { view-transition-name: masthead; }
+
+      /* Skip link: the first focusable element on every page, visible only on focus, so a
+         keyboard reader is not forced through the masthead's controls 3,550 times. */
+      .skipLink {
+        position: absolute; left: -9999px; top: 0; z-index: 100;
+        background: var(--solid); color: var(--solid-ink);
+        padding: 8px 14px; border-radius: 0 0 6px 0; font-family: var(--sans); font-size: 13px;
+      }
+      .skipLink:focus { left: 0; }
+
+      /* Print: the record on paper. Dark is the site's default theme, and printed dark theme is
+         near-white ink on white paper, so print forces the light palette and drops the chrome.
+         The brand and the data-as-of dateline stay: a filed page should carry its provenance. */
+      @media print {
+        :root, :root[data-theme="dark"] {
+          --paper: #ffffff; --surface: #ffffff; --surface-2: #f6f5f1;
+          --ink: #18191d; --ink-soft: #2c2f36; --ink-dim: #3a3e46;
+          --muted: #5b616c; --faint: #8b909a;
+          --rule: #d8d7d1; --rule-soft: #e6e5df; --rule-strong: #16181d;
+          --accent: #1b3b6f; --accent-tint: #ffffff; --accent-ink: #ffffff;
+          --solid: #18191d; --solid-ink: #ffffff;
+          --good: #1a7a3c; --bad: #8b1a1a; --warn: #9a6a00; --info: #1b3b6f;
+          --tag-bg: #f0efe9; --tag-ink: #565961; --shadow: none;
+        }
+        body { background: #ffffff; color: #18191d; max-width: none; padding: 0; font-size: 12.5px; }
+        .nav, .navSearch, .themeToggle, .skipLink, footer small { display: none !important; }
+        .masthead { margin: 0 0 14px; }
+        a { color: inherit; text-decoration: none; }
+        main { margin-top: 0; }
+      }
     </style>
   </head>
 
   <body>
+    <a class="skipLink" href="#main">Skip to content</a>
     <header class="masthead">
       <hr class="mastRule" />
       <div class="mastBar">
@@ -289,14 +332,14 @@ const jsonLdBlocks = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
       <hr class="mastRule" />
     </header>
 
-    <main>
+    <main id="main">
       <slot />
     </main>
 
     <SiteSearch />
 
     <footer>
-      <p class="colophon">Owner Scorecard · <a href="/about">About this publication</a></p>
+      <p class="colophon">Owner Scorecard · <a href="/about">About this publication</a> · <a href="/rss.xml">RSS</a></p>
       <small>
         Owner Scorecard is an independent publisher of financial research and is not registered as an investment adviser or broker-dealer.
         This material is for informational and educational purposes only and does not constitute investment, tax, or legal advice, or a recommendation to buy or sell any security.

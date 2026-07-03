@@ -1,0 +1,5 @@
+# Served by Cloudflare Workers static assets. HTML stays at its default (revalidate on every
+# request) because the daily wire rebuild must never serve stale; only files that change solely
+# on deploy get a browser TTL, with stale-while-revalidate so a deploy still propagates fast.
+/company-index.json
+  Cache-Control: public, max-age=3600, stale-while-revalidate=86400
