@@ -1,6 +1,7 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { getCollection, render } from "astro:content";
+import { ORG } from "../../lib/seo.mjs";
 
 export async function getStaticPaths() {
   const articles = await getCollection("articles", ({ data }) =>
@@ -17,9 +18,36 @@ const { Content } = await render(article);
 
 const fmtDate = (d) =>
   d.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric", timeZone: "UTC" });
+
+// Structured data: the Note as an Article, authored and published by the publication itself —
+// notes carry Owner Scorecard's name, not a personal byline, by choice. `about` links each
+// covered ticker to its scorecard so machines connect the essay to the company pages.
+const description = article.data.description || `${article.data.title}, a research note from Owner Scorecard.`;
+const canonical = new URL(Astro.url.pathname, Astro.site).href;
+const iso = (d) => d.toISOString().slice(0, 10);
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Article",
+  headline: article.data.title,
+  description,
+  datePublished: iso(article.data.date),
+  dateModified: iso(article.data.updated || article.data.date),
+  author: ORG,
+  publisher: ORG,
+  mainEntityOfPage: canonical,
+  ...(article.data.tickers.length
+    ? {
+        about: article.data.tickers.map((t) => ({
+          "@type": "Corporation",
+          tickerSymbol: t,
+          url: new URL(`/c/${t}`, Astro.site).href,
+        })),
+      }
+    : {}),
+};
 ---
 
-<BaseLayout title={`${article.data.title}, Owner Scorecard`}>
+<BaseLayout title={`${article.data.title}, Owner Scorecard`} description={description} ogType="article" jsonLd={jsonLd}>
   <p class="back"><a href="/notes">← Notes</a></p>
 
   <article>

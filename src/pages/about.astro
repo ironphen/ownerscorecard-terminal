@@ -1,0 +1,61 @@
+---
+// The publication's identity page: what this is, what it is not, and where the figures come
+// from. Exists for readers first, and second for the search and answer engines that need an
+// entity to attach the work to. Plain register, no em-dashes, no self-congratulation.
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { ORG, DEFAULT_DESCRIPTION } from "../lib/seo.mjs";
+---
+
+<BaseLayout
+  title="About, Owner Scorecard"
+  description={DEFAULT_DESCRIPTION}
+  jsonLd={{
+    "@context": "https://schema.org",
+    "@type": "AboutPage",
+    name: "About Owner Scorecard",
+    mainEntity: ORG,
+  }}
+>
+  <section class="about">
+    <h1>About</h1>
+
+    <p>
+      Owner Scorecard is an independent research publication. It lays a business out the way an
+      owner would read it: roughly a decade of revenue, margins, returns on capital, owner
+      earnings, buybacks, share count, and debt, every figure traced to the company's own SEC
+      filings.
+    </p>
+
+    <p>
+      What you will not find here is a rating, a price target, an estimate, or a buy or sell.
+      That is not an oversight. The old Value Line sheet earned its place on Warren Buffett's
+      desk for its record table, not for the ranks and timeliness scores printed beside it. This
+      publication keeps the record and leaves out the rest. The facts are presented; the judgment
+      is the reader's.
+    </p>
+
+    <p>
+      The figures come from primary sources: annual and quarterly reports filed with the SEC, and
+      the equivalent filings for the Japan and ADR catalogs. Where a number is computed, the
+      <a href="/concepts">Principles</a> page defines the computation. Where a company's own
+      disclosure is thin, the page says so rather than papering over it.
+    </p>
+
+    <p>
+      Research Notes are published under the publication's name. Errors, once found, are
+      corrected in place and the note's updated date is changed to say so.
+    </p>
+
+    <p class="fine">
+      Owner Scorecard is not registered as an investment adviser or broker-dealer. Nothing here
+      is investment advice or a recommendation to buy or sell any security.
+    </p>
+  </section>
+
+  <style>
+    .about { max-width: 640px; }
+    .about h1 { margin: 0 0 16px; }
+    .about p { color: var(--ink-soft); }
+    .fine { font-size: 13.5px; color: var(--muted); }
+  </style>
+</BaseLayout>

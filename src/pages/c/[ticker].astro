@@ -33,6 +33,7 @@ import { selectPeers } from "../../lib/peers.mjs";
 import notes from "../../data/notes.json";
 import adrFundamentals from "../../data/fundamentals.adr.json";
 import { getCollection } from "astro:content";
+import { ORG } from "../../lib/seo.mjs";
 
 // ADRs (foreign 20-F filers) carry US-style tickers and the same record shape, so they get the same
 // /c/[ticker] page as a US company; only the data source and currency differ. The two pools are
@@ -95,9 +96,25 @@ const fmtDate = (d) =>
 // The archetype-trail: which of the discovery archetypes this company fits, so discovery and evaluation
 // are one loop. Same memoized computation the Archetypes pages run, so the trail can never disagree with them.
 const lensTrail = fund ? (computeLenses(allCompanies, language.companies).byTicker[ticker] || []) : [];
+
+// Machine-readable identity for the scorecard: what the page is (a record, not a rating) and which
+// corporation it is about, so a search or answer engine can connect the ticker to this page directly.
+const pageDescription = fund
+  ? `${name} (${ticker}): the ten-year owner's record. Revenue, margins, returns on capital, owner earnings, buybacks, and debt, every figure traced to the company's own filings. No ratings, no price targets.`
+  : undefined;
+const pageJsonLd = fund
+  ? {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      name: `${name} (${ticker}), the owner's record`,
+      description: pageDescription,
+      about: { "@type": "Corporation", name, tickerSymbol: ticker },
+      publisher: ORG,
+    }
+  : null;
 ---
 
-<BaseLayout title={`${ticker}, Owner Scorecard`}>
+<BaseLayout title={`${ticker}, Owner Scorecard`} description={pageDescription} jsonLd={pageJsonLd}>
   <p class="back"><a href="/">← All companies</a></p>
 
   <header class="hero" id="top">

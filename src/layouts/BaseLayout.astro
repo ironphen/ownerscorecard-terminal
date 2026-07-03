@@ -1,10 +1,21 @@
 ---
 import SiteSearch from "../components/SiteSearch.astro";
 import { dataAsOf, fmtAsOf } from "../lib/freshness.mjs";
-const { title = "Owner Scorecard" } = Astro.props;
+import { SITE_NAME, DEFAULT_DESCRIPTION } from "../lib/seo.mjs";
+const {
+  title = "Owner Scorecard",
+  description = DEFAULT_DESCRIPTION,
+  ogType = "website",
+  jsonLd = null,
+  noindex = false,
+} = Astro.props;
 // The masthead carries the DATA's vintage (the pipeline's own as-of stamps), not the build clock, so
 // stale data shows as stale rather than wearing today's date. Falls back to nothing if unstamped.
 const refreshed = fmtAsOf(dataAsOf);
+// Canonical points at the configured site host, which must be the host that actually serves the
+// content. Pages pass jsonLd (an object or array) for structured data; the layout only serializes.
+const canonical = new URL(Astro.url.pathname, Astro.site).href;
+const jsonLdBlocks = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
 ---
 
 <html lang="en" data-theme="dark">
@@ -23,6 +34,18 @@ const refreshed = fmtAsOf(dataAsOf);
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" id="themeColorMeta" content="#15161a" />
     <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    {noindex ? <meta name="robots" content="noindex" /> : null}
+    <meta property="og:site_name" content={SITE_NAME} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content={ogType} />
+    <meta property="og:url" content={canonical} />
+    <meta name="twitter:card" content="summary" />
+    {jsonLdBlocks.map((block) => (
+      <script type="application/ld+json" is:inline set:html={JSON.stringify(block)} />
+    ))}
 
     <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
@@ -273,7 +296,7 @@ const refreshed = fmtAsOf(dataAsOf);
     <SiteSearch />
 
     <footer>
-      <p class="colophon">Owner Scorecard</p>
+      <p class="colophon">Owner Scorecard · <a href="/about">About this publication</a></p>
       <small>
         Owner Scorecard is an independent publisher of financial research and is not registered as an investment adviser or broker-dealer.
         This material is for informational and educational purposes only and does not constitute investment, tax, or legal advice, or a recommendation to buy or sell any security.

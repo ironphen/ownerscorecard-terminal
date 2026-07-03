@@ -1,0 +1,12 @@
+# Owner Scorecard, an independent research publication.
+# All crawlers are welcome here, including AI assistants and answer engines:
+# the catalog exists to be read and cited. Primary-source records, no ratings.
+# A machine-readable site guide lives at /llms.txt.
+
+User-agent: *
+Disallow: /account
+Disallow: /auth/
+Disallow: /api/
+Allow: /
+
+Sitemap: https://ownerscorecard.com/sitemap-index.xml

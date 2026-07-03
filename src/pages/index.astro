@@ -9,6 +9,7 @@ import adrData from "../data/fundamentals.adr.json";
 import language from "../data/language.json";
 import wire from "../data/wire.json";
 import { computeLenses, LENSES, GROUP_LABEL } from "../lib/lenses.mjs";
+import { ORG } from "../lib/seo.mjs";
 const jpCount = (jpData.companies || []).length;
 const adrCount = (adrData.companies || []).length;
 
@@ -91,7 +92,19 @@ const wireFeed = [...wireByTicker.values()]
 const fmtWireDate = (s) => new Date(s + "T00:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
 ---
 
-<BaseLayout title="Owner Scorecard, read a company the way an owner would">
+<BaseLayout
+  title="Owner Scorecard, read a company the way an owner would"
+  jsonLd={[
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      name: "Owner Scorecard",
+      url: new URL("/", Astro.site).href,
+      publisher: { "@id": new URL("/#organization", Astro.site).href },
+    },
+    { "@context": "https://schema.org", ...ORG },
+  ]}
+>
   <!-- ============================ SEARCH (the default door) ============================ -->
   <section id="searchView">
     <div class="lede">
