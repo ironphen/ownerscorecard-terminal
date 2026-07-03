@@ -15,6 +15,11 @@ const articles = defineCollection({
     section: z.enum(["markets", "companies", "principles", "letters"]),
     tickers: z.array(z.string()).default([]),
     draft: z.boolean().default(false),
+    // The corrections record. When an error in a published note is fixed, the fix is logged here
+    // (date + what was wrong and what it is now), rendered at the note's foot, and aggregated on
+    // /corrections. The rule that makes this worth anything: NEVER silently fix a published
+    // number — log it or don't touch it. Bump `updated` alongside.
+    corrections: z.array(z.object({ date: z.coerce.date(), note: z.string() })).default([]),
   }),
 });
 

@@ -23,6 +23,7 @@ import DebtMaturity from "../../components/DebtMaturity.astro";
 import LeaseObligations from "../../components/LeaseObligations.astro";
 import Acquisitions from "../../components/Acquisitions.astro";
 import FollowButton from "../../components/FollowButton.astro";
+import Cite from "../../components/Cite.astro";
 import language from "../../data/language.json";
 import segmentsData from "../../data/segments.json";
 import { classify } from "../../lib/archetype.mjs";
@@ -222,6 +223,10 @@ const pageJsonLd = fund
   ) : null}
 
   {!fund && !related.length ? <p>Nothing here for {ticker} yet.</p> : null}
+
+  {fund ? (
+    <Cite citation={`Owner Scorecard, "${name} (${ticker}), the owner's record," ${new URL(Astro.url.pathname, Astro.site).href.replace(/\/$/, "")}${dataAsOf ? `, data as of ${dataAsOf}` : ""}.`} />
+  ) : null}
 
   <style>
     .back { margin: 0 0 10px; }

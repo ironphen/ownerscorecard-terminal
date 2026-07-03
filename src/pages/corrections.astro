@@ -1,0 +1,63 @@
+---
+// The public corrections record. /about promises that errors are corrected in place with the
+// updated date changed to say so; this page is what makes that promise verifiable. Every entry
+// makes the page more convincing, not less: a publication with a corrections log is one that
+// expects to be checked. Empty is an honest state, not an embarrassing one.
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { getCollection } from "astro:content";
+
+const articles = await getCollection("articles", ({ data }) =>
+  import.meta.env.PROD ? !data.draft : true
+);
+const entries = articles
+  .flatMap((a) =>
+    a.data.corrections.map((c) => ({
+      date: c.date,
+      note: c.note,
+      title: a.data.title,
+      slug: a.id,
+    }))
+  )
+  .sort((x, y) => y.date.valueOf() - x.date.valueOf());
+
+const fmtDate = (d) =>
+  d.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric", timeZone: "UTC" });
+---
+
+<BaseLayout
+  title="Corrections, Owner Scorecard"
+  description="The public corrections record for Owner Scorecard's research Notes. Errors, once found, are corrected in place and logged here with the date and the substance of the change."
+>
+  <section class="corr">
+    <h1>Corrections</h1>
+    <p class="sub">
+      When an error in a published note is found, it is corrected in place, the note's updated date
+      is changed, and the correction is logged here: the date, and what changed. Numbers are never
+      fixed silently.
+    </p>
+
+    {entries.length ? (
+      <ul class="log">
+        {entries.map((e) => (
+          <li>
+            <span class="logDate">{fmtDate(e.date)}</span>
+            <span class="logBody"><a href={`/notes/${e.slug}`}>{e.title}</a>: {e.note}</span>
+          </li>
+        ))}
+      </ul>
+    ) : (
+      <p class="empty">No corrections yet. When one is made, it will appear here.</p>
+    )}
+  </section>
+
+  <style>
+    .corr { max-width: 640px; }
+    .corr h1 { margin: 0 0 12px; }
+    .sub { color: var(--ink-dim); }
+    .log { list-style: none; margin: 22px 0 0; padding: 0; }
+    .log li { padding: 10px 0; border-bottom: 1px solid var(--rule-soft); display: flex; gap: 14px; align-items: baseline; }
+    .logDate { font-family: var(--sans); font-size: 12px; color: var(--muted); flex: 0 0 110px; }
+    .logBody a { font-weight: 600; }
+    .empty { color: var(--muted); font-style: italic; margin-top: 22px; }
+  </style>
+</BaseLayout>

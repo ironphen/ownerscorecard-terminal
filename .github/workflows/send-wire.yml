@@ -1,0 +1,26 @@
+# Sends the wire by email, weekday afternoons after the Filing Wire refresh (~12:55 UTC) has
+# committed the day's items. Runs harmlessly (exits 0, sends nothing) until the three secrets
+# exist: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, RESEND_API_KEY (+ optional WIRE_FROM once the
+# sending domain is verified in Resend). The account page's "being stood up" notice comes down
+# when this goes live.
+name: send-wire
+on:
+  schedule:
+    - cron: "10 14 * * 1-5" # weekdays, 14:10 UTC
+  workflow_dispatch:
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Send the wire
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          WIRE_FROM: ${{ secrets.WIRE_FROM }}
+        run: node scripts/sendWire.mjs
