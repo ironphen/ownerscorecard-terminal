@@ -1,5 +1,6 @@
 // @ts-check
 import { readFileSync, readdirSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'astro/config';
 import mdx from '@astrojs/mdx';
 import react from '@astrojs/react';
@@ -9,21 +10,24 @@ import cloudflare from '@astrojs/cloudflare';
 // Sitemap lastmod comes from HONEST stamps only, never the build clock (a new Date() would mark
 // 3,550 unchanged pages fresh on every deploy and teach crawlers to ignore the signal): data-backed
 // pages carry the fundamentals pipeline's own asOf; each note carries its frontmatter updated/date.
-const fundamentalsAsOf = (() => {
-  try {
-    const m = readFileSync('./src/data/fundamentals.json', 'utf8').match(/"asOf"\s*:\s*"(\d{4}-\d{2}-\d{2})/);
-    return m ? m[1] : null;
-  } catch { return null; }
-})();
-const dataStamp = fundamentalsAsOf;
+// Paths are anchored to THIS FILE, not the working directory (build runners differ), and the whole
+// gathering is best-effort: a missing stamp means a sitemap entry without lastmod, never a dead build.
+const here = (p) => fileURLToPath(new URL(p, import.meta.url));
+let dataStamp = null;
 const noteStamps = {};
-for (const f of readdirSync('./src/content/articles')) {
-  if (!f.endsWith('.mdx')) continue;
-  const src = readFileSync(`./src/content/articles/${f}`, 'utf8');
-  const pick = (k) => (src.match(new RegExp(`^${k}:\\s*(\\d{4}-\\d{2}-\\d{2})`, 'm')) || [])[1];
-  const stamp = pick('updated') || pick('date');
-  if (stamp) noteStamps[f.replace(/\.mdx$/, '')] = stamp;
-}
+try {
+  const m = readFileSync(here('./src/data/fundamentals.json'), 'utf8').match(/"asOf"\s*:\s*"(\d{4}-\d{2}-\d{2})/);
+  dataStamp = m ? m[1] : null;
+} catch { /* no stamp, no lastmod */ }
+try {
+  for (const f of readdirSync(here('./src/content/articles'))) {
+    if (!f.endsWith('.mdx')) continue;
+    const src = readFileSync(here(`./src/content/articles/${f}`), 'utf8');
+    const pick = (k) => (src.match(new RegExp(`^${k}:\\s*(\\d{4}-\\d{2}-\\d{2})`, 'm')) || [])[1];
+    const stamp = pick('updated') || pick('date');
+    if (stamp) noteStamps[f.replace(/\.mdx$/, '')] = stamp;
+  }
+} catch { /* no stamps, no lastmod */ }
 
 // https://astro.build/config
 export default defineConfig({
