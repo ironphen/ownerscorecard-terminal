@@ -20,10 +20,13 @@ jobs:
         run: echo "SUPABASE_DB_URL secret not set; skipping backup."
       - name: Install postgres 17 client
         # The client must be >= the server's major version (Supabase runs Postgres 17;
-        # pg_dump refuses to dump a newer server). The runner image already carries the
-        # PGDG apt repo, so the versioned package installs directly.
+        # pg_dump refuses to dump a newer server). The runner's default repos stop at 16,
+        # so add the official PGDG repo and install the versioned client from there.
         if: env.SUPABASE_DB_URL != ''
         run: |
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl -sSf -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list
           sudo apt-get update -qq
           sudo apt-get install -y -qq postgresql-client-17
       - name: Dump public schema
