@@ -1,0 +1,110 @@
+---
+// Two build-time SVG charts for "The Moat and the Multiple." Chart the business, never the price —
+// except in a Note that is about the price, where the market's own line is the argument. Static
+// data (monthly closes the author supplied); nothing wired in, no runtime, no price feed. Zero-
+// anchored like the record charts, so a two-thirds fall reads as a two-thirds fall.
+//   chart="price" — Adobe's monthly price, the S&P 500 rebased to the same start for scale.
+//   chart="pe"    — Adobe's price divided by its own trailing full-year earnings: the multiple.
+const { chart = "price" } = Astro.props;
+
+// Monthly closing prices, Jan 2018 → Jul 2026 (author-supplied CSV).
+const ADBE = [
+  199.76,209.13,216.08,221.60,249.28,243.81,244.68,263.51,269.95,245.76,250.89,226.24,
+  247.82,262.50,266.49,289.25,270.90,294.65,298.86,284.51,276.25,277.93,309.53,329.81,
+  351.14,345.12,318.24,353.64,386.60,435.31,444.32,513.39,490.43,447.10,478.47,500.12,
+  458.77,459.67,475.37,508.34,504.58,585.64,621.63,663.70,575.72,650.36,669.85,567.06,
+  534.30,467.68,455.62,395.95,416.48,366.06,410.12,373.44,275.20,318.50,344.93,336.53,
+  370.34,323.95,385.37,377.56,417.79,488.99,546.17,559.34,509.90,532.06,611.01,596.60,
+  617.78,560.28,504.60,462.83,444.76,555.54,551.65,574.41,517.78,478.08,515.93,444.68,
+  437.45,438.56,383.53,374.98,415.09,386.88,357.69,356.70,352.75,340.31,320.13,349.99,
+  293.25,262.41,243.08,246.10,259.21,205.02,219.72,
+];
+const SPY = [
+  281.90,271.65,263.15,264.51,270.94,271.28,281.33,290.31,290.72,270.63,275.65,249.92,
+  269.93,278.68,282.48,294.02,275.27,293.00,297.43,292.45,296.77,303.33,314.31,321.86,
+  321.73,296.26,257.75,290.48,304.32,308.36,326.52,349.31,334.89,326.54,362.06,373.88,
+  370.07,380.36,396.33,417.30,420.04,428.06,438.51,451.56,429.14,459.25,455.56,474.96,
+  449.91,436.63,451.64,412.00,412.93,377.25,411.99,395.18,357.18,386.21,407.68,382.43,
+  406.48,396.26,409.39,415.93,417.85,443.28,457.79,450.35,427.48,418.20,456.40,475.31,
+  482.88,508.08,523.07,501.98,527.37,544.22,550.81,563.68,573.76,568.64,602.55,586.08,
+  601.82,594.18,559.39,554.54,589.39,617.85,632.08,645.05,666.18,682.06,683.39,681.92,
+  691.97,685.99,650.34,718.66,756.48,746.77,744.78,
+];
+// Adobe's GAAP EPS by fiscal year (from the record). Each month is valued on the most recent full
+// year; 2026 rides on FY2025 until FY2026 reports.
+const EPS = { 2018: 5.20, 2019: 6.00, 2020: 10.83, 2021: 10.02, 2022: 10.10, 2023: 11.82, 2024: 12.36, 2025: 16.70 };
+const BASE = 2018;
+const N = ADBE.length;
+const yearOf = (i) => BASE + Math.floor(i / 12);
+const PE = ADBE.map((p, i) => p / EPS[Math.min(yearOf(i), 2025)]);
+
+const isPrice = chart !== "pe";
+const primary = isPrice ? ADBE : PE;
+// S&P rebased to Adobe's Jan-2018 starting price, so the two lines share a start and the gap reads.
+const spyReb = SPY.map((v) => (v * ADBE[0]) / SPY[0]);
+
+const W = 720, H = 300, padL = 46, padR = 54, padT = 20, padB = 30;
+const plotW = W - padL - padR, plotH = H - padT - padB;
+const yMax = isPrice ? 720 : 75;
+const grid = isPrice ? [0, 200, 400, 600] : [0, 20, 40, 60];
+const x = (i) => padL + (i / (N - 1)) * plotW;
+const y = (v) => padT + (1 - v / yMax) * plotH;
+const pathOf = (arr) => arr.map((v, i) => `${i === 0 ? "M" : "L"}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
+
+// Marked points: the peak on the record and the latest reading.
+const peakI = primary.reduce((b, v, i) => (v > primary[b] ? i : b), 0);
+const lastI = N - 1;
+const mLabel = (i) => `${["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][i % 12]} '${String(yearOf(i)).slice(2)}`;
+const fmt = (v) => (isPrice ? `$${Math.round(v)}` : `${Math.round(v)}×`);
+
+const years = [0, 24, 48, 72, 96]; // Jan of 2018, 2020, 2022, 2024, 2026
+const title = isPrice ? "Adobe's price, 2018–2026" : "Adobe's price ÷ its own earnings";
+const caption = isPrice
+  ? "Monthly closing price. The S&P 500, rebased to Adobe's 2018 start, is the faint line — the market kept climbing while Adobe cratered, so the fall is Adobe's, not the tape's. The scorecard carries no price; this is commentary, and here the price is the point."
+  : "The multiple, month by month: Adobe's price divided by its most recent full-year earnings. Nearly every dollar of the decline is this line coming down, not the earnings.";
+---
+
+<figure class="drc">
+  <div class="drcTop">
+    <span class="drcTitle">{title}</span>
+    {isPrice ? (
+      <span class="drcKey"><i class="kA"></i>Adobe<i class="kS"></i>S&amp;P 500</span>
+    ) : null}
+  </div>
+  <svg viewBox={`0 0 ${W} ${H}`} class="drcSvg" role="img" aria-label={title}>
+    {grid.map((g) => (
+      <g>
+        <line class="drcGrid" x1={padL} x2={W - padR} y1={y(g)} y2={y(g)} />
+        <text class="drcYlab" x={padL - 8} y={y(g) + 3} text-anchor="end">{isPrice ? `$${g}` : `${g}×`}</text>
+      </g>
+    ))}
+    {years.map((i) => (
+      <text class="drcXlab" x={x(i)} y={H - 10} text-anchor="middle">{yearOf(i)}</text>
+    ))}
+    {isPrice ? <path class="drcSpy" d={pathOf(spyReb)} fill="none" /> : null}
+    <path class="drcLine" d={pathOf(primary)} fill="none" />
+    <circle class="drcDot" cx={x(peakI)} cy={y(primary[peakI])} r="3.2" />
+    <text class="drcPt" x={x(peakI)} y={y(primary[peakI]) - 8} text-anchor="middle">{mLabel(peakI)}</text>
+    <circle class="drcDot" cx={x(lastI)} cy={y(primary[lastI])} r="3.2" />
+    <text class="drcPt drcPtEnd" x={x(lastI) + 6} y={y(primary[lastI]) + 3} text-anchor="start">{fmt(primary[lastI])}</text>
+  </svg>
+  <figcaption class="drcCap">{caption}</figcaption>
+</figure>
+
+<style>
+  .drc { margin: 10px 0 20px; }
+  .drcTop { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 4px; }
+  .drcTitle { font-family: var(--sans); font-size: 12px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+  .drcKey { font-family: var(--sans); font-size: 11px; color: var(--muted); display: inline-flex; align-items: center; gap: 5px; }
+  .drcKey i { width: 14px; height: 2px; display: inline-block; }
+  .drcKey .kA { background: var(--accent); }
+  .drcKey .kS { background: var(--faint); margin-left: 8px; }
+  .drcSvg { width: 100%; height: auto; display: block; overflow: visible; }
+  .drcGrid { stroke: var(--rule); stroke-width: 1; }
+  .drcYlab, .drcXlab { font-family: var(--sans); font-size: 10.5px; fill: var(--faint); font-variant-numeric: tabular-nums; }
+  .drcSpy { stroke: var(--faint); stroke-width: 1.25; stroke-dasharray: 3 3; opacity: 0.85; }
+  .drcLine { stroke: var(--accent); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+  .drcDot { fill: var(--accent); }
+  .drcPt { font-family: var(--sans); font-size: 11px; font-weight: 600; fill: var(--ink); font-variant-numeric: tabular-nums; }
+  .drcCap { font-family: var(--serif); font-style: italic; font-size: 12.5px; line-height: 1.45; color: var(--muted); margin-top: 8px; max-width: 66ch; }
+</style>
