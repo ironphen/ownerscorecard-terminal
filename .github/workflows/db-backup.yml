@@ -18,16 +18,19 @@ jobs:
       - name: Skip if secret not configured
         if: env.SUPABASE_DB_URL == ''
         run: echo "SUPABASE_DB_URL secret not set; skipping backup."
-      - name: Install postgres client
+      - name: Install postgres 17 client
+        # The client must be >= the server's major version (Supabase runs Postgres 17;
+        # pg_dump refuses to dump a newer server). The runner image already carries the
+        # PGDG apt repo, so the versioned package installs directly.
         if: env.SUPABASE_DB_URL != ''
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y -qq postgresql-client
+          sudo apt-get install -y -qq postgresql-client-17
       - name: Dump public schema
         if: env.SUPABASE_DB_URL != ''
         run: |
           set -e
-          pg_dump "$SUPABASE_DB_URL" --schema=public --no-owner --no-privileges -f backup.sql
+          /usr/lib/postgresql/17/bin/pg_dump "$SUPABASE_DB_URL" --schema=public --no-owner --no-privileges -f backup.sql
           gzip backup.sql
           ls -la backup.sql.gz
       - name: Upload artifact
