@@ -7,7 +7,14 @@ export const prerender = false;
 import BaseLayout from "../layouts/BaseLayout.astro";
 import { getUser } from "../lib/gate/server.mjs";
 
-const { supabase, user } = await getUser(Astro);
+// A config or transient auth failure sends the reader to sign-in rather than a raw 500 — the same
+// place they'd land if simply signed out, and the sign-in page surfaces a readable message.
+let supabase, user;
+try {
+  ({ supabase, user } = await getUser(Astro));
+} catch (e) {
+  return Astro.redirect("/auth/login?next=/account", 303);
+}
 if (!user) {
   return Astro.redirect("/auth/login?next=/account", 303);
 }
