@@ -2,8 +2,6 @@
 import BaseLayout from "../layouts/BaseLayout.astro";
 import fundamentals from "../data/fundamentals.json";
 import { getCollection } from "astro:content";
-import JapanCatalog from "../components/JapanCatalog.astro";
-import AdrCatalog from "../components/AdrCatalog.astro";
 import jpData from "../data/fundamentals.jp.json";
 import adrData from "../data/fundamentals.adr.json";
 import language from "../data/language.json";
@@ -17,32 +15,14 @@ const adrCount = (adrData.companies || []).length;
 // ones that pass" and you have implied they are the good ones, the one thing we never do. So instead
 // the door is open to all of them at once: one bar that reaches every business we cover, in every
 // pool, the way you'd walk up to a reference desk and name the company you came to read. Behind a
-// small link sits the full catalog — Buffett's "open the manuals and start with the A's" — for the
-// reader who'd rather browse than search. We sort and group the catalog by company NAME (his manuals
-// were alphabetical), each a door to its own full Owner Scorecard. A leading "The" doesn't decide the
-// letter (The Coca-Cola Company files under C); a name that opens on a number or symbol lands under "#".
-const sortKey = (s) => s.replace(/^the\s+/i, "").replace(/^[^a-z0-9]+/i, "").trim().toLowerCase();
-// A compact prominence signal for ranking search results: log-scaled revenue (≈0.1-decade buckets),
-// so a household name outranks a tiny look-alike when both match what you typed. Carried on each row
-// as data-r and read back by the search; never shown.
-const magOf = (rev) => (rev > 0 ? Math.round(Math.log10(rev) * 10) : 0);
-const rows = [...(fundamentals.companies || [])]
-  .map((c) => { const ticker = String(c.ticker || ""); const name = c.name || ticker; return { ticker, name, key: sortKey(name) || ticker.toLowerCase(), r: magOf((c.lines && c.lines.revenue) || 0) }; })
-  .filter((r) => r.ticker)
-  .sort((a, b) => a.key.localeCompare(b.key) || a.ticker.localeCompare(b.ticker));
+// small link sits the full catalog (/catalog, its own server-rendered page) — Buffett's "open the
+// manuals and start with the A's" — for the reader who'd rather browse than search. The search box
+// reads its index from /company-index.json, fetched once and cached, so the front door ships light
+// instead of carrying every catalog row in hidden DOM.
+const usTickers = (fundamentals.companies || []).map((c) => String(c.ticker || "").toUpperCase()).filter(Boolean);
 
-const totalCount = rows.length + jpCount + adrCount;
+const totalCount = usTickers.length + jpCount + adrCount;
 const totalLabel = totalCount.toLocaleString("en-US");
-
-const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
-const letterOf = (key) => { const ch = (key[0] || "#").toUpperCase(); return /[A-Z]/.test(ch) ? ch : "#"; };
-const groups = new Map();
-for (const r of rows) {
-  const k = letterOf(r.key);
-  if (!groups.has(k)) groups.set(k, []);
-  groups.get(k).push(r);
-}
-const order = [...LETTERS.filter((l) => groups.has(l)), ...(groups.has("#") ? ["#"] : [])];
 
 const articles = (
   await getCollection("articles", ({ data }) => (import.meta.env.PROD ? !data.draft : true))
@@ -70,7 +50,7 @@ const confluenceN = confluence.length;
 // first, so the reader lands on something CURRENT and can step straight into the company. Not a screener
 // and not a market ticker — just what companies disclosed, one row per company (its most significant
 // recent filing), earnings ahead of housekeeping, capped as a teaser onto the full wire.
-const KNOWN = new Set(rows.map((r) => r.ticker.toUpperCase()));
+const KNOWN = new Set(usTickers);
 const isEarnings = (it) =>
   it.form === "10-K" || it.form === "10-Q" ||
   /reported results|results of operations|quarterly report|annual report/i.test(it.label || "");
@@ -169,7 +149,7 @@ const fmtWireDate = (s) => new Date(s + "T00:00:00Z").toLocaleDateString("en-US"
     <p class="entry">
       New here? Start with the <a href="/concepts">principles</a> — how to read a business, start to finish.
       <span class="sep" aria-hidden="true">·</span>
-      <a class="browse" href="#catalog" data-to="catalog">Browse all {totalLabel} companies →</a>
+      <a class="browse" href="/catalog">Browse all {totalLabel} companies →</a>
       <span class="sep" aria-hidden="true">·</span>
       <a href="/archetypes">Browse by archetype →</a>
     </p>
@@ -220,79 +200,11 @@ const fmtWireDate = (s) => new Date(s + "T00:00:00Z").toLocaleDateString("en-US"
     ) : null}
   </section>
 
-  <!-- ============================ CATALOG (behind the small link) ============================ -->
-  <section id="catalogView" hidden>
-    <p class="backRow"><a href="#" class="back" data-to="search">← Back to search</a></p>
-
-    <div class="poolTabs" role="tablist" aria-label="Choose a market">
-      <button class="poolTab" data-pool="us" role="tab" aria-selected="true" id="tab-us">United States<span class="ct">{rows.length}</span></button>
-      <button class="poolTab" data-pool="jp" role="tab" aria-selected="false" id="tab-jp">Japan<span class="ct">{jpCount}</span></button>
-      {adrCount ? <button class="poolTab" data-pool="adr" role="tab" aria-selected="false" id="tab-adr">ADRs<span class="ct">{adrCount}</span></button> : null}
-    </div>
-
-    <section class="catalogWrap" id="pool-us" role="tabpanel" aria-labelledby="tab-us">
-      <div class="bandHead">
-        <h2>The Catalog</h2>
-        <span class="headLinks">
-          <a class="all" href="/concepts">Principles →</a>
-          <a class="all" href="/concepts#vocabulary">What the terms mean →</a>
-        </span>
-      </div>
-      <p class="method">
-        Asked how he'd find ideas if he were starting over with little money, Buffett said he'd open the
-        manuals and start with the A's — reading every company, one by one. So here they all are,
-        alphabetically by name, each a door to its full Owner Scorecard. Search for one, or do as he did
-        and start at the top. New to it? Begin with the <a href="/concepts">principles</a>.
-      </p>
-
-      <div class="toolbar">
-        <input id="q" type="search" placeholder="Search ticker or name…" class="search" autocomplete="off" aria-label="Search by ticker or name" />
-        <span id="count" class="count">{rows.length} companies</span>
-      </div>
-
-      <nav class="azbar" aria-label="Jump to letter">
-        {LETTERS.map((l) => (groups.has(l)
-          ? <a href={`#L-${l}`}>{l}</a>
-          : <span class="off">{l}</span>))}
-        {groups.has("#") ? <a href="#L-num">#</a> : null}
-      </nav>
-
-      <div id="index">
-        {order.map((l) => (
-          <section class="let" id={l === "#" ? "L-num" : `L-${l}`}>
-            <h3 class="letH" aria-hidden="true">{l}</h3>
-            <ul class="ents">
-              {groups.get(l).map((r) => (
-                <li class="ent" data-s={`${r.name} ${r.ticker}`.toLowerCase()} data-r={r.r}>
-                  <a class="entLink" href={`/c/${r.ticker}`}>
-                    <span class="n">{r.name}</span>
-                    <span class="t">{r.ticker}</span>
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </section>
-        ))}
-        <p class="empty" id="empty" hidden>No company matches that. Try a ticker or part of a name.</p>
-      </div>
-    </section>
-
-    <div id="pool-jp" role="tabpanel" aria-labelledby="tab-jp" hidden>
-      <JapanCatalog />
-    </div>
-
-    {adrCount ? (
-      <div id="pool-adr" role="tabpanel" aria-labelledby="tab-adr" hidden>
-        <AdrCatalog />
-      </div>
-    ) : null}
-  </section>
-
   <noscript>
     <style>
-      /* With no JavaScript the omni-search can't run; fall back to the full browsable catalog. */
-      #omniBox, #omniChips, .entry .browse, .entry .sep { display: none !important; }
-      #catalogView { display: block !important; }
+      /* With no JavaScript the omni-search can't run; the full catalog at /catalog is a plain,
+         server-rendered page — point the reader there instead of at a dead box. */
+      #omniBox, #omniChips { display: none !important; }
     </style>
   </noscript>
 
@@ -404,50 +316,10 @@ const fmtWireDate = (s) => new Date(s + "T00:00:00Z").toLocaleDateString("en-US"
     .wf.grave { border-left-color: var(--bad); }
     .wf.grave .wfTkr, .wf.grave .wfWhat { color: var(--bad); }
 
-    /* ---------------------------------- catalog view ---------------------------------- */
-    .backRow { margin: 8px 0 0; }
-    .back { font-size: 12.5px; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; }
-
+    /* Shared band header (the wire + notes bands). */
     .bandHead { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--rule-strong); padding-bottom: 6px; }
     .bandHead h2 { margin: 0; }
     .all { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; flex: 0 0 auto; }
-    .headLinks { display: flex; gap: 16px; flex: 0 0 auto; align-items: baseline; flex-wrap: wrap; justify-content: flex-end; }
-
-    /* One catalog, three pools (United States, Japan, ADRs): a segmented switch is the single way in. */
-    .poolTabs { display: inline-flex; margin: 14px 0 0; border: 1px solid var(--rule-strong); border-radius: 999px; padding: 3px; background: var(--surface); gap: 2px; }
-    .poolTab { font-family: var(--sans); font-size: 13.5px; font-weight: 600; letter-spacing: 0.02em; color: var(--muted); background: none; border: 0; border-radius: 999px; padding: 7px 18px; cursor: pointer; display: inline-flex; align-items: baseline; gap: 7px; white-space: nowrap; }
-    .poolTab:hover { color: var(--ink); }
-    .poolTab[aria-selected="true"] { background: var(--solid); color: var(--solid-ink); }
-    .poolTab .ct { font-size: 11px; font-weight: 500; opacity: 0.7; font-variant-numeric: tabular-nums; }
-    @media (max-width: 480px) { .poolTabs { display: flex; } .poolTab { flex: 1 1 0; justify-content: center; } }
-
-    .method { font-family: var(--serif); font-style: italic; font-size: 13.5px; color: var(--muted); margin: 9px 0 0; max-width: 66ch; }
-
-    /* Search + count, sticky so they stay reachable as the index scrolls. */
-    .toolbar { position: sticky; top: 0; z-index: 20; background: var(--paper); display: flex; align-items: center; gap: 12px; margin: 14px 0 0; padding: 8px 0; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule-strong); }
-    .search { flex: 1 1 220px; min-width: 140px; padding: 9px 12px; border: 1px solid var(--rule-strong); border-radius: 3px; font-family: var(--sans); font-size: 14px; background: var(--surface); color: var(--ink); }
-    .search::placeholder { color: var(--faint); }
-    .count { font-size: 11.5px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); flex: 0 0 auto; font-variant-numeric: tabular-nums; }
-
-    /* The A–Z rail: a quick jump to any letter; letters with no names are dimmed and dead. */
-    .azbar { display: flex; flex-wrap: wrap; gap: 1px 2px; margin: 12px 0 0; position: sticky; top: 49px; z-index: 19; background: var(--paper); padding: 6px 0; border-bottom: 1px solid var(--rule); }
-    .azbar a, .azbar span { font-family: var(--sans); font-size: 12px; font-weight: 600; letter-spacing: 0.02em; padding: 3px 7px; border-radius: 3px; min-width: 22px; text-align: center; }
-    .azbar a { color: var(--accent); }
-    .azbar a:hover { background: var(--accent-tint); text-decoration: none; }
-    .azbar .off { color: var(--faint); }
-
-    .let { margin: 0; scroll-margin-top: 92px; }
-    .letH { font-family: var(--sans); font-weight: 800; font-size: 13px; letter-spacing: 0.08em; color: var(--muted); margin: 22px 0 0; padding-bottom: 5px; border-bottom: 1px solid var(--rule-strong); }
-    .ents { list-style: none; padding: 0; margin: 6px 0 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 0 24px; }
-    .ent { padding: 8px 2px; border-bottom: 1px solid var(--rule); }
-    .ent[hidden], .let[hidden] { display: none; }
-    .entLink { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; min-width: 0; }
-    .entLink:hover { text-decoration: none; }
-    .entLink:hover .n { color: var(--accent); }
-    .n { font-size: 14px; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
-    .t { font-family: var(--sans); font-weight: 700; font-variant-numeric: tabular-nums; font-size: 11px; letter-spacing: 0.03em; color: var(--muted); flex: 0 0 auto; }
-    .entLink:hover .t { color: var(--accent); }
-    .empty { font-family: var(--serif); font-style: italic; color: var(--muted); padding: 26px 2px; }
 
     @media (max-width: 640px) {
       .cards { grid-template-columns: 1fr; gap: 14px; }
@@ -457,64 +329,19 @@ const fmtWireDate = (s) => new Date(s + "T00:00:00Z").toLocaleDateString("en-US"
   </style>
 
   <script is:inline>
-    /* View + pool controller. The page has two doors: a search view (the default) and the full
-       catalog view (United States, Japan, ADRs — one pool shown at a time). A /#japan or /#adrs deep
-       link opens the catalog on that pool; /#catalog opens it on the US tab. The small "Browse" and
-       "Back to search" links flip between the two. */
+    /* The catalog lives at /catalog now. Old deep links (/#catalog, /#japan, /#adrs) still work:
+       they land here and are forwarded to the catalog page, pool preserved. */
     (function () {
-      const searchView = document.getElementById("searchView");
-      const catalogView = document.getElementById("catalogView");
-      const tabs = Array.from(document.querySelectorAll(".poolTab"));
-      const panels = { us: document.getElementById("pool-us"), jp: document.getElementById("pool-jp"), adr: document.getElementById("pool-adr") };
-      if (!searchView || !catalogView) return;
-      const poolHash = { jp: "#japan", adr: "#adrs" };
-
-      function setPool(p) {
-        if (!panels[p]) p = "us";
-        Object.keys(panels).forEach((k) => { if (panels[k]) panels[k].hidden = k !== p; });
-        tabs.forEach((t) => t.setAttribute("aria-selected", String(t.dataset.pool === p)));
-        return p;
-      }
-      function currentPool() {
-        const t = tabs.find((t) => t.getAttribute("aria-selected") === "true");
-        return t ? t.dataset.pool : "us";
-      }
-      function setView(v, pool) {
-        const cat = v === "catalog";
-        searchView.hidden = cat;
-        catalogView.hidden = !cat;
-        if (cat) {
-          const p = setPool(pool || currentPool() || "us");
-          try { history.replaceState(null, "", poolHash[p] || "#catalog"); } catch (e) {}
-          window.scrollTo(0, 0);
-        } else {
-          try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {}
-          const o = document.getElementById("omni");
-          if (o) o.focus();
-        }
-      }
-
-      tabs.forEach((t) => t.addEventListener("click", () => {
-        const p = setPool(t.dataset.pool);
-        try { history.replaceState(null, "", poolHash[p] || "#catalog"); } catch (e) {}
-      }));
-      document.querySelectorAll('[data-to="catalog"]').forEach((el) =>
-        el.addEventListener("click", (e) => { e.preventDefault(); setView("catalog"); }));
-      document.querySelectorAll('[data-to="search"]').forEach((el) =>
-        el.addEventListener("click", (e) => { e.preventDefault(); setView("search"); }));
-
       const h = location.hash;
-      if (h === "#japan") setView("catalog", "jp");
-      else if (h === "#adrs") setView("catalog", "adr");
-      else if (h === "#catalog") setView("catalog", "us");
-      else { searchView.hidden = false; catalogView.hidden = true; }
+      if (h === "#catalog") location.replace("/catalog");
+      else if (h === "#japan" || h === "#adrs") location.replace("/catalog" + h);
     })();
   </script>
 
   <script is:inline>
-    /* The unified search. It reads its index once from the catalog already rendered on the page (every
-       pool's rows are in the DOM, just hidden), so there is no second copy of the data to ship or keep
-       in sync. Ranking favors an exact ticker, then a ticker or name that starts with what you typed,
+    /* The unified search. Its index is /company-index.json (every pool, one compact cached file),
+       fetched once during idle or on the first keystroke — the page itself carries no catalog rows.
+       Ranking favors an exact ticker, then a ticker or name that starts with what you typed,
        then a word inside the name, then anything containing it. Keyboard: ↑/↓ to move, Enter to open,
        Esc to clear; "/" from anywhere jumps to the box. */
     (function () {
@@ -557,37 +384,43 @@ const fmtWireDate = (s) => new Date(s + "T00:00:00Z").toLocaleDateString("en-US"
         return m;
       }
 
-      // Harvest the index from the rendered catalog (US + Japan + ADRs). Tagging each row with its pool
-      // lets a US listing rank ahead of a foreign duplicate of the same name (Coca-Cola Co. before a
-      // Mexican bottler), and keeps the revenue-magnitude prominence comparable within one currency.
+      // The index comes from /company-index.json — the same compact file the site-wide overlay
+      // uses — fetched once (usually warmed during idle, before the first keystroke) instead of
+      // shipping every catalog row in this page's HTML. Row tuples: [ticker, name, poolCode,
+      // prominence, place]; poolCode 0 = US, 1 = ADR, 2 = Japan, which is already the rank order
+      // that puts a US listing ahead of a foreign duplicate of the same name.
       const INDEX = [];
-      const POOLRANK = { us: 0, adr: 1, jp: 2 };
-      function harvest(sel, pool) {
-        document.querySelectorAll(sel).forEach((e) => {
-          const a = e.querySelector("a.entLink");
-          if (!a) return;
-          const href = a.getAttribute("href");
-          if (!href) return;
-          const nEl = e.querySelector(".n"), tEl = e.querySelector(".t"), cEl = e.querySelector(".ctry");
-          const name = nEl ? nEl.textContent.trim() : "";
-          const ticker = tEl ? tEl.textContent.trim() : "";
-          const place = cEl ? cEl.textContent.trim() : "";
-          if (!name && !ticker) return;
-          const nl = name.toLowerCase();
-          const hay = (e.dataset.s || (nl + " " + ticker.toLowerCase())) + " " + place.toLowerCase();
-          INDEX.push({
-            name, ticker, place, href,
-            pool: POOLRANK[pool] || 0,
-            prom: parseInt(e.dataset.r || "0", 10) || 0,
-            tl: ticker.toLowerCase(),
-            words: nl.split(/[^a-z0-9]+/).filter(Boolean),
-            nlsq: sq(nl), nksq: sq(sortKey(name)), haysq: sq(hay),
-          });
-        });
+      let indexLoad = null;
+      function ensureIndex() {
+        if (!indexLoad) {
+          indexLoad = fetch("/company-index.json")
+            .then((r) => (r.ok ? r.json() : { rows: [] }))
+            .then((d) => {
+              (d.rows || []).forEach((row) => {
+                const ticker = String(row[0] || "");
+                const name = String(row[1] || "") || ticker;
+                const poolCode = row[2] | 0;
+                const place = String(row[4] || "");
+                if (!ticker) return;
+                const nl = name.toLowerCase();
+                const hay = nl + " " + ticker.toLowerCase() + " " + place.toLowerCase();
+                INDEX.push({
+                  name, ticker, place,
+                  href: (poolCode === 2 ? "/jp/" : "/c/") + ticker,
+                  pool: poolCode,
+                  prom: row[3] | 0,
+                  tl: ticker.toLowerCase(),
+                  words: nl.split(/[^a-z0-9]+/).filter(Boolean),
+                  nlsq: sq(nl), nksq: sq(sortKey(name)), haysq: sq(hay),
+                });
+              });
+            })
+            .catch(() => {});
+        }
+        return indexLoad;
       }
-      harvest("#pool-us .ent", "us");
-      harvest("#pool-jp .ent", "jp");
-      harvest("#pool-adr .ent", "adr");
+      // Warm the index during idle so the first keystroke answers instantly.
+      (window.requestIdleCallback || function (f) { setTimeout(f, 1200); })(ensureIndex);
 
       let shown = [];   // current rendered matches
       let active = -1;  // highlighted index into `shown`
@@ -708,7 +541,12 @@ const fmtWireDate = (s) => new Date(s + "T00:00:00Z").toLocaleDateString("en-US"
         const term = (input.value || "").trim().toLowerCase();
         if (!term) { showDefault(); return; }
         if (chips) chips.hidden = true;
-        render(term);
+        // The index is fetched lazily; re-read the live value at render time so a keystroke that
+        // raced the first load still renders what the reader actually typed.
+        ensureIndex().then(() => {
+          const now = (input.value || "").trim().toLowerCase();
+          if (now) render(now);
+        });
       }
 
       // Focus the empty box and the archetype buckets drop down; click away and they fold back (search
@@ -739,76 +577,22 @@ const fmtWireDate = (s) => new Date(s + "T00:00:00Z").toLocaleDateString("en-US"
         onInput();
       });
 
-      // "/" focuses whichever search is in view: the omni box, or the active pool's box in the catalog.
+      // "/" focuses the omni box (the catalog page has its own handler for its own boxes).
       document.addEventListener("keydown", (e) => {
         if (e.key !== "/" ) return;
         const tag = ((document.activeElement || {}).tagName || "").toLowerCase();
         if (tag === "input" || tag === "textarea" || tag === "select") return;
-        const catalog = document.getElementById("catalogView");
         e.preventDefault();
-        if (catalog && !catalog.hidden) {
-          const box = catalog.querySelector('#pool-us:not([hidden]) #q, #pool-jp:not([hidden]) #jp-q, #pool-adr:not([hidden]) #adr-q');
-          (box || input).focus();
-        } else {
-          input.focus();
-        }
+        input.focus();
       });
 
-      // Land and type: on a desktop arriving at the search view, focus the box (without scrolling).
-      // Skipped on touch, where it would pop the keyboard over the page, and when deep-linked to a pool.
+      // Land and type: on a desktop, focus the box (without scrolling). Skipped on touch, where
+      // it would pop the keyboard over the page.
       try {
-        const sv = document.getElementById("searchView");
-        if (sv && !sv.hidden && window.matchMedia && window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
+        if (window.matchMedia && window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
           input.focus({ preventScroll: true });
         }
       } catch (e) {}
-    })();
-  </script>
-
-  <script is:inline>
-    /* Catalog (US tab) search filters the index in place: hide the names that don't match, hide any
-       letter that empties out, and dim the A–Z rail to what's left. Server-rendered, so it degrades to
-       a plain A–Z directory with JS off. Scoped to #pool-us; Japan and ADRs carry their own. */
-    (function () {
-      const q = document.getElementById("q");
-      const countEl = document.getElementById("count");
-      const emptyEl = document.getElementById("empty");
-      const azbar = document.querySelector("#pool-us .azbar");
-      if (!q) return;
-      const sections = Array.from(document.querySelectorAll("#pool-us .let"));
-      const ents = Array.from(document.querySelectorAll("#pool-us .ent"));
-      const total = ents.length;
-
-      function apply() {
-        const term = (q.value || "").trim().toLowerCase();
-        let shown = 0;
-        const live = new Set();
-        if (!term) {
-          ents.forEach((e) => (e.hidden = false));
-          sections.forEach((s) => { s.hidden = false; live.add(s.id); });
-          shown = total;
-        } else {
-          sections.forEach((s) => {
-            let any = false;
-            s.querySelectorAll(".ent").forEach((e) => {
-              const m = e.dataset.s.indexOf(term) >= 0;
-              e.hidden = !m;
-              if (m) { any = true; shown++; }
-            });
-            s.hidden = !any;
-            if (any) live.add(s.id);
-          });
-        }
-        if (emptyEl) emptyEl.hidden = shown !== 0;
-        if (countEl) countEl.textContent = shown + (shown === 1 ? " company" : " companies");
-        if (azbar) azbar.querySelectorAll("a").forEach((a) => {
-          const on = live.has((a.getAttribute("href") || "").slice(1));
-          a.style.opacity = on ? "" : "0.3";
-          a.style.pointerEvents = on ? "" : "none";
-        });
-      }
-
-      q.addEventListener("input", apply);
     })();
   </script>
 </BaseLayout>

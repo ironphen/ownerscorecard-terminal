@@ -1,0 +1,234 @@
+---
+// The full catalog, one link behind the front door. Buffett's "open the manuals and start with
+// the A's": every company, alphabetical by name, each a door to its own Owner Scorecard. This
+// lives on its own page (not hidden inside the home page) so the front door ships light while
+// the browsing reader — and the crawler walking the site's internal links — still gets the whole
+// directory server-rendered. Three pools, one shown at a time; /catalog#japan and /catalog#adrs
+// deep-link to a pool.
+import BaseLayout from "../layouts/BaseLayout.astro";
+import fundamentals from "../data/fundamentals.json";
+import JapanCatalog from "../components/JapanCatalog.astro";
+import AdrCatalog from "../components/AdrCatalog.astro";
+import jpData from "../data/fundamentals.jp.json";
+import adrData from "../data/fundamentals.adr.json";
+
+const jpCount = (jpData.companies || []).length;
+const adrCount = (adrData.companies || []).length;
+
+// Alphabetical by NAME, the way the manuals were: a leading "The" doesn't decide the letter
+// (The Coca-Cola Company files under C); a name opening on a number or symbol lands under "#".
+const sortKey = (s) => s.replace(/^the\s+/i, "").replace(/^[^a-z0-9]+/i, "").trim().toLowerCase();
+const magOf = (rev) => (rev > 0 ? Math.round(Math.log10(rev) * 10) : 0);
+const rows = [...(fundamentals.companies || [])]
+  .map((c) => { const ticker = String(c.ticker || ""); const name = c.name || ticker; return { ticker, name, key: sortKey(name) || ticker.toLowerCase(), r: magOf((c.lines && c.lines.revenue) || 0) }; })
+  .filter((r) => r.ticker)
+  .sort((a, b) => a.key.localeCompare(b.key) || a.ticker.localeCompare(b.ticker));
+
+const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+const letterOf = (key) => { const ch = (key[0] || "#").toUpperCase(); return /[A-Z]/.test(ch) ? ch : "#"; };
+const groups = new Map();
+for (const r of rows) {
+  const k = letterOf(r.key);
+  if (!groups.has(k)) groups.set(k, []);
+  groups.get(k).push(r);
+}
+const order = [...LETTERS.filter((l) => groups.has(l)), ...(groups.has("#") ? ["#"] : [])];
+const totalLabel = (rows.length + jpCount + adrCount).toLocaleString("en-US");
+---
+
+<BaseLayout
+  title="The Catalog, Owner Scorecard"
+  description={`Every company Owner Scorecard covers — ${totalLabel} across the United States, Japan, and ADRs — alphabetical by name, each a door to its ten-year owner's record. No screens, no rankings: the whole shelf, A to Z.`}
+>
+  <p class="backRow"><a href="/" class="back">← Back to search</a></p>
+
+  <div class="poolTabs" role="tablist" aria-label="Choose a market">
+    <button class="poolTab" data-pool="us" role="tab" aria-selected="true" id="tab-us">United States<span class="ct">{rows.length}</span></button>
+    <button class="poolTab" data-pool="jp" role="tab" aria-selected="false" id="tab-jp">Japan<span class="ct">{jpCount}</span></button>
+    {adrCount ? <button class="poolTab" data-pool="adr" role="tab" aria-selected="false" id="tab-adr">ADRs<span class="ct">{adrCount}</span></button> : null}
+  </div>
+
+  <section class="catalogWrap" id="pool-us" role="tabpanel" aria-labelledby="tab-us">
+    <div class="bandHead">
+      <h2>The Catalog</h2>
+      <span class="headLinks">
+        <a class="all" href="/concepts">Principles →</a>
+        <a class="all" href="/concepts#vocabulary">What the terms mean →</a>
+      </span>
+    </div>
+    <p class="method">
+      Asked how he'd find ideas if he were starting over with little money, Buffett said he'd open the
+      manuals and start with the A's — reading every company, one by one. So here they all are,
+      alphabetically by name, each a door to its full Owner Scorecard. Search for one, or do as he did
+      and start at the top. New to it? Begin with the <a href="/concepts">principles</a>.
+    </p>
+
+    <div class="toolbar">
+      <input id="q" type="search" placeholder="Search ticker or name…" class="search" autocomplete="off" aria-label="Search by ticker or name" />
+      <span id="count" class="count">{rows.length} companies</span>
+    </div>
+
+    <nav class="azbar" aria-label="Jump to letter">
+      {LETTERS.map((l) => (groups.has(l)
+        ? <a href={`#L-${l}`}>{l}</a>
+        : <span class="off">{l}</span>))}
+      {groups.has("#") ? <a href="#L-num">#</a> : null}
+    </nav>
+
+    <div id="index">
+      {order.map((l) => (
+        <section class="let" id={l === "#" ? "L-num" : `L-${l}`}>
+          <h3 class="letH" aria-hidden="true">{l}</h3>
+          <ul class="ents">
+            {groups.get(l).map((r) => (
+              <li class="ent" data-s={`${r.name} ${r.ticker}`.toLowerCase()} data-r={r.r}>
+                <a class="entLink" href={`/c/${r.ticker}`}>
+                  <span class="n">{r.name}</span>
+                  <span class="t">{r.ticker}</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ))}
+      <p class="empty" id="empty" hidden>No company matches that. Try a ticker or part of a name.</p>
+    </div>
+  </section>
+
+  <div id="pool-jp" role="tabpanel" aria-labelledby="tab-jp" hidden>
+    <JapanCatalog />
+  </div>
+
+  {adrCount ? (
+    <div id="pool-adr" role="tabpanel" aria-labelledby="tab-adr" hidden>
+      <AdrCatalog />
+    </div>
+  ) : null}
+
+  <style>
+    .backRow { margin: 8px 0 0; }
+    .back { font-size: 12.5px; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; }
+
+    .bandHead { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--rule-strong); padding-bottom: 6px; }
+    .bandHead h2 { margin: 0; }
+    .all { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; flex: 0 0 auto; }
+    .headLinks { display: flex; gap: 16px; flex: 0 0 auto; align-items: baseline; flex-wrap: wrap; justify-content: flex-end; }
+
+    /* One catalog, three pools (United States, Japan, ADRs): a segmented switch is the single way in. */
+    .poolTabs { display: inline-flex; margin: 14px 0 0; border: 1px solid var(--rule-strong); border-radius: 999px; padding: 3px; background: var(--surface); gap: 2px; }
+    .poolTab { font-family: var(--sans); font-size: 13.5px; font-weight: 600; letter-spacing: 0.02em; color: var(--muted); background: none; border: 0; border-radius: 999px; padding: 7px 18px; cursor: pointer; display: inline-flex; align-items: baseline; gap: 7px; white-space: nowrap; }
+    .poolTab:hover { color: var(--ink); }
+    .poolTab[aria-selected="true"] { background: var(--solid); color: var(--solid-ink); }
+    .poolTab .ct { font-size: 11px; font-weight: 500; opacity: 0.7; font-variant-numeric: tabular-nums; }
+    @media (max-width: 480px) { .poolTabs { display: flex; } .poolTab { flex: 1 1 0; justify-content: center; } }
+
+    .method { font-family: var(--serif); font-style: italic; font-size: 13.5px; color: var(--muted); margin: 9px 0 0; max-width: 66ch; }
+
+    /* Search + count, sticky so they stay reachable as the index scrolls. */
+    .toolbar { position: sticky; top: 0; z-index: 20; background: var(--paper); display: flex; align-items: center; gap: 12px; margin: 14px 0 0; padding: 8px 0; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule-strong); }
+    .search { flex: 1 1 220px; min-width: 140px; padding: 9px 12px; border: 1px solid var(--rule-strong); border-radius: 3px; font-family: var(--sans); font-size: 14px; background: var(--surface); color: var(--ink); }
+    .search::placeholder { color: var(--faint); }
+    .count { font-size: 11.5px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); flex: 0 0 auto; font-variant-numeric: tabular-nums; }
+
+    /* The A–Z rail: a quick jump to any letter; letters with no names are dimmed and dead. */
+    .azbar { display: flex; flex-wrap: wrap; gap: 1px 2px; margin: 12px 0 0; position: sticky; top: 49px; z-index: 19; background: var(--paper); padding: 6px 0; border-bottom: 1px solid var(--rule); }
+    .azbar a, .azbar span { font-family: var(--sans); font-size: 12px; font-weight: 600; letter-spacing: 0.02em; padding: 3px 7px; border-radius: 3px; min-width: 22px; text-align: center; }
+    .azbar a { color: var(--accent); }
+    .azbar a:hover { background: var(--accent-tint); text-decoration: none; }
+    .azbar .off { color: var(--faint); }
+
+    .let { margin: 0; scroll-margin-top: 92px; }
+    .letH { font-family: var(--sans); font-weight: 800; font-size: 13px; letter-spacing: 0.08em; color: var(--muted); margin: 22px 0 0; padding-bottom: 5px; border-bottom: 1px solid var(--rule-strong); }
+    .ents { list-style: none; padding: 0; margin: 6px 0 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 0 24px; }
+    .ent { padding: 8px 2px; border-bottom: 1px solid var(--rule); }
+    .ent[hidden], .let[hidden] { display: none; }
+    .entLink { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; min-width: 0; }
+    .entLink:hover { text-decoration: none; }
+    .entLink:hover .n { color: var(--accent); }
+    .n { font-size: 14px; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+    .t { font-family: var(--sans); font-weight: 700; font-variant-numeric: tabular-nums; font-size: 11px; letter-spacing: 0.03em; color: var(--muted); flex: 0 0 auto; }
+    .entLink:hover .t { color: var(--accent); }
+    .empty { font-family: var(--serif); font-style: italic; color: var(--muted); padding: 26px 2px; }
+  </style>
+
+  <script is:inline>
+    /* Pool switcher. #japan / #adrs deep links open on that pool (and the old home-page hashes
+       still land here via the front door's redirect stub). */
+    (function () {
+      const tabs = Array.from(document.querySelectorAll(".poolTab"));
+      const panels = { us: document.getElementById("pool-us"), jp: document.getElementById("pool-jp"), adr: document.getElementById("pool-adr") };
+      const poolHash = { jp: "#japan", adr: "#adrs" };
+
+      function setPool(p) {
+        if (!panels[p]) p = "us";
+        Object.keys(panels).forEach((k) => { if (panels[k]) panels[k].hidden = k !== p; });
+        tabs.forEach((t) => t.setAttribute("aria-selected", String(t.dataset.pool === p)));
+        return p;
+      }
+      tabs.forEach((t) => t.addEventListener("click", () => {
+        const p = setPool(t.dataset.pool);
+        try { history.replaceState(null, "", poolHash[p] || location.pathname); } catch (e) {}
+      }));
+
+      const h = location.hash;
+      if (h === "#japan") setPool("jp");
+      else if (h === "#adrs") setPool("adr");
+
+      /* "/" focuses the visible pool's own filter box. */
+      document.addEventListener("keydown", (e) => {
+        if (e.key !== "/") return;
+        const tag = ((document.activeElement || {}).tagName || "").toLowerCase();
+        if (tag === "input" || tag === "textarea" || tag === "select") return;
+        const box = document.querySelector('#pool-us:not([hidden]) #q, #pool-jp:not([hidden]) #jp-q, #pool-adr:not([hidden]) #adr-q');
+        if (box) { e.preventDefault(); box.focus(); }
+      });
+    })();
+  </script>
+
+  <script is:inline>
+    /* Catalog (US tab) search filters the index in place: hide the names that don't match, hide any
+       letter that empties out, and dim the A–Z rail to what's left. Server-rendered, so it degrades to
+       a plain A–Z directory with JS off. Scoped to #pool-us; Japan and ADRs carry their own. */
+    (function () {
+      const q = document.getElementById("q");
+      const countEl = document.getElementById("count");
+      const emptyEl = document.getElementById("empty");
+      const azbar = document.querySelector("#pool-us .azbar");
+      if (!q) return;
+      const sections = Array.from(document.querySelectorAll("#pool-us .let"));
+      const ents = Array.from(document.querySelectorAll("#pool-us .ent"));
+      const total = ents.length;
+
+      function apply() {
+        const term = (q.value || "").trim().toLowerCase();
+        let shown = 0;
+        const live = new Set();
+        if (!term) {
+          ents.forEach((e) => (e.hidden = false));
+          sections.forEach((s) => { s.hidden = false; live.add(s.id); });
+          shown = total;
+        } else {
+          sections.forEach((s) => {
+            let any = false;
+            s.querySelectorAll(".ent").forEach((e) => {
+              const m = e.dataset.s.indexOf(term) >= 0;
+              e.hidden = !m;
+              if (m) { any = true; shown++; }
+            });
+            s.hidden = !any;
+            if (any) live.add(s.id);
+          });
+        }
+        if (emptyEl) emptyEl.hidden = shown !== 0;
+        if (countEl) countEl.textContent = shown + (shown === 1 ? " company" : " companies");
+        if (azbar) azbar.querySelectorAll("a").forEach((a) => {
+          const on = live.has((a.getAttribute("href") || "").slice(1));
+          a.style.opacity = on ? "" : "0.3";
+          a.style.pointerEvents = on ? "" : "none";
+        });
+      }
+
+      q.addEventListener("input", apply);
+    })();
+  </script>
+</BaseLayout>
