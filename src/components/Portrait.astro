@@ -124,6 +124,62 @@ const vitals = isBurnStage ? burnVitals : (isReit
 
 const pct = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${(Math.abs(v) * 100).toFixed(dp)}%`);
 
+// Revenue joins the strip, from the same freshest-twelve-months the other vitals read.
+const curRev = topLineRevenue(cur, company) ?? rev;
+if (!isBurnStage && curRev != null) vitals.unshift({ label: "Revenue", display: $(curRev) });
+
+// The latest single quarter, for the reader arriving from the wire: the just-reported quarter
+// against the SAME quarter a year ago (the honest comparison for a seasonal business). Fiscal
+// year-end entries in the series carry no standalone revenue (a 10-K reports the year, not a
+// fourth quarter), so the latest usable quarter is the last entry with a revenue figure, and
+// its yardstick is the usable entry nearest one year before it.
+const qSeries = (company.quarterly?.series || []).filter((e) => e && e.end && e.revenue != null);
+const latestQ = qSeries.length ? qSeries[qSeries.length - 1] : null;
+const dayMs = 86400000;
+const yearAgoQ = latestQ
+  ? qSeries.find((e) => {
+      const gap = (new Date(latestQ.end) - new Date(e.end)) / dayMs;
+      return gap > 320 && gap < 410;
+    }) || null
+  : null;
+const qm = (num, den) => (num != null && den ? num / den : null);
+const qVitals = latestQ
+  ? [
+      {
+        label: "Revenue",
+        display: $(latestQ.revenue),
+        sub: yearAgoQ ? { growth: (latestQ.revenue - yearAgoQ.revenue) / yearAgoQ.revenue } : null,
+      },
+      {
+        label: "Operating margin",
+        value: qm(latestQ.operatingIncome, latestQ.revenue),
+        dp: 1,
+        sub: ((a) => (a != null ? { ago: a, dp: 1 } : null))(yearAgoQ ? qm(yearAgoQ.operatingIncome, yearAgoQ.revenue) : null),
+      },
+      {
+        label: "Net income",
+        display: latestQ.netIncome != null ? $(latestQ.netIncome) : null,
+        sub: ((a) => (a != null ? { agoMoney: a } : null))(yearAgoQ ? yearAgoQ.netIncome : null),
+      },
+      {
+        label: "Net margin",
+        value: qm(latestQ.netIncome, latestQ.revenue),
+        dp: 1,
+        sub: ((a) => (a != null ? { ago: a, dp: 1 } : null))(yearAgoQ ? qm(yearAgoQ.netIncome, yearAgoQ.revenue) : null),
+      },
+    ].filter((v) => v.display != null || v.value != null)
+  : [];
+const fmtQEnd = (iso) => {
+  const [y, m, dd] = iso.slice(0, 10).split("-").map(Number);
+  const M = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  return `${M[m - 1]} ${dd}, ${y}`;
+};
+// The toggle earns its place only when there is a real quarter to show; burn-stage pages keep
+// their cash-and-runway strip undisturbed.
+const showQuarter = !isBurnStage && qVitals.length >= 2;
+const ttmModeLabel = `${curLabel}${!isBurnStage && avgLabel ? `, with ${avgLabel}` : ""}`;
+const qModeLabel = latestQ ? `quarter ended ${fmtQEnd(latestQ.end)}, with the year-ago quarter` : "";
+
 function spark(values, w = 132, h = 28) {
   const vs = values.filter((v) => v != null);
   if (vs.length < 2) return null;
@@ -158,8 +214,16 @@ const sp = spark(revSeries);
 
   {vitals.length ? (
     <div class="vitals">
-      <span class="vLbl">Vital signs · {curLabel}{!isBurnStage && avgLabel ? `, with ${avgLabel}` : ""}</span>
-      <div class="vRow">
+      <div class="vHead">
+        <span class="vLbl">Vital signs · <span id="vMode" data-ttm={ttmModeLabel} data-q={qModeLabel}>{ttmModeLabel}</span></span>
+        {showQuarter ? (
+          <div class="vToggle" role="tablist" aria-label="Vital signs period">
+            <button type="button" class="vT" id="vtTtm" role="tab" aria-selected="true">TTM</button>
+            <button type="button" class="vT" id="vtQ" role="tab" aria-selected="false">Latest quarter</button>
+          </div>
+        ) : null}
+      </div>
+      <div class="vRow" id="vRowTtm">
         {vitals.map((v) => (
           <div class="v">
             <span class="vk">{v.concept ? <Term id={v.concept}>{v.label}</Term> : v.label}</span>
@@ -168,7 +232,43 @@ const sp = spark(revSeries);
           </div>
         ))}
       </div>
+      {showQuarter ? (
+        <div class="vRow" id="vRowQ" hidden>
+          {qVitals.map((v) => (
+            <div class="v">
+              <span class="vk">{v.label}</span>
+              <span class="vv">{v.display != null ? v.display : pct(v.value, v.dp)}</span>
+              {v.sub && v.sub.growth != null ? (
+                <span class={`va ${v.sub.growth < 0 ? "vaNeg" : "vaPos"}`}>{v.sub.growth >= 0 ? "+" : ""}{pct(v.sub.growth, 1)} vs yr-ago qtr</span>
+              ) : v.sub && v.sub.ago != null ? (
+                <span class="va">yr-ago {pct(v.sub.ago, v.sub.dp)}</span>
+              ) : v.sub && v.sub.agoMoney != null ? (
+                <span class="va">yr-ago {$(v.sub.agoMoney)}</span>
+              ) : null}
+            </div>
+          ))}
+        </div>
+      ) : null}
     </div>
+  ) : null}
+
+  {showQuarter ? (
+    <script is:inline>
+      (function () {
+        var bT = document.getElementById("vtTtm"), bQ = document.getElementById("vtQ");
+        var rT = document.getElementById("vRowTtm"), rQ = document.getElementById("vRowQ");
+        var mode = document.getElementById("vMode");
+        if (!bT || !bQ || !rT || !rQ) return;
+        function set(q) {
+          rT.hidden = q; rQ.hidden = !q;
+          bT.setAttribute("aria-selected", String(!q));
+          bQ.setAttribute("aria-selected", String(q));
+          if (mode) mode.textContent = q ? (mode.dataset.q || "") : (mode.dataset.ttm || "");
+        }
+        bT.addEventListener("click", function () { set(false); });
+        bQ.addEventListener("click", function () { set(true); });
+      })();
+    </script>
   ) : null}
 
 </section>
@@ -188,7 +288,17 @@ const sp = spark(revSeries);
   .spark circle { fill: var(--accent); }
 
   .vitals { margin: 16px 0 0; padding: 12px 0; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }
+  .vHead { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
   .vLbl { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+  .vToggle { display: inline-flex; border: 1px solid var(--rule-strong); border-radius: 999px; padding: 2px; background: var(--surface); gap: 2px; }
+  .vT {
+    font-family: var(--sans); font-size: 11px; font-weight: 600; letter-spacing: 0.04em;
+    color: var(--muted); background: none; border: 0; border-radius: 999px; padding: 3px 11px; cursor: pointer;
+  }
+  .vT:hover { color: var(--ink); }
+  .vT[aria-selected="true"] { background: var(--solid); color: var(--solid-ink); }
+  .vaPos { color: var(--good); }
+  .vaNeg { color: var(--bad); }
   .vRow { display: flex; gap: 30px 40px; flex-wrap: wrap; margin-top: 8px; }
   .v { display: flex; flex-direction: column; }
   .vk { font-size: 12px; color: var(--muted); }
