@@ -124,9 +124,13 @@ const vitals = isBurnStage ? burnVitals : (isReit
 
 const pct = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${(Math.abs(v) * 100).toFixed(dp)}%`);
 
-// Revenue joins the strip, from the same freshest-twelve-months the other vitals read.
+// Revenue joins the strip, from the same freshest-twelve-months the other vitals read, with
+// the same five-year average beneath it as every other vital carries: how the current run rate
+// stands against the business's own recent norm.
 const curRev = topLineRevenue(cur, company) ?? rev;
-if (!isBurnStage && curRev != null) vitals.unshift({ label: "Revenue", display: $(curRev) });
+const avgRev = avgOf((l) => topLineRevenue(l, company));
+if (!isBurnStage && curRev != null)
+  vitals.unshift({ label: "Revenue", display: $(curRev), avgDisplay: avgRev != null ? $(avgRev) : null });
 
 // The latest single quarter, for the reader arriving from the wire: the just-reported quarter
 // against the SAME quarter a year ago (the honest comparison for a seasonal business). Fiscal
@@ -228,7 +232,11 @@ const sp = spark(revSeries);
           <div class="v">
             <span class="vk">{v.concept ? <Term id={v.concept}>{v.label}</Term> : v.label}</span>
             <span class="vv">{v.display != null ? v.display : pct(v.value, v.dp)}</span>
-            {v.avg != null && avgShort ? <span class="va">{avgShort} {pct(v.avg, v.dp)}</span> : null}
+            {v.avg != null && avgShort ? (
+              <span class="va">{avgShort} {pct(v.avg, v.dp)}</span>
+            ) : v.avgDisplay && avgShort ? (
+              <span class="va">{avgShort} {v.avgDisplay}</span>
+            ) : null}
           </div>
         ))}
       </div>
