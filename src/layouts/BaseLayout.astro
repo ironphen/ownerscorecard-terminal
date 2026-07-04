@@ -159,6 +159,11 @@ const jsonLdBlocks = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
 
       * { box-sizing: border-box; }
 
+      /* The hidden attribute always wins. Without this, any element styled display:flex/grid
+         silently overrides the browser's [hidden] { display:none }, and a script toggling
+         .hidden appears to do nothing — a class of bug this guard retires site-wide. */
+      [hidden] { display: none !important; }
+
       html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
 
       body {
