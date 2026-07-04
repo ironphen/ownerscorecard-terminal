@@ -20,6 +20,7 @@ import Valuation from "../../components/Valuation.astro";
 import CompareLink from "../../components/CompareLink.astro";
 import OwnerEarningsBridge from "../../components/OwnerEarningsBridge.astro";
 import DebtMaturity from "../../components/DebtMaturity.astro";
+import Drivers from "../../components/Drivers.astro";
 import LeaseObligations from "../../components/LeaseObligations.astro";
 import Acquisitions from "../../components/Acquisitions.astro";
 import FollowButton from "../../components/FollowButton.astro";
@@ -178,6 +179,7 @@ const pageJsonLd = fund
     <section id="act-record" class="actGroup">
       <ActHeader n="II" title="The record" lede="Ten years of arithmetic, read across the cycle." />
       <div id="sec-record" class="sec"><TenYear company={fund} /></div>
+      <div id="sec-drivers" class="sec"><Drivers company={fund} /></div>
       <div id="sec-recordcharts" class="sec"><RecordCharts company={fund} /></div>
       {!isFin ? <div id="sec-oeq" class="sec"><OwnerEarningsVsIncome company={fund} /></div> : null}
       {!isFin ? <div id="sec-capalloc" class="sec"><CapitalAllocation company={fund} /></div> : null}

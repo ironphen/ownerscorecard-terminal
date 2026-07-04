@@ -88,8 +88,13 @@ function parseContexts(xml, periodEnd) {
     let d;
     while ((d = memRe.exec(block))) dims.push({ axisLocal: local(d[1]), member: d[2].trim(), memberLocal: local(d[2].trim()) });
     // current full fiscal year: a ~annual duration ending on the filing's period end.
-    const current = !!(start && end && days(end, periodEnd) <= 5 && days(start, end) >= 350 && days(start, end) <= 380);
-    out.set(id, { dims, current });
+    const annual = !!(start && end && days(start, end) >= 350 && days(start, end) <= 380);
+    const current = annual && days(end, periodEnd) <= 5;
+    // prior full fiscal year: same filing, the comparative-year contexts (ends ~one fiscal year
+    // before the period end; the 330–400 band absorbs 52/53-week calendars). Powers the
+    // year-over-year figures the MD&A-drivers verification checks against.
+    const prior = annual && !current && days(end, periodEnd) >= 330 && days(end, periodEnd) <= 400;
+    out.set(id, { dims, current, prior });
   }
   return out;
 }
@@ -102,12 +107,13 @@ function parseFacts(xml, tag) {
   return out;
 }
 
-// Single-dimension members on one axis, current year only, aggregates removed.
-function membersOnAxis(facts, contexts, axisLocal, companyOnly) {
+// Single-dimension members on one axis, aggregates removed; `which` picks the fiscal year
+// ("current" or "prior") so the same machinery reads both sides of the comparative disclosure.
+function membersOnAxis(facts, contexts, axisLocal, companyOnly, which = "current") {
   const out = new Map();
   for (const f of facts) {
     const c = contexts.get(f.ctx);
-    if (!c || !c.current || c.dims.length !== 1) continue;
+    if (!c || !c[which] || c.dims.length !== 1) continue;
     const dim = c.dims[0];
     if (dim.axisLocal !== axisLocal) continue;
     if (AGGREGATE.test(dim.memberLocal)) continue;
@@ -117,14 +123,15 @@ function membersOnAxis(facts, contexts, axisLocal, companyOnly) {
   return out;
 }
 
-// Of the candidate revenue concepts, use whichever yields the richest breakdown.
+// Of the candidate revenue concepts, use whichever yields the richest breakdown. The winning
+// tag is returned too, so the prior-year pass reads the SAME concept the current year used.
 function bestRevenue(xml, contexts, axisLocal, companyOnly) {
-  let best = new Map();
+  let best = new Map(), bestTag = null;
   for (const tag of REV_TAGS) {
     const m = membersOnAxis(parseFacts(xml, tag), contexts, axisLocal, companyOnly);
-    if (m.size > best.size) best = m;
+    if (m.size > best.size) { best = m; bestTag = tag; }
   }
-  return best;
+  return { map: best, tag: bestTag };
 }
 
 // The best reconciling breakdown across a list of candidate axis names: each axis tried, subtotals
@@ -133,11 +140,24 @@ function bestRevenue(xml, contexts, axisLocal, companyOnly) {
 function bestAxis(xml, contexts, axisNames, total) {
   let best = null;
   for (const ax of axisNames) {
-    const map = stripSubtotals(bestRevenue(xml, contexts, ax, false), total);
+    const { map: raw, tag } = bestRevenue(xml, contexts, ax, false);
+    const map = stripSubtotals(raw, total);
     const r = reconcile(map, total);
-    if (r && (!best || map.size > best.map.size)) best = { map, axis: ax, ratio: r };
+    if (r && (!best || map.size > best.map.size)) best = { map, axis: ax, ratio: r, tag };
   }
   return best;
+}
+
+// The comparative year's values for the members the current year established, read from the same
+// concept tag on the same axis. Gated exactly like the current year: without a prior consolidated
+// total to reconcile against (or with a breakdown that doesn't reconcile), we attach nothing —
+// wrong prior-year data would corrupt the driver verification it exists to power.
+function priorValues(xml, contexts, axis, tag, currentMap, priorTotal) {
+  if (!priorTotal || !tag) return null;
+  const all = membersOnAxis(parseFacts(xml, tag), contexts, axis, false, "prior");
+  const subset = new Map([...all].filter(([member]) => currentMap.has(member)));
+  if (!reconcile(subset, priorTotal)) return null;
+  return subset;
 }
 
 // Filers often tag the same axis at two granularities at once: Apple's "Products"
@@ -225,13 +245,17 @@ function reconcile(map, total, lo = 0.8, hi = 1.1) {
   return ratio >= lo && ratio <= hi ? ratio : null;
 }
 
-function itemsFrom(map, labels, oiMap) {
+function itemsFrom(map, labels, oiMap, priorMap = null, priorOiMap = null) {
   return [...map.values()]
     .map((v) => ({
       label: labelFor(v.member, v.memberLocal, labels),
       qname: v.member,
       revenue: v.value,
       operatingIncome: oiMap && oiMap.has(v.member) ? oiMap.get(v.member).value : null,
+      // Comparative-year figures, present only when the prior breakdown reconciled. These power
+      // the MD&A-driver verification (the company's narrated change checked against its own filing).
+      ...(priorMap && priorMap.has(v.member) ? { revenuePrior: priorMap.get(v.member).value } : {}),
+      ...(priorOiMap && priorOiMap.has(v.member) ? { operatingIncomePrior: priorOiMap.get(v.member).value } : {}),
     }))
     .sort((a, b) => b.revenue - a.revenue);
 }
@@ -284,19 +308,26 @@ async function forCompany(c) {
     console.log("");
   }
 
-  return buildRecord(xml, contexts, labels, { fy: c.fy, periodEnd: c.periodEnd, sourceUrl: c.sourceUrl, total, oiTotal });
+  // Prior-year consolidated totals from the record we already hold, for reconciling the
+  // comparative-year breakdown. history entries are {fy, lines}; take fy - 1 exactly.
+  const priorEntry = (c.history || []).find((h) => h.fy === c.fy - 1) || null;
+  const priorTotal = priorEntry?.lines?.revenue ?? null;
+  const priorOiTotal = priorEntry?.lines?.operatingIncome ?? null;
+
+  return buildRecord(xml, contexts, labels, { fy: c.fy, periodEnd: c.periodEnd, sourceUrl: c.sourceUrl, total, oiTotal, priorTotal, priorOiTotal });
 }
 
 // Extract the three breakdowns from a parsed instance — shared by the US (10-K) and ADR (20-F) fetchers,
 // since both are EDGAR XBRL once the instance and labels are in hand. We keep every member on each axis
 // except the named roll-up subtotals (handled by AGGREGATE), because some filers report segments with
 // standard geographic members rather than company-defined ones; reconciliation is the real safety net.
-function buildRecord(xml, contexts, labels, { fy, periodEnd, sourceUrl, total, oiTotal }) {
+function buildRecord(xml, contexts, labels, { fy, periodEnd, sourceUrl, total, oiTotal, priorTotal = null, priorOiTotal = null }) {
   if (!total) return null;
   const seg = bestAxis(xml, contexts, SEG_AXES, total);
   const geo = bestAxis(xml, contexts, GEO_AXES, total);
   const prod = bestAxis(xml, contexts, PROD_AXES, total);
   const out = { fy, periodEnd, sourceUrl, revenueTotal: total, operatingIncomeTotal: oiTotal };
+  if (priorTotal != null) out.revenueTotalPrior = priorTotal;
   let any = false;
 
   if (seg) {
@@ -305,11 +336,26 @@ function buildRecord(xml, contexts, labels, { fy, periodEnd, sourceUrl, total, o
     const segOI = membersOnAxis(oiFacts, contexts, seg.axis, false);
     const oiSum = [...segOI.values()].reduce((a, b) => a + Math.abs(b.value), 0);
     const oiOk = segOI.size >= Math.ceil(seg.map.size / 2) && oiTotal != null && oiSum > 0 && oiSum <= Math.abs(oiTotal) * 3;
-    out.bySegment = { reconcile: +seg.ratio.toFixed(3), hasOperatingIncome: !!oiOk, items: itemsFrom(seg.map, labels, oiOk ? segOI : null) };
+    const segPrior = priorValues(xml, contexts, seg.axis, seg.tag, seg.map, priorTotal);
+    // Prior-year OI, held to the same coverage discipline as the current year's OI split.
+    let segOIPrior = null;
+    if (oiOk && priorOiTotal != null) {
+      const p = membersOnAxis(oiFacts, contexts, seg.axis, false, "prior");
+      if (p.size >= Math.ceil(seg.map.size / 2)) segOIPrior = p;
+    }
+    out.bySegment = { reconcile: +seg.ratio.toFixed(3), hasOperatingIncome: !!oiOk, items: itemsFrom(seg.map, labels, oiOk ? segOI : null, segPrior, oiOk ? segOIPrior : null) };
     any = true;
   }
-  if (geo) { out.byGeography = { reconcile: +geo.ratio.toFixed(3), items: itemsFrom(geo.map, labels, null) }; any = true; }
-  if (prod) { out.byProduct = { reconcile: +prod.ratio.toFixed(3), items: itemsFrom(prod.map, labels, null) }; any = true; }
+  if (geo) {
+    const geoPrior = priorValues(xml, contexts, geo.axis, geo.tag, geo.map, priorTotal);
+    out.byGeography = { reconcile: +geo.ratio.toFixed(3), items: itemsFrom(geo.map, labels, null, geoPrior) };
+    any = true;
+  }
+  if (prod) {
+    const prodPrior = priorValues(xml, contexts, prod.axis, prod.tag, prod.map, priorTotal);
+    out.byProduct = { reconcile: +prod.ratio.toFixed(3), items: itemsFrom(prod.map, labels, null, prodPrior) };
+    any = true;
+  }
   return any ? out : null;
 }
 

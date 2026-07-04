@@ -15,6 +15,10 @@ on:
         description: "Run only the segment fetch (skip fundamentals/filings)"
         type: boolean
         default: false
+      drivers_only:
+        description: "Run only the MD&A-drivers extraction (needs segments.json priors; run segments first)"
+        type: boolean
+        default: false
       filings_only:
         description: "Run only the filing-language fetch (skip fundamentals/segments)"
         type: boolean
@@ -83,7 +87,7 @@ jobs:
           UNIVERSE_DRYRUN: ${{ github.event.inputs.rebuild_universe == 'dryrun' && '1' || '' }}
           SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT }}
       - run: npm run fetch:fundamentals
-        if: ${{ github.event.inputs.segments_only != 'true' && github.event.inputs.filings_only != 'true' && github.event.inputs.rebuild_universe != 'dryrun' }}
+        if: ${{ github.event.inputs.segments_only != 'true' && github.event.inputs.filings_only != 'true' && github.event.inputs.drivers_only != 'true' && github.event.inputs.rebuild_universe != 'dryrun' }}
         env:
           SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT }}
           DEBT_DEBUG: ${{ github.event.inputs.debug }}
@@ -103,7 +107,7 @@ jobs:
       # over the prior file), so a fresh attempt is safe; up to three before giving up. Still
       # continue-on-error, so even three failures leave the prior good data and never block the refresh.
       - name: Run fetch:filings
-        if: ${{ github.event.inputs.segments_only != 'true' && github.event.inputs.fundamentals_only != 'true' && github.event.schedule != '0 7 * * 1' }}
+        if: ${{ github.event.inputs.segments_only != 'true' && github.event.inputs.fundamentals_only != 'true' && github.event.inputs.drivers_only != 'true' && github.event.schedule != '0 7 * * 1' }}
         continue-on-error: true # qualitative layer; never fail the fundamentals refresh
         run: |
           for i in 1 2 3; do
@@ -118,7 +122,7 @@ jobs:
           ONLY_TICKERS: ${{ github.event.inputs.tickers }} # limit the filing-language run (the rest carry over)
           POOL: ${{ github.event.inputs.filings_pool }} # us | adr | both (blank = both); the other pool carries over
       - run: npm run fetch:segments
-        if: ${{ github.event.inputs.filings_only != 'true' && github.event.inputs.fundamentals_only != 'true' && github.event.schedule != '0 7 * * 1' }}
+        if: ${{ github.event.inputs.filings_only != 'true' && github.event.inputs.fundamentals_only != 'true' && github.event.inputs.drivers_only != 'true' && github.event.schedule != '0 7 * * 1' }}
         continue-on-error: true # where-the-money-comes-from layer; never fail the refresh
         env:
           SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT }}
@@ -146,6 +150,17 @@ jobs:
           SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT }}
           ONLY_ADR: ${{ github.event.inputs.tickers }}
           SEG_DEBUG: ${{ github.event.inputs.debug }}
+      # MD&A drivers: the company's own cause sentences, anchored to the record and its segments
+      # and checked against the filed figures (scripts/fetchDrivers.mjs). Needs the segment priors
+      # the fetch above writes, so it runs after; annual-filing cadence, so the weekly cron skips
+      # it. Non-fatal: a drivers hiccup never blocks the refresh, and a company with nothing
+      # verified simply carries no section.
+      - run: npm run fetch:drivers
+        if: ${{ github.event.inputs.filings_only != 'true' && github.event.inputs.fundamentals_only != 'true' && github.event.inputs.segments_only != 'true' && github.event.schedule != '0 7 * * 1' }}
+        continue-on-error: true
+        env:
+          SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT }}
+          ONLY_TICKERS: ${{ github.event.inputs.tickers }}
       # Data-quality gate: runs the same lib functions the pages do. A systemic coverage
       # cliff (a taxonomy change that drops a whole data layer) fails this step and blocks
       # the commit below, so a broadly-broken refresh is never shipped. Per-company issues
@@ -177,6 +192,7 @@ jobs:
           # Stage every data file, the ADR pair guarded since it may not exist yet, then commit only
           # if anything actually staged — so a new ADR file is captured and a no-op run stays quiet.
           git add src/data/fundamentals.json src/data/language.json src/data/segments.json src/data/universe.json
+          git add src/data/drivers.json 2>/dev/null || true
           git add src/data/universe.adr.json src/data/fundamentals.adr.json 2>/dev/null || true
           if ! git diff --cached --quiet; then
             git config user.name "github-actions[bot]"
