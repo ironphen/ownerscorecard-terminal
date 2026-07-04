@@ -54,14 +54,48 @@ async function fromTreasury() {
   throw new Error("no Treasury 10-year value");
 }
 
+// Foreign-exchange reference rates, for the ADR pages only: they translate a US ADR quote (the
+// price the reader actually holds) into the filing currency the record is stated in. Reference
+// FX is central-bank-grade public data, the same standing as the Treasury yield above — not a
+// stock quote. Stored as USD per one unit of each currency the ADR and Japan pools file in.
+async function fetchFx() {
+  const res = await fetch("https://open.er-api.com/v6/latest/USD", { headers: { "user-agent": UA }, signal: AbortSignal.timeout(30_000) });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const data = await res.json();
+  if (data?.result !== "success" || !data.rates) throw new Error("unexpected FX payload");
+  // The set we actually need: every filing currency in the ADR pool, plus JPY for the Japan pool.
+  const needed = new Set(["JPY"]);
+  try {
+    const adr = JSON.parse(fs.readFileSync(path.join(process.cwd(), "src", "data", "fundamentals.adr.json"), "utf8"));
+    for (const c of adr.companies || []) if (c.currency && c.currency !== "USD") needed.add(c.currency);
+  } catch {}
+  const fx = {};
+  for (const ccy of [...needed].sort()) {
+    const perUsd = data.rates[ccy];
+    if (perUsd > 0) fx[ccy] = +(1 / perUsd).toFixed(6); // USD per one unit
+  }
+  const fxAsOf = new Date(data.time_last_update_unix ? data.time_last_update_unix * 1000 : Date.now()).toISOString().slice(0, 10);
+  return { fx, fxAsOf, fxSource: "open.er-api.com daily reference rates" };
+}
+
 async function main() {
   let rec = null;
   for (const fn of [fromFred, fromTreasury]) {
     try { rec = await fn(); break; } catch (e) { console.warn(`  ! ${fn.name}: ${e.message}`); }
   }
-  if (!rec) { console.error("⚠️  Could not fetch the 10-year yield; leaving the committed default in place."); return; }
-  fs.writeFileSync(OUT, JSON.stringify(rec, null, 2) + "\n");
-  console.log(`✅ 10-yr Treasury ${rec.tenYear}% as of ${rec.asOf} (${rec.source})`);
+  // Each leg fails softly and independently: a broken FX source never loses the yield, and vice
+  // versa — the previous file's values carry over for whichever leg didn't fetch.
+  let prior = {};
+  try { prior = JSON.parse(fs.readFileSync(OUT, "utf8")); } catch {}
+  let fxRec = null;
+  try { fxRec = await fetchFx(); } catch (e) { console.warn(`  ! fetchFx: ${e.message}`); }
+  const out = {
+    ...(rec || { tenYear: prior.tenYear, asOf: prior.asOf, source: prior.source }),
+    ...(fxRec || (prior.fx ? { fx: prior.fx, fxAsOf: prior.fxAsOf, fxSource: prior.fxSource } : {})),
+  };
+  if (out.tenYear == null && !out.fx) { console.error("⚠️  Nothing fetched and nothing prior; leaving file untouched."); return; }
+  fs.writeFileSync(OUT, JSON.stringify(out, null, 2) + "\n");
+  console.log(`✅ 10-yr Treasury ${out.tenYear}% as of ${out.asOf}${out.fx ? ` · FX ${Object.keys(out.fx).length} currencies as of ${out.fxAsOf}` : ""}`);
 }
 
 main().catch((e) => { console.error(`rates fetch failed softly: ${e.message}`); });

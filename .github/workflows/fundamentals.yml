@@ -150,6 +150,15 @@ jobs:
           SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT }}
           ONLY_ADR: ${{ github.event.inputs.tickers }}
           SEG_DEBUG: ${{ github.event.inputs.debug }}
+      # ADS ratios (how many ordinary shares one US-listed ADS represents), parsed verbatim from
+      # each 20-F/40-F cover. They let the valuation tool accept the US dollar quote a reader
+      # actually holds. Ratios essentially never change, so monthly is generous; non-fatal.
+      - run: npm run fetch:adr:ratios
+        if: ${{ (github.event.inputs.fetch_adr == 'true' || github.event.schedule == '0 8 1 * *') }}
+        continue-on-error: true
+        env:
+          SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT }}
+          ONLY_ADR: ${{ github.event.inputs.tickers }}
       # MD&A drivers: the company's own cause sentences, anchored to the record and its segments
       # and checked against the filed figures (scripts/fetchDrivers.mjs). Needs the segment priors
       # the fetch above writes, so it runs after; annual-filing cadence, so the weekly cron skips
@@ -192,7 +201,7 @@ jobs:
           # Stage every data file, the ADR pair guarded since it may not exist yet, then commit only
           # if anything actually staged — so a new ADR file is captured and a no-op run stays quiet.
           git add src/data/fundamentals.json src/data/language.json src/data/segments.json src/data/universe.json
-          git add src/data/drivers.json 2>/dev/null || true
+          git add src/data/drivers.json src/data/adrRatios.json 2>/dev/null || true
           git add src/data/universe.adr.json src/data/fundamentals.adr.json 2>/dev/null || true
           if ! git diff --cached --quiet; then
             git config user.name "github-actions[bot]"

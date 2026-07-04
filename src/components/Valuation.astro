@@ -12,6 +12,7 @@ import { ffoPerShare } from "../lib/reits.mjs";
 import { earningsPower } from "../lib/normalize.mjs";
 import { trendGrowth } from "../lib/valuationInputs.mjs";
 import rates from "../data/rates.json";
+import adrRatios from "../data/adrRatios.json";
 import DeliveredGrowth from "./DeliveredGrowth.astro";
 import Sparkline from "./Sparkline.astro";
 
@@ -28,26 +29,54 @@ const sparkWin = (vals, maxSpan, latest) => {
 };
 
 const { company } = Astro.props;
+// ---- ADR basis conversion -------------------------------------------------------------------
+// A foreign filer reports in its home currency on its ordinary-share count, but the US reader
+// holds an ADS quoted in dollars. When we know both bridge terms — the ADS ratio parsed verbatim
+// from the filer's own 20-F/40-F cover (adrRatios.json) and the daily reference FX rate
+// (rates.json) — we convert ONCE, here: every monetary figure × FX, the share count ÷ the ADS
+// ratio. Everything downstream is then USD per ADS, the exact basis of the quote the reader
+// types, and no other line of this tool needs to know the company is foreign. When either term
+// is missing the tool falls back to warn mode and asks for the home-market ordinary price.
+const isADRRaw = company.market === "ADR";
+const ratioRec = isADRRaw ? adrRatios?.companies?.[String(company.ticker || "").toUpperCase()] : null;
+const fxUsd = !isADRRaw ? null : (company.currency === "USD" ? 1 : rates?.fx?.[company.currency] ?? null);
+const adrAuto = !!(isADRRaw && ratioRec && ratioRec.ratio > 0 && fxUsd != null);
+const SHARE_KEYS = new Set(["sharesDiluted", "repurchasedShares"]);
+const scaleLines = (o) => {
+  if (!o) return o;
+  const out = {};
+  for (const [k, v] of Object.entries(o)) out[k] = typeof v === "number" ? (SHARE_KEYS.has(k) ? v / ratioRec.ratio : v * fxUsd) : v;
+  return out;
+};
+const co = adrAuto
+  ? { ...company, currency: "USD",
+      lines: scaleLines(company.lines),
+      ttm: company.ttm ? { ...company.ttm, lines: scaleLines(company.ttm.lines) } : company.ttm,
+      history: (company.history || []).map((h) => ({ ...h, lines: scaleLines(h.lines) })) }
+  : company;
+// Display terms for the basis note (the original filing currency; co.currency is USD after conversion).
+const homeCcy = company.currency || "USD";
+const adsBasis = ratioRec?.basis ?? null;
+const adsQuote = ratioRec?.quote || null;
+const fxDisp = fxUsd != null && homeCcy !== "USD" ? `${homeCcy} 1 = $${fxUsd.toFixed(homeCcy === "JPY" || homeCcy === "KRW" ? 4 : 3)}` : null;
+const fxAsOfDisp = rates?.fxAsOf || null;
+// ----------------------------------------------------------------------------------------------
 // Currency-aware: the reader brings the price (in the listing currency), and the tool does
 // the math in their browser. The symbol travels into each interactive box via data-sym.
-const ccy = company.currency || "USD";
+const ccy = co.currency || "USD";
 const sym = currencySymbol(ccy);
 const $ = (v) => fmtMoney(v, ccy);
-const { sector, overlays } = classify(company);
+const { sector, overlays } = classify(co);
 // A lender, an insurer and a REIT are not read on an owner-earnings DCF; each routes to
 // its own balance-sheet or FFO lens. Asset managers, exchanges, brokers and health plans
 // are capital-light cash generators, so they keep the owner-earnings reverse-DCF, the
 // right lens for a business whose value is the cash it throws off, not its book.
-const fk = financialKind(company);
+const fk = financialKind(co);
 const isInsurer = fk === "insurer";
 const offModel = fk === "bank" || fk === "insurer" || fk === "reit";
-// An ADR (a foreign 20-F/40-F filer) reports its financials in its home currency and on its
-// ordinary-share count, undivided by the ADR ratio. The reader-supplied price is the only input
-// the tool can't currency-convert (we carry no FX rate or ADR ratio, by the no-market-data rule),
-// so a US ADR quote in dollars would not reconcile with home-currency owner earnings and an
-// ordinary-share count — the multiple would be off by the exchange rate times the ADR ratio. We
-// warn loudly and tell the reader the basis to enter on, rather than silently invert the read.
-const isADR = company.market === "ADR";
+// ADR fallback: when the ADS ratio or the FX rate is missing, the conversion above didn't run,
+// and the only honest instruction is the old one — enter the home-market ordinary-share price.
+const isADR = isADRRaw && !adrAuto;
 const cyclical = overlays.some((o) => o.key === "cyclical");
 const median = (xs) => { if (!xs.length) return null; const s = [...xs].sort((a, b) => a - b); const m = Math.floor(s.length / 2); return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
 // A fiscal year as a two-digit tick (’25), and the inclusive span of a delivered-growth window —
@@ -59,13 +88,13 @@ const winRangeYrs = (pairs, n = 6) => { const w = (pairs || []).slice(-n); retur
 // shared libs — lib/valuationInputs.mjs and lib/reverseDcf.mjs — so this page and the head-to-head
 // compare view read a business through identical arithmetic. trendGrowth is imported above.
 
-const L = company.ttm?.lines || company.lines || {};
+const L = co.ttm?.lines || co.lines || {};
 // Share count turns the price into a market cap. We fall back from the TTM block to the latest
 // annual, but some filers (Up-C structures, multiple share classes — Planet Fitness, Shopify)
 // tag their shares where the pull misses them, leaving it null. Rather than withhold the whole
 // tool over that one field, we run the owner-earnings mode anyway and let the reader bring the
 // share count, the same way they bring the price.
-const shares = L.sharesDiluted ?? company.lines?.sharesDiluted ?? null;
+const shares = L.sharesDiluted ?? co.lines?.sharesDiluted ?? null;
 const haveShares = shares != null && shares > 0;
 const cfo = L.cashFromOps, capex = L.capex;
 const ownerEarnings = cfo != null && capex != null ? cfo - Math.abs(capex) : null;
@@ -76,26 +105,26 @@ const netDebt = (L.totalDebt || 0) - (liquidAssets(L) || 0);
 
 // Graham's price-gate inputs: 3-year average earnings (his method, to avoid paying
 // for a peak) and current book value, both per share.
-const niH = (company.history || []).filter((h) => h?.lines?.netIncome != null).slice(-3).map((h) => h.lines.netIncome);
+const niH = (co.history || []).filter((h) => h?.lines?.netIncome != null).slice(-3).map((h) => h.lines.netIncome);
 const eps3 = niH.length >= 2 && shares ? niH.reduce((a, b) => a + b, 0) / niH.length / shares : null;
 const bvps = L.stockholdersEquity != null && shares ? L.stockholdersEquity / shares : null;
 
 // An honest base, on demand: a 3-year average of owner earnings (Graham's normalization,
 // to avoid anchoring on one noisy year) and the latest stock comp (so it can be treated as
 // the expense Munger insisted it is). Both are toggles in the tool.
-const oeHist = (company.history || []).map((h) => (h.lines.cashFromOps != null && h.lines.capex != null ? h.lines.cashFromOps - Math.abs(h.lines.capex) : null));
+const oeHist = (co.history || []).map((h) => (h.lines.cashFromOps != null && h.lines.capex != null ? h.lines.cashFromOps - Math.abs(h.lines.capex) : null));
 const oe3vals = [...oeHist].reverse().filter((v) => v != null).slice(0, 3);
 const oe3 = oe3vals.length >= 2 ? oe3vals.reduce((a, b) => a + b, 0) / oe3vals.length : ownerEarnings;
 // The normalized base, Graham's through-cycle figure: the average owner-earnings margin of the
 // record applied to today's revenue. Falls back to a 3-year average where the record is too short.
-const ep = earningsPower(company);
+const ep = earningsPower(co);
 const oeNormalized = ep?.normOE ?? oe3;
 // Graham's through-cycle (peak-vs-trough) read, surfaced here at the point of valuation rather than in
 // a separate "earnings power" section: where the latest year's owner-earnings margin sits against its
 // own through-cycle median, so a price typed on a peak year is flagged as one. Only when the
 // normalization is stable (a positive, meaningful through-cycle figure).
 const cycleRead = ep && ep.normOE != null && ep.cyclePos && !ep.normUnstable && !ep.structuralBreak ? ep.cyclePos : null;
-const sbcLatest = L.stockBasedComp ?? company.lines?.stockBasedComp ?? 0;
+const sbcLatest = L.stockBasedComp ?? co.lines?.stockBasedComp ?? 0;
 // Steady-state owner earnings: Buffett's definition subtracts maintenance capex, not total
 // capex. For a business in a build-out (the AI capex wave most of all) total capex understates
 // the cash it would throw off at rest, so we offer a base that swaps capex for depreciation,
@@ -104,9 +133,9 @@ const dep = L.depreciation;
 // Maintenance capex (Buffett's owner earnings base) instead of total: the same per-company estimate
 // the owner-earnings bridge uses, so the steady-state lens here and the bridge never disagree. It
 // carves growth capex out only for a business spending above depreciation while it grows.
-const maintCx = maintenanceCapex(company);
+const maintCx = maintenanceCapex(co);
 const ownerEarningsMaint = cfo != null && maintCx != null ? cfo - maintCx : null;
-const oeHistMaint = (company.history || []).map((h) => (h.lines.cashFromOps != null && h.lines.depreciation != null ? h.lines.cashFromOps - h.lines.depreciation : null));
+const oeHistMaint = (co.history || []).map((h) => (h.lines.cashFromOps != null && h.lines.depreciation != null ? h.lines.cashFromOps - h.lines.depreciation : null));
 const oem3vals = [...oeHistMaint].reverse().filter((v) => v != null).slice(0, 3);
 const oe3Maint = oem3vals.length >= 2 ? oem3vals.reduce((a, b) => a + b, 0) / oem3vals.length : ownerEarningsMaint;
 // Show the steady-state toggle only where it actually differs — a real builder whose growth capex
@@ -135,7 +164,7 @@ const runnable = (ownerEarnings != null && ownerEarnings > 0) || defaultMaint ||
 // by the return it earns on that book. Same math for both; only the wording differs,
 // since an insurer's cycle is underwriting, not credit. Normalize over the record.
 const isBank = fk === "bank" || fk === "insurer";
-const isMReit = financialSubtype(company) === "mortgage-reit";
+const isMReit = financialSubtype(co) === "mortgage-reit";
 const finKind = isInsurer ? "insurer" : isMReit ? "mortgage REIT" : "bank";
 const bankRisk = isInsurer
   ? "an underwriting cycle, a reserve shortfall or a bad year on the float"
@@ -146,13 +175,13 @@ const tEq = tangibleEquity(L);
 const tbvps = tEq != null && shares ? tEq / shares : null;
 const bvpsB = L.stockholdersEquity != null && shares ? L.stockholdersEquity / shares : null;
 const epsB = L.netIncome != null && shares ? L.netIncome / shares : null;
-const rotceH = (company.history || [])
+const rotceH = (co.history || [])
   .map((h) => { const t = tangibleEquity(h.lines); return h.lines.netIncome != null && t && t > 0 ? h.lines.netIncome / t : null; })
   .filter((v) => v != null);
 const rotceMed = rotceH.length >= 3 ? median(rotceH) : null;
 const bankRunnable = isBank && tbvps != null && tbvps > 0 && rotceMed != null;
 // Delivered tangible-book-per-share growth, the record anchor for the bank/insurer growth dial.
-const tbvpsPairs = (company.history || [])
+const tbvpsPairs = (co.history || [])
   .map((h) => { const t = tangibleEquity(h.lines); const s = h.lines.sharesDiluted; return { fy: h.fy, v: t != null && s ? t / s : null }; })
   .filter((p) => p.v != null);
 const tbvpsH = tbvpsPairs.map((p) => p.v);
@@ -165,7 +194,7 @@ const tbvRange = winRangeYrs(tbvpsPairs);
 const isReit = fk === "reit";
 const ffops = ffoPerShare(L);
 const dpsReit = L.dividendsPaid != null && shares ? Math.abs(L.dividendsPaid) / shares : null;
-const ffopsPairs = (company.history || []).map((h) => ({ fy: h.fy, v: ffoPerShare(h.lines) })).filter((p) => p.v != null);
+const ffopsPairs = (co.history || []).map((h) => ({ fy: h.fy, v: ffoPerShare(h.lines) })).filter((p) => p.v != null);
 const ffopsH = ffopsPairs.map((p) => p.v);
 const ffoGrowthRaw = trendGrowth(ffopsH.slice(-6));
 const ffoWin = sparkWin(ffopsH, 5, ffops);
@@ -177,10 +206,10 @@ const reitRunnable = isReit && ffops != null && ffops > 0 && shares != null && s
 // the question to the future profitability the price demands. Inputs: revenue and its
 // recent growth, the only honest base when there are no earnings yet.
 const rev = L.revenue;
-const revPairs = (company.history || []).map((h) => ({ fy: h.fy, v: h.lines.revenue })).filter((p) => p.v != null);
+const revPairs = (co.history || []).map((h) => ({ fy: h.fy, v: h.lines.revenue })).filter((p) => p.v != null);
 const revH = revPairs.map((p) => p.v);
 const gRevRaw = trendGrowth(revH.slice(-6));
-const revWin = sparkWin(revH, 5, company.ttm?.lines?.revenue);
+const revWin = sparkWin(revH, 5, co.ttm?.lines?.revenue);
 const revRange = winRangeYrs(revPairs);
 const negMode = !runnable && !offModel && rev != null && rev > 0 && shares != null && shares > 0;
 const gRevPct = gRevRaw == null ? 15 : Math.max(0, Math.min(45, Math.round((gRevRaw * 100) / 5) * 5));
@@ -189,17 +218,17 @@ const oeMarginNow = ownerEarnings != null && rev ? ownerEarnings / rev : null;
 // profitable business whose capital spending currently outruns its operating cash (a
 // build-out, common to utilities, railroads, telecoms). The tool must not call the second
 // a "loss"; net income sets which framing is honest.
-const niNow = L.netIncome ?? company.lines?.netIncome ?? null;
+const niNow = L.netIncome ?? co.lines?.netIncome ?? null;
 const profitableNeg = niNow != null && niNow > 0;
 
-const report = moatReport(company);
+const report = moatReport(co);
 const oeGrowth = report?.facts.find((f) => f.label === "Owner earnings growth")?.value ?? null;
 // Delivered owner-earnings growth over a recent 5-year window, beside the full record: a
 // full-record CAGR can smooth over a recent acceleration or fade, so the shorter read sits next
 // to it. Same maintenance-based owner-earnings series (ownerEarningsAbs) and the same
 // 2-year-averaged-endpoint method the durability card's figure uses, read over each window, so the
 // two compare cleanly. Only shown when the record runs past five years, else it just repeats it.
-const oeAbsHist = (company.history || [])
+const oeAbsHist = (co.history || [])
   .filter((h) => h?.lines?.revenue != null)
   .map((h) => ({ fy: h.fy, v: ownerEarningsAbs(h.lines, company) }))
   .filter((p) => p.v != null);
@@ -249,7 +278,7 @@ const dLabel = oeGrowth != null
 const dValue = oeGrowth != null ? `${oeGrowth.replace("/yr", "")}/yr`
   : recentOe != null ? gFmt(recentOe.g)
   : "—";
-const name = company.name || company.ticker;
+const name = co.name || co.ticker;
 const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.abs(v * 100).toFixed(dp)}%`);
 // The risk-free anchor for Graham's bond test: the 10-year Treasury, fetched on the daily refresh
 // (public-domain government data), prefilled as an editable default. Dated, so it never reads as live.
@@ -263,12 +292,26 @@ const bondAsOf = rates?.asOf ? new Date(rates.asOf).toLocaleDateString("en-US", 
     <span class="tag">{bankRunnable ? "price / tangible book" : reitRunnable ? "price / FFO" : "reverse-DCF"}</span>
   </div>
 
-  {isADR ? (
+  {adrAuto ? (
+    <p class="adrWarn adrBasis">
+      <b>Enter the US price, in dollars</b> — the NYSE/Nasdaq quote you actually hold.
+      {adsBasis === "ads" ? (
+        <> Per the filing's own cover, “{adsQuote}”; {name} reports in {homeCcy}, so every figure in
+        this tool is stated per ADS{fxDisp ? <> and translated at {fxDisp} ({fxAsOfDisp}, reference rate)</> : null} — your
+        dollar quote reconciles exactly.</>
+      ) : (
+        <> {name}'s US listing is the ordinary share itself{fxDisp ? <>; figures in this tool are translated
+        at {fxDisp} ({fxAsOfDisp}, reference rate) so your dollar quote reconciles exactly</> : null}.</>
+      )}
+      {" "}The record tables elsewhere on this page remain as filed{homeCcy === "USD" ? "" : `, in ${homeCcy}`}.
+    </p>
+  ) : isADR ? (
     <p class="adrWarn">
       <b>Enter the home-market price, not the US ADR quote.</b> {name} reports in <b>{ccy}</b>,
       and every figure here — owner earnings, book value, the share count — is on that
       {ccy === "USD" ? " ordinary-share" : ` ${ccy}, ordinary-share`} basis. Enter the price on the
       same basis: the local-exchange quote per ordinary share{ccy === "USD" ? "" : ` in ${ccy}`}.
+      {ccy === "GBP" ? " Mind the convention: London quotes print in pence — 364.30p is £3.643; enter pounds." : ""}
       A US ADR price in dollars bundles the ADR-to-ordinary ratio{ccy === "USD" ? "" : " and the exchange rate"},
       so it will not reconcile with these figures and would throw the multiple off.
     </p>

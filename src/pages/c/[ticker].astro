@@ -37,6 +37,7 @@ import adrFundamentals from "../../data/fundamentals.adr.json";
 import { getCollection } from "astro:content";
 import { ORG } from "../../lib/seo.mjs";
 import { dataAsOf } from "../../lib/freshness.mjs";
+import adrRatios from "../../data/adrRatios.json";
 
 // ADRs (foreign 20-F filers) carry US-style tickers and the same record shape, so they get the same
 // /c/[ticker] page as a US company; only the data source and currency differ. The two pools are
@@ -136,7 +137,18 @@ const pageJsonLd = fund
     ) : null}
     {bizLine ? <p class="lede">{bizLine}</p> : null}
     {brief.length ? <div class="leadMore">{brief.map((s) => <p>{s}</p>)}</div> : null}
-    {fund ? <div class="meta">Latest filing: FY{fund.fy} {fund.form} <FollowButton ticker={ticker} /></div> : null}
+    {fund ? (
+      <div class="meta">
+        Latest filing: FY{fund.fy} {fund.form}
+        {fund.market === "ADR" ? (
+          <span class="adrBasisMeta">
+            {fund.currency && fund.currency !== "USD" ? ` · figures as filed, in ${fund.currency}` : ""}
+            {((r) => (r?.basis === "ads" && r.ratio ? ` · 1 ADS = ${r.ratio} ordinary share${r.ratio === 1 ? "" : "s"}` : r?.basis === "direct" ? " · US listing is the ordinary share" : ""))(adrRatios?.companies?.[ticker])}
+          </span>
+        ) : null}
+        <FollowButton ticker={ticker} />
+      </div>
+    ) : null}
     {!fund && related.length ? <p class="lede">Not yet in the catalog. The Notes below discuss it.</p> : null}
     {fund && related.length ? (
       <p class="noteFlag">
