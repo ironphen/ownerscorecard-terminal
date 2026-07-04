@@ -8,6 +8,11 @@ on:
   schedule:
     - cron: "10 14 * * 1-5" # weekdays, 14:10 UTC
   workflow_dispatch:
+    inputs:
+      window_days:
+        description: "Verification knob: look back this many days and send now regardless of frequency (scheduled runs never use this)"
+        required: false
+        default: ""
 
 jobs:
   send:
@@ -23,4 +28,5 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           WIRE_FROM: ${{ secrets.WIRE_FROM }}
+          WIRE_WINDOW_DAYS: ${{ inputs.window_days }}
         run: node scripts/sendWire.mjs

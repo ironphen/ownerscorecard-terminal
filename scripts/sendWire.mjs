@@ -36,8 +36,12 @@ const cutoff = (days) => {
   return d.toISOString().slice(0, 10);
 };
 // Daily window reaches back over the weekend on Mondays so Friday-evening filings aren't lost.
-const dailySince = cutoff(isMonday ? 3 : 1);
-const weeklySince = cutoff(7);
+// WIRE_WINDOW_DAYS is the manual verification knob (workflow_dispatch only): widen the window
+// and send now regardless of the subscriber's frequency, so a live test doesn't depend on what
+// happened to be filed this morning. Scheduled runs never set it.
+const OVERRIDE_DAYS = parseInt(process.env.WIRE_WINDOW_DAYS || "", 10) || 0;
+const dailySince = cutoff(OVERRIDE_DAYS || (isMonday ? 3 : 1));
+const weeklySince = cutoff(OVERRIDE_DAYS || 7);
 
 async function sb(path) {
   const r = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
@@ -68,7 +72,7 @@ for (const sub of subs) {
   if (!email) { skipped++; continue; }
 
   const weekly = sub.frequency !== "daily";
-  if (weekly && !isMonday) { skipped++; continue; }
+  if (weekly && !isMonday && !OVERRIDE_DAYS) { skipped++; continue; }
   const since = weekly ? weeklySince : dailySince;
 
   const mine = items.filter((it) => {
