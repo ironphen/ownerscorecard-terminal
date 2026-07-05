@@ -35,10 +35,10 @@ const THROTTLE_MS = Number(process.env.EDINET_THROTTLE_MS || 350);
 // ~3.3 years, enough to reach each company's FY-3 annual report, whose cash-flow statement
 // carries FY-3 and FY-4 capex. With the latest filing (FY, FY-1) and the FY-1 and FY-2 reports
 // in between, that fills the whole five-year window the summary covers for everything else.
-const LOOKBACK_DAYS = Number(process.env.EDINET_LOOKBACK_DAYS || 2300);
+const LOOKBACK_DAYS = Number(process.env.EDINET_LOOKBACK_DAYS || 3600);
 // How many older annual reports to pull per company for the deeper capex history (each carries
 // two years), beyond the latest. Three covers the five-year window.
-const CAPEX_BACKFILL = Number(process.env.EDINET_CAPEX_BACKFILL || 3);
+const CAPEX_BACKFILL = Number(process.env.EDINET_CAPEX_BACKFILL || 8);
 const DEBUG = (process.env.EDINET_DEBUG || "").split(",").map((s) => s.trim()).filter(Boolean);
 // Limit the run to a few tickers (comma-separated) for a fast, cheap test; blank = all.
 const ONLY_JP = (process.env.ONLY_JP || "").split(",").map((s) => s.trim()).filter(Boolean);
@@ -373,6 +373,12 @@ const CF_KEYS = [
   ["depreciation", "depreciation", false],
   ["dividendsPaid", "dividendsPaid", false],
   ["buybacks", "buybacks", true],
+  // The Graham depth set (2026-07): per-year earning-power and coverage lines the five-year
+  // summary omits, so return on capital, interest coverage, and the margin record read
+  // across the full ten years, not the recent five.
+  ["operatingIncome", "operatingIncome", false],
+  ["ordinaryIncome", "ordinaryIncome", false],
+  ["interestExpense", "interestExpense", false],
 ];
 // Balance-sheet working-capital items the five-year summary also omits, backfilled from the same
 // older filings (each carries the current and prior year as instant balances). With these the
@@ -384,9 +390,57 @@ const BS_KEYS = [
   ["accountsPayable", "accountsPayable"],
   ["currentAssets", "currentAssets"],
   ["currentLiabilities", "currentLiabilities"],
+  ["cashAndEquivalents", "cashAndEquivalents"],
+  ["goodwill", "goodwill"],
+  ["stockholdersEquity", "stockholdersEquity"],
+  ["totalAssets", "totalAssets"],
 ];
-const DEEPEN_FIELDS = [...CF_KEYS, ...BS_KEYS].map(([f]) => f);
-const CF_VERSION = 3; // bump when CF_KEYS or BS_KEYS changes, to rebuild the per-filing cache
+// totalDebt is computed (a sum over borrowing families, by accounting standard), so it rides
+// the same per-report walk as a special case rather than an INST concept.
+const DEEPEN_FIELDS = [...CF_KEYS, ...BS_KEYS].map(([f]) => f).concat(["totalDebt"]);
+const CF_VERSION = 4; // bump when CF_KEYS or BS_KEYS changes, to rebuild the per-filing cache
+
+// Ten years, Graham's window, from two filings: the latest report's five-year summary gives
+// FY-4..FY, and the report filed about five years earlier carries its own summary for
+// FY-9..FY-5. Restatements favor the newer filing — an older report never overwrites a year
+// the latest already carries. Extracted lines are cached per docId (cache.hist), cleared on
+// CF_VERSION bumps with the rest, so an unchanged old filing is parsed once ever.
+async function deepenHistory(rec, reports, cache) {
+  if (!reports || reports.length < 2) return 0;
+  const have = new Set(rec.history.map((h) => h.fy));
+  const oldest = Math.min(...have);
+  const dated = reports
+    .map((r) => ({ ...r, rfy: r.periodEnd ? Number(r.periodEnd.slice(0, 4)) : null }))
+    .filter((r) => r.rfy != null && r.rfy < oldest && r.rfy >= oldest - 5);
+  if (!dated.length) return 0;
+  // The candidate reaching deepest without leaving a gap: its summary covers rfy-4..rfy, so
+  // any rfy >= oldest-5 connects; the smallest such rfy reaches furthest back.
+  const pick = dated.sort((a, b) => a.rfy - b.rfy)[0];
+  cache.hist ||= {};
+  let rows = cache.hist[pick.docId];
+  if (!rows) {
+    rows = {};
+    try {
+      await sleep(THROTTLE_MS);
+      const store = await loadStore(pick.docId);
+      for (let rel = -4; rel <= 0; rel++) {
+        const L = linesFromStore(store, rel);
+        if (L.revenue == null && L.netIncome == null && L.totalAssets == null) continue;
+        rows[pick.rfy + rel] = L;
+      }
+    } catch (err) { console.warn(`    ! history filing ${pick.docId}: ${err.message}`); }
+    cache.hist[pick.docId] = rows;
+  }
+  let added = 0;
+  for (const fyS of Object.keys(rows)) {
+    const fy = Number(fyS);
+    if (have.has(fy)) continue;
+    rec.history.push({ fy, lines: rows[fyS] });
+    have.add(fy); added++;
+  }
+  rec.history.sort((a, b) => a.fy - b.fy);
+  return added;
+}
 
 // Pull the deeper history for one company by walking its older annual reports (each carries two
 // years), filling the years the latest filing's five-year summary leaves blank: capex and
@@ -395,7 +449,7 @@ const CF_VERSION = 3; // bump when CF_KEYS or BS_KEYS changes, to rebuild the pe
 // inventory, payables, current assets and liabilities). Cached per docId in cache.cf so an unchanged
 // older filing is parsed once.
 async function deepenCashFlow(rec, reports, cache) {
-  const missing = rec.history.filter((h) => h.lines.capex == null || h.lines.dividendsPaid == null || h.lines.receivables == null);
+  const missing = rec.history.filter((h) => h.lines.capex == null || h.lines.dividendsPaid == null || h.lines.receivables == null || h.lines.totalDebt == null || h.lines.operatingIncome == null);
   if (!missing.length || reports.length < 2) return 0;
   cache.cf ||= {};
   const byFy = {}; // fy -> { ...CF_KEYS and BS_KEYS fields }
@@ -406,7 +460,9 @@ async function deepenCashFlow(rec, reports, cache) {
       cf = {};
       try {
         await sleep(THROTTLE_MS);
-        const { first } = picker(await loadStore(r.docId));
+        const store = await loadStore(r.docId);
+        const { first } = picker(store);
+        const storeIFRS = isIFRSStore(store);
         const rfy = r.periodEnd ? Number(r.periodEnd.slice(0, 4)) : null;
         if (rfy != null) for (const rel of [0, -1]) {
           const row = {};
@@ -421,6 +477,8 @@ async function deepenCashFlow(rec, reports, cache) {
             row[field] = v != null ? v : null;
             if (v != null) any = true;
           }
+          const dv = debtForYear(store, rel, storeIFRS);
+          if (dv != null) { row.totalDebt = dv; any = true; }
           if (any) cf[rfy + rel] = row;
         }
       } catch (err) { console.warn(`    ! older filing ${r.docId}: ${err.message}`); }
@@ -524,7 +582,7 @@ async function main() {
   try { cache = JSON.parse(fs.readFileSync(cachePath, "utf8")); } catch {}
   // Rebuild the per-filing cash-flow cache when the set of lines we pull from older filings
   // changes (here: dividends and buybacks were added), so the older filings are re-parsed once.
-  if (cache.cfV !== CF_VERSION) { cache.cf = {}; cache.cfV = CF_VERSION; }
+  if (cache.cfV !== CF_VERSION) { cache.cf = {}; cache.hist = {}; cache.cfV = CF_VERSION; }
 
   console.log("Discovering latest annual reports on EDINET…");
   const found = await discover(secToTicker, cache);
@@ -599,6 +657,7 @@ async function main() {
     }
 
     const rec = buildRecord(store, meta, byTickerEntry[entry.ticker]);
+    const addedYears = await deepenHistory(rec, reports, cache);
     const deepened = await deepenCashFlow(rec, reports, cache);
     // Quality floor, the same one the US and ADR pools apply: a parse that came back without a top
     // line or any earnings figure (an EDINET element rename, a context-naming change) must NOT be
@@ -609,7 +668,7 @@ async function main() {
       continue;
     }
     companies.push(rec);
-    console.log(`  ✓ ${entry.ticker} ${entry.name} (FY${fy ?? "?"}, ${rec.history.length}yr, rev ${rec.lines.revenue ?? "—"}${deepened ? `, +${deepened}yr cf` : ""})`);
+    console.log(`  ✓ ${entry.ticker} ${entry.name} (FY${fy ?? "?"}, ${rec.history.length}yr${addedYears ? ` (+${addedYears} deep)` : ""}, rev ${rec.lines.revenue ?? "—"}${deepened ? `, +${deepened}yr cf` : ""})`);
   }
 
   // Persist the index and the per-filing capex cache filled during the loop, so the next run

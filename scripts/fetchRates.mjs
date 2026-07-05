@@ -54,6 +54,20 @@ async function fromTreasury() {
   throw new Error("no Treasury 10-year value");
 }
 
+// Japan's long-term government-bond yield (FRED IRLTLT01JPM156N, the OECD monthly series):
+// the risk-free anchor for the Japanese pages' Graham bond test, exactly as DGS10 anchors the
+// US pages. Monthly, so the date can lag a few weeks; it is a default the reader can edit.
+async function fetchJgb() {
+  const csv = await get("https://fred.stlouisfed.org/graph/fredgraph.csv?id=IRLTLT01JPM156N");
+  const lines = csv.trim().split(/\r?\n/);
+  for (let i = lines.length - 1; i >= 1; i--) {
+    const [date, val] = lines[i].split(",");
+    const v = Number(val);
+    if (Number.isFinite(v)) return { jp10y: +v.toFixed(2), jp10yAsOf: (date || "").trim(), jp10ySource: "FRED IRLTLT01JPM156N (10-yr JGB, monthly)" };
+  }
+  throw new Error("no numeric JGB row");
+}
+
 // Foreign-exchange reference rates, for the ADR pages only: they translate a US ADR quote (the
 // price the reader actually holds) into the filing currency the record is stated in. Reference
 // FX is central-bank-grade public data, the same standing as the Treasury yield above — not a
@@ -89,13 +103,16 @@ async function main() {
   try { prior = JSON.parse(fs.readFileSync(OUT, "utf8")); } catch {}
   let fxRec = null;
   try { fxRec = await fetchFx(); } catch (e) { console.warn(`  ! fetchFx: ${e.message}`); }
+  let jgbRec = null;
+  try { jgbRec = await fetchJgb(); } catch (e) { console.warn(`  ! fetchJgb: ${e.message}`); }
   const out = {
     ...(rec || { tenYear: prior.tenYear, asOf: prior.asOf, source: prior.source }),
+    ...(jgbRec || (prior.jp10y != null ? { jp10y: prior.jp10y, jp10yAsOf: prior.jp10yAsOf, jp10ySource: prior.jp10ySource } : {})),
     ...(fxRec || (prior.fx ? { fx: prior.fx, fxAsOf: prior.fxAsOf, fxSource: prior.fxSource } : {})),
   };
   if (out.tenYear == null && !out.fx) { console.error("⚠️  Nothing fetched and nothing prior; leaving file untouched."); return; }
   fs.writeFileSync(OUT, JSON.stringify(out, null, 2) + "\n");
-  console.log(`✅ 10-yr Treasury ${out.tenYear}% as of ${out.asOf}${out.fx ? ` · FX ${Object.keys(out.fx).length} currencies as of ${out.fxAsOf}` : ""}`);
+  console.log(`✅ 10-yr Treasury ${out.tenYear}% as of ${out.asOf}${out.jp10y != null ? ` · JGB ${out.jp10y}%` : ""}${out.fx ? ` · FX ${Object.keys(out.fx).length} currencies as of ${out.fxAsOf}` : ""}`);
 }
 
 main().catch((e) => { console.error(`rates fetch failed softly: ${e.message}`); });

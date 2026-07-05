@@ -25,9 +25,9 @@ on:
         type: boolean
         default: false
       lookback:
-        description: "Days of EDINET document index to crawl (~2300 reaches the ~10-year history; cached after the first run)"
+        description: "Days of EDINET document index to crawl (~3600 reaches the filings behind the full ten-year record; cached after the first run)"
         type: string
-        default: "2300"
+        default: "3600"
   push:
     branches: [main]
     paths:

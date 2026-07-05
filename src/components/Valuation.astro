@@ -257,10 +257,15 @@ const dValue = oeGrowth != null ? `${oeGrowth.replace("/yr", "")}/yr`
   : "—";
 const name = co.name || co.ticker;
 const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.abs(v * 100).toFixed(dp)}%`);
-// The risk-free anchor for Graham's bond test: the 10-year Treasury, fetched on the daily refresh
-// (public-domain government data), prefilled as an editable default. Dated, so it never reads as live.
-const bondDefault = rates?.tenYear != null ? rates.tenYear : null;
-const bondAsOf = rates?.asOf ? new Date(rates.asOf).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }) : null;
+// The risk-free anchor for Graham's bond test, fetched on the daily refresh (public-domain
+// government data), prefilled as an editable default and dated so it never reads as live.
+// A yen record is measured against the yen bond: Japanese pages anchor to the 10-year JGB,
+// everything else to the 10-year Treasury.
+const isJpMarket = co.market === "JP";
+const bondDefault = isJpMarket ? (rates?.jp10y ?? null) : (rates?.tenYear != null ? rates.tenYear : null);
+const bondName = isJpMarket ? "10-year JGB" : "10-year Treasury";
+const bondRawAsOf = isJpMarket ? rates?.jp10yAsOf : rates?.asOf;
+const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }) : null;
 ---
 
 <section class="val">
@@ -481,7 +486,7 @@ const bondAsOf = rates?.asOf ? new Date(rates.asOf).toLocaleDateString("en-US", 
           <span class="bondTitle">Against a high-grade bond — Graham’s yardstick</span>
           <span class="bondField"><span class="bondLbl">bond yield</span><input id="bondY" type="number" inputmode="decimal" step="0.1" min="0" placeholder="e.g. 4.5" aria-label="High-grade bond yield, percent" /><span class="bondPct">%</span></span>
         </div>
-        {bondAsOf ? <p class="bondAsOf">Prefilled with the 10-year Treasury ({bondDefault}%, as of {bondAsOf}) — the public-domain risk-free rate. Edit it for today’s exact figure, or a AAA corporate yield.</p> : null}
+        {bondAsOf ? <p class="bondAsOf">Prefilled with the {bondName} ({bondDefault}%, as of {bondAsOf}) — the public-domain risk-free rate. Edit it for today’s exact figure, or a AAA corporate yield.</p> : null}
         <p class="bondLede" id="bondLede">Graham measured a stock against the bond you could own instead — the heart of his margin of safety. Enter a price above to weigh the owner-earnings yield against this bond.</p>
         <div class="compare bondCmp" id="bondCmp" hidden>
           <div class="cmp"><span class="cl">Owner-earnings yield</span><span class="cv hot" id="eyB">—</span></div>
@@ -495,7 +500,7 @@ const bondAsOf = rates?.asOf ? new Date(rates.asOf).toLocaleDateString("en-US", 
         <label>Discount rate <output id="rOut">9%</output><input id="r" type="range" min="4" max="15" step="0.5" value="9" /></label>
         <label>Years of high growth <output id="nOut">10</output><input id="n" type="range" min="5" max="15" step="1" value="10" /></label>
         <label>Terminal growth <output id="gOut">2.5%</output><input id="g" type="range" min="0" max="4" step="0.25" value="2.5" /></label>
-        <p class="dialsNote">The discount rate is your interest rate, what a dollar years from now is worth today, anchored to the long-term Treasury yield ({bondDefault != null ? <>about {bondDefault}% as of {bondAsOf}</> : "~4–5% today"}, plus whatever premium you want for risk). Drag it toward the risk-free rate and watch how much growth the price suddenly “needs”: interest rates are gravity on valuations.</p>
+        <p class="dialsNote">The discount rate is your interest rate, what a dollar years from now is worth today, anchored to the long government-bond yield ({bondDefault != null ? <>the {bondName} is about {bondDefault}% as of {bondAsOf}</> : "~4–5% in the US today"}, plus whatever premium you want for risk). Drag it toward the risk-free rate and watch how much growth the price suddenly “needs”: interest rates are gravity on valuations.</p>
       </div>
 
       <div class="sens" id="sens" hidden>
@@ -712,7 +717,7 @@ const bondAsOf = rates?.asOf ? new Date(rates.asOf).toLocaleDateString("en-US", 
       if (!(BOND > 0) || !haveEY) {
         bondCmp.hidden = true;
         bondLede.textContent = !(BOND > 0)
-          ? "Graham measured a stock against the bond you could own instead — the heart of his margin of safety. Enter today’s high-grade bond yield (the 10-year Treasury, or a AAA corporate) to weigh the owner-earnings yield against it. Nothing is stored."
+          ? "Graham measured a stock against the bond you could own instead — the heart of his margin of safety. Enter today’s high-grade bond yield (the 10-year government bond, or a AAA corporate) to weigh the owner-earnings yield against it. Nothing is stored."
           : "Enter a price above to set the owner-earnings yield, then this weighs it against the bond.";
         return;
       }
