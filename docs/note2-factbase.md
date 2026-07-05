@@ -363,3 +363,34 @@ wholly-owned businesses; the small enterprising investor's mandate is opportunit
 3. The Snowball Korean passage verbatim if quoted directly (else use his retellings).
 4. Decide how much of the special-situations material the letter carries vs defers to a future
    Note (the specialist caveat suggests: state the mandate's breadth, don't map the terrain).
+
+## Verify-pass corrections to this fact base (2026-07-05, wf_4ba4c8e3)
+
+- FULL Ch. 7 verbatim (from the canon sweep, previously only summarized here): "Investment
+  policy, as it has been developed here, depends in the first place on a choice by the
+  investor of either the defensive (passive) or aggressive (enterprising) role. The aggressive
+  investor must have a considerable knowledge of security values -- enough, in fact, to
+  warrant viewing his security operations as equivalent to a business enterprise. There is no
+  room in this philosophy for a middle ground, or a series of gradations, between the passive
+  and aggressive status. Many, perhaps most, investors seek to place themselves in such an
+  intermediate category; in our opinion that is a compromise that is more likely to produce
+  disappointment than achievement." (2003 HarperBusiness ed. of the 1973 text, pp. 175-176.)
+- The 1993 Buffett sentence verbatim INCLUDES "for example": "By periodically investing in an
+  index fund, for example, the know-nothing investor can actually out-perform most investment
+  professionals." The earlier entry's ellipsis was a compression of this base, not the letter.
+- Graham 1976 prescription verbatim includes "a single criteria, or perhaps two criteria"
+  (the earlier "single-criterion" entry was compressed).
+- FactSet Q2 2026: the 23.3% estimated growth was "the second straight quarter above 20%"
+  per the sweep verbatim; the earlier entry dropped the clause.
+- Per-name SPY weights (SSGA, 2026-07-01) for the machine-intelligence wager: NVDA 7.44,
+  MSFT 4.44, AMZN 3.68, GOOGL 3.29, GOOG 2.63, AVGO 2.72, META 2.09, MU 1.81; sum 28.10%.
+  Classification: sells the chips, the models, or the computing they run on; AAPL (devices)
+  and TSLA (vehicles) excluded by that definition.
+- The "[P] June 2026: 42%" top-10 line is basis-unreconciled against the fund-holdings ~37%
+  readings and is NOT to be printed without naming its basis; the essay uses end-2025 ~41%
+  (index basis) and July ~37% (fund-holdings basis), bases named.
+- Numbers corrected in the essay per this pass: Burry interval is eight weeks (58 days);
+  "145-year" Shiller span dropped (series runs from 1871); "record multiple" softened to
+  near-record (only the dividend yield is at a record); Protégé challengers are funds of
+  hedge funds; churn window is twenty-four years; the 1929 DCA prints as about 12 percent
+  (reconstructed composite).
