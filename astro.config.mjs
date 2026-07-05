@@ -32,6 +32,9 @@ try {
 // https://astro.build/config
 export default defineConfig({
   site: 'https://ownerscorecard.com',
+  // The first Note shipped under this slug; the essay was retitled in place (2026-07-05) and
+  // the old URL is already in mailers, crawlers, and readers' history. Never break it.
+  redirects: { '/notes/the-de-rating': '/notes/the-moat-and-the-multiple' },
   // Hover-gated only: the catalog view holds 3,503 company links, so 'viewport' or 'load'
   // strategies would fire thousands of requests per session against the Workers free tier.
   prefetch: { prefetchAll: true, defaultStrategy: 'hover' },
