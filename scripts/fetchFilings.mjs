@@ -97,8 +97,11 @@ function cleanQuote(s) {
 const PAGE_AFTER = /^[\s.·•…_-]*\d+(?![0-9A-Za-z])/;
 const START_XREF_AFTER = /^["'”’\s.,;]*\b(above|below|herein|hereof|elsewhere|and\s+notes?\b|and\s+["'“]?(?:item|part)\b|beginning\s+on\s+page|of\s+this\s+(?:report|form|annual|filing|document)|information\s+required\s+by)/i;
 const START_QUOTE_BEFORE = /["'“]\s*$/;
-const XREF_BEFORE = /\b(see|under|within|refer(?:ence|red)?|described|discussed|contained|included|noted|defined|set\s+forth|pursuant\s+to|provided|listed)\s+(?:to|in|under|above|below|elsewhere)?\s*$/i;
-function section(text, startRe, endRes, validate) {
+// "…read in conjunction with the description appearing in Item 1 … and Item 8 Financial
+// Statements…" (TD SYNNEX) taught the guard its conjunctions: a heading is never preceded by
+// a running clause's "and/with", and mid-prose references usually are.
+const XREF_BEFORE = /\b(see|under|within|refer(?:ence|red)?|described|discussed|contained|included|noted|defined|set\s+forth|pursuant\s+to|provided|listed|appearing|presented|reported|found|shown|available|and|with)\s+(?:to|in|under|above|below|elsewhere)?\s*["'“]?\s*$/i;
+function section(text, startRe, endRes, validate, minSpan = 40) {
   const cands = [];
   let m;
   const re = new RegExp(startRe, "gi");
@@ -113,10 +116,16 @@ function section(text, startRe, endRes, validate) {
     let to = text.length;
     for (const er of endRes) {
       const e = new RegExp(er, "gi");
-      e.lastIndex = from + 40;
+      // minSpan defaults to 40 (don't match the start heading itself). The bare-title
+      // fallback callers raise it to ~1,500: their prose-word anchors ("financial review",
+      // "risk factors") get cited in a section's own first sentences, and no real narrative
+      // section runs that short anyway.
+      e.lastIndex = from + minSpan;
       let em;
       while ((em = e.exec(text)) !== null) {
-        if (!XREF_BEFORE.test(text.slice(Math.max(0, em.index - 28), em.index))) break; // a real heading, not a cross-reference
+        // A real heading, not a cross-reference: not verb/conjunction-led, not quoted.
+        if (!XREF_BEFORE.test(text.slice(Math.max(0, em.index - 34), em.index)) &&
+            !START_QUOTE_BEFORE.test(text.slice(Math.max(0, em.index - 4), em.index))) break;
       }
       if (em && em.index < to) to = em.index;
     }
@@ -628,16 +637,30 @@ async function latestAnnual(cik, n = 2) {
 // comma is deliberately absent, because "Item 8, 'Consolidated…'" is cross-reference phrasing.
 const SEP = "[\\s.|:–—-]+";
 const SEP0 = "[\\s.|:–—-]*";
+// A bare title is prone to seeding mid-sentence ("…adverse changes in market risk factors
+// such as…"): the tell for running prose is a LOWERCASE word (or a comma) immediately
+// before. Stated negatively rather than as a required boundary, because real headings carry
+// all kinds of prefixes — page numbers, running headers, a company name ("The Progressive
+// Corporation and Subsidiaries Management's Discussion…"), a prior heading in Title Case.
+const HEAD_BEFORE = `(?<!\\b[a-z][a-z']{0,24}\\s{1,2})(?<![,;]\\s{0,2})`;
 const SECTION_ANCHORS = {
   "10-K": {
     business: [`item\\s*1${SEP}business`, [`item\\s*1a${SEP}risk`, `item\\s*1b${SEP0}`, `item\\s*2${SEP}propert`]],
     mdna: [`item\\s*7${SEP}management`, [`item\\s*7a${SEP}quantitative`, `item\\s*8${SEP}financial`]],
     risk: [`item\\s*1a${SEP}risk\\s*factors`, [`item\\s*1b${SEP0}`, `item\\s*2${SEP}propert`]],
   },
+  // The 20-F cohort probe (2026-07-05, SONY/TSM/MUFG/BABA/HMC/EC/PKX/SHEL/BP/UL) found the
+  // body headings drop or vary the Item prefix by typesetter: "Item 4. Information on the
+  // Company" with BARE-LETTER sub-items ("D. Risk Factors <prose>", Japanese blue-chips),
+  // letterless bare titles (TSM's "Risk Factors We wish to caution…", plural "REVIEWS"),
+  // full "Item 3.D. Risk Factors" (POSCO), decimal-numbered custom reports ("5.2 Risk
+  // Factors", Ecopetrol), and UK strategic-report vocabulary (Shell/BP/Unilever). TOC rows
+  // carry trailing page numbers; cross-references are see/quote/dash-preceded — the standing
+  // guards separate them.
   "20-F": {
-    business: [`item\\s*4${SEP}information\\s+on\\s+the\\s+company|item\\s*4${SEP0}b${SEP}business\\s+overview|\\bbusiness\\s+overview\\b`, [`item\\s*4${SEP0}d${SEP0}`, `item\\s*5${SEP}operating`, "operating\\s+and\\s+financial\\s+review\\s+and\\s+prospects"]],
-    mdna: [`item\\s*5${SEP}operating|operating\\s+and\\s+financial\\s+review\\s+and\\s+prospects`, [`item\\s*6${SEP}directors`, `item\\s*6${SEP0}`]],
-    risk: [`item\\s*3${SEP0}d${SEP}risk\\s*factors|item\\s*3${SEP}risk\\s*factors`, [`item\\s*4${SEP}information`, `item\\s*3${SEP0}e${SEP0}`]],
+    business: [`item\\s*4${SEP}information\\s+on\\s+the\\s+company|item\\s*4\\.?\\s*b\\.?${SEP0}business\\s+overview|\\bbusiness\\s+overview\\b|\\d\\.\\s*business\\s+overview|${HEAD_BEFORE}b\\s*\\.\\s*business\\s+overview`, [`item\\s*4${SEP0}d${SEP0}`, `item\\s*5${SEP}operating`, "operating\\s+and\\s+financial\\s+reviews?\\s+and\\s+prospects", `${HEAD_BEFORE}c\\s*\\.\\s*organizational\\s+structure`]],
+    mdna: [`item\\s*5${SEP}operating|operating\\s+and\\s+financial\\s+reviews?\\s+and\\s+prospects|(?:item\\s*)?5\\.?a\\.?\\s*operating\\s+results|${HEAD_BEFORE}a\\s*\\.\\s*operating\\s+results|\\d\\.\\s*financial\\s+review\\b|group\\s+financial\\s+review|performance\\s+in\\s+the\\s+year`, [`item\\s*6${SEP}directors`, `item\\s*6${SEP0}`, "directors,?\\s+senior\\s+management\\s+and\\s+employees", "directors'?\\s+report", "governance\\s+report", "critical\\s+accounting", "independent\\s+auditor'?s?\\s+report", "\\bremuneration\\s+report\\b"]],
+    risk: [`item\\s*3${SEP0}d\\.?${SEP0}risk\\s*factors|item\\s*3${SEP}risk\\s*factors|${HEAD_BEFORE}d\\s*\\.\\s*risk\\s+factors|${HEAD_BEFORE}risk\\s+factors\\b|\\d\\.\\d\\s+risk\\s+factors|principal\\s+risks\\s+and\\s+uncertainties|risk\\s+factors\\s+and\\s+risk\\s+management|our\\s+principal\\s+risks\\b`, [`item\\s*4${SEP}information`, `item\\s*3${SEP0}e${SEP0}`, "history\\s+and\\s+development\\s+of\\s+the\\s+company", `${HEAD_BEFORE}(?:item\\s*)?4\\s*\\.\\s*information`]],
   },
 };
 SECTION_ANCHORS["40-F"] = SECTION_ANCHORS["20-F"];
@@ -649,11 +672,26 @@ SECTION_ANCHORS["40-F"] = SECTION_ANCHORS["20-F"];
 // Business has no usable bare title (the word is everywhere), so its fallback is positional —
 // from the end of the TOC to the first real Risk Factors heading — validated by the same
 // risk-smell test as the primary capture.
+// The MD&A title varies more than any other: "Management's Discussion and Analysis of
+// Financial Condition…" (the form's words), IBM's Exhibit-13 "MANAGEMENT DISCUSSION" (no
+// apostrophe-s, no "and Analysis"), Southern's "COMBINED MANAGEMENT'S DISCUSSION AND
+// ANALYSIS", the banks' "Financial Review", Magna's "…of Results of Operations and Financial
+// Position". Anchor the stable stem and let the ends bound the chunk.
+const MDNA_TITLE = `management'?s?\\s+discussion(?:\\s+and\\s+analysis)?\\b`;
 const FALLBACK_10K = {
-  mdna: ["management'?s\\s+discussion\\s+and\\s+analysis\\s+of\\s+financial", ["quantitative\\s+and\\s+qualitative\\s+disclosures", "report\\s+of\\s+independent\\s+registered", "financial\\s+statements\\s+and\\s+supplementary"]],
-  risk: ["risk\\s+factors", ["unresolved\\s+staff\\s+comments", "legal\\s+proceedings", "management'?s\\s+discussion\\s+and\\s+analysis", "quantitative\\s+and\\s+qualitative"]],
+  mdna: [`${HEAD_BEFORE}${MDNA_TITLE}|${HEAD_BEFORE}financial\\s+review\\b`, ["quantitative\\s+and\\s+qualitative\\s+disclosures", "report\\s+of\\s+independent\\s+registered", "financial\\s+statements\\s+and\\s+supplementary", `${HEAD_BEFORE}risk\\s+factors\\b`, "controls\\s+and\\s+procedures", `item\\s*8[\\s.|:–—-]+financial`, "other\\s+key\\s+information", "report\\s+of\\s+management\\b"]],
+  risk: [`${HEAD_BEFORE}risk\\s+factors\\b`, ["unresolved\\s+staff\\s+comments", "legal\\s+proceedings", "management'?s\\s+discussion\\s+and\\s+analysis", "quantitative\\s+and\\s+qualitative", "controls\\s+and\\s+procedures", "report\\s+of\\s+independent\\s+registered", "financial\\s+statements\\s+and\\s+supplementary", "consolidated\\s+statements?\\s+of\\s+(income|operations)", "other\\s+key\\s+information"]],
 };
 const wordsOf = (s) => (s ? s.split(/\s+/).filter(Boolean).length : 0);
+// A chunk seeded on a TOC row reads as titles-and-page-numbers; one seeded on the real
+// heading reads as prose. Used as the fallback captures' validator, because their bare-title
+// anchors match TOC rows that the page-number guard misses (the number trails a long title).
+const headIsProse = (chunk) => {
+  const h = chunk.slice(0, 800);
+  const digits = (h.match(/\d/g) || []).length;
+  const letters = (h.match(/[a-z]/gi) || []).length || 1;
+  return digits / (digits + letters) < 0.08 && /[.!?]\s/.test(h.slice(0, 400));
+};
 function businessFallback(text, riskStartRe) {
   // The TOC's end: the last "Item 14/15/16" row in the first 30% of the document.
   let tocEnd = -1, m;
@@ -674,21 +712,152 @@ function businessFallback(text, riskStartRe) {
   return smellsLikeRisk(chunk) ? "" : chunk;
 }
 
-async function getFiling(cik, f, totalDebtMillions = null) {
-  const accnNoDash = f.accn.replace(/-/g, "");
-  const url = `https://www.sec.gov/Archives/edgar/data/${Number(cik)}/${accnNoDash}/${f.doc}`;
-  const html = await fetchText(url);
-  const text = htmlToText(html);
-  const a = SECTION_ANCHORS[f.form] || SECTION_ANCHORS["10-K"];
+// The three narrative sections from one document's text: item anchors first, then the
+// bare-title fallbacks (10-K only). Shared by the primary document and any rescue document,
+// so every candidate runs the identical ladder.
+function extractSections(text, form) {
+  const a = SECTION_ANCHORS[form] || SECTION_ANCHORS["10-K"];
   let business = section(text, a.business[0], a.business[1], (chunk) => !smellsLikeRisk(chunk));
   let mdna = section(text, a.mdna[0], a.mdna[1]);
   let risk = section(text, a.risk[0], a.risk[1]);
-  // Bare-title fallbacks, 10-K only, and only where the item anchors found (almost) nothing —
-  // those names ship an empty section today, so the fallback can only add, never displace.
-  if (f.form === "10-K") {
-    if (wordsOf(mdna) < 200) { const fb = section(text, FALLBACK_10K.mdna[0], FALLBACK_10K.mdna[1]); if (wordsOf(fb) > wordsOf(mdna)) mdna = fb; }
-    if (wordsOf(risk) < 200) { const fb = section(text, FALLBACK_10K.risk[0], FALLBACK_10K.risk[1]); if (wordsOf(fb) > wordsOf(risk)) risk = fb; }
+  // Bare-title fallbacks, only where the item anchors found (almost) nothing — those names
+  // ship an empty section today, so the fallback can only add, never displace.
+  if (form === "10-K") {
+    if (wordsOf(mdna) < 200) { const fb = section(text, FALLBACK_10K.mdna[0], FALLBACK_10K.mdna[1], headIsProse, 1500); if (wordsOf(fb) > wordsOf(mdna)) mdna = fb; }
+    if (wordsOf(risk) < 200) { const fb = section(text, FALLBACK_10K.risk[0], FALLBACK_10K.risk[1], headIsProse, 1500); if (wordsOf(fb) > wordsOf(risk)) risk = fb; }
     if (wordsOf(business) < 200) { const fb = businessFallback(text, FALLBACK_10K.risk[0]); if (wordsOf(fb) > wordsOf(business)) business = fb; }
+  }
+  return { business, mdna, risk };
+}
+
+// Every .htm document in a filing folder, largest first, excluding the XBRL viewer renders
+// (R12.htm) and index pages. One extra request, paid only when a rescue is needed.
+async function folderDocs(cik, accnNoDash) {
+  const idx = JSON.parse(await fetchText(`https://www.sec.gov/Archives/edgar/data/${Number(cik)}/${accnNoDash}/index.json`));
+  return (idx.directory?.item || [])
+    .filter((d) => /\.htm(l)?$/i.test(d.name) && !/^R\d+\.htm/i.test(d.name) && !/-index/i.test(d.name))
+    .map((d) => ({ name: d.name, size: Number(d.size) || 0 }))
+    .sort((a, b) => b.size - a.size);
+}
+
+// ---- 40-F: the Canadian route ----
+// The 40-F form is a wrapper; the content arrives as sibling documents under the MJDS
+// convention: an Annual Information Form (business, plus a Risk Factors heading), a separate
+// MD&A, and the statements — as EX-99.1/2/3, EX-1/EX-2 (the banks), or, in the monolith
+// variant (Canadian Natural), all concatenated inside the primary under full-title banners.
+// Probed on RY/BNS/BMO/SU/CNQ/MGA/SLF/CVE (2026-07-05): exhibit ORDER varies (Suncor's MD&A
+// is 99.3), filenames vary (dexN.htm, xex99dN, descriptive), and the AIF's "Risk Factors" is
+// usually a STUB redirecting to the MD&A's risk-management block — the banks have no Risk
+// Factors body heading anywhere, so their risk section IS that block.
+const AIF_BUSINESS_START = "general\\s+development\\s+of\\s+the\\s+(?:bank'?s\\s+|company'?s\\s+)?business|description\\s+of\\s+(?:the\\s+)?(?:\\w+'?s?\\s+)?business(?:es)?\\b|business\\s+of\\s+[A-Z]";
+const AIF_BUSINESS_ENDS = [`${HEAD_BEFORE}risk\\s+factors\\b`, "dividends?\\s+and\\s+distributions", "capital\\s+structure", "market\\s+for\\s+securities", "directors\\s+and\\s+(?:executive\\s+)?officers", "legal\\s+proceedings", "transfer\\s+agents?"];
+const MDNA_RISK_START = `risk\\s+management\\s+and\\s+risk\\s+factors|${HEAD_BEFORE}(?:\\d{1,2}\\.\\s*)?risk\\s+factors\\b|${HEAD_BEFORE}[a-z]\\s*\\.\\s*risk\\s+management\\b|top\\s+and\\s+emerging\\s+risks|${HEAD_BEFORE}risk\\s+management\\b`;
+const MDNA_RISK_ENDS = ["critical\\s+accounting", "accounting\\s+(?:policies|standards|matters)", "controls\\s+and\\s+procedures", "\\bglossary\\b", "\\bappendix\\b", "additional\\s+(?:financial\\s+)?information", "capital\\s+management\\b", "\\bnon-?gaap\\b"];
+const MDNA_DOC_ENDS = ["report\\s+of\\s+independent", "independent\\s+auditor'?s?\\s+report"];
+const RISK_STUB = /MD&A|management'?s\s+discussion|described\s+on\s+pages?|can\s+be\s+found\s+in|incorporated\s+by\s+reference|(?:risk\s+management|risk\s+factors)\s+section/i;
+
+async function fortyFSections(cik, accnNoDash, primaryText) {
+  const base = `https://www.sec.gov/Archives/edgar/data/${Number(cik)}/${accnNoDash}`;
+  let aif = null, mdnaDoc = null;
+  try {
+    const docs = (await folderDocs(cik, accnNoDash)).filter((d) => d.size > 250000).slice(0, 6);
+    // Classify by which TITLE stands nearest the top: an MD&A's head can cross-reference
+    // the Annual Information Form (TD's did, and a substring test handed its MD&A to the
+    // AIF slot), but a document's own title precedes anything it merely mentions.
+    const cands = [];
+    for (const d of docs) {
+      try {
+        const t = htmlToText(await fetchText(`${base}/${d.name}`));
+        const head = t.slice(0, 9000);
+        cands.push({ name: d.name, text: t, aifAt: head.search(/annual\s+information\s+form/i), mdnaAt: head.search(new RegExp(MDNA_TITLE, "i")) });
+      } catch { /* skip unfetchable */ }
+    }
+    const aifC = cands.filter((c) => c.aifAt >= 0 && (c.mdnaAt < 0 || c.aifAt < c.mdnaAt)).sort((a, b) => a.aifAt - b.aifAt)[0];
+    const mdnaC = cands.filter((c) => c !== aifC && c.mdnaAt >= 0 && (c.aifAt < 0 || c.mdnaAt < c.aifAt)).sort((a, b) => a.mdnaAt - b.mdnaAt)[0];
+    if (aifC) aif = { name: aifC.name, text: aifC.text };
+    if (mdnaC) mdnaDoc = { name: mdnaC.name, text: mdnaC.text };
+  } catch { /* fall through to the monolith attempt */ }
+  // Monolith variant: everything inside the primary, separated by full-title banners.
+  if (!aif && !mdnaDoc && primaryText.length > 400000) {
+    const aifAt = primaryText.search(/annual\s+information\s+form\s+for\s+the\s+year/i);
+    const mdnaAt = primaryText.search(/management'?s\s+discussion\s+and\s+analysis\s+for\s+the\s+year/i);
+    if (aifAt >= 0 && mdnaAt > aifAt) {
+      aif = { name: null, text: primaryText.slice(aifAt, mdnaAt) };
+      mdnaDoc = { name: null, text: primaryText.slice(mdnaAt) };
+    }
+  }
+  if (!aif && !mdnaDoc) return null;
+  const out = { business: "", mdna: "", risk: "", url: null, text: null };
+  if (mdnaDoc) {
+    out.mdna = section(mdnaDoc.text, `${HEAD_BEFORE}${MDNA_TITLE}`, MDNA_DOC_ENDS, headIsProse, 1500) || mdnaDoc.text;
+    out.url = mdnaDoc.name; out.text = mdnaDoc.text;
+  }
+  if (aif) {
+    out.business = section(aif.text, AIF_BUSINESS_START, AIF_BUSINESS_ENDS, headIsProse, 1500) || aif.text;
+    if (!out.url) { out.url = aif.name; out.text = aif.text; }
+    // Substantive for industrials (Magna); a redirect stub for most; absent for the banks.
+    const riskAif = section(aif.text, `${HEAD_BEFORE}(?:[a-z]\\s*\\.\\s*)?risk\\s+factors\\b`, ["dividends?\\s+and", "capital\\s+structure", "market\\s+for\\s+securities", "directors\\s+and", "legal\\s+proceedings", "\\bratings\\b", "transfer\\s+agents?"], headIsProse, 1500);
+    if (wordsOf(riskAif) >= 400 && !RISK_STUB.test(riskAif.slice(0, 400))) out.risk = riskAif;
+  }
+  if (!out.risk && mdnaDoc) out.risk = section(mdnaDoc.text, MDNA_RISK_START, MDNA_RISK_ENDS, headIsProse, 1500);
+  return out;
+}
+
+// A 20-F's Item 4 and a 40-F's AIF open with history and incorporation boilerplate; the
+// description a reader wants sits under "Business Overview" / "Description of the Business",
+// often past the 25 sentences the lede scorer reads. Start the hunt there when present.
+function bizLeadText(business, form) {
+  if (form === "10-K" || !business) return business;
+  const m = business.search(/business\s+overview|description\s+of\s+(?:the\s+)?(?:\w+'?s?\s+)?business|general\s+development\s+of\s+the\s+business/i);
+  return m > 200 ? business.slice(m) : business;
+}
+
+async function getFiling(cik, f, totalDebtMillions = null) {
+  const accnNoDash = f.accn.replace(/-/g, "");
+  const base = `https://www.sec.gov/Archives/edgar/data/${Number(cik)}/${accnNoDash}`;
+  let url = `${base}/${f.doc}`;
+  const html = await fetchText(url);
+  let text = htmlToText(html);
+  let { business, mdna, risk } = extractSections(text, f.form);
+  // Fragment-primary rescue (Wells Fargo class): the submissions feed's primaryDocument
+  // points at a partial document (wfc-20251231_d2.htm, 360KB) while the complete 10-K sits
+  // beside it in the folder at 11.6MB. When the narrative is still missing after every
+  // fallback, re-run the ladder on the folder's largest non-exhibit document; keep whichever
+  // document yielded more. sourceUrl follows the document actually read — provenance is the
+  // page's promise, so the link must open the text the words came from.
+  if (f.form === "10-K" && (wordsOf(mdna) < 200 || wordsOf(risk) < 200)) {
+    try {
+      const docs = (await folderDocs(cik, accnNoDash)).filter((d) => !/(^|[^a-z])ex[-_.]?\d|exhibit/i.test(d.name));
+      const alt = docs[0];
+      if (alt && alt.name !== f.doc && alt.size > html.length * 2) {
+        const text2 = htmlToText(await fetchText(`${base}/${alt.name}`));
+        const s2 = extractSections(text2, f.form);
+        // Per-section merge: Wells Fargo's form part carries Item 1 Business while its
+        // Exhibit-13-style sibling carries the Financial Review and Risk Factors — each
+        // section comes from whichever document actually holds it.
+        let fromAlt = 0;
+        if (wordsOf(s2.business) > wordsOf(business)) { business = s2.business; fromAlt++; }
+        if (wordsOf(s2.mdna) > wordsOf(mdna)) { mdna = s2.mdna; fromAlt++; }
+        if (wordsOf(s2.risk) > wordsOf(risk)) { risk = s2.risk; fromAlt++; }
+        // Both documents belong to the same accession; the link and the notes-bearing text
+        // follow whichever supplied the greater share of the narrative.
+        if (fromAlt >= 2) { text = text2; url = `${base}/${alt.name}`; }
+      }
+    } catch { /* the primary's extraction stands */ }
+  }
+  // The Canadian route: a 40-F wrapper never carries a real MD&A, whatever stray phrases its
+  // exhibit descriptions hand the business anchor — gate on the MD&A alone.
+  if (f.form === "40-F" && wordsOf(mdna) < 200) {
+    try {
+      const r = await fortyFSections(cik, accnNoDash, text);
+      if (r) {
+        if (wordsOf(r.business) > wordsOf(business)) business = r.business;
+        if (wordsOf(r.mdna) > wordsOf(mdna)) mdna = r.mdna;
+        if (wordsOf(r.risk) > wordsOf(risk)) risk = r.risk;
+        if (r.url) url = `${base}/${r.url}`;
+        if (r.text) text = r.text;
+      }
+    } catch { /* the wrapper's (empty) extraction stands; the gate skips it as before */ }
   }
   const md = metrics(mdna);
   // The debt-maturity ladder lives in the financial-statement notes, past the three narrative sections,
@@ -697,7 +866,7 @@ async function getFiling(cik, f, totalDebtMillions = null) {
   const fy = f.reportDate ? parseInt(f.reportDate.slice(0, 4)) : null;
   let debtMaturity = null;
   try { debtMaturity = fy ? extractDebtMaturity(text, fy, totalDebtMillions) : null; } catch { debtMaturity = null; }
-  return { url, business: { ...metrics(business), lead: leadSentences(business), head: business.slice(0, 800) }, mdna: { ...md, lead: leadSentences(mdna), candor: candorSignals(mdna, md.sents) }, risk: metrics(risk), reportDate: f.reportDate, debtMaturity };
+  return { url, business: { ...metrics(business), lead: leadSentences(bizLeadText(business, f.form)), head: business.slice(0, 800) }, mdna: { ...md, lead: leadSentences(mdna), candor: candorSignals(mdna, md.sents) }, risk: metrics(risk), reportDate: f.reportDate, debtMaturity };
 }
 
 // ---- executive pay (proxy statement / DEF 14A) ----
@@ -1341,7 +1510,7 @@ async function main() {
 }
 
 // Exported for the offline logic test; only hit EDGAR when run directly.
-export { ownerFlags, FLAG_THEMES, sentences, isProse, diff, extractPayRatio, extractInsiderOwnership, extractInsiderGroup, htmlToText, section, fetchText, businessDescription, candorSignals, businessBrief, buffettRead, BIZ_HUMANCAP, BIZ_LINEAGE, BIZ_ASPIRATIONAL, BRIEF_ORPHAN, PROMO, smellsLikeRisk };
+export { ownerFlags, FLAG_THEMES, sentences, isProse, diff, extractPayRatio, extractInsiderOwnership, extractInsiderGroup, htmlToText, section, fetchText, businessDescription, candorSignals, businessBrief, buffettRead, BIZ_HUMANCAP, BIZ_LINEAGE, BIZ_ASPIRATIONAL, BRIEF_ORPHAN, PROMO, smellsLikeRisk, fortyFSections, folderDocs, extractSections };
 
 if (import.meta.url === pathToFileURL(process.argv[1] || "").href) {
   main().catch((e) => { console.error(`\n❌ ${e.message}\n`); process.exit(1); });
