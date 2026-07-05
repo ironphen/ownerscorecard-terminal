@@ -1,7 +1,6 @@
 import fundamentals from "../../data/fundamentals.json";
 import adrData from "../../data/fundamentals.adr.json";
 import jpData from "../../data/fundamentals.jp.json";
-import language from "../../data/language.json";
 import { buildCompareCard } from "../../lib/compareCard.mjs";
 
 // One slim card per company at /compare/<ticker>.json, generated at build time (the same way the
@@ -27,9 +26,7 @@ export function getStaticPaths() {
 
 export function GET({ props }) {
   const { company } = props;
-  const ticker = String(company.ticker || "").toUpperCase();
-  const lang = language?.companies?.[ticker] || null;
-  const card = buildCompareCard(company, lang);
+  const card = buildCompareCard(company);
   return new Response(JSON.stringify(card), {
     headers: {
       "content-type": "application/json; charset=utf-8",

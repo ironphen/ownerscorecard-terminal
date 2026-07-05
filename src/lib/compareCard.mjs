@@ -131,16 +131,6 @@ function stewardship(company) {
   };
 }
 
-function candorBand(lang) {
-  const c = lang?.mdna?.candor || null;
-  if (!c) return null;
-  // All three densities at exactly zero means the MD&A wasn't analyzed for this filing (an empty
-  // extract), not a measured-and-neutral filing. Showing "0.0" would imply a signal that isn't
-  // there, so withhold the band — "not measured" reads as a dash, never as a number.
-  if (!(c.owner || 0) && !(c.promo || 0) && !(c.adjusted || 0)) return null;
-  return { owner: rate(c.owner), promoter: rate(c.promo), nonGaap: rate(c.adjusted) };
-}
-
 function quality(company, vm) {
   const fk = financialKind(company);
   const fin = !!fk;
@@ -189,9 +179,8 @@ function priceBlock(company, vm, currency, sym, adrWarn) {
   };
 }
 
-// Build one company's compare card. `lang` is its language.json entry (or null — the Japanese pool
-// carries no MD&A read, so the candor band is honestly absent there).
-export function buildCompareCard(rawCompany, lang = null) {
+// Build one company's compare card.
+export function buildCompareCard(rawCompany) {
   // ADR basis conversion, the same one the company page runs (lib/adrBasis.mjs): a column with a
   // known ADS ratio and FX rate is stated in USD per ADS — the quote a US reader actually holds —
   // so the compare price row and /c/<ticker> can never give contradictory instructions.
@@ -229,7 +218,6 @@ export function buildCompareCard(rawCompany, lang = null) {
     compounding: { perShare: perShareCagr(company), ownerEarningsGrowthDelivered: rate(deliveredOeGrowth(company)), revenueGrowthDelivered: rate(vm.gRev) },
     survival: survival(company, vm),
     stewardship: stewardship(company),
-    candor: candorBand(lang),
     price: priceBlock(company, vm, currency, sym, ab.isADR && !ab.auto),
   };
 }

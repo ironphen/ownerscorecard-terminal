@@ -5,9 +5,9 @@ import { SEARCH_ALIASES } from "../../lib/searchAliases.mjs";
 // Weigh against another business — the head-to-head compare view. Munger's first question about any
 // investment is "compared to what?", and the honest answer is the other things you could own. This
 // lays two-to-four businesses you already have in mind side by side on the figures an owner weighs —
-// quality, compounding, survival, stewardship, candour — and ends, as the company page does, on a
-// reader-supplied price run through the same reverse-DCF, so each column says what you'd have to
-// believe to pay today's price, set against what the business has delivered.
+// quality, compounding, survival, Graham's tests, stewardship — and ends, as the company page does,
+// on a reader-supplied price run through the same reverse-DCF, so each column says what you'd have
+// to believe to pay today's price, set against what the business has delivered.
 //
 // It is NOT a screener and NOT a ranking. There is no score, no winner, no highlighted "better" cell,
 // no buy or sell. It lays facts in a row; which business is better — and which sit in your circle of
@@ -273,11 +273,6 @@ import { SEARCH_ALIASES } from "../../lib/searchAliases.mjs";
           { label: "Buyback price paid", rsub: "blended, over the record", get: (c) => c.stewardship.avgBuybackPrice != null ? cell(c.sym + c.stewardship.avgBuybackPrice.toFixed(2), c.stewardship.buybackSpan || null) : null },
           { label: "Dividend record", get: (c) => c.stewardship.dividendEverCut == null ? null : cell(c.stewardship.dividendEverCut ? "cut within the record" : "never cut in the record", c.stewardship.divYears ? `${c.stewardship.divYears} paying years` : null) },
           { label: "Retained to equity", rsub: "latest", get: (c) => c.stewardship.retainedToEquity != null ? cell(pctRate(c.stewardship.retainedToEquity, true, 1)) : null },
-        ] },
-        { band: "Candour", rows: [
-          { label: "Owner's vocabulary", rsub: "per 1,000 words", get: (c) => c.candor && c.candor.owner != null ? cell(c.candor.owner.toFixed(1)) : null },
-          { label: "Promoter's vocabulary", rsub: "per 1,000 words", get: (c) => c.candor && c.candor.promoter != null ? cell(c.candor.promoter.toFixed(1)) : null },
-          { label: "Steered off GAAP", rsub: "per 1,000 words", get: (c) => c.candor && c.candor.nonGaap != null ? cell(c.candor.nonGaap.toFixed(1)) : null },
         ] },
       ];
 
