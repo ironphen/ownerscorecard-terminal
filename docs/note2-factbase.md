@@ -224,6 +224,39 @@ The price wall, sourced:
 
 ---
 
+
+## Pre-draft verifications (2026-07-05, wf_b2743ebc)
+
+- [P] TOP TEN, two-source verified (SSGA SPY 2026-07-01 + Slickcharts 2026-07-02 close +
+  Vanguard VOO API 2026-05-31; membership unanimous): NVDA, AAPL, MSFT, AMZN, GOOGL, GOOG,
+  AVGO, META, TSLA, MU. Micron is tenth, ahead of Berkshire and Lilly (issuer-combined basis:
+  the tenth slot is an LLY/BRK.B coin flip). Combined weight: 36.68% (SPY, Jul 1), 36.57%
+  (Slickcharts, Jul 2 close), ~38% issuer-basis (IVV via Wikipedia, unverified direct).
+  RECONCILIATION: the ~41% record was END-2025; concentration EASED to ~37% by July 2026 as
+  the leaders fell (Mag-7 -15% YTD vs index -7%) — the self-correction visible in real time.
+  Prefer fund-sponsor ordering (AVGO above GOOG); note Slickcharts' GOOG methodology quirk.
+- [S] Y2K EARNINGS SHARE PINNED: at the March 2000 peak the top 10 were ~26.6% of index cap
+  but only ~15.8% of trailing earnings (JPMorgan chart basis) — an ~11-point gap. Today:
+  37.4% of cap on 33.2% of earnings (Mar 2026), a ~4-point gap. The counterweight, quantified
+  at both peaks. DEBUNK: the famous "33% of cap, 15% of earnings in 2000" stat is the TECH
+  SECTOR, not the top ten; do not conflate.
+- [P] SPIVA, primary-verified (Mid-Year 2025 scorecard, data 2025-06-30, Report 1a, all
+  large-cap vs S&P 500): 1-yr 72.61%, 10-yr 85.98%, 20-yr 91.03% underperformed. [S] Year-End
+  2025 edition (data 2025-12-31, published Mar 2026): 79% underperformed in calendar 2025,
+  fourth-worst year on record. The "~90% over 20 years" soundbite CHECKS against primary.
+- [S] Persistence (YE2025 Persistence Scorecard): of domestic equity funds top-quartile in
+  2021, 0.46% remained top-quartile through Dec 2025.
+- [debunked] A circulating horizon set (3yr 83% / 5yr 92% / 10yr 96% / 15yr 98% / 20yr 99%)
+  does NOT match the scorecards; never print it.
+- [P-ours] Catalog exhibit rows computed (fundamentals.json, decade records) for the verified
+  top ten — revenue CAGR / operating margin / net income / net cash / share-count change,
+  each linking to its scorecard. NVDA: rev CAGR 46.6%/yr, op margin 60.4%, NI $120.1B.
+  AAPL: 7.6%/yr, 32.0%, $112.0B, net debt. MSFT: 13.4%/yr, 45.6%, $101.8B. GOOGL: 18.1%/yr,
+  32.0%, $132.2B. AMZN: 20.3%/yr, 11.2%, $77.7B. AVGO: 19.1%/yr, 39.9%, $23.1B, net debt.
+  META: 24.7%/yr, 41.4%, $60.5B. TSLA: 33.6%/yr, 4.6%, $3.8B. MU: 13.0%/yr, 26.1%, $8.5B.
+  (Share-count "change" figures for NVDA/GOOGL/AMZN/TSLA/AVGO reflect splits in raw diluted
+  counts — normalize or omit share-count column in the exhibit; DO NOT print raw.)
+
 # Origin letter fact base — the enterprising mandate and the hold-forever misconception
 
 Gathered 2026-07-05 (workflow wf_bffc41f2, four sweeps, 96 source fetches). Same confidence
