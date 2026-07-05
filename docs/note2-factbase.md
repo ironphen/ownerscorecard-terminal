@@ -231,14 +231,12 @@ wholly-owned businesses; the small enterprising investor's mandate is opportunit
 
 ## Small sums and the size anchor
 
-- [S] 1999 BusinessWeek: "If I was running $1 million today, or $10 million for that matter,
-  I'd be fully invested… The highest rates of return I've ever achieved were in the 1950s…"
-  plus the ~50%/yr claim. GAP: the ORIGINAL article was not retrieved; verified secondary
-  only. Also [U]: at the 1999 meeting he reportedly said he was slightly misquoted. HANDLE
-  WITH DATED ATTRIBUTION plus the 2005 restatement below.
-- [S] 2005, to students, the 1999 quote read back: "Yes, I would still say the same thing
-  today. In fact, we are still earning those types of returns on some of our smaller
-  investments."
+- EXCLUDED BY EDITORIAL DECISION (Ryan, 2026-07-05): the 1999 BusinessWeek 50%-on-$1M quote
+  and its 2005 student-meeting restatement are NOT to be printed. Buffett reportedly said at
+  the 1999 annual meeting that he had been misquoted; a publication that prints only verbatim,
+  sourced words does not print a quote its speaker disclaimed. The size thesis rests instead on
+  the primary, undisputed record: the fat-wallet line below, the partnership letters, and the
+  Korea basket.
 - [S] Korea, 2004-05, personal account: ~20 companies at 2-3x post-tax earnings from a
   Citigroup one-page-per-company guide; "We bought Posco for 3-4 times post-tax earnings";
   Daehan Flour Mills at ~2x earnings. (The Snowball carries the extended first-person account
@@ -306,8 +304,7 @@ wholly-owned businesses; the small enterprising investor's mandate is opportunit
 ## Letter to-do before drafting
 
 1. Pull the 1969 partnership wind-down quote verbatim.
-2. Attempt the original 1999 BusinessWeek text once more; else print with secondary
-   attribution and the 2005 restatement beside it.
+2. (Resolved: the 1999 quote is excluded entirely — see the editorial decision above.)
 3. The Snowball Korean passage verbatim if quoted directly (else use his retellings).
 4. Decide how much of the special-situations material the letter carries vs defers to a future
    Note (the specialist caveat suggests: state the mandate's breadth, don't map the terrain).
