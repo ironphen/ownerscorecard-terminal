@@ -198,3 +198,116 @@ The price wall, sourced:
 5. Samuelson 1974 primary PDF if printable words are wanted.
 6. Exhibit build: "the ten businesses you own the most of" — top-10 records/multiples from OUR
    catalog pages, each linking to its scorecard.
+
+
+---
+
+# Origin letter fact base — the enterprising mandate and the hold-forever misconception
+
+Gathered 2026-07-05 (workflow wf_bffc41f2, four sweeps, 96 source fetches). Same confidence
+marks. Ryan's thesis: rigid hold-forever/preset horizons are a misreading of the enterprising
+role; the confusion comes from 21st-century Buffett speaking at Berkshire scale about
+wholly-owned businesses; the small enterprising investor's mandate is opportunity-shaped
+(Graham's special situations included). The letter states the canon precisely, advises nothing.
+
+## The partnership record (Buffett when small)
+
+- [P] 1957 letter, earliest verbatim: "A work-out is an investment which is dependent on a
+  specific corporate action for its profit rather than a general advance in the price of the
+  stock… sales, mergers, liquidations, tenders… the risk is that something will upset the
+  applecart." Allocation: 70-30 generals/workouts end-1956, ~85-15 end-1957.
+- [P] 1962-01-24 letter, "Our Method of Operation": the three categories verbatim — "generals"
+  (largest, 5-10% positions in five or six, ten to fifteen smaller), "work-outs" ("securities
+  with a timetable"), "control." Categories interconvert: a stagnant general becomes a control;
+  one that rises "we sell at higher levels and complete a successful general operation."
+- [P] 1965-01-18 letter: expansion to four categories, adding "Generals — Relatively
+  Undervalued" (the AmEx-era class, with the relative-value hedge technique).
+- [P] Workouts' role, 1965: "a little like looking for parking meters with some time left on
+  them… produces more steady absolute profits from year to year than generals do. In years of
+  market decline it should usually pile up a big edge." (1964 variant: "getting the last nickel
+  after the other fellow has made the first ninety-five cents.")
+- The 1969 wind-down ("out of step with present conditions") = stopped when opportunity
+  stopped; the opposite of hold-regardless. (Pull exact quote at draft time.)
+
+## Small sums and the size anchor
+
+- [S] 1999 BusinessWeek: "If I was running $1 million today, or $10 million for that matter,
+  I'd be fully invested… The highest rates of return I've ever achieved were in the 1950s…"
+  plus the ~50%/yr claim. GAP: the ORIGINAL article was not retrieved; verified secondary
+  only. Also [U]: at the 1999 meeting he reportedly said he was slightly misquoted. HANDLE
+  WITH DATED ATTRIBUTION plus the 2005 restatement below.
+- [S] 2005, to students, the 1999 quote read back: "Yes, I would still say the same thing
+  today. In fact, we are still earning those types of returns on some of our smaller
+  investments."
+- [S] Korea, 2004-05, personal account: ~20 companies at 2-3x post-tax earnings from a
+  Citigroup one-page-per-company guide; "We bought Posco for 3-4 times post-tax earnings";
+  Daehan Flour Mills at ~2x earnings. (The Snowball carries the extended first-person account
+  [U for verbatim]; his own retellings verified secondary.)
+- [P] ATTRIBUTION CORRECTION — "flitting from flower to flower" IS Buffett, 1991 letter, but
+  DISPARAGING active trading at Berkshire's scale: "Charlie and I are simply not smart enough,
+  considering the large sums we work with, to get great results by adroitly buying and selling
+  portions of far-from-great businesses." Note the built-in size qualifier: the disparagement
+  is expressly conditioned on "the large sums we work with." Deploy precisely or not at all.
+- [P] The cleaner size quote: "A fat wallet, however, is the enemy of superior investment
+  results." Plus [S] "our anchor of size."
+
+## The hold-forever record, precisely
+
+- [P] "Our favorite holding period is forever" = 1988 letter, about the new Freddie Mac and
+  Coca-Cola purchases ("when we own portions of outstanding businesses with outstanding
+  managements…"). SEPARATELY the 1988 letter names exactly THREE "permanent holdings": Cap
+  Cities/ABC, GEICO, Washington Post. The famous line was never a blanket portfolio policy.
+- [P] Owner's Manual, Principle 11 verbatim: "You should be fully aware of one attitude Charlie
+  and I share that hurts our financial performance: Regardless of price, we have no interest
+  at all in selling any good businesses that Berkshire owns…" plus "We continue to avoid gin
+  rummy behavior." He CONCEDES the cost. And the 2016 clarifying sentence: "we emphasize that
+  the comments here refer to businesses we control, not to marketable securities."
+- [P] THE KILL-SHOT — 2016 shareholder letter: "Sometimes the comments of shareholders or media
+  imply that we will own certain stocks 'forever.' It is true that we own some stocks that I
+  have no intention of selling… But we have made no commitment that Berkshire will hold any
+  of its marketable securities forever… we regard any marketable security as available for
+  sale, however unlikely such a sale now seems."
+- [S] The exit ledger (marketable securities were always saleable): all four airlines sold
+  entirely April-May 2020 ("The world has changed for the airlines"); TSMC bought Q3 2022,
+  ~86% sold within ONE QUARTER ("I don't like its location, and I've reevaluated that");
+  Wells Fargo exit completed Q1 2022 after ~32 years; IBM 2011 to full exit by 2018; Freddie
+  Mac sold ~2000 ("if people are thinking that way, they are going to do things… that I would
+  regard as unsound"); Disney sold by 2000-01.
+
+## Graham's own enterprising practice
+
+- [P] EDITION CONFIRMED: Ryan's photographed pp. 248-249 = the 1949 first edition (~276 pp).
+  The special-situations sentence survives VERBATIM into the 1973 4th edition, Chapter 20
+  (Margin of Safety), pp. 521-522, including the option-warrant "shocker" and the closing
+  "miscellany of unconventional investments" line.
+- [P] SPELLING CORRECTION: the footnote's author is Paul HALLINGBY Jr. (not Hallingsby),
+  "Speculative Opportunities in Stock-Purchase Warrants," Analysts' Journal, Q3 1947.
+- [P] Ch. 1 (1973, p. 32) quantifies the field: special situations "over many years could be
+  counted on to bring a nice annual return of 20% or better, with a minimum of overall risk"
+  to specialists.
+- [P] THE HONESTY CAVEAT the letter must carry: "The exploitation of special situations is a
+  technical branch of investment which requires a somewhat unusual mentality and equipment.
+  Probably only a small percentage of our enterprising investors are likely to engage in it."
+  Plus 1973 Ch. 7: the field "became riskier and less profitable" in recent years.
+- [S] Graham's arbitrage formula (1946 Analysts' Journal, "Special Situations"): indicated
+  annual return = [GC − L(100% − C)] / YP.
+- [S] Graham-Newman operated AS a special-situations vehicle: "intersecurity arbitrages,
+  payouts or workouts in liquidations, protected hedges of certain kinds" — turnover was the
+  practice of the master himself.
+- [P] The GEICO exception, Graham's own postscript: "about one-fifth of their fund" in one
+  company, and "the aggregate of profits accruing from this single investment decision far
+  exceeded the sum of all the others realized through 20 years of wide-ranging operations."
+  He labels it luck-or-genius, not method — the honest complication of his own rules.
+- [P] The two Grahams reconciled IN THE SAME 1973 EDITION: Ch. 16 on warrant ISSUANCE — "We
+  consider the recent development of stock-option warrants as a near fraud, an existing
+  menace, and a potential disaster" — beside Ch. 20's defensible warrant PURCHASE operation.
+  Issuance vs purchase; price and analysis decide.
+
+## Letter to-do before drafting
+
+1. Pull the 1969 partnership wind-down quote verbatim.
+2. Attempt the original 1999 BusinessWeek text once more; else print with secondary
+   attribution and the 2005 restatement beside it.
+3. The Snowball Korean passage verbatim if quoted directly (else use his retellings).
+4. Decide how much of the special-situations material the letter carries vs defers to a future
+   Note (the specialist caveat suggests: state the mandate's breadth, don't map the terrain).
