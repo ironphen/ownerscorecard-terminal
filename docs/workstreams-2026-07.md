@@ -80,9 +80,11 @@ the kill-gate tests exactly this.
 Panel finding: much already exists (Graham's defensive tests run per company, NCAV, buyback
 average-price-paid, return-on-retained, a real Inversion section). The ranked residue:
 
-1. **"New this year, in the company's own words"** — `language.json` already carries per-company
-   `mdnaChange`/`riskChange` and nothing renders them. A section beside OwnersRead makes every
-   page the filing-diff Buffett reads by hand. Effort S; data already paid for.
+1. **"New this year, in the company's own words"** — SUPERSEDED by the shipped Drivers section
+   (verified MD&A cause sentences). The `mdnaChange`/`riskChange` fields were RETIRED from
+   language.json in the 2026-07 NLP hardening (nothing rendered them; the data was below the
+   bar — see the taxonomy/NLP notes). The surviving idea is the Tier-1 mechanical risk-heading
+   diff for the wire, prototyped on 10 names for Ryan's eye before any rendering.
 2. **Complete Graham's price gates in "What the price implies"** — earnings yield vs. 2× the
    10-yr Treasury (rates.json is already imported into Valuation.astro) and price vs. NCAV where
    positive, framed exactly like the shipped P/E-15×P/B-22.5 gate: clears his published test or

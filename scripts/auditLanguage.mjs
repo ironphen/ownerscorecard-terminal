@@ -14,6 +14,8 @@
 
 import fs from "node:fs";
 import path from "node:path";
+// The production vocabularies, imported (not copied) so the audit can never drift from the fetcher.
+import { BIZ_HUMANCAP, BIZ_LINEAGE, BIZ_ASPIRATIONAL, BRIEF_ORPHAN, PROMO } from "./fetchFilings.mjs";
 
 const dataDir = path.join(process.cwd(), "src", "data");
 const L = JSON.parse(fs.readFileSync(path.join(dataDir, "language.json"), "utf8")).companies || {};
@@ -74,6 +76,27 @@ head("3. Business-in-brief");
 const haveBrief = tickers.filter((t) => Array.isArray(L[t].brief) && L[t].brief.length);
 floor("companies with ≥1 brief sentence", haveBrief.length / N, 0.6);
 
+// ---- 3b. Lede/brief quality (regression ceilings) ----
+// Each was a live, user-visible failure mode before the 2026-07 hardening (Scholastic's risk
+// text, Marzetti's rebrand, Wells Fargo's workforce paragraph, 228 mid-sentence ellipses).
+// The fetcher now rejects all of them at the source; any recurrence is a regression, so the
+// ceiling is zero. Runs against a stale (pre-hardening) corpus will fail — that is the point.
+head("3b. Lede & brief quality (regression ceilings)");
+function ceiling(label, ts, max = 0) {
+  const ok = ts.length <= max;
+  console.log(`  ${ok ? "PASS" : "FAIL"}  ${label}: ${ts.length} (ceiling ${max})${ts.length ? "\n    " + ts.slice(0, 10).join(", ") : ""}`);
+  if (!ok) floorsFailed++;
+}
+const ledeOf = (t) => L[t].business || "";
+const briefsOf = (t) => (Array.isArray(L[t].brief) ? L[t].brief : []);
+ceiling("ledes or briefs truncated mid-sentence (…)", tickers.filter((t) => /…$/.test(ledeOf(t)) || briefsOf(t).some((b) => /…$/.test(b))));
+ceiling("ledes that are human-capital prose", tickers.filter((t) => BIZ_HUMANCAP.test(ledeOf(t))));
+ceiling("ledes that are rename/lineage prose", tickers.filter((t) => BIZ_LINEAGE.test(ledeOf(t))));
+ceiling("briefs opening on an orphan reference", tickers.filter((t) => briefsOf(t).some((b) => BRIEF_ORPHAN.test(b))));
+// Promo-heavy ledes are a penalty, not a hard reject, so a small residue is tolerated — but a
+// growing one means the penalty has stopped doing its work.
+ceiling("ledes with 2+ promotional/aspirational hits", tickers.filter((t) => { const s = ledeOf(t); return ((s.match(PROMO) || []).length + (s.match(BIZ_ASPIRATIONAL) || []).length) >= 2; }), Math.ceil(N * 0.005));
+
 // ---- 4. Detector firing rates ----
 head("4. Detector coverage (soft targets — context, not floors)");
 const rate = (label, pred) => console.log(`  ${label}: ${pct(tickers.filter(pred).length)} (${tickers.filter(pred).length})`);
@@ -84,7 +107,6 @@ rate("  pricing power", (t) => L[t].buffettRead?.pricing?.power);
 rate("  critical estimates", (t) => L[t].buffettRead?.judgment);
 rate("  integrity flag (material weakness/restatement)", (t) => L[t].buffettRead?.integrity);
 rate("owner flags ≥3", (t) => (L[t].ownerFlags?.length ?? 0) >= 3);
-rate("\"what changed\" present", (t) => L[t].mdnaChange?.notable?.length || L[t].riskChange?.notable?.length);
 
 head(`RESULT: ${floorsFailed ? "FAIL" : "PASS"}  (${floorsFailed} floor${floorsFailed === 1 ? "" : "s"} breached)`);
 console.log(floorsFailed ? "  The qualitative layer is below floor — see the surfaced failures above." : "  Floors clear. Soft targets above are the room to improve.");

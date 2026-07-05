@@ -98,15 +98,18 @@ const PAGE_AFTER = /^[\s.·•…_-]*\d+(?![0-9A-Za-z])/;
 const START_XREF_AFTER = /^["'”’\s.,;]*\b(above|below|herein|hereof|elsewhere|and\s+notes?\b|and\s+["'“]?(?:item|part)\b|beginning\s+on\s+page|of\s+this\s+(?:report|form|annual|filing|document)|information\s+required\s+by)/i;
 const START_QUOTE_BEFORE = /["'“]\s*$/;
 const XREF_BEFORE = /\b(see|under|within|refer(?:ence|red)?|described|discussed|contained|included|noted|defined|set\s+forth|pursuant\s+to|provided|listed)\s+(?:to|in|under|above|below|elsewhere)?\s*$/i;
-function section(text, startRe, endRes) {
-  let best = "";
+function section(text, startRe, endRes, validate) {
+  const cands = [];
   let m;
   const re = new RegExp(startRe, "gi");
   while ((m = re.exec(text)) !== null) {
     const from = m.index, afterHead = from + m[0].length, after = text.slice(afterHead, afterHead + 30);
     // Not the section start: a TOC row or running header (a page number follows), or a cross-reference to
-    // the heading (quoted, or followed by "above" / "beginning on page" / "of this report" / "and Note").
-    if (PAGE_AFTER.test(after) || START_XREF_AFTER.test(after) || START_QUOTE_BEFORE.test(text.slice(Math.max(0, from - 8), from))) continue;
+    // the heading (quoted, followed by "above" / "of this report" / "and Note", or PRECEDED by "see" /
+    // "as noted under" / "described in" — the same test the end headings get; Scholastic's only
+    // in-body "Item 1. Business" was "as noted under Item 1. Business" inside its Risk Factors).
+    if (PAGE_AFTER.test(after) || START_XREF_AFTER.test(after) || START_QUOTE_BEFORE.test(text.slice(Math.max(0, from - 8), from)) ||
+        XREF_BEFORE.test(text.slice(Math.max(0, from - 28), from))) continue;
     let to = text.length;
     for (const er of endRes) {
       const e = new RegExp(er, "gi");
@@ -118,9 +121,27 @@ function section(text, startRe, endRes) {
       if (em && em.index < to) to = em.index;
     }
     const chunk = text.slice(from, to);
-    if (chunk.length > best.length) best = chunk;
+    if (chunk) cands.push(chunk);
   }
-  return best;
+  // Longest candidate wins — unless a validator says its CONTENT is wrong. A running page header
+  // mid-Risk-Factors ("Item 1 Business" then risk prose, Scholastic) passes every positional guard
+  // above: only reading the captured text catches it. When the longest fails, fall to the next;
+  // when every candidate fails, return nothing — an empty section is a visible, honest failure,
+  // where a poisoned one ships risk text as the company's own description.
+  cands.sort((a, b) => b.length - a.length);
+  if (!validate) return cands[0] || "";
+  return cands.find(validate) || "";
+}
+
+// Risk-Factors prose has an unmistakable construction density ("could adversely affect", "no
+// assurance", "if we fail to…") that business prose never approaches. Measured on the head of the
+// chunk: a real Business section with a risky tail should not be thrown away for it.
+const RISK_SMELL = /\b(?:could|may|might)\s+(?:adversely|materially|negatively|harm|impair|reduce|disrupt|result)|\bno assurance\b|\bif we (?:fail|are unable|cannot|do not)|\bmaterial(?:ly)? adverse\b|\bcould cause\b/gi;
+function smellsLikeRisk(chunk) {
+  const head = chunk.slice(0, 12000);
+  const words = head.split(/\s+/).length || 1;
+  const hits = (head.match(RISK_SMELL) || []).length;
+  return (hits / words) * 1000 > 4;
 }
 
 // Keep prose only, drop table rows, figure dumps, and page artifacts.
@@ -135,7 +156,7 @@ function isProse(s) {
 function sentences(text) {
   return text
     .replace(/\d+\s+table of contents/gi, " ")
-    .split(/(?<=[.!?])\s+(?=[A-Z(“"])/)
+    .split(/(?<=[.!?]["”’']?)\s+(?=[A-Z(“"])/)
     .map((s) => s.trim())
     .filter((s) => s.length >= 50 && s.length <= 500 && isProse(s));
 }
@@ -156,7 +177,7 @@ function isProseLead(s) {
 function leadSentences(text) {
   return text
     .replace(/\d+\s+table of contents/gi, " ")
-    .split(/(?<=[.!?])\s+(?=[A-Z(“"])/)
+    .split(/(?<=[.!?]["”’']?)\s+(?=[A-Z(“"])/)
     .map((s) => s.trim())
     .filter((s) => s.length >= 34 && s.length <= 600 && isProseLead(s))
     .slice(0, 45);
@@ -278,7 +299,7 @@ const BIZ_SKIP = /(was|were)\s+incorporated|incorporated\s+(under|in)\b|reincorp
 // A weak subject: the sentence is about employees, customers or a side note, not the
 // company itself, so it is not a description of the business.
 const BIZ_WEAK = /^(we also\b|when\s+we\b|founded\b|established\b|originally\b|since (our|its|we)\b|our (mission|vision|strateg|purpose|goals?|values|history|story|customers?|employees?|people|associates|team|more than|over\s|approximately|roughly|nearly)|our\b[^.]{0,40}\b(purpose|mission|vision)\b[^.]{0,120}\bis\s+to\b|we have (sharpened|built|been developing|also been|grown|expanded)|we strive|we seek\b|we aim\b|we (encounter|rely|depend|compete|consistently|correctly|pursue|understand|assess|estimate|disposed)\b|we have (entered|received)\b|[a-z][\w& .,'-]{0,38}'s\s+(vision|mission|purpose)\s+is\s+to\b|[a-z][\w& .,'-]{0,38}\b(strives?|aims?)\s+to\b|[a-z][\w& .,'-]{0,38}\bbelieves\b|[a-z][\w& .,'-]{0,30}'s\s+growth\b|[a-z][\w& .,'-]{0,30}\balso has\b)/i;
-const HEAD_TOKEN = /^(item\s*1[ab]?\b\.?|part\s*i+\b\.?|general development of (the )?business|executive overview|business overview|company overview|our company|our business|the company|introduction|business|general|overview)\s*[:.\-–—]?\s+/i;
+const HEAD_TOKEN = /^(item\s*1[ab]?\b\.?|part\s*i+\b\.?|general development of (the )?business|executive overview|business overview|company overview|about us|our company|our business|the company|introduction|business|general|overview)\s*[:.\-–—]?\s+/i;
 // A broken sentence fragment, not a description: a cross-reference ("found in Items 1 and 2"), or a
 // lead verb jammed into a preposition by bad splitting ("We provide, found in…", "We operate and in
 // the U.S. as a whole"). KMI and WAL slipped a mangled hero through on these; reject them.
@@ -293,9 +314,9 @@ const BIZ_RESULTS = /\b(increases?|decreases?)\s+(in|of)\b[^.]{0,40}\b(result|pr
 // is ONLY a heading/cross-reference, the BIZ_RICH check downstream still drops it.
 // Longer, more-specific headings come first so "overview of business" is taken whole rather than the
 // bare "overview" stripping only its first word and leaving "of business …".
-const LEAD_HEADING = /^((overview|description|summary|nature)\s+of\s+(the\s+)?business|general\s+development\s+of\s+(the\s+)?business|executive\s+overview|business\s+overview|company\s+overview|overview\s+of\s+operations|business\s+update|recent\s+developments|results\s+of\s+operations|business\s+factors[\w\s]{0,45}?operations|segment\s+reporting|our\s+business|our\s+company|the\s+(business|company)|overview|introduction|business|general|properties)\b[\s:.\-–—]+/i;
+const LEAD_HEADING = /^((overview|description|summary|nature)\s+of\s+(the\s+)?business|general\s+development\s+of\s+(the\s+)?business|executive\s+overview|business\s+overview|company\s+overview|overview\s+of\s+operations|business\s+update|recent\s+developments|results\s+of\s+operations|business\s+factors[\w\s]{0,45}?operations|segment\s+reporting|about\s+us|our\s+business|our\s+company|the\s+(business|company)|overview|introduction|business|general|properties)\b[\s:.\-–—]+/i;
 const stripLeadingHeading = (s) => { let o = String(s || ""); for (let k = 0; k < 2 && LEAD_HEADING.test(o); k++) o = o.replace(LEAD_HEADING, ""); return o ? o.charAt(0).toUpperCase() + o.slice(1) : o; };
-const LEAD_VERB = /^(is|are|operates?|provides?|markets?|designs?|develops?|sells?|offers?|supplies|distributes?|delivers?|produces?|manufactures?|engages?)\b/i;
+const LEAD_VERB = /^(is|are|operates?|provides?|markets?|designs?|develops?|sells?|offers?|supplies|distributes?|delivers?|produces?|manufactures?|engages?|creates?|builds?|makes?|serves?|owns?|publishes)\b/i;
 // Signals a richer description: names products, markets, customers or segments rather
 // than a bare "we operate" line.
 const BIZ_RICH = /\b(products?|services?|segments?|brands?|markets?|customers?|solutions?|software|platforms?|stores?|technolog|devices?|equipment|systems?)/i;
@@ -327,6 +348,53 @@ const BIZ_PRODUCTREF = /\bis\s+(?:the\s+)?(?:compan|registrant|firm|group|corpor
 const BIZ_SERVE = /\b(helps?|serves?|enables?|empowers?|connects?|powers?)\b/i;
 const BIZ_CHANNEL = /\b(retail|wholesale|e-?commerce|online|marketplace|web ?sites?|mobile apps?|stores?|outlets?|supermarkets?|restaurants?|warehouses?|clubs?|branches?|dealerships?|pharmac\w+|grocer\w*)\b/i;
 
+// Human-capital prose. The post-2020 Item 1 "Human Capital" subsection is written to read like a
+// description ("our employees are the key to our success…") and never is one — Wells Fargo's hero
+// was its workforce paragraph. Never a lede, never a brief line.
+const BIZ_HUMANCAP = /\bhuman capital\b|\b(?:our|the company'?s?|its)\s+(?:employees?|people|workforce|associates?|team members?|talent)\b[^.]{0,80}\b(?:key|critical|vital|essential|important|greatest|core|success|asset|drive|foundation)|\b(?:attract\w*|retain\w*|develop\w*|recruit\w*|nurtur\w*|cultivat\w*)[^.]{0,40}\btalent\b|\btalent[\s-]rich\b|\bcommitted to (?:our|the|its)\s+(?:employees?|people|associates?|workforce|team)\b|\binvest\w*\s+in\s+(?:our|its|their)\s+(?:employees?|people|workforce|team|associates?)\b|\b(?:market[\s-])?competitive\s+(?:compensation|salaries|wages|pay)\b|\bcareer[\s-]development\b|\bwork[\s-]life\b|\b(?:diversity|equity|inclusion|belonging)\b[^.]{0,60}\b(?:workforce|workplace|employees?|culture|hiring)\b|\bemployee (?:experience|engagement|well-?being|development)\b|\b(?:salaries|wages)\s+and\s+benefits\b|\bteam members?\b[^.]{0,60}\b(?:promot\w+|develop\w+|train\w+|career)/i;
+
+// Corporate-lineage prose: renames, brand identities, successions, spin-off ancestry — the
+// company's paperwork history, not its business. Marzetti's hero was its rebrand announcement.
+const BIZ_LINEAGE = /\bchang\w+\s+(?:our|its|the)\s+(?:company\s+|corporate\s+)?name\b|\brenam\w+|\bbrand identity\b|\bformerly\s+(?:known|named|called)\b|\bname change\b|\bsuccessor\s+(?:company|corporation|entity|issuer|to)\b|\bspun\s+off\b|\bspin-?off\s+(?:from|of)\b|\btraces\s+its\s+(?:roots|history|origins)\b|\bour (?:story|history|heritage)\b/i;
+
+// A pure legal-status recital ("is a Delaware corporation, a bank holding company and a financial
+// holding company") is true and says nothing about the business. Rejected only when the sentence
+// carries no doing/product content, so "a bank holding company providing retail banking across
+// twelve states" survives.
+const BIZ_RECITAL = /\b(?:bank|financial|savings\s+and\s+loan)\s+holding\s+company\b|\bregistered\s+(?:pursuant|under)\b|\bhereinafter\b|\bcollectively\s+referred\s+to\b/i;
+
+// Aspirational abstraction — mission-statement vocabulary that names an ambition, not an
+// operation ("shaping the future of sustainable transportation"). A scoring penalty alongside
+// PROMO rather than a hard reject, because "leading provider of X" is honest, common phrasing.
+const BIZ_ASPIRATIONAL = /\bshap(?:e|ing)\s+the\s+future\b|\bredefin\w+|\breimagin\w+|\b(?:dedicated|committed)\s+to\b|\bempower\w+|\binspir\w+|\bpassion\w*|\bpurpose-driven\b|\bguiding principles?\b|\bfounded on the belief\b|\bunmatched\b|\bworld-?leading\b|\bbetter\s+(?:future|world|tomorrow)\b|\bmake\s+(?:the|a)\s+difference\b|\bdifferentiat\w+\s+value\b|\bpositioned\s+(?:for|to)\b|\bauthentic\b[^.]{0,30}\bbrand\b/gi;
+
+// Cross-reference debris: a sentence pointing the reader at another document is never a
+// description of the business (Bank of America's briefs were pointers into its own MD&A).
+const BIZ_XREF = /\bmanagement'?s\s+discussion\s+and\s+analysis\b|\bnote\s+\d+\b|\b(?:set forth|included|presented|contained)\s+(?:in|on|under)\s+(?:the\s+)?(?:information|pages?|item|section|note)\b/i;
+
+// A Title-Case line is a heading the sentence-splitter glued a period onto, not a sentence
+// (ADP's "Provide Unmatched Expertise and Outsourcing Solutions."). Headings have almost no
+// lowercase words; a real sentence naming proper nouns still has its verbs and articles.
+function isHeadingCase(s) {
+  const midw = s.split(/\s+/).slice(1).filter((w) => /[a-z]/i.test(w));
+  const capw = midw.filter((w) => /^[A-Z]/.test(w) && w.length > 3).length;
+  const loww = midw.filter((w) => /^[a-z]/.test(w) && w.length > 3).length;
+  return midw.length >= 4 && capw / midw.length > 0.55 && loww <= 1;
+}
+
+// Prose that describes the industry's weather rather than the company's business: competition
+// boilerplate, risk narration, colon-list openers, trademark legalese, goals-speak. The lede
+// scorer's positive tests (is-a / does-what) already exclude these; the brief accepts any
+// concrete sentence, so it needs the negative list.
+const BRIEF_NOISE = /\bcompet(?:e|es|ing|ition|itive|itors?)\b|\brisks?\b|\bas follows\b|\bsolely for convenience\b|\btrademarks?\b[^.]{0,60}\b(?:property|belong|appearing|registered)\b|^goals?\s+(?:are|is|include)\b|\bwe believe\b|\bdirectly attributable\b|\bcharged (?:directly )?to\b/i;
+// A word doubled back-to-back ("Commercial Commercial loans…") is a section heading the text
+// extractor glued onto the sentence that followed it.
+const GLUED_HEADING = /\b([A-Z][a-z]{3,})\s+\1\b/;
+
+// A brief line must stand alone: an opener leaning on unseen prior text ("These products…",
+// "In addition…", "As previously announced…") reads as a non sequitur beneath the hero.
+const BRIEF_ORPHAN = /^(?:these|those|this|it|they|both|such|each|also|additionally|in addition|as previously|as discussed|as described|as noted|accordingly|however|therefore|further|finally|for (?:more|additional|further) information|all historical|through \d{4}|in (?:january|february|march|april|may|june|july|august|september|october|november|december)\s+(?:19|20)\d{2})\b/i;
+
 // Pull the company's own one-line description from the top of Item 1. Rather than take
 // the first sentence that passes, we collect candidates from the opening and score
 // them, so the canonical "<Company> is a <type> ..." form and richer, company-named
@@ -349,7 +417,7 @@ function businessDescription(sents, name, ticker) {
   if (distinctive.length) nameWords = distinctive;
   const cands = [];
   const slice = sents.slice(0, 25);
-  const startsWithSubject = (t) => /^(we|our|us|the (company|registrant|firm|group))\b/i.test(t) ||
+  const startsWithSubject = (t) => /^(we|our|us|the (company|registrant|firm|group|corporation|partnership|trust|bank))\b/i.test(t) ||
     nameWords.some((w) => t.toLowerCase().replace(/[^a-z0-9]/g, "").startsWith(w));
   for (let i = 0; i < slice.length; i++) {
     let s = cleanQuote(String(slice[i] || ""));
@@ -370,6 +438,10 @@ function businessDescription(sents, name, ticker) {
          .replace(/,\s+(?:a |an |the |together with |referred to |known as |collectively |including |doing business as |formerly ).{0,200}?,?(?=\s+(?:is|are)\s+(?:a|an|the|one of|engaged|primarily|now|currently|headquartered))/i, " ")
          .replace(/,?\s+and its (wholly[- ]owned )?subsidiaries\b/i, "")
          .replace(/\s{2,}/g, " ").trim();
+    // The full cleaned sentence, kept before any name-jump: disqualifying prose the jump cuts off
+    // ("As previously announced… changing our company name to The Marzetti Company provides…")
+    // must still disqualify, or the jump manufactures a fluent lie from the remainder.
+    const sFull = s;
     if (name && nameWords.length) {
       let at = -1;
       // (a) The opener sits behind a date or preamble ("Founded in 1904, Coty Inc. is …"):
@@ -382,7 +454,11 @@ function businessDescription(sents, name, ticker) {
         const alt = nameWords.map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|");
         const nameSubj = new RegExp(`\\b(?:${alt})\\b[\\w &.,'’-]{0,34}?(?:\\s+(?:is|are|was|were|provides?|operates?|designs?|develops?|manufactures?|makes?|markets?|sells?|offers?|supplies|distributes?|delivers?|produces?|serves?|engages?|owns?|builds?|creates?|enables?|helps?|pioneers?|pioneered|powers?|specializ\\w+)\\b|,\\s+(?:a|an)\\s+[a-z])`, "i");
         const m2 = s.match(nameSubj);
-        if (m2 && m2.index > 0 && m2.index < 160) at = m2.index;
+        // And never jump when the name is the OBJECT of the preceding clause — "changing our
+        // company name to The Marzetti Company provides…" puts the name in subject position
+        // grammatically, but the sentence is about the rename, not the business.
+        if (m2 && m2.index > 0 && m2.index < 160 &&
+            !/\b(?:to|as|into|of)\s+(?:the\s+)?$/i.test(s.slice(Math.max(0, m2.index - 12), m2.index))) at = m2.index;
       }
       // (b) The real opener is glued behind a heading or mission tagline with no period to
       // split on ("Our Mission … CAVA is a Mediterranean restaurant brand."): jump to the
@@ -397,7 +473,7 @@ function businessDescription(sents, name, ticker) {
         const m = s.match(subjVerb);
         if (m && m.index > 0 && m.index < 200) {
           const prefix = s.slice(0, m.index);
-          const headingish = /\b(mission|vision|overview|strateg|history|organization|introduction|purpose|founded|headquarter|business|general|company|incorporated|together with|referred to|first-person|notations|principal|trends?|as of|during|for the (year|fiscal|quarter|period|three|six|nine|twelve)|for fiscal)\b/i;
+          const headingish = /\b(mission|vision|overview|strateg|history|organization|introduction|purpose|founded|headquarter|business|general|company|incorporated|together with|referred to|first-person|notations|principal|trends?|today|as of|during|for the (year|fiscal|quarter|period|three|six|nine|twelve)|for fiscal)\b/i;
           // Only when the name does not already appear in the prefix: if it does, the prefix
           // is the real subject ("Huntington Ingalls is …"), not a heading to jump over.
           if (!subjVerb.test(prefix) && !nameWords.some((w) => prefix.toLowerCase().includes(w)) &&
@@ -406,16 +482,34 @@ function businessDescription(sents, name, ticker) {
       }
       if (at > 0) s = s.slice(at).trim();
     }
-    if (LEAD_VERB.test(s) && name) s = `${name.trim()} ${s}`; // restore a subject split off entirely
+    if (LEAD_VERB.test(s) && name) s = `${name.trim()} ${s.charAt(0).toLowerCase()}${s.slice(1)}`; // restore a subject split off entirely
+    // Restore a company name the section boundary clipped: a page break inside the name leaves
+    // "Financial Corporation is a…" (First Financial). When the sentence opens with the TAIL of
+    // the company's name (two words or more of it), put the missing lead words back.
+    if (name && !/^[a-z]/.test(s)) {
+      const nw = name.trim().split(/\s+/);
+      for (let k = 1; k < Math.min(nw.length, 4); k++) {
+        if (nw.length - k < 2) break;
+        const tail = nw.slice(k).join(" ").toLowerCase();
+        if (s.toLowerCase().startsWith(tail + " ")) { s = nw.slice(0, k).join(" ") + " " + s; break; }
+      }
+    }
     if (/^[a-z]/.test(s)) s = s.charAt(0).toUpperCase() + s.slice(1);
-    if (s.length < 34 || s.length > 700) continue;
-    if (BIZ_SKIP.test(s) || BIZ_WEAK.test(s) || BIZ_FRAGMENT.test(s) || BIZ_RESULTS.test(s) || BIZ_NOTDESC.test(s) || BIZ_PRODUCTREF.test(s)) continue;
+    // The cap is the ACCEPTANCE test, not a display truncation: a lede either fits whole or a
+    // shorter candidate (or the computed phrase) takes its place. The old path accepted up to 700
+    // characters and sliced to 297 + "…", which put a mid-sentence ellipsis on 8% of the catalog.
+    if (s.length < 34 || s.length > 340) continue;
+    if (!/[.!?]["'”’)]?$/.test(s)) continue; // a complete sentence, not a clipped fragment
+    if (isHeadingCase(s)) continue;          // a Title-Case heading the splitter glued a period onto
+    if (BIZ_SKIP.test(s) || BIZ_WEAK.test(s) || BIZ_FRAGMENT.test(s) || BIZ_RESULTS.test(s) || BIZ_NOTDESC.test(s) || BIZ_PRODUCTREF.test(s) || BIZ_XREF.test(s)) continue;
+    if (BIZ_HUMANCAP.test(sFull) || BIZ_LINEAGE.test(sFull)) continue; // test the PRE-jump text too
+    if (BIZ_RECITAL.test(s) && !(BIZ_DOING.test(s) && BIZ_RICH.test(s))) continue;
     const isa = BIZ_ISA.test(s);
     const serves = BIZ_SERVE.test(s) && BIZ_CHANNEL.test(s); // a mission opener that still names a concrete channel
     if (!BIZ_DOING.test(s) && !isa && !BIZ_ENGAGED.test(s) && !serves) continue;
     const head = s.split(/\s+/).slice(0, 6).join(" ");
     const headNorm = head.toLowerCase().replace(/[^a-z0-9]/g, "");
-    const weSubject = /^(we|our|the (company|registrant|firm|group)|us)\b/i.test(s);
+    const weSubject = /^(we|our|the (company|registrant|firm|group|corporation|partnership|trust|bank)|us)\b/i.test(s);
     const namedSubject = nameWords.some((w) => headNorm.includes(w));
     if ((!weSubject && !namedSubject) || !/^[A-Z]/.test(s)) continue;
     let score = 0;
@@ -430,6 +524,11 @@ function businessDescription(sents, name, ticker) {
     if (namedSubject && !weSubject) score += 2; // names the company, not a bare "we"
     if (BIZ_RICH.test(s)) score += 1;           // products, markets, segments
     if (BIZ_STRUCTURAL.test(s)) score -= 3;     // org chart, not a description
+    // Promotional and aspirational abstraction: each hit costs more than three positions of
+    // earliness penalty, so a concrete sentence deeper in the section beats a mission statement
+    // at the top (Lucid's "shaping the future of mobility" outranked its own "designed,
+    // developed, manufactures and sells two EVs" at 1.5 — it takes 2.0 to flip them).
+    score -= ((s.match(PROMO) || []).length + (s.match(BIZ_ASPIRATIONAL) || []).length) * 2;
     score -= Math.min(i, 3) * 0.6;              // the opener is usually the intended one — but cap the
     // penalty: with the MD&A Overview appended after Item 1, an unbounded penalty sank every clean
     // description sitting a dozen sentences deep (the Overview is a fallback for a thin Item 1, and a
@@ -454,8 +553,9 @@ function businessDescription(sents, name, ticker) {
   // buried so far down the earliness penalty sinks it. Better the segment mix or the computed phrase
   // than a doubtful sentence presented as what the business is.
   if (cands[0].score < 0) return null;
-  const best = cands[0].s;
-  return best.length > 300 ? best.slice(0, 297).replace(/[\s,;]+\S*$/, "") + "…" : best;
+  // Candidates were capped at 340 characters and required to end at a sentence boundary,
+  // so the lede is always a complete sentence — never sliced to an ellipsis.
+  return cands[0].s;
 }
 
 // A short "in brief" to sit beneath the hero sentence: up to two more lines that add concrete
@@ -469,10 +569,21 @@ function businessBrief(sents, lede, name) {
   const extras = [];
   for (let i = 0; i < Math.min(sents.length, 25) && extras.length < 2; i++) {
     let s = stripLeadingHeading(cleanQuote(String(sents[i] || "")));
-    if (LEAD_VERB.test(s) && name) s = `${name.trim()} ${s}`;
+    if (LEAD_VERB.test(s) && name) s = `${name.trim()} ${s.charAt(0).toLowerCase()}${s.slice(1)}`;
     if (/^[a-z]/.test(s)) s = s.charAt(0).toUpperCase() + s.slice(1);
     if (s.length < 60 || s.length > 340) continue;
     if (!isProse(s) || BIZ_SKIP.test(s) || BIZ_WEAK.test(s) || BIZ_STRUCTURAL.test(s)) continue;
+    // The brief long carried only the hero's lightest guards; every failure mode the hero
+    // rejects reads just as wrong two lines beneath it. Same tests, same reasons.
+    if (BIZ_FRAGMENT.test(s) || BIZ_RESULTS.test(s) || BIZ_NOTDESC.test(s) || BIZ_PRODUCTREF.test(s)) continue;
+    if (BIZ_HUMANCAP.test(s) || BIZ_LINEAGE.test(s) || BRIEF_ORPHAN.test(s) || BIZ_XREF.test(s)) continue;
+    if (BRIEF_NOISE.test(s) || GLUED_HEADING.test(s)) continue;
+    // Stylized drop-caps survive text extraction as split letters ("A lways D esigning for
+    // P eople", ADP's tagline). Two or more single-capital + fragment pairs is that artifact.
+    if ((s.match(/\b[A-Z]\s[a-z]{2,}/g) || []).length >= 2) continue;
+    if (BIZ_RECITAL.test(s) && !(BIZ_DOING.test(s) && BIZ_RICH.test(s))) continue;
+    if (((s.match(PROMO) || []).length + (s.match(BIZ_ASPIRATIONAL) || []).length) >= 2) continue;
+    if (!/[.!?]["'”’)]?$/.test(s) || isHeadingCase(s)) continue; // complete sentences only, not glued headings
     if (!BIZ_RICH.test(s)) continue; // must name products, markets, segments or customers
     const sNorm = normalize(s);
     if (sNorm === ledeNorm || ledeNorm.includes(sNorm.slice(0, 50)) || sNorm.includes(ledeNorm.slice(0, 50))) continue; // not the lede again
@@ -482,7 +593,7 @@ function businessBrief(sents, lede, name) {
     // company …" repeating its own lede.
     if (jaccard(tokenize(s), tokenize(lede)) > 0.5) continue;
     if (extras.some((e) => jaccard(tokenize(e), tokenize(s)) > 0.5)) continue; // distinct from a prior extra
-    extras.push(s.length > 320 ? s.slice(0, 317).replace(/[\s,;]+\S*$/, "") + "…" : s);
+    extras.push(s); // accepted whole or not at all — never sliced to an ellipsis
   }
   return extras;
 }
@@ -510,19 +621,58 @@ async function latestAnnual(cik, n = 2) {
 // Item 1A (Risk Factors). A 20-F uses Item 4 (Information on the Company), Item 5 (Operating &
 // Financial Review) and Item 3.D (Risk Factors). A 40-F has no fixed item layout, so it borrows the
 // 20-F anchors and, failing the word-count gate downstream, is simply skipped — the safe outcome.
+// The separator between the item number and its title varies by filer AND by how htmlToText
+// renders their heading markup: "Item 1. Business", "Item 1 Business", "Item 1: Business",
+// "Item 1—Business", and — table-cell headings — "Item 1 | Business" (Scholastic's whole 10-K
+// extracted 14 words because every body heading used pipes). One class covers them all; the
+// comma is deliberately absent, because "Item 8, 'Consolidated…'" is cross-reference phrasing.
+const SEP = "[\\s.|:–—-]+";
+const SEP0 = "[\\s.|:–—-]*";
 const SECTION_ANCHORS = {
   "10-K": {
-    business: ["item\\s*1[\\.\\s]+business", ["item\\s*1a[\\.\\s]+risk", "item\\s*1b[\\.\\s]", "item\\s*2[\\.\\s]+propert"]],
-    mdna: ["item\\s*7[\\.\\s]+management", ["item\\s*7a[\\.\\s]+quantitative", "item\\s*8[\\.\\s]+financial"]],
-    risk: ["item\\s*1a[\\.\\s]+risk\\s*factors", ["item\\s*1b[\\.\\s]", "item\\s*2[\\.\\s]+propert"]],
+    business: [`item\\s*1${SEP}business`, [`item\\s*1a${SEP}risk`, `item\\s*1b${SEP0}`, `item\\s*2${SEP}propert`]],
+    mdna: [`item\\s*7${SEP}management`, [`item\\s*7a${SEP}quantitative`, `item\\s*8${SEP}financial`]],
+    risk: [`item\\s*1a${SEP}risk\\s*factors`, [`item\\s*1b${SEP0}`, `item\\s*2${SEP}propert`]],
   },
   "20-F": {
-    business: ["item\\s*4[\\.\\s]+information\\s+on\\s+the\\s+company|item\\s*4[\\.\\s]*b[\\.\\s]+business\\s+overview|\\bbusiness\\s+overview\\b", ["item\\s*4[\\.\\s]*d[\\.\\s]", "item\\s*5[\\.\\s]+operating", "operating\\s+and\\s+financial\\s+review\\s+and\\s+prospects"]],
-    mdna: ["item\\s*5[\\.\\s]+operating|operating\\s+and\\s+financial\\s+review\\s+and\\s+prospects", ["item\\s*6[\\.\\s]+directors", "item\\s*6[\\.\\s]"]],
-    risk: ["item\\s*3[\\.\\s]*d[\\.\\s]+risk\\s*factors|item\\s*3[\\.\\s]+risk\\s*factors", ["item\\s*4[\\.\\s]+information", "item\\s*3[\\.\\s]*e[\\.\\s]"]],
+    business: [`item\\s*4${SEP}information\\s+on\\s+the\\s+company|item\\s*4${SEP0}b${SEP}business\\s+overview|\\bbusiness\\s+overview\\b`, [`item\\s*4${SEP0}d${SEP0}`, `item\\s*5${SEP}operating`, "operating\\s+and\\s+financial\\s+review\\s+and\\s+prospects"]],
+    mdna: [`item\\s*5${SEP}operating|operating\\s+and\\s+financial\\s+review\\s+and\\s+prospects`, [`item\\s*6${SEP}directors`, `item\\s*6${SEP0}`]],
+    risk: [`item\\s*3${SEP0}d${SEP}risk\\s*factors|item\\s*3${SEP}risk\\s*factors`, [`item\\s*4${SEP}information`, `item\\s*3${SEP0}e${SEP0}`]],
   },
 };
 SECTION_ANCHORS["40-F"] = SECTION_ANCHORS["20-F"];
+
+// Scholastic-class 10-Ks print the item headings ONLY in the table of contents; the body
+// sections open with bare titles ("Risk Factors", "Management's Discussion and Analysis…").
+// When the item-anchored capture comes up nearly empty, retry on the bare titles: the TOC row
+// duplicates them, but it yields a tiny chunk and the longest-candidate rule discards it.
+// Business has no usable bare title (the word is everywhere), so its fallback is positional —
+// from the end of the TOC to the first real Risk Factors heading — validated by the same
+// risk-smell test as the primary capture.
+const FALLBACK_10K = {
+  mdna: ["management'?s\\s+discussion\\s+and\\s+analysis\\s+of\\s+financial", ["quantitative\\s+and\\s+qualitative\\s+disclosures", "report\\s+of\\s+independent\\s+registered", "financial\\s+statements\\s+and\\s+supplementary"]],
+  risk: ["risk\\s+factors", ["unresolved\\s+staff\\s+comments", "legal\\s+proceedings", "management'?s\\s+discussion\\s+and\\s+analysis", "quantitative\\s+and\\s+qualitative"]],
+};
+const wordsOf = (s) => (s ? s.split(/\s+/).filter(Boolean).length : 0);
+function businessFallback(text, riskStartRe) {
+  // The TOC's end: the last "Item 14/15/16" row in the first 30% of the document.
+  let tocEnd = -1, m;
+  const rows = /item\s*1[456][\.\s]/gi;
+  while ((m = rows.exec(text)) !== null) { if (m.index > text.length * 0.3) break; tocEnd = m.index + m[0].length; }
+  if (tocEnd < 0) return "";
+  // The first real Risk Factors heading after the TOC bounds the business text.
+  const re = new RegExp(riskStartRe, "gi");
+  re.lastIndex = tocEnd;
+  let end = -1;
+  while ((m = re.exec(text)) !== null) {
+    if (PAGE_AFTER.test(text.slice(m.index + m[0].length, m.index + m[0].length + 30))) continue;
+    if (XREF_BEFORE.test(text.slice(Math.max(0, m.index - 28), m.index))) continue;
+    end = m.index; break;
+  }
+  if (end < tocEnd + 2000) return ""; // no bound found, or too thin to be a real Item 1
+  const chunk = text.slice(tocEnd, end);
+  return smellsLikeRisk(chunk) ? "" : chunk;
+}
 
 async function getFiling(cik, f, totalDebtMillions = null) {
   const accnNoDash = f.accn.replace(/-/g, "");
@@ -530,9 +680,16 @@ async function getFiling(cik, f, totalDebtMillions = null) {
   const html = await fetchText(url);
   const text = htmlToText(html);
   const a = SECTION_ANCHORS[f.form] || SECTION_ANCHORS["10-K"];
-  const business = section(text, a.business[0], a.business[1]);
-  const mdna = section(text, a.mdna[0], a.mdna[1]);
-  const risk = section(text, a.risk[0], a.risk[1]);
+  let business = section(text, a.business[0], a.business[1], (chunk) => !smellsLikeRisk(chunk));
+  let mdna = section(text, a.mdna[0], a.mdna[1]);
+  let risk = section(text, a.risk[0], a.risk[1]);
+  // Bare-title fallbacks, 10-K only, and only where the item anchors found (almost) nothing —
+  // those names ship an empty section today, so the fallback can only add, never displace.
+  if (f.form === "10-K") {
+    if (wordsOf(mdna) < 200) { const fb = section(text, FALLBACK_10K.mdna[0], FALLBACK_10K.mdna[1]); if (wordsOf(fb) > wordsOf(mdna)) mdna = fb; }
+    if (wordsOf(risk) < 200) { const fb = section(text, FALLBACK_10K.risk[0], FALLBACK_10K.risk[1]); if (wordsOf(fb) > wordsOf(risk)) risk = fb; }
+    if (wordsOf(business) < 200) { const fb = businessFallback(text, FALLBACK_10K.risk[0]); if (wordsOf(fb) > wordsOf(business)) business = fb; }
+  }
   const md = metrics(mdna);
   // The debt-maturity ladder lives in the financial-statement notes, past the three narrative sections,
   // so it reads from the full filing text — no extra EDGAR fetch. fy is the report year (the schedule
@@ -1085,10 +1242,6 @@ async function main() {
       for (const s of m.sents || []) pool.push({ s, section: sec });
     const flags = ownerFlags(pool);
 
-    // The diff: what's genuinely new versus last year (needs the prior filing).
-    const mdnaDiff = prior ? diff(cur.mdna.sents, prior.mdna.sents) : null;
-    const riskDiff = prior ? diff(cur.risk.sents, prior.risk.sents) : null;
-
     // Executive pay from the latest proxy (non-fatal, a bonus layer). US only: foreign private
     // issuers file no DEF 14A, so the proxy pull is skipped for the ADR pool.
     let comp = null;
@@ -1152,15 +1305,16 @@ async function main() {
           bizHead: bizLede ? undefined : (cur.business.head || null),
         },
         ownerFlags: flags,
+        // Retired from the record (2026-07): fog/hedge readability scores and the mdnaChange/
+        // riskChange sentence diffs. Nothing on the site read them — the "what changed" section
+        // was stripped as below the bar (see docs/workstreams-2026-07.md) — and dead fields in a
+        // 1,375-company file are pure weight. candorPrior stays: the candor-drift Inversion test
+        // is queued work.
         mdna: {
-          words: cur.mdna.words, fog: cur.mdna.fog, hedgeDensity: Math.round(cur.mdna.hedgeDensity * 1e4) / 1e4,
-          wordsPrior: prior?.mdna.words ?? null, fogPrior: prior?.mdna.fog ?? null,
-          hedgePrior: prior ? Math.round(prior.mdna.hedgeDensity * 1e4) / 1e4 : null,
+          words: cur.mdna.words, wordsPrior: prior?.mdna.words ?? null,
           candor: cur.mdna.candor || null, candorPrior: prior?.mdna.candor || null,
         },
         risk: { words: cur.risk.words, wordsPrior: prior?.risk.words ?? null },
-        mdnaChange: mdnaDiff,
-        riskChange: riskDiff,
         aiRead: aiSignal(cur, prior),
         buffettRead: buffettRead(cur, isFinancialSic(c.sic)),
         comp,
@@ -1187,7 +1341,7 @@ async function main() {
 }
 
 // Exported for the offline logic test; only hit EDGAR when run directly.
-export { ownerFlags, FLAG_THEMES, sentences, isProse, diff, extractPayRatio, extractInsiderOwnership, extractInsiderGroup, htmlToText, section, fetchText, businessDescription, candorSignals, businessBrief, buffettRead };
+export { ownerFlags, FLAG_THEMES, sentences, isProse, diff, extractPayRatio, extractInsiderOwnership, extractInsiderGroup, htmlToText, section, fetchText, businessDescription, candorSignals, businessBrief, buffettRead, BIZ_HUMANCAP, BIZ_LINEAGE, BIZ_ASPIRATIONAL, BRIEF_ORPHAN, PROMO, smellsLikeRisk };
 
 if (import.meta.url === pathToFileURL(process.argv[1] || "").href) {
   main().catch((e) => { console.error(`\n❌ ${e.message}\n`); process.exit(1); });

@@ -18,8 +18,8 @@ import { grahamTests } from "./graham.mjs";
 import { capitalHistory } from "./capital.mjs";
 import { valuationModel } from "./valuationInputs.mjs";
 import { adrBasis } from "./adrBasis.mjs";
-import adrRatios from "../data/adrRatios.json";
-import rates from "../data/rates.json";
+import adrRatios from "../data/adrRatios.json" with { type: "json" };
+import rates from "../data/rates.json" with { type: "json" };
 
 // Keep the JSON slim and free of false precision: money and share counts to whole units, ratios and
 // growth rates to six decimals (more than the reverse-DCF or any display needs). null passes through.

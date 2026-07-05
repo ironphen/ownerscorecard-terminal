@@ -78,8 +78,10 @@ else fail(`only ${built}/${all.length} cards built`);
 const sample = buildCompareCard(byTicker("AAPL"), language.AAPL || null);
 console.log("\nSample card (AAPL):");
 console.log(JSON.stringify(sample, null, 2).split("\n").slice(0, 1).join("") + " …");
-for (const band of ["quality", "compounding", "survival", "stewardship", "candor", "price"])
+// Candour was removed from the Compare page and the card (2026-07-05, Ryan's call) — never re-add.
+for (const band of ["quality", "compounding", "survival", "stewardship", "price"])
   if (!(band in sample)) fail(`AAPL card missing band: ${band}`);
+if ("candor" in sample) fail("AAPL card still carries the removed candor band");
 
 if (failures) { console.error(`\n❌ compareCardTest: ${failures} failure(s)`); process.exit(1); }
 console.log("\n✅ compareCardTest passed");
