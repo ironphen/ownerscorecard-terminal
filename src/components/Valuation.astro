@@ -13,6 +13,7 @@ import { earningsPower } from "../lib/normalize.mjs";
 import { trendGrowth } from "../lib/valuationInputs.mjs";
 import rates from "../data/rates.json";
 import adrRatios from "../data/adrRatios.json";
+import { adrBasis } from "../lib/adrBasis.mjs";
 import DeliveredGrowth from "./DeliveredGrowth.astro";
 import Sparkline from "./Sparkline.astro";
 
@@ -29,37 +30,13 @@ const sparkWin = (vals, maxSpan, latest) => {
 };
 
 const { company } = Astro.props;
-// ---- ADR basis conversion -------------------------------------------------------------------
-// A foreign filer reports in its home currency on its ordinary-share count, but the US reader
-// holds an ADS quoted in dollars. When we know both bridge terms — the ADS ratio parsed verbatim
-// from the filer's own 20-F/40-F cover (adrRatios.json) and the daily reference FX rate
-// (rates.json) — we convert ONCE, here: every monetary figure × FX, the share count ÷ the ADS
-// ratio. Everything downstream is then USD per ADS, the exact basis of the quote the reader
-// types, and no other line of this tool needs to know the company is foreign. When either term
-// is missing the tool falls back to warn mode and asks for the home-market ordinary price.
-const isADRRaw = company.market === "ADR";
-const ratioRec = isADRRaw ? adrRatios?.companies?.[String(company.ticker || "").toUpperCase()] : null;
-const fxUsd = !isADRRaw ? null : (company.currency === "USD" ? 1 : rates?.fx?.[company.currency] ?? null);
-const adrAuto = !!(isADRRaw && ratioRec && ratioRec.ratio > 0 && fxUsd != null);
-const SHARE_KEYS = new Set(["sharesDiluted", "repurchasedShares"]);
-const scaleLines = (o) => {
-  if (!o) return o;
-  const out = {};
-  for (const [k, v] of Object.entries(o)) out[k] = typeof v === "number" ? (SHARE_KEYS.has(k) ? v / ratioRec.ratio : v * fxUsd) : v;
-  return out;
-};
-const co = adrAuto
-  ? { ...company, currency: "USD",
-      lines: scaleLines(company.lines),
-      ttm: company.ttm ? { ...company.ttm, lines: scaleLines(company.ttm.lines) } : company.ttm,
-      history: (company.history || []).map((h) => ({ ...h, lines: scaleLines(h.lines) })) }
-  : company;
-// Display terms for the basis note (the original filing currency; co.currency is USD after conversion).
-const homeCcy = company.currency || "USD";
-const adsBasis = ratioRec?.basis ?? null;
-const adsQuote = ratioRec?.quote || null;
+// ---- ADR basis conversion (shared lib: lib/adrBasis.mjs; compare columns use the same) --------
+// Convert once — every monetary figure × FX, share count ÷ ADS ratio — so everything downstream
+// is USD per ADS, the exact basis of the quote the reader types. Warn mode when terms are missing.
+const ab = adrBasis(company, adrRatios, rates);
+const { co, auto: adrAuto, isADR: isADRRaw, homeCcy, basis: adsBasis, quote: adsQuote, fxUsd } = ab;
 const fxDisp = fxUsd != null && homeCcy !== "USD" ? `${homeCcy} 1 = $${fxUsd.toFixed(homeCcy === "JPY" || homeCcy === "KRW" ? 4 : 3)}` : null;
-const fxAsOfDisp = rates?.fxAsOf || null;
+const fxAsOfDisp = ab.fxAsOf;
 // ----------------------------------------------------------------------------------------------
 // Currency-aware: the reader brings the price (in the listing currency), and the tool does
 // the math in their browser. The symbol travels into each interactive box via data-sym.

@@ -17,6 +17,9 @@ import { returnOnEquity } from "./financials.mjs";
 import { grahamTests } from "./graham.mjs";
 import { capitalHistory } from "./capital.mjs";
 import { valuationModel } from "./valuationInputs.mjs";
+import { adrBasis } from "./adrBasis.mjs";
+import adrRatios from "../data/adrRatios.json";
+import rates from "../data/rates.json";
 
 // Keep the JSON slim and free of false precision: money and share counts to whole units, ratios and
 // growth rates to six decimals (more than the reverse-DCF or any display needs). null passes through.
@@ -92,13 +95,17 @@ function survival(company, vm) {
   const leverageYears = debtReliable(L) && debt != null && oi != null && oi > 0 ? rate(debt / oi) : null;
   const interestCoverage = oi != null && ie != null && Math.abs(ie) > 0 ? rate(oi / Math.abs(ie)) : null;
   const currentRatio = ca != null && cl != null && cl > 0 ? rate(ca / cl) : null;
+  // Graham's defensive tests as FACTS, one per test — name, the figure, and where it stands —
+  // never reduced to a count (a count is halfway to a score, the least doctrinal possible form
+  // and the least useful to Graham, who compared candidates test by test).
   const g = grahamTests(company);
+  const grahamRows = (g.tests || []).map((t) => ({ name: t.name, value: t.value ?? null, status: t.status, criterion: t.criterion ?? null }));
   const ni = (company.history || []).map((h) => h?.lines?.netIncome).filter((v) => v != null);
   const profitable = ni.filter((v) => v > 0).length;
   return {
     netDebt: money(vm.netDebt), netCash: vm.netDebt < 0,
     leverageYears, interestCoverage, currentRatio,
-    grahamPasses: g.passes, grahamTestable: g.testable,
+    graham: grahamRows,
     profitableYears: ni.length ? profitable : null, recordYears: ni.length || null,
   };
 }
@@ -114,6 +121,12 @@ function stewardship(company) {
     payoutOfOwnerEarnings: cap ? rate(cap.returnedOfOE) : null,
     dpsGrowth: cap ? rate(cap.dpsGrowth) : null,
     dividendEverCut: cap ? cap.everCut : null,
+    divYears: cap ? cap.divYears : null,
+    // The blended price paid for the record's buybacks, only where it survived the reliability
+    // gates — set beside the price the reader types one band below, it is Buffett's
+    // two-buyback-disciplines comparison with no judgment rendered.
+    avgBuybackPrice: cap && !cap.bbPriceUnreliable ? rate(cap.avgBuybackPrice) : null,
+    buybackSpan: cap ? cap.span : null,
     retainedToEquity,
   };
 }
@@ -146,11 +159,17 @@ function quality(company, vm) {
 }
 
 // The reverse-DCF inputs, by lens. Spread from valuationModel so a compare column reproduces the
-// company-page valuation. The ADR flag tells the renderer to gate the price row: a US ADR quote in
-// dollars won't reconcile with home-currency, ordinary-share figures, so we never invert it silently.
-function priceBlock(company, vm, currency, sym, pool) {
+// company-page valuation. Each lens's fields are emitted ONLY for its own kind of business:
+// valuationModel computes bank and REIT figures unconditionally (finKind even defaults to
+// "bank"), and spreading them for a software company published flat falsehoods on a public
+// endpoint — Adobe with a 330% "return on tangible equity" and an FFO per share. The `adrWarn`
+// flag marks the one remaining un-convertible case (no ADS ratio or FX), where the renderer
+// must still ask for the home-market ordinary-share price.
+function priceBlock(company, vm, currency, sym, adrWarn) {
+  const isBank = vm.mode === "bank";
+  const isReit = vm.mode === "reit";
   return {
-    mode: vm.mode, currency, sym, adrBasis: pool === "ADR",
+    mode: vm.mode, currency, sym, adrBasis: adrWarn,
     shares: money(vm.shares), netDebt: money(vm.netDebt),
     // owner-earnings lens
     oe: money(vm.oe), oeNormalized: money(vm.oeNormalized), oeMaint: money(vm.oeMaint),
@@ -158,11 +177,13 @@ function priceBlock(company, vm, currency, sym, pool) {
     offerMaint: vm.offerMaint, defaultMaint: vm.defaultMaint, defaultNorm: vm.defaultNorm,
     eps3: rate(vm.eps3), bvps: rate(vm.bvps), gDeliv: rate(vm.gDeliv),
     rev: money(vm.rev), gRev: rate(vm.gRev), ni: money(vm.ni),
-    // bank / insurer lens
-    tbvps: rate(vm.tbvps), bvpsBank: rate(vm.bvpsBank), epsBank: rate(vm.epsBank),
-    rotce: rate(vm.rotce), tbvGrowth: rate(vm.tbvGrowth), finKind: vm.finKind,
-    // REIT lens
-    ffops: rate(vm.ffops), dpsReit: rate(vm.dpsReit), ffoGrowth: rate(vm.ffoGrowth),
+    // bank / insurer lens — only where the business IS one
+    ...(isBank ? {
+      tbvps: rate(vm.tbvps), bvpsBank: rate(vm.bvpsBank), epsBank: rate(vm.epsBank),
+      rotce: rate(vm.rotce), tbvGrowth: rate(vm.tbvGrowth), finKind: vm.finKind,
+    } : {}),
+    // REIT lens — only for a REIT
+    ...(isReit ? { ffops: rate(vm.ffops), dpsReit: rate(vm.dpsReit), ffoGrowth: rate(vm.ffoGrowth) } : {}),
     // negative-owner-earnings lens
     oeMarginNow: rate(vm.oeMarginNow), profitableNeg: vm.profitableNeg,
   };
@@ -170,10 +191,15 @@ function priceBlock(company, vm, currency, sym, pool) {
 
 // Build one company's compare card. `lang` is its language.json entry (or null — the Japanese pool
 // carries no MD&A read, so the candor band is honestly absent there).
-export function buildCompareCard(company, lang = null) {
+export function buildCompareCard(rawCompany, lang = null) {
+  // ADR basis conversion, the same one the company page runs (lib/adrBasis.mjs): a column with a
+  // known ADS ratio and FX rate is stated in USD per ADS — the quote a US reader actually holds —
+  // so the compare price row and /c/<ticker> can never give contradictory instructions.
+  const ab = adrBasis(rawCompany, adrRatios, rates);
+  const company = ab.co;
   const cls = classify(company);
   const vm = valuationModel(company);
-  const pool = company.market === "ADR" ? "ADR" : company.market === "JP" ? "JP" : "US";
+  const pool = rawCompany.market === "ADR" ? "ADR" : rawCompany.market === "JP" ? "JP" : "US";
   const currency = company.currency || "USD";
   const sym = currencySymbol(currency);
   // The record's true depth: the span of years that carry any core figure. Revenue alone would
@@ -194,11 +220,16 @@ export function buildCompareCard(company, lang = null) {
       overlays: cls.overlays.map((o) => o.key),
     },
     recordYears: spanYears, spanLabel,
+    // The price-entry basis, stated: converted columns carry the terms so the page can print them.
+    basis: {
+      adr: ab.isADR, auto: ab.auto, homeCcy: ab.homeCcy,
+      ratio: ab.ratio, kind: ab.basis, fxUsd: ab.fxUsd != null ? rate(ab.fxUsd) : null, fxAsOf: ab.fxAsOf,
+    },
     quality: quality(company, vm),
     compounding: { perShare: perShareCagr(company), ownerEarningsGrowthDelivered: rate(deliveredOeGrowth(company)), revenueGrowthDelivered: rate(vm.gRev) },
     survival: survival(company, vm),
     stewardship: stewardship(company),
     candor: candorBand(lang),
-    price: priceBlock(company, vm, currency, sym, pool),
+    price: priceBlock(company, vm, currency, sym, ab.isADR && !ab.auto),
   };
 }

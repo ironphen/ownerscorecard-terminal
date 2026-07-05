@@ -58,6 +58,7 @@ import { SEARCH_ALIASES } from "../../lib/searchAliases.mjs";
         <label class="tog"><input type="checkbox" id="bSbc" /> Net of stock comp</label>
         <label class="tog"><input type="checkbox" id="bMaint" /> Steady-state</label>
       </div>
+      <button class="copyLink" id="cmpCopy" type="button" title="The whole comparison lives in the URL">Copy link</button>
     </div>
     <p class="ctlNote">
       One required return, applied to every column as its discount rate — the opportunity-cost hurdle,
@@ -76,8 +77,10 @@ import { SEARCH_ALIASES } from "../../lib/searchAliases.mjs";
   <p class="foot">
     Every figure is recomputed from the company&rsquo;s own SEC or EDINET filings — the same record behind
     each Owner&rsquo;s Scorecard. The reverse-DCF says what a price would have to <em>assume</em>, never what a
-    business is worth; a reference value is a yardstick, not a target. Absolute figures are shown in each
-    company&rsquo;s own reporting currency and are never differenced across columns; ratios and per-share
+    business is worth; a reference value is a yardstick, not a target. An ADR column with a known ADS ratio
+    is stated in US dollars per ADS (the ratio from the filer&rsquo;s own 20-F cover, translated at the dated
+    reference rate shown), so the price you type is the quote you hold; other absolute figures remain in each
+    company&rsquo;s own reporting currency and are never differenced across columns — ratios and per-share
     growth are what compare cleanly. A 5-year record (much of the Japanese pool) is not a 10-year one — the
     span is on every column.
   </p>
@@ -124,6 +127,8 @@ import { SEARCH_ALIASES } from "../../lib/searchAliases.mjs";
     .tog { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--ink-dim); cursor: pointer; }
     .tog input { accent-color: var(--accent); cursor: pointer; }
     .ctlNote { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); margin: 10px 0 0; line-height: 1.5; max-width: 76ch; }
+    .copyLink { font-family: var(--sans); font-size: 11.5px; font-weight: 600; letter-spacing: 0.03em; cursor: pointer; background: none; border: 1px solid var(--rule-strong); color: var(--ink-dim); border-radius: 999px; padding: 4px 12px; margin-left: auto; }
+    .copyLink:hover { border-color: var(--accent); color: var(--accent); }
 
     .tableWrap { margin: 18px 0 0; overflow-x: auto; }
     table.cmp { border-collapse: collapse; width: 100%; min-width: 100%; font-variant-numeric: tabular-nums; }
@@ -238,7 +243,7 @@ import { SEARCH_ALIASES } from "../../lib/searchAliases.mjs";
       const cell = (main, sub) => main == null ? null : { main, sub: sub || null };
 
       const BANDS = [
-        { band: "Quality — is it a good business?", rows: [
+        { band: "Quality", rows: [
           { label: "Return on capital", rsub: "through the cycle", get: (c) => tc(c.quality.roicThroughCycle, false) },
           { label: "Return on equity", rsub: "through the cycle", get: (c) => tc(c.quality.roeThroughCycle, false) },
           { label: "Return on tangible equity", rsub: "bank / insurer", get: (c) => c.quality.rotce != null ? cell(pctRate(c.quality.rotce, false, 0)) : null },
@@ -247,28 +252,29 @@ import { SEARCH_ALIASES } from "../../lib/searchAliases.mjs";
           { label: "Gross margin", rsub: "latest", get: (c) => c.quality.grossMarginLatest != null ? cell(pctRate(c.quality.grossMarginLatest, false, 0)) : null },
           { label: "FFO / share", rsub: "REIT", get: (c) => c.quality.ffoPerShare != null ? cell(c.sym + c.quality.ffoPerShare.toFixed(2)) : null },
         ] },
-        { band: "Compounding — does it grow per share?", rows: [
+        { band: "Compounding, per share", rows: [
           { label: "Revenue / share", rsub: "annual growth", get: (c) => ps(c.compounding.perShare && c.compounding.perShare.revenuePS) },
           { label: "Owner earnings / share", rsub: "annual growth", get: (c) => ps(c.compounding.perShare && c.compounding.perShare.ownerEarningsPS) },
           { label: "EPS", rsub: "annual growth", get: (c) => ps(c.compounding.perShare && c.compounding.perShare.eps) },
           { label: "Dividends / share", rsub: "annual growth", get: (c) => ps(c.compounding.perShare && c.compounding.perShare.dps) },
           { label: "Book value / share", rsub: "annual growth", get: (c) => ps(c.compounding.perShare && c.compounding.perShare.bvps) },
         ] },
-        { band: "Survival — can it die?", rows: [
-          { label: "Net debt / (cash)", get: (c) => { const v = c.survival.netDebt; return v == null ? null : cell(v < 0 ? "+" + moneyC(-v, c.sym) + " cash" : moneyC(v, c.sym)); } },
-          { label: "Debt / operating income", rsub: "years to repay", get: (c) => c.survival.leverageYears != null ? cell(xMult(c.survival.leverageYears)) : null },
-          { label: "Interest coverage", get: (c) => c.survival.interestCoverage != null ? cell(xMult(c.survival.interestCoverage)) : null },
-          { label: "Current ratio", get: (c) => c.survival.currentRatio != null ? cell(xMult(c.survival.currentRatio, 2)) : null },
-          { label: "Graham tests passed", get: (c) => c.survival.grahamTestable ? cell(`${c.survival.grahamPasses} of ${c.survival.grahamTestable}`) : null },
+        { band: "Survival", rows: [
+          { label: "Net debt / (cash)", rsub: "TTM", get: (c) => { const v = c.survival.netDebt; return v == null ? null : cell(v < 0 ? "+" + moneyC(-v, c.sym) + " cash" : moneyC(v, c.sym)); } },
+          { label: "Debt / operating income", rsub: "years to repay · TTM", get: (c) => c.survival.leverageYears != null ? cell(xMult(c.survival.leverageYears)) : null },
+          { label: "Interest coverage", rsub: "TTM", get: (c) => c.survival.interestCoverage != null ? cell(xMult(c.survival.interestCoverage)) : null },
+          { label: "Current ratio", rsub: "TTM", get: (c) => c.survival.currentRatio != null ? cell(xMult(c.survival.currentRatio, 2)) : null },
           { label: "Profitable years", get: (c) => c.survival.recordYears ? cell(`${c.survival.profitableYears} of ${c.survival.recordYears}`) : null },
         ] },
-        { band: "Stewardship — is it run for owners?", rows: [
+        { band: "Stewardship", rows: [
           { label: "Share count change", rsub: "over the record", get: (c) => c.stewardship.shareChange != null ? cell(pctRate(c.stewardship.shareChange, true, 1)) : null },
           { label: "Return on retained earnings", get: (c) => c.stewardship.returnOnRetained != null ? cell(pctRate(c.stewardship.returnOnRetained, false, 0)) : null },
           { label: "Payout of owner earnings", rsub: "dividends + buybacks", get: (c) => c.stewardship.payoutOfOwnerEarnings != null ? cell(pctRate(c.stewardship.payoutOfOwnerEarnings, false, 0)) : null },
+          { label: "Buyback price paid", rsub: "blended, over the record", get: (c) => c.stewardship.avgBuybackPrice != null ? cell(c.sym + c.stewardship.avgBuybackPrice.toFixed(2), c.stewardship.buybackSpan || null) : null },
+          { label: "Dividend record", get: (c) => c.stewardship.dividendEverCut == null ? null : cell(c.stewardship.dividendEverCut ? "cut within the record" : "never cut in the record", c.stewardship.divYears ? `${c.stewardship.divYears} paying years` : null) },
           { label: "Retained to equity", rsub: "latest", get: (c) => c.stewardship.retainedToEquity != null ? cell(pctRate(c.stewardship.retainedToEquity, true, 1)) : null },
         ] },
-        { band: "Candour — how does it talk to owners?", rows: [
+        { band: "Candour", rows: [
           { label: "Owner's vocabulary", rsub: "per 1,000 words", get: (c) => c.candor && c.candor.owner != null ? cell(c.candor.owner.toFixed(1)) : null },
           { label: "Promoter's vocabulary", rsub: "per 1,000 words", get: (c) => c.candor && c.candor.promoter != null ? cell(c.candor.promoter.toFixed(1)) : null },
           { label: "Steered off GAAP", rsub: "per 1,000 words", get: (c) => c.candor && c.candor.nonGaap != null ? cell(c.candor.nonGaap.toFixed(1)) : null },
@@ -287,8 +293,12 @@ import { SEARCH_ALIASES } from "../../lib/searchAliases.mjs";
 
       function priceRead(card) {
         const p = card.price, sym = p.sym, rr = rate / 100, N = 10, gT = 0.025;
-        const out = { implies: "—", delivered: "—", reference: "—", impliesHot: false };
+        const out = { implies: "—", delivered: "—", reference: "—", pe3: "—", pxb: "—", impliesHot: false };
         const price = parseFloat(prices[card.ticker]);
+        // Graham's price gates on the typed price: the same arithmetic the company page runs —
+        // the multiple of 3-year average earnings, and the multiple of latest filed book.
+        if (price > 0 && p.eps3 > 0) out.pe3 = (price / p.eps3).toFixed(1) + "×";
+        if (price > 0 && p.bvps > 0) out.pxb = (price / p.bvps).toFixed(2) + "×";
         if (p.mode === "owner-earnings") {
           // The honest base, by the global toggles, exactly as the company page's effOE.
           const maint = base.maint && p.oeMaint != null && p.offerMaint;
@@ -329,7 +339,13 @@ import { SEARCH_ALIASES } from "../../lib/searchAliases.mjs";
         if (p.mode === "off") return `Read on the balance sheet, not an owner-earnings DCF. <a href="${href}#sec-price">See the full read →</a>`;
         let n = "";
         if (p.mode === "owner-earnings" && p.shares == null) n = "The share count isn't tagged for this multi-class filer — enter it too (any quote page lists it). ";
-        if (p.adrBasis) n += `Enter the home-market price (${esc(card.currency)}, per ordinary share), not the US ADR quote.`;
+        const b = card.basis;
+        if (b && b.auto) {
+          // Converted column: the reader types the US dollar quote they actually hold.
+          n += `US quote, in dollars${b.kind === "ads" && b.ratio ? ` — 1 ADS = ${esc(String(b.ratio))} ordinary` : " — the US listing is the ordinary share"}${b.homeCcy !== "USD" && b.fxUsd ? `; ${esc(b.homeCcy)} 1 = $${esc(String(b.fxUsd))}` : ""}${b.fxAsOf ? ` (${esc(b.fxAsOf)})` : ""}.`;
+        } else if (p.adrBasis) {
+          n += `Enter the home-market price (${esc(card.currency)}, per ordinary share), not the US ADR quote.${card.currency === "GBP" ? " London quotes print in pence — enter pounds." : ""}`;
+        }
         return n;
       }
       const priceable = (card) => card.price.mode === "owner-earnings" || card.price.mode === "bank" || card.price.mode === "reit";
@@ -345,11 +361,34 @@ import { SEARCH_ALIASES } from "../../lib/searchAliases.mjs";
         let h = '<table class="cmp"><thead><tr><th class="corner"></th>';
         for (const c of cs) {
           const href = (c.pool === "JP" ? "/jp/" : "/c/") + c.ticker;
-          h += `<th class="colh"><div class="colTk"><a href="${href}">${esc(c.ticker)}</a></div><div class="colNm">${esc(c.name)}</div><div class="colTags"><span>${esc(c.archetype.adj)}</span><span class="ccy">${esc(c.currency)}</span><span>${c.recordYears ? c.recordYears + "-yr record" : "—"}</span></div></th>`;
+          const adsTag = c.basis && c.basis.auto && c.basis.kind === "ads" ? '<span class="ccy">per ADS</span>' : "";
+          h += `<th class="colh"><div class="colTk"><a href="${href}">${esc(c.ticker)}</a></div><div class="colNm">${esc(c.name)}</div><div class="colTags"><span>${esc(c.archetype.adj)}</span><span class="ccy">${esc(c.currency)}</span>${adsTag}<span>${c.recordYears ? c.recordYears + "-yr record" : "—"}</span></div></th>`;
         }
         h += "</tr></thead><tbody>";
 
+        // Graham's defensive tests, one row per test — the figures side by side, exactly how he
+        // compared candidates. Built from the union of the chosen columns' tests (labels are the
+        // shared test names from lib/graham.mjs); never a count, never a tally.
+        const gNames = [];
+        for (const c of cs) for (const t of (c.survival.graham || [])) if (!gNames.some((g) => g.name === t.name)) gNames.push({ name: t.name, criterion: t.criterion });
+        const fmtGV = (v) => v == null ? null : (typeof v === "number" ? (Math.abs(v) >= 100 ? String(Math.round(v)) : String(Math.round(v * 100) / 100)) : String(v));
+        const grahamBand = gNames.length ? {
+          band: "Graham's defensive tests", rows: gNames.map((g) => ({
+            label: g.name, rsub: g.criterion || null,
+            get: (c) => {
+              const t = (c.survival.graham || []).find((x) => x.name === g.name);
+              if (!t || t.status === "na") return null;
+              return cell(t.status === "pass" ? "meets it" : t.status === "near" ? "near" : "does not", fmtGV(t.value));
+            },
+          })),
+        } : null;
+        const bandsFor = [];
         for (const grp of BANDS) {
+          bandsFor.push(grp);
+          if (grp.band === "Survival" && grahamBand) bandsFor.push(grahamBand);
+        }
+
+        for (const grp of bandsFor) {
           // Keep a row only if some column has it (so a table of all-software names isn't padded with
           // bank rows, and vice versa).
           const liveRows = grp.rows.filter((r) => cs.some((c) => r.get(c) != null));
@@ -384,6 +423,8 @@ import { SEARCH_ALIASES } from "../../lib/searchAliases.mjs";
           { key: "implies", label: "What the price implies", rsub: "growth, or the multiple paid" },
           { key: "delivered", label: "What the record delivered", rsub: "set the implied beside this" },
           { key: "reference", label: "Reference value / share", rsub: "a yardstick, never a target" },
+          { key: "pe3", label: "P/E on 3-yr average earnings", rsub: "Graham's earnings basis" },
+          { key: "pxb", label: "Price / book", rsub: "latest filed book value" },
         ];
         for (const pr of pxRows) {
           h += `<tr><th class="rl">${esc(pr.label)}<span class="rsub">${esc(pr.rsub)}</span></th>`;
@@ -424,6 +465,8 @@ import { SEARCH_ALIASES } from "../../lib/searchAliases.mjs";
           set("implies", r.implies, r.impliesHot);
           set("delivered", r.delivered, false);
           set("reference", r.reference, false);
+          set("pe3", r.pe3, false);
+          set("pxb", r.pxb, false);
         }
       }
 
@@ -589,6 +632,15 @@ import { SEARCH_ALIASES } from "../../lib/searchAliases.mjs";
       rDial.addEventListener("input", () => { rate = parseFloat(rDial.value); rOut.textContent = rate + "%"; syncURL(); updatePrices(); });
       [["bNorm", "norm"], ["bSbc", "sbc"], ["bMaint", "maint"]].forEach(([id, key]) => {
         document.getElementById(id).addEventListener("change", (e) => { base[key] = e.target.checked; syncURL(); updatePrices(); });
+      });
+
+      // ---- copy link (the whole comparison lives in the URL) ----
+      const copyBtn = document.getElementById("cmpCopy");
+      if (copyBtn) copyBtn.addEventListener("click", () => {
+        navigator.clipboard.writeText(location.href).then(() => {
+          const t = copyBtn.textContent; copyBtn.textContent = "Copied";
+          setTimeout(() => { copyBtn.textContent = t; }, 1600);
+        }).catch(() => {});
       });
 
       // ---- example links ----
