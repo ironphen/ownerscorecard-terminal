@@ -105,6 +105,28 @@ Where buy-the-index truly failed (the honesty pool):
 - [S] The "34 years of zero" framing holds only for: price-only, dividend-excluded, yen, single
   lump sum at the exact peak. Each relaxation shortens it.
 
+
+## Our recomputed arithmetic (2026-07-05, scripts/scratchpad dca_compute.mjs)
+
+Method: US = Shiller monthly data (price = monthly averages, dividends annualized; nominal
+total-return chain, dividends reinvested, no costs; mirror's dividend series ends 2023-06 —
+irrelevant for these windows). Japan = FRED NIKKEI225 month-end closes, PRICE ONLY (no
+dividend series; understates — say so in print).
+
+- [P-ours] US lost decade, $500/month 2000-01..2009-12: $60,000 contributed, end value
+  $63,923, IRR 1.27%/yr. The same $60,000 lump-sum at January 2000: $55,852 (-6.9%).
+  (Independently confirms the Carlson ~$64k figure; now our own.)
+- [P-ours] The 1929 test, worst start imaginable: $100/month from September 1929 (the peak
+  month) through September 1954: $30,100 contributed, end value $169,771, IRR 11.98%/yr —
+  through a -89% drawdown and 25 years of price recovery.
+- [P-ours] Japan, ¥100,000/month 1990-01..2024-02 (peak to price recovery): ¥41.0M contributed,
+  end value ¥104.3M, IRR 4.95%/yr PRICE ONLY (dividends would add roughly 1-2pp). The same
+  total as a lump sum at January 1990: +5.3% CUMULATIVE over 34 years. Extended to 2026-06:
+  IRR 7.00%/yr price-only.
+- The contrast sentence the essay earns: the difference between the lump-sum story and the
+  contributor's story is the difference between an anecdote about a date and the arithmetic
+  of a working life.
+
 ## III. Graham's blessing (the canon, verbatim)
 
 - [P] Defensive/enterprising definitions (Intelligent Investor, 2003 HarperBusiness ed. of the
