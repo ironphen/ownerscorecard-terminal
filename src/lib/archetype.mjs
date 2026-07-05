@@ -307,6 +307,18 @@ function overlays(company, s) {
   const hist = company.history || [];
   const out = [];
 
+  // Regulated utility: the one situation set by law rather than by the record. Returns are
+  // capped and floored by a regulator on an approved rate base, which reframes every other
+  // overlay that may follow (heavy capex is the growth mechanism, not an omen). Leads the line.
+  // Electric (4911), combination utilities (4931/4932), gas distribution (4924), water (4941).
+  // Deliberately NOT gas transmission/pipelines (4922/4923): midstream tolls are contracts and
+  // FERC tariffs, not an approved rate base, and the copy below would overclaim there.
+  const sicNum = parseInt(company.sic, 10);
+  if ([4911, 4924, 4931, 4932, 4941].includes(sicNum)) {
+    out.push({ key: "utility", label: "Regulated utility",
+      reason: "returns are set by regulation on an approved rate base; the capital spending regulators approve becomes the growth, recovered through allowed rates" });
+  }
+
   if ((L.netIncome != null && L.netIncome < 0) || (L.operatingIncome != null && L.operatingIncome < 0)) {
     // Unprofitable growth, judged on the record rather than one year. Graham would not brand a
     // business unprofitable on a single down year (a writedown, a build-out, a cyclical trough),
@@ -323,8 +335,13 @@ function overlays(company, s) {
       // "Unprofitable" and no more. The reason is declarative only: overlays concatenate when a
       // company carries several, and instructions collide where facts cannot ("judge it on
       // growth" beside distress's "not growth" was a live contradiction on a sixth of the pages).
+      // Pre-revenue carve: "the gross-margin trajectory" is nonsense copy for a clinical-stage
+      // biotech; when revenue is de minimis the record is the runway and nothing else.
+      const preRevenue = s.rev == null || s.rev < 5e7;
       out.push({ key: "unprofitable", label: "Unprofitable",
-        reason: "no sustained operating profit across the record; an earnings multiple has nothing to rest on. What the record does show is revenue, the gross-margin trajectory, and the burn against the cash on hand" });
+        reason: preRevenue
+          ? "no meaningful revenue yet; the record is the cash on hand against the burn"
+          : "no sustained operating profit across the record; an earnings multiple has nothing to rest on. What the record does show is revenue, the gross-margin trajectory, and the burn against the cash on hand" });
     }
   }
 
@@ -371,6 +388,65 @@ function overlays(company, s) {
     if (median > 0 && troughs >= 2 && range > 0.1) {
       out.push({ key: "cyclical", label: "Cyclical",
         reason: "margins collapse and recover repeatedly across the record; a single year, good or bad, misstates the through-cycle earning power" });
+    }
+  }
+
+  // Serial acquirer: growth by purchase — Munger's distinct animal (the Teledyne-vs-Valeant
+  // fork). The tell is structural, not one deal: goodwill and acquired intangibles a large share
+  // of the balance sheet AND acquisition spending recurring across the record.
+  if (hist.length >= 4 && L.totalAssets > 0) {
+    const gwShare = ((L.goodwill || 0) + (L.intangibleAssets || 0)) / L.totalAssets;
+    const acqYears = hist.filter((h) => {
+      const a = Math.abs(h.lines.acquisitionSpend || 0);
+      const r = h.lines.revenue;
+      return a > 0 && r > 0 && a > 0.02 * r;
+    }).length;
+    // High bar on purpose: a third of large caps make occasional acquisitions; the overlay is for
+    // the business whose balance sheet says buying is the model. The label names the category;
+    // the reason states only what the record shows, never the causality.
+    if (gwShare > 0.35 && acqYears >= 4) {
+      out.push({ key: "rollup", label: "Serial acquirer",
+        reason: `goodwill and acquired intangibles are ${pct(gwShare)} of assets, with meaningful acquisition spending in ${acqYears} of the record's ${hist.length} years; much of what this business is was bought, at prices the record carries` });
+    }
+  }
+
+  // Revenue in runoff: the top line shrinking across the record while operations still throw off
+  // cash — the melting ice cube. Not a cyclical down-leg (that overlay claims those pages), and
+  // not a burner: this is the shape where the record's most important fact is the shrinkage.
+  if (!out.some((o) => o.key === "cyclical") && !out.some((o) => o.key === "unprofitable")) {
+    const revPts = hist.filter((h) => h.lines.revenue > 0).map((h) => ({ fy: h.fy, v: h.lines.revenue }));
+    if (revPts.length >= 6) {
+      const first = revPts[0], last = revPts[revPts.length - 1];
+      const span = last.fy - first.fy;
+      const cagr = span >= 5 ? Math.pow(last.v / first.v, 1 / span) - 1 : null;
+      let downs = 0, steps = 0;
+      for (let i = 1; i < revPts.length; i++) { steps++; if (revPts[i].v < revPts[i - 1].v) downs++; }
+      const cfoH = hist.map((h) => h.lines.cashFromOps).filter((v) => v != null);
+      const medCfo = cfoH.length ? medianOf(cfoH) : null;
+      if (cagr != null && cagr < -0.02 && downs >= steps / 2 && medCfo != null && medCfo > 0) {
+        out.push({ key: "runoff", label: "Revenue in runoff",
+          reason: `revenue has shrunk about ${pct(-cagr)} a year across the record while operations still generate cash` });
+      }
+    }
+  }
+
+  // Graham's asset play: liquid current assets exceed every liability combined — the net-net
+  // shape, stated from the balance sheet alone (whether the price sits below it is the reader's
+  // arithmetic, with the quote they bring). A bare surplus catches every cash-rich compounder,
+  // which is a different situation; the overlay is for the page where the balance sheet IS the
+  // story, so the surplus must dominate the whole asset base.
+  const totalLiab = L.totalAssets != null && L.stockholdersEquity != null ? L.totalAssets - L.stockholdersEquity : null;
+  if (L.currentAssets != null && totalLiab != null && totalLiab > 0 && L.totalAssets > 0) {
+    const ncav = L.currentAssets - totalLiab;
+    // An established earner with a cash-heavy balance sheet is not an asset play — its earnings
+    // are the story (Palantir carried this label for a day). Three straight profitable years
+    // retires the shape; Graham's net-nets were businesses the market valued on their assets
+    // precisely because the earnings couldn't carry the case.
+    const recent = hist.slice(-3).map((h) => h.lines.netIncome);
+    const establishedEarner = recent.length >= 3 && recent.every((v) => v != null && v > 0);
+    if (ncav > 0 && ncav >= 0.5 * L.totalAssets && !establishedEarner) {
+      out.push({ key: "assetplay", label: "Net current asset value",
+        reason: "current assets alone exceed every liability combined, and the surplus is most of the balance sheet: the shape Graham called a net-net" });
     }
   }
 

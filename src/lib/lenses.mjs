@@ -157,7 +157,7 @@ export const LENSES = [
     title: "Durable economics",
     tagline: "Wide margins held through the cycle, on capital that earns its keep.",
     principle:
-      "A wide operating margin sustained across the cycle, and a high return on the capital employed — pricing power that holds, not one good year.",
+      "A wide operating margin sustained across the cycle, and a high return on the capital employed: pricing power that holds, not one good year.",
     test: "Median operating margin ≥15% through the cycle, and return on invested capital ≥15% in at least seven of every ten years it can be measured. Financials excluded; a median margin above 60% is withheld as a mis-tagged top line.",
     positive: true,
     pick(F) {
@@ -172,7 +172,7 @@ export const LENSES = [
     title: "Fortress balance sheets",
     tagline: "More cash than debt, behind a durably profitable business.",
     principle:
-      "Cash and short-term investments above all debt, behind a record that has made money. Net cash leaves the business beholden to no lender — a bad year or a closed credit window can't force its hand.",
+      "Cash and short-term investments above all debt, behind a record that has made money. Net cash leaves the business beholden to no lender; a bad year or a closed credit window can't force its hand.",
     test: "Net cash, behind a record profitable in at least seven of every ten years. Financials excluded; a cushion above 90% of assets is withheld as a shell or corrupt data. Ranked by cushion strength.",
     positive: true,
     pick(F) {
@@ -202,7 +202,7 @@ export const LENSES = [
     title: "Net-net candidates",
     tagline: "Current assets alone cover every liability, with money left over.",
     principle:
-      "Net current asset value — current assets minus every liability, ignoring plant and goodwill. Positive means liquid assets alone could clear all debt with something left for the owner. Whether it trades below that is for the price you bring.",
+      "Net current asset value: current assets minus every liability, ignoring plant and goodwill. Positive means liquid assets alone could clear all debt with something left for the owner. Whether it trades below that is for the price you bring.",
     test: "Net current asset value (latest annual balance sheet) is positive and at least a tenth of total assets. Ranked by cushion strength.",
     positive: true,
     pick(F) {
@@ -228,7 +228,7 @@ export const LENSES = [
     key: "owner-minded",
     group: "buffett",
     title: "Owner-minded managements",
-    tagline: "Reports plainly — an owner's vocabulary, no sales pitch, no steering past GAAP.",
+    tagline: "Reports plainly: an owner's vocabulary, no sales pitch, no steering past GAAP.",
     principle:
       "The MD&A reasons in per-share value and returns, carries little or no promotional language, and leans on no non-GAAP measures.",
     test: "Owner's vocabulary present, promotional language minimal, no reliance on non-GAAP figures.",
@@ -247,7 +247,7 @@ export const LENSES = [
     title: "High gross profitability",
     tagline: "Gross profit that works the whole asset base hard, not just a fat headline margin.",
     principle:
-      "Gross profit as a share of total assets — the quality signal a margin alone misses. A wide margin on a bloated asset base is not the same as gross profit that earns its keep on the capital employed. Price-independent, from the record.",
+      "Gross profit as a share of total assets: the quality signal a margin alone misses. A wide margin on a bloated asset base is not the same as gross profit that earns its keep on the capital employed. Price-independent, from the record.",
     test: "Median gross profit ÷ total assets ≥40% through the record. Financials excluded; a gross margin outside a plausible band is withheld as a mis-tagged cost line.",
     positive: true,
     pick(F) {
@@ -260,9 +260,9 @@ export const LENSES = [
     key: "capital-light",
     group: "buffett",
     title: "Capital-light compounding",
-    tagline: "Owner earnings grew while the asset base barely did — growth that doesn't gorge on capital.",
+    tagline: "Owner earnings grew while the asset base barely did: growth that doesn't gorge on capital.",
     principle:
-      "Owner earnings that compounded faster than the assets behind them — Buffett's ideal of a business that grows without swallowing capital, and the mirror of the asset-growth anomaly (a bloating balance sheet is the warning, not the goal).",
+      "Owner earnings that compounded faster than the assets behind them: a business growing without swallowing capital, the mirror of the asset-growth anomaly (a bloating balance sheet is the warning, not the goal).",
     test: "Owner earnings grew, and grew faster than a total-asset base rising ≤8% a year, across the record. Financials excluded.",
     positive: true,
     pick(F) {
@@ -276,9 +276,9 @@ export const LENSES = [
     key: "cash-backed",
     group: "buffett",
     title: "Cash-backed earnings",
-    tagline: "Operating cash has met or beaten reported profit, year after year — earnings you can bank.",
+    tagline: "Operating cash has met or beaten reported profit, year after year: earnings that arrived as cash.",
     principle:
-      "Reported profit that shows up as cash rather than accruals — the positive side of the accrual signal the red-flags screen catches in reverse. Operating cash comfortably at or above net income across the record.",
+      "Reported profit that shows up as cash rather than accruals: the positive side of the accrual signal the red-flags screen catches in reverse. Operating cash comfortably at or above net income across the record.",
     test: "Median operating cash ÷ net income ≥1.05, over profitable years, across the record. Financials excluded.",
     positive: true,
     pick(F) {
