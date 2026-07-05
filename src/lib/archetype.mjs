@@ -292,9 +292,9 @@ function sectorReason(key, s) {
     case "consumer":
       return `a branded-goods profile${s.grossMargin != null ? ` at a ${pct(s.grossMargin)} gross margin` : ""}, the asset is the brand and shelf position`;
     case "financial":
-      return "a lender's balance sheet, judged on book value, net interest margin and loan losses (fuller treatment coming)";
+      return "a lender's balance sheet; the economics live in book value, net interest margin and loan losses";
     case "reit":
-      return "a property model where GAAP depreciation distorts earnings, judged on FFO and net asset value (fuller treatment coming)";
+      return "a property model where GAAP depreciation distorts earnings; the economics live in FFO and net asset value";
     default:
       return "not enough shape in the filings to read the model with confidence";
   }
@@ -319,23 +319,35 @@ function overlays(company, s) {
     const negShare = niHist.length ? niHist.filter((v) => v < 0).length / niHist.length : 0;
     const medNi = niHist.length ? medianOf(niHist) : null;
     if ((niHist.length < 3 || negShare >= 0.5 || (medNi != null && medNi <= 0)) && !(ttmNi != null && ttmNi > 0)) {
-      out.push({ key: "unprofitable", label: "Unprofitable growth",
-        reason: "no sustained operating profit across the record, judge it on revenue growth, gross-margin trajectory, cash burn and runway, never on an earnings multiple" });
+      // The label tests losses, never growth — plenty of flagged names are shrinking — so it says
+      // "Unprofitable" and no more. The reason is declarative only: overlays concatenate when a
+      // company carries several, and instructions collide where facts cannot ("judge it on
+      // growth" beside distress's "not growth" was a live contradiction on a sixth of the pages).
+      out.push({ key: "unprofitable", label: "Unprofitable",
+        reason: "no sustained operating profit across the record; an earnings multiple has nothing to rest on. What the record does show is revenue, the gross-margin trajectory, and the burn against the cash on hand" });
     }
   }
 
   // Distress / turnaround, also read through the cycle: a persistent inability to cover interest,
   // or operating cash that burns against real debt — a pattern, not one rough year on an otherwise
-  // sound record (which is a cyclical trough or a one-off, read elsewhere). The through-cycle
-  // median coverage, and how often operating cash has actually gone negative, decide it.
-  const covHist = hist.map((h) => (h.lines.operatingIncome != null && h.lines.interestExpense ? h.lines.operatingIncome / h.lines.interestExpense : null)).filter((v) => v != null);
+  // sound record (which is a cyclical trough or a one-off, read elsewhere). Three guards, each
+  // learned from a live misfire: interest expense must be a real cost (a sign-flipped tag made
+  // Disney's positive operating income read as negative coverage), the debt must be material
+  // against the balance sheet (net-cash Palantir was "distressed" on a rounding-error interest
+  // line), and a trailing twelve months that comfortably covers interest breaks the pattern —
+  // the same recovery escape the unprofitable overlay has always had.
+  const debtMaterial = L.totalDebt != null && (L.totalAssets ? L.totalDebt / L.totalAssets > 0.05 : L.totalDebt > 0);
+  const covHist = hist.map((h) => (h.lines.operatingIncome != null && h.lines.interestExpense > 0 ? h.lines.operatingIncome / h.lines.interestExpense : null)).filter((v) => v != null);
   const medCov = covHist.length ? medianOf(covHist) : null;
   const cfoHist = hist.map((h) => h.lines.cashFromOps).filter((v) => v != null);
   const cfoBurnShare = cfoHist.length ? cfoHist.filter((v) => v < 0).length / cfoHist.length : 0;
-  const latestBurn = L.cashFromOps != null && L.cashFromOps < 0 && L.totalDebt > 0;
-  if ((medCov != null && medCov < 1.5) || (latestBurn && cfoBurnShare >= 0.4)) {
+  const latestBurn = L.cashFromOps != null && L.cashFromOps < 0 && debtMaterial;
+  const ttmL = company.ttm?.lines || null;
+  const ttmCov = ttmL && ttmL.operatingIncome != null && ttmL.interestExpense > 0 ? ttmL.operatingIncome / ttmL.interestExpense : null;
+  const ttmClear = ttmCov != null ? ttmCov >= 3 : !!(ttmL && ttmL.operatingIncome > 0 && ttmL.cashFromOps > 0);
+  if (((medCov != null && medCov < 1.5 && debtMaterial) || (latestBurn && cfoBurnShare >= 0.4)) && !ttmClear) {
     out.push({ key: "distress", label: "Distress / turnaround",
-      reason: "thin interest coverage or cash-burning operations against real debt across the record, the first questions are liquidity and the maturity wall, not growth" });
+      reason: "thin interest coverage, or operating cash burned against real debt, across the record. The balance sheet carries this situation; the debt schedule sets the clock" });
   }
 
   // Capital build-out (the Chanos lens): capex elevated AND surging vs its own past.
@@ -358,7 +370,7 @@ function overlays(company, s) {
     const range = Math.max(...margins) - Math.min(...margins);
     if (median > 0 && troughs >= 2 && range > 0.1) {
       out.push({ key: "cyclical", label: "Cyclical",
-        reason: "margins collapse repeatedly across the cycle, a single year misleads; look at normalized, through-cycle earnings and the balance sheet at the trough" });
+        reason: "margins collapse and recover repeatedly across the record; a single year, good or bad, misstates the through-cycle earning power" });
     }
   }
 

@@ -176,7 +176,7 @@ const overlays = cls.overlays || [];
     {overlays.length ? (
       <div class="r">
         <dt>Situation</dt>
-        <dd>{overlays.map((o) => <span class="ov"><b>{o.label}.</b> {o.reason}. </span>)}</dd>
+        <dd>{overlays.map((o) => <span class="ov"><b>{o.label}.</b> {o.reason.charAt(0).toUpperCase() + o.reason.slice(1)}. </span>)}</dd>
       </div>
     ) : null}
     <div class="r">
