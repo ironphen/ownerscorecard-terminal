@@ -158,14 +158,14 @@ const enrich = (sec) => ({
     <div class="cockroach">
       {cockroach.materialWeakness ? <div class="ck"><span class="ckLabel">Material weakness in financial controls</span><blockquote class="ckq">“{ckTrim(cockroach.materialWeakness)}”</blockquote></div> : null}
       {cockroach.restatement ? <div class="ck"><span class="ckLabel">Restated past financials</span><blockquote class="ckq">“{ckTrim(cockroach.restatement)}”</blockquote></div> : null}
-      <p class="ckNote">The figures below are only as sound as the controls that produced them — the honesty test comes before any ratio.{company.sourceUrl ? <> <a href={company.sourceUrl} target="_blank" rel="noopener">read the note →</a></> : null}</p>
+      <p class="ckNote">The figures below are only as sound as the controls that produced them.{company.sourceUrl ? <> <a href={company.sourceUrl} target="_blank" rel="noopener">read the note →</a></> : null}</p>
     </div>
   ) : null}
 
   {sample ? (
     <div class="sample">
       <strong>Sample data.</strong> Illustrative placeholders until the EDGAR pipeline runs.
-      The “source” link is already real.
+      The “source” link is live.
     </div>
   ) : null}
 
@@ -212,7 +212,7 @@ const enrich = (sec) => ({
   {report ? (
     <div class="section">
       <h3 class="secHead">Durability &amp; moat, {report.years[0]}–{report.years[report.years.length - 1]}</h3>
-      <p class="durNote">A moat is a high return that doesn’t fade, reinvested at high returns. Here is what the record says, judgments, not another chart of the numbers.</p>
+      <p class="durNote">Whether the record’s returns held, and what the capital reinvested earned.</p>
       <ul class="report">
         {report.facts.map((ft) => (
           <li>
@@ -231,7 +231,7 @@ const enrich = (sec) => ({
   {company.market !== "JP" ? <MoatUnderAI company={company} /> : null}
 
   <p class="foot">
-    Solvent isn't cheap; growing isn't good. Vital signs, not a verdict — the filing is one click away.
+    All figures as filed; the source filing is linked above.
   </p>
 </section>
 

@@ -23,13 +23,11 @@ import { SEARCH_ALIASES } from "../../lib/searchAliases.mjs";
     <h1>Weigh one business against another</h1>
     <p class="lede">
       Munger&rsquo;s first question about anything you might own is <em>compared to what?</em> Put the
-      businesses you&rsquo;re weighing side by side — the record an owner reads, and what each one&rsquo;s
+      businesses you&rsquo;re weighing side by side: the record an owner reads, and what each one&rsquo;s
       price would have to assume to make sense.
     </p>
     <p class="frame">
-      Two records, set side by side. The service won&rsquo;t tell you which is better, or whether either
-      belongs in your portfolio — that is circle-of-competence work only you can do. There is no score
-      and no ranking here: just the facts, in a row.
+     
     </p>
   </header>
 
@@ -42,7 +40,7 @@ import { SEARCH_ALIASES } from "../../lib/searchAliases.mjs";
     </div>
     <ul class="pResults" id="cmpResults" role="listbox" aria-label="Matching businesses" hidden></ul>
     <div class="chips" id="cmpChips" aria-live="polite"></div>
-    <p class="pHint" id="cmpHint">Add two to four businesses you already have in mind. (Up to four.)</p>
+    <p class="pHint" id="cmpHint">Add two to four businesses you already have in mind.</p>
   </section>
 
   <section class="controls" id="cmpControls" hidden>
@@ -61,7 +59,7 @@ import { SEARCH_ALIASES } from "../../lib/searchAliases.mjs";
       <button class="copyLink" id="cmpCopy" type="button" title="The whole comparison lives in the URL">Copy link</button>
     </div>
     <p class="ctlNote">
-      One required return, applied to every column as its discount rate — the opportunity-cost hurdle,
+      One required return, applied to every column as its discount rate: the opportunity-cost hurdle,
       held equal across the businesses. Owner-earnings columns then grow for ten years and 2.5%
       thereafter; a bank is read on its return on tangible book, a REIT on its FFO. The base toggles
       make the owner-earnings figure honest and apply where they fit.
@@ -71,18 +69,17 @@ import { SEARCH_ALIASES } from "../../lib/searchAliases.mjs";
   <div id="cmpTable" class="tableWrap" aria-live="polite"></div>
 
   <section class="empty" id="cmpEmpty">
-    <p>Nothing to compare yet. Add a business above — for example, weigh <button class="exLink" data-ex="KO,PEP">Coca-Cola against PepsiCo</button>, or <button class="exLink" data-ex="V,MA">Visa against Mastercard</button>.</p>
+    <p>Nothing to compare yet. Add a business above; for example, weigh <button class="exLink" data-ex="KO,PEP">Coca-Cola against PepsiCo</button>, or <button class="exLink" data-ex="V,MA">Visa against Mastercard</button>.</p>
   </section>
 
   <p class="foot">
-    Every figure is recomputed from the company&rsquo;s own SEC or EDINET filings — the same record behind
+    Every figure is recomputed from the company&rsquo;s own SEC or EDINET filings, the same record behind
     each Owner&rsquo;s Scorecard. The reverse-DCF says what a price would have to <em>assume</em>, never what a
     business is worth; a reference value is a yardstick, not a target. An ADR column with a known ADS ratio
     is stated in US dollars per ADS (the ratio from the filer&rsquo;s own 20-F cover, translated at the dated
     reference rate shown), so the price you type is the quote you hold; other absolute figures remain in each
-    company&rsquo;s own reporting currency and are never differenced across columns — ratios and per-share
-    growth are what compare cleanly. A 5-year record (much of the Japanese pool) is not a 10-year one — the
-    span is on every column.
+    company&rsquo;s own reporting currency and are never differenced across columns; ratios and per-share
+    growth are what compare cleanly. A 5-year record (much of the Japanese pool) is not a 10-year one; the span is on every column.
   </p>
 
   <style>
@@ -330,16 +327,16 @@ import { SEARCH_ALIASES } from "../../lib/searchAliases.mjs";
       function priceNote(card) {
         const p = card.price;
         const href = (card.pool === "JP" ? "/jp/" : "/c/") + card.ticker;
-        if (p.mode === "negative") return `Owner earnings are negative — the price read flips to the margin it must reach. <a href="${href}#sec-price">See the full read →</a>`;
+        if (p.mode === "negative") return `Owner earnings are negative; the price read flips to the margin it must reach. <a href="${href}#sec-price">See the full read →</a>`;
         if (p.mode === "off") return `Read on the balance sheet, not an owner-earnings DCF. <a href="${href}#sec-price">See the full read →</a>`;
         let n = "";
-        if (p.mode === "owner-earnings" && p.shares == null) n = "The share count isn't tagged for this multi-class filer — enter it too (any quote page lists it). ";
+        if (p.mode === "owner-earnings" && p.shares == null) n = "The share count isn't tagged for this multi-class filer; enter it too (any quote page lists it). ";
         const b = card.basis;
         if (b && b.auto) {
           // Converted column: the reader types the US dollar quote they actually hold.
-          n += `US quote, in dollars${b.kind === "ads" && b.ratio ? ` — 1 ADS = ${esc(String(b.ratio))} ordinary` : " — the US listing is the ordinary share"}${b.homeCcy !== "USD" && b.fxUsd ? `; ${esc(b.homeCcy)} 1 = $${esc(String(b.fxUsd))}` : ""}${b.fxAsOf ? ` (${esc(b.fxAsOf)})` : ""}.`;
+          n += `US quote, in dollars${b.kind === "ads" && b.ratio ? `: 1 ADS = ${esc(String(b.ratio))} ordinary` : ": the US listing is the ordinary share"}${b.homeCcy !== "USD" && b.fxUsd ? `; ${esc(b.homeCcy)} 1 = $${esc(String(b.fxUsd))}` : ""}${b.fxAsOf ? ` (${esc(b.fxAsOf)})` : ""}.`;
         } else if (p.adrBasis) {
-          n += `Enter the home-market price (${esc(card.currency)}, per ordinary share), not the US ADR quote.${card.currency === "GBP" ? " London quotes print in pence — enter pounds." : ""}`;
+          n += `Enter the home-market price (${esc(card.currency)}, per ordinary share), not the US ADR quote.${card.currency === "GBP" ? " London quotes print in pence; enter pounds." : ""}`;
         }
         return n;
       }
@@ -400,7 +397,7 @@ import { SEARCH_ALIASES } from "../../lib/searchAliases.mjs";
         }
 
         // ---- the price band: the only interactive rows ----
-        h += `<tr class="bandRow"><th colspan="${cs.length + 1}">The price — what you&rsquo;d have to believe</th></tr>`;
+        h += `<tr class="bandRow"><th colspan="${cs.length + 1}">The price: what you&rsquo;d have to believe</th></tr>`;
         h += `<tr><th class="rl">Today&rsquo;s price<span class="rsub">you bring it</span></th>`;
         for (let i = 0; i < cs.length; i++) {
           const c = cs[i];
@@ -479,7 +476,7 @@ import { SEARCH_ALIASES } from "../../lib/searchAliases.mjs";
           chip.appendChild(x);
           chipsEl.appendChild(chip);
         });
-        hintEl.textContent = cols.length >= MAX ? "Four businesses — the most a head-to-head reads cleanly. Remove one to add another." : "Add two to four businesses you already have in mind. (Up to four.)";
+        hintEl.textContent = cols.length >= MAX ? "Four businesses is the most a head-to-head reads cleanly. Remove one to add another." : "Add two to four businesses you already have in mind.";
       }
 
       // ---- load a card on demand ----

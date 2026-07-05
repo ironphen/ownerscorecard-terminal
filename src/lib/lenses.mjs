@@ -187,7 +187,7 @@ export const LENSES = [
     title: "The defensive checklist",
     tagline: "Size, liquidity, debt, an unbroken earnings and dividend record.",
     principle:
-      "The price-independent defensive-investor tests: adequate size, a current ratio of two, debt within working capital, an unbroken earnings record, a paid dividend, and a decade of growth. A floor of safety, not a buy signal.",
+      "The price-independent defensive-investor tests: adequate size, a current ratio of two, debt within working capital, an unbroken earnings record, a paid dividend, and a decade of growth. ",
     test: "Clears at least five of the testable criteria. The price test is left to the company page, where you bring the price.",
     positive: true,
     pick(F) {
@@ -293,7 +293,7 @@ export const LENSES = [
     title: "Red flags",
     tagline: "A restatement, a control weakness, earnings ahead of cash, or heavy dilution.",
     principle:
-      "Companies that tripped an accounting-integrity or capital-structure flag. Stated as facts to read harder, not a verdict.",
+      "Companies that tripped an accounting-integrity or capital-structure flag. ",
     test: "Tripped at least one: a restatement or material weakness, earnings ahead of cash (on both the accrual and Beneish reads), the share count more than doubled, or heavy promotional plus off-GAAP language.",
     positive: false,
     pick(F) {

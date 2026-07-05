@@ -128,8 +128,8 @@ const lens = isReit ? "the REIT lens" : isLife ? "the spread-and-book-value lens
 const subLabel = subsector ? REIT_SUBSECTOR_LABELS[subsector] || cls.industry.label : null;
 const heading = basis === "model" ? "Peers, nearest by economic model" : `Peers, ${subLabel || cls.industry.label}`;
 const intro = basis === "model"
-  ? `No close industry peers in the catalog yet, so these are the nearest by economic model (${cls.sector.label.toLowerCase()}), compared on ${lens}. Don't rank by a single number.`
-  : `The same industry, side by side on ${lens}, compare, don't rank by a single number.`;
+  ? `No close industry peers in the catalog yet, so these are the nearest by economic model (${cls.sector.label.toLowerCase()}), compared on ${lens}.`
+  : `The same industry, side by side on ${lens}.`;
 ---
 
 {group.length >= 2 ? (

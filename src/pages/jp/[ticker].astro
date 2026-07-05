@@ -66,16 +66,16 @@ const sectorLabel = fund ? SECTOR_LABEL[fund.sector] || "Diversified" : null;
           <p>
             The numbers below are read directly from {name}&rsquo;s EDINET filing, in yen. The
             Japanese-language narrative is not machine-read; the short business note that follows
-            is <b>written and reviewed by hand</b>, grounded in the filing and the company&rsquo;s
-            established facts, not machine-paraphrased. Every figure is arithmetic on the filing.
+            is written and reviewed by hand, grounded in the filing and the company&rsquo;s
+            established facts.
             <a href={fund.sourceUrl} target="_blank" rel="noopener"> Find it on EDINET (code {ticker}) →</a>
           </p>
         ) : (
           <p>
-            This is a <b>quantitative</b> scorecard. The numbers below are read directly from
+            This is a quantitative scorecard. The numbers below are read directly from
             {name}&rsquo;s EDINET filing, in yen. The Japanese-language narrative, what the
             business does, its risks, what changed this year, is not machine-read here, so we
-            do not paraphrase it. For the words, go to the filing itself; for the numbers, read on.
+            do not paraphrase it. 
             <a href={fund.sourceUrl} target="_blank" rel="noopener"> Find it on EDINET (code {ticker}) →</a>
           </p>
         )}
@@ -94,8 +94,7 @@ const sectorLabel = fund ? SECTOR_LABEL[fund.sector] || "Diversified" : null;
           </dl>
           <p class="briefFoot">
             Written and reviewed by hand, grounded in the filing and the company&rsquo;s established
-            facts; whether it is a good business is the arithmetic below, not a word of this. The
-            judgment is yours.
+            facts.
           </p>
         </section>
       ) : null}
@@ -109,21 +108,21 @@ const sectorLabel = fund ? SECTOR_LABEL[fund.sector] || "Diversified" : null;
       </section>
 
       <section class="actGroup">
-        <ActHeader n="II" title="Quality &amp; stewardship" lede="Is it a good business, will it survive, and is it run for the owners? The same checks the US pages run, in yen." />
+        <ActHeader n="II" title="Quality &amp; stewardship" lede="Returns, the balance sheet, and stewardship. The same checks the US pages run, in yen." />
         <div id="sec-scorecard" class="sec"><Scorecard company={fund} /></div>
         <div id="sec-capital" class="sec"><Capital company={fund} /></div>
         <div id="sec-inversion" class="sec"><Inversion company={fund} /></div>
       </section>
 
       <section class="actGroup">
-        <ActHeader n="III" title="The price" lede="What you would be paying, and what a price would have to assume to make sense, set against the record above." />
+        <ActHeader n="III" title="The price" lede="What a price would have to assume, set against the record above." />
         <div id="sec-price" class="sec"><Valuation company={fund} /><CompareLink company={fund} /></div>
       </section>
 
       <p class="foot">
         Figures from EDINET, the Financial Services Agency&rsquo;s disclosure system, the
-        primary source, free, the same kind of filing the US pages draw from EDGAR. A separate
-        pool: these names never pass through the US industry classifier. Present, never pronounce.
+        same kind of filing the US pages draw from EDGAR. A separate
+        pool: these names never pass through the US industry classifier.
       </p>
     </>
   ) : (

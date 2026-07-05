@@ -397,8 +397,8 @@ const BS_KEYS = [
 ];
 // totalDebt is computed (a sum over borrowing families, by accounting standard), so it rides
 // the same per-report walk as a special case rather than an INST concept.
-const DEEPEN_FIELDS = [...CF_KEYS, ...BS_KEYS].map(([f]) => f).concat(["totalDebt"]);
-const CF_VERSION = 4; // bump when CF_KEYS or BS_KEYS changes, to rebuild the per-filing cache
+const DEEPEN_FIELDS = [...CF_KEYS, ...BS_KEYS].map(([f]) => f).concat(["totalDebt", "revenue"]);
+const CF_VERSION = 5; // bump when CF_KEYS or BS_KEYS changes, to rebuild the per-filing cache
 
 // Ten years, Graham's window, from two filings: the latest report's five-year summary gives
 // FY-4..FY, and the report filed about five years earlier carries its own summary for
@@ -451,7 +451,7 @@ async function deepenHistory(rec, reports, cache) {
 // inventory, payables, current assets and liabilities). Cached per docId in cache.cf so an unchanged
 // older filing is parsed once.
 async function deepenCashFlow(rec, reports, cache) {
-  const missing = rec.history.filter((h) => h.lines.capex == null || h.lines.dividendsPaid == null || h.lines.receivables == null || h.lines.totalDebt == null || h.lines.operatingIncome == null);
+  const missing = rec.history.filter((h) => h.lines.capex == null || h.lines.dividendsPaid == null || h.lines.receivables == null || h.lines.totalDebt == null || h.lines.operatingIncome == null || h.lines.revenue == null);
   if (!missing.length || reports.length < 2) return 0;
   cache.cf ||= {};
   const byFy = {}; // fy -> { ...CF_KEYS and BS_KEYS fields }
@@ -481,6 +481,12 @@ async function deepenCashFlow(rec, reports, cache) {
           }
           const dv = debtForYear(store, rel, storeIFRS);
           if (dv != null) { row.totalDebt = dv; any = true; }
+          // Revenue is standard-dependent (JGAAP 売上高 vs IFRS revenue families) and the
+          // five-year summaries carry it inconsistently across a filer's JGAAP→IFRS
+          // transition (Toyota's decade held revenue for only four years). Each older
+          // report supplies its own two years under its own standard.
+          const rv = first(storeIFRS ? REVENUE_IFRS : REVENUE_JGAAP, rel, false);
+          if (rv != null) { row.revenue = rv; any = true; }
           if (any) cf[rfy + rel] = row;
         }
       } catch (err) { console.warn(`    ! older filing ${r.docId}: ${err.message}`); }

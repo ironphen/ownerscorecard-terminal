@@ -38,8 +38,7 @@ const leasePctFixed = material ? Math.round((liability / totalFixed) * 100) : nu
     </div>
     <p class="intro">
       Debt by another name. What the business owes on the property, aircraft, stores and equipment it rents
-      rather than owns is a fixed claim due on a schedule, the same as a bond — add it back to debt to see the
-      true leverage. That ladder{bothKinds ? ", operating and finance leases together" : ""}, and what it adds to the debt on the page above.
+      rather than owns is a fixed claim due on a schedule; added back to the debt, it is the true leverage. That ladder{bothKinds ? ", operating and finance leases together" : ""}, and what it adds to the debt on the page above.
     </p>
 
     {bothKinds ? (
@@ -79,7 +78,7 @@ const leasePctFixed = material ? Math.round((liability / totalFixed) * 100) : nu
       <div class="rd">
         <span class="rlab">Total lease payments</span>
         <span class="rval">{$(lo.totalPayments)}</span>
-        <span class="rnote">every year plus the tail, undiscounted — the full cash the leases will take</span>
+        <span class="rnote">every year plus the tail, undiscounted: the full cash the leases will take</span>
       </div>
       {liability != null ? (
         <div class="rd">
@@ -91,23 +90,21 @@ const leasePctFixed = material ? Math.round((liability / totalFixed) * 100) : nu
     </div>
 
     <div class="cover">
-      <p class="ctitle">True leverage — debt plus leases</p>
+      <p class="ctitle">True leverage: debt plus leases</p>
       <div class="cgrid">
         <div class="c"><span>On-balance-sheet debt</span><b>{$(debt || 0)}</b></div>
         <div class="c"><span>Lease obligations (present value)</span><b>{$(liability)}</b></div>
         <div class="c tot"><span>Total fixed claims on the business</span><b>{$(totalFixed)}</b></div>
       </div>
       <p class="cnote">
-        Counting the leases the way Buffett does, the fixed claims on this business come to {$(totalFixed)} — of which
-        the leases are {leasePctFixed}%{leasePctFixed >= 50 ? ", more than the debt itself" : ""}. Read the maturity wall above beside the debt
-        schedule: together they are the calendar of what must be paid, and when. The figures are the fact; what the
-        leverage is worth is yours to weigh.
+        Counting the leases the way Buffett does, the fixed claims on this business come to {$(totalFixed)}, of which
+        the leases are {leasePctFixed}%{leasePctFixed >= 50 ? ", more than the debt itself" : ""}. The lease wall above and the debt schedule together are the calendar of what must be paid, and when. 
       </p>
     </div>
 
     <p class="foot">
       Lease ladder read from the ASC 842 tags in the company’s {lo.asOf ? fmtDate(lo.asOf) : "latest"} annual
-      report and reconciled — the yearly buckets sum to the undiscounted total, which less the imputed
+      report and reconciled: the yearly buckets sum to the undiscounted total, which less the imputed
       interest equals the balance-sheet liability; a ladder that doesn’t tie out is withheld.
     </p>
   </section>

@@ -8,7 +8,7 @@ const ticker = String(company?.ticker || "").toUpperCase();
 {ticker ? (
   <p class="cmpLink">
     <a href={`/compare?c=${encodeURIComponent(ticker)}`}>Weigh {ticker} against another business →</a>
-    <span class="note">Opportunity cost is the real test of a price: the question is never &ldquo;is this good?&rdquo; but &ldquo;is it better than the other things you could own?&rdquo; Set this record beside one.</span>
+    <span class="note"></span>
   </p>
 ) : null}
 

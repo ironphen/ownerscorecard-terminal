@@ -20,9 +20,9 @@ const clear = inv ? inv.checks.filter((c) => !c.flagged) : [];
 let tally = null;
 if (inv) {
   const f = inv.flaggedCount, n = inv.total;
-  if (f === 0) tally = `None of the ${n} tests turned up a mark; each came back clean. That is not a verdict that the business is cheap or safe, only that these particular ways of being wrong are not written into the record.`;
-  else if (f === n) tally = `All ${n} tests turned up something to look into. Each is a question for the filing, not an answer, but a record that trips every wire is one to understand slowly.`;
-  else tally = `${f} of the ${n} tests turned up something to look into; the other ${n - f} came back clean. A flag is a question to put to the filing, not a verdict.`;
+  if (f === 0) tally = `None of the ${n} tests turned up a mark; each came back clean. A clean panel says only that these particular ways of being wrong are not written into the record.`;
+  else if (f === n) tally = `All ${n} tests turned up something to look into. A record that trips every wire is one to understand slowly.`;
+  else tally = `${f} of the ${n} tests turned up something to look into; the other ${n - f} came back clean.`;
 }
 ---
 
@@ -30,9 +30,7 @@ if (inv) {
   <section class="inv">
     <div class="head"><h3 class="secTitle">Inverting the record</h3></div>
     <p class="lede">
-      <b>Invert:</b> instead of why {company.name || company.ticker} is a good business, ask what would make
-      owning it a mistake, and look for those marks in the record. Disconfirming tests across {inv.span}. A
-      flag points at a question, never a verdict.
+      <b>Invert:</b> instead of why {company.name || company.ticker} is a good business, the question is what would make owning it a mistake, and whether those marks are in the record. Disconfirming tests across {inv.span}. 
     </p>
 
     <p class="tally">{tally}</p>
@@ -62,9 +60,7 @@ if (inv) {
     ) : null}
 
     <p class="foot">
-      Each test is read from the filings and noisy alone — a flag can be a cyclical trough or a year of heavy
-      investment as easily as a problem, so each sends you to the filing. A clean panel is not a reason to
-      buy, a flagged one not a reason to sell.
+      Each test is read from the filings and is noisy alone; a flag can mark a cyclical trough or a year of heavy investment as easily as a problem. The filing says which.
     </p>
   </section>
 ) : null}

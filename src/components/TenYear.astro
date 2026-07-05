@@ -358,7 +358,7 @@ const pctRate = (g) => (g == null ? "—" : `${g.rate >= 0 ? "+" : "−"}${(Math
   <section class="tenyear">
     <div class="head">
       <h3 class="secTitle">The record, {hist[0].fy}–{hist[hist.length - 1].fy}</h3>
-      <span class="hint">realized figures from each filing, no estimates</span>
+      <span class="hint">realized figures from each filing</span>
     </div>
     <div class="wrap">
       <table>
@@ -394,7 +394,7 @@ const pctRate = (g) => (g == null ? "—" : `${g.rate >= 0 ? "+" : "−"}${(Math
       <div class="growth">
         <div class="ghead">
           <span class="gtitle">Per-share growth</span>
-          <span class="gnote">the rate an owner's share actually compounded — realized, never an estimate</span>
+          <span class="gnote">the realized rate an owner's share compounded</span>
         </div>
         <table class="gtab">
           <thead><tr><th class="rowlabel"></th><th>{fullSpan}-yr</th><th>5-yr</th></tr></thead>

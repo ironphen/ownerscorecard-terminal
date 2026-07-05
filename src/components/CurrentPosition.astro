@@ -58,7 +58,7 @@ const trendFirst = cp && cp.series.length >= 3 ? cp.series[0] : null;
       <span class="asof">{cp.fresh ? "as of the latest quarter" : "as of fiscal year-end"}{cp.asOf ? `, ${fmtDate(cp.asOf)}` : ""}</span>
     </div>
     <p class="intro">
-      Can the business pay what it owes this year, off the freshest balance sheet — the quality of the
+      Can the business pay what it owes this year, off the freshest balance sheet: the quality of the
       assets, the debt actually coming due, and what a low ratio means here.
     </p>
 
@@ -82,12 +82,12 @@ const trendFirst = cp && cp.series.length >= 3 ? cp.series[0] : null;
       <div class="rat">
         <span class="rlab">Quick ratio</span>
         <span class="rval">{x1(cp.quickRatio)}</span>
-        <span class="rnote">stricter — drops inventory, which may not sell</span>
+        <span class="rnote">stricter: inventory excluded</span>
       </div>
       <div class="rat">
         <span class="rlab">Cash ratio</span>
         <span class="rval">{x1(cp.cashRatio)}</span>
-        <span class="rnote">strictest — cash alone against what's due</span>
+        <span class="rnote">strictest: cash alone against what's due</span>
       </div>
       <div class="rat">
         <span class="rlab">Working capital</span>
@@ -98,10 +98,10 @@ const trendFirst = cp && cp.series.length >= 3 ? cp.series[0] : null;
 
     {cp.floatKind ? (
       <p class="teach">
-        Its current ratio is below 1, which usually reads as strain — but here it is likely structural
+        Its current ratio is below 1, which usually reads as strain; here it is likely structural
         strength. {cp.floatKind === "cycle"
           ? "This business collects from customers before it pays suppliers (a negative cash-conversion cycle), so the balance sheet is funded by that float"
-          : "What it owes in the near term is money to suppliers and customers — payables and deferred revenue — not to lenders, so the balance sheet is funded by operating float"}, the way Costco's and Amazon's are. The low ratio can be the edge, not the risk; read it beside the cash-conversion cycle and the debt due above.
+          : "What it owes in the near term is money to suppliers and customers (payables and deferred revenue), not to lenders, so the balance sheet is funded by operating float"}, the way Costco's and Amazon's are. The low ratio can be the edge, not the risk; the cash-conversion cycle and the debt due above say which.
       </p>
     ) : null}
 
@@ -112,7 +112,7 @@ const trendFirst = cp && cp.series.length >= 3 ? cp.series[0] : null;
           <span class="svval" style={cp.debtDueCovered ? "color:var(--good)" : "color:var(--warn)"}>
             {$(cp.debtDue)} due · {$(cp.cashLike)} cash
           </span>
-          <span class="svnote">{cp.debtDueCovered ? "covered by cash on hand, no refinancing forced" : "cash alone won't cover the maturities — it leans on refinancing or operating cash"}</span>
+          <span class="svnote">{cp.debtDueCovered ? "covered by cash on hand, no refinancing forced" : "cash alone won't cover the maturities; it leans on refinancing or operating cash"}</span>
         </div>
       ) : null}
       {cp.runwayYears != null ? (
@@ -148,11 +148,11 @@ const trendFirst = cp && cp.series.length >= 3 ? cp.series[0] : null;
         {cp.tangibleBook != null ? <div class="d"><span>Tangible book value</span><b>{$(cp.tangibleBook)}</b><i>equity stripped of goodwill & intangibles</i></div> : null}
         {cp.ncav != null ? <div class="d"><span>Net current asset value</span><b>{$(cp.ncav)}</b><i>Graham's net-net: current assets less all debt</i></div> : null}
         {cp.debtPlusLeases != null && cp.debtPlusLeases > 0 ? <div class="d"><span>Debt incl. leases</span><b>{$(cp.debtPlusLeases)}</b><i>{cp.leases ? `${$(cp.leases)} of it operating leases` : "true obligation, leases added back"}</i></div> : null}
-        {cp.deferredRevenue != null && cp.deferredRevenue > 0 ? <div class="d"><span>Deferred revenue</span><b>{$(cp.deferredRevenue)}</b><i>paid in advance — float, and a sign customers pre-pay</i></div> : null}
+        {cp.deferredRevenue != null && cp.deferredRevenue > 0 ? <div class="d"><span>Deferred revenue</span><b>{$(cp.deferredRevenue)}</b><i>customer cash collected before delivery; operating float</i></div> : null}
       </div>
     </div>
 
-    <p class="foot">From the company's latest filing — where it stands today.</p>
+    <p class="foot">From the company's latest filing.</p>
   </section>
 ) : null}
 

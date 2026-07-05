@@ -15,7 +15,7 @@ const span = range ?? `${xs.length}-yr record`;
 ---
 
 {show ? (
-  <p class="deliv" title={`What ${label.toLowerCase()} actually did over ${range ? `${range} on record` : `the last ${xs.length} years on record`}, the dial's starting point`}>
+  <p class="deliv" title={`Compounded rate of ${label.replace(/,s*delivered$/i, "")} over ${range ? range : `the last ${xs.length} years on record`}`}>
     <span class="dl">{label}</span>
     <b>{pct(cagr)}/yr</b>
     <Sparkline series={xs} />

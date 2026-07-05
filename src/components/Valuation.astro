@@ -276,24 +276,24 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
 
   {adrAuto ? (
     <p class="adrWarn adrBasis">
-      <b>Enter the US price, in dollars</b> — the NYSE/Nasdaq quote you actually hold.
+      <b>Enter the US price, in dollars</b>: the NYSE/Nasdaq quote you hold.
       {adsBasis === "ads" ? (
         <> Per the filing's own cover, “{adsQuote}”; {name} reports in {homeCcy}, so every figure in
-        this tool is stated per ADS{fxDisp ? <> and translated at {fxDisp} ({fxAsOfDisp}, reference rate)</> : null} — your
+        this tool is stated per ADS{fxDisp ? <> and translated at {fxDisp} ({fxAsOfDisp}, reference rate)</> : null} so your
         dollar quote reconciles exactly.</>
       ) : (
         <> {name}'s US listing is the ordinary share itself{fxDisp ? <>; figures in this tool are translated
-        at {fxDisp} ({fxAsOfDisp}, reference rate) so your dollar quote reconciles exactly</> : null}.</>
+        at {fxDisp} ({fxAsOfDisp}, reference rate); the dollar quote then reconciles exactly</> : null}.</>
       )}
       {" "}The record tables elsewhere on this page remain as filed{homeCcy === "USD" ? "" : `, in ${homeCcy}`}.
     </p>
   ) : isADR ? (
     <p class="adrWarn">
       <b>Enter the home-market price, not the US ADR quote.</b> {name} reports in <b>{ccy}</b>,
-      and every figure here — owner earnings, book value, the share count — is on that
+      and every figure here (owner earnings, book value, the share count) is on that
       {ccy === "USD" ? " ordinary-share" : ` ${ccy}, ordinary-share`} basis. Enter the price on the
       same basis: the local-exchange quote per ordinary share{ccy === "USD" ? "" : ` in ${ccy}`}.
-      {ccy === "GBP" ? " Mind the convention: London quotes print in pence — 364.30p is £3.643; enter pounds." : ""}
+      {ccy === "GBP" ? " London quotes print in pence; 364.30p is £3.643. Enter pounds." : ""}
       A US ADR price in dollars bundles the ADR-to-ordinary ratio{ccy === "USD" ? "" : " and the exchange rate"},
       so it will not reconcile with these figures and would throw the multiple off.
     </p>
@@ -319,13 +319,13 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
           <div class="cmp"><span class="cl">…less a 30% margin of safety</span><span class="cv" id="refMosR">—</span></div>
         </div>
         <div class="dials">
-          <span class="dialsLbl">The assumptions, turn the dials</span>
+          <span class="dialsLbl">The assumptions</span>
           <label>Discount rate <output id="rOutR">8%</output><input id="rR" type="range" min="5" max="12" step="0.5" value="8" /></label>
           <label>FFO / share growth <output id="gOutR">{reitGrowthPct}%</output><input id="gR" type="range" min="0" max="8" step="0.5" value={reitGrowthPct} /></label>
           <DeliveredGrowth cagr={ffoGrowthRaw} series={ffoWin} label="FFO / share, delivered" range={ffoRange} />
         </div>
-        <p class="dialsNote">The justified multiple is 1 ÷ (discount rate − growth), a perpetuity on FFO. At an 8% discount and 3% growth, a REIT is worth about 20× FFO. Raise the discount rate and the multiple falls: the same interest-rate gravity that pulls on every yield asset.</p>
-        <p class="foot">FFO about ${ffops.toFixed(2)} per share on {(shares / 1e6).toFixed(0)}M shares. The reference value applies the multiple the dials justify to FFO per share — a yardstick, not a price target. FFO here adds back depreciation and removes property-sale gains, the NAREIT method; it does not net out maintenance capex (AFFO), occupancy or lease terms, which the 10-K does.</p>
+        <p class="dialsNote">The justified multiple is 1 ÷ (discount rate − growth), a perpetuity on FFO. At an 8% discount and 3% growth, a REIT is worth about 20× FFO. </p>
+        <p class="foot">FFO about ${ffops.toFixed(2)} per share on {(shares / 1e6).toFixed(0)}M shares. The reference value applies the multiple the dials justify to FFO per share. FFO here adds back depreciation and removes property-sale gains, the NAREIT method; it does not net out maintenance capex (AFFO), occupancy or lease terms, which the 10-K does.</p>
       </div>
     ) : bankRunnable ? (
       <div id="valBoxBank" data-tbvps={tbvps} data-bvps={bvpsB} data-rotce={rotceMed} data-eps={epsB ?? ""} data-name={name} data-cycle={isInsurer ? "underwriting cycle" : "credit cycle"} data-sym={sym}>
@@ -351,24 +351,24 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
           <div class="cmp"><span class="cl">P/E</span><span class="cv" id="peBank">—</span></div>
         </div>
         <div class="dials">
-          <span class="dialsLbl">The assumptions, turn the dials</span>
+          <span class="dialsLbl">The assumptions</span>
           <label>Cost of equity <output id="coeOut">10%</output><input id="coeB" type="range" min="8" max="14" step="0.5" value="10" /></label>
           <label>Long-term growth <output id="gOutB">3%</output><input id="gB" type="range" min="0" max="6" step="0.5" value="3" /></label>
           <DeliveredGrowth cagr={tbvGrowthRaw} series={tbvWin} label="Tangible book / share, delivered" range={tbvRange} />
-          <p class="dialsNote">The justified multiple is (return on tangible equity − growth) ÷ (cost of equity − growth). {isInsurer ? "An" : "A"} {finKind} earning exactly its cost of equity is worth about one times tangible book; every point of durable excess return above that is worth paying up for. Raise the cost of equity and the justified multiple falls: that is interest-rate gravity on {isInsurer ? "an" : "a"} {finKind}.</p>
+          <p class="dialsNote">The justified multiple is (return on tangible equity − growth) ÷ (cost of equity − growth). {isInsurer ? "An" : "A"} {finKind} earning exactly its cost of equity is worth about one times tangible book; the premium above that prices each point of durable excess return. A higher cost of equity lowers the justified multiple for {isInsurer ? "an" : "a"} {finKind}.</p>
         </div>
-        <p class="foot">Tangible book {$(tEq)} on {(shares / 1e6).toFixed(0)}M shares, a {pctS(rotceMed)} normalized return on it. The reference value applies the multiple that return justifies to tangible book — a yardstick to weigh the price against, never a target. It assumes the {finKind} keeps earning that return; {bankRisk} changes it, which is what the record and the 10-K are for.</p>
+        <p class="foot">Tangible book {$(tEq)} on {(shares / 1e6).toFixed(0)}M shares, a {pctS(rotceMed)} normalized return on it. The reference value applies the multiple that return justifies to tangible book. It assumes the {finKind} keeps earning that return; {bankRisk} changes it, which is what the record and the 10-K are for.</p>
       </div>
     ) : (
-      <p class="note">A {sector.label.toLowerCase()} isn't read on an owner-earnings DCF, its economics live on the balance sheet (book value, the return earned on it, and the cash the assets throw off). We don't force this lens where it doesn't belong.</p>
+      <p class="note">A {sector.label.toLowerCase()} isn't read on an owner-earnings DCF; its economics live on the balance sheet (book value, the return earned on it, and the cash the assets throw off).</p>
     )
   ) : !runnable ? (
     negMode ? (
       <div id="valBoxNeg" data-rev={rev} data-shares={shares} data-netdebt={netDebt} data-name={name} data-oem={oeMarginNow ?? ""} data-profitable={profitableNeg ? "1" : "0"} data-sym={sym}>
         {profitableNeg ? (
-          <p class="intro">{name} is <b>profitable</b>, but owner earnings are <b>negative</b> this year because capital spending currently outruns operating cash, a build-out, so the owner-earnings reverse-DCF has no positive base to grow. We read the price from both ends instead: type a price to see the steady-state profitability it <b>demands</b>, then set the mature margin you would actually <b>believe</b> for a reference value to weigh it against. Nothing is stored.</p>
+          <p class="intro">{name} is <b>profitable</b>, but owner earnings are <b>negative</b> this year because capital spending currently outruns operating cash, a build-out, so the owner-earnings reverse-DCF has no positive base to grow. We read the price from both ends instead: type a price to see the steady-state profitability it <b>demands</b>, then set the mature margin you would <b>believe</b> for a reference value to weigh it against. Nothing is stored.</p>
         ) : (
-          <p class="intro">Owner earnings are <b>negative</b> today, so the usual reverse-DCF has nothing to grow. That is exactly when a price makes its boldest promise, so we read it from both ends: type a price to see the future profitability it <b>demands</b>, then set the mature margin you would actually <b>believe</b> to get a reference value to weigh that price against. Nothing is stored.</p>
+          <p class="intro">Owner earnings are <b>negative</b> today, so the usual reverse-DCF has nothing to grow. That is exactly when a price makes its boldest promise, so we read it from both ends: type a price to see the future profitability it <b>demands</b>, then set the mature margin you would <b>believe</b> to get a reference value to weigh that price against. Nothing is stored.</p>
         )}
         <div class="priceRow">
           <label for="pxn">Today&rsquo;s price</label>
@@ -387,14 +387,14 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
           <div class="cmp"><span class="cl">…less a 30% margin of safety</span><span class="cv" id="refMosN">—</span></div>
         </div>
         <div class="dials">
-          <span class="dialsLbl">The assumptions, turn the dials</span>
+          <span class="dialsLbl">The assumptions</span>
           <label>Discount rate <output id="rOutN">9%</output><input id="rN" type="range" min="4" max="15" step="0.5" value="9" /></label>
           <label>Years to get there <output id="nOutN">10</output><input id="nN" type="range" min="5" max="15" step="1" value="10" /></label>
           <label>Revenue growth <output id="grOutN">{gRevPct}%</output><input id="grN" type="range" min="0" max="45" step="5" value={gRevPct} /></label>
           <DeliveredGrowth cagr={gRevRaw} series={revWin} label="Revenue, delivered" range={revRange} />
           <label>Mature owner-earnings margin <output id="mmOutN">15%</output><input id="mmN" type="range" min="3" max="40" step="1" value="15" /></label>
         </div>
-        <p class="foot">Two reads of one future. From your price: the owner earnings the company must reach, valued at a mature multiple and discounted back at your rate, expressed as the margin it implies on revenue grown at your rate. From your belief: the mature margin you would credit, turned into a reference value per share and netted against {netDebt >= 0 ? `net debt ${$(netDebt)}` : `net cash ${$(-netDebt)}`} — a yardstick, never a target. When the margin the price demands runs above the one you would believe, you are paying for a future taken on faith. For a deep cyclical at a trough, normalized through-cycle earnings are the better lens; this mode is for the genuinely unprofitable, and for the profitable business whose capital spending currently outruns its cash.</p>
+        <p class="foot">Two reads of one future. From your price: the owner earnings the company must reach, valued at a mature multiple and discounted back at your rate, expressed as the margin it implies on revenue grown at your rate. From your belief: the mature margin you would credit, turned into a reference value per share and netted against {netDebt >= 0 ? `net debt ${$(netDebt)}` : `net cash ${$(-netDebt)}`}. When the margin the price demands runs above the one you would believe, you are paying for a future taken on faith. For a deep cyclical at a trough, normalized through-cycle earnings are the better lens; this mode is for the genuinely unprofitable, and for the profitable business whose capital spending currently outruns its cash.</p>
       </div>
     ) : (
       <p class="note">A reverse-DCF needs positive owner earnings, or at least revenue, to anchor to, there's no clean base here. Judge this one on assets or normalized earnings, not a growth model.</p>
@@ -402,15 +402,15 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
   ) : (
     <div id="valBox" data-oe={ownerEarnings} data-oe3={oeNormalized ?? ""} data-oemaint={ownerEarningsMaint ?? ""} data-oemaint3={oe3Maint ?? ""} data-sbc={sbcLatest ?? ""} data-gdeliv={(gDeliv5 ?? gDeliv) ?? ""} data-netdebt={netDebt} data-shares={shares} data-haveshares={haveShares ? "1" : "0"} data-name={name} data-eps3={eps3 ?? ""} data-bvps={bvps ?? ""} data-rev={rev ?? ""} data-grev={gRevRaw ?? ""} data-ni={niNow ?? ""} data-sym={sym} data-bonddefault={bondDefault ?? ""}>
       <p class="intro">
-        A price is the one input we don't pull — <b>you bring it</b>. Type today's close and see the
-        owner-earnings growth you'd have to believe to justify it, beside what {name} has actually delivered.
+        Type today's close and see the
+        owner-earnings growth you'd have to believe to justify it, beside what {name} has delivered.
       </p>
 
       {(defaultMaint || defaultNorm) ? (
         <p class="basenote">
           {name}&rsquo;s latest year shows <b>negative owner earnings</b>{defaultMaint
-            ? " — the mark of a build-out, where total capital spending outruns the cash the business throws off today"
-            : ", a cyclical trough"}. So the tool opens on the {defaultMaint ? "steady-state base — maintenance capex in place of the build-out spend" : "through-cycle base"}, the cash it would earn at rest, so the normalize controls actually work; clear the toggle below to read the latest year exactly as reported.
+            ? ", the mark of a build-out: total capital spending outruns the cash the business throws off today"
+            : ", a cyclical trough"}. So the tool opens on the {defaultMaint ? "steady-state base (maintenance capex in place of the build-out spend)" : "through-cycle base"}, the cash it would earn at rest; clear the toggle below to read the latest year exactly as reported.
         </p>
       ) : null}
 
@@ -425,18 +425,18 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
           <label for="shInput">Shares outstanding</label>
           <input id="shInput" type="number" inputmode="decimal" step="0.1" min="0" placeholder="e.g. 87.5" />
           <span class="unit">million</span>
-          <span class="shWhy">— the filing tags {name}&rsquo;s share count where we can&rsquo;t read it, so bring it too (any quote page lists it); the rest is from the record.</span>
+          <span class="shWhy">The share count isn&rsquo;t tagged in a form this tool can read; enter it too (any quote page lists it). The rest is from the record.</span>
         </div>
       ) : null}
 
       {cycleRead ? (
         <p class="cyclenote">
           Through the cycle, {name} earns about <b>{$(ep.normOE)}</b> on its {pctS(ep.normOeMargin, 1)} median
-          owner-earnings margin. This year&rsquo;s {pctS(ep.latestOeMargin, 1)} margin runs <b>{cycleRead === "at" ? "in line with" : cycleRead}</b> that{cycleRead === "above" ? " — so the reported figure may flatter a peak you'd be paying on" : cycleRead === "below" ? " — so the reported figure may understate a lean year" : ""}. <b>Normalize</b>, below, values the price on that through-cycle figure rather than the latest year.
+          owner-earnings margin. This year&rsquo;s {pctS(ep.latestOeMargin, 1)} margin runs <b>{cycleRead === "at" ? "in line with" : cycleRead}</b> that{cycleRead === "above" ? "; the reported figure may flatter a peak you'd be paying on" : cycleRead === "below" ? "; the reported figure may understate a lean year" : ""}. <b>Normalize</b>, below, values the price on that through-cycle figure rather than the latest year.
         </p>
       ) : null}
 
-      <div class="bases" role="group" aria-label="Make the owner-earnings base honest">
+      <div class="bases" role="group" aria-label="Adjust the owner-earnings base">
         <span class="basesLbl">Base</span>
         <label class="tog"><input type="checkbox" id="oeNorm" checked={defaultNorm} /> Normalize · through-cycle{oeNormalized != null ? <> (<b>{$(oeNormalized)}</b>)</> : null}</label>
         <label class="tog"><input type="checkbox" id="oeSbc" /> Net of stock comp{sbcLatest > 0 ? <> (−<b>{$(sbcLatest)}</b>)</> : null}</label>
@@ -477,17 +477,17 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
             <div class="cmp"><span class="cl">P/B</span><span class="cv" id="pb">—</span></div>
             <div class="cmp"><span class="cl">Graham’s price gate</span><span class="cv" id="ggate">—</span></div>
           </div>
-          <p class="gatenote">Graham capped the multiple at 15×; Buffett and Munger let that rule go, a wonderful business can deserve 50× if the thesis holds. Read it as the bargain-hunter's floor, not a ceiling on good sense.</p>
+          <p class="gatenote">Graham capped the multiple at 15×; Buffett and Munger let that rule go: a wonderful business can deserve 50× if the thesis holds. The gate marks the bargain-hunter's floor.</p>
         </>
       ) : null}
 
       <div class="bondBox">
         <div class="bondHead">
-          <span class="bondTitle">Against a high-grade bond — Graham’s yardstick</span>
+          <span class="bondTitle">Against a high-grade bond: Graham’s yardstick</span>
           <span class="bondField"><span class="bondLbl">bond yield</span><input id="bondY" type="number" inputmode="decimal" step="0.1" min="0" placeholder="e.g. 4.5" aria-label="High-grade bond yield, percent" /><span class="bondPct">%</span></span>
         </div>
-        {bondAsOf ? <p class="bondAsOf">Prefilled with the {bondName} ({bondDefault}%, as of {bondAsOf}) — the public-domain risk-free rate. Edit it for today’s exact figure, or a AAA corporate yield.</p> : null}
-        <p class="bondLede" id="bondLede">Graham measured a stock against the bond you could own instead — the heart of his margin of safety. Enter a price above to weigh the owner-earnings yield against this bond.</p>
+        {bondAsOf ? <p class="bondAsOf">Prefilled with the {bondName} ({bondDefault}%, as of {bondAsOf}). Edit it for today’s exact figure, or a AAA corporate yield.</p> : null}
+        <p class="bondLede" id="bondLede">Graham measured a stock against the bond you could own instead, the heart of his margin of safety. Enter a price above to weigh the owner-earnings yield against this bond.</p>
         <div class="compare bondCmp" id="bondCmp" hidden>
           <div class="cmp"><span class="cl">Owner-earnings yield</span><span class="cv hot" id="eyB">—</span></div>
           <div class="cmp"><span class="cl">High-grade bond yield</span><span class="cv" id="bondYOut">—</span></div>
@@ -496,15 +496,15 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
       </div>
 
       <div class="dials">
-        <span class="dialsLbl">The assumptions, turn the dials</span>
+        <span class="dialsLbl">The assumptions</span>
         <label>Discount rate <output id="rOut">9%</output><input id="r" type="range" min="4" max="15" step="0.5" value="9" /></label>
         <label>Years of high growth <output id="nOut">10</output><input id="n" type="range" min="5" max="15" step="1" value="10" /></label>
         <label>Terminal growth <output id="gOut">2.5%</output><input id="g" type="range" min="0" max="4" step="0.25" value="2.5" /></label>
-        <p class="dialsNote">The discount rate is your interest rate, what a dollar years from now is worth today, anchored to the long government-bond yield ({bondDefault != null ? <>the {bondName} is about {bondDefault}% as of {bondAsOf}</> : "~4–5% in the US today"}, plus whatever premium you want for risk). Drag it toward the risk-free rate and watch how much growth the price suddenly “needs”: interest rates are gravity on valuations.</p>
+        <p class="dialsNote">The discount rate is anchored to the long government-bond yield ({bondDefault != null ? <>the {bondName} is about {bondDefault}% as of {bondAsOf}</> : "~4–5% in the US today"}, plus the premium you demand for risk).</p>
       </div>
 
       <div class="sens" id="sens" hidden>
-        <span class="sensLbl">What the record justifies — the owner-earnings multiple, across the dials</span>
+        <span class="sensLbl">What the record justifies: the owner-earnings multiple, across the dials</span>
         <div class="sensWrap"><table class="sensTbl" id="sensTbl" aria-label="Justified owner-earnings multiple by discount rate and years of high growth"></table></div>
         <p class="sensNote" id="sensNote"></p>
       </div>
@@ -512,7 +512,7 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
       <p class="foot">
         {offerMaint ? "Free cash flow" : "Owner earnings"} {$(ownerEarnings)} {haveShares ? `on ${(shares / 1e6).toFixed(0)}M diluted shares` : "on the share count you enter above"}; net {netDebt >= 0 ? `debt ${$(netDebt)}` : `cash ${$(-netDebt)}`}.
         The base is the latest year by default; <b>Normalize</b> values it on the through-cycle median owner-earnings margin (to avoid paying on a peak year), and <b>Net of stock comp</b> treats option pay as the expense it is.{offerMaint ? (<> Capex ({$(Math.abs(capex))}) runs well above depreciation ({$(dep)}), so this is a build-out; <b>Steady-state</b> swaps total capex for maintenance (≈ depreciation), lifting the base to about {$(ownerEarningsMaint)}, the cash it would throw off if it stopped expanding.</>) : null}
-        The reference value extrapolates the owner-earnings growth the record actually delivered, netted against debt — a yardstick, never a price target. The tool says what you'd have to <em>believe</em>, not what the company is <em>worth</em>.
+        The reference value extrapolates the owner-earnings growth the record delivered, netted against debt.
       </p>
     </div>
   )}
@@ -717,7 +717,7 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
       if (!(BOND > 0) || !haveEY) {
         bondCmp.hidden = true;
         bondLede.textContent = !(BOND > 0)
-          ? "Graham measured a stock against the bond you could own instead — the heart of his margin of safety. Enter today’s high-grade bond yield (the 10-year government bond, or a AAA corporate) to weigh the owner-earnings yield against it. Nothing is stored."
+          ? "Graham measured a stock against the bond you could own instead, the heart of his margin of safety. Enter today’s high-grade bond yield (the 10-year government bond, or a AAA corporate) to weigh the owner-earnings yield against it. Nothing is stored."
           : "Enter a price above to set the owner-earnings yield, then this weighs it against the bond.";
         return;
       }
@@ -730,9 +730,9 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
       spreadB.style.color = spread >= 0 ? "var(--good)" : "var(--bad)";
       const ratio = EY / BOND;
       let s;
-      if (EY >= 2 * BOND) s = `The owner-earnings yield is about ${ratio.toFixed(1)}× the bond — comfortably above it, the wide cushion Graham looked for: you are paid far more to own the business than to hold the bond.`;
+      if (EY >= 2 * BOND) s = `The owner-earnings yield is about ${ratio.toFixed(1)}× the bond, comfortably above it: the wide cushion Graham looked for. You are paid far more to own the business than to hold the bond.`;
       else if (EY >= BOND) s = `The owner-earnings yield sits above the bond, but short of the roughly 2× cushion Graham’s defensive rule asked for. The margin over the bond is your pay for the equity’s risk; weigh whether it is enough.`;
-      else s = `The owner-earnings yield is below the bond — today, the riskless bond pays more. The equity has to grow into that gap to earn its risk, which is exactly the growth the reverse-DCF above asks you to believe.`;
+      else s = `The owner-earnings yield is below the bond: today, the riskless bond pays more. The equity has to grow into that gap to earn its risk, which is exactly the growth the reverse-DCF above asks you to believe.`;
       const prem = rr - BOND;
       if (prem > 0.001) s += ` Your ${(rr * 100).toFixed(0)}% discount rate is this ${(BOND * 100).toFixed(2)}% bond plus about a ${(prem * 100).toFixed(1)}-point premium for the risk.`;
       bondLede.textContent = s;
@@ -751,7 +751,7 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
         const norm = oeNorm && oeNorm.checked;
         const sbc = oeSbc && oeSbc.checked && SBC > 0;
         const kind = maint ? (norm ? "steady-state owner earnings, 3-year average" : "steady-state owner earnings (maintenance capex)") : (norm ? "through-cycle (normalized) owner earnings" : "latest-year owner earnings");
-        baseUsed.innerHTML = "Base in use: <b>" + usd(base) + "</b>" + (SH > 0 && isFinite(base / SH) ? " · <b>" + SYM + (base / SH).toFixed(2) + "</b>/share" : "") + " — " + kind + (sbc ? ", net of " + usd(SBC) + " stock comp" : "") + ".";
+        baseUsed.innerHTML = "Base in use: <b>" + usd(base) + "</b>" + (SH > 0 && isFinite(base / SH) ? " · <b>" + SYM + (base / SH).toFixed(2) + "</b>/share" : "") + ", " + kind + (sbc ? ", net of " + usd(SBC) + " stock comp" : "") + ".";
       }
 
       // Reference value: the per-share figure the growth it actually delivered would imply, valued at
@@ -805,7 +805,7 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
       if (ops) {
         ops.hidden = false;
         // Implied market cap, and the multiples that price is on each trailing figure an owner watches.
-        let mcs = `At <b>${P}</b>, the implied market cap is <b class="hot">${usd(mc)}</b> — <b>${(mc / base).toFixed(1)}×</b> owner earnings`;
+        let mcs = `At <b>${P}</b>, the implied market cap is <b class="hot">${usd(mc)}</b>: <b>${(mc / base).toFixed(1)}×</b> owner earnings`;
         if (NI > 0) mcs += `, <b>${(mc / NI).toFixed(1)}×</b> earnings`;
         if (REV > 0) mcs += `, <b>${(mc / REV).toFixed(1)}×</b> revenue`;
         if (opsMc) opsMc.innerHTML = mcs + ".";
@@ -817,7 +817,7 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
         const solved = !res.cap && res.g != null && isFinite(res.g) && res.g > 0;
         const oeN = solved ? base * Math.pow(1 + res.g, N) : null;
         if (solved && impOps) {
-          let s = `To justify it, owner earnings would compound to about <b class="hot">${usd(oeN)}</b> by year ${N} — <b>${(oeN / base).toFixed(1)}×</b> today’s.`;
+          let s = `To justify it, owner earnings would compound to about <b class="hot">${usd(oeN)}</b> by year ${N}, <b>${(oeN / base).toFixed(1)}×</b> today’s.`;
           if (REV > 0 && !isNaN(GREV) && GREV > -0.5) {
             const revN = REV * Math.pow(1 + GREV, N), margN = oeN / revN, margNow = base / REV;
             s += ` On revenue grown at its delivered ${pcs(GREV)}/yr to ${usd(revN)}, that is an owner-earnings margin near <b class="hot">${pcs(margN)}</b> (about ${pcs(margNow)} today).`;
@@ -829,7 +829,7 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
           const mm = mmDial ? parseFloat(mmDial.value) / 100 : 0.25;
           if (mmOut) mmOut.textContent = (mm * 100).toFixed(0) + "%";
           const revReq = oeN / mm, grReq = Math.pow(revReq / REV, 1 / N) - 1;
-          reqRev.innerHTML = `At a <b>${(mm * 100).toFixed(0)}%</b> mature owner-earnings margin, revenue must reach <b class="hot">${usd(revReq)}</b> by year ${N} — a <b class="hot">${pcs(grReq)}/yr</b> climb` + (!isNaN(GREV) && GREV > -0.5 ? ` (it has delivered ${pcs(GREV)}/yr)` : "") + ".";
+          reqRev.innerHTML = `At a <b>${(mm * 100).toFixed(0)}%</b> mature owner-earnings margin, revenue must reach <b class="hot">${usd(revReq)}</b> by year ${N}: a <b class="hot">${pcs(grReq)}/yr</b> climb` + (!isNaN(GREV) && GREV > -0.5 ? ` (it has delivered ${pcs(GREV)}/yr)` : "") + ".";
           marginRow.hidden = false; reqRev.hidden = false;
         } else { if (marginRow) marginRow.hidden = true; if (reqRev) reqRev.hidden = true; }
       }
@@ -901,10 +901,10 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
       reqM.textContent = reqMargin > 3 ? ">300%" : pcs(reqMargin);
       const P = SYM + price.toFixed(2);
       let verdict;
-      if (reqMargin > 1) verdict = `, more owner earnings than the business would have revenue — a margin above 100%, which is arithmetically unreachable.`;
+      if (reqMargin > 1) verdict = `, more owner earnings than the business would have revenue: a margin above 100%, which is arithmetically unreachable.`;
       else if (reqMargin > 0.45) verdict = `, a margin higher than all but a handful of businesses have sustained; the filings and the peer set are where you weigh whether this one can, ${FROM}.`;
       else if (reqMargin > 0.3) verdict = `, in the range of the most profitable software businesses; the record is where you weigh whether it gets there, ${FROM}.`;
-      else if (reqMargin > mgn) verdict = `, above the ${mm.value}% margin you set above — the price implies more than your own input credits.`;
+      else if (reqMargin > mgn) verdict = `, above the ${mm.value}% margin you set above; the price implies more than your own input credits.`;
       else verdict = `, at or below the ${mm.value}% you would credit, ${FROM}.`;
       lede.innerHTML = `At <b>${P}</b>, to earn you ${r.value}% a year, ${esc(NAME)} must be worth ${usd(valN)} in ${N} years. At ~${M.toFixed(0)}× owner earnings, that is <b class="hot">${usd(requiredOE)}</b> a year, on revenue grown ${g > 0 ? "at " + gr.value + "%/yr" : "flat"} to ${usd(revN)}: an owner-earnings margin of <b class="hot">${reqMargin > 3 ? ">300%" : pcs(reqMargin)}</b>${verdict}`;
       setURL(px.value);
@@ -957,7 +957,7 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
       let verdict;
       if (ratio <= 0.85) verdict = `below the about ${justified.toFixed(1)}× that a ${R}% return on tangible equity would support at the cost of equity and growth you set. Whether that return holds is what the record and the 10-K decide.`;
       else if (ratio <= 1.15) verdict = `roughly in line with the about ${justified.toFixed(1)}× that its ${R}% return on tangible equity would support at the dials you set.`;
-      else verdict = `above the about ${justified.toFixed(1)}× that a ${R}% return on tangible equity would support at the dials you set — the price carries the return rising, or holding past the ${CYCLE}.`;
+      else verdict = `above the about ${justified.toFixed(1)}× that a ${R}% return on tangible equity would support at the dials you set; the price carries the return rising, or holding past the ${CYCLE}.`;
       lede.innerHTML = `At <b>${P}</b>, you pay <b class="hot">${ptb.toFixed(2)}×</b> tangible book for ${esc(NAME)}, ${verdict}`;
       setURL(px.value);
     }
@@ -1004,7 +1004,7 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
       let verdict;
       if (ratio <= 0.85) verdict = `below the about ${justified.toFixed(1)}× that ${g.value}% FFO growth would support at an ${r.value}% discount rate.`;
       else if (ratio <= 1.15) verdict = `roughly in line with the about ${justified.toFixed(1)}× that ${g.value}% FFO growth would support at an ${r.value}% discount rate.`;
-      else verdict = `above the about ${justified.toFixed(1)}× that ${g.value}% FFO growth would support at an ${r.value}% discount rate — the price carries faster growth, or a lower rate.`;
+      else verdict = `above the about ${justified.toFixed(1)}× that ${g.value}% FFO growth would support at an ${r.value}% discount rate; the price carries faster growth, or a lower rate.`;
       const income = dy != null ? ` The income alone is a ${(dy * 100).toFixed(1)}% yield.` : "";
       lede.innerHTML = `At <b>${P}</b>, you pay <b class="hot">${pf.toFixed(1)}×</b> funds from operations for ${esc(NAME)}, ${verdict}${income}`;
       setURL(px.value);

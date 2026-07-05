@@ -104,7 +104,7 @@ const lensTrail = fund ? (computeLenses(allCompanies, language.companies).byTick
 // Machine-readable identity for the scorecard: what the page is (a record, not a rating) and which
 // corporation it is about, so a search or answer engine can connect the ticker to this page directly.
 const pageDescription = fund
-  ? `${name} (${ticker}): the ten-year owner's record. Revenue, margins, returns on capital, owner earnings, buybacks, and debt, every figure traced to the company's own filings. No ratings, no price targets.`
+  ? `${name} (${ticker}): the ten-year owner's record. Revenue, margins, returns on capital, owner earnings, buybacks, and debt, every figure traced to the company's own filings.`
   : undefined;
 const pageJsonLd = fund
   ? {

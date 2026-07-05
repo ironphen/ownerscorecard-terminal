@@ -33,7 +33,7 @@ if (cap?.bbYearly && cap.bbYearly.length >= 3) {
   if (hi.price / lo.price >= 1.25) {
     bbRange = ` Year to year the price paid ranged from ${per(lo.price)} (${lo.fy}) to ${per(hi.price)} (${hi.fy})` +
       (heaviest.fy === hi.fy
-        ? `, and ${hi.fy} — near the top of that range — was also its heaviest buyback year (${$(heaviest.spent)}).`
+        ? `, and ${hi.fy}, near the top of that range, was also its heaviest buyback year (${$(heaviest.spent)}).`
         : `; its heaviest year, ${heaviest.fy}, paid ${per(heaviest.price)} (${$(heaviest.spent)}).`);
   }
 }
@@ -53,7 +53,7 @@ if (cap) {
       src.push(`debt rose from ${$(cap.debtStart)} to ${$(cap.debtEnd)}`);
     if (cap.cashChange != null && cap.cashChange < -0.15 * shortfall)
       src.push(`cash and investments drew down ${$(Math.abs(cap.cashChange))}`);
-    fundingNote = `Reinvestment and shareholder returns ran ${$(shortfall)} beyond the operating cash the business generated, so the gap was financed off the balance sheet${src.length ? ` — ${src.join(", and ")}` : ""}.`;
+    fundingNote = `Reinvestment and shareholder returns ran ${$(shortfall)} beyond the operating cash the business generated, so the gap was financed off the balance sheet${src.length ? `: ${src.join(", and ")}` : ""}.`;
   } else {
     const moves = [];
     if (cap.debtChange != null) moves.push(`debt ${cap.debtChange < 0 ? "fell" : "rose"} ${$(Math.abs(cap.debtChange))}`);
@@ -78,7 +78,7 @@ const facts = cap
       },
       {
         key: "funding",
-        label: "Funded by the business, or the balance sheet?",
+        label: "Source of funding",
         value: cap.debtChange != null ? `${cap.debtChange >= 0 ? "+" : "−"}${$(Math.abs(cap.debtChange))} debt` : (materialOverspend ? `−${$(shortfall)}` : "—"),
         // No grade: debt-funded buybacks can build or destroy value depending on the price paid and the
         // durability of the business — both questions the rest of the page is for. The facts carry it.
@@ -91,15 +91,15 @@ const facts = cap
         label: "Average price paid for buybacks",
         value: cap.avgBuybackPrice != null ? per(cap.avgBuybackPrice) : "—",
         note: cap.avgBuybackPrice != null
-          ? `Across the years the filing reports a share count, ${(cap.bbSharesPriced / 1e6).toFixed(0)}M shares were bought for ${$(cap.bbSpentPriced)}, about ${per(cap.avgBuybackPrice)} each.${bbRange} Compare that to the price you bring and to the per-share figures above.`
+          ? `Across the years where the filing reports a share count, ${(cap.bbSharesPriced / 1e6).toFixed(0)}M shares were bought for ${$(cap.bbSpentPriced)}, about ${per(cap.avgBuybackPrice)} each.${bbRange}`
           : cap.bbPriceUnreliable
-          ? `Buybacks ran ${$(cap.bb)} over the span, but a stock split in the window left the reported buyback-share counts on a basis the diluted-share count doesn't match, so a comparable average price can't be deduced honestly here.`
+          ? `Buybacks ran ${$(cap.bb)} over the span, but a stock split in the window left the reported buyback-share counts on a basis the diluted-share count doesn't match, so a comparable average price can't be drawn.`
           : `Buybacks ran ${$(cap.bb)} over the span, but the filings don't tag the share count needed to deduce the average price paid.`,
         show: cap.bb > 0,
       },
       {
         key: "sharecount",
-        label: "Did the share count actually fall?",
+        label: "Net change in share count",
         value: cap.shareChange != null ? pct(cap.shareChange, 1) : "—",
         // No good/warn colour: a falling count is not unambiguously good (buying back overvalued
         // stock destroys value) and a rising one can be fine (a growth issuer). The number and the
@@ -108,7 +108,7 @@ const facts = cap
         note: cap.shareChange == null
           ? "No continuous share count across the span."
           : cap.shareChange <= -0.01
-          ? `The diluted count fell from ${(cap.firstShares / 1e6).toFixed(0)}M to ${(cap.lastShares / 1e6).toFixed(0)}M, so the buybacks outran the stock issued to staff: each remaining share owns more of the business.`
+          ? `The diluted count fell from ${(cap.firstShares / 1e6).toFixed(0)}M to ${(cap.lastShares / 1e6).toFixed(0)}M, so the buybacks outran the stock issued to staff.`
           : cap.shareChange >= 0.01
           ? `The diluted count rose from ${(cap.firstShares / 1e6).toFixed(0)}M to ${(cap.lastShares / 1e6).toFixed(0)}M: issuance (stock pay, deals) outran any buybacks, so owners were diluted on net.`
           : `The diluted count barely moved (${(cap.firstShares / 1e6).toFixed(0)}M to ${(cap.lastShares / 1e6).toFixed(0)}M): buybacks roughly offset the stock issued to staff.`,
@@ -121,7 +121,7 @@ const facts = cap
         note: cap.divYears === 0
           ? (cap.divReported
             ? "Paid no dividend over the span; it returns cash through buybacks or retains it."
-            : "No dividend line was reported in the filing data over the span, so we can't say whether it pays one — check the filing itself before assuming it does not.")
+            : "No dividend line was reported in the filing data over the span; the record here neither confirms nor rules out a payout.")
           : `Paid in ${cap.divYears} of the years on record${cap.dpsGrowth != null ? `, the per-share dividend ${cap.dpsGrowth >= 0 ? "growing" : "shrinking"} about ${pct(Math.abs(cap.dpsGrowth))} a year` : ""}. ${cap.everCut ? "It was cut at least once along the way." : "It was never cut over the span."}`,
         show: true,
       },
@@ -146,7 +146,7 @@ const facts = cap
 
     <p class="lede">
       Over the record, the business generated <b>{$(cap.cfo)}</b> of operating cash; how management split it
-      is the job that matters most. Here it reads as <b>{cap.character}</b>.
+      reads as <b>{cap.character}</b>.
     </p>
 
     <div class="bar" role="img" aria-label="Allocation of operating cash">
@@ -176,8 +176,8 @@ const facts = cap
 
     <p class="foot">
       Buybacks are gross of stock issued to staff; the share-count line above is the net of that, the figure that
-      actually decides whether owners gained. The average price paid blends a year of purchases (and any accelerated
-      repurchase), so read it as close, not exact. The record of where the cash went and on what terms.
+      decides whether owners gained. The average price paid blends a year of purchases (and any accelerated
+      repurchase), so it is close, not exact. The record of where the cash went and on what terms.
     </p>
   </section>
 ) : null}

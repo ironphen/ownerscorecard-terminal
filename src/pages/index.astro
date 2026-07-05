@@ -90,8 +90,7 @@ const fmtWireDate = (s) => new Date(s + "T00:00:00Z").toLocaleDateString("en-US"
     <div class="lede">
       <h1>Read any company the way an owner would.</h1>
       <p class="sub">
-        Every figure traced to the company's own SEC filing. We lay a business out in the order an owner
-        reads it — and stop where judgment begins. We present the evidence; we never pronounce the verdict.
+        Every figure traced to the company's own SEC filing. Each business laid out in the order an owner reads it.
       </p>
     </div>
 
@@ -147,7 +146,7 @@ const fmtWireDate = (s) => new Date(s + "T00:00:00Z").toLocaleDateString("en-US"
     </div>
 
     <p class="entry">
-      New here? Start with the <a href="/concepts">principles</a> — how to read a business, start to finish.
+      Start with the <a href="/concepts">principles</a>: how to read a business, start to finish.
       <span class="sep" aria-hidden="true">·</span>
       <a class="browse" href="/catalog">Browse all {totalLabel} companies →</a>
       <span class="sep" aria-hidden="true">·</span>
@@ -161,7 +160,7 @@ const fmtWireDate = (s) => new Date(s + "T00:00:00Z").toLocaleDateString("en-US"
           <a class="all" href="/wire">The full wire →</a>
         </div>
         <p class="wireLede">
-          Not what the market did — what companies just <em>disclosed</em>. The newest filings across the
+          The newest filings across the
           catalog{wire?.asOf ? `, as of ${fmtWireDate(wire.asOf)}` : ""}, the ones reporting results first.
         </p>
         <ul class="wireList">
@@ -502,7 +501,7 @@ const fmtWireDate = (s) => new Date(s + "T00:00:00Z").toLocaleDateString("en-US"
         emptyEl.hidden = true;
         countEl.hidden = false;
         countEl.textContent = matches.length > MAX
-          ? ("Showing " + MAX + " of " + matches.length.toLocaleString() + " — keep typing to narrow")
+          ? ("Showing " + MAX + " of " + matches.length.toLocaleString() + "; keep typing to narrow")
           : (matches.length + (matches.length === 1 ? " match" : " matches"));
 
         shown.forEach((it, i) => {

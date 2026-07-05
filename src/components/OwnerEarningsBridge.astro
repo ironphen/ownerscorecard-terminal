@@ -33,12 +33,12 @@ const hasGrowth = !!b && b.growthCapex > 0;             // the latest year, for 
 const rows = [
   { k: "ni", label: "Reported net income", kind: "start", get: (y) => y.netIncome },
   anyDep ? { k: "dep", label: "Depreciation & amortization", kind: "add", hint: "non-cash charge added back", get: (y) => y.depreciation } : null,
-  anySbc ? { k: "sbc", label: "Stock-based compensation", kind: "add", flag: true, hint: "non-cash — but a real cost", get: (y) => y.stockBasedComp } : null,
+  anySbc ? { k: "sbc", label: "Stock-based compensation", kind: "add", flag: true, hint: "non-cash, but a real cost", get: (y) => y.stockBasedComp } : null,
   { k: "oth", label: "Working capital & other", kind: "add", hint: "timing of cash in and out, other non-cash items", get: (y) => y.other },
   { k: "cfo", label: "Cash from operations", kind: "subtotal", get: (y) => y.cashFromOps },
   { k: "maint", label: anyGrowth ? "Maintenance capital expenditure" : "Capital expenditure", kind: "sub", hint: anyGrowth ? "the spending needed just to hold position and volume" : "cash put back in to keep running and to grow", get: (y) => -y.maintCapex },
   { k: "oe", label: "Owner earnings", kind: "total", get: (y) => y.ownerEarnings },
-  anyGrowth ? { k: "growth", label: "Growth capital expenditure", kind: "sub", hint: "discretionary — spent to get bigger, not to stand still", get: (y) => -y.growthCapex } : null,
+  anyGrowth ? { k: "growth", label: "Growth capital expenditure", kind: "sub", hint: "discretionary; spent to get bigger, not to stand still", get: (y) => -y.growthCapex } : null,
   anyGrowth ? { k: "fcf", label: "Free cash flow", kind: "subtotal", get: (y) => y.freeCashFlow } : null,
   { k: "oem", label: "Owner-earnings margin", kind: "ratio", hint: "owner earnings ÷ revenue", get: (y) => pc(y.ownerEarnings, y.revenue) },
 ].filter(Boolean);
@@ -73,11 +73,11 @@ let takeaway = null;
 if (b) {
   const niTxt = b.netIncome >= 0 ? `${$(b.netIncome)} of profit` : `a ${$(Math.abs(b.netIncome))} loss`;
   if (hasGrowth) {
-    takeaway = `That year the business earned ${$(b.ownerEarnings)} of owner earnings — the operating cash left after the ${$(b.maintCapex)} it takes just to hold its position. It chose to put ${$(b.growthCapex)} more into growth, which is why free cash flow was only ${$(b.freeCashFlow)}: the gap is investment, not weakness.`;
+    takeaway = `That year the business earned ${$(b.ownerEarnings)} of owner earnings, the operating cash left after the ${$(b.maintCapex)} it takes just to hold its position. It put ${$(b.growthCapex)} more into growth; free cash flow, after that spending, was ${$(b.freeCashFlow)}.`;
   } else {
     takeaway = b.ownerEarnings >= b.netIncome
-      ? `That year the business turned ${niTxt} into ${$(b.ownerEarnings)} of owner earnings — more cash than the profit line showed, after the non-cash charges and the capital it put back in.`
-      : `That year the business reported ${niTxt} but ${$(b.ownerEarnings)} of owner earnings — ${$(Math.abs(b.ownerEarnings - b.netIncome))} less than the profit line, taken out by capital spending and the timing of cash.`;
+      ? `That year the business turned ${niTxt} into ${$(b.ownerEarnings)} of owner earnings: more cash than the profit line showed, after the non-cash charges and the capital it put back in.`
+      : `That year the business reported ${niTxt} but ${$(b.ownerEarnings)} of owner earnings: ${$(Math.abs(b.ownerEarnings - b.netIncome))} less than the profit line, taken out by capital spending and the timing of cash.`;
   }
 }
 ---
@@ -93,7 +93,7 @@ if (b) {
     </div>
     <p class="intro">
       Net income is the accountant's number; owner earnings is the cash an owner could take out. The walk
-      between them, off the cash-flow statement — and whether the gap is widening or holding.
+      between them, off the cash-flow statement, and whether the gap is widening or holding.
     </p>
 
     {takeaway ? <p class="take">{takeaway}</p> : null}
@@ -136,26 +136,25 @@ if (b) {
     </div>
 
     <p class="note">
-      Owner earnings is the cash you could pull out without starving the business:
+      Owner earnings is the cash an owner could pull out without starving the business:
       operating cash less the {hasGrowth ? "maintenance " : ""}capital it must spend to hold its position
-      {hasGrowth ? <> — here about {$(b.maintCapex)}, roughly its depreciation, the rate its assets wear out</> : null}.
+      {hasGrowth ? <> (here about {$(b.maintCapex)}, roughly its depreciation, the rate its assets wear out)</> : null}.
       {hasGrowth ? (
         <> The other {$(b.growthCapex)} of its capital spending is growth it chose, not upkeep it owed; charged
         only with the maintenance it must do, the business earns well more than this year's free cash flow shows.</>
       ) : null}
       {b.stockBasedComp != null ? (
         <> The cash-flow statement also adds stock comp back as non-cash, but it is a real cost paid in
-        shares — counted as the expense it is (less {$(b.stockBasedComp)}), owner earnings is nearer {$(sbcAdj)}.</>
+        shares; counted as the expense it is (less {$(b.stockBasedComp)}), owner earnings is nearer {$(sbcAdj)}.</>
       ) : null}
     </p>
 
     {bigGap ? (
       <p class="gapnote">
-        Much of this year's profit didn't arrive as operating cash — it sits in “working capital &amp;
+        Much of this year's profit didn't arrive as operating cash; it sits in “working capital &amp;
         other” above. That can be a real inventory or timing swing, or profit that doesn't run through
         operating cash at all: a heavy tax year, equity-method earnings, or investment income booked
-        through investing. For a year like this, owner earnings understates the cash earned; read it
-        against the full cash-flow statement.
+        through investing. For a year like this, owner earnings understates the cash earned; the full cash-flow statement carries the rest.
       </p>
     ) : null}
 

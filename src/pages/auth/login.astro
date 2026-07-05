@@ -9,12 +9,12 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
   <section class="auth">
     <h1>Sign in</h1>
     <p class="sub">
-      We'll email you a one-time code and a sign-in link — no password to remember. An account does
+      We'll email you a one-time code and a sign-in link; no password to remember. An account does
       two things: follow the companies you're reading, and receive the filing wire by email. Every
       page on this site stays free either way.
     </p>
 
-    <p class="stale" id="stale" hidden>That sign-in link had already been used or expired — request a fresh one below.</p>
+    <p class="stale" id="stale" hidden>That sign-in link had already been used or expired; request a fresh one below.</p>
 
     <form id="f" novalidate>
       <label for="email">Email</label>
@@ -60,7 +60,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
         })
           .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
           .then(function (res) {
-            if (!res.ok) throw new Error(res.j && res.j.error || "could not send the email — try again");
+            if (!res.ok) throw new Error(res.j && res.j.error || "could not send the email; try again");
             location.href = "/auth/verify?email=" + encodeURIComponent(email) + "&next=" + encodeURIComponent(qs.get("next") || "/account");
           })
           .catch(function (ex) {

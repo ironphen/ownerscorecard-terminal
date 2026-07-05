@@ -36,7 +36,7 @@ const cap = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
 let evidence = null;
 if (ai && ai.inRisk) {
   evidence = {
-    label: ai.newThisYear ? "A competitive risk — new this year" : "Named as a competitive risk",
+    label: ai.newThisYear ? "A competitive risk, new this year" : "Named as a competitive risk",
     tone: ai.newThisYear ? "warn" : "info",
     quote: ai.newQuote || ai.riskQuote,
     note: `${fy ? `Its FY${fy} ` : "Its "}10-K names artificial intelligence as a competitive threat${ai.newThisYear ? ", in language that was not in the prior year's filing" : ""}.`,
@@ -46,7 +46,7 @@ if (ai && ai.inRisk) {
     label: "Raised, but not as a competitor",
     tone: "info",
     quote: null,
-    note: `The filing raises AI among its risks, but in other terms — security, regulation, energy or the like — not as a competitor to its product${ai.asCapability ? "; it frames AI mainly as a capability" : ""}.`,
+    note: `The filing raises AI among its risks, but in other terms (security, regulation, energy or the like), not as a competitor to its product${ai.asCapability ? "; it frames AI mainly as a capability" : ""}.`,
   };
 } else if (ai && exp.tier === "elevated") {
   evidence = {
@@ -55,7 +55,7 @@ if (ai && ai.inRisk) {
     quote: ai.asCapability ? ai.capabilityQuote : null,
     note: ai.asCapability
       ? "Despite the structural exposure, the filing positions AI as something it uses, not a threat to its product."
-      : "Despite the structural exposure, the latest 10-K does not name AI as a competitive risk — itself worth a question.",
+      : "Despite the structural exposure, the latest 10-K does not name AI as a competitive risk, which is itself worth a question.",
   };
 } else if (ai && ai.asCapability) {
   evidence = { label: "Framed as a capability", tone: "info", quote: ai.capabilityQuote, note: "The filing positions AI as something the company uses, not something it fears." };
@@ -64,13 +64,13 @@ if (ai && ai.inRisk) {
 // The synthesis: the question, posed, never answered.
 let verdict;
 if (exp.tier === "elevated" && (assetLight || wasDurable)) {
-  verdict = `${wasDurable ? "The moat the record shows — a high return on capital held across years — was earned before AI collapsed the cost of building a capable substitute for the very thing this business sells. " : "AI has collapsed the cost of building a capable substitute for the very thing this business sells. "}When a credible alternative can be assembled for a fraction of the incumbent's price, it is pricing power that erodes first, not revenue tomorrow. A candidate for Munger's “too-hard pile”: the live question is whether the moat survives that, not whether it held in the past.`;
+  verdict = `${wasDurable ? "The moat the record shows, a high return on capital held across years, was earned before AI collapsed the cost of building a capable substitute for the very thing this business sells. " : "AI has collapsed the cost of building a capable substitute for the very thing this business sells. "}When a credible alternative can be assembled for a fraction of the incumbent's price, it is pricing power that erodes first, not revenue tomorrow. A candidate for Munger's “too-hard pile”: the live question is whether the moat survives that, not whether it held in the past.`;
 } else if (exp.tier === "elevated") {
-  verdict = "The product is the kind capable AI most directly contests: when a substitute can be built cheaply, the incumbent's pricing power is the first thing at risk. The record cannot tell you whether the moat outlasts that, so treat past durability as a starting point, not a promise.";
+  verdict = "The product is the kind capable AI most directly contests: when a substitute can be built cheaply, the incumbent's pricing power is the first thing at risk. The record cannot say whether the moat outlasts that; past durability is a starting point, not a promise.";
 } else if (exp.tier === "low") {
   verdict = `AI is unlikely to contest a moat that is physical, regulated or balance-sheet-funded; here it reads more as a cost tool than a threat${ai && ai.asCapability ? ", and the company is using it that way" : ""}.`;
 } else {
-  verdict = "So the honest read here is a question, not an answer: does a moat the record shows as durable outlast a technology that lowers the cost of part of what the firm sells? Weigh the durability in the record above against how the filing itself frames AI — the industry label decides neither.";
+  verdict = "The question is whether a moat the record shows as durable outlasts a technology that lowers the cost of part of what the firm sells. The durability is read in the record above, the filing's own framing of AI beside it; the industry label decides nothing on its own.";
 }
 ---
 
@@ -93,7 +93,7 @@ if (exp.tier === "elevated" && (assetLight || wasDurable)) {
   ) : null}
 
   <p class="verdict">{verdict}</p>
-  <p class="foot">Classic text analysis of the filing's own risk factors, paired with the industry's structure from its SIC code. A lens on whether the moat is contestable, never a verdict on the company; the durability is read above, the price below.</p>
+  <p class="foot">Read from the filing's own risk factors, paired with the industry's structure under its SIC code; the durability is read above, the price below.</p>
 </section>
 
 <style>

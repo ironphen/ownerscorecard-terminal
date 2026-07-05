@@ -23,9 +23,9 @@ for (const it of items) {
     {wire?.asOf ? <span class="asof">filings as of {wire.asOf} · refreshed daily</span> : null}
   </header>
   <p class="lede">
-    Not what the market did, what companies actually <em>disclosed</em>. Every new filing across the
+    Every new filing across the
     catalog, straight from EDGAR, newest first, with the 8-K codes translated into plain English. The grave
-    ones, an auditor change, a restatement, a default, announce themselves. This is the only ticker an owner needs.
+    ones (an auditor change, a restatement, a default) announce themselves.
   </p>
 
   {items.length ? (
@@ -53,7 +53,7 @@ for (const it of items) {
       </section>
     ))
   ) : (
-    <p class="empty">The wire refreshes daily from EDGAR. Nothing loaded yet, once the daily job runs, the latest filings appear here.</p>
+    <p class="empty">The wire refreshes daily from EDGAR; the latest filings will appear here after the next refresh.</p>
   )}
 
   <style>

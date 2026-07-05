@@ -38,7 +38,7 @@ const title = isConfluence ? "Where the tests agree" : lens?.title || "Archetype
       <h1>Where the tests agree</h1>
       <p class="principle">
         Companies that clear two or more of the positive archetypes at once. The number beside each is a
-        count of tests met, not a rating; a co-occurring flag is named alongside.
+        count of tests met; a co-occurring flag is named alongside.
       </p>
     </header>
   ) : (
@@ -52,7 +52,7 @@ const title = isConfluence ? "Where the tests agree" : lens?.title || "Archetype
 
   <div class="countBar">
     <span class="total">{allRows.length.toLocaleString()} {allRows.length === 1 ? "company" : "companies"}</span>
-    {truncated > 0 ? <span class="trunc">showing the {isConfluence ? "first" : "strongest"} {CAP.toLocaleString()} — the other {truncated.toLocaleString()} clear the same test</span> : null}
+    {truncated > 0 ? <span class="trunc">showing the {isConfluence ? "first" : "strongest"} {CAP.toLocaleString()}; the other {truncated.toLocaleString()} clear the same test</span> : null}
   </div>
 
   {isConfluence ? (
@@ -81,8 +81,7 @@ const title = isConfluence ? "Where the tests agree" : lens?.title || "Archetype
   )}
 
   <p class="foot">
-    From the company's SEC filings, computed the same way as on its page. A place to start, not a
-    recommendation; bring the price and read the filing.
+    From the company's SEC filings, computed the same way as on its page. 
   </p>
 
   <style>

@@ -31,24 +31,21 @@ const shareClause =
       <span class="srcnote">from the balance sheet &amp; the {a.span}-year cash-flow record</span>
     </div>
     <p class="intro">
-      Goodwill is the running record of acquisition risk: the price paid <em>above</em> the identifiable value
-      of everything ever bought — a number that only grows when a company acquires and only falls when it
-      concedes it overpaid. The size of that bet, the cash put into buying rather than building, and how much
-      has already been written off.
+      Goodwill grows only when a company acquires and falls only when it concedes it overpaid. The size of that bet, the cash put into buying rather than building, and how much has already been written off.
     </p>
 
     <div class="reads">
       <div class="rd">
         <span class="rlab">Goodwill{a.intangibles ? " &amp; intangibles" : ""}</span>
         <span class="rval">{$(a.intangibles ? a.gwPlusInt : a.goodwill)}</span>
-        <span class="rnote">{pct(a.intangibles ? a.gwIntPctAssets : a.gwPctAssets)} of all assets — the premium carried on the balance sheet for businesses acquired</span>
+        <span class="rnote">{pct(a.intangibles ? a.gwIntPctAssets : a.gwPctAssets)} of all assets; the premium carried on the balance sheet for businesses acquired</span>
       </div>
       <div class="rd">
         <span class="rlab">Against book equity</span>
         <span class="rval">{a.exceedsEquity ? "exceeds it" : a.gwVsEquity != null ? `${pct(a.gwVsEquity)}` : "—"}</span>
         <span class="rnote">
           {a.exceedsEquity
-            ? `goodwill alone is larger than the company’s entire book equity${a.equity != null && a.equity <= 0 ? ", which is itself negative" : ""} — strip the acquisition premium and there is no net book worth`
+            ? `goodwill alone is larger than the company’s entire book equity${a.equity != null && a.equity <= 0 ? ", which is itself negative" : ""}; stripped of the acquisition premium, there is no net book worth`
             : `goodwill is this share of book equity; the rest is the company’s own retained and paid-in capital`}
         </span>
       </div>
@@ -62,13 +59,12 @@ const shareClause =
     <div class={a.cumImp > 0 ? "verdict charge" : "verdict clean"}>
       {a.cumImp > 0 ? (
         <p>
-          <b>{$(a.cumImp)} written down</b>{" "}{impSpan} — goodwill the company has already conceded it
-          overpaid for, charged against earnings.{shareClause} A write-down doesn&rsquo;t cost cash — the cash
-          left when the deal was signed — but it is management marking its own past judgement to market.
+          <b>{$(a.cumImp)} written down</b>{" "}{impSpan}: goodwill the company has already conceded it
+          overpaid for, charged against earnings.{shareClause} A write-down costs no cash (the cash went out when the deal was signed), but it is management marking its own past judgment to market.
         </p>
       ) : (
         <p>
-          <b>None written down</b> over the record — the goodwill is still carried at full cost. That is the
+          <b>None written down</b> over the record; the goodwill is still carried at full cost. That is the
           deals holding their value on the books so far; whether they keep doing so is the test an owner
           watches, since the write-down, when it comes, is the admission the price was too high.
         </p>

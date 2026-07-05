@@ -44,9 +44,7 @@ const bsDebt = L.totalDebt ?? null;
       {dm.sourceUrl ? <a class="src" href={dm.sourceUrl} target="_blank" rel="noopener">the debt note, SEC EDGAR →</a> : null}
     </div>
     <p class="intro">
-      Not how much it owes, but when it falls due — and against what. Debt that matures far out with cash
-      still coming in is carried safely; a load that all comes due at once into a shut credit window is how a
-      solvent business fails. The ladder the company files, beside cash on hand and a year's owner earnings.
+      Not how much it owes, but when it falls due, and against what. The ladder the company files, beside cash on hand and a year's owner earnings.
     </p>
 
     <div class="wall">
@@ -71,7 +69,7 @@ const bsDebt = L.totalDebt ?? null;
       <div class="rd">
         <span class="rlab">Due in the next 12 months</span>
         <span class="rval">{$(dm.dueNextYear)}</span>
-        <span class="rnote">the first rung — what must be repaid or rolled over within the year</span>
+        <span class="rnote">the first rung: what must be repaid or rolled over within the year</span>
       </div>
       <div class="rd">
         <span class="rlab">Within two years</span>
@@ -82,7 +80,7 @@ const bsDebt = L.totalDebt ?? null;
         <div class="rd">
           <span class="rlab">Biggest single year</span>
           <span class="rval">{$(dm.peakAmount)} <i>in {dm.peakYear}</i></span>
-          <span class="rnote">the lumpiest maturity — where a refinancing, if needed, is largest</span>
+          <span class="rnote">the lumpiest maturity, where a refinancing, if needed, is largest</span>
         </div>
       ) : null}
       <div class="rd">
@@ -106,10 +104,10 @@ const bsDebt = L.totalDebt ?? null;
         </div>
         <p class="cnote">
           Cash on hand{oePos > 0 ? " plus a year’s owner earnings" : ""} comes to {$(coverNum)} against the {$(dm.dueNextYear)} due
-          within twelve months — {coverMult >= 1
+          within twelve months: {coverMult >= 1
             ? `${coverMult.toFixed(coverMult >= 10 ? 0 : 1)} times it`
             : `about ${Math.round(coverMult * 100)}% of it, so the near maturities lean on refinancing or the rest of the year’s cash`}.
-          The figure is the fact; whether the coverage is comfortable is yours to weigh.
+         
         </p>
       </div>
     ) : null}
@@ -117,7 +115,7 @@ const bsDebt = L.totalDebt ?? null;
     <p class="foot">
       Maturity schedule extracted from the company&rsquo;s {dm.asOf ? fmtDate(dm.asOf) : "latest"} annual report and
       reconciled to {dm.basis === "declared" ? "the total the table states" : dm.basis === "balance-sheet" ? "the balance-sheet debt" : "the schedule’s own arithmetic"}.
-      Read it beside the Current Position above.
+     
     </p>
   </section>
 ) : null}

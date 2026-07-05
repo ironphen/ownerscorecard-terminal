@@ -38,27 +38,26 @@ const show = (sbc != null && rev) || comp?.payRatio != null || insider != null;
       {comp?.sourceUrl ? <a class="src" href={comp.sourceUrl} target="_blank" rel="noopener">read the proxy →</a> : null}
     </div>
     <p class="intro">
-      Show me the incentives and I'll show you the outcome. Two things from the proxy: how much of the
-      business the people running it actually own, and whether pay is rational and earned.
+      Two things from the proxy: how much of the business the people running it own, and how they are paid.
     </p>
 
     <ul class="rows">
       {insiderStr != null ? (
         <li>
           <div class="r"><span class="k">Insider ownership</span><span class="v">{insiderStr}</span></div>
-          <p class="n">The stake all directors and executive officers hold together{comp?.fy ? `, per the ${comp.fy} proxy` : ""} — skin in the game, the first thing Munger reads. It cuts both ways: meaningful ownership ties managers&rsquo; fortunes to yours, while a near-zero stake means the people steering the business mostly don&rsquo;t own it, and are paid in salary and options instead. A founder-controlled stake brings its own trade-off: deep alignment, with less outside check. The figure is the fact; what it&rsquo;s worth is yours to weigh.</p>
+          <p class="n">The stake all directors and executive officers hold together{comp?.fy ? `, per the ${comp.fy} proxy` : ""}: skin in the game, the first thing Munger reads.</p>
         </li>
       ) : null}
       {comp?.payRatio != null ? (
         <li>
           <div class="r"><span class="k">CEO pay ratio</span><span class="v">{comp.payRatio.toLocaleString()}:1</span></div>
-          <p class="n">What the chief earns for every dollar the median employee makes{comp.fy ? `, per the ${comp.fy} proxy` : ""}. A high ratio isn't proof of anything, some businesses are genuinely top-heavy in scarce skill, but a runaway figure is where Buffett starts asking whether the board is doing its job or just keeping the chair company.</p>
+          <p class="n">What the chief earns for every dollar the median employee makes{comp.fy ? `, per the ${comp.fy} proxy` : ""}. A high ratio alone settles nothing; some businesses are genuinely top-heavy in scarce skill. A runaway figure is where Buffett starts asking whether the board is doing its job.</p>
         </li>
       ) : null}
       {sbc != null && rev ? (
         <li>
           <div class="r"><span class="k">Stock-based compensation</span><span class="v">{$(sbc)}</span></div>
-          <p class="n">The slice of the business handed to employees in shares this year, {sbcRev} of revenue{sbcOI ? `, equal to ${sbcOI} of operating profit` : ""}. Buffett's oldest accounting fight: this is compensation, compensation is an expense, real whether or not the headline earnings admit it. And note the trap, the cash-flow statement adds SBC back, so the operating cash, and the owner earnings drawn from it, are flattered by exactly this amount; counted as the cost it is, what an owner keeps is lower.</p>
+          <p class="n">The slice of the business handed to employees in shares this year, {sbcRev} of revenue{sbcOI ? `, equal to ${sbcOI} of operating profit` : ""}. Buffett's oldest accounting fight: this is compensation, compensation is an expense, real whether or not the headline earnings admit it. One trap: the cash-flow statement adds SBC back, so the operating cash, and the owner earnings drawn from it, are flattered by exactly this amount; counted as the cost it is, what an owner keeps is lower.</p>
         </li>
       ) : null}
     </ul>

@@ -89,7 +89,7 @@ const fyN = [...hist].reverse().find((h) => h.fy)?.fy;
       <h3 class="secTitle">The record, charted</h3>
       {fy0 && fyN && fy0 !== fyN ? <span class="span">FY{fy0}–{fyN}</span> : null}
     </div>
-    <p class="note">Each measure over its full record — the current point, and the worst year marked.</p>
+    <p class="note">Each measure over its full record; the current point and the worst year marked.</p>
     <div class="grid">
       {charts.map((c) => (
         <div class="cell">

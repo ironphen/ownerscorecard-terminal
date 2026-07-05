@@ -64,7 +64,7 @@ const bars = rows.map((r, i) => {
         <span class="lg"><i class="sw retain"></i>Retained</span>
       </span>
     </div>
-    <p class="note">Each year's operating cash, by what management did with it — the mix, and how it drifts.</p>
+    <p class="note">Each year's operating cash, by what management did with it: the mix, and how it drifts.</p>
     <svg class="chart" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" role="img" aria-label="Capital allocation mix over the record">
       {bars.map((b) => (b.ok ? b.segs.map((s) => (
         <rect class={`bar ${s.cls}`} x={b.x.toFixed(1)} width={bw.toFixed(1)} y={s.y.toFixed(1)} height={s.h.toFixed(1)} />

@@ -8,7 +8,7 @@ import { classify, financialKind, financialSubtype } from "./archetype.mjs";
 // One lever and one one-line characterization per economic model (the fallback layer).
 const LEVER = {
   assetLight: "Whether the advantage is durable, not just the margin high. What decides it: the moat that keeps the returns up, a network, switching costs, intellectual property; whether stock paid to staff is quietly diluting owners; and whether the cash can be reinvested at the same high rate or only handed back.",
-  consumer: "Pricing power, the surest mark of a moat. What decides it: whether it can raise prices with inflation and not lose the customer, whether the brand still earns its place on the shelf, and whether volume holds when a cheaper rival appears.",
+  consumer: "Pricing power. What decides it: whether it can raise prices with inflation and not lose the customer, whether the brand still earns its place on the shelf, and whether volume holds when a cheaper rival appears.",
   capital: "Whether the heavy assets earn more than they cost to keep. What decides it: the return on the capital sunk into them, how much of the capex is merely standing still versus growing, and what a downturn does to a fixed-cost base. Here the balance sheet is the defense and cyclicality the enemy.",
   retail: "Unit economics, and whether the moat is real low cost or genuine convenience. What decides it: same-store sales, how fast inventory turns back into cash, and whether thin margins survive the next price war or the shift online.",
   financial: "Net interest margin, loan losses, and book value. A lender is read on the quality of its balance sheet, not an earnings multiple, and the worst year of credit losses matters more than the best.",
