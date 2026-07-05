@@ -413,9 +413,11 @@ async function deepenHistory(rec, reports, cache) {
     .map((r) => ({ ...r, rfy: r.periodEnd ? Number(r.periodEnd.slice(0, 4)) : null }))
     .filter((r) => r.rfy != null && r.rfy < oldest && r.rfy >= oldest - 5);
   if (!dated.length) return 0;
-  // The candidate reaching deepest without leaving a gap: its summary covers rfy-4..rfy, so
-  // any rfy >= oldest-5 connects; the smallest such rfy reaches furthest back.
-  const pick = dated.sort((a, b) => a.rfy - b.rfy)[0];
+  // The candidate ADJACENT to the current window, not the deepest: a report at oldest-1
+  // covers oldest-5..oldest-1 and the record stays contiguous. Picking the deepest reach
+  // (smallest rfy) left Itochu with 2013-2017 then a four-year hole before 2022 — a gapped
+  // record reads as broken everywhere the decade is charted or compounded.
+  const pick = dated.sort((a, b) => b.rfy - a.rfy)[0];
   cache.hist ||= {};
   let rows = cache.hist[pick.docId];
   if (!rows) {
