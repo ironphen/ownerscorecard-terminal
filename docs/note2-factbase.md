@@ -434,3 +434,101 @@ wholly-owned businesses; the small enterprising investor's mandate is opportunit
   Graham "the whole field of special situations would come under our definition of investment
   operations"; GEICO one-fifth-of-the-fund exception as the closer). NOT the option-warrant
   passage in the body (tips toward technique; footnote at most).
+
+
+## Letter anchors, verified (2026-07-06, wf_36f8310f)
+
+### The 1992 "value investing is redundant" passage [P]
+
+- Verbatim (Chairman's letter, Berkshire Hathaway 1992 annual report, dated March 1, 1993,
+  "Common Stock Investments" section): "In addition, we think the very term 'value investing'
+  is redundant. What is 'investing' if it is not the act of seeking value at least sufficient
+  to justify the amount paid? Consciously paying more for a stock than its calculated value -
+  in the hope that it can soon be sold for a still-higher price - should be labeled speculation
+  (which is neither illegal, immoral nor - in our view - financially fattening)."
+- The word "investing" carries quotation marks in the original; common citations drop them.
+  Original typography is typewriter: spaced hyphens " - " (not em-dashes), double sentence
+  spacing. No em-dashes to launder.
+- Adjacent in the same section [P]: "the two approaches are joined at the hip: Growth is always
+  a component in the calculation of value, constituting a variable whose importance can range
+  from negligible to enormous and whose impact can be negative as well as positive." ("always"
+  is italicized in the primary.) And the following paragraph: low price-to-book, low
+  price-earnings, high yield are "far from determinative"; their opposites "are in no way
+  inconsistent with a 'value' purchase."
+
+### Owner's Manual, Principle 13 (the silence principle) [P]
+
+- It is PRINCIPLE 13, not 11 (11 is the gin-rummy/hold-forever principle). Verbatim: "Despite
+  our policy of candor, we will discuss our activities in marketable securities only to the
+  extent legally required. Good investment ideas are rare, valuable and subject to competitive
+  appropriation just as good product or business acquisition ideas are. Therefore we normally
+  will not talk about our investment ideas. This ban extends even to securities we have sold
+  (because we may purchase them again) and to stocks we are incorrectly rumored to be buying.
+  If we deny those reports but say 'no comment' on other occasions, the no-comments become
+  confirmation."
+- "we normally will not talk" — the common paraphrase "we don't talk" is inexact.
+- Attached commentary, same item [P]: "Though we continue to be unwilling to talk about
+  specific stocks, we freely discuss our business and investment philosophy. I benefitted
+  enormously from the intellectual generosity of Ben Graham, the greatest teacher in the
+  history of finance, and I believe it appropriate to pass along what I learned from him, even
+  if that creates new and able investment competitors for Berkshire just as Ben's teachings
+  did for him." ("benefitted" is double-t in the primary.) The generosity-plus-silence pairing
+  in one numbered item is the exact register for our disclosure section: teach the method
+  freely, never the positions.
+- Cite: Berkshire Hathaway, "An Owner's Manual" (orig. June 1996; updated reproduction at
+  berkshirehathaway.com/ownman.pdf, printed p. 21), Owner-Related Business Principle 13.
+
+### MISATTRIBUTION CAUGHT: "out of step" is October 9, 1967 — not the 1969 wind-down [P]
+
+- The famous passage belongs to the October 9, 1967 letter (the letter changing BPL's
+  performance objectives, eighteen months before the wind-down). Verbatim: "Essentially I am
+  out of step with present conditions. On one point, however, I am clear. I will not abandon a
+  previous approach whose logic I understand (although I find it difficult to apply) even
+  though it may mean foregoing large and apparently easy, profits to embrace an approach which
+  I don't fully understand, have not practiced successfully and which, possibly, could lead to
+  substantial permanent loss of capital." Immediately preceded by: "The above may simply be
+  'old-fogeyism' (after all, I am 37)."
+- The actual wind-down letter is dated May 29, 1969. Its own verbatims [P]:
+  - "(1) opportunities for investment that are open to the analyst who stresses quantitative
+    factors have virtually disappeared, after rather steadily drying up over the past twenty
+    years; (2) our $100 million of assets further eliminates a large portion of this seemingly
+    barren investment world..."
+  - "I am not attuned to this market environment and I don't want to spoil a decent record by
+    trying to play a game I don't understand just so I can go out a hero."
+  - "The only way to slow down is to stop."
+- CAUTION: the circulating compilation of the partnership letters is a retyped transcription,
+  not a facsimile (it systematically renders some typescript commas as periods and carries
+  header typos). Date every quote precisely; never blend 1967 and 1969 material; avoid the
+  sentences with obvious transcription artifacts rather than silently normalizing them.
+- Resolves item 1 of "Letter to-do before drafting" above.
+
+## Movement I expanded (Ryan, 2026-07-06): the noise, and the mission proper
+
+- Ryan's framing, recorded: the price wall is only half of Movement I. The other half is noise.
+  Modern Wall Street manufactures product wherever the money flows (cryptocurrencies then;
+  prediction markets now bundled into brokerage accounts) because activity generates fees; the
+  noise loses not only retail investors but institutional professionals; the "high priests" of
+  modern finance and academia (strategies, algorithms, quantitative formulas, the efficient
+  market hypothesis) are, in Buffett's telling, avoidable by picking up Graham's book.
+- THE MISSION SENTENCE (Ryan, verbatim-close, 2026-07-06): the purpose is "to prove that the
+  intelligent enterprising investor, if considering their investment operations as a business
+  operation, has this resource at their disposal for free and is built from the same filings
+  that they can use going forward on their own. It's meant to empower the enterprising investor
+  so long as they are honest about which investor they are, as Graham wrote, so we should make
+  it clear that it isn't easy and isn't for everyone."
+- This locks three letter obligations:
+  1. The business-enterprise standard is Graham's own Ch. 7 language, already verified [P]
+     above: "viewing his security operations as equivalent to a business enterprise... There is
+     no room in this philosophy for a middle ground."
+  2. The built-from-filings provenance must be stated plainly: every table walks back to the
+     filing it came from; the reader who outgrows us can go to the filings directly, and that
+     is the point, not a defect.
+  3. The honesty clause: the letter says out loud that the enterprising role is work and is not
+     for everyone. Graham's sorting decides; the defensive reader is already well served (ties
+     to The Two Investors, published the same day).
+- Noise-cluster verbatims pending verification (wf_76b8f8dd, running): 1988 EMT passage;
+  Superinvestors flat-earth close; Munger on EMT; 2005 Gotrocks/Newton's fourth law; 2016
+  trillions-managed-by-Wall-Streeters + Bogle statue; 2023 casino-in-the-home; 2018 rat-poison
+  occasion; 2022 gambling-parlor/crumbs-of-capitalism; brokerage prediction-market facts
+  (Robinhood/Kalshi, IBKR ForecastEx). NOTHING from this cluster prints until it lands here
+  with [P] or transcript marks.
