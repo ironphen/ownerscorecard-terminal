@@ -33,7 +33,9 @@ pivot on Graham's defensive/enterprising sorting, tie to the origin letter (ship
   "Sell" 2023-01-31, then "I was wrong to say sell" 2023-03-30.
 - [S] Grantham, "Waiting for the Last Dance" (GMO, 2021-01-05): "full-fledged, epic bubble…
   right along with the South Sea bubble, 1929, and 2000." What followed: 2022 delivered -18.0%
-  TR, then new highs; 2021-2025 compounded ~+32.7%.
+  TR, then new highs; 2021-2023 compounded ~+33%; 2021-2025 compounded ~+96% (CORRECTED at
+  final read 2026-07-06: the ~+32.7% figure previously labeled 2021-2025 was the three-year
+  product; recomputed from annual TR 28.71, -18.11, 26.29, 25.02, 17.8).
 - [S] Einhorn, Bloomberg Masters in Business, 2024-02-08: "I view the markets as fundamentally
   broken"; "Passive investors have no opinion about value." What followed: +24.9% (2024),
   +17.8% (2025); record closes above 7,600 by 2026-06-02.
