@@ -532,3 +532,145 @@ wholly-owned businesses; the small enterprising investor's mandate is opportunit
   occasion; 2022 gambling-parlor/crumbs-of-capitalism; brokerage prediction-market facts
   (Robinhood/Kalshi, IBKR ForecastEx). NOTHING from this cluster prints until it lands here
   with [P] or transcript marks.
+
+
+## The noise cluster, verified (2026-07-06, wf_76b8f8dd) — Movement I material
+
+Marks: [P] primary, [T] meeting-transcript (CNBC Buffett Archive / CNBC edited transcript),
+[S] secondary. The Graham-book-antidote sweep died mid-run and is re-running separately; its
+items are NOT yet cleared to print.
+
+### The academy (EMT), in their words
+
+- [P] 1988 letter, section "Efficient Market Theory": "This doctrine became highly fashionable -
+  indeed, almost holy scripture in academic circles during the 1970s. Essentially, it said that
+  analyzing stocks was useless because all public information about them was appropriately
+  reflected in their prices. In other words, the market always knew everything. As a corollary,
+  the professors who taught EMT said that someone throwing darts at the stock tables could
+  select a stock portfolio having prospects just as good as one selected by the brightest, most
+  hard-working security analyst. Amazingly, EMT was embraced not only by academics, but by many
+  investment professionals and corporate managers as well. Observing correctly that the market
+  was frequently efficient, they went on to conclude incorrectly that it was always efficient.
+  The difference between these propositions is night and day." ("frequently" and "always"
+  italicized in primary; site renders dashes as spaced hyphens.)
+- [P] Same section, the priesthood word is BUFFETT'S OWN: a paragraph ends "Apparently, a
+  reluctance to recant, and thereby to demystify the priesthood, is not limited to theologians."
+  Ryan's "high priests" framing thus has a primary anchor in Buffett's own vocabulary.
+- [P] Same section: "Naturally the disservice done students and gullible investment
+  professionals who have swallowed EMT has been an extraordinary service to us and other
+  followers of Graham. In any sort of a contest - financial, mental, or physical - it's an
+  enormous advantage to have opponents who have been taught that it's useless to even try."
+  WORDING TRAPS: "the disservice done students" (no "to"); "In any sort of a contest"; the
+  service is "to us and other followers of Graham," NOT "to Berkshire."
+- [P] Superinvestors of Graham-and-Doddsville (Hermes, Fall 1984, facsimile-verified pp. 14-15),
+  the FINAL paragraph: "...the secret has been out for 50 years, ever since Ben Graham and Dave
+  Dodd wrote Security Analysis, yet I have seen no trend toward value investing in the 35 years
+  I've practiced it. There seems to be some perverse human characteristic that likes to make
+  easy things difficult. The academic world, if anything, has actually backed away from the
+  teaching of value investing over the last 30 years. It's likely to continue that way. Ships
+  will sail around the world but the Flat Earth Society will flourish. There will continue to
+  be wide discrepancies between price and value in the marketplace, and those who read their
+  Graham & Dodd will continue to prosper." (Hermes prints "Graham & Dodd" with ampersand;
+  "Security Analysis" italicized. The closing line doubles as a Graham-book-antidote anchor.)
+- [T] Munger, 1999 meeting (May 3, 1999, afternoon): "that's what's happened to the hard-form
+  efficient market theorists. They're an embarrassment to the scene and they will soon be
+  gone... People who think the market is reasonably efficient, or roughly efficient, of course,
+  are absolutely correct and that will stay with us for the long pull." Buffett, same exchange:
+  believing EMT "would have been like learning the earth is flat."
+- [S] Munger, 1994 USC talk (OID text via two word-for-word-agreeing mirrors; OID print/PCA not
+  directly consulted — confidence capped): "the efficient market theory is obviously roughly
+  right... So the answer is that it's partly efficient and partly inefficient. And, by the way,
+  I have a name for people who went to the extreme efficient market theory - which is
+  'bonkers'." Also the unnamed-Samuelson hedge passage ("one of the greatest economists of the
+  world is a substantial shareholder in Berkshire Hathaway... like Pascal in his famous wager,
+  he hedged his bet." — do NOT insert Samuelson's name inside the quote). Munger grants the
+  rough truth before mocking the extreme: any use must keep both halves.
+
+### The fees, in his words
+
+- [P] 2005 letter, section "How to Minimize Investment Returns" (printed pp. 18-19; Berkshire
+  itself reprinted the section verbatim in the 2016 annual report pp. 114-115): the Gotrocks
+  parable. Key verbatims: the Helpers, "for a fee, of course"; "The more that family members
+  trade, the smaller their share of the pie and the larger the slice received by the Helpers.
+  This fact is not lost upon these broker-Helpers: Activity is their friend and, in a wide
+  variety of ways, they urge it on."; hyper-Helpers "bearing sewn-on sexy names like HEDGE FUND
+  or PRIVATE EQUITY"; the Hadrocks rename; frictional costs "may well amount to 20% of the
+  earnings of American business... earn only 80% or so of what they would earn if they just sat
+  still and listened to no one."
+- [P] The Newton close: "Sir Isaac might well have gone on to discover the Fourth Law of
+  Motion: For investors as a whole, returns decrease as motion increases." CAUTION: the famous
+  clause follows a colon inside a longer sentence beginning "If he had not been traumatized by
+  this loss..." — not freestanding. (And the "madness of men" line Buffett gives Newton is
+  historically apocryphal; attribute the passage to Buffett, never to Newton directly.)
+- [P] 2016 letter, "The Bet" (or how your money finds its way to Wall Street), p. 24: "The
+  bottom line: When trillions of dollars are managed by Wall Streeters charging high fees, it
+  will usually be the managers who reap outsized profits, not the clients. Both large and small
+  investors should stick with low-cost index funds." (Common citation drops the lead-in and the
+  index-fund sentence.) Plus the Bogle statue passage ("...the hands-down choice should be Jack
+  Bogle... He is a hero to them and to me.") and p. 25 the financial "elites" passage: the
+  search for superior advice "has caused it, in aggregate, to waste more than $100 billion over
+  the past decade."
+- [P] 2023 letter (published Feb 2024), p. 7, "Our Not-So-Secret Weapon": "For whatever
+  reasons, markets now exhibit far more casino-like behavior than they did when I was young.
+  The casino now resides in many homes and daily tempts the occupants." WORDING TRAP: common
+  citation inserts "the" before "markets" and drops "For whatever reasons," — both wrong. Next
+  paragraph [P]: "One fact of financial life should never be forgotten. Wall Street - to use
+  the term in its figurative sense - would like its customers to make money, but what truly
+  causes its denizens' juices to flow is feverish activity. At such times, whatever foolishness
+  can be marketed will be vigorously marketed - not by everyone but always by someone."
+- DEBUNKED: "Whatever the withering effects..." appears NOWHERE in the 2023 letter (zero hits
+  for "wither"); it is a garbled memory of the "whatever foolishness can be marketed" sentence.
+  Never print it.
+
+### Wherever the money goes (crypto then, prediction markets now)
+
+- [T] "Rat poison squared" was NOT said in the 2018 meeting Q&A — "rat poison" appears nowhere
+  in the 145-page CNBC edited transcript. It was said the same day (May 5, 2018) in an informal
+  reporter exchange on the meeting floor: Fox Business's Liz Claman asked (referencing Munger's
+  2013 "I think it's rat poison," to which Buffett had then said "Put him down as undecided");
+  Buffett: "Well, it's probably rat poison squared." Best evidence is a video transcription
+  (Quote Investigator) plus Becky Quick's same-morning tweet [S]. SAFE PRINT: the phrase alone,
+  attributed "to reporters at the 2018 annual meeting" — never "at the Q&A," never "told CNBC."
+- [T] What he DID say in the 2018 Q&A (afternoon, q.12): "anytime you buy a nonproductive asset
+  you are counting on somebody else later on to buy a nonproductive asset because they think
+  they can sell it to somebody for more money... And cryptocurrencies will come to bad
+  endings." Munger, same exchange: "to me it's just dementia... It's like somebody else is
+  trading turds and you decide, 'I can't be left out.'"
+- [T] 2022 meeting (April 30, 2022, morning, Archive ch. 10), Buffett: "Sometimes it's quite
+  investment oriented... And other times, it's almost totally a casino, and it's a gambling
+  parlor. And that existed to an extraordinary degree in the last couple of years - encouraged
+  by Wall Street because the money is in turning over stocks." And: "Wall Street makes money
+  on - one way or another - catching the crumbs that fall off a table of capitalism... But they
+  don't make money unless people do things and if they get a piece of them. And they make a lot
+  more money when people are gambling than when they're investing." WORDING TRAPS: "a table of
+  capitalism" (not "the table"); "when they're investing." Also: "people say how wonderfully
+  you've done if you bought Berkshire in, you know, 1965 or something and held it. But your
+  broker would've starved to death." And: "overwhelmingly, large companies in America - well,
+  all of them - they became poker chips."
+- [T] Munger, same chapter: "We have computers with algorithms trading against other computers.
+  We've got people that know nothing about stocks being advised by stockbrokers, who know even
+  less." And: "it's weird that we ever got a system, where all this equivalent of a casino
+  activity is all mixed up with a lot of legitimate long-term investment. I don't think any
+  wise country would've wanted this outcome." And: "the people lathering the gamblers up so
+  they can rook them."
+- [P] Prediction markets are now sold inside mainstream brokerage accounts (all dates from
+  company announcements): Interactive Brokers via its own CFTC-designated exchange ForecastEx
+  (live Aug 1, 2024); Robinhood prediction-markets hub via Kalshi (March 17, 2025) — Robinhood's
+  own Nov 25, 2025 release: "Just one year since launch, 9 billion contracts have been traded
+  by more than 1 million Robinhood customers," prediction markets its fastest-growing product
+  line BY REVENUE, and it acquired a CFTC-licensed exchange (closed Jan 20, 2026); Webull via
+  Kalshi (announced Feb 12, 2025); moomoo via Kalshi (June 4, 2026 — Fed decisions, inflation
+  prints, elections, the World Cup). Schwab: ANNOUNCED-NOT-LAUNCHED (June 2026, WSJ-reported,
+  Cboe binary index options) — say "announced plans" if mentioned at all. Coinbase is a crypto
+  exchange, not a securities brokerage — exclude.
+- Regulatory wrinkle available if needed [P]: Robinhood rolled Super Bowl contracts Feb 3,
+  2025, and suspended the rollout Feb 4, 2025 after a formal CFTC request; sports contracts
+  returned later in 2025.
+
+### Movement I register discipline (recorded)
+
+- The noise critique prints ONLY as (a) their verbatim words above and (b) plain dated facts
+  (the prediction-market sentence). No editorial adjectives of ours; no sneering; the letter
+  never scolds the reader who owns event contracts. Buffett mocks by parable, concedes before
+  he cuts (Munger: "obviously roughly right" before "bonkers"); the letter does the same or
+  stays silent.
