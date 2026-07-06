@@ -5,7 +5,9 @@ import { glob } from "astro/loaders";
 // "articles" to avoid churn and to keep clear of notes.json; the public section lives at /notes).
 // Filename becomes the URL: my-piece.mdx → /notes/my-piece
 const articles = defineCollection({
-  loader: glob({ pattern: "**/*.{md,mdx}", base: "./src/content/articles" }),
+  // The negation keeps Microsoft Office lock files (~$foo.mdx, created while a piece is open
+  // in Word) from being parsed as content entries and failing the build.
+  loader: glob({ pattern: ["**/*.{md,mdx}", "!**/~$*"], base: "./src/content/articles" }),
   schema: z.object({
     title: z.string(),
     description: z.string(),

@@ -730,3 +730,42 @@ items are NOT yet cleared to print.
   LSEG mid-tier ~$15k, Bloomberg $31,980 with the 6.5% increase, CapIQ median ~$53k/firm);
   print as "roughly twelve to thirty-two thousand dollars a year" without vendor names, or
   name Bloomberg's $31,980 alone as the hard number.
+
+
+## 1998 Value Line quotes: Archive-certified; verify-pass traps (2026-07-06, wf_647f9362)
+
+- RE-CERTIFIED against the CNBC Buffett Archive, morning session, May 4, 1998
+  (buffett.cnbc.com, chapter 24, "Praise for Value Line's 'perfect snapshot'", ~59:00): both
+  letter fragments ("we get incredible value"; "a human triumph") are verbatim and contiguous
+  in the Archive text. Sourcing upgraded from Trigram-only; the standing re-certification
+  instruction above is SATISFIED.
+- OCCASION CORRECTION: Buffett was NOT asked about Value Line. Marc Gerstein of Value Line
+  asked how Buffett and Munger "manage to review the whole spectrum of choices in the equity
+  markets"; Buffett volunteered the praise ("A fat pitch coming up"). Never print "asked about
+  Value Line."
+- Full Archive wording for any longer quotation: Buffett: "But I don't mind it at all, because
+  the truth is that we get - I don't even know what we pay for Value Line. Charlie and I both
+  get it in our respective offices, but we get incredible value out of it because it give us
+  [sic, Archive artifact] the quickest way to see a huge number of the key factors..." Munger:
+  "Well, I think the Value Line charts are a human triumph. It's hard for me to imagine a job
+  being done any better than is done in those charts. An immense amount of information is put
+  in very usable form. And if I were running a business school we would be teaching from Value
+  Line charts." Traps: Buffett's remark never begins "We get" as a sentence; Munger's opens
+  "Well, I think"; a longer Buffett quote should start at "I don't even know what we pay for
+  Value Line."
+- [P] EDINET verified this pass: Japan FSA's disclosure archive is free and public with an
+  open API ("keeps the same public shelf" stands). CAUTIONS for future edits: EDINET public
+  retention is roughly five to ten years (not EDGAR's depth to 1994), and Japan abolished
+  quarterly securities reports in 2024 — never extend the "every quarterly, free" claim to
+  Japan.
+- ROBINHOOD DATING TRAP: the 9-billion-contracts / 1-million-customers figures are from the
+  Nov 25, 2025 release; its "one year since launch" clock runs from the late-2024
+  event-contracts launch, NOT the March 17, 2025 hub. Never print "one year after the hub."
+  Safe form: "opened its prediction-markets hub in March 2025 and by that November reported
+  nine billion contracts traded by more than a million customers."
+- LETTER ARITHMETIC PINNED [P-ours]: $12,000 / 0.05 = $240,000 exactly. Print "a stock
+  portfolio of two hundred and forty thousand dollars," never "a quarter of a million" (on
+  $250,000 the prize is $12,500 and the toll consumes 96 percent, not all).
+- Operational check CONFIRMED: Notes are static MDX with baked values (Note #2's tables are
+  literal markdown), so "a published Note is never silently changed" is operationally true;
+  record pages carry the refresh carve-out in the letter's own text.
