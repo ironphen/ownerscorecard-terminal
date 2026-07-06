@@ -418,3 +418,19 @@ wholly-owned businesses; the small enterprising investor's mandate is opportunit
   wants the mechanism in his voice.
 - Common paraphrase "if indexing gets to 90% it won't work at all" is INACCURATE: drops "very
   well" and drops the "But at the moment, it's worked fine" qualifier that carries the meaning.
+
+## Origin letter, Movement II framing (Ryan, 2026-07-05)
+
+- INTENT: break the "value investor who holds for life" stereotype of Graham/Buffett. Ryan's
+  frame: there is no such thing as "value investing" distinct from investing; ALL investing is
+  value investing. The enterprising investor has ample opportunity PROVIDED sound, thorough
+  analysis. The special-situations / time-horizon material serves ONE thematic point and stays
+  tight (never a how-to): the enterprising investor needs the courage of his convictions,
+  pursuing opportunities backed by coherent security analysis, even a "special situation."
+- ANCHOR TO VERIFY AT DRAFT: Buffett, 1992 Berkshire letter, the "value investing is redundant"
+  passage ("What is investing if it is not the act of seeking value at least sufficient to
+  justify the amount paid?"). States Ryan's point in the master's own words; pull verbatim.
+- SCOPE: Movement II compressed. Carry breadth + one or two vivid proofs (partnership workouts;
+  Graham "the whole field of special situations would come under our definition of investment
+  operations"; GEICO one-fifth-of-the-fund exception as the closer). NOT the option-warrant
+  passage in the body (tips toward technique; footnote at most).
