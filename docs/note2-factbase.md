@@ -674,3 +674,59 @@ items are NOT yet cleared to print.
   never scolds the reader who owns event contracts. Buffett mocks by parable, concedes before
   he cuts (Munger: "obviously roughly right" before "bonkers"); the letter does the same or
   stays silent.
+
+
+## The book itself, verified (2026-07-06, retry agent after content-filter kill)
+
+- CATCH: "By far the best book on investing ever written" is the PUBLISHER'S COVER BLURB
+  (cover-verified on both HarperBusiness covers), not a sentence Buffett wrote. His own preface
+  sentence [S, publisher-licensed text]: "I read the first edition of this book early in 1950,
+  when I was nineteen. I thought then that it was by far the best book about investing ever
+  written. I still think it is." Note "about investing," not "on investing," and it is three
+  sentences, not a blurb. Attribute the standalone cover line only to the cover, never to
+  Buffett's pen.
+- [S] Same preface ("Preface to the Fourth Edition, by Warren E. Buffett," added with the 1986
+  Harper & Row reprint, not present in the 1973 printing): "To invest successfully over a
+  lifetime does not require a stratospheric IQ, unusual business insights, or inside
+  information. What's needed is a sound intellectual framework for making decisions and the
+  ability to keep emotions from corroding that framework." (Exact, including "What's needed.")
+- [P] 2013 letter, "Some Thoughts About Investing" (printed pp. 17-21; section opens with the
+  Graham epigraph "Investment is most intelligent when it is most businesslike."): "I learned
+  most of the thoughts in this investment discussion from Ben's book The Intelligent Investor,
+  which I bought in 1949. My financial life changed with that purchase." And: "For me, the key
+  points were laid out in what later editions labeled Chapters 8 and 20. (The original 1949
+  edition numbered its chapters differently.)" And p. 21: "Of all the investments I ever made,
+  buying Ben's book was the best (except for my purchase of two marriage licenses)." WORDING
+  TRAP: the marriage-licenses parenthetical is inside the sentence; quoting only the first
+  clause requires an ellipsis. Nearby: "Ben's adage: Price is what you pay, value is what you
+  get."
+- [P] 1987 letter, section "Marketable Securities - Permanent Holdings": "Ben Graham, my friend
+  and teacher, long ago described the mental attitude toward market fluctuations that I believe
+  to be most conducive to investment success." Then: "He said that you should imagine market
+  quotations as coming from a remarkably accommodating fellow named Mr. Market who is your
+  partner in a private business." (Common citation drops "He said that you should imagine.")
+  The serve-not-guide line is a clause, not a sentence: "But, like Cinderella at the ball, you
+  must heed one warning or everything will turn into pumpkins and mice: Mr. Market is there to
+  serve you, not to guide you." Next sentence: "It is his pocketbook, not his wisdom, that you
+  will find useful."
+- RYAN'S EDITION (2026-07-06): his working copy is the HarperBusiness Essentials "Classic
+  Text" reprint of the 1949 original with the Bogle foreword (the edition whose cover carries
+  the sentence-case blurb). His photographed pp. 248-249 match because the reprint reproduces
+  the 1949 text. IMPLICATION for Note #2's pending check: the essay's Ch. 7 verbatim wall
+  quotes the 1973 text (2003 HarperBusiness ed., pp. 175-176), which the Classic Text will NOT
+  match word-for-word; the Note's citation names the 1973 text, so nothing is wrong, but the
+  check must be run against a 1973-text copy, not his 1949-text copy.
+- Movement II closer CONFIRMED (Ryan decision #4): Munger, Daily Journal meeting, Feb 15, 2017,
+  "the whole thing can't work perfectly forever, but it will work for a long time" (verified in
+  the indexing-limit section above). Frame precisely: the quote is about indexing continuing to
+  work; the letter may use it only as the flip side, that a market where the analysis is
+  increasingly unpracticed keeps leaving discrepancies for the few who practice it, and must
+  not put that mechanism INSIDE the quote.
+- Value Line + price wall (recovered from the earlier letter sweep, already in this file
+  above): Buffett 1998 meeting "we get incredible value" and Munger "The Value Line charts are
+  a human triumph" are [S] via the Trigram transcript; the 1998 morning session exists in the
+  CNBC Buffett Archive, so the hostile-verify pass should re-certify both against the Archive
+  before print. The $12,000-32,000 professional toll is [S] synthesis (FactSet ~$12k reported,
+  LSEG mid-tier ~$15k, Bloomberg $31,980 with the 6.5% increase, CapIQ median ~$53k/firm);
+  print as "roughly twelve to thirty-two thousand dollars a year" without vendor names, or
+  name Bloomberg's $31,980 alone as the hard number.
