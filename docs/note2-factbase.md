@@ -394,3 +394,27 @@ wholly-owned businesses; the small enterprising investor's mandate is opportunit
   near-record (only the dividend yield is at a record); Protégé challengers are funds of
   hedge funds; churn window is twenty-four years; the 1929 DCA prints as about 12 percent
   (reconstructed composite).
+
+## Munger on the indexing limit (verified 2026-07-05, agent a05392ab)
+
+- [P] Charlie Munger, Berkshire Hathaway annual meeting, April 30, 2022, AFTERNOON session
+  (CNBC Warren Buffett Archive transcript, chapter "Index funds may be getting too much
+  influence over corporate governance"), answering a submitted shareholder question about
+  index-fund managers' voting power / "undue influence over corporate governance." Verbatim:
+  "Well, I'll take that. I think the guy's right. I think the thing is out of control and
+  counterproductive. And I don't think it's good for the country to have three passive
+  investors, bright young men from Harvard or what all, telling them what proper governance of
+  corporations is. It's not a good development. And I think indexing, if it gets to 90%, then
+  it won't work very well at all. But at the moment, it's worked fine."
+- CRITICAL: the 90% sentence was APPENDED to a governance answer and carries NO stated
+  mechanism. Do NOT attribute price-discovery reasoning to him in this quote (Forbes glossed it
+  that way; the words "price discovery" appear nowhere). The essay prints the two sentences
+  verbatim (leading "And" dropped, "I" capitalized — standard) and characterizes only what the
+  quote itself does: grants the limit, denies it is here now.
+- Munger's REASONED version of the market-function limit is separate, Daily Journal meeting
+  Feb 15, 2017: "If everybody bought nothing but index funds, the whole world wouldn't work as
+  people expect... the whole thing can't work perfectly forever, but it will work for a long
+  time." (Nifty-Fifty analogy in the same answer.) Available if the letter or a later Note
+  wants the mechanism in his voice.
+- Common paraphrase "if indexing gets to 90% it won't work at all" is INACCURATE: drops "very
+  well" and drops the "But at the moment, it's worked fine" qualifier that carries the meaning.
