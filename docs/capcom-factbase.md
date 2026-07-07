@@ -249,3 +249,254 @@ Note. Unusually good primary evidence exists on BOTH sides, and Capcom itself em
 6. QC our own /c/9697 record page before the Note links readers to it.
 7. Live GME thread (unrelated to this Note): the diluted-vs-basic shares valuation bug still
    owed from the parked GME work — deliver its fix independently.
+
+
+## VERIFY PASS COMPLETE (2026-07-07, wf_ead4e25e, 4 sweeps, ~200 fetches) — this section
+## supersedes conflicting entries above; the Note drafts from HERE
+
+All quotes below verified against primary documents (tanshin 決算短信, the FY3/2026 yuho
+有価証券報告書 filed 2026-06-16, results decks, briefing transcripts and Q&A summaries on
+capcom.co.jp/ir; Berkshire letters at berkshirehathaway.com; the 1940 Security Analysis scan).
+Japanese quotes are primary; English translations are OURS unless noted. Local extracted texts
+saved for citation checking (see gaps notes in wf output).
+
+### The capital — the accounting, the surge, the discipline (all [P])
+
+- ACCOUNTING CRUX: game development costs are capitalized into ゲームソフト仕掛品 (game software
+  in progress), an INVENTORY line in current assets — not PP&E, not intangibles — "from the
+  stage at which internal productization is decided," then charged to cost of sales "based on
+  expected sales revenue" (yuho p.94-95, verbatim held). Writedown rules: pre-release titles cut
+  to net selling value; released titles written down when sales run significantly below plan
+  (a disclosed critical accounting estimate). PP&E CAPEX ALONE MASSIVELY UNDERSTATES TRUE
+  REINVESTMENT — the Note must present dev investment, not capex, as the reinvestment line.
+- Game-software WIP balance (¥M): FY16 24,825; FY17 30,150; FY18 25,635; FY19 16,926 (trough);
+  FY20 21,222; FY21 24,443; FY22 31,192; FY23 38,510; FY24 39,035; FY25 49,209; FY26 54,628.
+  More than TRIPLED from the FY19 trough.
+- Development investment 開発投資額 (¥M, includes capitalized content portion — Capcom KPI, not
+  a financial-statement line): FY16 27,255; FY17 27,720; FY18 29,077; FY19 27,038; FY20 25,843;
+  FY21 25,375; FY22 29,862; FY23 37,719; FY24 43,042; FY25 49,496; FY26 54,836; FY27 PLAN
+  62,900. THE SHAPE: flat ~¥25-30B for seven years (FY16-FY22), then a deliberate ~15%/yr
+  step-up. The surge is recent, planned, and continuing. FY26 R&D investment = 28.1% of sales;
+  R&D personnel 3,011 = 75.7% of all employees.
+- PP&E capex (cash-flow basis, ¥M): FY22 2,950; FY23 7,103; FY24 4,838; FY25 5,846; FY26
+  13,593. BASIS CAUTION: deck 設備投資 series differs (FY26 ¥17,713M additions incl. leases;
+  yuho overview ¥16,864M; CF cash paid ¥13,593M) — pick ONE basis per table and footnote it.
+- What the big capex years WERE: FY23 = business-site land adjacent to HQ (corporate segment
+  ¥4,949M "centered on business-site land acquisition"); FY26 = ~¥10.0B more land near HQ
+  (land line ¥10,028M→¥20,066M). The facilities: Capcom R&D Building No.3 (研究開発第3ビル)
+  adjacent to Osaka HQ, completing 2027, plus land for a FUTURE development base. President
+  Haruhiro Tsujimoto (FY25 briefing, verbatim held): building to "further strengthen the
+  development structure... construct a development environment where developers' talent can be
+  fully realized." [S] Nikkei: the FY26 land ≈ ¥9.0B, Osaka Chuo-ku, tied to the 100M-unit
+  goal (headline verified; body details paywalled — treat specifics as reported).
+- FOURTH channel appeared FY26: 映像資産 video assets ¥9,909M (new line, nil prior) — the
+  Street Fighter Hollywood film co-investment with Legendary (release October 2026).
+- The JGB purchase: ¥15,021M into held-to-maturity JAPANESE GOVERNMENT BONDS (Level 1; book
+  ¥15,014M, fair ¥14,938M). No stated purpose beyond classification ANYWHERE — describe as
+  surplus-cash placement into held-to-maturity JGBs, attribute no motive.
+- Headcount: development staff 2,369 (FY22) → 3,011 (FY26) → plan 3,180 (FY27). Stated policy
+  [P]: 100+ developer adds EVERY year (since 2013); average base pay +38.2% vs FY22. Capcom's
+  own per-employee OI series: ¥13.4M (FY22) → ¥18.9M (FY26).
+- Per-title discipline [P, Integrated Report 2025 dev-strategy page, verbatim held]: the
+  開発中期マップ (medium-term development map, 5-10 years out, rolled every six months): "for
+  each title we first set the development investment, then calculate a P&L and ROI scaled to
+  it"; three gates (start 着手 / prototype 試作 / production 制作). NOTE: the old "60-month map"
+  term does NOT appear in current primary — use the 2025 wording. Speaker is the new CPO
+  (role-description uniquely matches Ryozo Tsujimoto — verify name vs yuho officers table
+  before printing). Q3 call [P]: "WIP is building up because multiple titles are in
+  development, but we manage ROI per title so investment does not become excessive relative to
+  planned units."
+- Per-title COST: only directional primary statements exist — costs "on an increasing trend,"
+  flagship dev 2+ years; Pragmata's cost "low compared with mainline IPs"; new-IP investment
+  held at "a fixed proportion" regardless of individual results. NO absolute per-title figures
+  disclosed anywhere. [P-ours] derived: dev investment per developer ¥12.1M (FY20) → ¥18.2M
+  (FY26).
+- THE CASH POLICY (the fact that reframes the Graham question) [P, yuho p.34, verbatim held]:
+  Capcom "sets the level of cash and deposits to be held at a guideline of THREE YEARS of
+  development costs," for financial-base strength + growth-investment funding + risk reserve.
+  3 × FY26 dev investment ≈ ¥164B vs cash+deposits ¥148.0B (+ ¥15.0B JGBs = ¥163.1B) — the
+  pile is AT the company's own policy level, not above it. Same 3-year formulation in the
+  FY3/2023 yuho; risk section repeats the principle. Capital-allocation slide [P]: cash use
+  balances three elements — shareholder returns (30%+ payout guideline), employee compensation,
+  business reinvestment (research facilities, M&A, dev infrastructure). Net-cash policy
+  verbatim: "secure a level that can sustain current development investment for a fixed
+  period."
+- The catalog amortization mechanism, management's own words [P, FY26 briefing transcript]:
+  "repeat titles now account for 80% of units sold, and the majority of those have finished
+  amortization, producing high margins." Repeat units FY26: 49.46M of 59.07M (83.7%). THIS is
+  the disclosed mechanism converting past dev investment into current operating income.
+- Cash & deposits series (¥M): FY16 28,429 → FY22 107,262 → FY25 166,783 → FY26 148,002.
+  Cash EQUIVALENTS FY26 ¥102,833M (gap = time deposits >3mo). FY26 operating CF fell to
+  ¥31,380M mostly on deferred-revenue unwind (MH Wilds DLC), doubled tax payments, video
+  assets ¥9.9B and WIP build ¥5.4B — investing CF −¥55,862M dominated by time deposits (net
+  −¥26.2B), JGBs (−¥15.0B), land-heavy PP&E (−¥13.6B). Don't let the optics print as
+  "cash generation collapsed."
+
+### The incremental-return arithmetic [P-ours — the Note's one computed exhibit]
+
+- FY17→FY26: net assets +¥189.9B (77,774→267,716); operating income +¥61.6B (13,650→75,295).
+  Blended: ~32% pre-tax on each retained yen.
+- Cash+deposits+securities rose +¥138.5B over the same span = ~73% OF THE EQUITY BUILD SITS IN
+  CASH/JGBs. Ex-cash, incremental employed capital ≈ ¥51.4B produced +¥61.6B of OI — the core
+  business earned MORE THAN 100% pre-tax on the incremental capital it actually employed.
+  See's-shape confirmed: spectacular returns, historically tiny capital appetite; the surge is
+  management asserting the appetite is growing (dev investment +15%/yr, buildings, 100+ heads/
+  yr); the counterweight is Capcom's own 3-year cash policy, which claims most of the pile as
+  working reserve. Payouts in the span: dividends only, except ONE ¥13,645M tender-offer
+  buyback in FY23.
+
+### Governance & shareholders — corrections and upgrades (all [P] from the yuho)
+
+- FAMILY STAKE CORRECTION: identifiable Tsujimoto-related top-10 holdings = 18.69% of
+  ex-treasury shares (Crossroad Co. 10.26% + Yoshiyuki 3.74% + Haruhiro 2.36% + Ryozo 2.33%).
+  Kenzo does NOT appear (top-10 cutoff 1.96%) — his personal stake is below that and
+  undisclosed. The earlier ~22-23% figure is NOT supported by the primary — print 18.69%
+  identifiable, note the possibility of sub-threshold additional holdings. Crossroad = the
+  family asset company; per Capcom's own Oct 2018 release its voting rights were wholly held
+  by the three sons (2018 characterization — current structure unverified).
+- Officers [P]: Kenzo Tsujimoto = Representative Director, Chairman AND CEO; Haruhiro =
+  Representative Director, President & COO. (Earlier "founder Kenzo Chairman / son Haruhiro
+  President/CEO" was imprecise — Kenzo holds the CEO title.) FY26 compensation ≥¥100M:
+  Kenzo ¥460M, Haruhiro ¥345M, CFO Miyazaki ¥284M, Ryozo ¥180M, Ishida ¥138M, Sasahara ¥116M.
+- Board [P]: 14 directors, HALF (7) outside, all 7 filed with TSE as independent; audit-and-
+  supervisory-committee structure; 3 female directors after 2025.
+- CROSS-HOLDINGS: NONE. Capcom holds ZERO policy shares (政策保有株式) — only 4 unlisted
+  stocks at ~¥0M. Policy explicitly excludes "customary cross-holding and personal-connection
+  favoritism." Rare and notable for a Japanese company — a governance point in Capcom's favor
+  the Note can state plainly.
+- New: Saudi-linked holders per large-shareholding filings cited in the yuho — Ayar First
+  Investment 35,188K shares (6.60%, Dec 2025 report; matches the JPM nominee line — OUR
+  inference, not stated) and Electronic Gaming Development Company 32,186K (6.04%, April 2026
+  report); Capcom couldn't confirm FY-end beneficial holdings so excluded them from the table.
+  (PIF affiliation is widely reported, not verified primary here.)
+- GUIDANCE CONSERVATISM SETTLED [P, five-year primary series]: initial May guidance vs actual
+  OP — FY22 42,000→42,909 (+2.2%); FY23 48,000→50,812 (+5.9%); FY24 56,000→57,081 (+1.9%);
+  FY25 64,000→65,777 (+2.8%); FY26 73,000→75,295 (+3.1%). Beat all five years, by 1.9-5.9%:
+  MILD conservatism, not sandbagging. Sales also beat all five years. FY27 guide +10.2%
+  matches the stated "10% OP growth every year" mid-term target verbatim (tanshin).
+- Shareholder returns (CF basis, ¥M): dividends 8,745/10,868/14,266/16,823/17,887 (FY22-26);
+  buybacks ~0 except FY23 ¥13,645M self-tender (May-June 2022, ¥3,110/share, 4,387,353 shares
+  = 1.62%, cancelled; tenderer not disclosed — do NOT assert family involvement). Dividend
+  policy verbatim [P]: 30% consolidated payout as basic policy with stable-dividend emphasis;
+  internal reserves to game development, amusement, growth businesses.
+- HONEST COUNTERWEIGHT [P, yuho 5-yr table]: TSR (株主総利回り) 196.0% cumulative (FY26) vs
+  dividend-included TOPIX 202.2% — Capcom's five-year TSR fell BELOW the index in FY26 (was
+  211.0 vs 150.2 a year earlier). The stock round-tripped while the business compounded — a
+  fact that reinforces the business-vs-quotation distinction WITHOUT us discussing valuation.
+- Five-year primary table (yuho): sales 110,054/125,930/152,410/169,604/195,365; net profit
+  32,553/36,737/43,374/48,453/54,587; EPS ¥76.24/87.36/103.71/115.85/130.50 (split-adjusted);
+  ROE 24.4/23.9/24.4/23.0/22.1%; opCF 46,947/21,789/36,921/67,618/31,380; employees
+  3,206→3,976. Shares: 533,011,246 issued; 114,702,403 treasury (incl. 7.9M ESOP-trust);
+  418,308,843 ex-treasury (our subtraction); weighted avg 418,289,636. FY26 DPS ¥45 (payout
+  34.5%); FY27 forecast ¥46. FY23's ¥63 DPS included a ¥10 40th-anniversary commemorative.
+
+### AI section — primary status after the pass
+
+- Capcom Feb 16, 2026 investor Q&A: NOW PRIMARY, in Japanese (explanation_2026_full_08.pdf,
+  verbatim held): "当社は、生成AIで生み出した素材をゲームコンテンツには実装しません。一方、…効率化や生産性の
+  向上に寄与する技術としては、積極的に活用していく予定です。" Our translation: "We will not implement
+  materials created with generative AI into our game content. On the other hand, we plan to
+  actively utilize it as a technology that contributes to efficiency and improved productivity
+  in the development process" (examining graphics, sound, programming). NO official English
+  exists — the circulating English is Automaton's translation; if the Note quotes English,
+  translation is OURS and flagged.
+- Google Cloud press release (April 22, 2026) [P, fetched direct]: agents "Operating for more
+  than 30,000 hours per month..."; three agent types verbatim held (visual inspection via
+  Gemini Vision; predictive test-bot swarming; institutional-knowledge agents). Names NO Capcom
+  speakers. The 5,280-hours-vs-72 comparison NOT in the direct fetch — 4Gamer's tweet says
+  3,000-5,000 vs ~72 — do not print 5,280 without re-verification.
+- Inoue: 4Gamer article (2026-05-21) covering Capcom's Google Cloud Next 2026 session (April
+  22-24, Las Vegas). Title per 4Gamer: VP Game Development Platform & AI Solutions. In-body
+  verbatim [P]: 「最高峰の知性を持ったAIも，感性の点では，まだ我々のクリエイターには及ばない」 ("Even AI with
+  the highest level of intelligence still does not match our creators when it comes to
+  sensibility" — our translation). TRAP: "AI is not for creating art, but for unleashing the
+  potential of creators" is the 4GAMER HEADLINE, not confirmed as Inoue's spoken sentence —
+  attribute as the headline of the coverage or paraphrase; never print as his direct quote.
+  Second speaker: Kazuki Abe (阿部一樹), Solutions Development Room / CS Second Development —
+  re-verify exact title string before print.
+- Morgan Stanley: primary STILL unreachable (connection resets; archive blocked). Status:
+  "value concentrating in scaled platforms... proprietary data, IP, and live operations" =
+  verbatim ONLY via Reuters (Rashika Singh, April 22, 2026) and PYMNTS — cite as "Morgan
+  Stanley research note, as quoted by Reuters, April 22, 2026." The Cost "lowering barriers"
+  line = search-snippet only [S]. ToTM episode: Matt Cost, aired May 27, 2026, topic AI/games
+  [U — title/transcript/host unretrieved; one summary's "hosted by Mike Wilson" is unreliable,
+  don't use]. USE LOOSE ATTRIBUTION ONLY; the Note's AI section leads with Capcom's own
+  primary material, MS as light industry framing.
+- Steam genAI figures: NOW PRIMARY — Ichiro Lambe, Totally Human Media (July 13, 2025, fetched
+  direct): 7,818 titles disclose genAI use, ~7% of ~114,126-title library, "a little under 20%
+  of all games released in 2025" AS OF MID-JULY 2025 (date-stamp it), disclosures voluntary =
+  lower bound. November 2025 update: 10,258 titles (~8%) — consider citing the newer figure.
+
+### Lens verbatims — all upgraded, with wording traps (Berkshire letters [P]; Munger [S]; Graham 1940 [P])
+
+- Buffett 1992 ("Common Stock Investments"): "Leaving the question of price aside, the best
+  business to own is one that over an extended period can employ large amounts of incremental
+  capital at very high rates of return. The worst business to own is one that must, or will,
+  do the opposite - that is, consistently employ ever-greater amounts of capital at very low
+  rates of return." ('will' italicized; spaced hyphen in original.) SAME PARAGRAPH continues:
+  "Unfortunately, the first type of business is very hard to find: Most high-return businesses
+  need relatively little capital. Shareholders of such a business usually will benefit if it
+  pays out most of its earnings in dividends or makes significant stock repurchases."
+- Buffett 2007 ("Businesses – The Great, the Good and the Gruesome"): See's exact — bought $25M
+  / sales $30M / pre-tax <$5M / capital $8M = "earning 60% pre-tax on invested capital"; later
+  sales $383M, pre-tax $82M, capital $40M, "we have had to reinvest only $32 million since
+  1972... pre-tax earnings have totaled $1.35 billion." Taxonomy verbatims held: enduring-moat
+  sentence; "Truly great businesses... can't for any extended period reinvest a large portion
+  of their earnings internally at high rates of return"; the gruesome ("Think airlines."); the
+  three savings accounts. Also: "It's far better to have an ever-increasing stream of earnings
+  with virtually no major capital requirements. Ask Microsoft or Google."
+- Buffett 1989 ("Mistakes of the First Twenty-five Years (A Condensed Version)"): wonderful-
+  company sentence verbatim confirmed. TRAP RESOLVED: "Time is the friend of the wonderful
+  business, the enemy of the mediocre." is TWO PARAGRAPHS EARLIER (closes the $8M/$10M
+  liquidation example), separated by the Hochschild Kohn story — NEVER splice the two lines as
+  adjacent.
+- Buffett 1984 ("Dividend Policy") — the retained-earnings test, exactly on the Capcom cash
+  question: "Unrestricted earnings should be retained only when there is a reasonable prospect
+  - backed preferably by historical evidence or, when appropriate, by a thoughtful analysis of
+  the future - that for every dollar retained by the corporation, at least one dollar of
+  market value will be created for owners." (the for-every-dollar clause italicized in
+  original). Bonus verbatims: pay-out-or-repurchase prescription; "If earnings have been
+  unwisely retained, it is likely that managers, too, have been unwisely retained."
+- Munger 1994 USC [S, two word-for-word-agreeing mirrors]: "Over the long term, it's hard for
+  a stock to earn a much better return than the business which underlies it earns. If the
+  business earns 6% on capital over 40 years and you hold it for that 40 years, you're not
+  going to make much different than a 6% return even if you originally buy it at a huge
+  discount. Conversely, if a business earns 18% on capital over 20 or 30 years, even if you
+  pay an expensive looking price, you'll end up with a fine result." TRAPS: it's "a fine
+  result," NOT the circulating "one hell of a result"; numerals not words; date as "USC
+  Business School, 1994" (day disputed).
+- Graham 1940 Security Analysis Ch. XLIV — UPGRADED TO SCAN-CERTIFIED [P, archive.org
+  dli.ernet.7983]: cite the 1940 SECOND edition. Verbatims held: "The choice of a common stock
+  is a single act; its ownership is a continuing process..."; the docile-stockholder passage;
+  the five interested-decisions points incl. "3. Payment of dividends—Should the money earned
+  remain under the control of the management or pass into the hands of the stockholders?" +
+  "On all of these questions the decisions of the management are interested decisions, and for
+  that reason they require scrutiny by the stockholders" (+ the trust-but-no-carte-blanche
+  continuation); the surplus-cash prescription: "A third procedure consists of returning to
+  the stockholders such cash capital as is not needed for the conduct of the business..."
+  CONTEXT CAUTION: that prescription sits in a below-liquidating-value discussion — quote as
+  Graham's doctrine on cash "not needed for the conduct of the business," never as a
+  below-liquidation claim about Capcom.
+
+### What the capital section can now honestly say (the Note's shape)
+
+The question is genuinely open and BOTH sides are primary-sourced: (a) the See's shape — the
+core business historically needed almost nothing and earned >100% pre-tax on what it did
+employ; most retained yen piled up in cash; (b) the 1992-test bid — management is deliberately
+stepping up the capital the business absorbs (dev investment +15%/yr toward ¥62.9B, buildings,
+100+ developers/yr, film assets) with a disclosed per-title ROI discipline and a five-year
+guidance record of modest beats; (c) the Graham scrutiny — dividends-only-plus-one-buyback
+returns against a growing pile, BUT the pile sits AT the company's own stated 3-year-of-dev-
+costs policy, so the surplus question becomes "is three years the right reserve for a
+hit-driven inventory business, and who should hold the excess beyond it" — posed, not answered.
+The 1984 Buffett retained-earnings test and the FY26 TSR-below-TOPIX fact frame it without any
+valuation talk.
+
+### Residual gaps (small, managed)
+
+- Kenzo's personal stake below disclosure threshold — unknowable from primary; say so.
+- FY23 tender-offer counterparty undisclosed — never speculate.
+- CPO name (Ryozo) inference — check yuho officers table at draft time before printing.
+- MS primary unreachable — loose attribution only, or cut MS entirely if the critics prefer.
+- Per-title absolute costs undisclosed — directional statements only.
+- 4Gamer Abe title string; 5,280-hours figure; November Steam update year — re-verify if used.
