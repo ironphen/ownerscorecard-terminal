@@ -522,3 +522,45 @@ valuation talk.
   omitted year (only FY20 fell, a shown row); Digital Contents segment profit = 93.8% of
   CONSOLIDATED operating income but only 80.7% of summed segment profits — print against
   consolidated, never "of segment profit."
+
+## Pipeline sweep (2026-07-07, wf_c4c8ed15) — the concentration answer in actions
+
+- RE CONCENTRATION QUANTIFIED BY THE COMPANY [P, FY26 full-year Q&A official English, p.2]:
+  "The Resident Evil series accounted for more than half of our total unit sales for the
+  fiscal year ended March 31, 2026, and cumulative sales of the series have now exceeded 200
+  million units." Upgrades the concentration anchor from Platinum-list inference to a
+  company-stated unit share (units, not profit — keep the distinction).
+- PRAGMATA [P]: all-new IP; released April 17, 2026 (PS5/XSX/PC; Switch 2 April 24) — the
+  first month of FY3/2027; 1M units in 2 days (PR Apr 20, e260420.html), 2M in 16 days (PR
+  May 7, e260507.html); PR: "developed primarily by a team of younger Capcom developers";
+  Q&A official English: dev cost "comparatively lower than those of our major IPs" (with
+  impairments recorded along the way; "we do not expect this title to place a significant
+  burden on future earnings"); new-IP investment "is not determined by the sales performance
+  of individual titles. We will continue maintaining a certain level of investment in this
+  area."; "The creation of completely new IPs is an important initiative that supports our
+  sustainable growth"; will "consider the possibility of developing it into a series."
+  SUPERSEDES the translation-based "fixed proportion" rendering — the official English
+  edition exists (explanation_2025_full_04.pdf; the ENGLISH materials for FY-ended-March-2026
+  are filed under "2025/full", the JAPANESE under "2026/full" — same documents). 2020
+  announcement/delay history [S]. CAUTION: Capcom never frames new IP as
+  concentration-reduction; its words are "sustainable growth" — do not attribute the motive.
+- ONIMUSHA: WAY OF THE SWORD [P]: PR June 3, 2026 (e260603.html) — "the first new title in
+  the series in over 20 years... re-activating IPs that haven't had a new title launch
+  recently"; series cumulative 9.1M since 2001; release moved UP to September 4, 2026 (PR
+  July 2, e260702.html; PS5/XSX/Switch 2/PC). Dec 12, 2024 reveal [S].
+- RESIDENT EVIL VERONICA remake [P]: PR June 8, 2026 (e260608.html), "scheduled for release
+  in 2027" — CALENDAR year; fiscal placement NOT stated; never count into FY3/2027.
+- MONSTER HUNTER WILDS: ASCENDANCE [P]: paid expansion, PR June 8, 2026 (e260608b.html),
+  "scheduled for release in 2027"; Wilds Switch 2 version in development, undated. NO new
+  mainline Monster Hunter is announced for FY3/2027 (Stories 3 shipped March 2026 = FY26).
+  Same PR: MH World "has surpassed 30 million units" cumulative — DIFFERENT BASIS than the
+  Platinum list's 22.1M; never mix the bases.
+- REQUIEM [P]: "the ninth main installment," released February 27, 2026; ~¥9B of Requiem
+  revenue deferred until planned DLC releases (supplement p.21). Capcom never titles it "9."
+- FY3/2027 SLATE per deck (explanation_2025_full_02.pdf pp.13-14) [P]: "All-new IP PRAGMATA
+  was released in April" + "Onimusha Way of the Sword to be released in 2026"; unit plan
+  65.00M = 12.00M new + 53.00M catalog. "Other unannounced titles" [U, third-party
+  transcript]. SF6 Year 4 [S]; Street Fighter film October 16, 2026 [P, deck p.17].
+- PREMISE CORRECTIONS (Ryan's recall): "RE9 this year" = Requiem, already released and in
+  the Note; the Veronica remake is calendar 2027; there is NO new Monster Hunter game this
+  fiscal year (Ascendance is a 2027 expansion).
