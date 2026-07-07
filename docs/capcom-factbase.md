@@ -500,3 +500,25 @@ valuation talk.
 - MS primary unreachable — loose attribution only, or cut MS entirely if the critics prefer.
 - Per-title absolute costs undisclosed — directional statements only.
 - 4Gamer Abe title string; 5,280-hours figure; November Steam update year — re-verify if used.
+## Critic-pass additions (2026-07-07) — facts verified in the sweep outputs, previously omitted
+## from this file (the critics correctly flagged them as unheld; they are [P] in the workflows)
+
+- [P] Monster Hunter Wilds first-month record: Capcom press release, March 31, 2025
+  (capcom.co.jp/ir/english/news/html/e250331.html), verbatim: "worldwide sales of Monster
+  Hunter Wilds, released on February 28, 2025, surpassed 10 million units" — within its first
+  month, which Capcom calls its fastest title ever to reach 10 million and a company
+  first-month sales record. (From wf_3ce5c4b2, ip-catalog-moat sweep. The 8M-in-3-days figure
+  remains [S], widely reported.)
+- [P] The 100-million-unit ambition is PRIMARY, in management's own words, three formulations
+  (from wf_ead4e25e, capex sweep): FY3/2026 tanshin outlook, verbatim 「年間1億本の販売に向け、240を
+  超える国・地域での販売網の拡充…」 ("toward annual sales of 100 million units," expanding distribution
+  beyond 240 countries/regions); FY3/2026 deck p.26 ("aim for 100M units annually over the
+  long term"); FY3/2025 briefing (emerging-markets framing). Units toward it: FY22 32.60M →
+  FY26 59.07M (record); FY27 plan 65.0M.
+- [P] The FY3/2026 full-year results briefing transcript (explanation_2026_full_05.pdf) is
+  dated 2026-05-13 — "the May results briefing" is held.
+- Draft corrections logged from the critic pass (recompute anchors): FY20 sales fell 18.4%
+  (100,031→81,591), NO cause attributed in any primary; sales ROSE in every draft-table
+  omitted year (only FY20 fell, a shown row); Digital Contents segment profit = 93.8% of
+  CONSOLIDATED operating income but only 80.7% of summed segment profits — print against
+  consolidated, never "of segment profit."
