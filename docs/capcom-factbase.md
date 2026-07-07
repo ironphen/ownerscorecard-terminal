@@ -131,6 +131,113 @@ Our own /c/9697 page already carries a fresh 10-year EDINET record (asOf 2026-07
   /capital-allocation, or mispricing)? what would a private owner pay for this record vs ~22x
   forward after a decade of re-rating, and where is the margin of safety at that price?
 
+## AI and the moat (the two-sided question the Note poses — gathered wf_ccfbb0a5, 2026-07-07)
+
+The Note poses, does not answer: will AI challenge or widen the moat of an established developer
+like Capcom? This is a durability (business-quality) question, on-doctrine for the valuation-free
+Note. Unusually good primary evidence exists on BOTH sides, and Capcom itself embodies the
+"incumbent uses AI as a tool, not a content substitute" posture.
+
+### The Morgan Stanley reference — ATTRIBUTION CORRECTED
+
+- Ryan attributed it to Andrew Sheets; that is WRONG. Sheets is MS's Chief Cross-Asset
+  Strategist. The AI-in-gaming voice is **Matthew Cost, MS Research U.S. Internet Analyst**
+  [S]. Attribute to Cost, never Sheets. (Podcast host byline unconfirmed; ToTM episodes are
+  often solo-narrated, so Cost likely narrated it.)
+- The MS note (~April 21, 2026; Reuters wire April 22): "Advanced artificial intelligence tools
+  could help cut down video game developing costs by nearly half, potentially unlocking about
+  $22 billion in annual profits for game makers worldwide" [S, Reuters]. Two-sided moat framing,
+  exactly our question: AI "lowers the cost to make mid-scale games, inviting more competition"
+  (pressure on weaker franchises — Playtika, Netmarble named) while "value concentrat[es] in
+  scaled platforms and discovery, particularly among companies with proprietary data, IP, and
+  live operations" [S]. Named winners: Tencent, Sony, Roblox, NetEase, Take-Two, EA, Ubisoft,
+  AppLovin; engines Unity/Unreal "face a more binary outcome: adapt or be disrupted."
+- CRITICAL CAVEATS: (1) MS does NOT name Capcom — the thesis is a framework we apply by analogy;
+  never imply MS made a Capcom call. (2) morganstanley.com would NOT load for the agents
+  (ECONNRESET), so every MS quote here is a SECONDARY rendering (Reuters/CNBC/PYMNTS) — NOT
+  certified verbatim. Read the primary Insights article + ToTM transcript before quoting MS at
+  all. (3) DEBUNKED: a supposed MS "Scissors Effect" deflation/pricing framing is a summarizer
+  fabrication — do NOT use the phrase or attribute a deflation thesis to MS.
+- Adjacent MS view (verified via Apple Podcasts): ToTM "Will the Entertainment Business Stay
+  Human?" (July 23, 2025), Benjamin Swinburne (MS U.S. Media & Entertainment Analyst): GenAI
+  could cut TV/film production costs ~10-30%; winners = scaled platforms + agile newcomers;
+  live entertainment insulated [S].
+- EDITORIAL: the MS reference is the WEAKEST leg (misremembered, Capcom-silent, primary unread).
+  Anchor the AI section on Capcom's OWN actions + the market data below (both stronger and about
+  the actual company); use MS lightly as external industry framing, correctly attributed to Cost,
+  ONLY if we verify the primary.
+
+### The "widens the moat" side
+
+- Capcom's stated posture [S, Feb 16 2026 investor briefing Q&A via PC Gamer/Game Developer]:
+  "Our company will not be implementing any AI-generated assets into our video game content...
+  we plan to actively utilize this technology in order to improve efficiency and productivity of
+  game development." The exact incumbent-uses-AI-as-a-tool stance.
+- Capcom VP Shinichi Inoue (Game Development Platform & AI Solutions), reported ~Google Cloud
+  Next 2026 via 4Gamer [S]: "AI is not for creating art, but for unleashing the potential of
+  creators... top-tier AI still cannot match our creators when it comes to sensibility."
+  (Headlines paraphrase as "Capcom engineers"; the quote is Inoue's. Venue/date needs primary.)
+- [P] Google Cloud press release (April 22, 2026): Capcom runs AI agents doing "more than 30,000
+  hours of testing per month" across ~6-8 projects (Gemini Enterprise Agent Platform, Vision,
+  BigQuery). Secondary adds: a task needing ~5,280 human hours screened in ~72 agent hours.
+  Concrete proof an incumbent already extracts AI productivity at a scale a newcomer can't match.
+- [S] Capcom technical director Kazuki Abe: Google Gemini-based system generates/filters the
+  "hundreds of thousands of ideas" game production needs (Google Cloud Japan case study, 2025).
+- [P] RE Engine (Capcom Integrated Report 2025): assets "once created to be shared across
+  titles... rendering to editing, playtesting, and quality control can be completed within RE
+  ENGINE, greatly improving development efficiency." (Page itself does NOT mention AI; the
+  AI-tooling link is Capcom's separate statements.)
+- The flood, quantified [S, Tom's Hardware/VGC]: ~7,818 Steam titles disclosed genAI asset use
+  in 2025, up ~700-800% YoY, ~1 in 5 of 2025 releases; ~20,000+ Steam releases in 2025 (~350/
+  week) — discovery, not production, is the bottleneck, the context a trusted premium title
+  stands out in. (Self-disclosed Steam tags; true rate likely higher.)
+- Revenue concentrating in trusted titles [U, third-party estimates — Alinea/GameDiscoverCo]:
+  games grossing $50M+ ≈ 52% of 2025 Steam revenue; 40-66% of 2025 releases failed the ~$1,000
+  bar. (Estimates, not audited; the "3 games = 43% of revenue" claim is rumor — don't use.)
+- Capcom's own franchise as the proof point [S]: Resident Evil Requiem sold 5M in 4 days
+  (Capcom official "sold-in"), best launch in RE history — a $60-70 human-made owned-franchise
+  title topping charts the same year the AI flood peaked.
+
+### The "challenges the moat" side
+
+- CAPCOM'S OWN RISK BOX, verbatim from the primary [P, Integrated Report 2025 p.29]:
+  - "Rising development costs with the emergence of new technologies and improvements in hardware
+    capabilities" (note: the fuller wording adds the hardware clause).
+  - "Concerns about copyright infringement and damage to brand value due to the spread of AI."
+  - "On the other hand, as barriers to entry fall, the stability of the industry as a whole may
+    be shaken." (The single most on-point primary sentence for the erosion thesis — Capcom's own
+    hand.)
+  - "Declining IP value due to brand saturation in long-running series."
+  - Market-map annotation: "Profitability is improving, but increased competition is reducing
+    stability." PC is now 47% of the console+PC market (Newzoo via Capcom) [P].
+- Peer executives [S]: EA CEO Andrew Wilson — "more than 50% of our development processes will be
+  positively impacted by the advances in generative AI" (frames as augmentation; ~85% of QA uses
+  ML/AI, still hiring QA). Take-Two CEO Strauss Zelnick — GTA 6 uses ZERO generative AI,
+  handcrafted worlds, even as the company runs "hundreds of pilots" elsewhere (useful balance:
+  the flagship premium title was made without genAI).
+- Current AI-in-pipeline uses AND limits [S, Naavik July 2025]: art tools cut asset time up to
+  ~50% (InnoGames); voice/QA uses across Activision, The Finals, modl.ai. BUT limits temper the
+  disruption: "AI coding best limited to prototypes and vertical slices," dynamic-NPC latency
+  poor, image models show "telltale flaws." Today's tools accelerate work; they don't yet ship
+  AAA autonomously.
+- FLAG [rumor]: "King deployed AI level-design tools after training staff, then fired those
+  employees" (Naavik, single-source, causal framing contestable) — do NOT state as fact.
+- HONEST GAP: no verified case of an AI-enabled small team capturing material player time/spend
+  from a AAA publisher like Capcom; the "small teams now compete" thesis is prospective in the
+  sources, not demonstrated with share/revenue data. No Capcom disclosure ties AI specifically to
+  the $70 model — that pressure is analytical inference, not a sourced fact.
+
+### Verify before drafting (AI section)
+
+- Read the MS primary (Insights article + ToTM transcript) to confirm the Cost attribution and
+  any verbatim BEFORE quoting MS; if it won't load, use MS only as loosely-attributed framing or
+  drop it. Never imply MS named Capcom. Never use "Scissors Effect."
+- Pull Capcom's raw Feb 16 2026 investor Q&A (JP IR), the Inoue 4Gamer original (fix venue/date/
+  title), and the Abe Google Cloud case study — to lock the "won't implement AI assets / will use
+  for productivity" wording and the exec quotes.
+- Confirm the Steam figures against a primary aggregation; state the self-disclosure caveat.
+- King-layoffs stays out unless primary-sourced.
+
 ## Verify before drafting
 
 1. Pull Capcom's own Financial Highlights spreadsheet + the FY3/2026 EDINET 有価証券報告書 (due
