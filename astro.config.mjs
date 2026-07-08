@@ -34,15 +34,16 @@ export default defineConfig({
   site: 'https://ownerscorecard.com',
   // The first Note shipped under the-de-rating slug; the essay was retitled in place
   // (2026-07-05) and the old URL is already in mailers, crawlers, and readers' history.
-  // Never break it. TEMPORARY (2026-07-07): both research notes are unpublished while the
-  // author's final hand-written drafts are prepared; their URLs redirect to the notes index
-  // rather than 404 so saved links and the Founding Letter's cross-reference keep resolving.
-  // On each republish, remove that note's temporary redirect (and re-point the-de-rating at
-  // the moat note).
+  // Never break it. TEMPORARY (2026-07-07): all published pieces (both research notes AND
+  // the founding letter) are unpublished while the author's final hand-written drafts are
+  // prepared; their URLs redirect to the notes index rather than 404 so saved links and the
+  // /about page's letter link keep resolving. On each republish, remove that piece's
+  // temporary redirect (and re-point the-de-rating at the moat note).
   redirects: {
     '/notes/the-de-rating': '/notes',
     '/notes/the-moat-and-the-multiple': '/notes',
     '/notes/the-two-investors-2026': '/notes',
+    '/notes/the-founding-letter': '/notes',
   },
   // Hover-gated only: the catalog view holds 3,503 company links, so 'viewport' or 'load'
   // strategies would fire thousands of requests per session against the Workers free tier.
