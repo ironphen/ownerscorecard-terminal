@@ -1,0 +1,101 @@
+---
+// The shelves (docs/discovery-design.md feature 4): the whole library on one page, arranged by
+// what the businesses do. About twenty-five plain-noun shelves, each naming its industries with a
+// count of the records held. A table of contents, not a menu system: no personalization, no
+// prompts, no search box — clicking through (in the next round) is the circle-of-competence act.
+//
+// Order is fixed and stated: shelves alphabetical by their sentence, industries alphabetical
+// within a shelf. A count is the size of a shelf, never a recommendation; nothing here ranks,
+// scores, or suggests.
+//
+// Industries render as PLAIN TEXT for now. The /industries/[slug] chapter pages (feature 3)
+// arrive in the next round; when they exist, each industry below becomes a link to its chapter
+// via industrySlug() from lib/shelves.mjs — the slugs are already curated and stable in
+// src/data/shelves.json. No links are emitted today so nothing on this page can 404.
+import BaseLayout from "../layouts/BaseLayout.astro";
+import fundamentals from "../data/fundamentals.json";
+import adr from "../data/fundamentals.adr.json";
+import jp from "../data/fundamentals.jp.json";
+import { SHELVES, industryLabelOf } from "../lib/shelves.mjs";
+import { dataAsOf, fmtAsOf } from "../lib/freshness.mjs";
+
+// One classify pass over the three pools; the same read scripts/shelvesTest.mjs guards.
+const countByLabel = new Map();
+for (const c of [...(fundamentals.companies || []), ...(adr.companies || []), ...(jp.companies || [])]) {
+  const label = industryLabelOf(c);
+  countByLabel.set(label, (countByLabel.get(label) || 0) + 1);
+}
+
+// A curated industry with no companies after a data refresh renders nothing — a zero row would be
+// noise, and next round it would be a link to an empty chapter.
+const shelves = SHELVES.map((s) => {
+  const industries = s.industries
+    .map((ind) => ({ ...ind, count: countByLabel.get(ind.label) || 0 }))
+    .filter((ind) => ind.count > 0);
+  return { noun: s.noun, industries, total: industries.reduce((a, ind) => a + ind.count, 0) };
+}).filter((s) => s.industries.length > 0);
+
+const totalCompanies = shelves.reduce((a, s) => a + s.total, 0);
+const refreshed = fmtAsOf(dataAsOf);
+---
+
+<BaseLayout title="Businesses, Owner Scorecard" description="The whole library arranged by what the businesses do: plain-noun shelves, each naming its industries and the number of records held.">
+  <header class="hero">
+    <h1>The shelves</h1>
+    <p class="lede">
+      Every company in the library, {totalCompanies.toLocaleString()} records, arranged by what the
+      business does.
+    </p>
+    <p class="sub">
+      Each shelf is a plain sentence; under it, the industries that do that work and the number of
+      records the library holds. Shelves run alphabetically by their sentence, industries
+      alphabetically within a shelf. A count states the size of a shelf, never a place to start:
+      which businesses a reader understands is the reader's own question, and it is the one thing
+      this page does not answer.
+    </p>
+    {refreshed ? <p class="dateline">From the latest filings · data as of {refreshed}.</p> : null}
+  </header>
+
+  <ul class="shelves">
+    {shelves.map((s) => (
+      <li class="shelf">
+        <div class="sTop">
+          <h2 class="sNoun">{s.noun}</h2>
+          <span class="sN">{s.total.toLocaleString()} companies</span>
+        </div>
+        <p class="sInds">
+          {s.industries.map((ind, i) => (
+            <>
+              {i > 0 ? <span class="sep"> · </span> : null}
+              <span class="ind">{ind.label} <span class="n">{ind.count.toLocaleString()}</span></span>
+            </>
+          ))}
+        </p>
+      </li>
+    ))}
+  </ul>
+
+  <p class="foot">
+    The industries are as each company's own filing classifies it, read the same way its page and
+    its peer bench read it, so this catalog and the pages it names can never disagree.
+  </p>
+
+  <style>
+    .hero h1 { margin: 0 0 8px; }
+    .lede { font-family: var(--serif); font-size: 18px; line-height: 1.55; color: var(--ink-soft); margin: 0 0 10px; max-width: 68ch; }
+    .sub { color: var(--ink-dim); margin: 0; max-width: 68ch; line-height: 1.6; font-size: 14.5px; }
+    .dateline { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); margin: 10px 0 0; }
+
+    .shelves { list-style: none; padding: 0; margin: 22px 0 0; }
+    .shelf { border-bottom: 1px solid var(--rule); padding: 15px 0; }
+    .sTop { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+    .sNoun { font-family: var(--serif); font-weight: 600; font-size: 17px; margin: 0; color: var(--ink); }
+    .sN { font-family: var(--sans); font-variant-numeric: tabular-nums; font-size: 13px; color: var(--muted); flex: 0 0 auto; }
+    .sInds { margin: 6px 0 0; color: var(--ink-dim); font-size: 13.5px; line-height: 1.8; max-width: 90ch; }
+    .ind { white-space: nowrap; }
+    .ind .n { font-variant-numeric: tabular-nums; color: var(--muted); }
+    .sep { color: var(--muted); }
+
+    .foot { font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--muted); border-top: 1px solid var(--rule-strong); margin-top: 28px; padding-top: 12px; max-width: 78ch; line-height: 1.6; }
+  </style>
+</BaseLayout>
