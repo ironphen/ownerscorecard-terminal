@@ -1,0 +1,25 @@
+# CI — the regression gate the data-refresh audits cannot cover. npm test chains the ~21
+# offline fixture tests that exercise the extraction and arithmetic libraries every page
+# renders (src/lib/*, scripts/lib logic). Cloudflare Builds runs only astro build +
+# verifyStatic, so before this workflow existed a lib regression shipped to production
+# whenever the local run was forgotten. Tests are offline and fast; no secrets.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: npm test

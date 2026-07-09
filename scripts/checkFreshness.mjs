@@ -36,8 +36,39 @@ for (const s of stamps.sort((a, b) => (a.asOf < b.asOf ? 1 : -1))) {
   console.log(`  ${s.f.padEnd(26)} as of ${s.asOf}  (${a}d ago)`);
 }
 
+const problems = [];
 if (freshest > MAX_FRESH_DAYS) {
-  console.error(`\n❌ STALE: the freshest pool is ${freshest} days old (> ${MAX_FRESH_DAYS}) — the data pipeline appears to have stopped. Check the Fundamentals and Filing Wire workflows.`);
+  problems.push(`STALE: the freshest pool is ${freshest} days old (> ${MAX_FRESH_DAYS}) — the data pipeline appears to have stopped. Check the Fundamentals and Filing Wire workflows.`);
+}
+
+// ---- rates legs: the valuation's bond anchor and every ADR/JP translation's USD basis ----
+// Each leg of fetchRates fails soft and carries its prior value forever, so a permanently
+// broken source (URL change, key requirement) freezes a leg silently while the wire keeps the
+// masthead fresh. Assert each leg's own age here, plus a plausibility band so a mis-parsed
+// value (0.42 where 4.2 was meant) can't sit unnoticed either.
+const rates = read("rates.json");
+if (rates) {
+  console.log("\nRates legs:");
+  const leg = (name, asOf, maxDays, val, lo, hi) => {
+    if (!asOf) { problems.push(`rates.${name}: no as-of stamp`); return; }
+    const a = ageDays(asOf);
+    console.log(`  ${name.padEnd(24)} as of ${asOf}  (${a}d ago)  value ${val}`);
+    if (a > maxDays) problems.push(`rates.${name} is ${a} days old (> ${maxDays}) — its source has likely broken while other refreshes kept running`);
+    if (typeof val !== "number" || val < lo || val > hi) problems.push(`rates.${name} value ${val} is outside the plausibility band ${lo}–${hi}`);
+  };
+  // Thresholds carry each source's own calendar: DGS10 is daily but lags a business day and
+  // pauses over holidays (10d covers the worst holiday cluster); the JGB series is MONTHLY and
+  // publishes 5-8 weeks behind, so a May point in July is normal (100d catches a true freeze);
+  // FX is daily (5d covers a long weekend).
+  leg("tenYear (US 10-yr)", rates.asOf, 10, rates.tenYear, 0.3, 15);
+  leg("jp10y (10-yr JGB)", rates.jp10yAsOf, 100, rates.jp10y, -1, 10);
+  leg("fx (USDJPY sanity)", rates.fxAsOf, 5, rates.fx?.JPY ? 1 / rates.fx.JPY : undefined, 60, 300);
+} else {
+  problems.push("rates.json missing or unreadable — valuation bond anchor and ADR FX are unverified");
+}
+
+if (problems.length) {
+  console.error("\n❌ " + problems.join("\n❌ "));
   process.exit(1);
 }
-console.log(`\n✅ Pipeline alive: freshest pool is ${freshest} day(s) old.`);
+console.log(`\n✅ Pipeline alive: freshest pool is ${freshest} day(s) old; rates legs current and plausible.`);

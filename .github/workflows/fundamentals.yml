@@ -208,12 +208,19 @@ jobs:
             git config user.email "github-actions[bot]@users.noreply.github.com"
             git commit -m "Refresh fundamentals + filing language + segments"
             # Rebase-and-retry so a concurrent push can't silently drop the data refresh.
+            pushed=""
             for i in 1 2 3 4 5; do
-              git push && break
+              git push && pushed=1 && break
               echo "push rejected; rebasing on origin/$GITHUB_REF_NAME and retrying ($i)…"
               git pull --rebase origin "$GITHUB_REF_NAME" || { git rebase --abort; true; }
               sleep $((i * 3))
             done
+            # Without this check, five failed pushes end the step green and the refresh is
+            # silently lost — the run must go red so the owner is emailed.
+            if [ -z "$pushed" ]; then
+              echo "::error::git push failed after 5 attempts — the fundamentals refresh was NOT published"
+              exit 1
+            fi
           else
             echo "No change."
           fi

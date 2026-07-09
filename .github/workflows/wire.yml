@@ -38,12 +38,19 @@ jobs:
             git commit -m "Refresh the filing wire and the risk-free rate"
             # Rebase-and-retry so a concurrent push (an overlapping fundamentals run) can't silently
             # drop the day's wire + risk-free-rate refresh, the way a bare push otherwise would.
+            pushed=""
             for i in 1 2 3 4 5; do
-              git push && break
+              git push && pushed=1 && break
               echo "push rejected; rebasing on origin/$GITHUB_REF_NAME and retrying ($i)…"
               git pull --rebase origin "$GITHUB_REF_NAME" || { git rebase --abort; true; }
               sleep $((i * 3))
             done
+            # Without this check, five failed pushes end the step green and the refresh is
+            # silently lost — the run must go red so the owner is emailed.
+            if [ -z "$pushed" ]; then
+              echo "::error::git push failed after 5 attempts — the wire/rates refresh was NOT published"
+              exit 1
+            fi
           else
             echo "No change."
           fi

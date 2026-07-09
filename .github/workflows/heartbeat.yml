@@ -10,6 +10,10 @@ on:
   schedule:
     - cron: "0 13 * * *" # daily 13:00 UTC, after the weekday wire refresh has had time to land
 
+permissions:
+  contents: read
+  actions: read # for the backup-recency assertion below
+
 jobs:
   freshness:
     runs-on: ubuntu-latest
@@ -18,3 +22,21 @@ jobs:
       - run: node scripts/checkFreshness.mjs
         env:
           MAX_FRESH_DAYS: "6"
+      # The weekly DB backup (reader accounts, follows, wire subscriptions) skips green when its
+      # secret is missing and its failures are just another workflow email — so assert here,
+      # where a miss emails the owner daily, that a successful backup ran within the last 9 days.
+      - name: Assert a recent DB backup exists
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          last=$(gh run list --workflow=db-backup.yml --status=success --limit 1 --json updatedAt --jq '.[0].updatedAt' 2>/dev/null || echo "")
+          if [ -z "$last" ] || [ "$last" = "null" ]; then
+            echo "::error::No successful DB backup run found — the reader-relationship data is unbacked"
+            exit 1
+          fi
+          age_days=$(( ( $(date +%s) - $(date -d "$last" +%s) ) / 86400 ))
+          echo "Last successful DB backup: $last (${age_days}d ago)"
+          if [ "$age_days" -gt 9 ]; then
+            echo "::error::Last successful DB backup is ${age_days} days old (>9) — the weekly backup has stopped"
+            exit 1
+          fi

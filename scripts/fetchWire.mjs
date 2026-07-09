@@ -109,12 +109,14 @@ async function main() {
   try { for (const it of (JSON.parse(fs.readFileSync(wirePath, "utf8")).items || [])) if (it.accn) cache[it.accn] = it.whatChanged ?? null; } catch {}
 
   const items = [];
+  let attempted = 0, failed = 0;
   for (const c of fundamentals.companies) {
     if (!c.cik) continue;
     await sleep(150);
+    attempted++;
     let j;
     try { j = await getJSON(`https://data.sec.gov/submissions/CIK${c.cik}.json`); }
-    catch (e) { console.warn(`  ! ${c.ticker}: ${e.message}`); continue; }
+    catch (e) { failed++; console.warn(`  ! ${c.ticker}: ${e.message}`); continue; }
     const r = j.filings?.recent;
     if (!r?.form) continue;
     let diffed = 0;
@@ -136,6 +138,14 @@ async function main() {
       items.push({ ticker: c.ticker, name: c.name || c.ticker, form, date, label, grave, accn, url, whatChanged: changed });
     }
   }
+  // Partial-outage fail-safe: the zero-item check below catches a total EDGAR outage, but a
+  // partial one (a slice of the submissions fetches failing) would silently drop those
+  // companies from the wire — and from every follower's email — in a green run. That is the
+  // exact surface where a grave 8-K goes missing unseen. Fail red and keep the prior file.
+  if (attempted >= 50 && failed / attempted > 0.10) {
+    console.error(`\n❌ Wire: ${failed}/${attempted} submissions fetches failed (>10%); preserving the prior file rather than publishing a partial wire.\n`);
+    process.exit(1);
+  }
   // Fail-safe: a run that found nothing (every submissions fetch failed, an EDGAR outage) must not
   // blank the wire. Preserve the prior file and exit non-zero so the scheduled job surfaces the failure
   // rather than committing an empty feed.
@@ -145,9 +155,22 @@ async function main() {
     if (priorCount > 0) { console.error(`\n❌ Wire fetch returned no filings; preserving the prior ${priorCount}-item file.\n`); process.exit(1); }
   }
   items.sort((a, b) => b.date.localeCompare(a.date) || a.ticker.localeCompare(b.ticker));
-  const out = { asOf: new Date().toISOString().slice(0, 10), source: "SEC EDGAR, recent filings", items: items.slice(0, 90) };
+  // Keep a window of recent filing DAYS rather than a fixed item count: the old 90-item cap
+  // silently truncated busy days (one earnings-season morning can exceed it on its own), which
+  // dropped filings from the page and the follower emails alike. Window: the 7 most recent
+  // filing dates, with a hard ceiling as a file-size guard; grave items are never dropped.
+  const keepDates = new Set([...new Set(items.map((x) => x.date))].sort().reverse().slice(0, 7));
+  let kept = items.filter((x) => keepDates.has(x.date));
+  const CEILING = 800;
+  if (kept.length > CEILING) {
+    console.warn(`  ! wire window holds ${kept.length} items (> ${CEILING}); dropping the oldest non-grave overflow`);
+    const grave = kept.filter((x) => x.grave);
+    const rest = kept.filter((x) => !x.grave).slice(0, Math.max(0, CEILING - grave.length));
+    kept = [...grave, ...rest].sort((a, b) => b.date.localeCompare(a.date) || a.ticker.localeCompare(b.ticker));
+  }
+  const out = { asOf: new Date().toISOString().slice(0, 10), source: "SEC EDGAR, recent filings", items: kept };
   fs.writeFileSync(wirePath, JSON.stringify(out, null, 2) + "\n");
-  console.log(`✅ Wire: ${out.items.length} filings, ${items.filter((x) => x.whatChanged).length} with what-changed`);
+  console.log(`✅ Wire: ${out.items.length} filings across ${keepDates.size} filing days, ${kept.filter((x) => x.whatChanged).length} with what-changed`);
 }
 
 export { label8K, ITEM_8K, priorYoYIndex, getMDNA };
