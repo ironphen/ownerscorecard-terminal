@@ -10,7 +10,6 @@ import Valuation from "../../components/Valuation.astro";
 import CompareLink from "../../components/CompareLink.astro";
 import ActHeader from "../../components/ActHeader.astro";
 import Segments from "../../components/Segments.astro";
-import CaseAgainst from "../../components/CaseAgainst.astro";
 import notes from "../../data/notes.json";
 import { pickNote } from "../../lib/business.mjs";
 import fundamentals from "../../data/fundamentals.json";
@@ -80,10 +79,6 @@ const sectorLabel = fund ? SECTOR_LABEL[fund.sector] || "Diversified" : null;
         </div>
         <div class="meta">Latest filing: FY{fund.fy} annual securities report (有価証券報告書) · EDINET</div>
       </header>
-
-      {/* The language pool carries no JP tickers, so the candor and integrity reads pass null;
-          firedRegisters and the rest run on the filed figures alone. */}
-      <CaseAgainst company={fund} lang={null} isFin={false} />
 
       <section class="band note">
         {note ? (
