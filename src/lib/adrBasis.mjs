@@ -33,6 +33,12 @@ export function adrBasis(company, adrRatios, rates) {
         lines: scaleLines(company.lines),
         ttm: company.ttm ? { ...company.ttm, lines: scaleLines(company.ttm.lines) } : company.ttm,
         history: (company.history || []).map((h) => ({ ...h, lines: scaleLines(h.lines) })),
+        // The dated instantaneous count (an ordinary-share figure as filed) divides by the ADS
+        // ratio like every other share count, so price × it forms a market cap in the reader's
+        // dollars-per-ADS basis.
+        sharesForValue: company.sharesForValue?.val > 0
+          ? { ...company.sharesForValue, val: company.sharesForValue.val / rec.ratio }
+          : company.sharesForValue,
       }
     : company;
 

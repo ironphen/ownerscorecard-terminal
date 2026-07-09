@@ -307,6 +307,35 @@ function latestObservation(facts, tags, unit, instant = false) {
   }
   return best;
 }
+// The dated instantaneous count that turns a price into a market cap — the 20-F/40-F cover's
+// dei:EntityCommonStockSharesOutstanding, under the same guarded chain as the US fetcher's
+// sharesForValueOf: the cover count when fresh (within 400 days of the freshest weighted
+// average), else a balance-sheet instant within ±25% of that average, else the weighted
+// average itself. One guard is added here that the US side gets from its share-scale fixer:
+// the cover count must sit within 4× either way of the weighted average, so a thousands-
+// mistagged cover can't pass. The weighted-average series stays the record tables' per-share
+// denominator; this count exists only to price the whole business.
+function sharesForValueOf(facts) {
+  const avg = latestObservation(facts, CONCEPTS.sharesDiluted, "shares", false);
+  const pick = (o, basis) => ({ val: o.val, asOf: o.end, form: o.form || null, basis });
+  let dei = null;
+  const units = facts?.facts?.dei?.EntityCommonStockSharesOutstanding?.units?.shares;
+  if (units) {
+    for (const u of units) {
+      if (!u.form || !u.end || u.start) continue;
+      if (!(u.form.startsWith("20-F") || u.form.startsWith("40-F"))) continue;
+      if (!dei || new Date(u.end) > new Date(dei.end) || (u.end === dei.end && (u.filed || "") > dei.filed))
+        dei = { val: u.val, end: u.end, filed: u.filed || "", form: u.form };
+    }
+  }
+  const scaleOk = dei && (!(avg?.val > 0) || (dei.val >= avg.val / 4 && dei.val <= avg.val * 4));
+  if (dei && dei.val > 0 && scaleOk && (!avg?.end || Math.abs(days(dei.end, avg.end)) <= 400)) return pick(dei, "cover");
+  const inst = latestObservation(facts, CONCEPTS.sharesOutstanding, "shares", true);
+  if (inst && inst.val > 0 && avg?.val > 0 && inst.val >= avg.val * 0.75 && inst.val <= avg.val * 1.25)
+    return pick(inst, "instant");
+  if (avg && avg.val > 0) return pick(avg, "average");
+  return null;
+}
 function instantMap(facts, tags, unit) {
   const units = rowsFor(facts, tags, unit);
   if (!units) return {};
@@ -520,6 +549,10 @@ async function main() {
       market: "ADR", currency: ccy, country: meta.country || null, accountingStandard: standard,
       fy: anchor?.fy ?? null, periodEnd: anchor?.end ?? null, form: anchor?.form || "20-F",
       sourceUrl: `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${cik}&type=20-F`,
+      // The dated instantaneous count for price-to-value arithmetic; the record tables keep
+      // the weighted-average series. See sharesForValueOf above. Stated on the ordinary-share
+      // basis as filed; lib/adrBasis.mjs divides it by the ADS ratio with everything else.
+      sharesForValue: sharesForValueOf(facts),
       lines: latestLines,
       history, ttm, quarterly,
     };
