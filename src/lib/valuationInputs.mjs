@@ -55,7 +55,11 @@ export function valuationModel(company) {
   const offModel = isBank || isReit;
 
   const L = company.ttm?.lines || company.lines || {};
-  const shares = L.sharesDiluted ?? company.lines?.sharesDiluted ?? null;
+  // The dated instantaneous count (filing-cover dei, guarded — see fetchFundamentals'
+  // sharesForValueOf) turns a price into a value; the weighted-average diluted count stays the
+  // record's per-share denominator. The fallback chain covers records not yet refreshed.
+  const shares = (company.sharesForValue?.val > 0 ? company.sharesForValue.val : null)
+    ?? L.sharesDiluted ?? company.lines?.sharesDiluted ?? null;
   const cfo = L.cashFromOps, capex = L.capex;
   const ownerEarnings = cfo != null && capex != null ? cfo - Math.abs(capex) : null;
   const netDebt = (L.totalDebt || 0) - (liquidAssets(L) || 0);

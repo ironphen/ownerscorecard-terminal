@@ -409,6 +409,48 @@ const pickInstant = (facts, tags, unit = "USD") => latestEntry(instantByYear(fac
 const collectAnnual = (facts, tags, unit = "USD") => valuesByYear(annualByYear(facts, tags, unit));
 const collectInstant = (facts, tags, unit = "USD") => valuesByYear(instantByYear(facts, tags, unit));
 
+// ---- the share count for turning a price into a value (NOT the per-share denominator) ----
+// The weighted-average diluted count answers "earnings per share over the period"; converting a
+// typed price into a company value needs the INSTANTANEOUS count actually outstanding, and the
+// freshest filed source of that is the cover of every 10-K/10-Q: dei:EntityCommonStockShares-
+// Outstanding, "as of the latest practicable date". Convertible issuers make the difference
+// material — GameStop's Q1-2026 weighted diluted count (592M, if-converted) overstates the real
+// 449M outstanding by a third, and 650+ names in this pool diverge by more than 3%.
+// Guarded chain, most-checkable first:
+//   1. the dei cover count — accepted only when it is not stale (dual-class filers sometimes
+//      stop tagging it; HEICO's last dei observation is 2015), i.e. within ~400 days of the
+//      freshest weighted-average observation;
+//   2. the us-gaap CommonStockSharesOutstanding instant across 10-K AND 10-Q — accepted only
+//      within ±25% of the weighted-average count, which rejects the per-class fragments some
+//      dual-class filers tag (HEICO reports 55M of one class against 139M total);
+//   3. the weighted-average count itself (basic where tagged, else the diluted series) — a
+//      period average, not an instant, so the basis is carried for the page to disclose.
+// Returns { val, asOf, form, basis } or null; sharesDiluted stays untouched everywhere else
+// (record tables, per-share history, dilution trend), where it is the right denominator.
+function sharesForValueOf(facts, shareRef) {
+  const avg = latestObservation(facts, ["WeightedAverageNumberOfSharesOutstandingBasic", ...CONCEPTS.sharesDiluted], "shares", false);
+  const pick = (o, basis) => ({ val: fixShareScale(o.val, shareRef), asOf: o.end, form: o.form || null, basis });
+  let dei = null;
+  const units = facts?.facts?.dei?.EntityCommonStockSharesOutstanding?.units?.shares;
+  if (units) {
+    for (const u of units) {
+      if (!u.form || !u.end || u.start) continue;
+      if (!(u.form.startsWith("10-K") || u.form.startsWith("10-Q"))) continue;
+      if (!dei || new Date(u.end) > new Date(dei.end) || (u.end === dei.end && (u.filed || "") > dei.filed))
+        dei = { val: u.val, end: u.end, filed: u.filed || "", form: u.form };
+    }
+  }
+  if (dei && dei.val > 0 && (!avg?.end || Math.abs(days(dei.end, avg.end)) <= 400)) return pick(dei, "cover");
+  const inst = latestObservation(facts, CONCEPTS.sharesOutstanding, "shares", true);
+  if (inst && inst.val > 0 && avg?.val > 0 && inst.val >= avg.val * 0.75 && inst.val <= avg.val * 1.25)
+    return pick(inst, "instant");
+  if (avg && avg.val > 0) {
+    const hasBasic = !!facts?.facts?.["us-gaap"]?.WeightedAverageNumberOfSharesOutstandingBasic;
+    return pick(avg, hasBasic ? "basic average" : "diluted average");
+  }
+  return null;
+}
+
 // ---- trailing twelve months ----
 // All duration observations (10-K and 10-Q) for a concept.
 function durations(facts, tags, unit = "USD") {
@@ -1046,6 +1088,9 @@ async function main() {
       periodEnd: anchor?.end ?? null,
       form: anchor?.form ?? "10-K",
       sourceUrl,
+      // The dated instantaneous share count the valuation multiplies a price by; the record
+      // tables keep the weighted-average diluted series. See sharesForValueOf above.
+      sharesForValue: sharesForValueOf(facts, shareRef),
       lines: {
         operatingIncome: deriveOpInc(oi?.val ?? null, revLatest, pick(CONCEPTS.costsAndExpenses), pick(CONCEPTS.netIncome), pick(CONCEPTS.incomeTaxExpense), pick(CONCEPTS.interestExpense)),
         interestExpense: pick(CONCEPTS.interestExpense),

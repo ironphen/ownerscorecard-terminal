@@ -66,13 +66,22 @@ const winRangeYrs = (pairs, n = 6) => { const w = (pairs || []).slice(-n); retur
 // compare view read a business through identical arithmetic. trendGrowth is imported above.
 
 const L = co.ttm?.lines || co.lines || {};
-// Share count turns the price into a market cap. We fall back from the TTM block to the latest
-// annual, but some filers (Up-C structures, multiple share classes — Planet Fitness, Shopify)
-// tag their shares where the pull misses them, leaving it null. Rather than withhold the whole
-// tool over that one field, we run the owner-earnings mode anyway and let the reader bring the
-// share count, the same way they bring the price.
-const shares = L.sharesDiluted ?? co.lines?.sharesDiluted ?? null;
+// Share count turns the price into a market cap, and the right count for that job is the dated
+// INSTANTANEOUS one — sharesForValue, the filing cover's count under a guarded chain in the
+// pipeline — not the weighted-average diluted count, which remains the per-share denominator in
+// the record tables but overstates a convertible issuer's real outstanding count (GameStop's
+// if-converted average ran a third above its actual shares). Fall back through the old chain
+// for records not yet refreshed; and when every source is missing (Up-C structures, multiple
+// share classes — Planet Fitness, Shopify), run the owner-earnings mode anyway and let the
+// reader bring the share count, the same way they bring the price.
+const sfv = co.sharesForValue && co.sharesForValue.val > 0 ? co.sharesForValue : null;
+const shares = sfv?.val ?? L.sharesDiluted ?? co.lines?.sharesDiluted ?? null;
 const haveShares = shares != null && shares > 0;
+// The if-converted overhang a buyer inherits (convertibles, options): shown when material, so
+// the dilution stays visible even though it no longer inflates the market-cap arithmetic.
+const dilutedCount = L.sharesDiluted ?? co.lines?.sharesDiluted ?? null;
+const overhangPct = sfv && dilutedCount && dilutedCount / sfv.val > 1.03
+  ? Math.round((dilutedCount / sfv.val - 1) * 100) : null;
 const cfo = L.cashFromOps, capex = L.capex;
 const ownerEarnings = cfo != null && capex != null ? cfo - Math.abs(capex) : null;
 const netDebt = (L.totalDebt || 0) - (liquidAssets(L) || 0);
@@ -510,7 +519,14 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
       </div>
 
       <p class="foot">
-        {offerMaint ? "Free cash flow" : "Owner earnings"} {$(ownerEarnings)} {haveShares ? `on ${(shares / 1e6).toFixed(0)}M diluted shares` : "on the share count you enter above"}; net {netDebt >= 0 ? `debt ${$(netDebt)}` : `cash ${$(-netDebt)}`}.
+        {offerMaint ? "Free cash flow" : "Owner earnings"} {$(ownerEarnings)} {haveShares
+          ? (sfv
+            ? `on ${(shares / 1e6).toFixed(0)}M shares outstanding${
+                sfv.basis === "cover" ? `, per the ${sfv.form || "filing"} cover, as of ${sfv.asOf}`
+                : sfv.basis === "instant" ? `, the balance-sheet count at ${sfv.asOf}`
+                : ` (a weighted ${sfv.basis}, the only count this filer tags)`}`
+            : `on ${(shares / 1e6).toFixed(0)}M diluted shares`)
+          : "on the share count you enter above"}; net {netDebt >= 0 ? `debt ${$(netDebt)}` : `cash ${$(-netDebt)}`}.{overhangPct != null ? ` The if-converted diluted count is ${(dilutedCount / 1e6).toFixed(0)}M, ${overhangPct}% above the shares outstanding: the dilution overhang (convertibles, options) a buyer inherits.` : ""}
         The base is the latest year by default; <b>Normalize</b> values it on the through-cycle median owner-earnings margin (to avoid paying on a peak year), and <b>Net of stock comp</b> treats option pay as the expense it is.{offerMaint ? (<> Capex ({$(Math.abs(capex))}) runs well above depreciation ({$(dep)}), so this is a build-out; <b>Steady-state</b> swaps total capex for maintenance (≈ depreciation), lifting the base to about {$(ownerEarningsMaint)}, the cash it would throw off if it stopped expanding.</>) : null}
         The reference value extrapolates the owner-earnings growth the record delivered, netted against debt.
       </p>
