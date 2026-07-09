@@ -11,7 +11,7 @@
       "grave": false,
       "accn": "0001097149-26-000050",
       "url": "https://www.sec.gov/Archives/edgar/data/1097149/000109714926000050/algn-20260706.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "BE",
@@ -22,7 +22,7 @@
       "grave": false,
       "accn": "0001628280-26-047734",
       "url": "https://www.sec.gov/Archives/edgar/data/1664703/000162828026047734/be-20260709.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "CABO",
@@ -33,7 +33,7 @@
       "grave": false,
       "accn": "0000950157-26-000791",
       "url": "https://www.sec.gov/Archives/edgar/data/1632127/000095015726000791/form8-k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "CNOB",
@@ -44,7 +44,7 @@
       "grave": false,
       "accn": "0001437749-26-023097",
       "url": "https://www.sec.gov/Archives/edgar/data/712771/000143774926023097/cnob20260526_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "CNOBP",
@@ -55,7 +55,7 @@
       "grave": false,
       "accn": "0001437749-26-023097",
       "url": "https://www.sec.gov/Archives/edgar/data/712771/000143774926023097/cnob20260526_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "ENVX",
@@ -66,7 +66,7 @@
       "grave": false,
       "accn": "0001828318-26-000050",
       "url": "https://www.sec.gov/Archives/edgar/data/1828318/000182831826000050/envx-20260709.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "EPAC",
@@ -77,7 +77,7 @@
       "grave": false,
       "accn": "0001140361-26-027991",
       "url": "https://www.sec.gov/Archives/edgar/data/6955/000114036126027991/ef20077568_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "FBRX",
@@ -88,7 +88,7 @@
       "grave": false,
       "accn": "0001193125-26-299177",
       "url": "https://www.sec.gov/Archives/edgar/data/1419041/000119312526299177/d170175d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "FCEL",
@@ -99,7 +99,7 @@
       "grave": false,
       "accn": "0001104659-26-082100",
       "url": "https://www.sec.gov/Archives/edgar/data/886128/000110465926082100/tm2620028d1_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "MARA",
@@ -110,7 +110,7 @@
       "grave": false,
       "accn": "0000950142-26-002012",
       "url": "https://www.sec.gov/Archives/edgar/data/1507605/000095014226002012/eh260804074_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "NWS",
@@ -121,7 +121,7 @@
       "grave": false,
       "accn": "0001564708-26-000148",
       "url": "https://www.sec.gov/Archives/edgar/data/1564708/000156470826000148/nws-20260708.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "NWSA",
@@ -132,7 +132,7 @@
       "grave": false,
       "accn": "0001564708-26-000148",
       "url": "https://www.sec.gov/Archives/edgar/data/1564708/000156470826000148/nws-20260708.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "ORBS",
@@ -143,7 +143,7 @@
       "grave": false,
       "accn": "0001493152-26-032609",
       "url": "https://www.sec.gov/Archives/edgar/data/1892492/000149315226032609/form8-k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "PEP",
@@ -154,7 +154,7 @@
       "grave": false,
       "accn": "0000077476-26-000037",
       "url": "https://www.sec.gov/Archives/edgar/data/77476/000007747626000037/pep-20260709.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "PEP",
@@ -165,11 +165,23 @@
       "grave": false,
       "accn": "0000077476-26-000035",
       "url": "https://www.sec.gov/Archives/edgar/data/77476/000007747626000035/pep-20260613.htm",
-      "whatChanged": [
-        "Operating profit improvement primarily reflects a prior-year impairment charge related to the Rockstar brand, productivity savings, a favorable net impact of acquisition and divestiture-related charges/credits related to our poppi acquisition, lower restructuring charges, the effective net pricing a",
-        "These impacts were partially offset by certain operating cost increases, the decline in organic volume and a 6-percentage-point impact of higher commodity costs. 24 Weeks Net revenue increased 8%, primarily driven by a favorable net impact of acquisitions and divestitures and effective net pricing, ",
-        "The reported tax rate increased 1.5 percentage points, primarily reflecting the prior-year release of federal interest accruals and the impairment of the Rockstar brand, as well as the current-year impact of the OECD model global minimum tax, partially offset by higher tax benefits from foreign resu"
-      ]
+      "performance": {
+        "period": "2026-06-13",
+        "basis": "quarter",
+        "rev": {
+          "yoy": 6.4,
+          "cur": 24181000000,
+          "prior": 22726000000
+        },
+        "oi": {
+          "yoy": 124.9,
+          "cur": 4023000000,
+          "prior": 1789000000
+        },
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
     },
     {
       "ticker": "QXO",
@@ -180,7 +192,7 @@
       "grave": false,
       "accn": "0001104659-26-082040",
       "url": "https://www.sec.gov/Archives/edgar/data/1236275/000110465926082040/tm2620075d1_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "RIVN",
@@ -191,7 +203,7 @@
       "grave": false,
       "accn": "0001104659-26-081988",
       "url": "https://www.sec.gov/Archives/edgar/data/1874178/000110465926081988/tm2617163d3_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "RXT",
@@ -202,7 +214,7 @@
       "grave": false,
       "accn": "0001810019-26-000078",
       "url": "https://www.sec.gov/Archives/edgar/data/1810019/000181001926000078/rxt-20260702.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "SMPL",
@@ -213,11 +225,23 @@
       "grave": false,
       "accn": "0001702744-26-000023",
       "url": "https://www.sec.gov/Archives/edgar/data/1702744/000170274426000023/atk-20260530.htm",
-      "whatChanged": [
-        "For the thirteen and thirty-nine week periods ended May 30, 2026, the Company incurred $13.5 million and $18.1 million of costs for restructuring activities, of which $6.2 million and $6.2 million have been included within Cost of goods sold and $6.2 million and $10.8 million have been included with",
-        "As a result of the sustained decline in the Company's stock price and declines in the Company's market capitalization assessed during the third quarter of fiscal year 2026, the Company identified a triggering event indicating that it was more likely than not that the fair value of both the OWYN and ",
-        "As a result of the sustained decline in the Company's share price and declines in the Company's market capitalization assessed during the third quarter of fiscal year 2026, the Company identified a triggering event indicating that it was more likely than not that the fair value of the goodwill repor"
-      ]
+      "performance": {
+        "period": "2026-05-30",
+        "basis": "quarter",
+        "rev": {
+          "yoy": -6.3,
+          "cur": 356983000,
+          "prior": 380956000
+        },
+        "oi": {
+          "yoy": -184.1,
+          "cur": -49864000,
+          "prior": 59320000
+        },
+        "driver": "Net sales were $357.0 million for the thirteen weeks ended May 30, 2026, compared to $381.0 million for the thirteen weeks ended May 31, 2025, representing a decrease of $24.0 million, or 6.3%, driven by distribution-related declines for Atkins which were partially offset by Quest and OWYN volume-driven growth.",
+        "driverLine": "revenue",
+        "check": "pct"
+      }
     },
     {
       "ticker": "SMPL",
@@ -228,7 +252,7 @@
       "grave": false,
       "accn": "0001702744-26-000021",
       "url": "https://www.sec.gov/Archives/edgar/data/1702744/000170274426000021/atk-20260709.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "SSTK",
@@ -239,7 +263,7 @@
       "grave": false,
       "accn": "0001140361-26-028035",
       "url": "https://www.sec.gov/Archives/edgar/data/1549346/000114036126028035/ef20077612_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "UNFI",
@@ -250,7 +274,7 @@
       "grave": false,
       "accn": "0001020859-26-000020",
       "url": "https://www.sec.gov/Archives/edgar/data/1020859/000102085926000020/unfi-20260707.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "WLY",
@@ -261,7 +285,7 @@
       "grave": false,
       "accn": "0000107140-26-000039",
       "url": "https://www.sec.gov/Archives/edgar/data/107140/000010714026000039/jwa-20260709.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "WLYB",
@@ -272,7 +296,7 @@
       "grave": false,
       "accn": "0000107140-26-000039",
       "url": "https://www.sec.gov/Archives/edgar/data/107140/000010714026000039/jwa-20260709.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "ALG",
@@ -283,7 +307,7 @@
       "grave": false,
       "accn": "0000897077-26-000082",
       "url": "https://www.sec.gov/Archives/edgar/data/897077/000089707726000082/alg-20260705.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "ALKS",
@@ -294,7 +318,7 @@
       "grave": false,
       "accn": "0001193125-26-298004",
       "url": "https://www.sec.gov/Archives/edgar/data/1520262/000119312526298004/alks-20260706.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "AMPH",
@@ -305,7 +329,7 @@
       "grave": false,
       "accn": "0001297184-26-000041",
       "url": "https://www.sec.gov/Archives/edgar/data/1297184/000129718426000041/amph-20260702x8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "ARLP",
@@ -316,7 +340,7 @@
       "grave": false,
       "accn": "0001104659-26-081790",
       "url": "https://www.sec.gov/Archives/edgar/data/1086600/000110465926081790/arlp-20260701x8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "AXTI",
@@ -327,7 +351,7 @@
       "grave": true,
       "accn": "0001437749-26-022984",
       "url": "https://www.sec.gov/Archives/edgar/data/1051627/000143774926022984/axti20260629_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "AZTA",
@@ -338,7 +362,7 @@
       "grave": false,
       "accn": "0001628280-26-047591",
       "url": "https://www.sec.gov/Archives/edgar/data/933974/000162828026047591/azta-20260701.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "AZZ",
@@ -349,7 +373,7 @@
       "grave": false,
       "accn": "0000008947-26-000163",
       "url": "https://www.sec.gov/Archives/edgar/data/8947/000000894726000163/azz-20260708.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "AZZ",
@@ -360,11 +384,23 @@
       "grave": false,
       "accn": "0000008947-26-000162",
       "url": "https://www.sec.gov/Archives/edgar/data/8947/000000894726000162/azz-20260531.htm",
-      "whatChanged": [
-        "The increase was primarily due to increased professional fees and personnel costs, partially offset by a decrease in stock-based compensation, primarily due to the adoption of the Executive Retiree LTI Program and the acceleration of expense for the related stock awards in the prior year.",
-        "The increase was due to an increase in the average price of coils coated, as well as revenue related to the ramp-up of the Washington, Missouri facility, partially offset by lower volume, mainly due to decreases in construction, infrastructure, HVAC and appliance end markets.",
-        "The decrease in the effective tax rate is driven by higher tax deductions for stock compensation in the current year, coupled with higher tax expense in the prior year related to equity in earnings from the AVAIL JV."
-      ]
+      "performance": {
+        "period": "2026-05-31",
+        "basis": "quarter",
+        "rev": {
+          "yoy": 6.3,
+          "cur": 448530000,
+          "prior": 421962000
+        },
+        "oi": {
+          "yoy": 10.8,
+          "cur": 77033000,
+          "prior": 69549000
+        },
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
     },
     {
       "ticker": "BNL",
@@ -375,7 +411,7 @@
       "grave": false,
       "accn": "0001424182-26-000054",
       "url": "https://www.sec.gov/Archives/edgar/data/1424182/000142418226000054/bnl-20260708.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "BRBR",
@@ -386,7 +422,7 @@
       "grave": false,
       "accn": "0001628280-26-047674",
       "url": "https://www.sec.gov/Archives/edgar/data/1772016/000162828026047674/brbr-20260708.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "CHSCO",
@@ -397,7 +433,7 @@
       "grave": false,
       "accn": "0000823277-26-000025",
       "url": "https://www.sec.gov/Archives/edgar/data/823277/000082327726000025/chscp-20260708.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "CHSCO",
@@ -408,11 +444,23 @@
       "grave": false,
       "accn": "0000823277-26-000023",
       "url": "https://www.sec.gov/Archives/edgar/data/823277/000082327726000023/chscp-20260531.htm",
-      "whatChanged": [
-        "Income Tax Expense Three Months Ended May 31, Change 2026 2025 Dollars Percent (Dollars in thousands) Income tax expense $ 14,717 $ 27,175 $ (12,458) (45.8 %) Decreased income tax expense during the three months ended May 31, 2026, reflects the mix of full-year earnings projected across business uni",
-        "Grains segment IBIT decreased $141.0 million, or 112.1%, during the nine months ended May 31, 2026, compared to the nine months ended May 31, 2025, primarily as a result of the following: Lower oilseed export volumes, soft crush margins during the first half of our fiscal year, weaker retail and who",
-        "Income Tax Expense Nine Months Ended May 31, Change 2026 2025 Dollars Percent (Dollars in thousands) Income tax expense $ 8,661 $ 31,710 $ (23,049) (72.7 %) Decreased income tax expense during the nine months ended May 31, 2026, reflects the mix of full-year earnings projected across business units "
-      ]
+      "performance": {
+        "period": "2026-05-31",
+        "basis": "quarter",
+        "rev": {
+          "yoy": 18.6,
+          "cur": 11582089000,
+          "prior": 9766421000
+        },
+        "oi": {
+          "yoy": 52.7,
+          "cur": 108337000,
+          "prior": 70961000
+        },
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
     },
     {
       "ticker": "CHSCO",
@@ -423,7 +471,7 @@
       "grave": false,
       "accn": "0000823277-26-000022",
       "url": "https://www.sec.gov/Archives/edgar/data/823277/000082327726000022/chscp-20260708.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "CHSCP",
@@ -434,7 +482,7 @@
       "grave": false,
       "accn": "0000823277-26-000025",
       "url": "https://www.sec.gov/Archives/edgar/data/823277/000082327726000025/chscp-20260708.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "CHSCP",
@@ -445,11 +493,23 @@
       "grave": false,
       "accn": "0000823277-26-000023",
       "url": "https://www.sec.gov/Archives/edgar/data/823277/000082327726000023/chscp-20260531.htm",
-      "whatChanged": [
-        "Income Tax Expense Three Months Ended May 31, Change 2026 2025 Dollars Percent (Dollars in thousands) Income tax expense $ 14,717 $ 27,175 $ (12,458) (45.8 %) Decreased income tax expense during the three months ended May 31, 2026, reflects the mix of full-year earnings projected across business uni",
-        "Grains segment IBIT decreased $141.0 million, or 112.1%, during the nine months ended May 31, 2026, compared to the nine months ended May 31, 2025, primarily as a result of the following: Lower oilseed export volumes, soft crush margins during the first half of our fiscal year, weaker retail and who",
-        "Income Tax Expense Nine Months Ended May 31, Change 2026 2025 Dollars Percent (Dollars in thousands) Income tax expense $ 8,661 $ 31,710 $ (23,049) (72.7 %) Decreased income tax expense during the nine months ended May 31, 2026, reflects the mix of full-year earnings projected across business units "
-      ]
+      "performance": {
+        "period": "2026-05-31",
+        "basis": "quarter",
+        "rev": {
+          "yoy": 18.6,
+          "cur": 11582089000,
+          "prior": 9766421000
+        },
+        "oi": {
+          "yoy": 52.7,
+          "cur": 108337000,
+          "prior": 70961000
+        },
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
     },
     {
       "ticker": "CHSCP",
@@ -460,7 +520,7 @@
       "grave": false,
       "accn": "0000823277-26-000022",
       "url": "https://www.sec.gov/Archives/edgar/data/823277/000082327726000022/chscp-20260708.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "CMG",
@@ -471,7 +531,7 @@
       "grave": false,
       "accn": "0001058090-26-000058",
       "url": "https://www.sec.gov/Archives/edgar/data/1058090/000105809026000058/cmg-20260707.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "COST",
@@ -482,7 +542,7 @@
       "grave": false,
       "accn": "0000909832-26-000060",
       "url": "https://www.sec.gov/Archives/edgar/data/909832/000090983226000060/cost-20260707.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "CPRT",
@@ -493,7 +553,7 @@
       "grave": false,
       "accn": "0001193125-26-298722",
       "url": "https://www.sec.gov/Archives/edgar/data/900075/000119312526298722/d115993d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "CPRX",
@@ -504,7 +564,7 @@
       "grave": false,
       "accn": "0001193125-26-298739",
       "url": "https://www.sec.gov/Archives/edgar/data/1369568/000119312526298739/d109692d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "CRGY",
@@ -515,7 +575,7 @@
       "grave": false,
       "accn": "0001866175-26-000103",
       "url": "https://www.sec.gov/Archives/edgar/data/1866175/000186617526000103/crgy-20260708.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "CUBB",
@@ -526,7 +586,7 @@
       "grave": false,
       "accn": "0001488813-26-000078",
       "url": "https://www.sec.gov/Archives/edgar/data/1488813/000148881326000078/cubi-20260708.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "CUBI",
@@ -537,7 +597,7 @@
       "grave": false,
       "accn": "0001488813-26-000078",
       "url": "https://www.sec.gov/Archives/edgar/data/1488813/000148881326000078/cubi-20260708.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "CVEO",
@@ -548,7 +608,7 @@
       "grave": false,
       "accn": "0001193125-26-297738",
       "url": "https://www.sec.gov/Archives/edgar/data/1590584/000119312526297738/d153591d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "CZR",
@@ -559,7 +619,7 @@
       "grave": false,
       "accn": "0001590895-26-000024",
       "url": "https://www.sec.gov/Archives/edgar/data/1590895/000159089526000024/czr-20260706.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "DFH",
@@ -570,7 +630,7 @@
       "grave": false,
       "accn": "0001628280-26-047583",
       "url": "https://www.sec.gov/Archives/edgar/data/1825088/000162828026047583/dream-20260708.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "DINO",
@@ -581,7 +641,7 @@
       "grave": false,
       "accn": "0001193125-26-297981",
       "url": "https://www.sec.gov/Archives/edgar/data/1915657/000119312526297981/d125995d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "ELF",
@@ -592,7 +652,7 @@
       "grave": false,
       "accn": "0001600033-26-000030",
       "url": "https://www.sec.gov/Archives/edgar/data/1600033/000160003326000030/elf-20260706.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "EOLS",
@@ -603,7 +663,7 @@
       "grave": false,
       "accn": "0001570562-26-000079",
       "url": "https://www.sec.gov/Archives/edgar/data/1570562/000157056226000079/eols-20260707.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "EPAC",
@@ -614,7 +674,7 @@
       "grave": false,
       "accn": "0001171843-26-004528",
       "url": "https://www.sec.gov/Archives/edgar/data/6955/000117184326004528/f8k_070826.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "ESPR",
@@ -625,7 +685,7 @@
       "grave": false,
       "accn": "0001104659-26-081588",
       "url": "https://www.sec.gov/Archives/edgar/data/1434868/000110465926081588/tm2620034d1_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "ET",
@@ -636,7 +696,7 @@
       "grave": false,
       "accn": "0001193125-26-298149",
       "url": "https://www.sec.gov/Archives/edgar/data/1276187/000119312526298149/d86030d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "FG",
@@ -647,7 +707,7 @@
       "grave": false,
       "accn": "0001934850-26-000077",
       "url": "https://www.sec.gov/Archives/edgar/data/1934850/000193485026000077/fg-20260708.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "FGN",
@@ -658,7 +718,7 @@
       "grave": false,
       "accn": "0001934850-26-000077",
       "url": "https://www.sec.gov/Archives/edgar/data/1934850/000193485026000077/fg-20260708.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "FNLC",
@@ -669,7 +729,7 @@
       "grave": false,
       "accn": "0000765207-26-000095",
       "url": "https://www.sec.gov/Archives/edgar/data/765207/000076520726000095/fnlc-20260708.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "GME",
@@ -680,7 +740,7 @@
       "grave": false,
       "accn": "0001326380-26-000038",
       "url": "https://www.sec.gov/Archives/edgar/data/1326380/000132638026000038/gme-20260707.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "GTLB",
@@ -691,7 +751,7 @@
       "grave": false,
       "accn": "0001653482-26-000145",
       "url": "https://www.sec.gov/Archives/edgar/data/1653482/000165348226000145/gtlb-20260708.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "HELE",
@@ -702,11 +762,19 @@
       "grave": false,
       "accn": "0000916789-26-000096",
       "url": "https://www.sec.gov/Archives/edgar/data/916789/000091678926000096/hele-20260531.htm",
-      "whatChanged": [
-        "The increase was primarily driven by: the favorable comparative impact of lower first quarter fiscal 2026 sales due to retailer pull-forward activity in the fourth quarter of fiscal 2025 in response to tariff uncertainty and potential supply disruption; strong international demand for technical, lif",
-        "The increase was primarily driven by: an increase in Home & Outdoor due to strong international demand for packs, new product launches and the favorable comparative impact of retailer pull-forward activity in the fourth quarter of fiscal 2025 in response to tariff uncertainty; and an increase in Bea",
-        "The increase is primarily due to the comparative impact of after-tax asset impairment charges of $436.2 million and valuation allowances on deferred tax assets related to our intangible asset reorganization both recognized during the first quarter of fiscal 2026, the recognition of an after-tax gain"
-      ]
+      "performance": {
+        "period": "2026-05-31",
+        "basis": "quarter",
+        "rev": {
+          "yoy": 8.2,
+          "cur": 402115000,
+          "prior": 371655000
+        },
+        "oi": null,
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
     },
     {
       "ticker": "HELE",
@@ -717,7 +785,7 @@
       "grave": false,
       "accn": "0000916789-26-000094",
       "url": "https://www.sec.gov/Archives/edgar/data/916789/000091678926000094/hele-20260708.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "INVH",
@@ -728,7 +796,7 @@
       "grave": false,
       "accn": "0001193125-26-298582",
       "url": "https://www.sec.gov/Archives/edgar/data/1687229/000119312526298582/d116394d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "JEF",
@@ -739,7 +807,7 @@
       "grave": false,
       "accn": "0001140361-26-027986",
       "url": "https://www.sec.gov/Archives/edgar/data/96223/000114036126027986/ef20077505_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "LEVI",
@@ -750,11 +818,23 @@
       "grave": false,
       "accn": "0000094845-26-000037",
       "url": "https://www.sec.gov/Archives/edgar/data/94845/000009484526000037/lvis-20260531.htm",
-      "whatChanged": [
-        "These tariff actions, retaliatory measures, or other trade restrictions could materially and adversely affect our business. 32 Table of Co nte nts The current domestic and international political environment, including volatile trade relations and military and civil conflicts, and most recently heig",
-        "The increase in other income for the six-month period ended May 31, 2026 was primarily due to the recognition of a legal settlement gain of $33.0 million, foreign exchange management gains of $14.2 million and foreign currency transaction losses of $6.6 million, compared to foreign exchange manageme",
-        "The increase in other income for the three-month period ended May 31, 2026 was primarily due to the recognition of foreign exchange management gains of $8.6 million and foreign currency transaction losses of $1.1 million, compared to foreign exchange 41 Table of Co nte nts management gains of $40.9 "
-      ]
+      "performance": {
+        "period": "2026-05-31",
+        "basis": "quarter",
+        "rev": {
+          "yoy": 8,
+          "cur": 1562000000,
+          "prior": 1446000000
+        },
+        "oi": {
+          "yoy": 13.1,
+          "cur": 122200000,
+          "prior": 108000000
+        },
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
     },
     {
       "ticker": "LEVI",
@@ -765,7 +845,7 @@
       "grave": false,
       "accn": "0000094845-26-000038",
       "url": "https://www.sec.gov/Archives/edgar/data/94845/000009484526000038/levi-20260708.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "MASS",
@@ -776,7 +856,7 @@
       "grave": false,
       "accn": "0001104659-26-081806",
       "url": "https://www.sec.gov/Archives/edgar/data/1555279/000110465926081806/mass-20260708x8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "MNST",
@@ -787,7 +867,7 @@
       "grave": false,
       "accn": "0001104659-26-081842",
       "url": "https://www.sec.gov/Archives/edgar/data/865752/000110465926081842/tm2619964d1_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "MRNA",
@@ -798,7 +878,7 @@
       "grave": false,
       "accn": "0001682852-26-000134",
       "url": "https://www.sec.gov/Archives/edgar/data/1682852/000168285226000134/mrna-20260706.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "NEE",
@@ -809,7 +889,7 @@
       "grave": false,
       "accn": "0001104659-26-081863",
       "url": "https://www.sec.gov/Archives/edgar/data/753308/000110465926081863/tm2614888d16_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "NGS",
@@ -820,7 +900,7 @@
       "grave": false,
       "accn": "0001084991-26-000061",
       "url": "https://www.sec.gov/Archives/edgar/data/1084991/000108499126000061/ngs-20260708.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "NSA",
@@ -831,7 +911,7 @@
       "grave": false,
       "accn": "0001104659-26-081584",
       "url": "https://www.sec.gov/Archives/edgar/data/1618563/000110465926081584/tm2619947d1_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "NSSC",
@@ -842,7 +922,7 @@
       "grave": false,
       "accn": "0001104659-26-081794",
       "url": "https://www.sec.gov/Archives/edgar/data/69633/000110465926081794/nssc-20260708x8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "NVTS",
@@ -853,7 +933,7 @@
       "grave": false,
       "accn": "0001104659-26-081576",
       "url": "https://www.sec.gov/Archives/edgar/data/1821769/000110465926081576/tm2620013d1_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "NWS",
@@ -864,7 +944,7 @@
       "grave": false,
       "accn": "0001564708-26-000147",
       "url": "https://www.sec.gov/Archives/edgar/data/1564708/000156470826000147/nws-20260707.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "NWSA",
@@ -875,7 +955,7 @@
       "grave": false,
       "accn": "0001564708-26-000147",
       "url": "https://www.sec.gov/Archives/edgar/data/1564708/000156470826000147/nws-20260707.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "OGS",
@@ -886,7 +966,7 @@
       "grave": false,
       "accn": "0001587732-26-000029",
       "url": "https://www.sec.gov/Archives/edgar/data/1587732/000158773226000029/ogs-20260708.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "ORC",
@@ -897,7 +977,7 @@
       "grave": false,
       "accn": "0001437749-26-023058",
       "url": "https://www.sec.gov/Archives/edgar/data/1518621/000143774926023058/orc20260707_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "OSBC",
@@ -908,7 +988,7 @@
       "grave": false,
       "accn": "0000357173-26-000037",
       "url": "https://www.sec.gov/Archives/edgar/data/357173/000035717326000037/osbc-20260707x8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "OVID",
@@ -919,7 +999,7 @@
       "grave": false,
       "accn": "0001628280-26-047584",
       "url": "https://www.sec.gov/Archives/edgar/data/1636651/000162828026047584/ovid-20260707.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "PDYN",
@@ -930,7 +1010,7 @@
       "grave": false,
       "accn": "0001193125-26-297985",
       "url": "https://www.sec.gov/Archives/edgar/data/1826681/000119312526297985/pdyn-20260708.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "PRME",
@@ -941,7 +1021,7 @@
       "grave": false,
       "accn": "0001628280-26-047590",
       "url": "https://www.sec.gov/Archives/edgar/data/1894562/000162828026047590/prme-20260706.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "PSMT",
@@ -952,7 +1032,7 @@
       "grave": false,
       "accn": "0001041803-26-000030",
       "url": "https://www.sec.gov/Archives/edgar/data/1041803/000104180326000030/psmt-20260708.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "PSMT",
@@ -963,11 +1043,23 @@
       "grave": false,
       "accn": "0001041803-26-000028",
       "url": "https://www.sec.gov/Archives/edgar/data/1041803/000104180326000028/psmt-20260531.htm",
-      "whatChanged": [
-        "For the nine months ended May 31, 2026, the primary driver of Other expense, net was $9.2 million of losses due to revaluation of monetary assets and liabilities (primarily U.S. dollars) compared to $5.4 million of losses for the nine months ended May 31, 2025.",
-        "The decrease for the third quarter of fiscal year 2026 compared with the same period in the prior year is primarily due to one-time expenses we incurred in the third quarter of fiscal year 2025 related to the relocation of the San Diego corporate headquarters.",
-        "While we currently expect to convert increased amounts of Trinidad dollars going forward, the timing and availability of U.S. dollars remains uncertain, and we may incur significant premium costs to complete such conversions."
-      ]
+      "performance": {
+        "period": "2026-05-31",
+        "basis": "quarter",
+        "rev": {
+          "yoy": 12.5,
+          "cur": 1481793000,
+          "prior": 1317289000
+        },
+        "oi": {
+          "yoy": 16.7,
+          "cur": 65641000,
+          "prior": 56230000
+        },
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
     },
     {
       "ticker": "RH",
@@ -978,7 +1070,7 @@
       "grave": false,
       "accn": "0001104659-26-081857",
       "url": "https://www.sec.gov/Archives/edgar/data/1528849/000110465926081857/rh-20260708x8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "SR",
@@ -989,7 +1081,7 @@
       "grave": false,
       "accn": "0001193125-26-298586",
       "url": "https://www.sec.gov/Archives/edgar/data/1126956/000119312526298586/sr-20260708.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "STRL",
@@ -1000,7 +1092,7 @@
       "grave": false,
       "accn": "0000874238-26-000093",
       "url": "https://www.sec.gov/Archives/edgar/data/874238/000087423826000093/strl-20260702.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "SUNB",
@@ -1011,7 +1103,7 @@
       "grave": false,
       "accn": "0001193125-26-297740",
       "url": "https://www.sec.gov/Archives/edgar/data/2083785/000119312526297740/d128907d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "TARS",
@@ -1022,7 +1114,7 @@
       "grave": false,
       "accn": "0001819790-26-000046",
       "url": "https://www.sec.gov/Archives/edgar/data/1819790/000181979026000046/tars-20260706.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "UCTT",
@@ -1033,7 +1125,7 @@
       "grave": false,
       "accn": "0001628280-26-047655",
       "url": "https://www.sec.gov/Archives/edgar/data/1275014/000162828026047655/uctt-20260702.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "UNF",
@@ -1044,11 +1136,23 @@
       "grave": false,
       "accn": "0001628280-26-047621",
       "url": "https://www.sec.gov/Archives/edgar/data/717954/000162828026047621/unf-20260530.htm",
-      "whatChanged": [
-        "Cost of revenues (In thousands, except percentages) May 30, 2026 May 31, 2025 Dollar Change Percent Change Cost of revenues $ 1,196,391 $ 1,160,388 $ 36,003 3.1 % % of Revenues 63.7 % 63.8 % The increase in consolidated cost of revenues of 3.1% during the thirty-nine weeks ended May 30, 2026 compare",
-        "The decrease in cash and cash equivalents and short-term investments was largely driven by our continued investment in our business with capital expenditures totaling $107.0 million, $32.7 million of share repurchases, $18.8 million of dividend payments and $15.8 million paid for acquisitions.",
-        "The segment, through the Company's cleanroom operations, also purchases, rents, cleans, delivers and sells specialty garments and non-garment items primarily for cleanroom applications and provides cleanroom cleaning at limited customer locations."
-      ]
+      "performance": {
+        "period": "2026-05-30",
+        "basis": "quarter",
+        "rev": {
+          "yoy": 3.9,
+          "cur": 634402000,
+          "prior": 610778000
+        },
+        "oi": {
+          "yoy": -52.2,
+          "cur": 23030000,
+          "prior": 48177000
+        },
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
     },
     {
       "ticker": "UVE",
@@ -1059,7 +1163,7 @@
       "grave": false,
       "accn": "0000891166-26-000082",
       "url": "https://www.sec.gov/Archives/edgar/data/891166/000089116626000082/uve-20260708.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "VG",
@@ -1070,7 +1174,7 @@
       "grave": false,
       "accn": "0002007855-26-000057",
       "url": "https://www.sec.gov/Archives/edgar/data/2007855/000200785526000057/vg-20260708.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "VISN",
@@ -1081,7 +1185,7 @@
       "grave": false,
       "accn": "0001193125-26-298682",
       "url": "https://www.sec.gov/Archives/edgar/data/1517228/000119312526298682/visn-20260701.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "VOYA",
@@ -1092,7 +1196,7 @@
       "grave": false,
       "accn": "0001535929-26-000138",
       "url": "https://www.sec.gov/Archives/edgar/data/1535929/000153592926000138/voya-20260708.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "VOYG",
@@ -1103,7 +1207,7 @@
       "grave": false,
       "accn": "0001628280-26-047657",
       "url": "https://www.sec.gov/Archives/edgar/data/1788060/000162828026047657/voyg-20260706.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "AHCO",
@@ -1114,7 +1218,7 @@
       "grave": false,
       "accn": "0001104659-26-081305",
       "url": "https://www.sec.gov/Archives/edgar/data/1725255/000110465926081305/tm2619971d1_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "AX",
@@ -1125,7 +1229,7 @@
       "grave": false,
       "accn": "0001299709-26-000047",
       "url": "https://www.sec.gov/Archives/edgar/data/1299709/000129970926000047/ax-20260706.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "AZZ",
@@ -1136,7 +1240,7 @@
       "grave": false,
       "accn": "0000008947-26-000134",
       "url": "https://www.sec.gov/Archives/edgar/data/8947/000000894726000134/azz-20260707.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "BHRB",
@@ -1147,7 +1251,7 @@
       "grave": false,
       "accn": "0001964333-26-000080",
       "url": "https://www.sec.gov/Archives/edgar/data/1964333/000196433326000080/bhrb-20260706.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "CDNA",
@@ -1158,7 +1262,7 @@
       "grave": false,
       "accn": "0001217234-26-000038",
       "url": "https://www.sec.gov/Archives/edgar/data/1217234/000121723426000038/cdna-20260630.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "CLMB",
@@ -1169,7 +1273,7 @@
       "grave": false,
       "accn": "0001437749-26-022894",
       "url": "https://www.sec.gov/Archives/edgar/data/945983/000143774926022894/clmb20260706_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "COTY",
@@ -1180,7 +1284,7 @@
       "grave": false,
       "accn": "0001024305-26-000038",
       "url": "https://www.sec.gov/Archives/edgar/data/1024305/000102430526000038/coty-20260707.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "DGICA",
@@ -1191,7 +1295,7 @@
       "grave": false,
       "accn": "0001171843-26-004511",
       "url": "https://www.sec.gov/Archives/edgar/data/800457/000117184326004511/f8k_070726.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "DGICB",
@@ -1202,7 +1306,7 @@
       "grave": false,
       "accn": "0001171843-26-004511",
       "url": "https://www.sec.gov/Archives/edgar/data/800457/000117184326004511/f8k_070726.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "DOCN",
@@ -1213,7 +1317,7 @@
       "grave": false,
       "accn": "0001582961-26-000055",
       "url": "https://www.sec.gov/Archives/edgar/data/1582961/000158296126000055/docn-20260707.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "ECHO",
@@ -1224,7 +1328,7 @@
       "grave": false,
       "accn": "0001104659-26-080994",
       "url": "https://www.sec.gov/Archives/edgar/data/1415404/000110465926080994/tm2619909d1_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "FISV",
@@ -1235,7 +1339,7 @@
       "grave": false,
       "accn": "0001193125-26-297448",
       "url": "https://www.sec.gov/Archives/edgar/data/798354/000119312526297448/d110419d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "FMAO",
@@ -1246,7 +1350,7 @@
       "grave": false,
       "accn": "0001193125-26-297378",
       "url": "https://www.sec.gov/Archives/edgar/data/792966/000119312526297378/fmao-20260630.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "GETY",
@@ -1257,7 +1361,7 @@
       "grave": false,
       "accn": "0001213900-26-075721",
       "url": "https://www.sec.gov/Archives/edgar/data/1898496/000121390026075721/ea029721801-8k_getty.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "GIC",
@@ -1268,7 +1372,7 @@
       "grave": false,
       "accn": "0001628280-26-047515",
       "url": "https://www.sec.gov/Archives/edgar/data/945114/000162828026047515/gic-20260630.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "GNW",
@@ -1279,7 +1383,7 @@
       "grave": false,
       "accn": "0001276520-26-000032",
       "url": "https://www.sec.gov/Archives/edgar/data/1276520/000127652026000032/gnw-20260707.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "HTB",
@@ -1290,7 +1394,7 @@
       "grave": false,
       "accn": "0001538263-26-000091",
       "url": "https://www.sec.gov/Archives/edgar/data/1538263/000153826326000091/htbi-20260707.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "INTA",
@@ -1301,7 +1405,7 @@
       "grave": false,
       "accn": "0001140361-26-027768",
       "url": "https://www.sec.gov/Archives/edgar/data/1565687/000114036126027768/inta-20260701.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "IRDM",
@@ -1312,7 +1416,7 @@
       "grave": false,
       "accn": "0001104659-26-081335",
       "url": "https://www.sec.gov/Archives/edgar/data/1418819/000110465926081335/tm2619278d14_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "JACK",
@@ -1323,7 +1427,7 @@
       "grave": false,
       "accn": "0000807882-26-000082",
       "url": "https://www.sec.gov/Archives/edgar/data/807882/000080788226000082/jack-20260702.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "KRUS",
@@ -1334,11 +1438,19 @@
       "grave": false,
       "accn": "0001193125-26-297529",
       "url": "https://www.sec.gov/Archives/edgar/data/1772177/000119312526297529/krus-20260531.htm",
-      "whatChanged": [
-        "The reduction in tariffs as a result of the termination of IEEPA tariffs on our food and beverage costs are offset by an increase in commodity inflation and therefore, based on the current economic environment, we expect our food and beverage costs as a percentage of sales for the remainder of fisca",
-        "As a percentage of sales, labor and related costs decreased to 30.6% in the three months ended May 31, 2026 as compared to 33.1% in the three months ended May 31, 2025, primarily due to initiatives relating to operations, such as the reservation system and scheduling, and increases in menu prices, p",
-        "In addition, ongoing geopolitical events could lead to a disruption of energy supplies, which has and could continue to impact inflation, disrupt global supply chains and food distribution markets, and adversely impact consumer spending which has and can continue to adversely affect our business, fi"
-      ]
+      "performance": {
+        "period": "2026-05-31",
+        "basis": "quarter",
+        "rev": {
+          "yoy": 16.2,
+          "cur": 85922000,
+          "prior": 73965000
+        },
+        "oi": null,
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
     },
     {
       "ticker": "KRUS",
@@ -1349,7 +1461,7 @@
       "grave": false,
       "accn": "0001193125-26-297503",
       "url": "https://www.sec.gov/Archives/edgar/data/1772177/000119312526297503/krus-20260707.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "KWR",
@@ -1360,7 +1472,7 @@
       "grave": false,
       "accn": "0001628280-26-047513",
       "url": "https://www.sec.gov/Archives/edgar/data/81362/000162828026047513/kwr-20260630.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "LAZ",
@@ -1371,7 +1483,7 @@
       "grave": false,
       "accn": "0001628280-26-047432",
       "url": "https://www.sec.gov/Archives/edgar/data/1311370/000162828026047432/laz-20260702.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "LFST",
@@ -1382,7 +1494,7 @@
       "grave": false,
       "accn": "0001193125-26-297525",
       "url": "https://www.sec.gov/Archives/edgar/data/1845257/000119312526297525/d98636d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "LQDT",
@@ -1393,7 +1505,7 @@
       "grave": false,
       "accn": "0001193125-26-296716",
       "url": "https://www.sec.gov/Archives/edgar/data/1235468/000119312526296716/lqdt-20260706.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "LWAY",
@@ -1404,7 +1516,7 @@
       "grave": false,
       "accn": "0001683168-26-005332",
       "url": "https://www.sec.gov/Archives/edgar/data/814586/000168316826005332/lifeway_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "MAMA",
@@ -1415,7 +1527,7 @@
       "grave": false,
       "accn": "0001493152-26-032364",
       "url": "https://www.sec.gov/Archives/edgar/data/1520358/000149315226032364/form8-k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "MGTX",
@@ -1426,7 +1538,7 @@
       "grave": false,
       "accn": "0001104659-26-080949",
       "url": "https://www.sec.gov/Archives/edgar/data/1735438/000110465926080949/mgtx-20260630x8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "MTZ",
@@ -1437,7 +1549,7 @@
       "grave": false,
       "accn": "0001193125-26-297552",
       "url": "https://www.sec.gov/Archives/edgar/data/15615/000119312526297552/d77261d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "NWS",
@@ -1448,7 +1560,7 @@
       "grave": false,
       "accn": "0001564708-26-000146",
       "url": "https://www.sec.gov/Archives/edgar/data/1564708/000156470826000146/nws-20260706.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "NWSA",
@@ -1459,7 +1571,7 @@
       "grave": false,
       "accn": "0001564708-26-000146",
       "url": "https://www.sec.gov/Archives/edgar/data/1564708/000156470826000146/nws-20260706.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "NXT",
@@ -1470,7 +1582,7 @@
       "grave": false,
       "accn": "0001852131-26-000038",
       "url": "https://www.sec.gov/Archives/edgar/data/1852131/000185213126000038/nxt-20260702.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "O",
@@ -1481,7 +1593,7 @@
       "grave": false,
       "accn": "0001104659-26-080984",
       "url": "https://www.sec.gov/Archives/edgar/data/726728/000110465926080984/tm2619513d1_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "OII",
@@ -1492,7 +1604,7 @@
       "grave": false,
       "accn": "0000073756-26-000127",
       "url": "https://www.sec.gov/Archives/edgar/data/73756/000007375626000127/oii-20260706.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "OLPX",
@@ -1503,7 +1615,7 @@
       "grave": false,
       "accn": "0001193125-26-296993",
       "url": "https://www.sec.gov/Archives/edgar/data/1868726/000119312526296993/d128672d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "PENG",
@@ -1514,11 +1626,23 @@
       "grave": false,
       "accn": "0001616533-26-000043",
       "url": "https://www.sec.gov/Archives/edgar/data/1616533/000161653326000043/peng-20260529.htm",
-      "whatChanged": [
-        "Optimized LED net sales increased by $4.4 million, or 7.2%, and decreased by $11.9 million, or 6.3%, in the third quarter and first nine months of 2026, respectively, compared to the same periods in the prior year, with the third quarter increase primarily attributable to stronger channel demand and",
-        "Selling, General and Administrative Selling, general and administrative expense decreased by $0.3 million, or 0.5%, and $19.1 million, or 10.6% , in the third quarter and first nine months of 2026, respectively, as compared to the same periods in the prior year, primarily due to lower personnel-rela",
-        "Gross margin decreased to 27.8% in the third quarter of 2026 compared to 29.3% in the same period in 2025, and to 27.7% in the first nine months of 2026 compared to 28.9% in the same period in 2025, primarily attributable to the ongoing wind down of our Penguin Edge business and a shift in the overa"
-      ]
+      "performance": {
+        "period": "2026-05-29",
+        "basis": "quarter",
+        "rev": {
+          "yoy": 47.6,
+          "cur": 478713000,
+          "prior": 324251000
+        },
+        "oi": {
+          "yoy": 416.7,
+          "cur": 50863000,
+          "prior": 9843000
+        },
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
     },
     {
       "ticker": "PENG",
@@ -1529,7 +1653,7 @@
       "grave": false,
       "accn": "0001616533-26-000041",
       "url": "https://www.sec.gov/Archives/edgar/data/1616533/000161653326000041/peng-20260707.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "PRMB",
@@ -1540,7 +1664,7 @@
       "grave": false,
       "accn": "0001193125-26-297539",
       "url": "https://www.sec.gov/Archives/edgar/data/2042694/000119312526297539/d59881d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "PRVA",
@@ -1551,7 +1675,7 @@
       "grave": false,
       "accn": "0001759655-26-000056",
       "url": "https://www.sec.gov/Archives/edgar/data/1759655/000175965526000056/prva-20260706.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "PSA",
@@ -1562,7 +1686,7 @@
       "grave": false,
       "accn": "0001193125-26-297556",
       "url": "https://www.sec.gov/Archives/edgar/data/1393311/000119312526297556/d156543d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "PSTL",
@@ -1573,7 +1697,7 @@
       "grave": false,
       "accn": "0001628280-26-047540",
       "url": "https://www.sec.gov/Archives/edgar/data/1759774/000162828026047540/pstl-20260702.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "QBTS",
@@ -1584,7 +1708,7 @@
       "grave": false,
       "accn": "0001907982-26-000097",
       "url": "https://www.sec.gov/Archives/edgar/data/1907982/000190798226000097/qbts-20260707.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "RES",
@@ -1595,7 +1719,7 @@
       "grave": false,
       "accn": "0001104659-26-081292",
       "url": "https://www.sec.gov/Archives/edgar/data/742278/000110465926081292/res-20260630x8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "RMD",
@@ -1606,7 +1730,7 @@
       "grave": false,
       "accn": "0001193125-26-297658",
       "url": "https://www.sec.gov/Archives/edgar/data/943819/000119312526297658/d88958d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "RWT",
@@ -1617,7 +1741,7 @@
       "grave": false,
       "accn": "0001104659-26-081027",
       "url": "https://www.sec.gov/Archives/edgar/data/930236/000110465926081027/tm2619917d1_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "RWTN",
@@ -1628,7 +1752,7 @@
       "grave": false,
       "accn": "0001104659-26-081027",
       "url": "https://www.sec.gov/Archives/edgar/data/930236/000110465926081027/tm2619917d1_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "RWTO",
@@ -1639,7 +1763,7 @@
       "grave": false,
       "accn": "0001104659-26-081027",
       "url": "https://www.sec.gov/Archives/edgar/data/930236/000110465926081027/tm2619917d1_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "SATS",
@@ -1650,7 +1774,7 @@
       "grave": false,
       "accn": "0001104659-26-080994",
       "url": "https://www.sec.gov/Archives/edgar/data/1415404/000110465926080994/tm2619909d1_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "SENEA",
@@ -1661,7 +1785,7 @@
       "grave": false,
       "accn": "0001437749-26-022933",
       "url": "https://www.sec.gov/Archives/edgar/data/88948/000143774926022933/senea20260618_def14a.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "SENEB",
@@ -1672,7 +1796,7 @@
       "grave": false,
       "accn": "0001437749-26-022933",
       "url": "https://www.sec.gov/Archives/edgar/data/88948/000143774926022933/senea20260618_def14a.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "SOLS",
@@ -1683,7 +1807,7 @@
       "grave": false,
       "accn": "0001213900-26-075618",
       "url": "https://www.sec.gov/Archives/edgar/data/2064953/000121390026075618/ea0297143-8k425_solstice.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "SPRY",
@@ -1694,7 +1818,7 @@
       "grave": false,
       "accn": "0001193125-26-297554",
       "url": "https://www.sec.gov/Archives/edgar/data/1671858/000119312526297554/d157645d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "TBRG",
@@ -1705,7 +1829,7 @@
       "grave": false,
       "accn": "0001193125-26-297489",
       "url": "https://www.sec.gov/Archives/edgar/data/1169445/000119312526297489/d144014d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "TFSL",
@@ -1716,7 +1840,7 @@
       "grave": false,
       "accn": "0001381668-26-000033",
       "url": "https://www.sec.gov/Archives/edgar/data/1381668/000138166826000033/tfsl-20260707.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "TMHC",
@@ -1727,7 +1851,7 @@
       "grave": false,
       "accn": "0001193125-26-296849",
       "url": "https://www.sec.gov/Archives/edgar/data/1562476/000119312526296849/d168036d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "TMUS",
@@ -1738,7 +1862,7 @@
       "grave": false,
       "accn": "0001193125-26-297534",
       "url": "https://www.sec.gov/Archives/edgar/data/1283699/000119312526297534/d170112d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "TOI",
@@ -1749,7 +1873,7 @@
       "grave": false,
       "accn": "0001079973-26-000934",
       "url": "https://www.sec.gov/Archives/edgar/data/1799191/000107997326000934/toi_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "UGI",
@@ -1760,7 +1884,7 @@
       "grave": false,
       "accn": "0001104659-26-081321",
       "url": "https://www.sec.gov/Archives/edgar/data/884614/000110465926081321/ugi-20260630x8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "ULCC",
@@ -1771,7 +1895,7 @@
       "grave": false,
       "accn": "0001670076-26-000073",
       "url": "https://www.sec.gov/Archives/edgar/data/1670076/000167007626000073/fron-20260630.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "UTL",
@@ -1782,7 +1906,7 @@
       "grave": false,
       "accn": "0000755001-26-000026",
       "url": "https://www.sec.gov/Archives/edgar/data/755001/000075500126000026/utl-20260630.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "VRTX",
@@ -1793,7 +1917,7 @@
       "grave": false,
       "accn": "0001193125-26-296710",
       "url": "https://www.sec.gov/Archives/edgar/data/875320/000119312526296710/d113650d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "XMAX",
@@ -1804,7 +1928,7 @@
       "grave": false,
       "accn": "0001493152-26-032343",
       "url": "https://www.sec.gov/Archives/edgar/data/1473334/000149315226032343/form8-k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "YEXT",
@@ -1815,7 +1939,7 @@
       "grave": false,
       "accn": "0001628280-26-047499",
       "url": "https://www.sec.gov/Archives/edgar/data/1614178/000162828026047499/yext-20260707.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "ZSQR",
@@ -1826,7 +1950,7 @@
       "grave": false,
       "accn": "0001185185-26-002828",
       "url": "https://www.sec.gov/Archives/edgar/data/1759186/000118518526002828/zsqr8k070726.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "ABBV",
@@ -1837,7 +1961,7 @@
       "grave": false,
       "accn": "0001551152-26-000021",
       "url": "https://www.sec.gov/Archives/edgar/data/1551152/000155115226000021/abbv-20260706.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "ABR",
@@ -1848,7 +1972,7 @@
       "grave": false,
       "accn": "0001104659-26-080833",
       "url": "https://www.sec.gov/Archives/edgar/data/1253986/000110465926080833/tm2619809d1_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "ABTC",
@@ -1859,7 +1983,7 @@
       "grave": false,
       "accn": "0001193125-26-296396",
       "url": "https://www.sec.gov/Archives/edgar/data/1755953/000119312526296396/abtc-20260702.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "ACDC",
@@ -1870,7 +1994,7 @@
       "grave": false,
       "accn": "0001104659-26-080566",
       "url": "https://www.sec.gov/Archives/edgar/data/1881487/000110465926080566/tm2619787d1_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "ASST",
@@ -1881,7 +2005,7 @@
       "grave": false,
       "accn": "0001628280-26-047102",
       "url": "https://www.sec.gov/Archives/edgar/data/1920406/000162828026047102/asst-20260706.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "AVGO",
@@ -1892,7 +2016,7 @@
       "grave": false,
       "accn": "0001193125-26-295589",
       "url": "https://www.sec.gov/Archives/edgar/data/1730168/000119312526295589/d84378d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "AVT",
@@ -1903,7 +2027,7 @@
       "grave": false,
       "accn": "0000008858-26-000062",
       "url": "https://www.sec.gov/Archives/edgar/data/8858/000000885826000062/avt-20260701x8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "BAM",
@@ -1914,7 +2038,7 @@
       "grave": false,
       "accn": "0001171843-26-004484",
       "url": "https://www.sec.gov/Archives/edgar/data/1937926/000117184326004484/f8k_070626.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "BMNP",
@@ -1925,7 +2049,7 @@
       "grave": false,
       "accn": "0001493152-26-032090",
       "url": "https://www.sec.gov/Archives/edgar/data/1829311/000149315226032090/form8-k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "BMNR",
@@ -1936,7 +2060,7 @@
       "grave": false,
       "accn": "0001493152-26-032090",
       "url": "https://www.sec.gov/Archives/edgar/data/1829311/000149315226032090/form8-k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "CAC",
@@ -1947,7 +2071,7 @@
       "grave": false,
       "accn": "0000750686-26-000053",
       "url": "https://www.sec.gov/Archives/edgar/data/750686/000075068626000053/cac-20260630.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "CBSH",
@@ -1958,7 +2082,7 @@
       "grave": false,
       "accn": "0000022356-26-000169",
       "url": "https://www.sec.gov/Archives/edgar/data/22356/000002235626000169/cbsh-20260701.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "CCRN",
@@ -1969,7 +2093,7 @@
       "grave": false,
       "accn": "0000950103-26-010220",
       "url": "https://www.sec.gov/Archives/edgar/data/1141103/000095010326010220/dp249689_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "COUR",
@@ -1980,7 +2104,7 @@
       "grave": false,
       "accn": "0001651562-26-000055",
       "url": "https://www.sec.gov/Archives/edgar/data/1651562/000165156226000055/cour-20260706.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "CRNX",
@@ -1991,7 +2115,7 @@
       "grave": false,
       "accn": "0001140361-26-027642",
       "url": "https://www.sec.gov/Archives/edgar/data/1658247/000114036126027642/ef20077399_form8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "CTEV",
@@ -2002,7 +2126,7 @@
       "grave": false,
       "accn": "0001793229-26-000061",
       "url": "https://www.sec.gov/Archives/edgar/data/1793229/000179322926000061/ctev-20260706.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "CXW",
@@ -2013,7 +2137,7 @@
       "grave": false,
       "accn": "0001193125-26-295590",
       "url": "https://www.sec.gov/Archives/edgar/data/1070985/000119312526295590/d110529d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "DEC",
@@ -2024,7 +2148,7 @@
       "grave": false,
       "accn": "0001922446-26-000057",
       "url": "https://www.sec.gov/Archives/edgar/data/1922446/000192244626000057/dec-20260702.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "DELL",
@@ -2035,7 +2159,7 @@
       "grave": false,
       "accn": "0001193125-26-296224",
       "url": "https://www.sec.gov/Archives/edgar/data/1571996/000119312526296224/d32716d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "DMLP",
@@ -2046,7 +2170,7 @@
       "grave": false,
       "accn": "0001437749-26-022814",
       "url": "https://www.sec.gov/Archives/edgar/data/1172358/000143774926022814/dmlp20260706_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "DUK",
@@ -2057,7 +2181,7 @@
       "grave": false,
       "accn": "0001104659-26-080476",
       "url": "https://www.sec.gov/Archives/edgar/data/1326160/000110465926080476/tm2619723d1_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "DUKB",
@@ -2068,7 +2192,7 @@
       "grave": false,
       "accn": "0001104659-26-080476",
       "url": "https://www.sec.gov/Archives/edgar/data/1326160/000110465926080476/tm2619723d1_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "EGBN",
@@ -2079,7 +2203,7 @@
       "grave": false,
       "accn": "0001050441-26-000083",
       "url": "https://www.sec.gov/Archives/edgar/data/1050441/000105044126000083/gnw-20260629.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "ESI",
@@ -2090,7 +2214,7 @@
       "grave": false,
       "accn": "0001104659-26-080825",
       "url": "https://www.sec.gov/Archives/edgar/data/1590714/000110465926080825/tm2619788d2_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "ESI",
@@ -2101,7 +2225,7 @@
       "grave": false,
       "accn": "0001104659-26-080612",
       "url": "https://www.sec.gov/Archives/edgar/data/1590714/000110465926080612/tm2619788d4_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "EXR",
@@ -2112,7 +2236,7 @@
       "grave": false,
       "accn": "0001193125-26-296159",
       "url": "https://www.sec.gov/Archives/edgar/data/1289490/000119312526296159/d152545d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "HBCP",
@@ -2123,7 +2247,7 @@
       "grave": false,
       "accn": "0001628280-26-047052",
       "url": "https://www.sec.gov/Archives/edgar/data/1436425/000162828026047052/hbcp-20260702.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "INCY",
@@ -2134,7 +2258,7 @@
       "grave": false,
       "accn": "0000879169-26-000048",
       "url": "https://www.sec.gov/Archives/edgar/data/879169/000087916926000048/incy-20260706.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "INGR",
@@ -2145,7 +2269,7 @@
       "grave": false,
       "accn": "0001046257-26-000224",
       "url": "https://www.sec.gov/Archives/edgar/data/1046257/000104625726000224/ingr-20260703.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "INVH",
@@ -2156,7 +2280,7 @@
       "grave": false,
       "accn": "0001193125-26-296211",
       "url": "https://www.sec.gov/Archives/edgar/data/1687229/000119312526296211/d117428d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "KD",
@@ -2167,7 +2291,7 @@
       "grave": false,
       "accn": "0001104659-26-080558",
       "url": "https://www.sec.gov/Archives/edgar/data/1867072/000110465926080558/tm2619785d1_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "LCID",
@@ -2178,7 +2302,7 @@
       "grave": false,
       "accn": "0001628280-26-047248",
       "url": "https://www.sec.gov/Archives/edgar/data/1811210/000162828026047248/lcid-20260706.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "LSTR",
@@ -2189,7 +2313,7 @@
       "grave": false,
       "accn": "0001193125-26-296288",
       "url": "https://www.sec.gov/Archives/edgar/data/853816/000119312526296288/d110858d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "MCHP",
@@ -2200,7 +2324,7 @@
       "grave": false,
       "accn": "0000827054-26-000026",
       "url": "https://www.sec.gov/Archives/edgar/data/827054/000082705426000026/mchp-20260701.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "MCHPP",
@@ -2211,7 +2335,7 @@
       "grave": false,
       "accn": "0000827054-26-000026",
       "url": "https://www.sec.gov/Archives/edgar/data/827054/000082705426000026/mchp-20260701.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "MDB",
@@ -2222,7 +2346,7 @@
       "grave": false,
       "accn": "0001628280-26-047228",
       "url": "https://www.sec.gov/Archives/edgar/data/1441816/000162828026047228/mdb-20260630.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "MIDD",
@@ -2233,7 +2357,7 @@
       "grave": false,
       "accn": "0001193125-26-295648",
       "url": "https://www.sec.gov/Archives/edgar/data/769520/000119312526295648/d51635d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "MSTR",
@@ -2244,7 +2368,7 @@
       "grave": false,
       "accn": "0001193125-26-295586",
       "url": "https://www.sec.gov/Archives/edgar/data/1050446/000119312526295586/mstr-20260706.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "NTRA",
@@ -2255,7 +2379,7 @@
       "grave": false,
       "accn": "0001604821-26-000005",
       "url": "https://www.sec.gov/Archives/edgar/data/1604821/000160482126000005/ntra-20260701.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "NUAI",
@@ -2266,7 +2390,7 @@
       "grave": false,
       "accn": "0001213900-26-075176",
       "url": "https://www.sec.gov/Archives/edgar/data/2028336/000121390026075176/ea0297026-8k_newera.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "NUVB",
@@ -2277,7 +2401,7 @@
       "grave": false,
       "accn": "0001193125-26-296398",
       "url": "https://www.sec.gov/Archives/edgar/data/1811063/000119312526296398/d136399d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "NWS",
@@ -2288,7 +2412,7 @@
       "grave": false,
       "accn": "0001564708-26-000145",
       "url": "https://www.sec.gov/Archives/edgar/data/1564708/000156470826000145/nws-20260702.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "NWSA",
@@ -2299,7 +2423,7 @@
       "grave": false,
       "accn": "0001564708-26-000145",
       "url": "https://www.sec.gov/Archives/edgar/data/1564708/000156470826000145/nws-20260702.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "OMER",
@@ -2310,7 +2434,7 @@
       "grave": false,
       "accn": "0001552781-26-000377",
       "url": "https://www.sec.gov/Archives/edgar/data/1285819/000155278126000377/e26295_omer-8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "ONDS",
@@ -2321,7 +2445,7 @@
       "grave": false,
       "accn": "0001213900-26-075227",
       "url": "https://www.sec.gov/Archives/edgar/data/1646188/000121390026075227/ea0296702-8k_ondas.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "OPTU",
@@ -2332,7 +2456,7 @@
       "grave": false,
       "accn": "0001104659-26-080797",
       "url": "https://www.sec.gov/Archives/edgar/data/1702780/000110465926080797/tm2619807d1_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "OUST",
@@ -2343,7 +2467,7 @@
       "grave": false,
       "accn": "0001193125-26-296151",
       "url": "https://www.sec.gov/Archives/edgar/data/1816581/000119312526296151/d115877d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "PBH",
@@ -2354,7 +2478,7 @@
       "grave": false,
       "accn": "0001295947-26-000029",
       "url": "https://www.sec.gov/Archives/edgar/data/1295947/000129594726000029/pbh-20260630.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "PGY",
@@ -2365,7 +2489,7 @@
       "grave": false,
       "accn": "0001883085-26-000039",
       "url": "https://www.sec.gov/Archives/edgar/data/1883085/000188308526000039/pgy-20260706.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "PLUS",
@@ -2376,7 +2500,7 @@
       "grave": false,
       "accn": "0001022408-26-000064",
       "url": "https://www.sec.gov/Archives/edgar/data/1022408/000102240826000064/plus-20260706.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "POWL",
@@ -2387,7 +2511,7 @@
       "grave": false,
       "accn": "0000080420-26-000095",
       "url": "https://www.sec.gov/Archives/edgar/data/80420/000008042026000095/powl-20260701.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "PRGO",
@@ -2398,7 +2522,7 @@
       "grave": false,
       "accn": "0001585364-26-000108",
       "url": "https://www.sec.gov/Archives/edgar/data/1585364/000158536426000108/prgo-20260629.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "REGN",
@@ -2409,7 +2533,7 @@
       "grave": false,
       "accn": "0001104659-26-080562",
       "url": "https://www.sec.gov/Archives/edgar/data/872589/000110465926080562/tm2619682d1_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "RIVN",
@@ -2420,7 +2544,7 @@
       "grave": false,
       "accn": "0001104659-26-080813",
       "url": "https://www.sec.gov/Archives/edgar/data/1874178/000110465926080813/tm2619783d1_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "SATA",
@@ -2431,7 +2555,7 @@
       "grave": false,
       "accn": "0001628280-26-047102",
       "url": "https://www.sec.gov/Archives/edgar/data/1920406/000162828026047102/asst-20260706.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "SEI",
@@ -2442,7 +2566,7 @@
       "grave": false,
       "accn": "0001628280-26-047296",
       "url": "https://www.sec.gov/Archives/edgar/data/1697500/000162828026047296/sei-20260701.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "SKYH",
@@ -2453,7 +2577,7 @@
       "grave": false,
       "accn": "0001437749-26-022810",
       "url": "https://www.sec.gov/Archives/edgar/data/1823587/000143774926022810/ysac20260701_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "SMTC",
@@ -2464,7 +2588,7 @@
       "grave": false,
       "accn": "0000088941-26-000022",
       "url": "https://www.sec.gov/Archives/edgar/data/88941/000008894126000022/smtc-20260706.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "SOLS",
@@ -2475,7 +2599,7 @@
       "grave": false,
       "accn": "0001213900-26-075267",
       "url": "https://www.sec.gov/Archives/edgar/data/2064953/000121390026075267/ea0297095-8k425_solstice.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "SPGI",
@@ -2486,7 +2610,7 @@
       "grave": false,
       "accn": "0001104659-26-080751",
       "url": "https://www.sec.gov/Archives/edgar/data/64040/000110465926080751/tm2619719d1_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "SSB",
@@ -2497,7 +2621,7 @@
       "grave": false,
       "accn": "0001104659-26-080628",
       "url": "https://www.sec.gov/Archives/edgar/data/764038/000110465926080628/ssb-20260706x8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "STRC",
@@ -2508,7 +2632,7 @@
       "grave": false,
       "accn": "0001193125-26-295586",
       "url": "https://www.sec.gov/Archives/edgar/data/1050446/000119312526295586/mstr-20260706.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "STRD",
@@ -2519,7 +2643,7 @@
       "grave": false,
       "accn": "0001193125-26-295586",
       "url": "https://www.sec.gov/Archives/edgar/data/1050446/000119312526295586/mstr-20260706.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "STRF",
@@ -2530,7 +2654,7 @@
       "grave": false,
       "accn": "0001193125-26-295586",
       "url": "https://www.sec.gov/Archives/edgar/data/1050446/000119312526295586/mstr-20260706.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "STRK",
@@ -2541,7 +2665,7 @@
       "grave": false,
       "accn": "0001193125-26-295586",
       "url": "https://www.sec.gov/Archives/edgar/data/1050446/000119312526295586/mstr-20260706.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "SVC",
@@ -2552,7 +2676,7 @@
       "grave": false,
       "accn": "0001104659-26-080829",
       "url": "https://www.sec.gov/Archives/edgar/data/945394/000110465926080829/tm2619808d1_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "SVCO",
@@ -2563,7 +2687,7 @@
       "grave": false,
       "accn": "0001213900-26-075613",
       "url": "https://www.sec.gov/Archives/edgar/data/1943289/000121390026075613/ea0297054-8k_silvaco.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "TDW",
@@ -2574,7 +2698,7 @@
       "grave": false,
       "accn": "0001437749-26-022594",
       "url": "https://www.sec.gov/Archives/edgar/data/98222/000143774926022594/tdw20260701_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "TKR",
@@ -2585,7 +2709,7 @@
       "grave": false,
       "accn": "0001206774-26-000349",
       "url": "https://www.sec.gov/Archives/edgar/data/98362/000120677426000349/tkr4658521-8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "TPC",
@@ -2596,7 +2720,7 @@
       "grave": false,
       "accn": "0000077543-26-000163",
       "url": "https://www.sec.gov/Archives/edgar/data/77543/000007754326000163/tpc-20260702.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "TRGP",
@@ -2607,7 +2731,7 @@
       "grave": false,
       "accn": "0001193125-26-296255",
       "url": "https://www.sec.gov/Archives/edgar/data/1389170/000119312526296255/d116740d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "TWIN",
@@ -2618,7 +2742,7 @@
       "grave": false,
       "accn": "0001437749-26-022794",
       "url": "https://www.sec.gov/Archives/edgar/data/100378/000143774926022794/twin20260702_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "TXNM",
@@ -2629,7 +2753,7 @@
       "grave": false,
       "accn": "0001108426-26-000040",
       "url": "https://www.sec.gov/Archives/edgar/data/1108426/000110842626000040/pnm-20260706.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "UMH",
@@ -2640,7 +2764,7 @@
       "grave": false,
       "accn": "0001493152-26-032153",
       "url": "https://www.sec.gov/Archives/edgar/data/752642/000149315226032153/form8-k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "UNM",
@@ -2651,7 +2775,7 @@
       "grave": false,
       "accn": "0000005513-26-000069",
       "url": "https://www.sec.gov/Archives/edgar/data/5513/000000551326000069/unm-20260702.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "UNMA",
@@ -2662,7 +2786,7 @@
       "grave": false,
       "accn": "0000005513-26-000069",
       "url": "https://www.sec.gov/Archives/edgar/data/5513/000000551326000069/unm-20260702.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "USAC",
@@ -2673,7 +2797,7 @@
       "grave": false,
       "accn": "0001193125-26-295524",
       "url": "https://www.sec.gov/Archives/edgar/data/1522727/000119312526295524/d61366d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "USPH",
@@ -2684,7 +2808,7 @@
       "grave": false,
       "accn": "0000885978-26-000039",
       "url": "https://www.sec.gov/Archives/edgar/data/885978/000088597826000039/form8-k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "VSH",
@@ -2695,7 +2819,7 @@
       "grave": false,
       "accn": "0000103730-26-000054",
       "url": "https://www.sec.gov/Archives/edgar/data/103730/000010373026000054/vsh-20260706.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "VSNT",
@@ -2706,7 +2830,7 @@
       "grave": false,
       "accn": "0002067876-26-000034",
       "url": "https://www.sec.gov/Archives/edgar/data/2067876/000206787626000034/vsnt-20260706.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "WAFD",
@@ -2717,7 +2841,7 @@
       "grave": false,
       "accn": "0000936528-26-000053",
       "url": "https://www.sec.gov/Archives/edgar/data/936528/000093652826000053/wfsl-20260702.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "WAFDP",
@@ -2728,7 +2852,7 @@
       "grave": false,
       "accn": "0000936528-26-000053",
       "url": "https://www.sec.gov/Archives/edgar/data/936528/000093652826000053/wfsl-20260702.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "WULF",
@@ -2739,7 +2863,7 @@
       "grave": false,
       "accn": "0001104659-26-080583",
       "url": "https://www.sec.gov/Archives/edgar/data/1083301/000110465926080583/tm2619468d1_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "XMAX",
@@ -2750,7 +2874,7 @@
       "grave": false,
       "accn": "0001493152-26-032173",
       "url": "https://www.sec.gov/Archives/edgar/data/1473334/000149315226032173/form8-k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "XRN",
@@ -2761,7 +2885,7 @@
       "grave": false,
       "accn": "0001104659-26-080771",
       "url": "https://www.sec.gov/Archives/edgar/data/1533615/000110465926080771/tm2619831d1_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "AA",
@@ -2772,7 +2896,7 @@
       "grave": false,
       "accn": "0000950103-26-010155",
       "url": "https://www.sec.gov/Archives/edgar/data/1675149/000095010326010155/dp249367_8k-mc.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "ABX",
@@ -2783,7 +2907,7 @@
       "grave": false,
       "accn": "0001628280-26-046875",
       "url": "https://www.sec.gov/Archives/edgar/data/1814287/000162828026046875/abl-20260629.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "ABXL",
@@ -2794,7 +2918,7 @@
       "grave": false,
       "accn": "0001628280-26-046875",
       "url": "https://www.sec.gov/Archives/edgar/data/1814287/000162828026046875/abl-20260629.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "ADC",
@@ -2805,7 +2929,7 @@
       "grave": false,
       "accn": "0000917251-26-000054",
       "url": "https://www.sec.gov/Archives/edgar/data/917251/000091725126000054/adc-20260702.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "ADI",
@@ -2816,7 +2940,7 @@
       "grave": false,
       "accn": "0001193125-26-294488",
       "url": "https://www.sec.gov/Archives/edgar/data/6281/000119312526294488/d112344d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "AHCO",
@@ -2827,7 +2951,7 @@
       "grave": false,
       "accn": "0001104659-26-080297",
       "url": "https://www.sec.gov/Archives/edgar/data/1725255/000110465926080297/ahco-20260627x8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "ALMS",
@@ -2838,7 +2962,7 @@
       "grave": false,
       "accn": "0001104659-26-080361",
       "url": "https://www.sec.gov/Archives/edgar/data/1847367/000110465926080361/tm2619591d1_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "ALTI",
@@ -2849,7 +2973,7 @@
       "grave": false,
       "accn": "0001628280-26-046705",
       "url": "https://www.sec.gov/Archives/edgar/data/1838615/000162828026046705/alti-20260701.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "APG",
@@ -2860,7 +2984,7 @@
       "grave": false,
       "accn": "0001628280-26-046698",
       "url": "https://www.sec.gov/Archives/edgar/data/1796209/000162828026046698/apg-20260702.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "ARDX",
@@ -2871,7 +2995,7 @@
       "grave": false,
       "accn": "0001437402-26-000033",
       "url": "https://www.sec.gov/Archives/edgar/data/1437402/000143740226000033/ardx-20260629.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "ARLP",
@@ -2882,7 +3006,7 @@
       "grave": false,
       "accn": "0001104659-26-080100",
       "url": "https://www.sec.gov/Archives/edgar/data/1086600/000110465926080100/arlp-20260701x8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "AVA",
@@ -2893,7 +3017,7 @@
       "grave": false,
       "accn": "0001193125-26-294722",
       "url": "https://www.sec.gov/Archives/edgar/data/104918/000119312526294722/ava-20260702.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "AVNS",
@@ -2904,7 +3028,7 @@
       "grave": false,
       "accn": "0001606498-26-000085",
       "url": "https://www.sec.gov/Archives/edgar/data/1606498/000160649826000085/avns-20260702.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "AXTI",
@@ -2915,7 +3039,7 @@
       "grave": false,
       "accn": "0001437749-26-022557",
       "url": "https://www.sec.gov/Archives/edgar/data/1051627/000143774926022557/axti20260630_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "BBIO",
@@ -2926,7 +3050,7 @@
       "grave": false,
       "accn": "0001140361-26-027445",
       "url": "https://www.sec.gov/Archives/edgar/data/1743881/000114036126027445/ef20077282_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "BELFA",
@@ -2937,7 +3061,7 @@
       "grave": false,
       "accn": "0001437749-26-022539",
       "url": "https://www.sec.gov/Archives/edgar/data/729580/000143774926022539/belfa20260701_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "BELFB",
@@ -2948,7 +3072,7 @@
       "grave": false,
       "accn": "0001437749-26-022539",
       "url": "https://www.sec.gov/Archives/edgar/data/729580/000143774926022539/belfa20260701_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "BLZE",
@@ -2959,7 +3083,7 @@
       "grave": false,
       "accn": "0001628280-26-046865",
       "url": "https://www.sec.gov/Archives/edgar/data/1462056/000162828026046865/blze-20260630.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "BMBL",
@@ -2970,7 +3094,7 @@
       "grave": false,
       "accn": "0001193125-26-294479",
       "url": "https://www.sec.gov/Archives/edgar/data/1830043/000119312526294479/d125319d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "BMRC",
@@ -2981,7 +3105,7 @@
       "grave": false,
       "accn": "0001403475-26-000033",
       "url": "https://www.sec.gov/Archives/edgar/data/1403475/000140347526000033/bmrc-20260702.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "BNL",
@@ -2992,7 +3116,7 @@
       "grave": false,
       "accn": "0001424182-26-000050",
       "url": "https://www.sec.gov/Archives/edgar/data/1424182/000142418226000050/bnl-20260702.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "BRZE",
@@ -3003,7 +3127,7 @@
       "grave": false,
       "accn": "0001676238-26-000033",
       "url": "https://www.sec.gov/Archives/edgar/data/1676238/000167623826000033/brz-20260630.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "BSVN",
@@ -3014,7 +3138,7 @@
       "grave": false,
       "accn": "0001140361-26-027463",
       "url": "https://www.sec.gov/Archives/edgar/data/1746129/000114036126027463/ef20077345_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "CLBK",
@@ -3025,7 +3149,7 @@
       "grave": false,
       "accn": "0001723596-26-000031",
       "url": "https://www.sec.gov/Archives/edgar/data/1723596/000172359626000031/clbk-20260701.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "CNM",
@@ -3036,7 +3160,7 @@
       "grave": false,
       "accn": "0001193125-26-294978",
       "url": "https://www.sec.gov/Archives/edgar/data/1856525/000119312526294978/d150669d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "CNXC",
@@ -3047,11 +3171,7 @@
       "grave": false,
       "accn": "0001803599-26-000136",
       "url": "https://www.sec.gov/Archives/edgar/data/1803599/000180359926000136/cnxc-20260531.htm",
-      "whatChanged": [
-        "This decrease in interest expense included $8.4 million associated with the Sellers' Note in the prior year period that did not recur in the current period as it was repaid in the fourth quarter of fiscal year 2025, partially offset by a net increase in interest expense associated with the Company's",
-        "For the six months ended May 31, 2026, revenue in our technology and consumer electronics vertical decreased by 4.6%, primarily due to decreases in revenue for certain larger clients in the vertical, partially offset by an increase in revenue with a larger client in the vertical.",
-        "The decrease in interest expense and finance charges, net for the six months ended May 31, 2026, compared to the six months ended May 31, 2025, was primarily due to lower interest expenses due to less debt outstanding during the period in comparison to the prior year."
-      ]
+      "performance": null
     },
     {
       "ticker": "COTY",
@@ -3062,7 +3182,7 @@
       "grave": false,
       "accn": "0001024305-26-000036",
       "url": "https://www.sec.gov/Archives/edgar/data/1024305/000102430526000036/coty-20260630.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "CPF",
@@ -3073,7 +3193,7 @@
       "grave": false,
       "accn": "0000701347-26-000063",
       "url": "https://www.sec.gov/Archives/edgar/data/701347/000070134726000063/cpf-20260630.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "CRCL",
@@ -3084,7 +3204,7 @@
       "grave": false,
       "accn": "0001876042-26-000205",
       "url": "https://www.sec.gov/Archives/edgar/data/1876042/000187604226000205/crcl-20260629.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "CRMD",
@@ -3095,7 +3215,7 @@
       "grave": false,
       "accn": "0001410098-26-000040",
       "url": "https://www.sec.gov/Archives/edgar/data/1410098/000141009826000040/crmd-20260629.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "CRNC",
@@ -3106,7 +3226,7 @@
       "grave": false,
       "accn": "0001628280-26-046899",
       "url": "https://www.sec.gov/Archives/edgar/data/1768267/000162828026046899/crnc-20260628.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "CV",
@@ -3117,7 +3237,7 @@
       "grave": false,
       "accn": "0001378325-26-000026",
       "url": "https://www.sec.gov/Archives/edgar/data/1378325/000137832526000026/cv-20260701.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "CVEO",
@@ -3128,7 +3248,7 @@
       "grave": false,
       "accn": "0001590584-26-000066",
       "url": "https://www.sec.gov/Archives/edgar/data/1590584/000159058426000066/cveo-20260701.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "DK",
@@ -3139,7 +3259,7 @@
       "grave": false,
       "accn": "0001628280-26-046943",
       "url": "https://www.sec.gov/Archives/edgar/data/1694426/000162828026046943/dkl-20260626.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "DKL",
@@ -3150,7 +3270,7 @@
       "grave": false,
       "accn": "0001628280-26-046943",
       "url": "https://www.sec.gov/Archives/edgar/data/1552797/000162828026046943/dkl-20260626.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "DLTR",
@@ -3161,7 +3281,7 @@
       "grave": false,
       "accn": "0000935703-26-000075",
       "url": "https://www.sec.gov/Archives/edgar/data/935703/000093570326000075/dltr-20260701.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "ED",
@@ -3172,7 +3292,7 @@
       "grave": false,
       "accn": "0001193125-26-294715",
       "url": "https://www.sec.gov/Archives/edgar/data/1047862/000119312526294715/d168683d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "ENS",
@@ -3183,7 +3303,7 @@
       "grave": false,
       "accn": "0001193125-26-294512",
       "url": "https://www.sec.gov/Archives/edgar/data/1289308/000119312526294512/d32071ddef14a.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "ENTA",
@@ -3194,7 +3314,7 @@
       "grave": false,
       "accn": "0001193125-26-294837",
       "url": "https://www.sec.gov/Archives/edgar/data/1177648/000119312526294837/d123412d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "EOSE",
@@ -3205,7 +3325,7 @@
       "grave": false,
       "accn": "0000950103-26-010023",
       "url": "https://www.sec.gov/Archives/edgar/data/1805077/000095010326010023/dp249395_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "EQPT",
@@ -3216,7 +3336,7 @@
       "grave": false,
       "accn": "0000950103-26-010008",
       "url": "https://www.sec.gov/Archives/edgar/data/1693736/000095010326010008/dp249450_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "F",
@@ -3227,7 +3347,7 @@
       "grave": false,
       "accn": "0000037996-26-000151",
       "url": "https://www.sec.gov/Archives/edgar/data/37996/000003799626000151/f-20260702.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "FIP",
@@ -3238,7 +3358,7 @@
       "grave": false,
       "accn": "0001140361-26-027428",
       "url": "https://www.sec.gov/Archives/edgar/data/1899883/000114036126027428/ef20077277_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "FIZZ",
@@ -3249,7 +3369,7 @@
       "grave": false,
       "accn": "0001437749-26-022532",
       "url": "https://www.sec.gov/Archives/edgar/data/69891/000143774926022532/fizz20260702_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "FLOC",
@@ -3260,7 +3380,7 @@
       "grave": false,
       "accn": "0001193125-26-294704",
       "url": "https://www.sec.gov/Archives/edgar/data/2035149/000119312526294704/floc-20251231.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "FRME",
@@ -3271,7 +3391,7 @@
       "grave": false,
       "accn": "0000712534-26-000048",
       "url": "https://www.sec.gov/Archives/edgar/data/712534/000071253426000048/frme-20260701.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "FRMEP",
@@ -3282,7 +3402,7 @@
       "grave": false,
       "accn": "0000712534-26-000048",
       "url": "https://www.sec.gov/Archives/edgar/data/712534/000071253426000048/frme-20260701.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "FUN",
@@ -3293,7 +3413,7 @@
       "grave": false,
       "accn": "0001999001-26-000087",
       "url": "https://www.sec.gov/Archives/edgar/data/1999001/000199900126000087/fun-20260701.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "HALO",
@@ -3304,7 +3424,7 @@
       "grave": false,
       "accn": "0001159036-26-000088",
       "url": "https://www.sec.gov/Archives/edgar/data/1159036/000115903626000088/halo-20260630.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "HGV",
@@ -3315,7 +3435,7 @@
       "grave": false,
       "accn": "0001140361-26-027453",
       "url": "https://www.sec.gov/Archives/edgar/data/1674168/000114036126027453/ef20077173_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "HVT",
@@ -3326,7 +3446,7 @@
       "grave": false,
       "accn": "0001628280-26-046937",
       "url": "https://www.sec.gov/Archives/edgar/data/216085/000162828026046937/hvt-20260702.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "IOVA",
@@ -3337,7 +3457,7 @@
       "grave": false,
       "accn": "0001104659-26-080409",
       "url": "https://www.sec.gov/Archives/edgar/data/1425205/000110465926080409/tm2618989d1_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "JSM",
@@ -3348,7 +3468,7 @@
       "grave": false,
       "accn": "0001140361-26-027441",
       "url": "https://www.sec.gov/Archives/edgar/data/1593538/000114036126027441/ef20077249_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "KDK",
@@ -3359,7 +3479,7 @@
       "grave": false,
       "accn": "0001628280-26-046850",
       "url": "https://www.sec.gov/Archives/edgar/data/1853138/000162828026046850/kdk-20260701.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "KRG",
@@ -3370,7 +3490,7 @@
       "grave": false,
       "accn": "0001104659-26-080362",
       "url": "https://www.sec.gov/Archives/edgar/data/1286043/000110465926080362/tm2619631d1_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "LCID",
@@ -3381,7 +3501,7 @@
       "grave": false,
       "accn": "0001628280-26-046718",
       "url": "https://www.sec.gov/Archives/edgar/data/1811210/000162828026046718/lcid-20260701.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "LEU",
@@ -3392,7 +3512,7 @@
       "grave": false,
       "accn": "0001628280-26-046801",
       "url": "https://www.sec.gov/Archives/edgar/data/1065059/000162828026046801/leu-20260630.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "LNG",
@@ -3403,7 +3523,7 @@
       "grave": false,
       "accn": "0001193125-26-294777",
       "url": "https://www.sec.gov/Archives/edgar/data/3570/000119312526294777/d73800d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "LNN",
@@ -3414,11 +3534,7 @@
       "grave": false,
       "accn": "0001193125-26-294516",
       "url": "https://www.sec.gov/Archives/edgar/data/836157/000119312526294516/lnn-20260531.htm",
-      "whatChanged": [
-        "Governmental action A number of governmental laws, regulations and policies can affect the Company's business, including the following: In 2025, new tariffs were imposed in the U.S., including under the International Emergency Economic Powers Act (the \"IEEPA\"), on imports from Canada, Mexico, China ",
-        "Lower irrigation gross margin resulted primarily from higher input costs and fixed cost deleverage on lower unit sales volumes, while infrastructure gross margin also decreased due to an unfavorable mix of Road Zipper System revenues compared to the prior year.",
-        "In response to these tariffs, the Company implemented a comprehensive action plan that included supplier negotiation, strategic inventory placement, and other supply chain initiatives to manage potential cost impacts."
-      ]
+      "performance": null
     },
     {
       "ticker": "LNN",
@@ -3429,7 +3545,7 @@
       "grave": false,
       "accn": "0001193125-26-293405",
       "url": "https://www.sec.gov/Archives/edgar/data/836157/000119312526293405/lnn-20260702.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "LOB",
@@ -3440,7 +3556,7 @@
       "grave": false,
       "accn": "0001462120-26-000049",
       "url": "https://www.sec.gov/Archives/edgar/data/1462120/000146212026000049/lob-20260701.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "MIR",
@@ -3451,7 +3567,7 @@
       "grave": false,
       "accn": "0001628280-26-046912",
       "url": "https://www.sec.gov/Archives/edgar/data/1809987/000162828026046912/mir-20260702.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "MNRO",
@@ -3462,7 +3578,7 @@
       "grave": false,
       "accn": "0001193125-26-293555",
       "url": "https://www.sec.gov/Archives/edgar/data/876427/000119312526293555/d129459ddef14a.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "MTRX",
@@ -3473,7 +3589,7 @@
       "grave": false,
       "accn": "0000866273-26-000040",
       "url": "https://www.sec.gov/Archives/edgar/data/866273/000086627326000040/mtrx-20260628.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "NAVI",
@@ -3484,7 +3600,7 @@
       "grave": false,
       "accn": "0001140361-26-027441",
       "url": "https://www.sec.gov/Archives/edgar/data/1593538/000114036126027441/ef20077249_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "NVDA",
@@ -3495,7 +3611,7 @@
       "grave": false,
       "accn": "0001045810-26-000060",
       "url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581026000060/nvda-20260628.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "NWS",
@@ -3506,7 +3622,7 @@
       "grave": false,
       "accn": "0001564708-26-000144",
       "url": "https://www.sec.gov/Archives/edgar/data/1564708/000156470826000144/nws-20260701.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "NWSA",
@@ -3517,7 +3633,7 @@
       "grave": false,
       "accn": "0001564708-26-000144",
       "url": "https://www.sec.gov/Archives/edgar/data/1564708/000156470826000144/nws-20260701.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "ORBS",
@@ -3528,7 +3644,7 @@
       "grave": false,
       "accn": "0001493152-26-031671",
       "url": "https://www.sec.gov/Archives/edgar/data/1892492/000149315226031671/form8-k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "PCOR",
@@ -3539,7 +3655,7 @@
       "grave": false,
       "accn": "0001193125-26-294952",
       "url": "https://www.sec.gov/Archives/edgar/data/1611052/000119312526294952/d165711d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "RILY",
@@ -3550,7 +3666,7 @@
       "grave": false,
       "accn": "0001213900-26-075019",
       "url": "https://www.sec.gov/Archives/edgar/data/1464790/000121390026075019/ea0296644-8k_brcgroup.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "RILYG",
@@ -3561,7 +3677,7 @@
       "grave": false,
       "accn": "0001213900-26-075019",
       "url": "https://www.sec.gov/Archives/edgar/data/1464790/000121390026075019/ea0296644-8k_brcgroup.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "RILYL",
@@ -3572,7 +3688,7 @@
       "grave": false,
       "accn": "0001213900-26-075019",
       "url": "https://www.sec.gov/Archives/edgar/data/1464790/000121390026075019/ea0296644-8k_brcgroup.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "RILYN",
@@ -3583,7 +3699,7 @@
       "grave": false,
       "accn": "0001213900-26-075019",
       "url": "https://www.sec.gov/Archives/edgar/data/1464790/000121390026075019/ea0296644-8k_brcgroup.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "RILYP",
@@ -3594,7 +3710,7 @@
       "grave": false,
       "accn": "0001213900-26-075019",
       "url": "https://www.sec.gov/Archives/edgar/data/1464790/000121390026075019/ea0296644-8k_brcgroup.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "RILYT",
@@ -3605,7 +3721,7 @@
       "grave": false,
       "accn": "0001213900-26-075019",
       "url": "https://www.sec.gov/Archives/edgar/data/1464790/000121390026075019/ea0296644-8k_brcgroup.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "RILYZ",
@@ -3616,7 +3732,7 @@
       "grave": false,
       "accn": "0001213900-26-075019",
       "url": "https://www.sec.gov/Archives/edgar/data/1464790/000121390026075019/ea0296644-8k_brcgroup.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "RIVN",
@@ -3627,7 +3743,7 @@
       "grave": false,
       "accn": "0001874178-26-000048",
       "url": "https://www.sec.gov/Archives/edgar/data/1874178/000187417826000048/rivn-20260702.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "SIG",
@@ -3638,7 +3754,7 @@
       "grave": false,
       "accn": "0000832988-26-000185",
       "url": "https://www.sec.gov/Archives/edgar/data/832988/000083298826000185/sig-20260702.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "SLDP",
@@ -3649,7 +3765,7 @@
       "grave": false,
       "accn": "0001104659-26-079956",
       "url": "https://www.sec.gov/Archives/edgar/data/1844862/000110465926079956/tm2619489d1_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "SNX",
@@ -3660,7 +3776,7 @@
       "grave": false,
       "accn": "0001628280-26-046896",
       "url": "https://www.sec.gov/Archives/edgar/data/1177394/000162828026046896/snx-20260626.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "SNX",
@@ -3671,11 +3787,7 @@
       "grave": false,
       "accn": "0001628280-26-046858",
       "url": "https://www.sec.gov/Archives/edgar/data/1177394/000162828026046858/snx-20260531.htm",
-      "whatChanged": [
-        "The increases are driven by growth in Manufacturing sales as well as Supply Chain Services, partially offset by a greater percentage of our sales being presented on a net basis due to a higher mix of sales under arrangements which operate under a customer-owned procurement model, which negatively im",
-        "SG&A expenses as a percentage of gross profit and adjusted SG&A expenses as a percentage of gross profit decreased due to our increase in gross profit from growth in both our Advanced Solutions and Endpoint Solutions distribution portfolios and in Hyve Solutions, partially offset by higher personnel",
-        "Gross margin increased primarily due to the presentation of additional revenues on a net basis primarily in our Hyve Solutions portfolio, which positively impacted our gross margin by approximately 24 basis points, partially offset by a decline in Hyve Solutions margins due to product mix."
-      ]
+      "performance": null
     },
     {
       "ticker": "SOC",
@@ -3686,7 +3798,7 @@
       "grave": false,
       "accn": "0001831481-26-000092",
       "url": "https://www.sec.gov/Archives/edgar/data/1831481/000183148126000092/socc-20260630.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "SOUN",
@@ -3697,7 +3809,7 @@
       "grave": false,
       "accn": "0001213900-26-075086",
       "url": "https://www.sec.gov/Archives/edgar/data/1840856/000121390026075086/ea0296856-8k425_sound.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "SOUNW",
@@ -3708,7 +3820,7 @@
       "grave": false,
       "accn": "0001213900-26-075086",
       "url": "https://www.sec.gov/Archives/edgar/data/1840856/000121390026075086/ea0296856-8k425_sound.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "SPGI",
@@ -3719,7 +3831,7 @@
       "grave": false,
       "accn": "0001104659-26-080005",
       "url": "https://www.sec.gov/Archives/edgar/data/64040/000110465926080005/tm2619099d1_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "SXI",
@@ -3730,7 +3842,7 @@
       "grave": false,
       "accn": "0001437749-26-022576",
       "url": "https://www.sec.gov/Archives/edgar/data/310354/000143774926022576/sxi20260701_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "SYY",
@@ -3741,7 +3853,7 @@
       "grave": false,
       "accn": "0001104659-26-079979",
       "url": "https://www.sec.gov/Archives/edgar/data/96021/000110465926079979/tm2619427d1_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "TALO",
@@ -3752,7 +3864,7 @@
       "grave": false,
       "accn": "0001193125-26-292989",
       "url": "https://www.sec.gov/Archives/edgar/data/1724965/000119312526292989/d115356d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "TCBX",
@@ -3763,7 +3875,7 @@
       "grave": false,
       "accn": "0001193125-26-294606",
       "url": "https://www.sec.gov/Archives/edgar/data/1781730/000119312526294606/tcbx-20260702.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "THRM",
@@ -3774,7 +3886,7 @@
       "grave": false,
       "accn": "0001193125-26-293500",
       "url": "https://www.sec.gov/Archives/edgar/data/903129/000119312526293500/d52623d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "TPTA",
@@ -3785,7 +3897,7 @@
       "grave": false,
       "accn": "0001104659-26-080408",
       "url": "https://www.sec.gov/Archives/edgar/data/1674356/000110465926080408/tm2619604d1_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "TRLV",
@@ -3796,7 +3908,7 @@
       "grave": false,
       "accn": "0001754195-26-000056",
       "url": "https://www.sec.gov/Archives/edgar/data/1754195/000175419526000056/tcnnf-20260630.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "TSLA",
@@ -3807,7 +3919,7 @@
       "grave": false,
       "accn": "0001628280-26-046717",
       "url": "https://www.sec.gov/Archives/edgar/data/1318605/000162828026046717/tsla-20260702.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "VNOM",
@@ -3818,7 +3930,7 @@
       "grave": false,
       "accn": "0001104659-26-080406",
       "url": "https://www.sec.gov/Archives/edgar/data/2074176/000110465926080406/tm2617785d1_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "WKC",
@@ -3829,7 +3941,7 @@
       "grave": false,
       "accn": "0001193125-26-294559",
       "url": "https://www.sec.gov/Archives/edgar/data/789460/000119312526294559/wkc-20260618.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "WPC",
@@ -3840,7 +3952,7 @@
       "grave": false,
       "accn": "0001104659-26-080334",
       "url": "https://www.sec.gov/Archives/edgar/data/1025378/000110465926080334/tm2619605d1_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "WSBC",
@@ -3851,7 +3963,7 @@
       "grave": false,
       "accn": "0001193125-26-294653",
       "url": "https://www.sec.gov/Archives/edgar/data/203596/000119312526294653/wsbc-20260702.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "WSBCO",
@@ -3862,7 +3974,7 @@
       "grave": false,
       "accn": "0001193125-26-294653",
       "url": "https://www.sec.gov/Archives/edgar/data/203596/000119312526294653/wsbc-20260702.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "XRN",
@@ -3873,7 +3985,7 @@
       "grave": false,
       "accn": "0001104659-26-080436",
       "url": "https://www.sec.gov/Archives/edgar/data/1533615/000110465926080436/tm2619294d1_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "XRX",
@@ -3884,7 +3996,7 @@
       "grave": false,
       "accn": "0001193125-26-294480",
       "url": "https://www.sec.gov/Archives/edgar/data/1770450/000119312526294480/d111689d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "AA",
@@ -3895,7 +4007,7 @@
       "grave": false,
       "accn": "0000950103-26-009899",
       "url": "https://www.sec.gov/Archives/edgar/data/1675149/000095010326009899/dp249366_8k-pr.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "AAOI",
@@ -3906,7 +4018,7 @@
       "grave": false,
       "accn": "0001683168-26-005221",
       "url": "https://www.sec.gov/Archives/edgar/data/1158114/000168316826005221/aaoi_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "ABR",
@@ -3917,7 +4029,7 @@
       "grave": false,
       "accn": "0001104659-26-079862",
       "url": "https://www.sec.gov/Archives/edgar/data/1253986/000110465926079862/tm2619560d1_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "ADEA",
@@ -3928,7 +4040,7 @@
       "grave": false,
       "accn": "0001193125-26-291571",
       "url": "https://www.sec.gov/Archives/edgar/data/1803696/000119312526291571/adea-20260701.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "AEO",
@@ -3939,7 +4051,7 @@
       "grave": false,
       "accn": "0001193125-26-292659",
       "url": "https://www.sec.gov/Archives/edgar/data/919012/000119312526292659/d119583d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "AIOT",
@@ -3950,7 +4062,7 @@
       "grave": false,
       "accn": "0001493152-26-031357",
       "url": "https://www.sec.gov/Archives/edgar/data/1774170/000149315226031357/form8-k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "ALIT",
@@ -3961,7 +4073,7 @@
       "grave": false,
       "accn": "0001628280-26-046350",
       "url": "https://www.sec.gov/Archives/edgar/data/1809104/000162828026046350/alit-20260629.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "AMBA",
@@ -3972,7 +4084,7 @@
       "grave": false,
       "accn": "0001193125-26-292824",
       "url": "https://www.sec.gov/Archives/edgar/data/1280263/000119312526292824/d139114d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "AMD",
@@ -3983,7 +4095,7 @@
       "grave": false,
       "accn": "0000002488-26-000115",
       "url": "https://www.sec.gov/Archives/edgar/data/2488/000000248826000115/amd-20260626.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "AON",
@@ -3994,7 +4106,7 @@
       "grave": false,
       "accn": "0001193125-26-292736",
       "url": "https://www.sec.gov/Archives/edgar/data/315293/000119312526292736/d76205d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "APO",
@@ -4005,7 +4117,7 @@
       "grave": false,
       "accn": "0001858681-26-000033",
       "url": "https://www.sec.gov/Archives/edgar/data/1858681/000185868126000033/apo-20260701.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "APOG",
@@ -4016,7 +4128,7 @@
       "grave": false,
       "accn": "0000006845-26-000068",
       "url": "https://www.sec.gov/Archives/edgar/data/6845/000000684526000068/apog-20260701.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "APOS",
@@ -4027,7 +4139,7 @@
       "grave": false,
       "accn": "0001858681-26-000033",
       "url": "https://www.sec.gov/Archives/edgar/data/1858681/000185868126000033/apo-20260701.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "APPF",
@@ -4038,7 +4150,7 @@
       "grave": false,
       "accn": "0001433195-26-000040",
       "url": "https://www.sec.gov/Archives/edgar/data/1433195/000143319526000040/appf-20260626.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "ARR",
@@ -4049,7 +4161,7 @@
       "grave": false,
       "accn": "0001428205-26-000076",
       "url": "https://www.sec.gov/Archives/edgar/data/1428205/000142820526000076/arr-20260701.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "ASTH",
@@ -4060,7 +4172,7 @@
       "grave": false,
       "accn": "0001104659-26-079874",
       "url": "https://www.sec.gov/Archives/edgar/data/1083446/000110465926079874/tm2619134d1_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "AWK",
@@ -4071,7 +4183,7 @@
       "grave": false,
       "accn": "0001410636-26-000109",
       "url": "https://www.sec.gov/Archives/edgar/data/1410636/000141063626000109/awk-20260701.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "BBBY",
@@ -4082,7 +4194,7 @@
       "grave": false,
       "accn": "0001140361-26-027094",
       "url": "https://www.sec.gov/Archives/edgar/data/1130713/000114036126027094/ef20077159_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "BDC",
@@ -4093,7 +4205,7 @@
       "grave": false,
       "accn": "0000913142-26-000029",
       "url": "https://www.sec.gov/Archives/edgar/data/913142/000091314226000029/bdc-20260701.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "BIIB",
@@ -4104,7 +4216,7 @@
       "grave": false,
       "accn": "0000875045-26-000068",
       "url": "https://www.sec.gov/Archives/edgar/data/875045/000087504526000068/biib-20260701.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "BLD",
@@ -4115,7 +4227,7 @@
       "grave": false,
       "accn": "0001104659-26-079876",
       "url": "https://www.sec.gov/Archives/edgar/data/1633931/000110465926079876/tm2618991d10_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "BLMN",
@@ -4126,7 +4238,7 @@
       "grave": false,
       "accn": "0001546417-26-000028",
       "url": "https://www.sec.gov/Archives/edgar/data/1546417/000154641726000028/blmn-20260626.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "BOC",
@@ -4137,7 +4249,7 @@
       "grave": false,
       "accn": "0001437749-26-022287",
       "url": "https://www.sec.gov/Archives/edgar/data/1494582/000143774926022287/bomn20260520_def14a.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "BOX",
@@ -4148,7 +4260,7 @@
       "grave": false,
       "accn": "0001193125-26-292529",
       "url": "https://www.sec.gov/Archives/edgar/data/1372612/000119312526292529/d87668d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "BTU",
@@ -4159,7 +4271,7 @@
       "grave": false,
       "accn": "0001193125-26-291466",
       "url": "https://www.sec.gov/Archives/edgar/data/1064728/000119312526291466/d59087d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "CAR",
@@ -4170,7 +4282,7 @@
       "grave": false,
       "accn": "0000950142-26-001951",
       "url": "https://www.sec.gov/Archives/edgar/data/723612/000095014226001951/eh260800571_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "CATX",
@@ -4181,7 +4293,7 @@
       "grave": false,
       "accn": "0001193125-26-292547",
       "url": "https://www.sec.gov/Archives/edgar/data/728387/000119312526292547/catx-20260701.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "CHH",
@@ -4192,7 +4304,7 @@
       "grave": false,
       "accn": "0001628280-26-046377",
       "url": "https://www.sec.gov/Archives/edgar/data/1046311/000162828026046377/chh-20260626.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "CMCO",
@@ -4203,7 +4315,7 @@
       "grave": false,
       "accn": "0001193125-26-292563",
       "url": "https://www.sec.gov/Archives/edgar/data/1005229/000119312526292563/d66917d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "CODI",
@@ -4214,7 +4326,7 @@
       "grave": false,
       "accn": "0001345126-26-000052",
       "url": "https://www.sec.gov/Archives/edgar/data/1345126/000134512626000052/codi-20260701.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "COLB",
@@ -4225,7 +4337,7 @@
       "grave": false,
       "accn": "0000887343-26-000159",
       "url": "https://www.sec.gov/Archives/edgar/data/887343/000088734326000159/colb-20260630.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "CRBG",
@@ -4236,7 +4348,7 @@
       "grave": false,
       "accn": "0001889539-26-000129",
       "url": "https://www.sec.gov/Archives/edgar/data/1889539/000188953926000129/crbg-20260701.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "CRMD",
@@ -4247,7 +4359,7 @@
       "grave": true,
       "accn": "0001410098-26-000037",
       "url": "https://www.sec.gov/Archives/edgar/data/1410098/000141009826000037/crmd-20260625.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "CURB",
@@ -4258,7 +4370,7 @@
       "grave": false,
       "accn": "0001193125-26-292530",
       "url": "https://www.sec.gov/Archives/edgar/data/2027317/000119312526292530/d149838d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "CWST",
@@ -4269,7 +4381,7 @@
       "grave": false,
       "accn": "0000911177-26-000035",
       "url": "https://www.sec.gov/Archives/edgar/data/911177/000091117726000035/cwst-20260626.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "CXM",
@@ -4280,7 +4392,7 @@
       "grave": false,
       "accn": "0001193125-26-291553",
       "url": "https://www.sec.gov/Archives/edgar/data/1569345/000119312526291553/d106582d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "DELL",
@@ -4291,7 +4403,7 @@
       "grave": false,
       "accn": "0001571996-26-000036",
       "url": "https://www.sec.gov/Archives/edgar/data/1571996/000157199626000036/dell-20260625.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "DLR",
@@ -4302,7 +4414,7 @@
       "grave": false,
       "accn": "0001193125-26-292577",
       "url": "https://www.sec.gov/Archives/edgar/data/1297996/000119312526292577/d332992d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "DT",
@@ -4313,7 +4425,7 @@
       "grave": false,
       "accn": "0001773383-26-000023",
       "url": "https://www.sec.gov/Archives/edgar/data/1773383/000177338326000023/dt-20260630.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "EBF",
@@ -4324,11 +4436,7 @@
       "grave": false,
       "accn": "0001193125-26-291652",
       "url": "https://www.sec.gov/Archives/edgar/data/33002/000119312526291652/ebf-20260531.htm",
-      "whatChanged": [
-        "Transforming our product offerings in order to provide innovative, value-added solutions on a proactive basis requires ongoing investments in new and existing technologies, as well as the development of key strategic business relationships, including print-on-demand services and product offerings th",
-        "While we continue to transition to these alternative suppliers and do not currently anticipate disruptions to customer service, product availability or product quality, changes in industry supply conditions could result in continued supply constraints and input cost volatility for certain paper grad",
-        "Production capacity and price competition within our industry Industry supply of paper products continues to fluctuate as market conditions influence producers to idle, permanently close, or convert paper machines and mills to alternative product lines."
-      ]
+      "performance": null
     },
     {
       "ticker": "EIG",
@@ -4339,7 +4447,7 @@
       "grave": false,
       "accn": "0001379041-26-000050",
       "url": "https://www.sec.gov/Archives/edgar/data/1379041/000137904126000050/eig-20260625.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "EOSE",
@@ -4350,7 +4458,7 @@
       "grave": false,
       "accn": "0000950103-26-009976",
       "url": "https://www.sec.gov/Archives/edgar/data/1805077/000095010326009976/dp249372_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "EPD",
@@ -4361,7 +4469,7 @@
       "grave": false,
       "accn": "0001193125-26-291582",
       "url": "https://www.sec.gov/Archives/edgar/data/1061219/000119312526291582/d67955d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "ES",
@@ -4372,7 +4480,7 @@
       "grave": false,
       "accn": "0001104659-26-079426",
       "url": "https://www.sec.gov/Archives/edgar/data/72741/000110465926079426/tm2619364d1_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "EVRG",
@@ -4383,7 +4491,7 @@
       "grave": false,
       "accn": "0001193125-26-292566",
       "url": "https://www.sec.gov/Archives/edgar/data/1711269/000119312526292566/d917808d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "EVRG",
@@ -4394,7 +4502,7 @@
       "grave": false,
       "accn": "0001193125-26-292565",
       "url": "https://www.sec.gov/Archives/edgar/data/1711269/000119312526292565/d82314d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "FCN",
@@ -4405,7 +4513,7 @@
       "grave": false,
       "accn": "0001193125-26-291542",
       "url": "https://www.sec.gov/Archives/edgar/data/887936/000119312526291542/fcn-20260630.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "FDS",
@@ -4416,11 +4524,7 @@
       "grave": false,
       "accn": "0001628280-26-046549",
       "url": "https://www.sec.gov/Archives/edgar/data/1013237/000162828026046549/fds-20260531.htm",
-      "whatChanged": [
-        "The 2025 Credit Agreement contains usual and customary affirmative and negative covenants for facilities of this type, including a financial covenant requiring maintenance of a total leverage ratio of no greater than 3.75 to 1.00 as of the last day of each fiscal quarter (subject to an increase to 4",
-        "When expenses are expressed as a percentage of revenues, this decrease was primarily driven by higher operating expenses, mainly due to an increase in employee compensation costs, including one-time restructuring charges and Chief Executive Officer (\"CEO\") compensation costs pursuant to the terms of",
-        "Nine months ended May 31, 2026 compared with nine months ended May 31, 2025 Americas Americas operating income decreased primarily due to higher employee compensation costs and, to a lesser extent, an increase in amortization of intangible assets and technology-related expenses, partially offset by "
-      ]
+      "performance": null
     },
     {
       "ticker": "FDS",
@@ -4431,7 +4535,7 @@
       "grave": false,
       "accn": "0001628280-26-046338",
       "url": "https://www.sec.gov/Archives/edgar/data/1013237/000162828026046338/fds-20260701.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "FIZZ",
@@ -4442,11 +4546,7 @@
       "grave": false,
       "accn": "0001437749-26-022315",
       "url": "https://www.sec.gov/Archives/edgar/data/69891/000143774926022315/fizz20260502_10k.htm",
-      "whatChanged": [
-        "The increase in working capital was primarily due to an increase in cash and cash equivalents of $155.7 million, an increase in inventory of $10.4 million, an increase in the derivative asset of $8.6 million, an increase in income tax receivable of $5.1 million, a decrease in accounts payable and ac",
-        "The decrease was primarily due to a decrease in administrative and shipping and handling costs, partially offset by an increase in marketing and selling costs.",
-        "The unprecedented disruption, government shutdowns, funding changes, inflation and cautious consumer spending all impacted volume."
-      ]
+      "performance": null
     },
     {
       "ticker": "FMC",
@@ -4457,7 +4557,7 @@
       "grave": false,
       "accn": "0000950103-26-009902",
       "url": "https://www.sec.gov/Archives/edgar/data/37785/000095010326009902/dp249374_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "FSUN",
@@ -4468,7 +4568,7 @@
       "grave": false,
       "accn": "0001709442-26-000039",
       "url": "https://www.sec.gov/Archives/edgar/data/1709442/000170944226000039/fcb-20260701.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "FUN",
@@ -4479,7 +4579,7 @@
       "grave": false,
       "accn": "0001999001-26-000083",
       "url": "https://www.sec.gov/Archives/edgar/data/1999001/000199900126000083/fun-20260625.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "FVR",
@@ -4490,7 +4590,7 @@
       "grave": false,
       "accn": "0001193125-26-291502",
       "url": "https://www.sec.gov/Archives/edgar/data/1988494/000119312526291502/fvr-20260701.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "GATX",
@@ -4501,7 +4601,7 @@
       "grave": false,
       "accn": "0001193125-26-292657",
       "url": "https://www.sec.gov/Archives/edgar/data/40211/000119312526292657/d147032d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "GBX",
@@ -4512,11 +4612,7 @@
       "grave": false,
       "accn": "0001193125-26-292719",
       "url": "https://www.sec.gov/Archives/edgar/data/923120/000119312526292719/gbx-20260531.htm",
-      "whatChanged": [
-        "Cash Flows From Operating Activities The $159.6 million decrease in Net cash provided by operating activities for the nine months ended May 31, 2026 compared to the nine months ended May 31, 2025 was primarily due to a $104.1 million decrease in Net earnings, a $56.4 million change in Leased railcar",
-        "Cash Flows From Financing Activities The $27.7 million decrease in Net cash used in financing activities for the nine months ended May 31, 2026 compared to the nine months ended May 31, 2025 was primarily attributed to a $56.6 million increase in net borrowings partially offset by $27.9 million chan",
-        "Net earnings attributable to Greenbrier decreased $41.2 million for the three months ended May 31, 2026 as compared to the three months ended May 31, 2025 primarily due to: $70.4 million decrease in Margin attributable to a 38.5% decrease in deliveries and a change in railcar manufacturing product m"
-      ]
+      "performance": null
     },
     {
       "ticker": "GBX",
@@ -4527,7 +4623,7 @@
       "grave": false,
       "accn": "0001193125-26-292598",
       "url": "https://www.sec.gov/Archives/edgar/data/923120/000119312526292598/gbx-20260701.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "GIS",
@@ -4538,7 +4634,7 @@
       "grave": false,
       "accn": "0001628280-26-046466",
       "url": "https://www.sec.gov/Archives/edgar/data/40704/000162828026046466/gis-20260531.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "GIS",
@@ -4549,7 +4645,7 @@
       "grave": false,
       "accn": "0001628280-26-046337",
       "url": "https://www.sec.gov/Archives/edgar/data/40704/000162828026046337/gis-20260701.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "GNL",
@@ -4560,7 +4656,7 @@
       "grave": false,
       "accn": "0001104659-26-079649",
       "url": "https://www.sec.gov/Archives/edgar/data/1526113/000110465926079649/tm2618944d1_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "GRBK",
@@ -4571,7 +4667,7 @@
       "grave": false,
       "accn": "0001628280-26-046536",
       "url": "https://www.sec.gov/Archives/edgar/data/1373670/000162828026046536/grbk-20260701.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "GTN",
@@ -4582,7 +4678,7 @@
       "grave": false,
       "accn": "0001437749-26-022218",
       "url": "https://www.sec.gov/Archives/edgar/data/43196/000143774926022218/gtn20260629_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "HIMS",
@@ -4593,7 +4689,7 @@
       "grave": false,
       "accn": "0001773751-26-000146",
       "url": "https://www.sec.gov/Archives/edgar/data/1773751/000177375126000146/hims-20260626.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "JXN",
@@ -4604,7 +4700,7 @@
       "grave": false,
       "accn": "0001104659-26-079925",
       "url": "https://www.sec.gov/Archives/edgar/data/1822993/000110465926079925/tm2618572d2_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "KE",
@@ -4615,7 +4711,7 @@
       "grave": false,
       "accn": "0001606757-26-000028",
       "url": "https://www.sec.gov/Archives/edgar/data/1606757/000160675726000028/ke-20260626.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "KR",
@@ -4626,7 +4722,7 @@
       "grave": false,
       "accn": "0001104659-26-079552",
       "url": "https://www.sec.gov/Archives/edgar/data/56873/000110465926079552/tm2619434d1_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "KSS",
@@ -4637,7 +4733,7 @@
       "grave": false,
       "accn": "0001193125-26-292702",
       "url": "https://www.sec.gov/Archives/edgar/data/885639/000119312526292702/d152011d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "MAMA",
@@ -4648,7 +4744,7 @@
       "grave": false,
       "accn": "0001493152-26-031561",
       "url": "https://www.sec.gov/Archives/edgar/data/1520358/000149315226031561/form8-k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "MATV",
@@ -4659,7 +4755,7 @@
       "grave": false,
       "accn": "0001000623-26-000060",
       "url": "https://www.sec.gov/Archives/edgar/data/1000623/000100062326000060/matv-20260701.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "MCK",
@@ -4670,7 +4766,7 @@
       "grave": false,
       "accn": "0000927653-26-000185",
       "url": "https://www.sec.gov/Archives/edgar/data/927653/000092765326000185/mck-20260629.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "MLI",
@@ -4681,7 +4777,7 @@
       "grave": false,
       "accn": "0000089439-26-000027",
       "url": "https://www.sec.gov/Archives/edgar/data/89439/000008943926000027/mli-20260629.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "MQ",
@@ -4692,7 +4788,7 @@
       "grave": false,
       "accn": "0001522540-26-000048",
       "url": "https://www.sec.gov/Archives/edgar/data/1522540/000152254026000048/mq-20260630.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "MSM",
@@ -4703,7 +4799,7 @@
       "grave": false,
       "accn": "0001003078-26-000080",
       "url": "https://www.sec.gov/Archives/edgar/data/1003078/000100307826000080/msm-20260530.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "MSM",
@@ -4714,7 +4810,7 @@
       "grave": false,
       "accn": "0001003078-26-000078",
       "url": "https://www.sec.gov/Archives/edgar/data/1003078/000100307826000078/msm-20260701.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "MTUS",
@@ -4725,7 +4821,7 @@
       "grave": false,
       "accn": "0001193125-26-291476",
       "url": "https://www.sec.gov/Archives/edgar/data/1598428/000119312526291476/d80019d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "NDAQ",
@@ -4736,7 +4832,7 @@
       "grave": false,
       "accn": "0001193125-26-292723",
       "url": "https://www.sec.gov/Archives/edgar/data/1120193/000119312526292723/d146997d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "NHC",
@@ -4747,7 +4843,7 @@
       "grave": false,
       "accn": "0001437749-26-022306",
       "url": "https://www.sec.gov/Archives/edgar/data/1047335/000143774926022306/nhc20260630_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "NHI",
@@ -4758,7 +4854,7 @@
       "grave": false,
       "accn": "0000877860-26-000169",
       "url": "https://www.sec.gov/Archives/edgar/data/877860/000087786026000169/nhi-20260701.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "NHI",
@@ -4769,7 +4865,7 @@
       "grave": false,
       "accn": "0000877860-26-000167",
       "url": "https://www.sec.gov/Archives/edgar/data/877860/000087786026000167/nhi-20260701.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "NRGV",
@@ -4780,7 +4876,7 @@
       "grave": false,
       "accn": "0001828536-26-000083",
       "url": "https://www.sec.gov/Archives/edgar/data/1828536/000182853626000083/nrgv-20260626.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "NWS",
@@ -4791,7 +4887,7 @@
       "grave": false,
       "accn": "0001564708-26-000143",
       "url": "https://www.sec.gov/Archives/edgar/data/1564708/000156470826000143/nws-20260630.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "NWSA",
@@ -4802,7 +4898,7 @@
       "grave": false,
       "accn": "0001564708-26-000143",
       "url": "https://www.sec.gov/Archives/edgar/data/1564708/000156470826000143/nws-20260630.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "OMCL",
@@ -4813,7 +4909,7 @@
       "grave": false,
       "accn": "0001104659-26-079606",
       "url": "https://www.sec.gov/Archives/edgar/data/926326/000110465926079606/tm2619353d1_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "ONIT",
@@ -4824,7 +4920,7 @@
       "grave": false,
       "accn": "0001493152-26-031547",
       "url": "https://www.sec.gov/Archives/edgar/data/873860/000149315226031547/form8-k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "ORI",
@@ -4835,7 +4931,7 @@
       "grave": false,
       "accn": "0000074260-26-000079",
       "url": "https://www.sec.gov/Archives/edgar/data/74260/000007426026000079/ori-20260630.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "ORLY",
@@ -4846,7 +4942,7 @@
       "grave": false,
       "accn": "0000898173-26-000037",
       "url": "https://www.sec.gov/Archives/edgar/data/898173/000089817326000037/orly-20260701x8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "OSBC",
@@ -4857,7 +4953,7 @@
       "grave": false,
       "accn": "0000357173-26-000035",
       "url": "https://www.sec.gov/Archives/edgar/data/357173/000035717326000035/osbc-20260701x8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "PB",
@@ -4868,7 +4964,7 @@
       "grave": false,
       "accn": "0001193125-26-291486",
       "url": "https://www.sec.gov/Archives/edgar/data/1068851/000119312526291486/d109409d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "PEG",
@@ -4879,7 +4975,7 @@
       "grave": false,
       "accn": "0001193125-26-292587",
       "url": "https://www.sec.gov/Archives/edgar/data/788784/000119312526292587/d913061d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "PLD",
@@ -4890,7 +4986,7 @@
       "grave": false,
       "accn": "0001193125-26-291634",
       "url": "https://www.sec.gov/Archives/edgar/data/1045609/000119312526291634/d145916d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "PSKY",
@@ -4901,7 +4997,7 @@
       "grave": false,
       "accn": "0001104659-26-079448",
       "url": "https://www.sec.gov/Archives/edgar/data/2041610/000110465926079448/tm2610616d6_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "Q",
@@ -4912,7 +5008,7 @@
       "grave": false,
       "accn": "0002058873-26-000025",
       "url": "https://www.sec.gov/Archives/edgar/data/2058873/000205887326000025/q-20260701.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "QXO",
@@ -4923,7 +5019,7 @@
       "grave": false,
       "accn": "0001104659-26-079864",
       "url": "https://www.sec.gov/Archives/edgar/data/1236275/000110465926079864/tm2618991d7_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "RDW",
@@ -4934,7 +5030,7 @@
       "grave": false,
       "accn": "0001819810-26-000084",
       "url": "https://www.sec.gov/Archives/edgar/data/1819810/000181981026000084/rdw-20260630.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "REX",
@@ -4945,7 +5041,7 @@
       "grave": false,
       "accn": "0000930413-26-002006",
       "url": "https://www.sec.gov/Archives/edgar/data/744187/000093041326002006/c116858_8k-ixbrl.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "REZI",
@@ -4956,7 +5052,7 @@
       "grave": false,
       "accn": "0001213900-26-074244",
       "url": "https://www.sec.gov/Archives/edgar/data/1740332/000121390026074244/ea0296428-8k_resideo.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "RGA",
@@ -4967,7 +5063,7 @@
       "grave": false,
       "accn": "0001193125-26-292830",
       "url": "https://www.sec.gov/Archives/edgar/data/898174/000119312526292830/d108862d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "RIGL",
@@ -4978,7 +5074,7 @@
       "grave": false,
       "accn": "0001034842-26-000045",
       "url": "https://www.sec.gov/Archives/edgar/data/1034842/000103484226000045/rigl-20260625.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "RNST",
@@ -4989,7 +5085,7 @@
       "grave": false,
       "accn": "0000715072-26-000063",
       "url": "https://www.sec.gov/Archives/edgar/data/715072/000071507226000063/rnst-20251231.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "RZC",
@@ -5000,7 +5096,7 @@
       "grave": false,
       "accn": "0001193125-26-292830",
       "url": "https://www.sec.gov/Archives/edgar/data/898174/000119312526292830/d108862d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "SEM",
@@ -5011,7 +5107,7 @@
       "grave": false,
       "accn": "0001104659-26-079643",
       "url": "https://www.sec.gov/Archives/edgar/data/1320414/000110465926079643/tm2619266d7_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "SILA",
@@ -5022,7 +5118,7 @@
       "grave": false,
       "accn": "0001140361-26-027203",
       "url": "https://www.sec.gov/Archives/edgar/data/1567925/000114036126027203/ef20077151_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "SITM",
@@ -5033,7 +5129,7 @@
       "grave": false,
       "accn": "0001193125-26-291561",
       "url": "https://www.sec.gov/Archives/edgar/data/1451809/000119312526291561/d71116d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "SMA",
@@ -5044,7 +5140,7 @@
       "grave": false,
       "accn": "0001193125-26-292661",
       "url": "https://www.sec.gov/Archives/edgar/data/1585389/000119312526292661/ck0001585389-20260701.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "SMG",
@@ -5055,7 +5151,7 @@
       "grave": false,
       "accn": "0000825542-26-000032",
       "url": "https://www.sec.gov/Archives/edgar/data/825542/000082554226000032/smg-20260701.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "SSTK",
@@ -5066,7 +5162,7 @@
       "grave": false,
       "accn": "0001140361-26-027078",
       "url": "https://www.sec.gov/Archives/edgar/data/1549346/000114036126027078/ef20077175_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "STEL",
@@ -5077,7 +5173,7 @@
       "grave": false,
       "accn": "0001193125-26-291511",
       "url": "https://www.sec.gov/Archives/edgar/data/1473844/000119312526291511/d116708d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "STZ",
@@ -5088,11 +5184,7 @@
       "grave": false,
       "accn": "0000016918-26-000029",
       "url": "https://www.sec.gov/Archives/edgar/data/16918/000001691826000029/stz-20260531.htm",
-      "whatChanged": [
-        "This decrease of $2.9 million, or 1%, was primarily due to $15.6 million of reduced capital expenditures for First Quarter 2027 as compared to First Quarter 2026, partially offset by $15.3 million of increased business acquisition activity for First Quarter 2027, driven by the April 2026 purchase of",
-        "The increase in organic gross profit is largely attributable to (i) $15.3 million of branded wine and spirits shipment volume growth and (ii) $2.1 million of decreased cost of product sold partially offset by (i) $12.7 million of unfavorable product mix and (ii) the $3.2 million decrease from strate",
-        "The increase in organic net sales is largely driven by $17.2 million of branded wine and spirits shipment volume growth, partially offset by a (i) $4.9 million decrease in non-branded net sales led by a decline in bulk sales and (ii) $3.2 million decrease from strategic pricing actions taken on sele"
-      ]
+      "performance": null
     },
     {
       "ticker": "TALO",
@@ -5103,7 +5195,7 @@
       "grave": false,
       "accn": "0001193125-26-291547",
       "url": "https://www.sec.gov/Archives/edgar/data/1724965/000119312526291547/d111469d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "TIC",
@@ -5114,7 +5206,7 @@
       "grave": false,
       "accn": "0001628280-26-046600",
       "url": "https://www.sec.gov/Archives/edgar/data/2032966/000162828026046600/tic-20260701.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "TRIP",
@@ -5125,7 +5217,7 @@
       "grave": false,
       "accn": "0001193125-26-292531",
       "url": "https://www.sec.gov/Archives/edgar/data/1526520/000119312526292531/d68553d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "UHAL",
@@ -5136,7 +5228,7 @@
       "grave": false,
       "accn": "0001193125-26-292785",
       "url": "https://www.sec.gov/Archives/edgar/data/4457/000119312526292785/uhal-20260701.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "UMH",
@@ -5147,7 +5239,7 @@
       "grave": false,
       "accn": "0001493152-26-031557",
       "url": "https://www.sec.gov/Archives/edgar/data/752642/000149315226031557/form8-k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "UNF",
@@ -5158,7 +5250,7 @@
       "grave": false,
       "accn": "0001628280-26-046349",
       "url": "https://www.sec.gov/Archives/edgar/data/717954/000162828026046349/unf-20260701.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "UNM",
@@ -5169,7 +5261,7 @@
       "grave": false,
       "accn": "0000005513-26-000066",
       "url": "https://www.sec.gov/Archives/edgar/data/5513/000000551326000066/unm-20260701.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "UNMA",
@@ -5180,7 +5272,7 @@
       "grave": false,
       "accn": "0000005513-26-000066",
       "url": "https://www.sec.gov/Archives/edgar/data/5513/000000551326000066/unm-20260701.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "UVV",
@@ -5191,7 +5283,7 @@
       "grave": false,
       "accn": "0001628280-26-046310",
       "url": "https://www.sec.gov/Archives/edgar/data/102037/000162828026046310/uvv-20260624.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "VELO",
@@ -5202,7 +5294,7 @@
       "grave": false,
       "accn": "0001193125-26-292515",
       "url": "https://www.sec.gov/Archives/edgar/data/1825079/000119312526292515/velo-20260629.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "VISN",
@@ -5213,7 +5305,7 @@
       "grave": false,
       "accn": "0001193125-26-291679",
       "url": "https://www.sec.gov/Archives/edgar/data/1517228/000119312526291679/visn-20260701.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "VSH",
@@ -5224,7 +5316,7 @@
       "grave": false,
       "accn": "0001140361-26-027081",
       "url": "https://www.sec.gov/Archives/edgar/data/103730/000114036126027081/ny20076868x4_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "VTRS",
@@ -5235,7 +5327,7 @@
       "grave": false,
       "accn": "0001140361-26-027216",
       "url": "https://www.sec.gov/Archives/edgar/data/1792044/000114036126027216/ef20077152_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "WHR",
@@ -5246,7 +5338,7 @@
       "grave": false,
       "accn": "0000106640-26-000052",
       "url": "https://www.sec.gov/Archives/edgar/data/106640/000010664026000052/whr-20260701.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "WMB",
@@ -5257,7 +5349,7 @@
       "grave": false,
       "accn": "0000107263-26-000020",
       "url": "https://www.sec.gov/Archives/edgar/data/107263/000010726326000020/wmb-20260701.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "WOOF",
@@ -5268,7 +5360,7 @@
       "grave": false,
       "accn": "0001826470-26-000047",
       "url": "https://www.sec.gov/Archives/edgar/data/1826470/000182647026000047/woof-20260630.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "WRLD",
@@ -5279,7 +5371,7 @@
       "grave": false,
       "accn": "0000108385-26-000022",
       "url": "https://www.sec.gov/Archives/edgar/data/108385/000010838526000022/wrld-20260629.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "WSR",
@@ -5290,7 +5382,7 @@
       "grave": false,
       "accn": "0001193125-26-292533",
       "url": "https://www.sec.gov/Archives/edgar/data/1175535/000119312526292533/d103777d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "XFOR",
@@ -5301,7 +5393,7 @@
       "grave": false,
       "accn": "0001501697-26-000060",
       "url": "https://www.sec.gov/Archives/edgar/data/1501697/000150169726000060/xfor-20260630.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "ZUMZ",
@@ -5312,7 +5404,7 @@
       "grave": false,
       "accn": "0001193125-26-292534",
       "url": "https://www.sec.gov/Archives/edgar/data/1318008/000119312526292534/d97070d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "ACHR",
@@ -5323,7 +5415,7 @@
       "grave": false,
       "accn": "0001824502-26-000046",
       "url": "https://www.sec.gov/Archives/edgar/data/1824502/000182450226000046/achr-20260626.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "AFL",
@@ -5334,7 +5426,7 @@
       "grave": false,
       "accn": "0001628280-26-046124",
       "url": "https://www.sec.gov/Archives/edgar/data/4977/000162828026046124/afl-20260630.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "ALGT",
@@ -5345,7 +5437,7 @@
       "grave": false,
       "accn": "0001362468-26-000039",
       "url": "https://www.sec.gov/Archives/edgar/data/1362468/000136246826000039/algt-20260630.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "ALOY",
@@ -5356,7 +5448,7 @@
       "grave": false,
       "accn": "0001185185-26-002743",
       "url": "https://www.sec.gov/Archives/edgar/data/1567900/000118518526002743/realloys8k063026.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "ANGX",
@@ -5367,7 +5459,7 @@
       "grave": false,
       "accn": "0001104659-26-079001",
       "url": "https://www.sec.gov/Archives/edgar/data/1865200/000110465926079001/tm2619008d1_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "APD",
@@ -5378,7 +5470,7 @@
       "grave": true,
       "accn": "0001193125-26-289427",
       "url": "https://www.sec.gov/Archives/edgar/data/2969/000119312526289427/d97956d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "APOG",
@@ -5389,11 +5481,7 @@
       "grave": false,
       "accn": "0000006845-26-000063",
       "url": "https://www.sec.gov/Archives/edgar/data/6845/000000684526000063/apog-20260530.htm",
-      "whatChanged": [
-        "By aligning our capabilities, investments, and operating approach around this customer focused strategy, we believe we will be better positioned to differentiate, compete effectively, and strengthen our position in the markets we serve. 2.",
-        "The decrease in adjusted EBITDA margin was primarily driven by higher material and freight costs and the impacts from lower volume, partially offset by productivity improvements and benefits from cost savings of Fortify Phase 2.",
-        "The decline in adjusted EBITDA margin was driven by unfavorable project mix, mostly offset by benefits from the actions of Project Fortify Phase 2 to reduce the impact of tariffs, and the impact from increased volume."
-      ]
+      "performance": null
     },
     {
       "ticker": "ARDT",
@@ -5404,7 +5492,7 @@
       "grave": false,
       "accn": "0001628280-26-046247",
       "url": "https://www.sec.gov/Archives/edgar/data/1756655/000162828026046247/ardt-20260626.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "AUB",
@@ -5415,7 +5503,7 @@
       "grave": false,
       "accn": "0000883948-26-000060",
       "url": "https://www.sec.gov/Archives/edgar/data/883948/000088394826000060/aub-20260630x8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "BCO",
@@ -5426,7 +5514,7 @@
       "grave": false,
       "accn": "0001140361-26-026938",
       "url": "https://www.sec.gov/Archives/edgar/data/78890/000114036126026938/ef20077039_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "BLK",
@@ -5437,7 +5525,7 @@
       "grave": false,
       "accn": "0001193125-26-290830",
       "url": "https://www.sec.gov/Archives/edgar/data/2012383/000119312526290830/d108689d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "BOC",
@@ -5448,7 +5536,7 @@
       "grave": false,
       "accn": "0001437749-26-022158",
       "url": "https://www.sec.gov/Archives/edgar/data/1494582/000143774926022158/bomn20260625_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "BTBT",
@@ -5459,7 +5547,7 @@
       "grave": false,
       "accn": "0001213900-26-073316",
       "url": "https://www.sec.gov/Archives/edgar/data/1710350/000121390026073316/ea0296412-8k_bitdigit.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "CAC",
@@ -5470,7 +5558,7 @@
       "grave": false,
       "accn": "0000750686-26-000048",
       "url": "https://www.sec.gov/Archives/edgar/data/750686/000075068626000048/cac-20260630.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "CALM",
@@ -5481,7 +5569,7 @@
       "grave": false,
       "accn": "0001562762-26-000076",
       "url": "https://www.sec.gov/Archives/edgar/data/16160/000156276226000076/calm-20260629_8K.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "CPRX",
@@ -5492,7 +5580,7 @@
       "grave": false,
       "accn": "0001193125-26-290768",
       "url": "https://www.sec.gov/Archives/edgar/data/1369568/000119312526290768/d158010d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "DEA",
@@ -5503,7 +5591,7 @@
       "grave": false,
       "accn": "0001193125-26-289476",
       "url": "https://www.sec.gov/Archives/edgar/data/1622194/000119312526289476/dea-20260625.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "DVN",
@@ -5514,7 +5602,7 @@
       "grave": false,
       "accn": "0001193125-26-290829",
       "url": "https://www.sec.gov/Archives/edgar/data/1090012/000119312526290829/d214249d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "ECVT",
@@ -5525,7 +5613,7 @@
       "grave": false,
       "accn": "0001193125-26-290479",
       "url": "https://www.sec.gov/Archives/edgar/data/1708035/000119312526290479/d833981d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "EGBN",
@@ -5536,7 +5624,7 @@
       "grave": false,
       "accn": "0001050441-26-000081",
       "url": "https://www.sec.gov/Archives/edgar/data/1050441/000105044126000081/gnw-20260630.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "EOSE",
@@ -5547,7 +5635,7 @@
       "grave": false,
       "accn": "0000950103-26-009739",
       "url": "https://www.sec.gov/Archives/edgar/data/1805077/000095010326009739/dp249222_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "FLS",
@@ -5558,7 +5646,7 @@
       "grave": false,
       "accn": "0001628280-26-046231",
       "url": "https://www.sec.gov/Archives/edgar/data/30625/000162828026046231/fls-20260630.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "FOX",
@@ -5569,7 +5657,7 @@
       "grave": false,
       "accn": "0001193125-26-290605",
       "url": "https://www.sec.gov/Archives/edgar/data/1754301/000119312526290605/d44317d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "FOXA",
@@ -5580,7 +5668,7 @@
       "grave": false,
       "accn": "0001193125-26-290605",
       "url": "https://www.sec.gov/Archives/edgar/data/1754301/000119312526290605/d44317d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "FRST",
@@ -5591,7 +5679,7 @@
       "grave": false,
       "accn": "0001104659-26-079364",
       "url": "https://www.sec.gov/Archives/edgar/data/1325670/000110465926079364/tm2619419d1_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "GETY",
@@ -5602,7 +5690,7 @@
       "grave": false,
       "accn": "0001213900-26-073816",
       "url": "https://www.sec.gov/Archives/edgar/data/1898496/000121390026073816/ea0296572-8k425_getty.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "HPK",
@@ -5613,7 +5701,7 @@
       "grave": false,
       "accn": "0001437749-26-022144",
       "url": "https://www.sec.gov/Archives/edgar/data/1792849/000143774926022144/hpe20260623c_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "HZO",
@@ -5624,7 +5712,7 @@
       "grave": false,
       "accn": "0001193125-26-290439",
       "url": "https://www.sec.gov/Archives/edgar/data/1057060/000119312526290439/hzo-20260629.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "INGR",
@@ -5635,7 +5723,7 @@
       "grave": false,
       "accn": "0001046257-26-000210",
       "url": "https://www.sec.gov/Archives/edgar/data/1046257/000104625726000210/ingr-20260630.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "INN",
@@ -5646,7 +5734,7 @@
       "grave": false,
       "accn": "0001497645-26-000054",
       "url": "https://www.sec.gov/Archives/edgar/data/1497645/000149764526000054/inn-20260629.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "INV",
@@ -5657,7 +5745,7 @@
       "grave": false,
       "accn": "0002001557-26-000144",
       "url": "https://www.sec.gov/Archives/edgar/data/2001557/000200155726000144/innv-20260626.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "JBL",
@@ -5668,11 +5756,7 @@
       "grave": false,
       "accn": "0001628280-26-046138",
       "url": "https://www.sec.gov/Archives/edgar/data/898293/000162828026046138/jbl-20260531.htm",
-      "whatChanged": [
-        "Loss (Gain) from the Divestiture of Businesses Three months ended Nine months ended (in millions) May 31, 2026 May 31, 2025 Change May 31, 2026 May 31, 2025 Change Loss (gain) from the divestiture of businesses $ 1 $ (45) $ 46 $ 1 $ (45) $ 46 Gain recorded during the three months and nine months end",
-        "Investing Activities Net cash used in investing activities during the nine months ended May 31, 2026, consisted primarily of the acquisition of Hanley and Rebound Technologies and capital expenditures, principally to support ongoing business in the Regulated Industries, Intelligent Infrastructure, a",
-        "Supreme Court issued a ruling striking down tariffs imposed under the International Emergency Economic Powers Act (\"IEEPA\"), including, among others, tariffs on imports of certain Canadian, Chinese, and Mexican goods, a universal baseline tariff on imports from most countries, and reciprocal tariffs"
-      ]
+      "performance": null
     },
     {
       "ticker": "JOBY",
@@ -5683,7 +5767,7 @@
       "grave": false,
       "accn": "0001819848-26-000378",
       "url": "https://www.sec.gov/Archives/edgar/data/1819848/000181984826000378/joby-20260629.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "KMT",
@@ -5694,7 +5778,7 @@
       "grave": false,
       "accn": "0001628280-26-046148",
       "url": "https://www.sec.gov/Archives/edgar/data/55242/000162828026046148/kmt-20260625.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "LCII",
@@ -5705,7 +5789,7 @@
       "grave": false,
       "accn": "0000763744-26-000040",
       "url": "https://www.sec.gov/Archives/edgar/data/763744/000076374426000040/lcii-20260630.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "LE",
@@ -5716,7 +5800,7 @@
       "grave": false,
       "accn": "0001104659-26-079340",
       "url": "https://www.sec.gov/Archives/edgar/data/799288/000110465926079340/tm2619425d1_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "LH",
@@ -5727,7 +5811,7 @@
       "grave": false,
       "accn": "0000920148-26-000150",
       "url": "https://www.sec.gov/Archives/edgar/data/920148/000092014826000150/lh-20260630.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "LSCC",
@@ -5738,7 +5822,7 @@
       "grave": false,
       "accn": "0001437749-26-022141",
       "url": "https://www.sec.gov/Archives/edgar/data/855658/000143774926022141/lscc20260629_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "LTC",
@@ -5749,7 +5833,7 @@
       "grave": false,
       "accn": "0001104659-26-079383",
       "url": "https://www.sec.gov/Archives/edgar/data/887905/000110465926079383/tm2619372d1_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "MCFT",
@@ -5760,7 +5844,7 @@
       "grave": false,
       "accn": "0001193125-26-290514",
       "url": "https://www.sec.gov/Archives/edgar/data/1638290/000119312526290514/mcft-20260630.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "NATL",
@@ -5771,7 +5855,7 @@
       "grave": false,
       "accn": "0001140361-26-026940",
       "url": "https://www.sec.gov/Archives/edgar/data/1974138/000114036126026940/ef20077041_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "NET",
@@ -5782,7 +5866,7 @@
       "grave": false,
       "accn": "0001477333-26-000042",
       "url": "https://www.sec.gov/Archives/edgar/data/1477333/000147733326000042/cloud-20260630.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "NKE",
@@ -5793,7 +5877,7 @@
       "grave": false,
       "accn": "0000320187-26-000076",
       "url": "https://www.sec.gov/Archives/edgar/data/320187/000032018726000076/nke-20260630.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "NUVB",
@@ -5804,7 +5888,7 @@
       "grave": false,
       "accn": "0001193125-26-290823",
       "url": "https://www.sec.gov/Archives/edgar/data/1811063/000119312526290823/d81296d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "NVCR",
@@ -5815,7 +5899,7 @@
       "grave": false,
       "accn": "0001645113-26-000056",
       "url": "https://www.sec.gov/Archives/edgar/data/1645113/000164511326000056/nvcr-20260630.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "NVDA",
@@ -5826,7 +5910,7 @@
       "grave": false,
       "accn": "0001045810-26-000056",
       "url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581026000056/nvda-20260624.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "NWS",
@@ -5837,7 +5921,7 @@
       "grave": false,
       "accn": "0001564708-26-000142",
       "url": "https://www.sec.gov/Archives/edgar/data/1564708/000156470826000142/nws-20260629.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "NWSA",
@@ -5848,7 +5932,7 @@
       "grave": false,
       "accn": "0001564708-26-000142",
       "url": "https://www.sec.gov/Archives/edgar/data/1564708/000156470826000142/nws-20260629.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "O",
@@ -5859,7 +5943,7 @@
       "grave": false,
       "accn": "0001104659-26-079023",
       "url": "https://www.sec.gov/Archives/edgar/data/726728/000110465926079023/tm2613710d3_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "OCFC",
@@ -5870,7 +5954,7 @@
       "grave": false,
       "accn": "0001004702-26-000111",
       "url": "https://www.sec.gov/Archives/edgar/data/1004702/000100470226000111/ocfc-20260629.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "PATK",
@@ -5881,7 +5965,7 @@
       "grave": false,
       "accn": "0000076605-26-000059",
       "url": "https://www.sec.gov/Archives/edgar/data/76605/000007660526000059/patk-20260630.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "PCRX",
@@ -5892,7 +5976,7 @@
       "grave": false,
       "accn": "0001628280-26-046136",
       "url": "https://www.sec.gov/Archives/edgar/data/1396814/000162828026046136/pcrx-20260628.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "PPL",
@@ -5903,7 +5987,7 @@
       "grave": false,
       "accn": "0000922224-26-000040",
       "url": "https://www.sec.gov/Archives/edgar/data/922224/000092222426000040/ppl-20260630.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "PPLC",
@@ -5914,7 +5998,7 @@
       "grave": false,
       "accn": "0000922224-26-000040",
       "url": "https://www.sec.gov/Archives/edgar/data/922224/000092222426000040/ppl-20260630.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "PRGO",
@@ -5925,7 +6009,7 @@
       "grave": false,
       "accn": "0001585364-26-000103",
       "url": "https://www.sec.gov/Archives/edgar/data/1585364/000158536426000103/prgo-20260630.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "PRGS",
@@ -5936,11 +6020,7 @@
       "grave": false,
       "accn": "0000876167-26-000078",
       "url": "https://www.sec.gov/Archives/edgar/data/876167/000087616726000078/prgs-20260531.htm",
-      "whatChanged": [
-        "The MDL has also consolidated an insurance subrogation complaint (where an insurer is seeking recovery for expenses incurred on behalf of its insured in connection with the MOVEit Vulnerability) and, as of the date of this filing, one customer cross-claim.",
-        "These decreases in interest expense were partially offset by the redemption of our 2026 Notes in April, which was funded by drawing on our revolving line of credit that carries a higher interest rate than the Notes.",
-        "The decrease in acquisition-related expenses in the second quarter of and first six months fiscal year 2026 are due to the fair value adjustment related to the contingent earn-out to former Nuclia shareholders."
-      ]
+      "performance": null
     },
     {
       "ticker": "PRGS",
@@ -5951,7 +6031,7 @@
       "grave": false,
       "accn": "0000876167-26-000077",
       "url": "https://www.sec.gov/Archives/edgar/data/876167/000087616726000077/prgs-20260630.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "PTLO",
@@ -5962,7 +6042,7 @@
       "grave": false,
       "accn": "0001871509-26-000043",
       "url": "https://www.sec.gov/Archives/edgar/data/1871509/000187150926000043/ptlo-20260629.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "PVLA",
@@ -5973,7 +6053,7 @@
       "grave": false,
       "accn": "0001104659-26-079087",
       "url": "https://www.sec.gov/Archives/edgar/data/1583648/000110465926079087/tm2619348d1_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "PZZA",
@@ -5984,7 +6064,7 @@
       "grave": false,
       "accn": "0001628280-26-046242",
       "url": "https://www.sec.gov/Archives/edgar/data/901491/000162828026046242/pzza-20260626.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "QBTS",
@@ -5995,7 +6075,7 @@
       "grave": false,
       "accn": "0001907982-26-000093",
       "url": "https://www.sec.gov/Archives/edgar/data/1907982/000190798226000093/qbts-20260630.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "QUBT",
@@ -6006,7 +6086,7 @@
       "grave": false,
       "accn": "0001213900-26-073258",
       "url": "https://www.sec.gov/Archives/edgar/data/1758009/000121390026073258/ea0296335-8k_quantum.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "QXO",
@@ -6017,7 +6097,7 @@
       "grave": false,
       "accn": "0001104659-26-079101",
       "url": "https://www.sec.gov/Archives/edgar/data/1236275/000110465926079101/tm2618991d6_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "RUSHA",
@@ -6028,7 +6108,7 @@
       "grave": false,
       "accn": "0001437749-26-022156",
       "url": "https://www.sec.gov/Archives/edgar/data/1012019/000143774926022156/rusha20260630_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "RUSHB",
@@ -6039,7 +6119,7 @@
       "grave": false,
       "accn": "0001437749-26-022156",
       "url": "https://www.sec.gov/Archives/edgar/data/1012019/000143774926022156/rusha20260630_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "SBET",
@@ -6050,7 +6130,7 @@
       "grave": false,
       "accn": "0001493152-26-031202",
       "url": "https://www.sec.gov/Archives/edgar/data/1981535/000149315226031202/form8-k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "SEPN",
@@ -6061,7 +6141,7 @@
       "grave": false,
       "accn": "0001193125-26-290649",
       "url": "https://www.sec.gov/Archives/edgar/data/1984086/000119312526290649/sepn-20260626.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "SIG",
@@ -6072,7 +6152,7 @@
       "grave": false,
       "accn": "0000832988-26-000173",
       "url": "https://www.sec.gov/Archives/edgar/data/832988/000083298826000173/sig-20260626.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "SNOW",
@@ -6083,7 +6163,7 @@
       "grave": false,
       "accn": "0001640147-26-000032",
       "url": "https://www.sec.gov/Archives/edgar/data/1640147/000164014726000032/snow-20260629.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "SR",
@@ -6094,7 +6174,7 @@
       "grave": false,
       "accn": "0001193125-26-290674",
       "url": "https://www.sec.gov/Archives/edgar/data/1126956/000119312526290674/sr-20260630.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "STOK",
@@ -6105,7 +6185,7 @@
       "grave": false,
       "accn": "0001193125-26-289409",
       "url": "https://www.sec.gov/Archives/edgar/data/1623526/000119312526289409/d924679d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "STZ",
@@ -6116,7 +6196,7 @@
       "grave": false,
       "accn": "0000016918-26-000028",
       "url": "https://www.sec.gov/Archives/edgar/data/16918/000001691826000028/stz-20260630.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "SUNB",
@@ -6127,7 +6207,7 @@
       "grave": false,
       "accn": "0001193125-26-290643",
       "url": "https://www.sec.gov/Archives/edgar/data/2083785/000119312526290643/d136822d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "TALO",
@@ -6138,7 +6218,7 @@
       "grave": false,
       "accn": "0001193125-26-290589",
       "url": "https://www.sec.gov/Archives/edgar/data/1724965/000119312526290589/d14154d8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "TEX",
@@ -6149,7 +6229,7 @@
       "grave": false,
       "accn": "0000097216-26-000105",
       "url": "https://www.sec.gov/Archives/edgar/data/97216/000009721626000105/tex-20260625.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "THFF",
@@ -6160,7 +6240,7 @@
       "grave": false,
       "accn": "0000714562-26-000047",
       "url": "https://www.sec.gov/Archives/edgar/data/714562/000071456226000047/thff-20260629x8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "THFF",
@@ -6171,7 +6251,7 @@
       "grave": false,
       "accn": "0000714562-26-000044",
       "url": "https://www.sec.gov/Archives/edgar/data/714562/000071456226000044/thff-20260629x8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "TLRY",
@@ -6182,7 +6262,7 @@
       "grave": false,
       "accn": "0001140361-26-026966",
       "url": "https://www.sec.gov/Archives/edgar/data/1731348/000114036126026966/ef20077071_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "ULCC",
@@ -6193,7 +6273,7 @@
       "grave": false,
       "accn": "0001670076-26-000068",
       "url": "https://www.sec.gov/Archives/edgar/data/1670076/000167007626000068/fron-20260624.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "VST",
@@ -6204,7 +6284,7 @@
       "grave": false,
       "accn": "0001140361-26-026944",
       "url": "https://www.sec.gov/Archives/edgar/data/1692819/000114036126026944/ef20077059_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "VVV",
@@ -6215,7 +6295,7 @@
       "grave": false,
       "accn": "0001674910-26-000049",
       "url": "https://www.sec.gov/Archives/edgar/data/1674910/000167491026000049/vvv-20260630.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "WEST",
@@ -6226,7 +6306,7 @@
       "grave": false,
       "accn": "0001104659-26-079351",
       "url": "https://www.sec.gov/Archives/edgar/data/1806347/000110465926079351/tm2618568d1_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "WPC",
@@ -6237,7 +6317,7 @@
       "grave": false,
       "accn": "0001104659-26-079341",
       "url": "https://www.sec.gov/Archives/edgar/data/1025378/000110465926079341/tm2619376d1_8k.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "WS",
@@ -6248,7 +6328,7 @@
       "grave": false,
       "accn": "0001968487-26-000018",
       "url": "https://www.sec.gov/Archives/edgar/data/1968487/000196848726000018/ws-20260625.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "XERS",
@@ -6259,7 +6339,7 @@
       "grave": false,
       "accn": "0001867096-26-000048",
       "url": "https://www.sec.gov/Archives/edgar/data/1867096/000186709626000048/xers-20260629.htm",
-      "whatChanged": null
+      "performance": null
     },
     {
       "ticker": "ZSQR",
@@ -6270,7 +6350,7 @@
       "grave": false,
       "accn": "0001185185-26-002750",
       "url": "https://www.sec.gov/Archives/edgar/data/1759186/000118518526002750/zsquared8k063026.htm",
-      "whatChanged": null
+      "performance": null
     }
   ]
 }
