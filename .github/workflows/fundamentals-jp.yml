@@ -88,6 +88,12 @@ jobs:
       - name: Audit coverage
         if: ${{ github.event.inputs.probe_segments != 'true' }}
         run: npm run audit:coverage
+      # The full test suite against the fresh data, before the push: a workflow-token push does
+      # not trigger CI, so this is the only test gate a data refresh ever passes. Red blocks the
+      # commit and emails the owner.
+      - name: Test against the fresh data
+        if: ${{ github.event.inputs.probe_segments != 'true' }}
+        run: npm test
       - name: Commit if changed
         if: ${{ github.event.inputs.probe_segments != 'true' }}
         run: |

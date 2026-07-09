@@ -195,6 +195,14 @@ jobs:
       - name: Audit coverage
         if: ${{ github.event.inputs.debug == '' }}
         run: npm run audit:coverage
+      # The full test suite, against the freshly fetched data, BEFORE the push. A push made with
+      # the workflow token does not trigger the CI workflow (GitHub suppresses recursive runs), so
+      # without this step a data refresh that breaks the product lands silently green — which is
+      # exactly how the sharesForValue rollout broke the compare-card goldens unnoticed. A red run
+      # here blocks the commit and emails the owner.
+      - name: Test against the fresh data
+        if: ${{ github.event.inputs.debug == '' }}
+        run: npm test
       - name: Commit if changed
         if: ${{ github.event.inputs.debug == '' }}
         run: |
