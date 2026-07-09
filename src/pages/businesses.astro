@@ -2,16 +2,15 @@
 // The shelves (docs/discovery-design.md feature 4): the whole library on one page, arranged by
 // what the businesses do. About twenty-five plain-noun shelves, each naming its industries with a
 // count of the records held. A table of contents, not a menu system: no personalization, no
-// prompts, no search box — clicking through (in the next round) is the circle-of-competence act.
+// prompts, no search box — clicking through to a chapter is the circle-of-competence act.
 //
 // Order is fixed and stated: shelves alphabetical by their sentence, industries alphabetical
 // within a shelf. A count is the size of a shelf, never a recommendation; nothing here ranks,
 // scores, or suggests.
 //
-// Industries render as PLAIN TEXT for now. The /industries/[slug] chapter pages (feature 3)
-// arrive in the next round; when they exist, each industry below becomes a link to its chapter
-// via industrySlug() from lib/shelves.mjs — the slugs are already curated and stable in
-// src/data/shelves.json. No links are emitted today so nothing on this page can 404.
+// Each industry links to its chapter at /industries/[slug] (feature 3) via the curated, stable
+// slug in src/data/shelves.json — the same slug the chapter pages build their routes from, so a
+// link here can never 404 while shelvesTest is green.
 import BaseLayout from "../layouts/BaseLayout.astro";
 import fundamentals from "../data/fundamentals.json";
 import adr from "../data/fundamentals.adr.json";
@@ -27,7 +26,7 @@ for (const c of [...(fundamentals.companies || []), ...(adr.companies || []), ..
 }
 
 // A curated industry with no companies after a data refresh renders nothing — a zero row would be
-// noise, and next round it would be a link to an empty chapter.
+// a link to a chapter that no longer builds.
 const shelves = SHELVES.map((s) => {
   const industries = s.industries
     .map((ind) => ({ ...ind, count: countByLabel.get(ind.label) || 0 }))
@@ -67,7 +66,7 @@ const refreshed = fmtAsOf(dataAsOf);
           {s.industries.map((ind, i) => (
             <>
               {i > 0 ? <span class="sep"> · </span> : null}
-              <span class="ind">{ind.label} <span class="n">{ind.count.toLocaleString()}</span></span>
+              <a class="ind" href={`/industries/${ind.slug}`}>{ind.label} <span class="n">{ind.count.toLocaleString()}</span></a>
             </>
           ))}
         </p>
@@ -92,7 +91,8 @@ const refreshed = fmtAsOf(dataAsOf);
     .sNoun { font-family: var(--serif); font-weight: 600; font-size: 17px; margin: 0; color: var(--ink); }
     .sN { font-family: var(--sans); font-variant-numeric: tabular-nums; font-size: 13px; color: var(--muted); flex: 0 0 auto; }
     .sInds { margin: 6px 0 0; color: var(--ink-dim); font-size: 13.5px; line-height: 1.8; max-width: 90ch; }
-    .ind { white-space: nowrap; }
+    .ind { white-space: nowrap; color: var(--ink-dim); text-decoration: none; }
+    .ind:hover { color: var(--accent); }
     .ind .n { font-variant-numeric: tabular-nums; color: var(--muted); }
     .sep { color: var(--muted); }
 

@@ -1,0 +1,158 @@
+---
+// An industry chapter — docs/discovery-design.md feature 3. One page per industry that occurs in
+// any pool (US, ADR and Japan share one label space), every member A to Z by ticker as the same
+// Entry Block the Manual renders, with the same columns aligned so the eye can run down a column.
+// The header is computed and factual — member count and three group reads — stated as a
+// description of the list, naming no best member; hand-written preambles replace computed headers
+// progressively (design open question 2). No sort controls, no filters: a chapter is a reading
+// surface, not a test, so withheld and flagged records sit in their alphabetical place.
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import EntryBlock from "../../components/EntryBlock.astro";
+import fundamentals from "../../data/fundamentals.json";
+import adrData from "../../data/fundamentals.adr.json";
+import jpData from "../../data/fundamentals.jp.json";
+import language from "../../data/language.json";
+import { industryOrder, chapterFacts, chapterMemberHref } from "../../lib/chapters.mjs";
+import { computeLenses } from "../../lib/lenses.mjs";
+import { dataAsOf, fmtAsOf } from "../../lib/freshness.mjs";
+
+export function getStaticPaths() {
+  const { chapters } = industryOrder(fundamentals.companies, adrData.companies, jpData.companies);
+  return chapters.map((ch) => ({ params: { slug: ch.slug } }));
+}
+
+const slug = String(Astro.params.slug || "");
+const { bySlug } = industryOrder(fundamentals.companies, adrData.companies, jpData.companies);
+const chapter = bySlug.get(slug);
+const facts = chapterFacts(chapter);
+
+// The same memoized universe pass the manual, archetype and company pages run, so a chip here can
+// never disagree with the lens page it links to. JP names never enter this pass.
+const lenses = computeLenses(
+  [...(fundamentals.companies || []), ...(adrData.companies || [])],
+  language.companies
+).byTicker;
+
+const members = chapter.members;
+const first = members[0];
+const last = members[members.length - 1];
+const one = members.length === 1;
+const pct = (v, d = 0) => `${(v * 100).toFixed(d)}%`;
+
+// "Open anywhere on this chapter": the uniform random door, scoped to the members. Uniform,
+// withheld and flagged records included — any weighting would be an implicit ranking. The list of
+// hrefs is already on the page (every member is rendered below), so this costs nothing at build.
+const memberHrefs = members.map((m) => chapterMemberHref(m));
+
+// Each group read states exactly what was computed, carries the count of members it was read on,
+// and renders its absence honestly — "not applied" where the read is a category error for every
+// member, "not read" where the inputs were not in the filings. Never a mark against the list.
+const allFin = facts.finCount === facts.count;
+const gpaText =
+  facts.gpa.n > 0
+    ? `median ${pct(facts.gpa.median)} — gross profit as a share of total assets, each member's median across its readable years; read on ${facts.gpa.n} of ${facts.count} member${facts.count === 1 ? "" : "s"}`
+    : allFin
+      ? "not applied: every member is a balance-sheet business, where the read is a category error"
+      : "not read: no member carries three readable years of gross profit and total assets";
+const capintText =
+  facts.capint.n > 0
+    ? `median ${pct(facts.capint.median, 1)} — capital expenditure as a share of revenue, each member's median across its readable years; read on ${facts.capint.n} of ${facts.count} member${facts.count === 1 ? "" : "s"}`
+    : allFin
+      ? "not applied: every member is a balance-sheet business, where the read is a category error"
+      : "not read: no member carries three readable years of capital expenditure and revenue";
+const netCashText =
+  facts.netCash.n > 0
+    ? `${facts.netCash.yes} of the ${facts.netCash.n} member${facts.netCash.n === 1 ? "" : "s"} with a readable debt line hold${facts.netCash.n === 1 ? "s" : ""} more cash and short-term investments than total debt`
+    : allFin
+      ? "not applied: every member is a balance-sheet business, where the read is a category error"
+      : "not read: no member's debt line is reliably captured";
+
+const refreshed = fmtAsOf(dataAsOf);
+const description = one
+  ? `${chapter.label}: the one company the library holds in this industry, as the same five-line record the Manual uses, under a computed factual header.`
+  : `${chapter.label}: the ${facts.count.toLocaleString()} companies the library holds in this industry, each as the same five-line record, in strict ticker order, under a computed factual header.`;
+---
+
+<BaseLayout title={`${chapter.label}, an industry chapter — Owner Scorecard`} description={description}>
+  <p class="back"><a href="/businesses">← The shelves</a></p>
+
+  <header class="hero">
+    <span class="kicker">An industry chapter{chapter.shelfNoun ? ` · ${chapter.shelfNoun}` : ""}</span>
+    <h1>{chapter.label}</h1>
+    <p class="range">
+      {one
+        ? `1 member: ${first.ticker}.`
+        : `${facts.count.toLocaleString()} members, ${first.ticker} to ${last.ticker}, A to Z by ticker.`}
+    </p>
+    <dl class="chapStats">
+      <div class="cs"><dt>Gross profitability</dt><dd>{gpaText}</dd></div>
+      <div class="cs"><dt>Capital intensity</dt><dd>{capintText}</dd></div>
+      <div class="cs"><dt>Net cash</dt><dd>{netCashText}</dd></div>
+    </dl>
+    <p class="statNote">
+      Figures describe the list as a group, from each member's own filed record; they name no
+      member and form no rank. A member missing an input is absent from that median, never counted
+      against the others.
+    </p>
+    {refreshed ? <p class="dateline">From the latest filings · data as of {refreshed}.</p> : null}
+  </header>
+
+  <p class="chapDoor">
+    <a id="chapAnywhere" href="#entries" data-hrefs={JSON.stringify(memberHrefs)} title="A uniformly random member of this chapter">
+      Open anywhere in this chapter
+    </a>
+  </p>
+
+  <div id="entries">
+    {members.map((m) => (
+      <EntryBlock company={m.company} lenses={lenses} market={m.poolKey} />
+    ))}
+  </div>
+
+  <p class="foot">
+    The same five lines for every member, in strict ticker order; a figure that could not be read
+    renders as "not read," never as a mark against the record beside it. The header describes the
+    list and names no member; the entries carry no ranking and form no score. What a chapter
+    cannot carry — understanding of the business, and a price — is yours.
+  </p>
+
+  <script is:inline>
+    // The chapter's own random door (discovery design, feature 5): a uniform draw over the
+    // members rendered on this page, nothing weighted, nothing fetched. Without JS the anchor
+    // simply jumps to the entries.
+    (function () {
+      var door = document.getElementById("chapAnywhere");
+      if (!door) return;
+      var hrefs = [];
+      try { hrefs = JSON.parse(door.dataset.hrefs || "[]"); } catch (e) {}
+      if (!hrefs.length) return;
+      door.addEventListener("click", function (e) {
+        e.preventDefault();
+        window.location.href = hrefs[Math.floor(Math.random() * hrefs.length)];
+      });
+    })();
+  </script>
+
+  <style>
+    .back { margin: 0 0 10px; font-size: 13px; }
+    .kicker { font-family: var(--sans); font-size: 11px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--muted); }
+    .hero h1 { margin: 4px 0 0; }
+    .range { font-family: var(--sans); font-size: 13px; color: var(--ink-dim); margin: 8px 0 0; font-variant-numeric: tabular-nums; }
+
+    .chapStats { margin: 14px 0 0; border-top: 1px solid var(--rule-strong); }
+    .cs { display: grid; grid-template-columns: 170px 1fr; gap: 14px; padding: 8px 0; border-bottom: 1px solid var(--rule); }
+    .cs dt { font-family: var(--sans); font-size: 10.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); padding-top: 2px; }
+    .cs dd { margin: 0; font-family: var(--sans); font-size: 13px; line-height: 1.55; color: var(--ink-dim); max-width: 80ch; font-variant-numeric: tabular-nums; }
+    @media (max-width: 560px) { .cs { grid-template-columns: 1fr; gap: 2px; } }
+
+    .statNote { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); margin: 10px 0 0; max-width: 76ch; line-height: 1.6; }
+    .dateline { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); margin: 8px 0 0; }
+
+    .chapDoor { display: flex; justify-content: flex-end; margin: 14px 0 0; padding-bottom: 8px; border-bottom: 1px solid var(--rule-strong); }
+    .chapDoor a { font-family: var(--sans); font-size: 12.5px; font-weight: 600; letter-spacing: 0.02em; }
+
+    #entries { scroll-margin-top: 16px; }
+
+    .foot { font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--muted); margin: 18px 0 0; line-height: 1.6; max-width: 78ch; border-top: 1px solid var(--rule-strong); padding-top: 12px; }
+  </style>
+</BaseLayout>
