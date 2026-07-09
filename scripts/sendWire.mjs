@@ -66,6 +66,19 @@ for (const f of follows) {
 
 const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
+// The performance line under a periodic item: numbers only, up/down and a percentage, exactly
+// as the wire page prints it (the verbatim MD&A clause stays on the page). Every percentage
+// was computed from two dollar figures in the filing's own XBRL; nothing else is said.
+const upDown = (l) => `${l.yoy < 0 ? "down" : "up"} ${Math.abs(l.yoy).toFixed(1)}%`;
+function perfLine(p) {
+  if (!p) return null;
+  const phrase = p.basis === "fy" ? "for the fiscal year" : p.basis === "ytd" ? "year to date" : "year over year";
+  const parts = [];
+  if (p.rev) parts.push(`Revenue ${upDown(p.rev)} ${phrase}`);
+  if (p.oi) parts.push(p.rev ? `operating income ${upDown(p.oi)}` : `Operating income ${upDown(p.oi)} ${phrase}`);
+  return parts.length ? parts.join("; ") : null;
+}
+
 let sent = 0, skipped = 0;
 for (const sub of subs) {
   const email = emailOf.get(sub.user_id);
@@ -88,7 +101,10 @@ for (const sub of subs) {
     ? `The wire, week of ${weeklySince}: ${mine.length} filing${mine.length === 1 ? "" : "s"}`
     : `The wire: ${mine.length} filing${mine.length === 1 ? "" : "s"} from companies you follow`;
 
-  const lines = mine.map((it) => `${it.date}  ${it.ticker}  ${it.form}  ${it.label || ""}\n  ${it.url || `${SITE}/c/${it.ticker}`}`);
+  const lines = mine.map((it) => {
+    const perf = perfLine(it.performance);
+    return `${it.date}  ${it.ticker}  ${it.form}  ${it.label || ""}\n  ${it.url || `${SITE}/c/${it.ticker}`}${perf ? `\n    ${perf}` : ""}`;
+  });
   const text = [
     weekly ? "New filings this week from the companies you follow." : "New filings from the companies you follow.",
     "",
@@ -98,12 +114,14 @@ for (const sub of subs) {
     `Manage or turn off this email: ${SITE}/account`,
   ].join("\n");
 
-  const rows = mine.map((it) =>
-    `<tr><td style="padding:4px 10px 4px 0;color:#5b616c;font-size:13px;white-space:nowrap">${esc(it.date)}</td>` +
+  const rows = mine.map((it) => {
+    const perf = perfLine(it.performance);
+    return `<tr><td style="padding:4px 10px 4px 0;color:#5b616c;font-size:13px;white-space:nowrap">${esc(it.date)}</td>` +
     `<td style="padding:4px 10px 4px 0;font-weight:600"><a href="${esc(`${SITE}/c/${String(it.ticker).toUpperCase()}`)}" style="color:#1b3b6f;text-decoration:none">${esc(it.ticker)}</a></td>` +
     `<td style="padding:4px 10px 4px 0;font-size:13px">${esc(it.form)}</td>` +
-    `<td style="padding:4px 0;font-size:13.5px">${it.url ? `<a href="${esc(it.url)}" style="color:#18191d">${esc(it.label || "the filing")}</a>` : esc(it.label || "")}</td></tr>`
-  ).join("");
+    `<td style="padding:4px 0;font-size:13.5px">${it.url ? `<a href="${esc(it.url)}" style="color:#18191d">${esc(it.label || "the filing")}</a>` : esc(it.label || "")}</td></tr>` +
+    (perf ? `<tr><td></td><td colspan="3" style="padding:0 0 6px;font-size:12.5px;color:#1b3b6f">${esc(perf)}</td></tr>` : "");
+  }).join("");
   const html =
     `<div style="font-family:Georgia,serif;color:#18191d;max-width:640px">` +
     `<p style="font-size:15px">${weekly ? "New filings this week from the companies you follow." : "New filings from the companies you follow."}</p>` +

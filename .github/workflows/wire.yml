@@ -29,13 +29,36 @@ jobs:
       - run: npm run fetch:rates
         env:
           SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT }}
+      # Per-filing refresh: the companies that filed a 10-K/10-Q get their fundamentals
+      # re-fetched in the same run, so the wire item and the lit-up company page go live in the
+      # same deploy. The window is 2 days, not 1 — that gives every filer a second attempt the
+      # next morning, which self-heals the edge where companyfacts still lags a same-morning
+      # filing when the wire runs. ONLY_FUND re-fetches just the named tickers and merges over
+      # the last good file, so the catalog is never truncated.
+      - name: Find the periodic filers
+        id: filers
+        run: |
+          tickers=$(node -e "const w=require('./src/data/wire.json');const cut=new Date(Date.now()-2*86400000).toISOString().slice(0,10);console.log([...new Set((w.items||[]).filter((i)=>(i.form==='10-K'||i.form==='10-Q')&&i.date>=cut).map((i)=>String(i.ticker).toUpperCase()))].join(','))")
+          echo "tickers=$tickers" >> "$GITHUB_OUTPUT"
+          echo "Periodic filers in the 2-day window: ${tickers:-none}"
+      - name: Refresh fundamentals for the filers
+        if: steps.filers.outputs.tickers != ''
+        run: npm run fetch:fundamentals
+        env:
+          ONLY_FUND: ${{ steps.filers.outputs.tickers }}
+          SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT }}
+      # The same audits the fundamentals workflow runs: a targeted refresh must clear the same
+      # bar before it is committed, or a bad merge would publish sitewide.
+      - name: Audit the refreshed data
+        if: steps.filers.outputs.tickers != ''
+        run: npm run audit && npm run audit:believe && npm run audit:coverage
       - name: Commit if changed
         run: |
-          if ! git diff --quiet -- src/data/wire.json src/data/rates.json; then
+          if ! git diff --quiet -- src/data/wire.json src/data/rates.json src/data/fundamentals.json; then
             git config user.name "github-actions[bot]"
             git config user.email "github-actions[bot]@users.noreply.github.com"
-            git add src/data/wire.json src/data/rates.json
-            git commit -m "Refresh the filing wire and the risk-free rate"
+            git add src/data/wire.json src/data/rates.json src/data/fundamentals.json
+            git commit -m "Refresh the filing wire, the risk-free rate, and the day's filers"
             # Rebase-and-retry so a concurrent push (an overlapping fundamentals run) can't silently
             # drop the day's wire + risk-free-rate refresh, the way a bare push otherwise would.
             pushed=""
