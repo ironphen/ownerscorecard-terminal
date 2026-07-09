@@ -220,8 +220,15 @@ export const LENSES = [
       const cushion = ncav / ta;
       if (ncav <= 0 || cushion < 0.1 || cushion > 1.001) return null;
       const cur = F.company.currency || "USD";
-      const perShare = F.shares && F.shares > 0 ? `${perShareStr(ncav / F.shares, cur)}/share` : `${fmtMoney(ncav, cur)} total`;
-      return { sort: cushion, figure: `NCAV ${perShare} · cushion ${pctStr(cushion)} of assets` };
+      const perShareNum = F.shares && F.shares > 0 ? ncav / F.shares : null;
+      const perShare = perShareNum != null ? `${perShareStr(perShareNum, cur)}/share` : `${fmtMoney(ncav, cur)} total`;
+      return {
+        sort: cushion,
+        figure: `NCAV ${perShare} · cushion ${pctStr(cushion)} of assets`,
+        // The as-filed components behind the figure, emitted so the ledger page can lay the
+        // subtraction out for the reader to redo by hand. Same coherent balance sheet as above.
+        data: { ncav, perShare: perShareNum, ca, totLiab, shares: perShareNum != null ? F.shares : null, fy: F.company.fy, currency: cur },
+      };
     },
   },
   {
@@ -341,7 +348,7 @@ export function computeLenses(companies, langMap) {
     for (const lens of LENSES) {
       const hit = lens.pick(F);
       if (!hit) continue;
-      byLens[lens.key].push({ ticker: tk, name: company.name || "", figure: hit.figure, sort: hit.sort });
+      byLens[lens.key].push({ ticker: tk, name: company.name || "", figure: hit.figure, sort: hit.sort, ...(hit.data ? { data: hit.data } : {}) });
       cleared.push(lens.key);
     }
     if (cleared.length) byTicker[tk] = cleared;

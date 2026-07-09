@@ -1,0 +1,184 @@
+---
+// The Net-Net Ledger — the net-nets lens upgraded to a workbook. Same universe, same test, same
+// order (cushion, the lens's own figure) as the generic archetype page it replaces; what changes
+// is that every row lays out the as-filed components — current assets, total liabilities, diluted
+// shares, filing year — so the subtraction can be redone by hand. One client-side cell takes the
+// price the reader brings: it lives only in localStorage, keyed per ticker, and shows the price
+// as a percentage of NCAV per share. Typing a price never re-sorts and never filters — the ledger
+// keeps its cushion order no matter what price is typed.
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import fundamentals from "../../data/fundamentals.json";
+import adr from "../../data/fundamentals.adr.json";
+import language from "../../data/language.json";
+import { computeLenses, LENS_BY_KEY, GROUP_LABEL } from "../../lib/lenses.mjs";
+import { fmtMoney, currencySymbol } from "../../lib/fundamentals.mjs";
+import { dataAsOf, fmtAsOf } from "../../lib/freshness.mjs";
+
+const companies = [...(fundamentals.companies || []), ...(adr.companies || [])];
+const { byLens } = computeLenses(companies, language.companies);
+const lens = LENS_BY_KEY["net-nets"];
+
+const CAP = 200; // the strongest CAP by the lens figure; the rest clear the same test, named honestly below
+const allRows = byLens["net-nets"] || [];
+const rows = allRows.slice(0, CAP);
+const truncated = allRows.length - rows.length;
+
+// A per-share figure keeps its cents (it is the number the reader sets a price against).
+const perShareStr = (v, ccy) => `${currencySymbol(ccy)}${v.toFixed(2)}`;
+const sharesStr = (n) => {
+  if (n == null) return "—";
+  if (n >= 1e9) return `${(n / 1e9).toFixed(2)}B`;
+  if (n >= 1e6) return `${(n / 1e6).toFixed(1)}M`;
+  if (n >= 1e3) return `${Math.round(n / 1e3)}K`;
+  return `${Math.round(n)}`;
+};
+const refreshed = fmtAsOf(dataAsOf);
+---
+
+<BaseLayout title={`${lens.title}, Archetypes · Owner Scorecard`}>
+  <p class="back"><a href="/archetypes">← Archetypes</a></p>
+
+  <header class="hero">
+    <span class="kicker">{GROUP_LABEL[lens.group]}</span>
+    <h1>{lens.title}</h1>
+    <p class="principle">{lens.principle}</p>
+    <p class="test"><span class="testLabel">The test</span>{lens.test}</p>
+    <p class="practice">
+      Graham's practice: he paid no more than about two-thirds of net current asset value, and he
+      held these in wide diversification, dozens at a time, so that no single liquidation had to go
+      well. Each row shows the as-filed components — current assets, total liabilities, diluted
+      shares, the filing year — so the subtraction can be redone by hand.
+    </p>
+    <p class="yourPrice">
+      The price column is yours. Type a price and the row shows it as a percentage of NCAV per
+      share. It is stored only in your browser, per ticker, and it never re-orders or filters the
+      ledger; the list keeps its cushion order no matter what is typed.
+    </p>
+    {refreshed ? <p class="dateline">Latest annual balance sheets · data as of {refreshed}.</p> : null}
+  </header>
+
+  <div class="countBar">
+    <span class="total">{allRows.length.toLocaleString()} {allRows.length === 1 ? "company" : "companies"}</span>
+    {truncated > 0 ? <span class="trunc">showing the strongest {CAP.toLocaleString()} by cushion; the other {truncated.toLocaleString()} clear the same test</span> : null}
+  </div>
+
+  <div class="ledgerWrap">
+    <table class="ledger">
+      <thead>
+        <tr>
+          <th class="cTk">Company</th>
+          <th class="num">NCAV / share</th>
+          <th class="num">Current assets</th>
+          <th class="num">− Total liabilities</th>
+          <th class="num">= NCAV</th>
+          <th class="num">÷ Diluted shares</th>
+          <th class="num">Filed</th>
+          <th class="num">Cushion</th>
+          <th class="num">Your price</th>
+          <th class="num">Price / NCAV</th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((r) => {
+          const d = r.data || {};
+          const hasPs = d.perShare != null && d.perShare > 0;
+          return (
+            <tr data-nn-row data-ticker={r.ticker} data-ncavps={hasPs ? d.perShare : null}>
+              <td class="cTk">
+                <a class="tk" href={`/c/${r.ticker}`}>{r.ticker}</a>
+                <span class="nm">{r.name}</span>
+              </td>
+              <td class="num ps">{hasPs ? perShareStr(d.perShare, d.currency) : `${fmtMoney(d.ncav, d.currency)} total`}</td>
+              <td class="num">{fmtMoney(d.ca, d.currency)}</td>
+              <td class="num">{fmtMoney(d.totLiab, d.currency)}</td>
+              <td class="num">{fmtMoney(d.ncav, d.currency)}</td>
+              <td class="num">{sharesStr(d.shares)}</td>
+              <td class="num">{d.fy ?? "—"}</td>
+              <td class="num">{Math.round(r.sort * 100)}% of assets</td>
+              {hasPs ? (
+                <td class="num pxCell">
+                  <span class="pxSym">{currencySymbol(d.currency)}</span>
+                  <input class="px" type="number" inputmode="decimal" step="0.01" min="0" placeholder="price" aria-label={`Your price for ${r.ticker}, in the filing currency`} />
+                </td>
+              ) : (
+                <td class="num noPx">no share count</td>
+              )}
+              <td class="num pctCell">{hasPs ? <span data-pct>—</span> : "—"}</td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
+  </div>
+
+  <p class="foot">
+    From the company's SEC filings, computed the same way as on its page. NCAV is current assets
+    minus every liability (total assets less equity), from one coherent annual balance sheet.
+    Typed prices live only in this browser's storage and never leave it; ADR rows report in the
+    filing currency shown, so bring the ordinary-share price in that currency.
+  </p>
+
+  <script>
+    // The reader's price, per ticker, localStorage only (key: osc-nn-px-TICKER). Rendering is
+    // strictly per-row: a typed price updates its own percentage cell and nothing else — no
+    // re-sorting, no filtering, nothing sent anywhere.
+    const rows = document.querySelectorAll("[data-nn-row]");
+    for (const row of rows) {
+      const input = row.querySelector("input.px");
+      const out = row.querySelector("[data-pct]");
+      const ncavps = parseFloat(row.getAttribute("data-ncavps") || "");
+      if (!input || !out || !isFinite(ncavps) || ncavps <= 0) continue;
+      const key = `osc-nn-px-${row.getAttribute("data-ticker")}`;
+      const render = (v) => {
+        const p = parseFloat(v);
+        out.textContent = isFinite(p) && p > 0 ? `${Math.round((p / ncavps) * 100)}% of NCAV` : "—";
+      };
+      let stored = null;
+      try { stored = localStorage.getItem(key); } catch {}
+      if (stored) { input.value = stored; render(stored); }
+      input.addEventListener("input", () => {
+        const v = input.value.trim();
+        try { v ? localStorage.setItem(key, v) : localStorage.removeItem(key); } catch {}
+        render(v);
+      });
+    }
+  </script>
+
+  <style>
+    .back { margin: 0 0 10px; font-size: 13px; }
+    .kicker { font-family: var(--sans); font-size: 11px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--accent); }
+    .hero h1 { margin: 4px 0 0; }
+    .principle { font-family: var(--serif); font-size: 15px; line-height: 1.62; color: var(--ink-soft); margin: 10px 0 0; max-width: 76ch; }
+    .test { font-size: 13.5px; line-height: 1.6; color: var(--ink-dim); margin: 12px 0 0; max-width: 76ch; }
+    .testLabel { font-family: var(--sans); font-weight: 700; font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink); margin-right: 9px; }
+    .practice { font-family: var(--serif); font-size: 14px; line-height: 1.62; color: var(--ink-soft); margin: 12px 0 0; max-width: 76ch; }
+    .yourPrice { font-size: 13.5px; line-height: 1.6; color: var(--ink-dim); margin: 10px 0 0; max-width: 76ch; }
+    .dateline { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); margin: 10px 0 0; }
+
+    .countBar { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; border-bottom: 1px solid var(--rule-strong); margin: 20px 0 0; padding-bottom: 7px; }
+    .total { font-family: var(--sans); font-weight: 700; font-size: 14px; color: var(--ink); }
+    .trunc { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); }
+
+    .ledgerWrap { overflow-x: auto; margin: 0; }
+    .ledger { border-collapse: collapse; width: 100%; min-width: 880px; }
+    .ledger th { font-family: var(--sans); font-size: 10.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); text-align: right; padding: 8px 10px 6px; border-bottom: 1px solid var(--rule-strong); white-space: nowrap; }
+    .ledger th.cTk { text-align: left; padding-left: 0; }
+    .ledger td { padding: 8px 10px; border-bottom: 1px solid var(--rule); font-family: var(--sans); font-variant-numeric: tabular-nums; font-size: 12.5px; color: var(--ink-dim); white-space: nowrap; }
+    .ledger td.cTk { padding-left: 0; max-width: 260px; overflow: hidden; text-overflow: ellipsis; }
+    .num { text-align: right; }
+    .tk { font-family: var(--sans); font-weight: 700; font-size: 13.5px; }
+    .nm { font-family: var(--serif); font-size: 13px; color: var(--ink-soft); margin-left: 8px; }
+    .ps { font-weight: 600; color: var(--ink); }
+    .noPx { font-family: var(--serif); font-style: italic; color: var(--faint); }
+
+    .pxCell { white-space: nowrap; }
+    .pxSym { color: var(--muted); font-size: 12px; margin-right: 2px; }
+    .px { width: 84px; padding: 3px 6px; font-family: var(--sans); font-variant-numeric: tabular-nums; font-size: 12.5px; color: var(--ink); background: var(--surface); border: 1px solid var(--rule); text-align: right; }
+    .px:focus { outline: none; border-color: var(--accent); }
+    .px::-webkit-outer-spin-button, .px::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    .px { -moz-appearance: textfield; appearance: textfield; }
+    .pctCell { min-width: 110px; }
+
+    .foot { font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--muted); border-top: 1px solid var(--rule-strong); margin-top: 20px; padding-top: 12px; max-width: 78ch; line-height: 1.6; }
+  </style>
+</BaseLayout>

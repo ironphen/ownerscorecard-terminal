@@ -121,3 +121,27 @@ export function firedRegisters(company, lang) {
 
   return out;
 }
+
+// firedRegisters over the whole universe, once: per-register member lists, each ordered by the
+// fact's own magnitude (descending, alphabetical tiebreak). Memoized globally for the build, the
+// same way computeLenses is — the hub and every register page call this, and the dataset is
+// always the same canonical set, so the heavy pass runs a single time and the hub's counts can
+// never disagree with the pages' rows. `langMap` is language.json's companies map, keyed by ticker.
+let _regCache = null;
+export function computeRegisters(companies, langMap) {
+  if (_regCache) return _regCache;
+  const bySlug = Object.fromEntries(REGISTERS.map((r) => [r.slug, []]));
+  for (const company of companies || []) {
+    const tk = String(company.ticker || "").toUpperCase();
+    if (!tk) continue;
+    const lang = langMap?.[company.ticker] || null;
+    for (const fired of firedRegisters(company, lang)) {
+      bySlug[fired.slug].push({ ticker: tk, name: company.name || "", figure: fired.figure, sort: fired.sort });
+    }
+  }
+  for (const slug of Object.keys(bySlug)) {
+    bySlug[slug].sort((a, b) => b.sort - a.sort || a.ticker.localeCompare(b.ticker));
+  }
+  _regCache = bySlug;
+  return bySlug;
+}

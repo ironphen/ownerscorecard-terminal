@@ -11,7 +11,13 @@ import language from "../../data/language.json";
 import { computeLenses, LENSES, LENS_BY_KEY, GROUP_LABEL } from "../../lib/lenses.mjs";
 
 export function getStaticPaths() {
-  return [...LENSES.map((l) => ({ params: { lens: l.key } })), { params: { lens: "confluence" } }];
+  // Lenses upgraded to bespoke static workbooks own their route; the generic page must not
+  // also emit it. Add a key here when a lens gets its own page.
+  const EXCLUDED = new Set(["net-nets"]);
+  return [
+    ...LENSES.filter((l) => !EXCLUDED.has(l.key)).map((l) => ({ params: { lens: l.key } })),
+    { params: { lens: "confluence" } },
+  ];
 }
 
 const { lens: key } = Astro.params;

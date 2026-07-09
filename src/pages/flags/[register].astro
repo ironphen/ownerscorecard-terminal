@@ -1,0 +1,100 @@
+---
+// One flag register — a single named way to die, and every company where it fired. Each row is
+// the disqualifying fact itself, stated in figures, linking to the company page where the full
+// panel sits. Ordered by the fact's own magnitude, because that is the one fact this list exists
+// to show; nothing is scored, nothing is summed across registers, and a row is a fact about a
+// filing, not a verdict on a business.
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import fundamentals from "../../data/fundamentals.json";
+import adr from "../../data/fundamentals.adr.json";
+import language from "../../data/language.json";
+import { REGISTERS, REGISTER_BY_SLUG, computeRegisters } from "../../lib/flags.mjs";
+import { dataAsOf, fmtAsOf } from "../../lib/freshness.mjs";
+
+export function getStaticPaths() {
+  return REGISTERS.map((r) => ({ params: { register: r.slug } }));
+}
+
+const { register: slug } = Astro.params;
+const reg = REGISTER_BY_SLUG[slug];
+
+const companies = [...(fundamentals.companies || []), ...(adr.companies || [])];
+const bySlug = computeRegisters(companies, language.companies);
+
+const CAP = 200;
+const allRows = bySlug[slug] || [];
+const rows = allRows.slice(0, CAP);
+const capped = allRows.length > CAP;
+
+// The threshold, stated factually — the same line the shared read in flags.mjs draws, in words.
+const THRESHOLD = {
+  "restated-or-weakness":
+    "The trigger is the filing's own concession: prior financials restated, or a material weakness in controls over reporting admitted in so many words. No numeric threshold; the words are the fact. Ordered by what was conceded — both together first, then a restatement, then a weakness — alphabetical within each.",
+  "serial-diluters":
+    "Fires when the split-adjusted diluted share count at least doubled across the record, an increase of 100% or more. Above a fifty-fold increase the count changed basis (an IPO restructuring, a share-class conversion) and is withheld rather than listed. Ordered by the size of the increase.",
+  "earnings-ahead-of-cash":
+    "Fires when total accruals run above 2% of assets a year through the cycle with the eight-ratio manipulation screen elevated, or above 5% of assets a year standing alone. Ordered by the width of the accrual gap.",
+  "bought-their-growth":
+    "Fires when goodwill stands at or above all book equity, or when past deals have already been conceded by write-down — a write-down against negative book equity, or one worth at least 5% of it. Ordered by goodwill against equity where it exceeds it, then by the written-down share of the cash put in.",
+  "sells-hard":
+    "Fires when the MD&A carries promotional language at 0.8 or more and non-GAAP references at 4.8 or more per thousand words, rates near the top of the catalog. Ordered by the combined rate.",
+}[slug];
+
+const refreshed = fmtAsOf(dataAsOf);
+---
+
+<BaseLayout title={`${reg.title}, Flags · Owner Scorecard`}>
+  <p class="back"><a href="/flags">← The flag registers</a></p>
+
+  <header class="hero">
+    <span class="kicker">Flags</span>
+    <h1 class="regTitle">{reg.title}</h1>
+    <p class="principle">{reg.describe}</p>
+    <p class="test"><span class="testLabel">The threshold</span>{THRESHOLD}</p>
+    {refreshed ? <p class="dateline">From the latest filings · data as of {refreshed}.</p> : null}
+  </header>
+
+  <div class="countBar">
+    <span class="total">{allRows.length.toLocaleString()} {allRows.length === 1 ? "company" : "companies"}</span>
+    {capped ? <span class="trunc">the {CAP.toLocaleString()} largest by the fact's own size; {allRows.length.toLocaleString()} fired in all</span> : null}
+  </div>
+
+  <ul class="rows">
+    {rows.map((r) => (
+      <li>
+        <a class="tk" href={`/c/${r.ticker}`}>{r.ticker}</a>
+        <span class="nm">{r.name}</span>
+        <span class="fig">{r.figure}</span>
+      </li>
+    ))}
+  </ul>
+
+  <p class="foot">
+    From the company's SEC filings and its MD&amp;A, computed the same way as on its page. A fired
+    flag is a fact about the filing, stated with its figure; what it means for the business is
+    read on the company page, where the full panel sits.
+  </p>
+
+  <style>
+    .back { margin: 0 0 10px; font-size: 13px; }
+    .kicker { font-family: var(--sans); font-size: 11px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--warn, #b4690e); }
+    .hero h1 { margin: 4px 0 0; }
+    .regTitle { color: var(--warn, #b4690e); }
+    .principle { font-family: var(--serif); font-size: 15px; line-height: 1.62; color: var(--ink-soft); margin: 10px 0 0; max-width: 76ch; }
+    .test { font-size: 13.5px; line-height: 1.6; color: var(--ink-dim); margin: 12px 0 0; max-width: 76ch; }
+    .testLabel { font-family: var(--sans); font-weight: 700; font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink); margin-right: 9px; }
+    .dateline { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); margin: 10px 0 0; }
+
+    .countBar { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; border-bottom: 1px solid var(--rule-strong); margin: 20px 0 0; padding-bottom: 7px; }
+    .total { font-family: var(--sans); font-weight: 700; font-size: 14px; color: var(--ink); }
+    .trunc { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); }
+
+    .rows { list-style: none; padding: 0; margin: 0; }
+    .rows li { display: flex; align-items: baseline; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--rule); }
+    .tk { font-family: var(--sans); font-weight: 700; font-size: 14px; flex: 0 0 64px; }
+    .nm { font-family: var(--serif); font-size: 14px; color: var(--ink-soft); flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .fig { font-family: var(--sans); font-variant-numeric: tabular-nums; font-size: 12.5px; color: var(--ink-dim); flex: 0 0 auto; text-align: right; max-width: 52%; white-space: normal; }
+
+    .foot { font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--muted); border-top: 1px solid var(--rule-strong); margin-top: 20px; padding-top: 12px; max-width: 78ch; line-height: 1.6; }
+  </style>
+</BaseLayout>
