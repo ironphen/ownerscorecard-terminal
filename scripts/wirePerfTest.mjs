@@ -117,5 +117,18 @@ console.log("\npickConsolidated — the other gates hold for the wire's caller-s
   eq(pickConsolidated(good, { fy: FY, changes: {} }), [], "no XBRL changes → no quote");
 }
 
+console.log("\npickConsolidated — a segment-scoped subject never anchors a consolidated claim:");
+{
+  // AZZ, live leak caught in review: the segment's 11.5% sat within tolerance of the
+  // consolidated 10.8% by coincidence. Scope words before the change verb kill the sentence;
+  // a segment named after the verb is a cause and still ships.
+  const seg = "Operating income for the AZZ Metal Coatings segment increased $5.8 million, or 11.5%, for the three months ended May 31, 2026, compared to the prior year quarter. The increase was due to increased sales, partially offset by an increase in cost of sales.";
+  const segSents = splitSentences(mdnaText(toBlocks(doc10Q([seg])), "10-Q"));
+  eq(pickConsolidated(segSents, { fy: FY, changes: { operatingIncome: { pct: 10.8, delta: 7484000 } } }), [], "segment-subject OI clause -> nothing ships");
+  const cause = "Net sales increased $45.6 million, or 12.3%, for the three months ended May 31, 2026, driven primarily by growth in the commercial segment.";
+  const causeSents = splitSentences(mdnaText(toBlocks(doc10Q([cause])), "10-Q"));
+  eq(pickConsolidated(causeSents, { fy: FY, changes: CHANGES }).length, 1, "segment named after the verb is a cause and ships");
+}
+
 if (fails) { console.error(`\n❌ wirePerfTest: ${fails} failure(s)`); process.exit(1); }
 console.log("\n✅ wirePerfTest passed");

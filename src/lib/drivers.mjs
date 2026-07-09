@@ -156,6 +156,14 @@ function pickConsolidated(sents, { fy = 2025, changes = {} } = {}) {
       const m = re.exec(s);
       if (!m) continue;
       if (key === "revenue" && SEG_GLUE.test(s)) continue;
+      // A consolidated claim must not be anchored by a segment-scoped subject ("Operating
+      // income for the AZZ Metal Coatings segment increased 11.5%..."): the figure can sit
+      // within tolerance of the consolidated change by coincidence and ship a clause about
+      // one segment as if it were the whole company. Scope words BEFORE the change verb kill
+      // the sentence; a segment named after the verb is a cause, which is what we want quoted.
+      const verbAt = s.slice(0, 300).search(new RegExp(UP.source + "|" + DOWN.source, "i"));
+      const subject = verbAt > 0 ? s.slice(0, verbAt) : s.slice(0, 300);
+      if (/\b(?:segment|division|business\s+unit|reporting\s+unit)\b/i.test(subject.slice(m[0].length))) continue;
       if (FORWARD.test(s.slice(0, 200))) continue;
       if (!yearOk(s, fy)) continue;
       if (!directionAgrees(s, s.slice(0, 300), chg.pct > 0)) continue;

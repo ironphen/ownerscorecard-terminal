@@ -52,6 +52,11 @@ jobs:
       - name: Audit the refreshed data
         if: steps.filers.outputs.tickers != ''
         run: npm run audit && npm run audit:believe && npm run audit:coverage
+      # The full test suite against the fresh data, before the push: a workflow-token push does
+      # not trigger CI, so this is the only test gate a wire refresh ever passes. Red blocks the
+      # commit and emails the owner.
+      - name: Test against the fresh data
+        run: npm test
       - name: Commit if changed
         run: |
           if ! git diff --quiet -- src/data/wire.json src/data/rates.json src/data/fundamentals.json; then
