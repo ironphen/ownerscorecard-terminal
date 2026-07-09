@@ -26,6 +26,15 @@ import fs from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { compactJson } from "../src/lib/dataFile.mjs";
+// The shared machinery — HTML→blocks, the MD&A span, the sentence splitter, and the four gates —
+// lives in src/lib/drivers.mjs so the wire's performance line proves its clauses against the
+// same rulebook. This script keeps what is 10-K-specific: the fundamentals-history changes,
+// the segment anchors, and the catalog walk.
+import {
+  toBlocks, mdnaText, splitSentences,
+  FORWARD, yearOk, verifyFigure, directionAgrees, withCause,
+  CONSOLIDATED, pickConsolidated,
+} from "../src/lib/drivers.mjs";
 
 const UA = process.env.SEC_USER_AGENT || "Owner Scorecard research (ryanreinsant@gmail.com)";
 const HEADERS = { "User-Agent": UA, "Accept-Encoding": "gzip, deflate" };
@@ -47,105 +56,8 @@ async function fetchText(url) {
   }
 }
 
-// ---- HTML → text blocks (block-level tags become breaks; entities decoded; tags stripped) ----
-const ENT = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: " ", rsquo: "’", lsquo: "‘", rdquo: "”", ldquo: "“", mdash: "—", ndash: "–", "#8217": "’", "#8216": "‘", "#8220": "“", "#8221": "”", "#8212": "—", "#8211": "–", "#160": " ", "#38": "&" };
-function decode(s) {
-  return s.replace(/&(#?\w+);/g, (m, e) => {
-    if (ENT[e] !== undefined) return ENT[e];
-    if (e[0] === "#") { const n = e[1] === "x" ? parseInt(e.slice(2), 16) : parseInt(e.slice(1), 10); return Number.isFinite(n) ? String.fromCodePoint(n) : " "; }
-    return " ";
-  });
-}
-function toBlocks(html) {
-  let s = html.replace(/<script[\s\S]*?<\/script>/gi, " ").replace(/<style[\s\S]*?<\/style>/gi, " ");
-  s = s.replace(/<\/?(?:p|div|li|tr|h[1-6]|br|table|td|th)\b[^>]*>/gi, "\n");
-  s = s.replace(/<[^>]+>/g, "");
-  s = decode(s);
-  return s.split("\n").map((t) => t.replace(/\s+/g, " ").trim()).filter(Boolean);
-}
-
-// ---- MD&A span: Item 7 → Item 7A/8, longest candidate (a TOC row is short; the real one is huge) ----
-const MDNA_START = /item\s*7\.?\s*[—:\-]?\s*management/i;
-const MDNA_END = /item\s*7a\.?\s*[—:\-]?\s*quantitative|item\s*8\.?\s*[—:\-]?\s*financial\s+statements/i;
-function mdnaText(blocks) {
-  const spans = [];
-  for (let i = 0; i < blocks.length; i++) {
-    if (blocks[i].length < 140 && MDNA_START.test(blocks[i])) {
-      let end = blocks.length;
-      for (let j = i + 1; j < blocks.length; j++) {
-        if (blocks[j].length < 140 && MDNA_END.test(blocks[j])) { end = j; break; }
-      }
-      let size = 0;
-      for (let k = i; k < end; k++) size += blocks[k].length;
-      spans.push({ size, i, end });
-    }
-  }
-  if (!spans.length) return null;
-  spans.sort((a, b) => b.size - a.size);
-  const { i, end } = spans[0];
-  return blocks.slice(i, end).join(" ");
-}
-
-function splitSentences(text) {
-  return text
-    // A boundary is a sentence end followed by a capital — or by Apple-style lowercase brands
-    // (iPhone, iPad, iMac...), which otherwise glue "…desktops. iPad iPad net sales…" into one.
-    .split(/(?<=[.!?])\s+(?=[A-Z(“"$]|i[A-Z])/)
-    .map((s) => s.trim())
-    .filter((s) => {
-      if (s.length < 50 || s.length > 460) return false;
-      if (/table of contents|%%/i.test(s)) return false;
-      // Lenient on digits: the classical driver sentence ("increased $63.2 million, or 28.7%,
-      // to $282.4 million for the year ended December 31, 2025...") legitimately runs ~25%
-      // digits. Table debris is killed downstream by the anchor + direction-verb + cause gates,
-      // which a header row can never satisfy.
-      const digits = (s.match(/\d/g) || []).length;
-      const letters = (s.match(/[a-zA-Z]/g) || []).length;
-      return letters >= 60 && digits / (digits + letters) <= 0.40;
-    });
-}
-
-// ---- gates ----
-// Verb form ("revenue increased 22%") and noun form ("…, an increase of $92.4 million or
-// 22.5%") — midcap filings overwhelmingly narrate in the second.
-const UP = /\b(increased|grew|rose|improved|was\s+up|higher|an?\s+increase\s+of|growth\s+of)\b/i;
-const DOWN = /\b(decreased|declined|fell|deteriorated|was\s+down|lower|a\s+decrease\s+of|a\s+decline\s+of)\b/i;
-// The cause often lives in the NEXT sentence: "The increase in transaction revenue was
-// primarily driven by…". A continuation opens on the change noun.
-const CONTINUATION = /^["“']?(?:The|This)\s+(?:increase|decrease|growth|decline|improvement)\b/i;
-const CAUSE = /driven\s+by|due\s+to|primarily|attributable\s+to|reflecting|led\s+by|because\s+of|as\s+a\s+result\s+of|resulting\s+from|partially\s+offset/i;
-const FORWARD = /\b(expect(?:s|ed|ations?)?|anticipat\w*|outlook|guidance|going\s+forward|we\s+believe\s+.{0,40}\bwill\b)\b/i;
-const SEG_GLUE = /^["“']?(?:revenues?|net\s+sales|sales)\s*[-–—:]/i;
-
-// A named year must include the current fiscal year — kills prior-year comparison narration
-// ("increased ... in 2024" inside an FY2025 filing). Sentences naming no year pass; the figure
-// verification carries them.
-function yearOk(s, fy) {
-  const yrs = [...s.matchAll(/\b(20\d\d)\b/g)].map((m) => parseInt(m[1], 10));
-  return !yrs.length || Math.max(...yrs) >= fy;
-}
-
-// A narrated figure adjacent to the anchor must match the computed change.
-function verifyFigure(s, from, actualPct, actualDelta, pctTol) {
-  const windowText = s.slice(from, from + 260);
-  for (const m of windowText.matchAll(/(\d{1,3}(?:\.\d+)?)\s*(?:%|percent)/g)) {
-    if (Math.abs(parseFloat(m[1]) - Math.abs(actualPct)) <= pctTol) return { kind: "pct", quote: `${m[1]}%` };
-  }
-  if (actualDelta) {
-    for (const m of windowText.matchAll(/\$\s*([\d,]+(?:\.\d+)?)\s*(billion|million)/gi)) {
-      const v = parseFloat(m[1].replace(/,/g, "")) * (/billion/i.test(m[2]) ? 1e9 : 1e6);
-      if (Math.abs(v - Math.abs(actualDelta)) / Math.abs(actualDelta) <= 0.06) return { kind: "dollar", quote: m[0] };
-    }
-  }
-  return null;
-}
-
-const CONSOLIDATED = [
-  { key: "revenue", label: "Revenue", re: /^["“']?(?:In\s+(?:fiscal\s+(?:year\s+)?)?\d{4},?\s+)?(?:Our\s+|The\s+Company['’]s\s+)?(?:Total\s+|Consolidated\s+|Net\s+)?(?:revenues?|net\s+sales|sales)\b/i },
-  { key: "operatingIncome", label: "Operating income", re: /^["“']?(?:In\s+(?:fiscal\s+(?:year\s+)?)?\d{4},?\s+)?(?:Our\s+|The\s+Company['’]s\s+)?(?:Total\s+|Consolidated\s+)?(?:operating\s+income|income\s+from\s+operations|operating\s+profit)\b/i },
-  { key: "netIncome", label: "Net income", re: /^["“']?(?:In\s+(?:fiscal\s+(?:year\s+)?)?\d{4},?\s+)?(?:Our\s+|The\s+Company['’]s\s+)?(?:Consolidated\s+)?(?:net\s+income|net\s+earnings)\b/i },
-];
-
+// The year-over-year change per line from the fundamentals history — the XBRL proof the
+// consolidated gates verify against.
 function changeFrom(c, key) {
   const h = c.history || [];
   if (h.length < 2) return null;
@@ -154,47 +66,13 @@ function changeFrom(c, key) {
   return { pct: (100 * (cur - pri)) / Math.abs(pri), delta: cur - pri };
 }
 
-function directionAgrees(s, head, wantUp) {
-  const up = UP.test(head), down = DOWN.test(head);
-  if (!up && !down) return false;
-  if (up && down) return true; // mixed sentence ("increased ... partially offset by lower ..."): allow; figure check decides
-  return up === wantUp;
-}
-
-// The cause requirement, satisfiable by the sentence itself or by its continuation ("The
-// increase was primarily driven by…"). Returns the text to ship, or null.
-function withCause(s, next, fy) {
-  if (CAUSE.test(s)) return s;
-  if (next && CONTINUATION.test(next) && CAUSE.test(next) && yearOk(next, fy) && !FORWARD.test(next.slice(0, 200))) {
-    const joined = `${s} ${next}`;
-    return joined.length <= 560 ? joined : s + " " + next.slice(0, 540 - s.length) + "…";
-  }
-  return null;
-}
-
-function pickConsolidated(sents, c) {
-  const out = [];
-  const fy = c.fy || 2025;
-  for (const { key, label, re } of CONSOLIDATED) {
+function consolidatedChanges(c) {
+  const changes = {};
+  for (const { key } of CONSOLIDATED) {
     const chg = changeFrom(c, key);
-    if (!chg) continue;
-    for (let i = 0; i < sents.length; i++) {
-      const s = sents[i];
-      const m = re.exec(s);
-      if (!m) continue;
-      if (key === "revenue" && SEG_GLUE.test(s)) continue;
-      if (FORWARD.test(s.slice(0, 200))) continue;
-      if (!yearOk(s, fy)) continue;
-      if (!directionAgrees(s, s.slice(0, 300), chg.pct > 0)) continue;
-      const text = withCause(s, sents[i + 1], fy);
-      if (!text) continue;
-      const v = verifyFigure(s, m[0].length, chg.pct, chg.delta, 1.0);
-      if (!v) continue; // consolidated lines ship only figure-verified
-      out.push({ line: key, label, pct: +chg.pct.toFixed(1), sentence: text, check: v.kind });
-      break;
-    }
+    if (chg) changes[key] = chg;
   }
-  return out;
+  return changes;
 }
 
 // Segment labels worth anchoring on: the company's own, sized like names, minus catch-alls.
@@ -273,11 +151,11 @@ async function forCompany(c) {
   if (!docUrl) return null;
   const html = await fetchText(docUrl);
   if (!html) return null;
-  const text = mdnaText(toBlocks(html));
-  if (!text || text.length < 4000) return null;
+  const text = mdnaText(toBlocks(html), "10-K"); // the lib enforces the 4,000-char floor
+  if (!text) return null;
   const sents = splitSentences(text);
   const tk = String(c.ticker).toUpperCase();
-  const consolidated = pickConsolidated(sents, c);
+  const consolidated = pickConsolidated(sents, { fy: c.fy || 2025, changes: consolidatedChanges(c) });
   const segs = pickSegments(sents, tk, c.fy || 2025);
   if (!consolidated.length && !segs.length) return null;
   return { fy: c.fy, sourceUrl: c.sourceUrl, consolidated, segments: segs };
@@ -313,6 +191,7 @@ async function main() {
 }
 
 export { toBlocks, mdnaText, splitSentences, pickConsolidated, pickSegments };
+// (the first four re-exported from src/lib/drivers.mjs, where they now live)
 
 if (import.meta.url === pathToFileURL(process.argv[1] || "").href) {
   main().catch((e) => { console.error(`❌ ${e.message}`); process.exit(1); });

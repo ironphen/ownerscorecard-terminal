@@ -10,7 +10,9 @@
 import fs from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
-import { fetchText, htmlToText, section, sentences, diff } from "./fetchFilings.mjs";
+import { fetchText } from "./fetchFilings.mjs";
+import { toBlocks, mdnaText, splitSentences, pickConsolidated } from "../src/lib/drivers.mjs";
+import { annualByYear, quarterFlowMap, deriveOpInc, revenueTagsFor, CONCEPTS } from "./fetchFundamentals.mjs";
 
 const UA = process.env.SEC_USER_AGENT || "Owner Scorecard research (ryanreinsant@gmail.com)";
 const HEADERS = { "User-Agent": UA, "Accept-Encoding": "gzip, deflate" };
@@ -57,56 +59,166 @@ function label8K(items) {
   return codes.length ? ITEM_8K[codes[0]] : "Current report";
 }
 
-// ---- moat-deepener: what changed in a new periodic report ----
-const RECENT_DAYS = 45; // run the NLP diff only on genuinely new filings
-
-function getMDNA(text, form) {
-  if (form.startsWith("10-K"))
-    return section(text, "item\\s*7[\\.\\s]+management", ["item\\s*7a[\\.\\s]+quantitative", "item\\s*8[\\.\\s]+financial"]);
-  return section(text, "item\\s*2[\\.\\s]+management", ["item\\s*3[\\.\\s]+quantitative", "item\\s*4[\\.\\s]+controls", "part\\s*ii\\b"]);
-}
-
-// The same period a year earlier (matched by report date, so quarters line up) for
-// a clean year-over-year diff rather than a noisy quarter-over-quarter one.
-function priorYoYIndex(r, i) {
-  const form = r.form[i], curRD = r.reportDate?.[i];
-  if (!curRD) return -1;
-  const target = new Date(curRD + "T00:00:00Z");
-  target.setUTCFullYear(target.getUTCFullYear() - 1);
-  let best = -1, bestD = Infinity;
-  for (let j = 0; j < r.form.length; j++) {
-    if (j === i || r.form[j] !== form || !r.reportDate?.[j]) continue;
-    const d = Math.abs(new Date(r.reportDate[j] + "T00:00:00Z") - target);
-    if (d < bestD && d < 70 * 86400000) { bestD = d; best = j; }
-  }
-  return best;
-}
+// ---- moat-deepener: the performance line for a new periodic report ----
+// "Revenue up 12.3% year over year; operating income up 9.0%" — the percentages COMPUTED from
+// the filing's own XBRL (the new accession carries its own prior-year comparative, so both
+// dollar figures trace to the just-filed document), plus the company's verbatim MD&A clause
+// when it passes the same anchored/directed/figure-verified gates the company pages' Drivers
+// use. Never a word of ours: quotation plus arithmetic, up/down and a percentage, no
+// adjectives, no beat/missed. A line whose prior year isn't a clean positive base ships
+// nothing: silence over filler.
+const RECENT_DAYS = 45; // compute performance only for genuinely new filings
+const RETRY_DAYS = 5; // a cached null stays retryable this long (companyfacts lags by hours, not days)
+const MATCH_MS = 20 * 86400000; // ±20d period-end match absorbs 52/53-week fiscal calendars
 
 const docURL = (cik, r, idx) =>
   `https://www.sec.gov/Archives/edgar/data/${Number(cik)}/${r.accessionNumber[idx].replace(/-/g, "")}/${r.primaryDocument[idx]}`;
 
-async function whatChanged(cik, r, i) {
-  const pj = priorYoYIndex(r, i);
-  if (pj < 0 || !r.primaryDocument[i] || !r.primaryDocument[pj]) return null;
+// The value whose period end falls within ±20 days of the target instant, from an end→value map.
+function endValue(map, t) {
+  let best = null, bestD = MATCH_MS + 1;
+  for (const end in map) {
+    const d = Math.abs(Date.parse(end + "T00:00:00Z") - t);
+    if (d < bestD) { bestD = d; best = map[end]; }
+  }
+  return best;
+}
+
+// annualByYear keyed by period end instead of fiscal year, for the same ±20d matching.
+function annualEndMap(facts, tags, pickMax = false) {
+  const m = {};
+  for (const e of Object.values(annualByYear(facts, tags, "USD", pickMax))) m[e.end] = e.val;
+  return m;
+}
+
+// Sub-annual duration observations (a quarter through a nine-month YTD span) for the tags,
+// for filers that tag no discrete ~90-day quarter — their 10-Q carries only cumulative
+// year-to-date durations, which still yield an honest year-over-year read (basis "ytd").
+function subAnnualDurations(facts, tags) {
+  const all = [];
+  for (const tag of tags) {
+    const units = facts?.facts?.["us-gaap"]?.[tag]?.units?.USD;
+    if (!units) continue;
+    for (const u of units) {
+      if (!u.form || !u.start || !u.end) continue;
+      if (!(u.form.startsWith("10-K") || u.form.startsWith("10-Q"))) continue;
+      const dur = (Date.parse(u.end) - Date.parse(u.start)) / 86400000;
+      if (dur < 80 || dur > 300) continue;
+      all.push({ val: u.val, end: u.end, dur, filed: u.filed || "" });
+    }
+  }
+  return all;
+}
+
+// The YTD pair: the longest duration ending at the period end, and the same-length span
+// (±25d) ending a year earlier. Both null when the filer tagged neither.
+function ytdPair(all, tCur, tPri) {
+  const cur = all
+    .filter((e) => Math.abs(Date.parse(e.end + "T00:00:00Z") - tCur) <= MATCH_MS)
+    .sort((a, b) => b.dur - a.dur || b.filed.localeCompare(a.filed))[0];
+  if (!cur) return null;
+  const pri = all
+    .filter((e) => Math.abs(Date.parse(e.end + "T00:00:00Z") - tPri) <= MATCH_MS && Math.abs(e.dur - cur.dur) <= 25)
+    .sort((a, b) => b.filed.localeCompare(a.filed))[0];
+  return pri ? { cur: cur.val, prior: pri.val } : null;
+}
+
+// A printed percentage needs a clean positive base: prior > 0, both figures present.
+function lineOf(cur, prior) {
+  if (cur == null || prior == null || prior <= 0) return null;
+  return { yoy: +((100 * (cur - prior)) / prior).toFixed(1), cur, prior };
+}
+
+async function performanceFor(c, r, i) {
+  const form = r.form[i], reportDate = r.reportDate?.[i];
+  if (!reportDate || !r.primaryDocument[i]) return null;
   try {
-    const cur = sentences(getMDNA(htmlToText(await fetchText(docURL(cik, r, i))), r.form[i]));
+    const facts = await getJSON(`https://data.sec.gov/api/xbrl/companyfacts/CIK${c.cik}.json`);
     await sleep(150);
-    const prior = sentences(getMDNA(htmlToText(await fetchText(docURL(cik, r, pj))), r.form[i]));
-    if (cur.length < 20) return null; // MD&A didn't parse cleanly, skip rather than emit noise
-    const d = diff(cur, prior);
-    return d.notable.length ? d.notable.slice(0, 3) : null;
-  } catch (e) { return null; }
+    const tCur = Date.parse(reportDate + "T00:00:00Z");
+    const priD = new Date(tCur);
+    priD.setUTCFullYear(priD.getUTCFullYear() - 1);
+    const tPri = priD.getTime();
+
+    const sicN = Number(c.sic) || 0;
+    const revTags = revenueTagsFor(c.sic);
+    const pickMax = (sicN >= 6500 && sicN <= 6799) || (sicN >= 6300 && sicN <= 6399); // REIT rent / insurer total (see fetchFundamentals)
+
+    let basis, rev, oi;
+    if (form.startsWith("10-K")) {
+      basis = "fy";
+      const revM = annualEndMap(facts, revTags, pickMax);
+      const oiAt = (t) => deriveOpInc(
+        endValue(annualEndMap(facts, CONCEPTS.operatingIncome), t),
+        endValue(revM, t),
+        endValue(annualEndMap(facts, CONCEPTS.costsAndExpenses), t),
+        endValue(annualEndMap(facts, CONCEPTS.netIncome), t),
+        endValue(annualEndMap(facts, CONCEPTS.incomeTaxExpense), t),
+        endValue(annualEndMap(facts, CONCEPTS.interestExpense), t),
+      );
+      rev = lineOf(endValue(revM, tCur), endValue(revM, tPri));
+      oi = lineOf(oiAt(tCur), oiAt(tPri));
+    } else {
+      // 10-Q: discrete three-month flows first — the cleanest quarter-on-quarter-a-year-ago read.
+      basis = "quarter";
+      const revM = quarterFlowMap(facts, revTags);
+      const oiAt = (t) => deriveOpInc(
+        endValue(quarterFlowMap(facts, CONCEPTS.operatingIncome), t),
+        endValue(revM, t),
+        endValue(quarterFlowMap(facts, CONCEPTS.costsAndExpenses), t),
+        endValue(quarterFlowMap(facts, CONCEPTS.netIncome), t),
+        endValue(quarterFlowMap(facts, CONCEPTS.incomeTaxExpense), t),
+        endValue(quarterFlowMap(facts, CONCEPTS.interestExpense), t),
+      );
+      rev = lineOf(endValue(revM, tCur), endValue(revM, tPri));
+      oi = lineOf(oiAt(tCur), oiAt(tPri));
+      // Fallback: no line proved as a discrete quarter → the filer tags cumulative YTD
+      // durations only. Both lines move to the YTD basis together, never mixed.
+      if (!rev && !oi) {
+        basis = "ytd";
+        const p = (tags) => ytdPair(subAnnualDurations(facts, tags), tCur, tPri);
+        const revP = p(revTags), oiP = p(CONCEPTS.operatingIncome);
+        const ceP = p(CONCEPTS.costsAndExpenses), niP = p(CONCEPTS.netIncome);
+        const taxP = p(CONCEPTS.incomeTaxExpense), intP = p(CONCEPTS.interestExpense);
+        rev = revP ? lineOf(revP.cur, revP.prior) : null;
+        const oiCur = deriveOpInc(oiP?.cur ?? null, revP?.cur ?? null, ceP?.cur ?? null, niP?.cur ?? null, taxP?.cur ?? null, intP?.cur ?? null);
+        const oiPri = deriveOpInc(oiP?.prior ?? null, revP?.prior ?? null, ceP?.prior ?? null, niP?.prior ?? null, taxP?.prior ?? null, intP?.prior ?? null);
+        oi = lineOf(oiCur, oiPri);
+      }
+    }
+    if (!rev && !oi) return null; // XBRL not up yet, or no clean base: retryable while fresh
+
+    // The company's own words, only when they prove against the numbers above: the same
+    // anchored/directed/figure-verified gates the Drivers section uses, on THIS filing's MD&A.
+    let driver = null, driverLine = null, check = null;
+    const html = await fetchText(docURL(c.cik, r, i));
+    if (html) {
+      const text = mdnaText(toBlocks(html), form);
+      if (text) {
+        const fy = new Date(reportDate + "T00:00:00Z").getUTCFullYear();
+        const changes = {};
+        if (rev) changes.revenue = { pct: rev.yoy, delta: rev.cur - rev.prior };
+        if (oi) changes.operatingIncome = { pct: oi.yoy, delta: oi.cur - oi.prior };
+        const picks = pickConsolidated(splitSentences(text), { fy, changes });
+        if (picks.length) ({ sentence: driver, line: driverLine, check } = picks[0]); // revenue anchor first by CONSOLIDATED order
+      }
+    }
+    return { period: reportDate, basis, rev, oi, driver, driverLine, check };
+  } catch { return null; }
 }
 
 async function main() {
   const cutoff = new Date(Date.now() - DAYS * 86400000).toISOString().slice(0, 10);
   const recentCutoff = new Date(Date.now() - RECENT_DAYS * 86400000).toISOString().slice(0, 10);
+  const retryCutoff = new Date(Date.now() - RETRY_DAYS * 86400000).toISOString().slice(0, 10);
   const wirePath = path.join(dataDir, "wire.json");
 
-  // Reuse already-computed diffs (keyed by accession) so each new filing is analysed
-  // once, not re-fetched on every daily run.
+  // Reuse already-computed performance (keyed by accession) so each new filing is analysed
+  // once, not re-fetched on every daily run. A cached null stays a miss while the item is
+  // fresh (see the retry gate below): companyfacts can lag a filing by hours, and the first
+  // morning's miss must not freeze into a permanent blank.
   const cache = {};
-  try { for (const it of (JSON.parse(fs.readFileSync(wirePath, "utf8")).items || [])) if (it.accn) cache[it.accn] = it.whatChanged ?? null; } catch {}
+  try { for (const it of (JSON.parse(fs.readFileSync(wirePath, "utf8")).items || [])) if (it.accn) cache[it.accn] = it.performance ?? null; } catch {}
 
   const items = [];
   let attempted = 0, failed = 0;
@@ -128,14 +240,15 @@ async function main() {
       const label = form === "8-K" ? label8K(r.items?.[i]) : FORM_LABEL[form];
       const grave = form === "8-K" && /can't be relied on|Changed its auditor|default|impairment|Delisting/.test(label);
 
-      // What changed: only for genuinely new 10-K/10-Q, capped per company, computed once.
-      let changed = null;
+      // Performance: only for genuinely new 10-K/10-Q, capped per company, computed once —
+      // except a cached null, which is retried while the item is at most RETRY_DAYS old.
+      let performance = null;
       if ((form === "10-K" || form === "10-Q") && date >= recentCutoff && diffed < 2) {
-        if (accn in cache) changed = cache[accn];
-        else { changed = await whatChanged(c.cik, r, i); diffed++; }
+        if (accn in cache && !(cache[accn] == null && date >= retryCutoff)) performance = cache[accn];
+        else { performance = await performanceFor(c, r, i); diffed++; }
       }
 
-      items.push({ ticker: c.ticker, name: c.name || c.ticker, form, date, label, grave, accn, url, whatChanged: changed });
+      items.push({ ticker: c.ticker, name: c.name || c.ticker, form, date, label, grave, accn, url, performance });
     }
   }
   // Partial-outage fail-safe: the zero-item check below catches a total EDGAR outage, but a
@@ -170,10 +283,10 @@ async function main() {
   }
   const out = { asOf: new Date().toISOString().slice(0, 10), source: "SEC EDGAR, recent filings", items: kept };
   fs.writeFileSync(wirePath, JSON.stringify(out, null, 2) + "\n");
-  console.log(`✅ Wire: ${out.items.length} filings across ${keepDates.size} filing days, ${kept.filter((x) => x.whatChanged).length} with what-changed`);
+  console.log(`✅ Wire: ${out.items.length} filings across ${keepDates.size} filing days, ${kept.filter((x) => x.performance).length} with performance`);
 }
 
-export { label8K, ITEM_8K, priorYoYIndex, getMDNA };
+export { label8K, ITEM_8K, performanceFor };
 
 if (import.meta.url === pathToFileURL(process.argv[1] || "").href) {
   main().catch((e) => { console.error(`❌ ${e.message}`); process.exit(1); });

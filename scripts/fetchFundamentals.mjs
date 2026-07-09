@@ -311,6 +311,17 @@ const INSURER_REVENUE = ["Revenues", "RevenueFromContractWithCustomerExcludingAs
 // Used for depository SICs (6020-6079).
 const BANK_REVENUE = ["Revenues", "RevenuesNetOfInterestExpense"];
 
+// The revenue tags a filer's industry calls for (see the REIT/insurer/bank notes above):
+// rent-first for REITs, the combined total for insurers and banks, the contract-revenue
+// order for everyone else. Shared with the wire, which reads the same top line per filing.
+function revenueTagsFor(sic) {
+  const sicN = Number(sic) || 0;
+  if (sicN >= 6500 && sicN <= 6799) return REIT_REVENUE;
+  if (sicN >= 6300 && sicN <= 6399) return INSURER_REVENUE;
+  if (sicN >= 6020 && sicN <= 6079) return BANK_REVENUE;
+  return CONCEPTS.revenue;
+}
+
 const days = (a, b) => Math.abs((new Date(b) - new Date(a)) / 86400000);
 
 // ---- value extraction (tag-merged) ----
@@ -625,7 +636,7 @@ async function main() {
     const isReitCo = sicN >= 6500 && sicN <= 6799;
     const isInsurerCo = sicN >= 6300 && sicN <= 6399;
     const isBankCo = sicN >= 6020 && sicN <= 6079;
-    const revTags = isReitCo ? REIT_REVENUE : isInsurerCo ? INSURER_REVENUE : isBankCo ? BANK_REVENUE : CONCEPTS.revenue;
+    const revTags = revenueTagsFor(sic);
     const revAnnualBy = annualByYear(facts, revTags, "USD", isReitCo || isInsurerCo);
     // Most banks book no combined total-revenue tag at all — their top line is two components, net
     // interest income plus noninterest income. For any year the total tags miss, reconstruct the total
@@ -1237,8 +1248,8 @@ async function main() {
   if (withheld.size) console.log(`   withheld: ${[...withheld].sort().join(", ")}`);
 }
 
-// Exported for the offline extraction test; only hit EDGAR when run directly.
-export { instantMap, quarterFlowMap, quarterSeries, latestObservation, CONCEPTS };
+// Exported for the offline extraction test and the wire's performance line; only hit EDGAR when run directly.
+export { instantMap, quarterFlowMap, quarterSeries, latestObservation, annualByYear, deriveOpInc, revenueTagsFor, CONCEPTS };
 
 if (import.meta.url === pathToFileURL(process.argv[1] || "").href) {
   main().catch((err) => {
