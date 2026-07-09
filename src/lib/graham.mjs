@@ -7,11 +7,16 @@ import { fmtMoney, currencySymbol, debtReliable } from "./fundamentals.mjs";
 
 const mean = (xs) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null);
 
+// Each test carries, besides the display fields, a numeric `delta`: the shortfall in the test's
+// own units (dollars short of the size floor, turns of current ratio, money past working capital,
+// loss years, unpaid years, growth points), null when the test passes or can't be run. The raw
+// figures behind each verdict (cr, debt vs working capital, paid/total, g, ...) ride along too, so
+// a surface like the Defensive Workbook can phrase the shortfall without recomputing anything.
 export function grahamTests(company) {
   const L = company.lines || {};
   const H = (company.history || []).filter((h) => h?.lines);
   const t = [];
-  const add = (name, criterion, value, status, note) => t.push({ name, criterion, value, status, note });
+  const add = (name, criterion, value, status, note, extra) => t.push({ name, criterion, value, status, note, delta: null, ...extra });
   const ccy = company?.currency || "USD";
   const $ = (v) => fmtMoney(v, ccy);
   const sym = currencySymbol(ccy);
@@ -25,10 +30,12 @@ export function grahamTests(company) {
     const r = L.revenue;
     if (ccy === "USD") {
       add("Adequate size", "Revenue ≥ $2B", $(r), r >= 2e9 ? "pass" : r >= 1e9 ? "near" : "fail",
-        "Big enough to weather a storm. Graham's 1972 floor was ~$100M of sales (≈ $700M today); we use a $2B revenue line as a conservative modern stand-in.");
+        "Big enough to weather a storm. Graham's 1972 floor was ~$100M of sales (≈ $700M today); we use a $2B revenue line as a conservative modern stand-in.",
+        { revenue: r, floor: 2e9, delta: r >= 2e9 ? null : 2e9 - r });
     } else {
       add("Adequate size", "Revenue ≥ $2B (a dollar floor)", $(r), "na",
-        "Big enough to weather a storm. Graham's floor is a dollar figure — about $2B of revenue as a conservative modern stand-in. This company reports in its home currency and we carry no exchange rate, so we show the figure and leave the size bar for you to apply rather than convert it with a number we don't have.");
+        "Big enough to weather a storm. Graham's floor is a dollar figure — about $2B of revenue as a conservative modern stand-in. This company reports in its home currency and we carry no exchange rate, so we show the figure and leave the size bar for you to apply rather than convert it with a number we don't have.",
+        { revenue: r, floor: 2e9 });
     }
   }
 
@@ -37,7 +44,8 @@ export function grahamTests(company) {
   if (ca != null && cl != null && cl > 0) {
     const cr = ca / cl;
     add("Strong liquidity", "Current ratio ≥ 2×", `${cr.toFixed(2)}×`, cr >= 2 ? "pass" : cr >= 1.5 ? "near" : "fail",
-      "Current assets at least twice current liabilities, near-term bills covered without touching the business. Strict by design: many cash-rich modern firms run leaner and miss it, holding their cushion in longer-dated securities.");
+      "Current assets at least twice current liabilities, near-term bills covered without touching the business. Strict by design: many cash-rich modern firms run leaner and miss it, holding their cushion in longer-dated securities.",
+      { cr, floor: 2, delta: cr >= 2 ? null : 2 - cr });
   } else {
     add("Strong liquidity", "Current ratio ≥ 2×", "—", "na", "Current assets / liabilities not in the data yet.");
   }
@@ -50,7 +58,8 @@ export function grahamTests(company) {
     const wc = ca - cl;
     add("Conservative debt", "Debt ≤ working capital", `${$(L.totalDebt)} vs ${$(wc)} WC`,
       wc > 0 && L.totalDebt <= wc ? "pass" : wc > 0 && L.totalDebt <= 1.5 * wc ? "near" : "fail",
-      "Graham's rule that borrowings not exceed net current assets. Capital-heavy and buyback-heavy firms routinely fail it, read it next to interest coverage, not alone.");
+      "Graham's rule that borrowings not exceed net current assets. Capital-heavy and buyback-heavy firms routinely fail it, read it next to interest coverage, not alone.",
+      { debt: L.totalDebt, workingCapital: wc, delta: wc > 0 && L.totalDebt <= wc ? null : L.totalDebt - wc });
   }
 
   // 4, Earnings stability: a profit every year on record
@@ -59,7 +68,8 @@ export function grahamTests(company) {
     const losses = ni.filter((v) => v <= 0).length;
     add("Earnings stability", `A profit every year (${ni.length}-yr record)`, losses === 0 ? "no losses" : `${losses} loss year${losses > 1 ? "s" : ""}`,
       losses === 0 ? "pass" : losses === 1 ? "near" : "fail",
-      "Graham wanted earnings in each of the past ten years, the stability a defensive owner leans on.");
+      "Graham wanted earnings in each of the past ten years, the stability a defensive owner leans on.",
+      { losses, years: ni.length, delta: losses === 0 ? null : losses });
   }
 
   // 5, Dividend record. Count over the FULL window: a year with no dividend is a
@@ -69,7 +79,8 @@ export function grahamTests(company) {
     const paid = H.filter((h) => h.lines.dividendsPaid != null && Math.abs(h.lines.dividendsPaid) > 0).length;
     add("Dividend record", "Uninterrupted dividends", paid === total ? `paid every year (${total})` : paid === 0 ? "none paid" : `${paid} of ${total} yrs`,
       paid === total ? "pass" : paid === 0 ? "fail" : paid >= total * 0.9 ? "near" : "fail",
-      "An unbroken dividend was Graham's mark of durability. He wanted twenty years; the filings show about ten, and a single suspension breaks the streak. Non-payers, many fine modern compounders, fall outside his defensive net by design.");
+      "An unbroken dividend was Graham's mark of durability. He wanted twenty years; the filings show about ten, and a single suspension breaks the streak. Non-payers, many fine modern compounders, fall outside his defensive net by design.",
+      { paid, years: total, delta: paid === total ? null : total - paid });
   }
 
   // 6, Earnings growth: net income up ≥ 33% over the record (3-yr averages, to smooth).
@@ -80,7 +91,8 @@ export function grahamTests(company) {
       const g = (late - early) / early;
       add("Earnings growth", "Earnings +33% over the record", `${g >= 0 ? "+" : "−"}${Math.abs(g * 100).toFixed(0)}%`,
         g >= 0.33 ? "pass" : g > 0 ? "near" : "fail",
-        "At least a third more earnings than a decade ago, averaging three years at each end. Net income (not per-share), so stock splits don't distort it, buybacks and dilution show up in the share-count line instead.");
+        "At least a third more earnings than a decade ago, averaging three years at each end. Net income (not per-share), so stock splits don't distort it, buybacks and dilution show up in the share-count line instead.",
+        { growth: g, floor: 0.33, delta: g >= 0.33 ? null : 0.33 - g });
     } else {
       add("Earnings growth", "Earnings +33% over the record", "—", "na", "Earnings were negative early in the record, a growth rate isn't meaningful.");
     }

@@ -1,0 +1,275 @@
+---
+// The Defensive Workbook — the defensive lens upgraded from a one-figure list to Graham's own
+// worksheet (docs/discovery-design.md, feature 6). One row per company, one column per
+// price-independent criterion; every cell carries the status word and the filed figure, and a
+// missed test states its shortfall in the test's own units, so any entry can be recomputed by
+// hand. Three strata only: the full-pass group, then benches one test short grouped by WHICH
+// test, then a counted remainder. Never ordered by pass count — a count of tests met, used as
+// an ordering, is a composite score in a plain suit (section 5 of the design brief). Statuses
+// are words beside figures, never color-graded cells. Fully prerendered; no client JS.
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import fundamentals from "../../data/fundamentals.json";
+import adr from "../../data/fundamentals.adr.json";
+import { grahamTests } from "../../lib/graham.mjs";
+import { fmtMoney } from "../../lib/fundamentals.mjs";
+import { LENS_BY_KEY, GROUP_LABEL } from "../../lib/lenses.mjs";
+import { dataAsOf, fmtAsOf } from "../../lib/freshness.mjs";
+
+const lens = LENS_BY_KEY.defensive;
+const refreshed = fmtAsOf(dataAsOf);
+
+// The same pools the other archetype pages read (US + ADR), one row per ticker.
+const companies = [...(fundamentals.companies || []), ...(adr.companies || [])];
+const seen = new Set();
+const rows = [];
+for (const company of companies) {
+  const ticker = String(company.ticker || "").toUpperCase();
+  if (!ticker || seen.has(ticker)) continue;
+  seen.add(ticker);
+  let g = null;
+  try {
+    g = grahamTests(company);
+  } catch {
+    g = null;
+  }
+  if (!g || !g.tests?.length) continue;
+  rows.push({ ticker, name: company.name || "", company, g });
+}
+
+// The six price-independent criteria, in Graham's order. `header` restates the criterion in the
+// column head; `bench` names the test in a bench heading ("Failing only the dividend test").
+const CRITERIA = [
+  { name: "Adequate size", header: "Revenue ≥ $2B", bench: "the size test" },
+  { name: "Strong liquidity", header: "Current ratio ≥ 2×", bench: "the liquidity test" },
+  { name: "Conservative debt", header: "Debt ≤ working capital", bench: "the debt test" },
+  { name: "Earnings stability", header: "A profit every year", bench: "the earnings-stability test" },
+  { name: "Dividend record", header: "Uninterrupted dividends", bench: "the dividend test" },
+  { name: "Earnings growth", header: "Earnings +33% over the record", bench: "the growth test" },
+];
+
+const find = (g, name) => (g.tests || []).find((t) => t.name === name);
+
+// One cell: the status word plus the filed figure, with the shortfall phrased in the test's own
+// units when the test is missed. "na" cells keep a short explanation instead of a status word.
+function cell(r, name) {
+  const t = find(r.g, name);
+  const ccy = r.company.currency || "USD";
+  if (!t) return { status: "na", text: "not in the data yet" };
+  const s = t.status;
+  if (name === "Adequate size") {
+    if (s === "na") return { status: s, text: `yours to apply · ${t.value}` };
+    return { status: s, text: s === "pass" ? t.value : `${t.value}, ${fmtMoney(t.delta, ccy)} short of $2B` };
+  }
+  if (name === "Strong liquidity") {
+    if (s === "na") return { status: s, text: "not in the data yet" };
+    return { status: s, text: s === "pass" ? t.value : `${t.value}, ${t.delta.toFixed(2)}× short of 2.00×` };
+  }
+  if (name === "Conservative debt") {
+    if (s === "na") return { status: s, text: "debt not reliably tagged" };
+    return { status: s, text: s === "pass" ? t.value : `${t.value}, debt exceeds working capital by ${fmtMoney(t.delta, ccy)}` };
+  }
+  if (name === "Earnings stability") {
+    return { status: s, text: s === "pass" ? `no losses in ${t.years} yrs` : `${t.losses} loss year${t.losses > 1 ? "s" : ""} in ${t.years}` };
+  }
+  if (name === "Dividend record") {
+    if (s === "pass") return { status: s, text: `paid every year (${t.years})` };
+    return { status: s, text: t.paid === 0 ? `none paid in ${t.years} yrs` : `paid ${t.paid} of ${t.years} yrs` };
+  }
+  if (name === "Earnings growth") {
+    if (s === "na") return { status: s, text: "negative early earnings" };
+    return { status: s, text: s === "pass" ? t.value : `${t.value}, a third was required` };
+  }
+  return { status: s, text: t.value };
+}
+
+const rowData = (r) => ({
+  ticker: r.ticker,
+  name: r.name,
+  cells: [
+    ...CRITERIA.map((c) => cell(r, c.name)),
+    { status: "na", text: "yours to apply", href: `/c/${r.ticker}#sec-price` },
+  ],
+});
+
+// Strata. A "near" counts as not-passing for membership, though the cell still says "near" with
+// its figure. The workbook bar is at least five testable criteria — the same floor the lens
+// itself uses — so a thin record can't full-pass on two cells, or sit a bench with tests unrun.
+const notPassing = (g) => (g.tests || []).filter((t) => t.status !== "na" && t.status !== "pass");
+const byTicker = (a, b) => a.ticker.localeCompare(b.ticker);
+
+const eligible = rows.filter((r) => r.g.testable >= 5);
+const thin = rows.length - eligible.length;
+const fullPass = eligible.filter((r) => notPassing(r.g).length === 0).sort(byTicker);
+const oneShort = eligible.filter((r) => notPassing(r.g).length === 1);
+const remainder = eligible.length - fullPass.length - oneShort.length;
+
+const benches = CRITERIA.map((c) => ({
+  criterion: c,
+  members: oneShort.filter((r) => notPassing(r.g)[0].name === c.name).sort(byTicker),
+})).filter((b) => b.members.length);
+
+const fullPassRows = fullPass.map(rowData);
+const benchGroups = benches.map((b) => ({
+  label: `Failing only ${b.criterion.bench}, ${b.members.length} ${b.members.length === 1 ? "company" : "companies"}`,
+  rows: b.members.map(rowData),
+}));
+
+// The group view: medians and counts DESCRIBING the full-pass list, never a grade.
+const median = (a) => (a.length ? [...a].sort((x, y) => x - y)[Math.floor((a.length - 1) / 2)] : null);
+const crs = fullPass.map((r) => find(r.g, "Strong liquidity")?.cr).filter((v) => v != null);
+const debtPcts = fullPass
+  .map((r) => {
+    const t = find(r.g, "Conservative debt");
+    return t && t.status !== "na" && t.workingCapital > 0 ? t.debt / t.workingCapital : null;
+  })
+  .filter((v) => v != null);
+const unbroken = fullPass.filter((r) => find(r.g, "Dividend record")?.status === "pass").length;
+const netCash = fullPass.filter((r) => {
+  const L = r.company.lines || {};
+  return (L.cashAndEquivalents || 0) + (L.shortTermInvestments || 0) > (L.totalDebt || 0);
+}).length;
+const medCr = median(crs);
+const medDebtPct = median(debtPcts);
+
+const groupParts = [
+  medCr != null ? `median current ratio ${medCr.toFixed(2)}×` : null,
+  medDebtPct != null ? `median debt at ${Math.round(medDebtPct * 100)}% of working capital` : null,
+  `${unbroken} with an unbroken dividend`,
+  `${netCash} net-cash`,
+].filter(Boolean);
+
+const colCount = CRITERIA.length + 2; // company + six criteria + moderate price
+---
+
+<BaseLayout title="The defensive workbook, Archetypes · Owner Scorecard">
+  <p class="back"><a href="/archetypes">← Archetypes</a></p>
+
+  <header class="hero">
+    <span class="kicker">{GROUP_LABEL[lens.group]}</span>
+    <h1>The defensive workbook</h1>
+    <p class="principle">{lens.principle}</p>
+    <p class="explain">
+      Graham ran the whole Dow through these tests and printed the table, every figure beside its
+      verdict, so a reader could recompute any cell by hand. This page does the same for the record
+      here: one row per company, one column per criterion, the filed figure in every cell, and where
+      a test is missed, the shortfall in the test's own units. The seventh test, a moderate price,
+      needs the one number this site does not carry; every row leaves it where it belongs, with you,
+      on the company page.
+    </p>
+  </header>
+
+  <section class="groupView">
+    <p class="gvLede">
+      As of the latest filings, <strong>{fullPass.length}</strong> companies meet every testable
+      defensive criterion.
+    </p>
+    <p class="gvStats">As a group: {groupParts.join(", ")}.</p>
+    <p class="gvNote">
+      {refreshed ? `Data as of ${refreshed}. ` : ""}The medians describe this list as it stands; they
+      are not a grade.
+    </p>
+  </section>
+
+  <div class="tableWrap">
+    <table>
+      <thead>
+        <tr>
+          <th class="thCo" scope="col">Company</th>
+          {CRITERIA.map((c) => (
+            <th scope="col"><span class="cName">{c.name}</span><span class="cRule">{c.header}</span></th>
+          ))}
+          <th scope="col"><span class="cName">Moderate price</span><span class="cRule">P/E ≤ 15 · P/E × P/B ≤ 22.5</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="stratum"><th colspan={colCount} scope="colgroup">Meets every testable criterion, {fullPass.length} companies · alphabetical by ticker</th></tr>
+        {fullPassRows.map((r) => (
+          <tr>
+            <td class="co"><a class="tk" href={`/c/${r.ticker}`}>{r.ticker}</a><span class="nm">{r.name}</span></td>
+            {r.cells.map((c) => (
+              <td class={`cell s-${c.status}`}>
+                {c.href ? (
+                  <a class="yours" href={c.href}>{c.text}</a>
+                ) : c.status === "na" ? (
+                  <span class="naTxt">{c.text}</span>
+                ) : (
+                  <><span class="word">{c.status}</span> <span class="figTxt">{c.text}</span></>
+                )}
+              </td>
+            ))}
+          </tr>
+        ))}
+      </tbody>
+      {benchGroups.map((g) => (
+        <tbody>
+          <tr class="stratum"><th colspan={colCount} scope="colgroup">{g.label}</th></tr>
+          {g.rows.map((r) => (
+            <tr>
+              <td class="co"><a class="tk" href={`/c/${r.ticker}`}>{r.ticker}</a><span class="nm">{r.name}</span></td>
+              {r.cells.map((c) => (
+                <td class={`cell s-${c.status}`}>
+                  {c.href ? (
+                    <a class="yours" href={c.href}>{c.text}</a>
+                  ) : c.status === "na" ? (
+                    <span class="naTxt">{c.text}</span>
+                  ) : (
+                    <><span class="word">{c.status}</span> <span class="figTxt">{c.text}</span></>
+                  )}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      ))}
+    </table>
+  </div>
+
+  <p class="remainder">
+    {remainder.toLocaleString()} further companies fail two or more of the testable criteria; each
+    company page carries its full panel.{thin > 0 ? ` Another ${thin.toLocaleString()} carry fewer than five testable criteria, a record too thin for this table; their panels are on their pages as well.` : ""}
+  </p>
+
+  <p class="foot">
+    From the company's SEC filings, computed the same way as on its page. The defensive chip that
+    appears on company pages marks a company clearing at least five of the testable criteria; the
+    price test is left to the company page, where you bring the price.
+  </p>
+
+  <style>
+    .back { margin: 0 0 10px; font-size: 13px; }
+    .kicker { font-family: var(--sans); font-size: 11px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--accent); }
+    .hero h1 { margin: 4px 0 0; }
+    .principle { font-family: var(--serif); font-size: 15px; line-height: 1.62; color: var(--ink-soft); margin: 10px 0 0; max-width: 76ch; }
+    .explain { font-size: 13.5px; line-height: 1.6; color: var(--ink-dim); margin: 12px 0 0; max-width: 76ch; }
+
+    .groupView { border: 1px solid var(--rule-strong); border-left: 3px solid var(--accent); padding: 14px 18px; margin: 22px 0 0; }
+    .gvLede { font-family: var(--serif); font-size: 15.5px; line-height: 1.55; color: var(--ink); margin: 0; }
+    .gvStats { font-family: var(--sans); font-variant-numeric: tabular-nums; font-size: 13px; line-height: 1.6; color: var(--ink-soft); margin: 6px 0 0; }
+    .gvNote { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); margin: 6px 0 0; }
+
+    .tableWrap { overflow-x: auto; margin: 20px 0 0; border-bottom: 1px solid var(--rule-strong); }
+    table { border-collapse: collapse; width: 100%; min-width: 1240px; }
+    thead th { text-align: left; vertical-align: bottom; border-bottom: 1px solid var(--rule-strong); padding: 6px 14px 7px 0; }
+    .cName { display: block; font-family: var(--sans); font-weight: 700; font-size: 11.5px; color: var(--ink); }
+    .cRule { display: block; font-family: var(--sans); font-weight: 400; font-size: 10.5px; color: var(--muted); margin-top: 2px; }
+    .thCo { width: 210px; }
+
+    .stratum th { text-align: left; font-family: var(--sans); font-weight: 700; font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink); border-bottom: 1px solid var(--rule-strong); padding: 18px 0 6px; }
+    td { border-bottom: 1px solid var(--rule); padding: 8px 14px 8px 0; vertical-align: top; }
+    .co { min-width: 200px; }
+    .tk { font-family: var(--sans); font-weight: 700; font-size: 13.5px; }
+    .nm { display: block; font-family: var(--serif); font-size: 12px; color: var(--ink-dim); max-width: 24ch; }
+    .cell { min-width: 130px; font-size: 12.5px; line-height: 1.5; }
+    /* Status is a word beside the figure, never a color: a muted/ink weighting only. */
+    .word { font-family: var(--sans); font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+    .s-fail .word, .s-near .word { color: var(--ink); }
+    .figTxt { font-family: var(--sans); font-variant-numeric: tabular-nums; color: var(--ink-dim); }
+    .s-fail .figTxt, .s-near .figTxt { color: var(--ink); }
+    .naTxt { font-family: var(--serif); font-style: italic; font-size: 12px; color: var(--muted); }
+    .yours { font-family: var(--serif); font-style: italic; font-size: 12px; color: var(--ink-dim); }
+    .yours:hover { color: var(--accent); }
+
+    .remainder { font-family: var(--serif); font-size: 13.5px; line-height: 1.6; color: var(--ink-soft); margin: 16px 0 0; max-width: 78ch; }
+    .foot { font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--muted); border-top: 1px solid var(--rule-strong); margin-top: 20px; padding-top: 12px; max-width: 78ch; line-height: 1.6; }
+  </style>
+</BaseLayout>
