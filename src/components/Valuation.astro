@@ -322,10 +322,7 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
           <div class="cmp"><span class="cl">Price / FFO</span><span class="cv hot" id="pffo">—</span></div>
           <div class="cmp"><span class="cl">Justified by growth</span><span class="cv" id="justpffo">—</span></div>
           <div class="cmp"><span class="cl">Dividend yield</span><span class="cv" id="dyR">—</span></div>
-        </div>
-        <div class="compare ref">
-        </div>
-        <div class="dials">
+        </div>        <div class="dials">
           <span class="dialsLbl">The assumptions</span>
           <label>Discount rate <output id="rOutR">8%</output><input id="rR" type="range" min="5" max="12" step="0.5" value="8" /></label>
           <label>FFO / share growth <output id="gOutR">{reitGrowthPct}%</output><input id="gR" type="range" min="0" max="8" step="0.5" value={reitGrowthPct} /></label>
@@ -347,10 +344,7 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
           <div class="cmp"><span class="cl">Price / tangible book</span><span class="cv hot" id="ptbv">—</span></div>
           <div class="cmp"><span class="cl">Justified by the return</span><span class="cv" id="justptbv">—</span></div>
           <div class="cmp"><span class="cl">Normalized return on tangible equity</span><span class="cv">{pctS(rotceMed)}</span></div>
-        </div>
-        <div class="compare ref">
-        </div>
-        <div class="compare gate">
+        </div>        <div class="compare gate">
           <div class="cmp"><span class="cl">Price / book</span><span class="cv" id="pbBank">—</span></div>
           <div class="cmp"><span class="cl">Earnings yield</span><span class="cv" id="eyBank">—</span></div>
           <div class="cmp"><span class="cl">P/E</span><span class="cv" id="peBank">—</span></div>
@@ -465,9 +459,11 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
 
       <p class="gatenote cushion" id="cushionLine" hidden></p>
 
-      <div class="compare ref" id="refRow" hidden>
-        <div class="cmp"><span class="cl">On the growth it delivered</span><span class="cv" id="refG">—</span></div>
-        <div class="cmp"><span class="cl">Justified multiple</span><span class="cv" id="justMult">—</span></div>
+      <div class="sens" id="sens" hidden>
+        <span class="sensLbl">What a growth belief costs, in multiples</span>
+        <div class="sensWrap"><table class="sensTbl" id="sensTbl" aria-label="Owner-earnings multiple a growth belief justifies, by discount rate"></table></div>
+        <p class="sensLoc" id="sensLoc" hidden></p>
+        <p class="sensNote" id="sensNote"></p>
       </div>
 
       {eps3 != null && bvps != null ? (
@@ -501,12 +497,6 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
         <label>Years of high growth <output id="nOut">10</output><input id="n" type="range" min="5" max="15" step="1" value="10" /></label>
         <label>Terminal growth <output id="gOut">2.5%</output><input id="g" type="range" min="0" max="4" step="0.25" value="2.5" /></label>
         <p class="dialsNote">The discount rate is anchored to the long government-bond yield ({bondDefault != null ? <>the {bondName} is about {bondDefault}% as of {bondAsOf}</> : "~4–5% in the US today"}, plus the premium you demand for risk).</p>
-      </div>
-
-      <div class="sens" id="sens" hidden>
-        <span class="sensLbl">What the record justifies: the owner-earnings multiple, across the dials</span>
-        <div class="sensWrap"><table class="sensTbl" id="sensTbl" aria-label="Justified owner-earnings multiple by discount rate and years of high growth"></table></div>
-        <p class="sensNote" id="sensNote"></p>
       </div>
 
       <p class="foot">
@@ -597,7 +587,9 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
   .marginRow output { font-weight: 700; font-variant-numeric: tabular-nums; min-width: 40px; color: var(--ink); }
   .marginRow input[type="range"] { flex: 1 1 200px; max-width: 280px; accent-color: var(--accent); }
 
-  /* The sensitivity grid: justified owner-earnings multiple across discount rate × horizon. */
+  /* The multiples schedule: what a growth belief costs, in owner-earnings multiples, across
+     discount rates. The delivered rate is one labeled row of a general table; no cell is ever
+     highlighted as fair. */
   .sens { margin: 18px 0 0; }
   .sens[hidden] { display: none; }
   .sensLbl { font-size: 11.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
@@ -607,7 +599,8 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
   .sensTbl thead th { color: var(--muted); font-weight: 600; font-size: 11px; letter-spacing: 0.03em; }
   .sensTbl tbody th { color: var(--muted); font-weight: 600; }
   .sensTbl td { color: var(--ink-dim); }
-  .sensTbl td.now { background: var(--accent-tint); color: var(--accent); font-weight: 700; }
+  .sensTbl tbody tr.deliv th { color: var(--ink); }
+  .sensLoc { font-family: var(--serif); font-size: 13px; color: var(--ink-dim); margin: 9px 0 0; line-height: 1.5; max-width: 72ch; }
   .sensNote { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); margin: 9px 0 0; line-height: 1.5; max-width: 72ch; }
 
   .gatenote { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); margin: 8px 0 0; line-height: 1.5; max-width: 70ch; }
@@ -656,11 +649,11 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
     const bondY = document.getElementById("bondY"), bondLede = document.getElementById("bondLede"), bondCmp = document.getElementById("bondCmp");
     const eyB = document.getElementById("eyB"), bondYOut = document.getElementById("bondYOut"), spreadB = document.getElementById("spreadB");
     const oeNorm = document.getElementById("oeNorm"), oeSbc = document.getElementById("oeSbc"), oeMaint = document.getElementById("oeMaint");
-    const refRow = document.getElementById("refRow"), refG = document.getElementById("refG"), cushionLine = document.getElementById("cushionLine");
+    const cushionLine = document.getElementById("cushionLine");
     const EPS3 = parseFloat(box.dataset.eps3), BVPS = parseFloat(box.dataset.bvps);
     const REV = parseFloat(box.dataset.rev), GREV = parseFloat(box.dataset.grev), NI = parseFloat(box.dataset.ni);
-    const multPaid = document.getElementById("multPaid"), justMult = document.getElementById("justMult");
-    const sens = document.getElementById("sens"), sensTbl = document.getElementById("sensTbl"), sensNote = document.getElementById("sensNote");
+    const multPaid = document.getElementById("multPaid");
+    const sens = document.getElementById("sens"), sensTbl = document.getElementById("sensTbl"), sensNote = document.getElementById("sensNote"), sensLoc = document.getElementById("sensLoc");
     const baseUsed = document.getElementById("baseUsed");
     const ops = document.getElementById("ops"), opsMc = document.getElementById("opsMc"), impOps = document.getElementById("impOps");
     const marginRow = document.getElementById("marginRow"), mmDial = document.getElementById("mmDial"), mmOut = document.getElementById("mmOut"), reqRev = document.getElementById("reqRev");
@@ -669,27 +662,37 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
     const pcs = (v) => (v < 0 ? "−" : "") + Math.abs(v * 100).toFixed(1) + "%";
     const usd = (v) => { const a = Math.abs(v); const s = a >= 1e12 ? SYM + (a / 1e12).toFixed(2) + "T" : a >= 1e9 ? SYM + (a / 1e9).toFixed(1) + "B" : a >= 1e6 ? SYM + Math.round(a / 1e6) + "M" : SYM + Math.round(a); return v < 0 ? "(" + s + ")" : s; };
 
-    // The sensitivity grid: the owner-earnings multiple the delivered growth justifies across a span of
-    // discount rates (down) and high-growth horizons (across), so the reader sees the whole surface at
-    // once — interest-rate gravity down a column, the price of a longer runway across a row — not just
-    // the one cell their dials happen to land on.
-    const R_ROWS = [0.06, 0.08, 0.1, 0.12], N_COLS = [5, 10, 15];
-    const nearest = (arr, x) => arr.reduce((a, b) => (Math.abs(b - x) < Math.abs(a - x) ? b : a));
-    function renderSens(gT, rrCur, NCur) {
-      if (!sens || !sensTbl || isNaN(GDELIV)) { if (sens) sens.hidden = true; return; }
-      const rN = nearest(R_ROWS, rrCur), nN = nearest(N_COLS, NCur);
-      let html = "<thead><tr><th>disc · yrs</th>" + N_COLS.map((n) => "<th>" + n + "y</th>").join("") + "</tr></thead><tbody>";
-      for (const rr of R_ROWS) {
-        html += "<tr><th>" + (rr * 100).toFixed(0) + "%</th>";
-        for (const n of N_COLS) {
-          const m = rr > gT ? pv(GDELIV, rr, n, gT) : null;
-          html += "<td" + (rr === rN && n === nN ? ' class="now"' : "") + ">" + (m != null ? m.toFixed(1) + "×" : "—") + "</td>";
+    // The multiples schedule, the page's centerpiece: what a growth belief costs, in owner-earnings
+    // multiples — growth beliefs down, discount rates across, the horizon and terminal rate following
+    // the dials. The delivered rate appears as one labeled row of a general table, never as the
+    // company's own number, and no cell is ever highlighted as fair; once a price is typed, the paid
+    // multiple is located in prose, by the reader's own dials.
+    const R_COLS = [0.06, 0.08, 0.1, 0.12];
+    const gLbl = (g, dp) => (g < 0 ? "−" : "") + Math.abs(g * 100).toFixed(dp) + "%";
+    let SCHED_ROWS = [];
+    function schedRows() {
+      let rows = [0, 0.05, 0.15, 0.2].map((g) => ({ g, lbl: gLbl(g, 0) + "/yr", pl: gLbl(g, 0) + "/yr", deliv: false }));
+      if (!isNaN(GDELIV) && GDELIV >= -0.05 && GDELIV <= 0.30) {
+        rows = rows.filter((r) => Math.abs(r.g - GDELIV) >= 0.0025);
+        rows.push({ g: GDELIV, lbl: gLbl(GDELIV, 1) + "/yr · delivered", pl: gLbl(GDELIV, 1) + "/yr (delivered)", deliv: true });
+      }
+      return rows.sort((a, b) => a.g - b.g);
+    }
+    function renderSens(gT, N) {
+      if (!sens || !sensTbl) return;
+      SCHED_ROWS = schedRows();
+      let html = "<thead><tr><th>growth · disc</th>" + R_COLS.map((rr) => "<th>" + (rr * 100).toFixed(0) + "%</th>").join("") + "</tr></thead><tbody>";
+      for (const row of SCHED_ROWS) {
+        html += "<tr" + (row.deliv ? ' class="deliv"' : "") + "><th>" + row.lbl + "</th>";
+        for (const rr of R_COLS) {
+          const m = rr > gT ? pv(row.g, rr, N, gT) : null;
+          html += "<td>" + (m != null ? m.toFixed(1) + "×" : "—") + "</td>";
         }
         html += "</tr>";
       }
       sensTbl.innerHTML = html + "</tbody>";
       sens.hidden = false;
-      if (sensNote) sensNote.textContent = "Each cell is the owner-earnings multiple a " + pcs(GDELIV) + "/yr record justifies at that discount rate and horizon (then " + (gT * 100).toFixed(1) + "% forever). Your dials sit on the highlighted cell; set the price's multiple against it.";
+      if (sensNote) sensNote.textContent = "Each cell is the owner-earnings multiple that growth belief justifies at that discount rate, held " + N + " years, then " + (gT * 100).toFixed(1) + "% forever; the horizon and terminal rate follow the dials below." + (SCHED_ROWS.some((r) => r.deliv) ? " The row marked delivered is the rate this record actually compounded at; the other rows are anyone's beliefs." : "");
     }
 
     // The base the whole tool runs on, made honest by the toggles: a 3-year average instead of
@@ -761,25 +764,19 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
         baseUsed.innerHTML = "Base in use: <b>" + usd(base) + "</b>" + (SH > 0 && isFinite(base / SH) ? " · <b>" + SYM + (base / SH).toFixed(2) + "</b>/share" : "") + ", " + kind + (sbc ? ", net of " + usd(SBC) + " stock comp" : "") + ".";
       }
 
-      // The delivered growth and the multiple it would justify at your dials: schedule values,
-      // general arithmetic anyone can apply, shown whether or not a price has been typed. No
-      // dollar value is computed here — the publication does not publish what a share is
-      // "worth"; the reader may multiply the multiple by the per-share base themselves, and the
-      // figure will be theirs (see docs/valuation-doctrine-review.md).
-      if (refRow) {
-        if (!isNaN(GDELIV) && GDELIV >= -0.05 && GDELIV <= 0.30 && rr > gT) {
-          refRow.hidden = false;
-          refG.textContent = pcs(GDELIV) + "/yr";
-          if (justMult) justMult.textContent = pv(GDELIV, rr, N, gT).toFixed(1) + "×";
-          renderSens(gT, rr, N);
-        } else { refRow.hidden = true; if (sens) sens.hidden = true; }
-      }
+      // The multiples schedule renders before any price: general arithmetic anyone may apply,
+      // its assumptions worn on the row and column labels. No dollar value is computed here —
+      // the publication does not publish what a share is "worth"; the reader may multiply a
+      // multiple by the per-share base themselves, and the figure will be theirs
+      // (see docs/valuation-doctrine-review.md).
+      renderSens(gT, N);
 
       const price = parseFloat(px.value);
       if (!(price > 0)) {
         lede.textContent = "Enter a price above to run it."; impG.textContent = "—"; oeY.textContent = "—";
         if (multPaid) multPaid.textContent = "—"; if (ops) ops.hidden = true;
         if (cushionLine) cushionLine.hidden = true;
+        if (sensLoc) sensLoc.hidden = true;
         if (pe) pe.textContent = "—"; if (pb) pb.textContent = "—"; if (ggate) { ggate.textContent = "—"; ggate.style.color = ""; }
         setURL(""); return;
       }
@@ -801,7 +798,7 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
           else { ggate.textContent = "n/m"; ggate.style.color = ""; }
         }
       }
-      if (!res) { impG.textContent = "—"; lede.textContent = "Set the discount rate above the terminal rate."; return; }
+      if (!res) { impG.textContent = "—"; lede.textContent = "Set the discount rate above the terminal rate."; if (cushionLine) cushionLine.hidden = true; if (sensLoc) sensLoc.hidden = true; return; }
       impG.textContent = res.cap ? "100%+/yr" : pcs(res.g) + "/yr";
       const P = SYM + price.toFixed(2);
       if (res.cap) lede.innerHTML = `At <b>${P}</b>, even <b class="hot">100%+/yr</b> growth for a decade can't justify the price on owner earnings alone.`;
@@ -815,6 +812,19 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
           cushionLine.hidden = false;
           cushionLine.textContent = `A third below your price, the implied growth falls to ${pcs(cres.g)}/yr` + (!isNaN(GDELIV) ? `, against ${pcs(GDELIV)}/yr delivered` : "") + ".";
         } else cushionLine.hidden = true;
+      }
+      // Locate the paid multiple in the schedule, in prose and by the reader's own dials —
+      // never by highlighting a cell as fair.
+      if (sensLoc) {
+        if (base > 0 && SCHED_ROWS.length) {
+          const mult = (mc / base).toFixed(1);
+          let wh;
+          if (res.cap || res.g > SCHED_ROWS[SCHED_ROWS.length - 1].g) wh = `above the ${SCHED_ROWS[SCHED_ROWS.length - 1].pl} row`;
+          else if (res.g < SCHED_ROWS[0].g) wh = `below the ${SCHED_ROWS[0].pl} row`;
+          else { let i = 1; while (i < SCHED_ROWS.length && SCHED_ROWS[i].g < res.g) i++; wh = `between the ${SCHED_ROWS[i - 1].pl} and ${SCHED_ROWS[i].pl} rows`; }
+          sensLoc.textContent = `At your discount rate and horizon, the ${mult}× you are paying sits ${wh} of the schedule.`;
+          sensLoc.hidden = false;
+        } else sensLoc.hidden = true;
       }
       // The operating picture behind the price.
       if (ops) {
@@ -909,11 +919,16 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
       if (reqMargin > 1) verdict = `, more owner earnings than the business would have revenue: a margin above 100%, which is arithmetically unreachable.`;
       else if (reqMargin > 0.45) verdict = `, a margin higher than all but a handful of businesses have sustained; the filings and the peer set are where you weigh whether this one can, ${FROM}.`;
       else if (reqMargin > 0.3) verdict = `, in the range of the most profitable software businesses; the record is where you weigh whether it gets there, ${FROM}.`;
-      else if (reqMargin > mgn) verdict = `, above the ${mm.value}% margin you set above; the price implies more than your own input credits.`;
+      else if (!mmTouched) verdict = `, ${FROM}. The margin dial below asks what you would credit at maturity; that comparison is yours to make.`;
+      else if (reqMargin > mgn) verdict = `, above the ${mm.value}% margin you set below; the price implies more than your own input credits.`;
       else verdict = `, at or below the ${mm.value}% you would credit, ${FROM}.`;
       lede.innerHTML = `At <b>${P}</b>, to earn you ${r.value}% a year, ${esc(NAME)} must be worth ${usd(valN)} in ${N} years. At ~${M.toFixed(0)}× owner earnings, that is <b class="hot">${usd(requiredOE)}</b> a year, on revenue grown ${g > 0 ? "at " + gr.value + "%/yr" : "flat"} to ${usd(revN)}: an owner-earnings margin of <b class="hot">${reqMargin > 3 ? ">300%" : pcs(reqMargin)}</b>${verdict}`;
       setURL(px.value);
     }
+    // The reader's belief must be the reader's: the dial has to rest somewhere, so the
+    // demanded-vs-credited comparison enters the lede only after the dial has been touched.
+    let mmTouched = false;
+    mm.addEventListener("input", () => { mmTouched = true; });
     [px, r, n, gr, mm].forEach((el) => el.addEventListener("input", update));
     try { const q = new URL(location.href).searchParams.get("px"); if (q) px.value = q; } catch (e) {}
     update();
@@ -976,7 +991,6 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
     const r = document.getElementById("rR"), g = document.getElementById("gR");
     const rOut = document.getElementById("rOutR"), gOut = document.getElementById("gOutR");
     const lede = document.getElementById("ledeR"), pffo = document.getElementById("pffo"), just = document.getElementById("justpffo"), dyR = document.getElementById("dyR");
-    const refVR = document.getElementById("refVR"), refMosR = document.getElementById("refMosR");
     const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
     function setURL(v) { try { const u = new URL(location.href); v ? u.searchParams.set("px", v) : u.searchParams.delete("px"); history.replaceState(null, "", u); } catch (e) {} }
 
