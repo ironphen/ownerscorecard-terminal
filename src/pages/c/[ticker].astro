@@ -12,6 +12,7 @@ import Peers from "../../components/Peers.astro";
 import BusinessRead from "../../components/BusinessRead.astro";
 import Segments from "../../components/Segments.astro";
 import OwnersRead from "../../components/OwnersRead.astro";
+import CaseAgainst from "../../components/CaseAgainst.astro";
 import Capital from "../../components/Capital.astro";
 import Inversion from "../../components/Inversion.astro";
 import ActHeader from "../../components/ActHeader.astro";
@@ -164,6 +165,10 @@ const pageJsonLd = fund
       </div>
     ) : null}
   </header>
+
+  {fund ? (
+    <CaseAgainst company={fund} lang={language?.companies?.[ticker] || null} isFin={isFin} />
+  ) : null}
 
   {fund ? (
     <div class="cbar">
