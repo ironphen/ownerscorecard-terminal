@@ -1,6 +1,19 @@
 # Discovery design brief
 
-docs/discovery-design.md. Merged from three method designs (Graham, Buffett, Munger), 2026-07-09. Doctrine holds throughout: no price feed, no rankings, no scores, no verdicts; companies meet tests or fail them; everything prerendered or client-side on build-time JSON; per-user state only in the existing Supabase follows or localStorage. File and function names below are verified against the repo (`.surplus-scout/ownerscorecard-terminal`).
+**OPERATING LENS NARROWED — GRAHAM & BUFFETT ONLY (owner, 2026-07-09, end of day).** The owner's
+standing instruction: the design lens for this product is Graham and Buffett — quantitative
+security analysis, the business read as a business, investment operations conducted as a
+businessman. Munger's framework is background understanding, never a design directive: his
+contributions are dispositions (inversion, the too-hard call, the psychology of misjudgment)
+that live in a person, not in code, and both same-day doctrine removals (the published too-hard
+pile; the case-against strip) came from trying to encode them. Consequences for this brief:
+features 12 (the unflagged basket), 15 (the gauntlet), and 17 (the before-you-follow card) are
+OUT OF SCOPE unless the owner explicitly revives them; features 7 (the enterprising list,
+Graham ch. 15), 9 (tenure), and 16 (the punch card, Buffett's own discipline) remain candidates
+awaiting the owner's go. The disqualification surfaces already shipped (/flags, /withheld) stay:
+their substance is Graham's own accounting scrutiny, behind doors the reader opens.
+
+Merged from three method designs (Graham, Buffett, Munger), 2026-07-09. Doctrine holds throughout: no price feed, no rankings, no scores, no verdicts; companies meet tests or fail them; everything prerendered or client-side on build-time JSON; per-user state only in the existing Supabase follows or localStorage. File and function names below are verified against the repo (`.surplus-scout/ownerscorecard-terminal`).
 
 ## 1. The thesis
 
