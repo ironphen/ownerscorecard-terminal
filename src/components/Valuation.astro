@@ -1009,10 +1009,12 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
     function update() {
       const rr = parseFloat(r.value) / 100, gg = parseFloat(g.value) / 100;
       rOut.textContent = r.value + "%"; gOut.textContent = g.value + "%";
-      // The justified multiple and the reference value depend only on the dials, not the price.
+      // The justified MULTIPLE is a schedule value and stands on its own; the dollar reference
+      // value renders only after the reader types a price (interim gate pending
+      // docs/valuation-doctrine-review.md — a default-dial dollar is a published estimate).
       const justified = gordonMultiple(rr, gg);
       just.textContent = justified != null ? justified.toFixed(1) + "×" : "—";
-      if (justified != null && FFOPS > 0) {
+      if (parseFloat(px.value) > 0 && justified != null && FFOPS > 0) {
         const refValue = justified * FFOPS;
         refVR.textContent = SYM + refValue.toFixed(2); refMosR.textContent = SYM + (refValue * 0.7).toFixed(2);
       } else { refVR.textContent = "—"; refMosR.textContent = "—"; }
