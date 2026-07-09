@@ -35,6 +35,8 @@ import { compositionSentence } from "../../lib/segments.mjs";
 import { selectPeers } from "../../lib/peers.mjs";
 import notes from "../../data/notes.json";
 import adrFundamentals from "../../data/fundamentals.adr.json";
+import jpFundamentals from "../../data/fundamentals.jp.json";
+import { manualOrder, manualHref } from "../../lib/manual.mjs";
 import { getCollection } from "astro:content";
 import { ORG } from "../../lib/seo.mjs";
 import { dataAsOf } from "../../lib/freshness.mjs";
@@ -103,6 +105,13 @@ const fmtDate = (d) =>
 // are one loop. Same memoized computation the Archetypes pages run, so the trail can never disagree with them.
 const lensTrail = fund ? (computeLenses(allCompanies, language.companies).byTicker[ticker] || []) : [];
 
+// This company's place in the Manual (docs/discovery-design.md feature 2): the previous and next
+// ticker in its own volume, so a reader can proceed page to page the way the manuals were read.
+// Same memoized order the manual pages render; article-only tickers have no entry and no links.
+const man = manualOrder(fundamentals.companies || [], adrFundamentals.companies || [], jpFundamentals.companies || []);
+const manEntry = fund ? man.neighbors[`us:${ticker}`] || man.neighbors[`adr:${ticker}`] || null : null;
+const manPlace = manEntry ? manualHref(manEntry.volKey, ticker) : null;
+
 // Machine-readable identity for the scorecard: what the page is (a record, not a rating) and which
 // corporation it is about, so a search or answer engine can connect the ticker to this page directly.
 const pageDescription = fund
@@ -126,7 +135,16 @@ const pageJsonLd = fund
 ---
 
 <BaseLayout title={`${ticker}, Owner Scorecard`} description={pageDescription} jsonLd={pageJsonLd}>
-  <p class="back"><a href="/">← All companies</a></p>
+  <p class="back">
+    <a href="/">← All companies</a>
+    {manEntry ? (
+      <span class="manNav">
+        {manEntry.prev ? <a href={`/c/${manEntry.prev}`}>← {manEntry.prev}</a> : null}
+        <a class="manIn" href={manPlace}>Manual</a>
+        {manEntry.next ? <a href={`/c/${manEntry.next}`}>{manEntry.next} →</a> : null}
+      </span>
+    ) : null}
+  </p>
 
   <header class="hero" id="top">
     <h1>{ticker}{name ? `, ${name}` : ""}</h1>
@@ -248,8 +266,22 @@ const pageJsonLd = fund
     <Cite citation={`Owner Scorecard, "${name} (${ticker}), the owner's record," ${new URL(Astro.url.pathname, Astro.site).href.replace(/\/$/, "")}${dataAsOf ? `, data as of ${dataAsOf}` : ""}.`} />
   ) : null}
 
+  {manEntry ? (
+    <p class="manFoot">
+      Manual order: {manEntry.prev ? <a href={`/c/${manEntry.prev}`}>← {manEntry.prev}</a> : null}
+      <a href={manPlace}>its page in the Manual</a>
+      {manEntry.next ? <a href={`/c/${manEntry.next}`}>{manEntry.next} →</a> : null}
+    </p>
+  ) : null}
+
   <style>
-    .back { margin: 0 0 10px; }
+    .back { margin: 0 0 10px; display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+    .manNav { display: inline-flex; gap: 12px; align-items: baseline; font-size: 12.5px; }
+    .manNav a { font-family: var(--sans); font-weight: 600; }
+    .manNav .manIn { font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); }
+    .manNav .manIn:hover { color: var(--accent); }
+    .manFoot { display: flex; gap: 14px; align-items: baseline; justify-content: center; font-size: 12.5px; border-top: 1px solid var(--rule); margin-top: 20px; padding-top: 12px; }
+    .manFoot a { font-family: var(--sans); font-weight: 600; }
     .hero h1 { margin: 0; }
     .ident { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin: 8px 0 0; }
     .ichip { font-family: var(--sans); font-size: 11.5px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink); border: 1px solid var(--rule-strong); padding: 2px 8px; }

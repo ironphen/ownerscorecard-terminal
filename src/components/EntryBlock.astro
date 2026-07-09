@@ -1,0 +1,105 @@
+---
+// The Entry Block — docs/discovery-design.md feature 1. Five fixed lines, rendered identically
+// wherever a company appears on a reading surface (the Manual today; industry chapters and the
+// punch card later): (1) ticker, name, one-line lede; (2) the ten-year owner-earnings row with an
+// inline shape, no axes; (3) the retained-capital arithmetic as a sentence of numbers; (4) balance-
+// sheet posture and stewardship facts; (5) the archetype chips, alphabetical, never counted into a
+// number. Absence renders "not read" (or "not applied" where the read is a category error), never
+// as a mark against a filled cell. The fixed format is the point: it is what trains the eye.
+//
+// Build-cheap by design — it renders ~3,530 times per build. The heavy work (capitalHistory, the
+// owner-earnings series, cashPosition) is memoized per company in lib/entryBlock.mjs, and the lens
+// membership arrives as a precomputed map (`lenses`), never recomputed per instance.
+import Sparkline from "./Sparkline.astro";
+import language from "../data/language.json";
+import segmentsData from "../data/segments.json";
+import notes from "../data/notes.json";
+import { entryFacts } from "../lib/entryBlock.mjs";
+import { pickNote } from "../lib/business.mjs";
+import { LENS_BY_KEY } from "../lib/lenses.mjs";
+
+// company: the fundamentals record. lenses: the precomputed byTicker membership map from
+// computeLenses. n: this entry's number in the Manual's run (enables the resume-marker data
+// attributes). market: "jp" routes to /jp/, everything else to /c/.
+const { company, lenses = {}, n = null, market = "us" } = Astro.props;
+
+const tk = String(company.ticker || "").toUpperCase();
+const facts = entryFacts(company, {
+  lang: language?.companies?.[tk] || null,
+  seg: segmentsData?.companies?.[tk] || null,
+  note: pickNote(notes, tk),
+});
+const href = market === "jp" ? `/jp/${tk}` : `/c/${tk}`;
+
+// Line 5: the archetype chips, alphabetical by title — an order with no argument in it.
+const chips = (lenses[tk] || [])
+  .map((key) => ({ key, lens: LENS_BY_KEY[key] }))
+  .filter((c) => c.lens)
+  .sort((a, b) => a.lens.title.localeCompare(b.lens.title));
+
+// Line 4 always renders: posture first (or its honest absence), then the stewardship facts.
+const postureText =
+  facts.posture ||
+  (facts.isFin ? "a balance-sheet business; the net-cash read is not applied" : "net position not read");
+const line4 = [postureText, ...facts.stewardship].join(" · ");
+---
+
+<article class="entry" id={facts.ticker}>
+  <p class="eHead">
+    <a class="eTicker" href={href} {...(n != null ? { "data-mt": facts.ticker, "data-mn": n } : {})}>{facts.ticker}</a>
+    <span class="eName">{facts.name}</span>
+  </p>
+  {facts.lede ? <p class="eLede">{facts.lede}</p> : null}
+  <p class="eRow">
+    <span class="eLab">Owner earnings{facts.oe ? ` ${facts.oe.span}` : ""}</span>
+    {facts.oe ? (
+      <span class="eFigs">
+        {facts.oe.figs.map((f) => (
+          <span class="eFig" title={`FY${f.fy}`}>{f.label}</span>
+        ))}
+        <Sparkline series={facts.oe.series} w={72} h={16} klass="eSpark" />
+      </span>
+    ) : (
+      <span class="eNone">{facts.isFin ? "not applied to a balance-sheet business" : "not read"}</span>
+    )}
+  </p>
+  <p class="eRow">
+    <span class="eLab">Retained capital</span>
+    {facts.retained ? (
+      <span class="eSent">{facts.retained}</span>
+    ) : (
+      <span class="eNone">{facts.isFin ? "not applied to a balance-sheet business" : "not read"}</span>
+    )}
+  </p>
+  <p class="eRow">
+    <span class="eLab">Balance sheet</span>
+    <span class="eSent">{line4}</span>
+  </p>
+  {chips.length ? (
+    <p class="eChips">
+      {chips.map((c) => (
+        <a class={c.lens.positive ? "eChip" : "eChip eChipCaution"} href={`/archetypes/${c.key}`}>{c.lens.title}</a>
+      ))}
+    </p>
+  ) : null}
+</article>
+
+<style>
+  .entry { padding: 16px 0 14px; border-bottom: 1px solid var(--rule); scroll-margin-top: 16px; }
+  .eHead { margin: 0; display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+  .eTicker { font-family: var(--sans); font-weight: 800; font-size: 15px; letter-spacing: 0.01em; flex: 0 0 auto; }
+  .eName { font-family: var(--serif); font-size: 14px; color: var(--ink-soft); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .eLede { font-family: var(--serif); font-size: 13.5px; line-height: 1.5; color: var(--ink-soft); margin: 5px 0 0; max-width: 76ch; }
+  .eRow { margin: 6px 0 0; font-size: 12.5px; line-height: 1.6; color: var(--ink-dim); max-width: 86ch; }
+  .eLab { font-family: var(--sans); font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-right: 9px; white-space: nowrap; }
+  .eFigs { display: inline-flex; flex-wrap: wrap; gap: 2px 9px; align-items: baseline; vertical-align: baseline; }
+  .eFig { font-family: var(--sans); font-variant-numeric: tabular-nums; font-size: 11.5px; color: var(--ink-dim); }
+  .eFigs :global(.eSpark) { margin-left: 4px; opacity: 0.85; }
+  .eSent { font-family: var(--sans); font-size: 12.5px; }
+  .eNone { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); }
+  .eChips { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin: 8px 0 0; }
+  .eChip { font-family: var(--sans); font-size: 11px; color: var(--ink-soft); border: 1px solid var(--rule-strong); padding: 1px 7px; text-decoration: none; }
+  .eChip:hover { border-color: var(--accent); color: var(--accent); }
+  .eChipCaution { color: var(--warn, #b4690e); border-color: var(--warn, #b4690e); }
+  .eChipCaution:hover { color: var(--warn, #b4690e); filter: brightness(1.12); }
+</style>

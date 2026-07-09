@@ -1,0 +1,122 @@
+---
+// The Manual — docs/discovery-design.md feature 2. Every company in the library in one fixed
+// format, three volumes, strict alphabetical order by ticker. The form is borrowed from the
+// Moody's manuals Buffett read page by page: turn every page and the obscure entry gets found,
+// because every entry gets turned to. This index lists the volumes and their counts, and renders
+// the reader's ribbon (a bookmark held in localStorage — never a progress bar, no percent, no
+// streaks) as one line.
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import fundamentals from "../../data/fundamentals.json";
+import adrData from "../../data/fundamentals.adr.json";
+import jpData from "../../data/fundamentals.jp.json";
+import { manualOrder } from "../../lib/manual.mjs";
+import { dataAsOf, fmtAsOf } from "../../lib/freshness.mjs";
+
+const { volumes, total } = manualOrder(fundamentals.companies, adrData.companies, jpData.companies);
+const refreshed = fmtAsOf(dataAsOf);
+const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+const VOL_SUB = {
+  us: "SEC filers, from their 10-K filings.",
+  adr: "Foreign filers on US exchanges, from their 20-F filings; figures as filed, in each company's home currency.",
+  jp: "EDINET filers, from their annual securities reports; figures as filed, in yen.",
+};
+---
+
+<BaseLayout
+  title="The Manual, Owner Scorecard"
+  description={`Every company in the library in one fixed format: ${total.toLocaleString()} entries across three volumes, in strict alphabetical order by ticker, each a five-line record read from the filings.`}
+>
+  <header class="hero">
+    <h1>The Manual</h1>
+    <p class="lede">
+      Every company in the library, in one fixed format, in strict alphabetical order by ticker.
+      Three volumes, {total.toLocaleString()} entries.
+    </p>
+    <p class="sub">
+      The form is borrowed from the Moody's manuals Buffett read page by page: turn every page and
+      the obscure entry gets found, because every entry gets turned to. Each entry is the same five
+      lines — what it is, the owner-earnings record, the retained-capital arithmetic, the balance
+      sheet and stewardship facts, and the archetype tests it meets. Nothing is ranked and nothing
+      is scored; the reader brings the two things no entry carries, understanding of the business
+      and a price.
+    </p>
+    {refreshed ? <p class="dateline">From the latest filings · data as of {refreshed}.</p> : null}
+    <p class="resume" id="mResume" hidden></p>
+  </header>
+
+  <ul class="vols">
+    {volumes.map((v) => (
+      <li class="vol">
+        <div class="vTop">
+          <span class="vOrd">{v.ordinal}</span>
+          <a class="vTitle" href={v.key === "jp" ? "/manual/japan" : `/manual/${v.key}/a`}>{v.label}</a>
+          <span class="vN">{v.count.toLocaleString()} companies</span>
+        </div>
+        <p class="vSub">{VOL_SUB[v.key]}</p>
+        {v.key === "jp" ? (
+          <p class="vLetters"><a class="one" href="/manual/japan">One page, all {v.count} entries →</a></p>
+        ) : (
+          <p class="vLetters">
+            {LETTERS.map((L) =>
+              v.letters.has(L) ? <a href={`/manual/${v.key}/${L.toLowerCase()}`}>{L}</a> : <span class="off">{L}</span>
+            )}
+          </p>
+        )}
+      </li>
+    ))}
+  </ul>
+
+  <p class="foot">
+    A reading surface, not a screen: the entries are in ticker order and nothing else, every figure
+    is read from the company's own filings the same way its page computes it, and a record that
+    could not be read renders "not read" rather than disappearing. Start at the A's, or anywhere.
+  </p>
+
+  <script is:inline define:vars={{ total }}>
+    // The ribbon: one line, rendered only where a place was marked. A bookmark, not a progress
+    // bar — no percent, no streaks.
+    (function () {
+      var el = document.getElementById("mResume");
+      if (!el) return;
+      var m = null;
+      try { m = JSON.parse(localStorage.getItem("oscManualResume") || "null"); } catch (e) {}
+      if (!m || !m.t || !m.n || !m.v) return;
+      var t = String(m.t).toUpperCase();
+      var href = m.v === "jp"
+        ? "/manual/japan#" + t
+        : "/manual/" + (m.v === "adr" ? "adr" : "us") + "/" + t.charAt(0).toLowerCase() + "#" + t;
+      el.appendChild(document.createTextNode(
+        "Entry " + Number(m.n).toLocaleString("en-US") + " of " + total.toLocaleString("en-US") + ", continue at "
+      ));
+      var a = document.createElement("a");
+      a.href = href;
+      a.textContent = t;
+      el.appendChild(a);
+      el.appendChild(document.createTextNode("."));
+      el.hidden = false;
+    })();
+  </script>
+
+  <style>
+    .hero h1 { margin: 0 0 8px; }
+    .lede { font-family: var(--serif); font-size: 18px; line-height: 1.55; color: var(--ink-soft); margin: 0 0 10px; max-width: 68ch; }
+    .sub { color: var(--ink-dim); margin: 0; max-width: 72ch; line-height: 1.6; font-size: 14.5px; }
+    .dateline { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); margin: 10px 0 0; }
+    .resume { font-family: var(--serif); font-size: 14.5px; color: var(--ink-soft); margin: 12px 0 0; border-left: 2px solid var(--accent); padding-left: 10px; }
+
+    .vols { list-style: none; padding: 0; margin: 22px 0 0; }
+    .vol { border-bottom: 1px solid var(--rule); padding: 15px 0; }
+    .vTop { display: flex; align-items: baseline; gap: 12px; }
+    .vOrd { font-family: var(--sans); font-size: 10.5px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); flex: 0 0 auto; }
+    .vTitle { font-family: var(--serif); font-weight: 600; font-size: 17px; }
+    .vN { font-family: var(--sans); font-variant-numeric: tabular-nums; font-size: 13px; color: var(--muted); margin-left: auto; flex: 0 0 auto; }
+    .vSub { margin: 5px 0 0; color: var(--ink-dim); font-size: 13px; line-height: 1.55; max-width: 76ch; }
+    .vLetters { display: flex; flex-wrap: wrap; gap: 1px 2px; margin: 8px 0 0; }
+    .vLetters a, .vLetters .off { font-family: var(--sans); font-size: 12px; font-weight: 600; letter-spacing: 0.02em; padding: 3px 7px; border-radius: 3px; min-width: 22px; text-align: center; }
+    .vLetters a:hover { background: var(--accent-tint); text-decoration: none; }
+    .vLetters .off { color: var(--faint); }
+    .vLetters .one { min-width: 0; text-align: left; padding-left: 0; }
+
+    .foot { font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--muted); border-top: 1px solid var(--rule-strong); margin-top: 24px; padding-top: 12px; max-width: 78ch; line-height: 1.6; }
+  </style>
+</BaseLayout>

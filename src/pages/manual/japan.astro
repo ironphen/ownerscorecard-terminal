@@ -1,0 +1,34 @@
+---
+// The Manual, volume three (Japan) — docs/discovery-design.md feature 2. Thirty-four EDINET
+// filers on one page, in strict alphabetical order by securities code, figures as filed in yen.
+// The archetype pass never includes the Japanese pool, so entries here carry no chips — absence
+// renders blank, never as a mark.
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import ManualPage from "../../components/ManualPage.astro";
+import fundamentals from "../../data/fundamentals.json";
+import adrData from "../../data/fundamentals.adr.json";
+import jpData from "../../data/fundamentals.jp.json";
+import { manualOrder, manualPageChain } from "../../lib/manual.mjs";
+
+const { volumes, total } = manualOrder(fundamentals.companies, adrData.companies, jpData.companies);
+const vol = volumes.find((v) => v.key === "jp");
+
+const chain = manualPageChain(volumes);
+const idx = chain.findIndex((p) => p.volKey === "jp");
+---
+
+<BaseLayout
+  title="The Manual: Japan — Owner Scorecard"
+  description={`Volume three of the Manual: all ${vol.count} Japanese companies in the library on one page, each as the same five-line record, figures as filed in yen, in order of securities code.`}
+>
+  <ManualPage
+    vol={vol}
+    letter={null}
+    entries={vol.entries}
+    prevPage={idx > 0 ? chain[idx - 1] : null}
+    nextPage={idx >= 0 && idx < chain.length - 1 ? chain[idx + 1] : null}
+    lenses={{}}
+    total={total}
+    rail={[]}
+  />
+</BaseLayout>

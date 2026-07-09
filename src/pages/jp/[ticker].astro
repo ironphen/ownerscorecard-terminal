@@ -13,6 +13,9 @@ import Segments from "../../components/Segments.astro";
 import CaseAgainst from "../../components/CaseAgainst.astro";
 import notes from "../../data/notes.json";
 import { pickNote } from "../../lib/business.mjs";
+import fundamentals from "../../data/fundamentals.json";
+import adrData from "../../data/fundamentals.adr.json";
+import { manualOrder, manualHref } from "../../lib/manual.mjs";
 
 // The Japanese pool, a separate route and a separate dataset from the US catalog. These
 // pages are quantitative by design: the figures are read straight from each company's
@@ -36,6 +39,13 @@ const name = fund?.name || "";
 // note, the page stays quantitative-only and says so.
 const note = fund ? pickNote(notes, ticker) : null;
 
+// This company's place in the Manual (docs/discovery-design.md feature 2): prev/next securities
+// code within the Japan volume, so reading proceeds page to page. Same memoized order the manual
+// pages render.
+const man = manualOrder(fundamentals.companies || [], adrData.companies || [], jp.companies || []);
+const manEntry = fund ? man.neighbors[`jp:${ticker}`] || null : null;
+const manPlace = manEntry ? manualHref("jp", ticker) : null;
+
 const SECTOR_LABEL = {
   assetLight: "Asset-light compounder",
   consumer: "Consumer & brand",
@@ -47,7 +57,16 @@ const sectorLabel = fund ? SECTOR_LABEL[fund.sector] || "Diversified" : null;
 ---
 
 <BaseLayout title={`${ticker} ${name}, Owner Scorecard (Japan)`}>
-  <p class="back"><a href="/japan">← Japan catalog</a></p>
+  <p class="back">
+    <a href="/japan">← Japan catalog</a>
+    {manEntry ? (
+      <span class="manNav">
+        {manEntry.prev ? <a href={`/jp/${manEntry.prev}`}>← {manEntry.prev}</a> : null}
+        <a class="manIn" href={manPlace}>Manual</a>
+        {manEntry.next ? <a href={`/jp/${manEntry.next}`}>{manEntry.next} →</a> : null}
+      </span>
+    ) : null}
+  </p>
 
   {fund ? (
     <>
@@ -129,13 +148,27 @@ const sectorLabel = fund ? SECTOR_LABEL[fund.sector] || "Diversified" : null;
         same kind of filing the US pages draw from EDGAR. A separate
         pool: these names never pass through the US industry classifier.
       </p>
+
+      {manEntry ? (
+        <p class="manFoot">
+          Manual order: {manEntry.prev ? <a href={`/jp/${manEntry.prev}`}>← {manEntry.prev}</a> : null}
+          <a href={manPlace}>its page in the Manual</a>
+          {manEntry.next ? <a href={`/jp/${manEntry.next}`}>{manEntry.next} →</a> : null}
+        </p>
+      ) : null}
     </>
   ) : (
     <p>Nothing here for {ticker} yet.</p>
   )}
 
   <style>
-    .back { margin: 0 0 10px; }
+    .back { margin: 0 0 10px; display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+    .manNav { display: inline-flex; gap: 12px; align-items: baseline; font-size: 12.5px; }
+    .manNav a { font-family: var(--sans); font-weight: 600; }
+    .manNav .manIn { font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); }
+    .manNav .manIn:hover { color: var(--accent); }
+    .manFoot { display: flex; gap: 14px; align-items: baseline; justify-content: center; font-size: 12.5px; border-top: 1px solid var(--rule); margin-top: 20px; padding-top: 12px; }
+    .manFoot a { font-family: var(--sans); font-weight: 600; }
     .hero h1 { margin: 0; }
     .ident { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin: 8px 0 0; }
     .ichip { font-family: var(--sans); font-size: 11.5px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink); border: 1px solid var(--rule-strong); padding: 2px 8px; }
