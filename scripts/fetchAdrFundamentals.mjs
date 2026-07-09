@@ -317,6 +317,7 @@ function latestObservation(facts, tags, unit, instant = false) {
 // denominator; this count exists only to price the whole business.
 function sharesForValueOf(facts) {
   const avg = latestObservation(facts, CONCEPTS.sharesDiluted, "shares", false);
+  const inst = latestObservation(facts, CONCEPTS.sharesOutstanding, "shares", true);
   const pick = (o, basis) => ({ val: o.val, asOf: o.end, form: o.form || null, basis });
   let dei = null;
   const units = facts?.facts?.dei?.EntityCommonStockSharesOutstanding?.units?.shares;
@@ -328,9 +329,13 @@ function sharesForValueOf(facts) {
         dei = { val: u.val, end: u.end, filed: u.filed || "", form: u.form };
     }
   }
-  const scaleOk = dei && (!(avg?.val > 0) || (dei.val >= avg.val / 4 && dei.val <= avg.val * 4));
+  // The scale guard measures the cover against ANY count the filer tags — the weighted average
+  // when it exists, else the balance-sheet instant. A filer with no weighted-average series at
+  // all once slipped an ADS-denominated cover through (MAAS, 20:1 — the cover was 1/20th of its
+  // instant count), which the ratio division downstream would have shrunk twice.
+  const ref = avg?.val > 0 ? avg.val : inst?.val > 0 ? inst.val : null;
+  const scaleOk = dei && (ref == null || (dei.val >= ref / 4 && dei.val <= ref * 4));
   if (dei && dei.val > 0 && scaleOk && (!avg?.end || Math.abs(days(dei.end, avg.end)) <= 400)) return pick(dei, "cover");
-  const inst = latestObservation(facts, CONCEPTS.sharesOutstanding, "shares", true);
   if (inst && inst.val > 0 && avg?.val > 0 && inst.val >= avg.val * 0.75 && inst.val <= avg.val * 1.25)
     return pick(inst, "instant");
   if (avg && avg.val > 0) return pick(avg, "average");
