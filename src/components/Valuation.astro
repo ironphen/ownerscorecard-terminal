@@ -324,8 +324,6 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
           <div class="cmp"><span class="cl">Dividend yield</span><span class="cv" id="dyR">—</span></div>
         </div>
         <div class="compare ref">
-          <div class="cmp"><span class="cl">Reference value / share</span><span class="cv hot" id="refVR">—</span></div>
-          <div class="cmp"><span class="cl">…less a 30% margin of safety</span><span class="cv" id="refMosR">—</span></div>
         </div>
         <div class="dials">
           <span class="dialsLbl">The assumptions</span>
@@ -334,7 +332,7 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
           <DeliveredGrowth cagr={ffoGrowthRaw} series={ffoWin} label="FFO / share, delivered" range={ffoRange} />
         </div>
         <p class="dialsNote">The justified multiple is 1 ÷ (discount rate − growth), a perpetuity on FFO. At an 8% discount and 3% growth, a REIT is worth about 20× FFO. </p>
-        <p class="foot">FFO about ${ffops.toFixed(2)} per share on {(shares / 1e6).toFixed(0)}M shares. The reference value applies the multiple the dials justify to FFO per share. FFO here adds back depreciation and removes property-sale gains, the NAREIT method; it does not net out maintenance capex (AFFO), occupancy or lease terms, which the 10-K does.</p>
+        <p class="foot">FFO about ${ffops.toFixed(2)} per share on {(shares / 1e6).toFixed(0)}M shares. The dials set the multiple they justify; your price sets the multiple you are paying. FFO here adds back depreciation and removes property-sale gains, the NAREIT method; it does not net out maintenance capex (AFFO), occupancy or lease terms, which the 10-K does.</p>
       </div>
     ) : bankRunnable ? (
       <div id="valBoxBank" data-tbvps={tbvps} data-bvps={bvpsB} data-rotce={rotceMed} data-eps={epsB ?? ""} data-name={name} data-cycle={isInsurer ? "underwriting cycle" : "credit cycle"} data-sym={sym}>
@@ -351,8 +349,6 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
           <div class="cmp"><span class="cl">Normalized return on tangible equity</span><span class="cv">{pctS(rotceMed)}</span></div>
         </div>
         <div class="compare ref">
-          <div class="cmp"><span class="cl">Reference value / share</span><span class="cv hot" id="refVB">—</span></div>
-          <div class="cmp"><span class="cl">…less a 30% margin of safety</span><span class="cv" id="refMosB">—</span></div>
         </div>
         <div class="compare gate">
           <div class="cmp"><span class="cl">Price / book</span><span class="cv" id="pbBank">—</span></div>
@@ -366,7 +362,7 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
           <DeliveredGrowth cagr={tbvGrowthRaw} series={tbvWin} label="Tangible book / share, delivered" range={tbvRange} />
           <p class="dialsNote">The justified multiple is (return on tangible equity − growth) ÷ (cost of equity − growth). {isInsurer ? "An" : "A"} {finKind} earning exactly its cost of equity is worth about one times tangible book; the premium above that prices each point of durable excess return. A higher cost of equity lowers the justified multiple for {isInsurer ? "an" : "a"} {finKind}.</p>
         </div>
-        <p class="foot">Tangible book {$(tEq)} on {(shares / 1e6).toFixed(0)}M shares, a {pctS(rotceMed)} normalized return on it. The reference value applies the multiple that return justifies to tangible book. It assumes the {finKind} keeps earning that return; {bankRisk} changes it, which is what the record and the 10-K are for.</p>
+        <p class="foot">Tangible book {$(tEq)} on {(shares / 1e6).toFixed(0)}M shares, a {pctS(rotceMed)} normalized return on it. The dials set the multiple such a return would justify; your price sets the multiple you are paying. It assumes the {finKind} keeps earning that return; {bankRisk} changes it, which is what the record and the 10-K are for.</p>
       </div>
     ) : (
       <p class="note">A {sector.label.toLowerCase()} isn't read on an owner-earnings DCF; its economics live on the balance sheet (book value, the return earned on it, and the cash the assets throw off).</p>
@@ -375,9 +371,9 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
     negMode ? (
       <div id="valBoxNeg" data-rev={rev} data-shares={shares} data-netdebt={netDebt} data-name={name} data-oem={oeMarginNow ?? ""} data-profitable={profitableNeg ? "1" : "0"} data-sym={sym}>
         {profitableNeg ? (
-          <p class="intro">{name} is <b>profitable</b>, but owner earnings are <b>negative</b> this year because capital spending currently outruns operating cash, a build-out, so the owner-earnings reverse-DCF has no positive base to grow. We read the price from both ends instead: type a price to see the steady-state profitability it <b>demands</b>, then set the mature margin you would <b>believe</b> for a reference value to weigh it against. Nothing is stored.</p>
+          <p class="intro">{name} is <b>profitable</b>, but owner earnings are <b>negative</b> this year because capital spending currently outruns operating cash, a build-out, so the owner-earnings reverse-DCF has no positive base to grow. We read the price from both ends instead: type a price to see the steady-state profitability it <b>demands</b>, then set the mature margin you would <b>believe</b> and weigh the two against each other. Nothing is stored.</p>
         ) : (
-          <p class="intro">Owner earnings are <b>negative</b> today, so the usual reverse-DCF has nothing to grow. That is exactly when a price makes its boldest promise, so we read it from both ends: type a price to see the future profitability it <b>demands</b>, then set the mature margin you would <b>believe</b> to get a reference value to weigh that price against. Nothing is stored.</p>
+          <p class="intro">Owner earnings are <b>negative</b> today, so the usual reverse-DCF has nothing to grow. That is exactly when a price makes its boldest promise, so we read it from both ends: type a price to see the future profitability it <b>demands</b>, then set the mature margin you would <b>believe</b> and weigh the two against each other. Nothing is stored.</p>
         )}
         <div class="priceRow">
           <label for="pxn">Today&rsquo;s price</label>
@@ -390,11 +386,6 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
           <div class="cmp"><span class="cl">Margin the price demands</span><span class="cv hot" id="reqM">—</span></div>
           <div class="cmp"><span class="cl">Owner-earnings margin today</span><span class="cv neg">{pctS(oeMarginNow)}</span></div>
         </div>
-        <div class="compare ref">
-          <div class="cmp"><span class="cl">On the margin you would believe</span><span class="cv" id="refMN">—</span></div>
-          <div class="cmp"><span class="cl">Reference value / share</span><span class="cv hot" id="refVN">—</span></div>
-          <div class="cmp"><span class="cl">…less a 30% margin of safety</span><span class="cv" id="refMosN">—</span></div>
-        </div>
         <div class="dials">
           <span class="dialsLbl">The assumptions</span>
           <label>Discount rate <output id="rOutN">9%</output><input id="rN" type="range" min="4" max="15" step="0.5" value="9" /></label>
@@ -403,7 +394,7 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
           <DeliveredGrowth cagr={gRevRaw} series={revWin} label="Revenue, delivered" range={revRange} />
           <label>Mature owner-earnings margin <output id="mmOutN">15%</output><input id="mmN" type="range" min="3" max="40" step="1" value="15" /></label>
         </div>
-        <p class="foot">Two reads of one future. From your price: the owner earnings the company must reach, valued at a mature multiple and discounted back at your rate, expressed as the margin it implies on revenue grown at your rate. From your belief: the mature margin you would credit, turned into a reference value per share and netted against {netDebt >= 0 ? `net debt ${$(netDebt)}` : `net cash ${$(-netDebt)}`}. When the margin the price demands runs above the one you would believe, you are paying for a future taken on faith. For a deep cyclical at a trough, normalized through-cycle earnings are the better lens; this mode is for the genuinely unprofitable, and for the profitable business whose capital spending currently outruns its cash.</p>
+        <p class="foot">Two reads of one future. From your price: the owner earnings the company must reach, valued at a mature multiple and discounted back at your rate, expressed as the margin it implies on revenue grown at your rate. From your belief: the mature margin you would credit, set on the dial below. When the margin the price demands runs above the one you would believe, you are paying for a future taken on faith. For a deep cyclical at a trough, normalized through-cycle earnings are the better lens; this mode is for the genuinely unprofitable, and for the profitable business whose capital spending currently outruns its cash.</p>
       </div>
     ) : (
       <p class="note">A reverse-DCF needs positive owner earnings, or at least revenue, to anchor to, there's no clean base here. Judge this one on assets or normalized earnings, not a growth model.</p>
@@ -472,11 +463,11 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
         <p class="reqRev" id="reqRev" hidden></p>
       </div>
 
+      <p class="gatenote cushion" id="cushionLine" hidden></p>
+
       <div class="compare ref" id="refRow" hidden>
         <div class="cmp"><span class="cl">On the growth it delivered</span><span class="cv" id="refG">—</span></div>
         <div class="cmp"><span class="cl">Justified multiple</span><span class="cv" id="justMult">—</span></div>
-        <div class="cmp"><span class="cl">Reference value / share</span><span class="cv hot" id="refV">—</span></div>
-        <div class="cmp"><span class="cl">…less a 30% margin of safety</span><span class="cv" id="refMos">—</span></div>
       </div>
 
       {eps3 != null && bvps != null ? (
@@ -528,7 +519,7 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
             : `on ${(shares / 1e6).toFixed(0)}M diluted shares`)
           : "on the share count you enter above"}; net {netDebt >= 0 ? `debt ${$(netDebt)}` : `cash ${$(-netDebt)}`}.{overhangPct != null ? ` The if-converted diluted count is ${(dilutedCount / 1e6).toFixed(0)}M, ${overhangPct}% above the shares outstanding: the dilution overhang (convertibles, options) a buyer inherits.` : ""}
         The base is the latest year by default; <b>Normalize</b> values it on the through-cycle median owner-earnings margin (to avoid paying on a peak year), and <b>Net of stock comp</b> treats option pay as the expense it is.{offerMaint ? (<> Capex ({$(Math.abs(capex))}) runs well above depreciation ({$(dep)}), so this is a build-out; <b>Steady-state</b> swaps total capex for maintenance (≈ depreciation), lifting the base to about {$(ownerEarningsMaint)}, the cash it would throw off if it stopped expanding.</>) : null}
-        The reference value extrapolates the owner-earnings growth the record delivered, netted against debt.
+        The dials set the multiple a growth belief justifies; the price, and every dollar on this page, is yours.
       </p>
     </div>
   )}
@@ -650,7 +641,7 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
     if (!box) return;
     const OE = parseFloat(box.dataset.oe), SH_DATA = parseFloat(box.dataset.shares), NAME = box.dataset.name || "this company";
     const SYM = box.dataset.sym || "$";
-    const OE3 = parseFloat(box.dataset.oe3), SBC = parseFloat(box.dataset.sbc) || 0, GDELIV = parseFloat(box.dataset.gdeliv), NETDEBT = parseFloat(box.dataset.netdebt) || 0;
+    const OE3 = parseFloat(box.dataset.oe3), SBC = parseFloat(box.dataset.sbc) || 0, GDELIV = parseFloat(box.dataset.gdeliv);
     const OEM = parseFloat(box.dataset.oemaint), OEM3 = parseFloat(box.dataset.oemaint3);
     const px = document.getElementById("px");
     // When the filing's share count is missing (Up-C / multi-class filers), the reader supplies it
@@ -665,7 +656,7 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
     const bondY = document.getElementById("bondY"), bondLede = document.getElementById("bondLede"), bondCmp = document.getElementById("bondCmp");
     const eyB = document.getElementById("eyB"), bondYOut = document.getElementById("bondYOut"), spreadB = document.getElementById("spreadB");
     const oeNorm = document.getElementById("oeNorm"), oeSbc = document.getElementById("oeSbc"), oeMaint = document.getElementById("oeMaint");
-    const refRow = document.getElementById("refRow"), refG = document.getElementById("refG"), refV = document.getElementById("refV"), refMos = document.getElementById("refMos");
+    const refRow = document.getElementById("refRow"), refG = document.getElementById("refG"), cushionLine = document.getElementById("cushionLine");
     const EPS3 = parseFloat(box.dataset.eps3), BVPS = parseFloat(box.dataset.bvps);
     const REV = parseFloat(box.dataset.rev), GREV = parseFloat(box.dataset.grev), NI = parseFloat(box.dataset.ni);
     const multPaid = document.getElementById("multPaid"), justMult = document.getElementById("justMult");
@@ -770,21 +761,16 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
         baseUsed.innerHTML = "Base in use: <b>" + usd(base) + "</b>" + (SH > 0 && isFinite(base / SH) ? " · <b>" + SYM + (base / SH).toFixed(2) + "</b>/share" : "") + ", " + kind + (sbc ? ", net of " + usd(SBC) + " stock comp" : "") + ".";
       }
 
-      // Reference value: the per-share figure the growth it actually delivered would imply, valued at
-      // your own dials — a yardstick to weigh your price against, never what the business is "worth"
-      // and never a target. Shown only when the delivered growth is in a range it's honest to extrapolate,
-      // and ONLY once the reader has typed a price: a dollar figure rendered from the site's default
-      // dials with no reader act is a published value estimate, which this publication does not make.
-      // (Interim gate pending the fuller redesign in docs/valuation-doctrine-review.md.)
+      // The delivered growth and the multiple it would justify at your dials: schedule values,
+      // general arithmetic anyone can apply, shown whether or not a price has been typed. No
+      // dollar value is computed here — the publication does not publish what a share is
+      // "worth"; the reader may multiply the multiple by the per-share base themselves, and the
+      // figure will be theirs (see docs/valuation-doctrine-review.md).
       if (refRow) {
-        if (parseFloat(px.value) > 0 && !isNaN(GDELIV) && GDELIV >= -0.05 && GDELIV <= 0.30 && base > 0 && SH > 0 && rr > gT) {
-          const mult = pv(GDELIV, rr, N, gT);
-          const refPx = (mult * base - NETDEBT) / SH;
+        if (!isNaN(GDELIV) && GDELIV >= -0.05 && GDELIV <= 0.30 && rr > gT) {
           refRow.hidden = false;
           refG.textContent = pcs(GDELIV) + "/yr";
-          if (justMult) justMult.textContent = mult.toFixed(1) + "×";
-          refV.textContent = refPx > 0 ? SYM + refPx.toFixed(2) : "—";
-          refMos.textContent = refPx > 0 ? SYM + (refPx * 0.7).toFixed(2) : "—";
+          if (justMult) justMult.textContent = pv(GDELIV, rr, N, gT).toFixed(1) + "×";
           renderSens(gT, rr, N);
         } else { refRow.hidden = true; if (sens) sens.hidden = true; }
       }
@@ -793,6 +779,7 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
       if (!(price > 0)) {
         lede.textContent = "Enter a price above to run it."; impG.textContent = "—"; oeY.textContent = "—";
         if (multPaid) multPaid.textContent = "—"; if (ops) ops.hidden = true;
+        if (cushionLine) cushionLine.hidden = true;
         if (pe) pe.textContent = "—"; if (pb) pb.textContent = "—"; if (ggate) { ggate.textContent = "—"; ggate.style.color = ""; }
         setURL(""); return;
       }
@@ -820,6 +807,15 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
       if (res.cap) lede.innerHTML = `At <b>${P}</b>, even <b class="hot">100%+/yr</b> growth for a decade can't justify the price on owner earnings alone.`;
       else if (res.g < 0) lede.innerHTML = `At <b>${P}</b>, the market is pricing owner earnings to <b>shrink ${pcs(res.g)}/yr</b> for ${N} years, priced for decline.`;
       else lede.innerHTML = `At <b>${P}</b>, the market is pricing <b>${esc(NAME)}</b> to grow owner earnings about <b class="hot">${pcs(res.g)}</b>/yr for ${N} years, then ${(gT * 100).toFixed(1)}% forever, discounted at ${(rr * 100).toFixed(0)}%.`;
+      // Margin of safety, as Graham used it: a discipline the buyer applies to their own price,
+      // shown as what a one-third cushion buys in belief-space. No second dollar is printed.
+      if (cushionLine) {
+        const cres = !res.cap ? solve((0.7 * mc) / base, rr, N, gT) : null;
+        if (cres && !cres.cap && isFinite(cres.g)) {
+          cushionLine.hidden = false;
+          cushionLine.textContent = `A third below your price, the implied growth falls to ${pcs(cres.g)}/yr` + (!isNaN(GDELIV) ? `, against ${pcs(GDELIV)}/yr delivered` : "") + ".";
+        } else cushionLine.hidden = true;
+      }
       // The operating picture behind the price.
       if (ops) {
         ops.hidden = false;
@@ -878,7 +874,6 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
     const box = document.getElementById("valBoxNeg");
     if (!box) return;
     const REV = parseFloat(box.dataset.rev), SH = parseFloat(box.dataset.shares), NAME = box.dataset.name || "this company";
-    const NETDEBT = parseFloat(box.dataset.netdebt) || 0;
     const PROFIT = box.dataset.profitable === "1";
     const FROM = PROFIT ? "from negative free cash flow today" : "from a loss today";
     const SYM = box.dataset.sym || "$";
@@ -886,7 +881,6 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
     const r = document.getElementById("rN"), n = document.getElementById("nN"), gr = document.getElementById("grN"), mm = document.getElementById("mmN");
     const rOut = document.getElementById("rOutN"), nOut = document.getElementById("nOutN"), grOut = document.getElementById("grOutN"), mmOut = document.getElementById("mmOutN");
     const lede = document.getElementById("ledeN"), reqOE = document.getElementById("reqOE"), reqM = document.getElementById("reqM");
-    const refMN = document.getElementById("refMN"), refVN = document.getElementById("refVN"), refMosN = document.getElementById("refMosN");
 
     const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
     const pcs = (v) => (v < 0 ? "−" : "") + Math.abs(v * 100).toFixed(0) + "%";
@@ -899,20 +893,9 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
       const M = gordonMultiple(rr, 0.025) || 0; // mature owner-earnings multiple at this discount rate (2.5% terminal)
       const revN = REV * Math.pow(1 + g, N);  // revenue grown at your rate
 
-      // From your belief: the mature margin you would credit, turned into owner earnings on
-      // that grown revenue, valued at the mature multiple, discounted back, net of debt. A
-      // reference value to set the price against — the same yardstick the other modes show.
-      refMN.textContent = mm.value + "%";
-      // Dollar figures render only after the reader types a price (interim gate pending
-      // docs/valuation-doctrine-review.md) — the site must not publish a per-share value built
-      // on its own prefilled margin belief.
-      if (parseFloat(px.value) > 0 && M > 0 && SH > 0 && revN > 0) {
-        const pv = (revN * mgn * M) / Math.pow(1 + rr, N);
-        const refPS = (pv - NETDEBT) / SH;
-        refVN.textContent = refPS > 0 ? SYM + refPS.toFixed(2) : "—";
-        refMosN.textContent = refPS > 0 ? SYM + (refPS * 0.7).toFixed(2) : "—";
-      } else { refVN.textContent = "—"; refMosN.textContent = "—"; }
-
+      // No reference value is computed: the belief side lives in the dial, and the lede compares
+      // the margin the price demands against the margin the reader credits — a relationship, not
+      // a published worth (see docs/valuation-doctrine-review.md).
       const price = parseFloat(px.value);
       if (!(price > 0)) { lede.textContent = "Enter a price to run it."; reqOE.textContent = "—"; reqM.textContent = "—"; setURL(""); return; }
       const mc = price * SH;
@@ -950,7 +933,6 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
     const coeOut = document.getElementById("coeOut"), gOutB = document.getElementById("gOutB");
     const lede = document.getElementById("ledeB"), ptbv = document.getElementById("ptbv"), just = document.getElementById("justptbv");
     const pbB = document.getElementById("pbBank"), eyB = document.getElementById("eyBank"), peB = document.getElementById("peBank");
-    const refVB = document.getElementById("refVB"), refMosB = document.getElementById("refMosB");
     const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
 
     function setURL(v) { try { const u = new URL(location.href); v ? u.searchParams.set("px", v) : u.searchParams.delete("px"); history.replaceState(null, "", u); } catch (e) {} }
@@ -959,15 +941,10 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
       const c = parseFloat(coe.value) / 100, g = parseFloat(gB.value) / 100;
       coeOut.textContent = coe.value + "%"; gOutB.textContent = gB.value + "%";
       // The justified MULTIPLE is a schedule value (general arithmetic on the dials) and stands
-      // on its own; the dollar reference value it implies renders only after the reader types a
-      // price — a per-share dollar from default dials would be a published value estimate.
-      // (Interim gate pending docs/valuation-doctrine-review.md.)
+      // on its own. No dollar reference value is computed — the reader may multiply the multiple
+      // by tangible book per share themselves (see docs/valuation-doctrine-review.md).
       const justified = justifiedBookMultiple(ROTCE, c, g);
       just.textContent = justified != null ? justified.toFixed(1) + "×" : "—";
-      if (parseFloat(px.value) > 0 && justified != null && TBVPS > 0) {
-        const refValue = justified * TBVPS;
-        refVB.textContent = SYM + refValue.toFixed(2); refMosB.textContent = SYM + (refValue * 0.7).toFixed(2);
-      } else { refVB.textContent = "—"; refMosB.textContent = "—"; }
       const price = parseFloat(px.value);
       if (!(price > 0)) { lede.textContent = "Enter a price above to run it."; [ptbv, pbB, eyB, peB].forEach((e) => (e.textContent = "—")); setURL(""); return; }
       const ptb = price / TBVPS;
@@ -977,12 +954,9 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
       else { eyB.textContent = "n/m"; peB.textContent = "n/m"; }
       const P = SYM + price.toFixed(2), R = (ROTCE * 100).toFixed(0);
       if (justified == null) { lede.textContent = "Set the cost of equity above the growth rate."; setURL(px.value); return; }
-      const ratio = ptb / justified;
-      let verdict;
-      if (ratio <= 0.85) verdict = `below the about ${justified.toFixed(1)}× that a ${R}% return on tangible equity would support at the cost of equity and growth you set. Whether that return holds is what the record and the 10-K decide.`;
-      else if (ratio <= 1.15) verdict = `roughly in line with the about ${justified.toFixed(1)}× that its ${R}% return on tangible equity would support at the dials you set.`;
-      else verdict = `above the about ${justified.toFixed(1)}× that a ${R}% return on tangible equity would support at the dials you set; the price carries the return rising, or holding past the ${CYCLE}.`;
-      lede.innerHTML = `At <b>${P}</b>, you pay <b class="hot">${ptb.toFixed(2)}×</b> tangible book for ${esc(NAME)}, ${verdict}`;
+      // Two multiples, stated plainly: the one the reader is paying, and the one the dials
+      // justify. No band, no adjective — which is larger is the reader's own reading.
+      lede.innerHTML = `At <b>${P}</b>, you pay <b class="hot">${ptb.toFixed(2)}×</b> tangible book for ${esc(NAME)}; at the cost of equity and growth you set, a ${R}% return on tangible equity supports about <b>${justified.toFixed(1)}×</b>. Whether that return holds past the ${CYCLE} is what the record and the 10-K decide.`;
       setURL(px.value);
     }
     [px, coe, gB].forEach((el) => el.addEventListener("input", update));
@@ -1009,15 +983,11 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
     function update() {
       const rr = parseFloat(r.value) / 100, gg = parseFloat(g.value) / 100;
       rOut.textContent = r.value + "%"; gOut.textContent = g.value + "%";
-      // The justified MULTIPLE is a schedule value and stands on its own; the dollar reference
-      // value renders only after the reader types a price (interim gate pending
-      // docs/valuation-doctrine-review.md — a default-dial dollar is a published estimate).
+      // The justified MULTIPLE is a schedule value and stands on its own. No dollar reference
+      // value is computed — the reader may multiply the multiple by FFO per share themselves
+      // (see docs/valuation-doctrine-review.md).
       const justified = gordonMultiple(rr, gg);
       just.textContent = justified != null ? justified.toFixed(1) + "×" : "—";
-      if (parseFloat(px.value) > 0 && justified != null && FFOPS > 0) {
-        const refValue = justified * FFOPS;
-        refVR.textContent = SYM + refValue.toFixed(2); refMosR.textContent = SYM + (refValue * 0.7).toFixed(2);
-      } else { refVR.textContent = "—"; refMosR.textContent = "—"; }
       const price = parseFloat(px.value);
       if (!(price > 0)) { lede.textContent = "Enter a price above to run it."; [pffo, dyR].forEach((e) => (e.textContent = "—")); setURL(""); return; }
       const pf = price / FFOPS;
@@ -1026,13 +996,9 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
       dyR.textContent = dy != null ? (dy * 100).toFixed(1) + "%" : "—";
       const P = SYM + price.toFixed(2);
       if (justified == null) { lede.textContent = "Set the discount rate above the growth rate."; setURL(px.value); return; }
-      const ratio = pf / justified;
-      let verdict;
-      if (ratio <= 0.85) verdict = `below the about ${justified.toFixed(1)}× that ${g.value}% FFO growth would support at an ${r.value}% discount rate.`;
-      else if (ratio <= 1.15) verdict = `roughly in line with the about ${justified.toFixed(1)}× that ${g.value}% FFO growth would support at an ${r.value}% discount rate.`;
-      else verdict = `above the about ${justified.toFixed(1)}× that ${g.value}% FFO growth would support at an ${r.value}% discount rate; the price carries faster growth, or a lower rate.`;
+      // Two multiples, stated plainly; which is larger is the reader's own reading.
       const income = dy != null ? ` The income alone is a ${(dy * 100).toFixed(1)}% yield.` : "";
-      lede.innerHTML = `At <b>${P}</b>, you pay <b class="hot">${pf.toFixed(1)}×</b> funds from operations for ${esc(NAME)}, ${verdict}${income}`;
+      lede.innerHTML = `At <b>${P}</b>, you pay <b class="hot">${pf.toFixed(1)}×</b> funds from operations for ${esc(NAME)}; ${g.value}% FFO growth at an ${r.value}% discount rate supports about <b>${justified.toFixed(1)}×</b>.${income}`;
       setURL(px.value);
     }
     [px, r, g].forEach((el) => el.addEventListener("input", update));

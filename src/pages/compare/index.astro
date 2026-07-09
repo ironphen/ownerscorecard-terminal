@@ -75,7 +75,7 @@ import { SEARCH_ALIASES } from "../../lib/searchAliases.mjs";
   <p class="foot">
     Every figure is recomputed from the company&rsquo;s own SEC or EDINET filings, the same record behind
     each Owner&rsquo;s Scorecard. The reverse-DCF says what a price would have to <em>assume</em>, never what a
-    business is worth; a reference value is a yardstick, not a target. An ADR column with a known ADS ratio
+    business is worth. An ADR column with a known ADS ratio
     is stated in US dollars per ADS (the ratio from the filer&rsquo;s own 20-F cover, translated at the dated
     reference rate shown), so the price you type is the quote you hold; other absolute figures remain in each
     company&rsquo;s own reporting currency and are never differenced across columns; ratios and per-share
@@ -199,7 +199,7 @@ import { SEARCH_ALIASES } from "../../lib/searchAliases.mjs";
   </style>
 
   <script>
-    import { pv, solve, justifiedBookMultiple, gordonMultiple } from "../../lib/reverseDcf.mjs";
+    import { solve } from "../../lib/reverseDcf.mjs";
 
     (function () {
       const MAX = 4;
@@ -285,7 +285,7 @@ import { SEARCH_ALIASES } from "../../lib/searchAliases.mjs";
 
       function priceRead(card) {
         const p = card.price, sym = p.sym, rr = rate / 100, N = 10, gT = 0.025;
-        const out = { implies: "—", delivered: "—", reference: "—", pe3: "—", pxb: "—", impliesHot: false };
+        const out = { implies: "—", delivered: "—", pe3: "—", pxb: "—", impliesHot: false };
         const price = parseFloat(prices[card.ticker]);
         // Graham's price gates on the typed price: the same arithmetic the company page runs —
         // the multiple of 3-year average earnings, and the multiple of latest filed book.
@@ -299,29 +299,18 @@ import { SEARCH_ALIASES } from "../../lib/searchAliases.mjs";
           if (base.sbc && p.sbc > 0) b -= p.sbc;
           const SH = effShares(card);
           out.delivered = p.gDeliv != null ? pctRate(p.gDeliv, true, 1) + "/yr" : "—";
-          // The reference dollar fills only for a column whose price the reader has typed —
-          // four side-by-side per-share values on a bare shareable URL would be a published
-          // fair-value sheet. (Interim gate pending docs/valuation-doctrine-review.md.)
-          if (price > 0 && p.gDeliv != null && p.gDeliv >= -0.05 && p.gDeliv <= 0.30 && b > 0 && SH > 0 && rr > gT) {
-            const refPS = (pv(p.gDeliv, rr, N, gT) * b - (p.netDebt || 0)) / SH;
-            out.reference = refPS > 0 ? sym + refPS.toFixed(2) : "—";
-          }
+          // No reference dollar is computed anywhere on this page — a per-share value under the
+          // masthead would be a published fair-value sheet (docs/valuation-doctrine-review.md).
           if (price > 0 && b > 0 && SH > 0) {
             const res = solve((price * SH) / b, rr, N, gT);
             out.implies = !res ? "—" : res.cap ? ">100%/yr" : pctRate(res.g, true, 1) + "/yr";
             out.impliesHot = true;
           }
         } else if (p.mode === "bank") {
-          const coe = rr, g = 0.03;
           out.delivered = p.tbvGrowth != null ? pctRate(p.tbvGrowth, true, 1) + "/yr" : "—";
-          const just = justifiedBookMultiple(p.rotce, coe, g);
-          if (price > 0 && just != null && p.tbvps > 0) out.reference = sym + (just * p.tbvps).toFixed(2);
           if (price > 0 && p.tbvps > 0) { out.implies = (price / p.tbvps).toFixed(2) + "× book"; out.impliesHot = true; }
         } else if (p.mode === "reit") {
-          const g = p.ffoGrowth != null ? Math.max(0, Math.min(0.08, p.ffoGrowth)) : 0.03;
           out.delivered = p.ffoGrowth != null ? pctRate(p.ffoGrowth, true, 1) + "/yr" : "—";
-          const just = gordonMultiple(rr, g);
-          if (price > 0 && just != null && p.ffops > 0) out.reference = sym + (just * p.ffops).toFixed(2);
           if (price > 0 && p.ffops > 0) { out.implies = (price / p.ffops).toFixed(1) + "× FFO"; out.impliesHot = true; }
         }
         return out;
@@ -417,7 +406,6 @@ import { SEARCH_ALIASES } from "../../lib/searchAliases.mjs";
         const pxRows = [
           { key: "implies", label: "What the price implies", rsub: "growth, or the multiple paid" },
           { key: "delivered", label: "What the record delivered", rsub: "set the implied beside this" },
-          { key: "reference", label: "Reference value / share", rsub: "a yardstick, never a target" },
           { key: "pe3", label: "P/E on 3-yr average earnings", rsub: "Graham's earnings basis" },
           { key: "pxb", label: "Price / book", rsub: "latest filed book value" },
         ];
@@ -459,7 +447,6 @@ import { SEARCH_ALIASES } from "../../lib/searchAliases.mjs";
           const set = (key, txt, hot) => { const el = document.getElementById(`pc-${i}-${key}`); if (el) { el.textContent = txt; el.classList.toggle("hot", !!hot); } };
           set("implies", r.implies, r.impliesHot);
           set("delivered", r.delivered, false);
-          set("reference", r.reference, false);
           set("pe3", r.pe3, false);
           set("pxb", r.pxb, false);
         }
