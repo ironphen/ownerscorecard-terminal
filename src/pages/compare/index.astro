@@ -299,7 +299,10 @@ import { SEARCH_ALIASES } from "../../lib/searchAliases.mjs";
           if (base.sbc && p.sbc > 0) b -= p.sbc;
           const SH = effShares(card);
           out.delivered = p.gDeliv != null ? pctRate(p.gDeliv, true, 1) + "/yr" : "—";
-          if (p.gDeliv != null && p.gDeliv >= -0.05 && p.gDeliv <= 0.30 && b > 0 && SH > 0 && rr > gT) {
+          // The reference dollar fills only for a column whose price the reader has typed —
+          // four side-by-side per-share values on a bare shareable URL would be a published
+          // fair-value sheet. (Interim gate pending docs/valuation-doctrine-review.md.)
+          if (price > 0 && p.gDeliv != null && p.gDeliv >= -0.05 && p.gDeliv <= 0.30 && b > 0 && SH > 0 && rr > gT) {
             const refPS = (pv(p.gDeliv, rr, N, gT) * b - (p.netDebt || 0)) / SH;
             out.reference = refPS > 0 ? sym + refPS.toFixed(2) : "—";
           }
@@ -312,13 +315,13 @@ import { SEARCH_ALIASES } from "../../lib/searchAliases.mjs";
           const coe = rr, g = 0.03;
           out.delivered = p.tbvGrowth != null ? pctRate(p.tbvGrowth, true, 1) + "/yr" : "—";
           const just = justifiedBookMultiple(p.rotce, coe, g);
-          if (just != null && p.tbvps > 0) out.reference = sym + (just * p.tbvps).toFixed(2);
+          if (price > 0 && just != null && p.tbvps > 0) out.reference = sym + (just * p.tbvps).toFixed(2);
           if (price > 0 && p.tbvps > 0) { out.implies = (price / p.tbvps).toFixed(2) + "× book"; out.impliesHot = true; }
         } else if (p.mode === "reit") {
           const g = p.ffoGrowth != null ? Math.max(0, Math.min(0.08, p.ffoGrowth)) : 0.03;
           out.delivered = p.ffoGrowth != null ? pctRate(p.ffoGrowth, true, 1) + "/yr" : "—";
           const just = gordonMultiple(rr, g);
-          if (just != null && p.ffops > 0) out.reference = sym + (just * p.ffops).toFixed(2);
+          if (price > 0 && just != null && p.ffops > 0) out.reference = sym + (just * p.ffops).toFixed(2);
           if (price > 0 && p.ffops > 0) { out.implies = (price / p.ffops).toFixed(1) + "× FFO"; out.impliesHot = true; }
         }
         return out;

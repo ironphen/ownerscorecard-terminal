@@ -772,9 +772,12 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
 
       // Reference value: the per-share figure the growth it actually delivered would imply, valued at
       // your own dials — a yardstick to weigh your price against, never what the business is "worth"
-      // and never a target. Shown only when the delivered growth is in a range it's honest to extrapolate.
+      // and never a target. Shown only when the delivered growth is in a range it's honest to extrapolate,
+      // and ONLY once the reader has typed a price: a dollar figure rendered from the site's default
+      // dials with no reader act is a published value estimate, which this publication does not make.
+      // (Interim gate pending the fuller redesign in docs/valuation-doctrine-review.md.)
       if (refRow) {
-        if (!isNaN(GDELIV) && GDELIV >= -0.05 && GDELIV <= 0.30 && base > 0 && SH > 0 && rr > gT) {
+        if (parseFloat(px.value) > 0 && !isNaN(GDELIV) && GDELIV >= -0.05 && GDELIV <= 0.30 && base > 0 && SH > 0 && rr > gT) {
           const mult = pv(GDELIV, rr, N, gT);
           const refPx = (mult * base - NETDEBT) / SH;
           refRow.hidden = false;
@@ -900,7 +903,10 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
       // that grown revenue, valued at the mature multiple, discounted back, net of debt. A
       // reference value to set the price against — the same yardstick the other modes show.
       refMN.textContent = mm.value + "%";
-      if (M > 0 && SH > 0 && revN > 0) {
+      // Dollar figures render only after the reader types a price (interim gate pending
+      // docs/valuation-doctrine-review.md) — the site must not publish a per-share value built
+      // on its own prefilled margin belief.
+      if (parseFloat(px.value) > 0 && M > 0 && SH > 0 && revN > 0) {
         const pv = (revN * mgn * M) / Math.pow(1 + rr, N);
         const refPS = (pv - NETDEBT) / SH;
         refVN.textContent = refPS > 0 ? SYM + refPS.toFixed(2) : "—";
@@ -952,11 +958,13 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
     function update() {
       const c = parseFloat(coe.value) / 100, g = parseFloat(gB.value) / 100;
       coeOut.textContent = coe.value + "%"; gOutB.textContent = gB.value + "%";
-      // The justified multiple and the reference value it implies depend only on the dials and
-      // the normalized return, not on the price you type, so they stand on their own.
+      // The justified MULTIPLE is a schedule value (general arithmetic on the dials) and stands
+      // on its own; the dollar reference value it implies renders only after the reader types a
+      // price — a per-share dollar from default dials would be a published value estimate.
+      // (Interim gate pending docs/valuation-doctrine-review.md.)
       const justified = justifiedBookMultiple(ROTCE, c, g);
       just.textContent = justified != null ? justified.toFixed(1) + "×" : "—";
-      if (justified != null && TBVPS > 0) {
+      if (parseFloat(px.value) > 0 && justified != null && TBVPS > 0) {
         const refValue = justified * TBVPS;
         refVB.textContent = SYM + refValue.toFixed(2); refMosB.textContent = SYM + (refValue * 0.7).toFixed(2);
       } else { refVB.textContent = "—"; refMosB.textContent = "—"; }
