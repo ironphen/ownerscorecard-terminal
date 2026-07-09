@@ -46,6 +46,11 @@ const refreshed = fmtAsOf(dataAsOf);
     ))}
   </ul>
 
+  <p class="sixth">
+    A sixth basket is the publication's own: <a href="/withheld">the records it could not read
+    reliably from the filings</a>, each with its reason. A limitation of ours, not a flag.
+  </p>
+
   <p class="foot">
     Every figure comes from the company's SEC filings and its MD&amp;A, computed the same way as on
     its page, so a register and the page it links to can never disagree.
@@ -65,6 +70,8 @@ const refreshed = fmtAsOf(dataAsOf);
     .reg a:hover .rTitle { filter: brightness(1.15); }
     .rN { font-family: var(--sans); font-variant-numeric: tabular-nums; font-size: 13px; color: var(--muted); flex: 0 0 auto; }
     .rDesc { margin: 5px 0 0; color: var(--ink-dim); font-size: 13.5px; line-height: 1.55; max-width: 76ch; }
+
+    .sixth { font-family: var(--serif); font-size: 13.5px; color: var(--ink-dim); margin: 18px 0 0; max-width: 76ch; line-height: 1.6; }
 
     .foot { font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--muted); border-top: 1px solid var(--rule-strong); margin-top: 28px; padding-top: 12px; max-width: 78ch; line-height: 1.6; }
   </style>

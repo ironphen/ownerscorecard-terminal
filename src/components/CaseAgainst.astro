@@ -7,85 +7,123 @@
 // low — one line per fired item, each with its figure, each anchoring to the fuller panel below.
 // No verdict words; the strip states facts and where they are examined. When nothing fired it
 // says so in one plain sentence — never a green badge, because the absence of a flag is not a
-// virtue, only the cheap checks coming back empty. (The withheld-reads line joins in milestone 2,
-// once the readability record exists.)
+// virtue, only the cheap checks coming back empty.
+//
+// A company with a readability record (readability.mjs, feature 11) shows the withheld form
+// INSTEAD of the normal lines: the publication's own limitation, stated in the first person —
+// this publication could not read the record reliably from the filings, so these reads were not
+// run. A statement about our reading, never about the business or the reader.
 import { firedRegisters, REGISTER_BY_SLUG } from "../lib/flags.mjs";
 import { inversionChecks } from "../lib/inversion.mjs";
 import { grahamTests } from "../lib/graham.mjs";
 import { financialKind } from "../lib/archetype.mjs";
+import { readabilityOf } from "../lib/readability.mjs";
 
 // `lang` is this company's entry from language.json (the candor and integrity reads); pass null
 // where the pool carries none (the Japanese pages). `isFin` mirrors the page's own gating of the
-// Inversion section, so the strip can never cite a panel the page withholds.
-const { company, lang = null, isFin = false } = Astro.props;
+// Inversion section, so the strip can never cite a panel the page withholds. `adrRatios` and
+// `rates` feed the readability record's ADR-basis check; pass null where the pool has no ADRs
+// (the Japanese pages), and the check simply never applies.
+const { company, lang = null, isFin = false, adrRatios = null, rates = null } = Astro.props;
+
+// The readability record, first: when the publication could not read this record reliably, the
+// reads below were not run, so their lines are not computed — the strip states the limitation
+// and its reasons instead.
+const withheld = readabilityOf(company, adrRatios, rates);
 
 const items = [];
 
-// 1. The named registers — the same firedRegisters() the /flags pages run, so "what fired here"
-// and "who else did this" can never disagree. Each line links out to its register.
-const fired = firedRegisters(company, lang);
-for (const f of fired) {
-  items.push({ label: REGISTER_BY_SLUG[f.slug].title, figure: f.figure, href: `/flags/${f.slug}` });
-}
+if (!withheld) {
+  // 1. The named registers — the same firedRegisters() the /flags pages run, so "what fired here"
+  // and "who else did this" can never disagree. Each line links out to its register.
+  const fired = firedRegisters(company, lang);
+  for (const f of fired) {
+    items.push({ label: REGISTER_BY_SLUG[f.slug].title, figure: f.figure, href: `/flags/${f.slug}` });
+  }
 
-// 2. Flagged inversion checks, only where the page runs the Inversion panel: the operating reads
-// are category errors on a financial, and the page withholds that section there.
-const inv = !isFin ? inversionChecks(company) : null;
-for (const c of (inv?.checks || []).filter((x) => x.flagged)) {
-  items.push({ label: c.label, figure: c.value, href: "#sec-inversion" });
-}
+  // 2. Flagged inversion checks, only where the page runs the Inversion panel: the operating reads
+  // are category errors on a financial, and the page withholds that section there.
+  const inv = !isFin ? inversionChecks(company) : null;
+  for (const c of (inv?.checks || []).filter((x) => x.flagged)) {
+    items.push({ label: c.label, figure: c.value, href: "#sec-inversion" });
+  }
 
-// 3. Graham's defensive tests, failed — stated as a count against the testable, never a score.
-// Same gate as the Scorecard, where the panel lives: the US pool and the ADRs, non-financials.
-// Only when the record carries enough testable criteria for the count to mean anything.
-const g = company.market !== "JP" && !financialKind(company) ? grahamTests(company) : null;
-const gFail = g ? g.testable - g.passes : 0;
-if (g && g.testable >= 5 && gFail > 0) {
-  items.push({
-    label: "Graham's defensive tests",
-    figure: `fails ${gFail} of ${g.testable} testable defensive criteria`,
-    href: "#sec-scorecard",
-  });
-}
+  // 3. Graham's defensive tests, failed — stated as a count against the testable, never a score.
+  // Same gate as the Scorecard, where the panel lives: the US pool and the ADRs, non-financials.
+  // Only when the record carries enough testable criteria for the count to mean anything.
+  const g = company.market !== "JP" && !financialKind(company) ? grahamTests(company) : null;
+  const gFail = g ? g.testable - g.passes : 0;
+  if (g && g.testable >= 5 && gFail > 0) {
+    items.push({
+      label: "Graham's defensive tests",
+      figure: `fails ${gFail} of ${g.testable} testable defensive criteria`,
+      href: "#sec-scorecard",
+    });
+  }
 
-// 4. A candor low the registers did not carry: promotional or non-GAAP-steering language elevated
-// on one measure but below the sells-hard register's two-figure threshold. Only when that register
-// did NOT fire, so the same read is never stated twice.
-const cd = lang?.mdna?.candor || null;
-if (!fired.some((f) => f.slug === "sells-hard") && cd && ((cd.promo || 0) >= 0.8 || (cd.adjusted || 0) >= 4.8)) {
-  const parts = [];
-  if (cd.promo != null) parts.push(`promotional language at ${cd.promo.toFixed(1)}`);
-  if (cd.adjusted != null) parts.push(`non-GAAP references at ${cd.adjusted.toFixed(1)}`);
-  items.push({
-    label: "The candor read",
-    figure: `${parts.join(" and ")} per thousand words of MD&A`,
-    href: "#sec-changes",
-  });
+  // 4. A candor low the registers did not carry: promotional or non-GAAP-steering language elevated
+  // on one measure but below the sells-hard register's two-figure threshold. Only when that register
+  // did NOT fire, so the same read is never stated twice.
+  const cd = lang?.mdna?.candor || null;
+  if (!fired.some((f) => f.slug === "sells-hard") && cd && ((cd.promo || 0) >= 0.8 || (cd.adjusted || 0) >= 4.8)) {
+    const parts = [];
+    if (cd.promo != null) parts.push(`promotional language at ${cd.promo.toFixed(1)}`);
+    if (cd.adjusted != null) parts.push(`non-GAAP references at ${cd.adjusted.toFixed(1)}`);
+    items.push({
+      label: "The candor read",
+      figure: `${parts.join(" and ")} per thousand words of MD&A`,
+      href: "#sec-changes",
+    });
+  }
 }
 ---
 
-<aside class={items.length ? "caseAgainst" : "caseAgainst clean"}>
-  <h3 class="caTitle">The case against</h3>
-  {items.length ? (
-    <ul class="caList">
-      {items.map((it) => (
-        <li>
-          <a class="caLabel" href={it.href}>{it.label}</a>
-          <span class="caSep" aria-hidden="true">·</span>
-          <span class="caFig">{it.figure}</span>
-        </li>
+{withheld ? (
+  <aside class="caseAgainst caWithheld">
+    <h3 class="caTitle">Withheld</h3>
+    <p class="caNone">
+      This publication could not read this record reliably from the filings; these reads were not
+      run:
+    </p>
+    <ul class="caList caReasons">
+      {withheld.reasons.map((r) => (
+        <li>{r.text}</li>
       ))}
     </ul>
-  ) : (
-    <p class="caNone">No disqualifier fired on the cheap checks. The two tests that remain, understanding and price, are yours.</p>
-  )}
-</aside>
+    <p class="caWFoot">
+      A limitation of ours, not a fact about the business. <a href="/withheld">Every record this
+      publication could not read →</a>
+    </p>
+  </aside>
+) : (
+  <aside class={items.length ? "caseAgainst" : "caseAgainst clean"}>
+    <h3 class="caTitle">The case against</h3>
+    {items.length ? (
+      <ul class="caList">
+        {items.map((it) => (
+          <li>
+            <a class="caLabel" href={it.href}>{it.label}</a>
+            <span class="caSep" aria-hidden="true">·</span>
+            <span class="caFig">{it.figure}</span>
+          </li>
+        ))}
+      </ul>
+    ) : (
+      <p class="caNone">No disqualifier fired on the cheap checks. The two tests that remain, understanding and price, are yours.</p>
+    )}
+  </aside>
+)}
 
 <style>
   /* A quiet strip: the muted warn border marks where the disconfirming lines live, and the words
-     carry the meaning. When nothing fired the border goes neutral — a plain sentence, no praise. */
+     carry the meaning. When nothing fired the border goes neutral — a plain sentence, no praise.
+     The withheld form is neutral too: the publication's own limitation, not a flag against the
+     company, so it carries no warn color. */
   .caseAgainst { margin: 16px 0 0; border-left: 3px solid var(--warn, #b4690e); background: var(--warn-tint, var(--accent-tint)); padding: 10px 14px 11px; max-width: 78ch; }
   .caseAgainst.clean { border-left-color: var(--rule-strong); background: transparent; padding: 10px 14px 11px; }
+  .caseAgainst.caWithheld { border-left-color: var(--rule-strong); background: transparent; }
+  .caReasons li { font-family: var(--serif); color: var(--ink-soft); }
+  .caWFoot { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); margin: 8px 0 0; }
   .caTitle { font-family: var(--sans); font-size: 10.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin: 0; }
   .caList { list-style: none; padding: 0; margin: 6px 0 0; }
   .caList li { padding: 4px 0; font-size: 13.5px; line-height: 1.55; }
