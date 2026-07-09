@@ -397,10 +397,10 @@ const jsonLdBlocks = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
     <script is:inline>
       /* "Open anywhere" (discovery design, feature 5): the uniform random door. One fetch of the
          same compact index the search overlay uses (the browser caches it), one uniform draw across
-         every company in every pool — US, ADR, Japan, flagged and too-hard included, because any
-         weighting toward test-passers would be an implicit ranking. The href derives from the row's
-         pool code exactly as search does. Without JS, or on a failed fetch, the anchor's own href
-         (/archetypes) is the door. */
+         every company in every pool — US, ADR, Japan, flagged and unreadable-record names included,
+         because any weighting toward test-passers would be an implicit ranking. The href derives
+         from the row's pool code exactly as search does. Without JS, or on a failed fetch, the
+         anchor's own href (/archetypes) is the door. */
       (function () {
         var door = document.getElementById("openAnywhere");
         if (!door) return;
