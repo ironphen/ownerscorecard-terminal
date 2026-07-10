@@ -29,6 +29,26 @@ try {
   }
 } catch { /* no stamps, no lastmod */ }
 
+// The dateline stamps (lib/freshness.mjs), read here and injected as build-time constants via
+// vite.define below. The dateline renders on the server-rendered account page too, and when
+// freshness.mjs imported the data pools to read their stamps, whichever chunk Rollup colocated
+// them into could ride the account page's import of BaseLayout straight into the Cloudflare
+// worker — the exact ~45MB leak scripts/verifyStatic.mjs exists to catch, and a chunking
+// accident that actually fired when the archetypes demolition reshaped the import graph. Each
+// pool file carries its own top-level `asOf` within the first bytes, so 2KB of each is plenty;
+// best-effort like the sitemap stamps above (a missing stamp reads as absent, never a dead build).
+const asOfStamps = [
+  './src/data/fundamentals.json',
+  './src/data/fundamentals.adr.json',
+  './src/data/language.json',
+  './src/data/rates.json',
+].map((p) => {
+  try {
+    const m = readFileSync(here(p), 'utf8').slice(0, 2048).match(/"asOf"\s*:\s*"(\d{4}-\d{2}-\d{2})/);
+    return m ? m[1] : null;
+  } catch { return null; }
+}).filter(Boolean).sort();
+
 // https://astro.build/config
 export default defineConfig({
   site: 'https://ownerscorecard.com',
@@ -39,6 +59,10 @@ export default defineConfig({
   // prepared; their URLs redirect to the notes index rather than 404 so saved links and the
   // /about page's letter link keep resolving. On each republish, remove that piece's
   // temporary redirect (and re-point the-de-rating at the moat note).
+  // The retired /archetypes routes 301 to /groupings, /tests and /flags from public/_redirects
+  // (the /articles precedent), NOT from here: a config redirect becomes a worker route that
+  // imports its destination page module, and those destinations import the data pools — ~45MB
+  // into the Cloudflare worker, past scripts/verifyStatic.mjs's ceiling.
   redirects: {
     '/notes/the-de-rating': '/notes',
     '/notes/the-moat-and-the-multiple': '/notes',
@@ -54,6 +78,14 @@ export default defineConfig({
   // fails the deploy if the static corpus ever silently shrinks or the worker bundle swallows the
   // big data JSONs — see docs/phase-2-plan.md §1.
   adapter: cloudflare(),
+  vite: {
+    define: {
+      // The oldest stamp (the honest dateline floor) and the newest — the same convention
+      // lib/freshness.mjs documents.
+      __OSC_DATA_AS_OF__: JSON.stringify(asOfStamps[0] ?? null),
+      __OSC_DATA_AS_OF_LATEST__: JSON.stringify(asOfStamps[asOfStamps.length - 1] ?? null),
+    },
+  },
   integrations: [mdx(), react(), sitemap({
     // Account/auth/API surfaces are per-user, never for the index. The free /notes pages stay in —
     // they are the publication; paid Notes render on demand and so never enter the build-time
