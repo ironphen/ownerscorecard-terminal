@@ -10,7 +10,6 @@ import { ownerEarningsBridge, ownerEarningsBridgeSeries, fmtMoney } from "../lib
 import Term from "./Term.astro";
 
 const { company } = Astro.props;
-const b = ownerEarningsBridge(company);
 const $ = (v) => fmtMoney(v, company?.currency || "USD");
 const signed = (v) => (v < 0 ? "−" : "+") + $(Math.abs(v));
 const pc = (n, d) => (n != null && d ? `${Math.round((n / d) * 100)}%` : null);
@@ -22,11 +21,19 @@ const pc = (n, d) => (n != null && d ? `${Math.round((n / d) * 100)}%` : null);
 // needs just to hold its position, which owner earnings subtracts, and — for a builder spending
 // above depreciation while it grows — the discretionary growth capex, carried down to free cash flow.
 const series = ownerEarningsBridgeSeries(company, 5);   // oldest → newest
-const cols = series.slice().reverse();                  // newest first, so the headline year leads
-const anyGrowth = series.some((y) => y.growthCapex > 0);
-const anyDep = series.some((y) => y.depreciation != null);
-const anySbc = series.some((y) => y.stockBasedComp != null);
-const hasGrowth = !!b && b.growthCapex > 0;             // the latest year, for the prose below
+// The single-year bridge (company.lines) can sit on a newer vintage than the history the ledger
+// renders — the sentence then narrates a year that appears in no column, sometimes with the opposite
+// sign. So every featured figure — takeaway, bars, the note — is driven from the series' newest
+// column, the same column the ledger marks, and they agree by construction. Only when no history
+// year carries the bridge does the single-year figure stand in, as the ledger's one column.
+const single = ownerEarningsBridge(company);
+const rendered = series.length ? series : single ? [single] : [];
+const b = rendered.length ? rendered[rendered.length - 1] : null;
+const cols = rendered.slice().reverse();                // newest first, so the featured year leads
+const anyGrowth = rendered.some((y) => y.growthCapex > 0);
+const anyDep = rendered.some((y) => y.depreciation != null);
+const anySbc = rendered.some((y) => y.stockBasedComp != null);
+const hasGrowth = !!b && b.growthCapex > 0;             // the featured (newest rendered) year
 
 // Each row reads one bridge figure across every year column. `kind` drives both the arithmetic sign
 // (add/sub get a +/−) and the banded styling (start / subtotal / total / ratio).
@@ -68,16 +75,18 @@ const barMax = showBars ? Math.max(b.netIncome, b.ownerEarnings) : 0;
 // operations (Nintendo's float of cash and securities). A small note when that gap is large.
 const bigGap = !!b && b.netIncome > 0 && b.other < -0.5 * b.netIncome;
 
-// One factual takeaway, no verdict.
+// One factual takeaway, no verdict — the featured column's year, named, so the sentence and the
+// ledger can never describe two different vintages.
 let takeaway = null;
 if (b) {
+  const yr = b.fy != null ? `In fiscal ${b.fy}` : "In its latest reported year";
   const niTxt = b.netIncome >= 0 ? `${$(b.netIncome)} of profit` : `a ${$(Math.abs(b.netIncome))} loss`;
   if (hasGrowth) {
-    takeaway = `That year the business earned ${$(b.ownerEarnings)} of owner earnings, the operating cash left after the ${$(b.maintCapex)} it takes just to hold its position. It put ${$(b.growthCapex)} more into growth; free cash flow, after that spending, was ${$(b.freeCashFlow)}.`;
+    takeaway = `${yr} the business earned ${$(b.ownerEarnings)} of owner earnings, the operating cash left after the ${$(b.maintCapex)} it takes just to hold its position. It put ${$(b.growthCapex)} more into growth; free cash flow, after that spending, was ${$(b.freeCashFlow)}.`;
   } else {
     takeaway = b.ownerEarnings >= b.netIncome
-      ? `That year the business turned ${niTxt} into ${$(b.ownerEarnings)} of owner earnings: more cash than the profit line showed, after the non-cash charges and the capital it put back in.`
-      : `That year the business reported ${niTxt} but ${$(b.ownerEarnings)} of owner earnings: ${$(Math.abs(b.ownerEarnings - b.netIncome))} less than the profit line, taken out by capital spending and the timing of cash.`;
+      ? `${yr} the business turned ${niTxt} into ${$(b.ownerEarnings)} of owner earnings: more cash than the profit line showed, after the non-cash charges and the capital it put back in.`
+      : `${yr} the business reported ${niTxt} but ${$(b.ownerEarnings)} of owner earnings: ${$(Math.abs(b.ownerEarnings - b.netIncome))} less than the profit line, taken out by capital spending and the timing of cash.`;
   }
 }
 ---
@@ -87,7 +96,7 @@ if (b) {
     <div class="head">
       <h3 class="secTitle"><Term id="owner-earnings">Owner-earnings bridge</Term></h3>
       <span class="hmeta">
-        <span class="asof">{series.length > 1 ? `FY${series[0].fy}–FY${series[series.length - 1].fy}` : (b.fy ? `FY${b.fy}` : "latest year")}</span>
+        <span class="asof">{rendered.length > 1 ? `FY${rendered[0].fy}–FY${rendered[rendered.length - 1].fy}` : (b.fy ? `FY${b.fy}` : "latest year")}</span>
         {company.sourceUrl ? <a class="src" href={company.sourceUrl} target="_blank" rel="noopener">cash-flow statement, {company.market === "JP" ? "EDINET" : "SEC EDGAR"} →</a> : null}
       </span>
     </div>
@@ -141,7 +150,7 @@ if (b) {
       {hasGrowth ? <> (here about {$(b.maintCapex)}, roughly its depreciation, the rate its assets wear out)</> : null}.
       {hasGrowth ? (
         <> The other {$(b.growthCapex)} of its capital spending is growth it chose, not upkeep it owed; charged
-        only with the maintenance it must do, the business earns well more than this year's free cash flow shows.</>
+        only with the maintenance it must do, the business earns well more than the year's free cash flow shows.</>
       ) : null}
       {b.stockBasedComp != null ? (
         <> The cash-flow statement also adds stock comp back as non-cash, but it is a real cost paid in
@@ -151,7 +160,7 @@ if (b) {
 
     {bigGap ? (
       <p class="gapnote">
-        Much of this year's profit didn't arrive as operating cash; it sits in “working capital &amp;
+        Much of {b.fy != null ? `fiscal ${b.fy}'s` : "the featured year's"} profit didn't arrive as operating cash; it sits in “working capital &amp;
         other” above. That can be a real inventory or timing swing, or profit that doesn't run through
         operating cash at all: a heavy tax year, equity-method earnings, or investment income booked
         through investing. For a year like this, owner earnings understates the cash earned; the full cash-flow statement carries the rest.

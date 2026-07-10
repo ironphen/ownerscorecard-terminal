@@ -14,10 +14,20 @@ const $ = (v) => fmtMoney(v, company?.currency || "USD");
 const L = company?.lines || {};
 const dm = language?.companies?.[company?.ticker]?.debtMaturity || null;
 
-// Coverage frame: what the business has on hand and earns in a year, set against the nearest maturities.
-const cash = (L.cashAndEquivalents ?? 0) + (L.shortTermInvestments ?? 0);
-const oe = ownerEarningsAbs(L, company); // one year of owner earnings (null if not computable)
-const hasCash = L.cashAndEquivalents != null || L.shortTermInvestments != null;
+// Coverage frame: what the business has on hand and earns in a year, set against the nearest
+// maturities. The cash reads the freshest balance sheet the pipeline holds — the same dated
+// quarterly snapshot Current Position reads, so one page quotes one cash figure — falling back to
+// the fiscal year-end sheet (the schedule's own date) where no quarter is captured. Cash, the
+// schedule and the earnings year each carry their own date below, so a reader always knows which
+// balance sheet a figure came from.
+const qb = company?.quarterly?.balance || null;
+const hasQCash = qb != null && (qb.cash != null || qb.shortTermInvestments != null);
+const hasCash = hasQCash || L.cashAndEquivalents != null || L.shortTermInvestments != null;
+const cash = hasQCash
+  ? (qb.cash ?? 0) + (qb.shortTermInvestments ?? 0)
+  : (L.cashAndEquivalents ?? 0) + (L.shortTermInvestments ?? 0);
+const cashAsOf = hasQCash ? company?.quarterly?.asOf || null : dm?.asOf || null;
+const oe = ownerEarningsAbs(L, company); // one year of owner earnings (null if not computable), fiscal-year basis
 const oePos = oe != null && oe > 0 ? oe : 0;
 const coverNum = (hasCash ? cash : 0) + oePos;        // cash + a year of owner earnings
 const nearWall = dm?.dueNextYear ?? null;
@@ -98,16 +108,16 @@ const bsDebt = L.totalDebt ?? null;
       <div class="cover">
         <p class="ctitle">Against what the business has and earns</p>
         <div class="cgrid">
-          {hasCash ? <div class="c"><span>Cash &amp; short-term investments</span><b>{$(cash)}</b></div> : null}
-          {oePos > 0 ? <div class="c"><span>One year of owner earnings</span><b>{$(oe)}</b></div> : null}
+          {hasCash ? <div class="c"><span>Cash &amp; short-term investments{cashAsOf ? `, ${fmtDate(cashAsOf)}` : ""}</span><b>{$(cash)}</b></div> : null}
+          {oePos > 0 ? <div class="c"><span>One year of owner earnings{company?.fy ? ` (FY${company.fy})` : ""}</span><b>{$(oe)}</b></div> : null}
           <div class="c tot"><span>Together, against {$(dm.dueNextYear)} due next year</span><b>{coverMult >= 1 ? `${coverMult.toFixed(1)}×` : `${coverMult.toFixed(2)}×`}</b></div>
         </div>
         <p class="cnote">
-          Cash on hand{oePos > 0 ? " plus a year’s owner earnings" : ""} comes to {$(coverNum)} against the {$(dm.dueNextYear)} due
-          within twelve months: {coverMult >= 1
+          Cash on hand{cashAsOf ? ` as of ${fmtDate(cashAsOf)}` : ""}{oePos > 0 ? " plus a year’s owner earnings" : ""} comes to {$(coverNum)} against
+          the {$(dm.dueNextYear)} due in the twelve months after {dm.asOf ? `the ${fmtDate(dm.asOf)} schedule` : "the schedule’s date"}: {coverMult >= 1
             ? `${coverMult.toFixed(coverMult >= 10 ? 0 : 1)} times it`
             : `about ${Math.round(coverMult * 100)}% of it, so the near maturities lean on refinancing or the rest of the year’s cash`}.
-         
+
         </p>
       </div>
     ) : null}

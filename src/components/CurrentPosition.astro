@@ -6,10 +6,21 @@
 // presents and never grades. Withheld for financials (no current/non-current split).
 import { currentPosition } from "../lib/currentPosition.mjs";
 import { fmtMoney } from "../lib/fundamentals.mjs";
+import { leaseObligations } from "../lib/leases.mjs";
 
 const { company } = Astro.props;
 const cp = currentPosition(company);
 const $ = (v) => fmtMoney(v, company?.currency || "USD");
+
+// Two lease-inclusive totals can appear on one page: this section's figure reads the QUARTERLY
+// balance sheet, whose tags carry operating leases only, while the Lease obligations section's
+// "total fixed claims" adds finance leases off the ANNUAL report. Same idea, two bases — so the
+// tile names its own basis and, when the lease section renders (the same materiality gate it
+// uses), points to that figure by name rather than leaving two unexplained totals.
+const lo = leaseObligations(company);
+const fyDebt = company?.lines?.totalDebt ?? null;
+const totalFixed = lo?.liability != null ? (fyDebt ?? 0) + lo.liability : null;
+const leaseSectionShown = !!(lo && lo.liability != null && totalFixed > 0 && lo.liability / totalFixed >= 0.10 && lo.liability >= 3e8);
 
 const x1 = (v, dp = 2) => (v == null ? "—" : `${v.toFixed(dp)}×`);
 const pc = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.abs(v * 100).toFixed(dp)}%`);
@@ -82,7 +93,7 @@ const trendFirst = cp && cp.series.length >= 3 ? cp.series[0] : null;
       <div class="rat">
         <span class="rlab">Quick ratio</span>
         <span class="rval">{x1(cp.quickRatio)}</span>
-        <span class="rnote">stricter: inventory excluded</span>
+        <span class="rnote">{cp.invUntagged ? "inventory untagged this quarter, so withheld rather than shown equal to the current ratio" : "stricter: inventory excluded"}</span>
       </div>
       <div class="rat">
         <span class="rlab">Cash ratio</span>
@@ -112,7 +123,7 @@ const trendFirst = cp && cp.series.length >= 3 ? cp.series[0] : null;
           <span class="svval" style={cp.debtDueCovered ? "color:var(--good)" : "color:var(--warn)"}>
             {$(cp.debtDue)} due · {$(cp.cashLike)} cash
           </span>
-          <span class="svnote">{cp.debtDueCovered ? "covered by cash on hand, no refinancing forced" : "cash alone won't cover the maturities; it leans on refinancing or operating cash"}</span>
+          <span class="svnote">{cp.debtDueCovered ? "covered by cash on hand, no refinancing forced" : "cash alone won't cover the maturities; it leans on refinancing or operating cash"}{cp.asOf ? ` · both figures from the ${fmtDate(cp.asOf)} balance sheet` : ""}</span>
         </div>
       ) : null}
       {cp.runwayYears != null ? (
@@ -146,8 +157,8 @@ const trendFirst = cp && cp.series.length >= 3 ? cp.series[0] : null;
       <span class="deyebrow">Deeper floors</span>
       <div class="dgrid">
         {cp.tangibleBook != null ? <div class="d"><span>Tangible book value</span><b>{$(cp.tangibleBook)}</b><i>equity stripped of goodwill & intangibles</i></div> : null}
-        {cp.ncav != null ? <div class="d"><span>Net current asset value</span><b>{$(cp.ncav)}</b><i>Graham's net-net: current assets less all debt</i></div> : null}
-        {cp.debtPlusLeases != null && cp.debtPlusLeases > 0 ? <div class="d"><span>Debt incl. leases</span><b>{$(cp.debtPlusLeases)}</b><i>{cp.leases ? `${$(cp.leases)} of it operating leases` : "true obligation, leases added back"}</i></div> : null}
+        {cp.ncav != null ? <div class="d"><span>Net current asset value</span><b>{$(cp.ncav)}</b><i>Graham's net-net: current assets less all liabilities</i></div> : null}
+        {cp.debtPlusLeases != null && cp.debtPlusLeases > 0 ? <div class="d"><span>Debt incl. operating leases</span><b>{$(cp.debtPlusLeases)}</b><i>{cp.leases ? `${$(cp.leases)} of it operating leases` : "no operating-lease liability tagged this quarter, so debt alone"}{leaseSectionShown && totalFixed != null ? `; with finance leases, “total fixed claims” below reaches ${$(totalFixed)} (annual-report basis)` : ""}</i></div> : null}
         {cp.deferredRevenue != null && cp.deferredRevenue > 0 ? <div class="d"><span>Deferred revenue</span><b>{$(cp.deferredRevenue)}</b><i>customer cash collected before delivery; operating float</i></div> : null}
       </div>
     </div>

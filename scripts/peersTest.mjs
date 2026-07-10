@@ -2,7 +2,7 @@
 // drawn from the same economic ENGINE (a bank with banks, never a grocer or an automaker), ranked by
 // structural likeness (scale, sub-industry, capital intensity), and that the distribution helper places a
 // value with a median and a percentile rather than crowning a winner. Run with `npm test`.
-import { selectPeers, peerStat, throughCycleMetric, peerMedian } from "../src/lib/peers.mjs";
+import { selectPeers, peerStat, throughCycleMetric, peerMedian, floatYield, FLOAT_YIELD_CAP } from "../src/lib/peers.mjs";
 
 let pass = 0, fail = 0;
 const check = (name, cond) => { console.log((cond ? "ok   " : "FAIL ") + name); cond ? pass++ : fail++; };
@@ -82,6 +82,15 @@ check("throughCycleMetric is the record median", Math.abs(throughCycleMetric(wit
 check("peerMedian is the median of peers' through-cycle figures",
   Math.abs(peerMedian([withHist([0.1, 0.1, 0.1]), withHist([0.2, 0.2, 0.2]), withHist([0.3, 0.3, 0.3])], (L) => L._m) - 0.2) < 1e-9);
 check("peerMedian withholds under three peers", peerMedian([withHist([0.1, 0.1, 0.1])], (L) => L._m) === null);
+
+// Yield on float, behind the plausibility cap: the pipeline's only float line is the P&C
+// loss-reserve tag, so a life insurer (MetLife's 110%, RGA's 82%) prints an impossible "yield" —
+// withheld rather than shown wrong. A real P&C reading passes through untouched.
+check("floatYield passes a plausible P&C reading", Math.abs(floatYield({ investmentIncome: 1e9, lossReserves: 20e9 }) - 0.05) < 1e-9);
+check("floatYield withholds an impossible life-insurer reading (MET-shaped, 110%)", floatYield({ investmentIncome: 22e9, lossReserves: 20e9 }) === null);
+check("floatYield withholds just past the cap and keeps just under it",
+  floatYield({ investmentIncome: 16e8, lossReserves: 1e10 }) === null && floatYield({ investmentIncome: 14e8, lossReserves: 1e10 }) != null && FLOAT_YIELD_CAP === 0.15);
+check("floatYield withholds when either line is missing", floatYield({ investmentIncome: 1e9 }) === null && floatYield({ lossReserves: 1e9 }) === null && floatYield(null) === null);
 
 console.log(`\n${pass} passed, ${fail} failed`);
 if (fail) process.exit(1);

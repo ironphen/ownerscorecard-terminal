@@ -9,6 +9,18 @@ import { classify } from "./archetype.mjs";
 const num = (v) => (typeof v === "number" && isFinite(v) ? v : null);
 const sum = (...xs) => { let s = 0, any = false; for (const x of xs) if (num(x) != null) { s += x; any = true; } return any ? s : null; };
 
+// A business that certainly carries inventory: makers and builders (agriculture through
+// manufacturing, SIC 0100–3999) and wholesale/retail trade (5000–5999); for a filer without a SIC
+// code, a cost-of-goods line dominating revenue is the fallback signal. Mirrors the gate
+// cashConversionCycle uses in fundamentals.mjs, so the two reads treat an untagged inventory line
+// the same way: as missing data on a goods business, never as zero.
+function carriesInventory(c) {
+  const s = parseInt(c?.sic, 10);
+  if (!Number.isNaN(s)) return (s >= 100 && s < 4000) || (s >= 5000 && s < 6000);
+  const L = c?.lines || {};
+  return L.costOfRevenue != null && L.revenue > 0 && L.costOfRevenue / L.revenue >= 0.6;
+}
+
 export function currentPosition(company) {
   const q = company?.quarterly;
   const b = q?.balance;
@@ -22,8 +34,13 @@ export function currentPosition(company) {
   const inventory = num(b.inventory);
 
   // The liquidity ladder, loosest to strictest: everything, then drop inventory, then cash only.
+  // The quick ratio's whole point is subtracting inventory — so an UNTAGGED inventory line on a
+  // goods business (a department store's quarterly balance often carries none) is missing data,
+  // not zero: subtracted as zero, the "stricter" ratio silently equals the current ratio. There
+  // it is withheld; a services filer keeps it, since its inventory genuinely rounds to zero.
+  const invUntagged = inventory == null && carriesInventory(company);
   const currentRatio = cl > 0 ? ca / cl : null;
-  const quickRatio = cl > 0 ? (ca - (inventory ?? 0)) / cl : null;
+  const quickRatio = cl > 0 && !invUntagged ? (ca - (inventory ?? 0)) / cl : null;
   const cashRatio = cl > 0 ? cashLike / cl : null;
   const workingCapital = ca - cl;
 
@@ -105,7 +122,7 @@ export function currentPosition(company) {
       cash: num(b.cash), shortTermInvestments: num(b.shortTermInvestments), receivables: num(b.receivables),
       inventory, accountsPayable: num(b.accountsPayable), debtDue,
     },
-    currentRatio, quickRatio, cashRatio, workingCapital,
+    currentRatio, quickRatio, cashRatio, workingCapital, invUntagged,
     debtDue, debtDueCovered,
     ncav, tangibleBook, totalDebt, leases, debtPlusLeases, deferredRevenue,
     runwayYears, burning,

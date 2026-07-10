@@ -156,6 +156,20 @@ export function peerMedian(peers, fn) {
   return vals.length >= 3 ? med(vals) : null;
 }
 
+// "Yield on float": investment income against the float that funds it. The only float line the
+// pipeline carries is lossReserves — the P&C loss-reserve tag. A LIFE insurer's float lives in
+// future policy benefits and policyholder account balances, tags the pipeline doesn't yet pull, so
+// read against the P&C tag alone the figure prints an impossible "yield" (MetLife 110%, RGA 82% —
+// no float on earth earns that; the denominator is a sliver of the real float). A reading past the
+// plausibility cap is therefore withheld — null, never shown wrong — until a life-float denominator
+// exists in the data. ~15%: comfortably above any real portfolio yield, low enough to catch a
+// wrong-denominator artifact.
+export const FLOAT_YIELD_CAP = 0.15;
+export function floatYield(L) {
+  const v = L && L.investmentIncome != null && L.lossReserves ? L.investmentIncome / L.lossReserves : null;
+  return v != null && v > 0 && v <= FLOAT_YIELD_CAP ? v : null;
+}
+
 // Where a value falls in the peer set: the group median, the company's percentile, and the min/max band.
 // Context, never a crown — the reader reads the position, we assign no winner. Needs at least three
 // non-null values (the company plus two peers) to be a distribution worth reading; null otherwise.
