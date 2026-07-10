@@ -27,14 +27,19 @@ if (queue.includes(`## ${today} `)) {
   process.exit(0);
 }
 
-// The 30-day dedup ledger: one tweet per company per month, however often it files.
+// The 30-day dedup ledger: one tweet per company per month, however often it files. Keyed by
+// ticker AND by company name, because a preferred-share variant is a different ticker for the
+// same company (CHSCO on Friday must block CHSCP on Monday).
 const cutoff = new Date(new Date(today).getTime() - 30 * 86400000).toISOString().slice(0, 10);
-const recent = new Set(
-  log.split("\n")
-    .map((l) => l.split("|").map((s) => s.trim()))
-    .filter((p) => p.length >= 2 && /^\d{4}-\d{2}-\d{2}$/.test(p[0]) && p[0] >= cutoff)
-    .map((p) => p[1].toUpperCase())
-);
+const norm = (s) => String(s || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+const recent = new Set();
+for (const l of log.split("\n")) {
+  const p = l.split("|").map((s) => s.trim());
+  if (p.length >= 2 && /^\d{4}-\d{2}-\d{2}$/.test(p[0]) && p[0] >= cutoff) {
+    recent.add(p[1].toUpperCase());
+    if (p[3]) recent.add(norm(p[3]));
+  }
+}
 
 // Prominence: the same idea the search index uses — revenue magnitude — so "recognizable"
 // is a figure, not a vibe.
@@ -52,7 +57,7 @@ for (const it of wire.items || []) {
   const rev = it.performance?.rev?.yoy;
   if (rev == null) continue;
   const tk = String(it.ticker || "").toUpperCase();
-  if (!tk || recent.has(tk)) continue;
+  if (!tk || recent.has(tk) || recent.has(norm(it.name))) continue;
   if (it.accn && seenAccn.has(it.accn)) continue;
   if (it.accn) seenAccn.add(it.accn);
   candidates.push({ tk, name: it.name || tk, form: it.form, date: it.date, rev, quote: it.performance?.driver || null, size: revByTicker.get(tk) || 0 });
@@ -75,7 +80,7 @@ const draft = (c) => {
   return withQuote && withQuote.length <= 280 ? withQuote : `${line1}\n${line3}`;
 };
 
-const section = [
+let section = [
   `## ${today} — STATUS: PENDING REVIEW`,
   "",
   ...chosen.flatMap((c) => [
@@ -87,11 +92,44 @@ const section = [
   ]),
 ].join("\n");
 
+// Mondays add the week's digest thread: every periodic filer of the prior seven days whose
+// filing carried the comparison, one tweet per company, prominence-ranked, capped at six. A
+// digest may repeat a company the dailies already carried — that is what a digest is. Same
+// rules: figures verbatim, one cashtag per tweet, no judgment words.
+if (new Date(today + "T00:00:00Z").getUTCDay() === 1 && !queue.includes(`## ${today} — WEEKLY THREAD`)) {
+  const weekAgo = new Date(new Date(today).getTime() - 7 * 86400000).toISOString().slice(0, 10);
+  const seen = new Set();
+  const week = [];
+  for (const it of wire.items || []) {
+    if (it.form !== "10-K" && it.form !== "10-Q") continue;
+    const rev = it.performance?.rev?.yoy;
+    if (rev == null || !it.date || it.date < weekAgo || it.date >= today) continue;
+    if (it.accn && seen.has(it.accn)) continue;
+    if (it.accn) seen.add(it.accn);
+    const tk = String(it.ticker || "").toUpperCase();
+    week.push({ tk, form: it.form, rev, size: revByTicker.get(tk) || 0 });
+  }
+  week.sort((a, b) => b.size - a.size);
+  const top = week.slice(0, 6);
+  if (top.length >= 2) {
+    const lead = `Last week on the wire: ${week.length} annual and quarterly reports crossed. The figures, from the filings themselves:`;
+    const lines = top.map((c) => `$${c.tk} ${c.form}: revenue ${c.rev < 0 ? "down" : "up"} ${Math.abs(c.rev).toFixed(1)}% year over year → https://ownerscorecard.com/c/${c.tk}`);
+    section += "\n" + [
+      `## ${today} — WEEKLY THREAD — STATUS: PENDING REVIEW`,
+      "",
+      "```",
+      [lead, ...lines].join("\n---\n"),
+      "```",
+      "",
+    ].join("\n");
+  }
+}
+
 // Newest section first, directly under the file header.
 const headerEnd = queue.indexOf("\n## ");
 const newQueue = headerEnd === -1
   ? queue.trimEnd() + "\n\n" + section + "\n"
   : queue.slice(0, headerEnd + 1) + "\n" + section + "\n" + queue.slice(headerEnd + 1);
 fs.writeFileSync(queuePath, newQueue);
-fs.writeFileSync(logPath, log.trimEnd() + "\n" + chosen.map((c) => `${today} | ${c.tk} | ${c.form}`).join("\n") + "\n");
+fs.writeFileSync(logPath, log.trimEnd() + "\n" + chosen.map((c) => `${today} | ${c.tk} | ${c.form} | ${c.name}`).join("\n") + "\n");
 console.log(`draftTweets: queued ${chosen.length} draft(s): ${chosen.map((c) => c.tk).join(", ")}`);
