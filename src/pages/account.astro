@@ -187,8 +187,9 @@ const wireFreq = wirePref?.frequency === "daily" ? "daily" : "weekly";
     }
 
     // Each followed company's context: name, industry chapter, the latest annual filing on
-    // record, archetype chips. A ticker with no row (a follow on a company the library doesn't
-    // cover) keeps its bare line — absence stays absence.
+    // record. A ticker with no row (a follow on a company the library doesn't cover) keeps its
+    // bare line — absence stays absence. (No archetype chips here by owner doctrine: coined
+    // quality labels are a verdict by arrangement; the industry chapter is the grouping door.)
     function enrich(byTicker) {
       if (!followsEl) return;
       for (const li of followsEl.querySelectorAll("li[data-ticker]")) {
@@ -206,11 +207,6 @@ const wireFreq = wirePref?.frequency === "daily" ? "daily" : "weekly";
         const line = filingLine(entry);
         if (line) meta.append(el("span", "fFiling", line));
         if (meta.childNodes.length) li.insertBefore(meta, row.nextSibling);
-
-        const chips = el("p", "fChips");
-        for (const lens of entry.lenses)
-          chips.append(a(lens.positive ? "chip" : "chip chipCaution", "/archetypes/" + lens.key, lens.title));
-        if (chips.childNodes.length) li.append(chips);
       }
     }
 
