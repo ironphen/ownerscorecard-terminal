@@ -97,12 +97,21 @@ export function fmtUSD(v) { return fmtMoney(v, "USD"); }
 // Returns null when it can't be computed honestly (missing EBIT, or no
 // meaningful interest burden, which is a *good* sign, handled by the verdict).
 export function coverage(company) {
-  const oi = company?.lines?.operatingIncome;
-  const interest = company?.lines?.interestExpense;
+  const L = company?.lines || {};
+  const oi = L.operatingIncome;
+  const interest = L.interestExpense;
   if (oi == null) return null;
   if (!oiReliable(company)) return { ratio: null, oi, interest, notMeaningful: true };
-  if (interest == null) return { ratio: null, oi, interest: null, noBurden: true };
-  if (interest <= 0) return { ratio: null, oi, interest, noBurden: true };
+  if (interest == null || interest <= 0) {
+    // A missing (or negative) interest tag beside material balance-sheet debt is a data gap, not a
+    // virtue: the burden is unknown, never "none" — a good-tone "isn't leaning on lenders" would sit
+    // directly above a net-debt check showing real borrowing. Material: net debt at least half a
+    // year's operating profit (or any net debt when there's no operating profit to measure against).
+    const netDebt = (L.totalDebt || 0) - ((L.cashAndEquivalents || 0) + (L.shortTermInvestments || 0));
+    if (L.totalDebt > 0 && netDebt > 0 && (oi <= 0 || netDebt >= 0.5 * oi))
+      return { ratio: null, oi, interest, untagged: true };
+    return { ratio: null, oi, interest, noBurden: true };
+  }
   return { ratio: oi / interest, oi, interest, noBurden: false };
 }
 
@@ -116,6 +125,8 @@ export function coverageVerdict(result) {
   if (!result) return { tone: "none", label: "Not enough data", note: "Operating income wasn't found in the filing data." };
   if (result.notMeaningful)
     return { tone: "none", label: "Not the right lens here", note: "This business earns through equity-method affiliates, so interest coverage on its operating line isn't meaningful. Read its solvency on net debt against equity instead." };
+  if (result.untagged)
+    return { tone: "none", label: "Interest expense not tagged in the data", note: "No usable interest-expense line was tagged in the filing data, but the balance sheet carries real net debt — so the interest burden here is unknown, not absent. Read the debt on the net-debt check below." };
   if (result.noBurden)
     return {
       tone: "good",
@@ -353,12 +364,18 @@ export function cashPosition(c) {
   const years = oi && oi > 0 && net > 0 ? net / oi : null;
   const netCash = net < 0;
 
+  // Net debt against an operating LOSS is the harshest read, not the mildest: a profitable 4.5×
+  // borrower at least has the profit; here there is none to measure the debt against at all.
+  // Gated on oiReliable, so a holding company whose affiliates dwarf its operating line (a negative
+  // print beside a solid net profit) isn't misread as a loss-making borrower.
+  const opLoss = oi != null && oi <= 0 && oiReliable(c);
   let tone, label;
   if (netCash) { tone = "good"; label = gross === 0 ? "Net cash, debt-free" : "Net cash"; }
   else if (net === 0) { tone = "good"; label = "Cash equals debt"; }
   else if (years != null && years < 2) { tone = "ok"; label = "Modest net debt"; }
   else if (years != null && years < 4) { tone = "warn"; label = "Meaningful net debt"; }
   else if (years != null) { tone = "bad"; label = "Heavy net debt"; }
+  else if (opLoss) { tone = "bad"; label = "Net debt against an operating loss"; }
   else { tone = "warn"; label = "Net debt"; }
 
   const value = netCash ? `+${$(-net)}` : $(net);
@@ -372,7 +389,7 @@ export function cashPosition(c) {
   const grossDiffers = years != null && grossYears != null && grossYears.toFixed(1) !== years.toFixed(1);
   let note = netCash
     ? `Cash and short-term investments exceed every dollar of debt by ${$(-net)}, on net the company owes nothing, and can act from strength when others can't.`
-    : `Netting ${$(liquid)} of cash and short-term investments against ${$(gross)} of debt leaves ${$(net)} owed${years != null ? `, about ${years.toFixed(1)}× a year's operating profit${grossDiffers ? ` (${grossYears.toFixed(1)}× on the gross debt, before the cash)` : ""}` : ""}.`;
+    : `Netting ${$(liquid)} of cash and short-term investments against ${$(gross)} of debt leaves ${$(net)} owed${years != null ? `, about ${years.toFixed(1)}× a year's operating profit${grossDiffers ? ` (${grossYears.toFixed(1)}× on the gross debt, before the cash)` : ""}` : opLoss ? `, with no operating profit this year to measure it against — understand that combination before anything else about the company` : ""}.`;
   if (lt) {
     const full = net - lt;
     note += ` It also holds ${$(lt)} in longer-dated marketable securities; counting those, it sits at ${full < 0 ? `net cash of ${$(-full)}` : `${$(full)} of net debt`}.`;
@@ -486,8 +503,13 @@ export function ownerCash(c) {
   // is not: if the last three years are ALL positive it's a clean turn — judge on the recent margin;
   // otherwise present both facts (positive this year, negative across the cycle) rather than a "bad"
   // verdict the valuation flatly disagrees with. The judgment stays the reader's.
-  const recent3 = (c.history || []).map((h) => ownerEarningsAbs(h.lines, c)).filter((v) => v != null).slice(-3);
-  const fullTurn = tc != null && tc.median <= 0.05 && oe > 0 && recent3.length >= 3 && recent3.every((v) => v > 0);
+  const oeHist = (c.history || []).map((h) => ownerEarningsAbs(h.lines, c)).filter((v) => v != null);
+  const recent3 = oeHist.slice(-3);
+  // The turn narrative ("recently turned positive, after an earlier loss stretch") requires an actual
+  // loss in the record — a negative owner-earnings year, or a cycle median at or below zero. A business
+  // that has been positive-but-thin every year (a grocer at a 3% margin) never "turned": it reads plain.
+  const hadLoss = oeHist.some((v) => v < 0) || (tc != null && tc.median <= 0);
+  const fullTurn = hadLoss && tc != null && tc.median <= 0.05 && oe > 0 && recent3.length >= 3 && recent3.every((v) => v > 0);
   const softTurn = tc != null && tc.median <= 0 && oe > 0 && !fullTurn;
   const j = fullTurn ? margin : tc ? tc.median : margin;
   let tone, base, suffix;
@@ -635,25 +657,43 @@ export function ownerEarningsBridgeSeries(c, maxCols = 5) {
 }
 
 // Capital allocation: of the Owner Earnings, how much was returned, and was it real?
+// The denominator is the same Buffett owner-earnings figure the bridge and the valuation read
+// (operating cash less MAINTENANCE capex, ownerEarningsAbs) — not free cash flow — so one page can
+// never carry two different "Owner Earnings" dollars, or deny a surplus its own bridge proves.
 export function capitalAllocation(c) {
   const $ = (v) => fmtMoney(v, c?.currency || "USD");
   const L = c?.lines || {};
   const cfo = L.cashFromOps, capex = L.capex, div = L.dividendsPaid, bb = L.buybacks;
   if (cfo == null || capex == null || (div == null && bb == null)) return null;
-  const oc = cfo - Math.abs(capex);
-  if (oc <= 0)
+  const oc = ownerEarningsAbs(L, c);
+  if (oc == null || oc <= 0)
     return { value: "—", formula: "", tone: "warn", label: "No surplus to allocate", note: "The business didn't generate positive Owner Earnings this year, so any distributions came from the balance sheet or borrowing, not from operations." };
   const dividends = Math.abs(div || 0), buybacks = Math.abs(bb || 0), sbc = L.stockBasedComp;
   const returned = dividends + buybacks;
   const payout = returned / oc;
-  const label = payout >= 0.9 ? "Returns most of it" : payout >= 0.4 ? "Returns about half" : "Reinvests most of it";
-  let note = `Of ${$(oc)} Owner Earnings, ${$(returned)} (${(payout * 100).toFixed(0)}%) went back to shareholders, ${$(dividends)} dividends, ${$(buybacks)} buybacks.`;
+  const label = payout > 1 ? "Returned more than it generated" : payout >= 0.9 ? "Returns most of it" : payout >= 0.4 ? "Returns about half" : "Reinvests most of it";
+  let note = payout > 1
+    ? `The company returned more than it generated: against ${$(oc)} of Owner Earnings, ${$(returned)} (${(payout * 100).toFixed(0)}%) went back to shareholders, ${$(dividends)} dividends, ${$(buybacks)} buybacks — the excess came from the balance sheet or borrowing, not the year's operations.`
+    : `Of ${$(oc)} Owner Earnings, ${$(returned)} (${(payout * 100).toFixed(0)}%) went back to shareholders, ${$(dividends)} dividends, ${$(buybacks)} buybacks.`;
   if (buybacks > 0 && sbc != null)
     note += buybacks - sbc <= 0
       ? ` But the buybacks barely exceed stock issued to employees (${$(sbc)} SBC), net of dilution, little was truly returned.`
       : ` Net of ${$(sbc)} stock comp, the real buyback was about ${$(buybacks - sbc)}.`;
-  note += " Returning most of it is the mark of a mature business with little left to reinvest at a high return; reinvesting most could mean a long runway, or empire-building. The split doesn't say which; the return earned on it (see ROIC) does.";
+  note += payout > 1
+    ? " Sustained, that pattern draws down cash or adds debt; the net-debt line above shows where it stands."
+    : " Returning most of it is the mark of a mature business with little left to reinvest at a high return; reinvesting most could mean a long runway, or empire-building. The split doesn't say which; the return earned on it (see ROIC) does.";
   return { value: `${(payout * 100).toFixed(0)}%`, formula: `Dividends + buybacks ${$(returned)} ÷ Owner Earnings ${$(oc)}`, tone: "info", label, note };
+}
+
+// A business that certainly carries inventory: makers and builders (agriculture through
+// manufacturing, SIC 0100–3999) and wholesale/retail trade (5000–5999). For a filer without a SIC
+// code (the Japanese pool), a cost-of-goods line dominating revenue is the fallback signal. Used to
+// tell an untagged inventory line (a data gap) from a genuinely inventory-free services model.
+function carriesInventory(c) {
+  const s = parseInt(c?.sic, 10);
+  if (!Number.isNaN(s)) return (s >= 100 && s < 4000) || (s >= 5000 && s < 6000);
+  const L = c?.lines || {};
+  return L.costOfRevenue != null && L.revenue > 0 && L.costOfRevenue / L.revenue >= 0.6;
 }
 
 // Cash-conversion cycle: DSO + DIO − DPO (days). A liquidity check that doubles
@@ -663,6 +703,11 @@ export function cashConversionCycle(c) {
   const rev = L.revenue, cogs = L.costOfRevenue, recv = L.receivables, ap = L.accountsPayable;
   if (rev == null || cogs == null || recv == null || ap == null || cogs <= 0 || rev <= 0) return null;
   const inv = L.inventory;
+  // An untagged inventory line on a goods business is missing data, not zero: computed without it, a
+  // department store or grocer prints a fictional negative cycle praised as float. Withhold the figure
+  // (not enough data) rather than praise a moat that isn't there. A services filer with no inventory
+  // line keeps its cycle — there, the inventory leg genuinely rounds to zero.
+  if (inv == null && carriesInventory(c)) return null;
   const hasInv = inv != null && inv > 0;
   const dso = (recv / rev) * 365;
   const dio = hasInv ? (inv / cogs) * 365 : 0;
@@ -927,7 +972,7 @@ export function buildScorecard(company) {
     title: "Can it pay its interest?",
     concept: "interest-coverage",
     value: cov?.ratio != null ? `${cov.ratio.toFixed(1)}×` : "—",
-    formula: cov && cov.notMeaningful ? "" : cov && !cov.noBurden ? `Operating income ${$(cov.oi)} ÷ interest expense ${$(cov.interest)}` : "Little or no interest expense reported",
+    formula: cov && (cov.notMeaningful || cov.untagged) ? "" : cov && !cov.noBurden ? `Operating income ${$(cov.oi)} ÷ interest expense ${$(cov.interest)}` : "Little or no interest expense reported",
     tone: covV.tone,
     label: covV.label,
     note: covV.note,

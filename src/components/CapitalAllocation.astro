@@ -4,9 +4,12 @@
 // what management chose to do with it: reinvestment (capex), buybacks (net of stock comp, so an
 // SBC-funded "return" doesn't overstate), dividends, acquisitions, and what was retained. Plotted
 // as the MIX — each year normalized to a full bar — so the signal is the composition and its drift
-// over time, not "big got bigger." Present, never pronounce: the bands are the decisions, sourced
-// from the cash-flow statement; no grade, no good/bad color. A year with no operating surplus shows
-// blank rather than a false split. Skipped for financials, whose capex/operating-cash framing differs.
+// over time, not "big got bigger." One base per year: the larger of operating cash and total outlays.
+// In a year the outlays ran past operating cash, the excess is drawn as its own hatched segment
+// ("beyond op. cash"), so an acquisition year funded by debt never reads like a fully-funded one.
+// Present, never pronounce: the bands are the decisions, sourced from the cash-flow statement; no
+// grade, no good/bad color. A year with no positive operating cash shows blank rather than a false
+// split. Skipped for financials, whose capex/operating-cash framing differs.
 import { financialKind } from "../lib/archetype.mjs";
 
 const { company } = Astro.props;
@@ -28,12 +31,21 @@ const rows = hist.map((h) => {
   if (oc == null || oc <= 0) return { fy: h.fy, ok: false };
   const uses = USES.map((u) => u.of(l));
   const usesTotal = uses.reduce((a, b) => a + b, 0);
+  // One base per year: the larger of operating cash and total outlays. A surplus year is
+  // uses + retained (= operating cash); an overspend year is all uses, with the share beyond
+  // operating cash carried separately so it can be drawn as its own hatched segment.
   const denom = Math.max(oc, usesTotal) || 1;
-  return { fy: h.fy, ok: true, frac: uses.map((v) => v / denom), retainFrac: Math.max(0, oc - usesTotal) / denom };
+  return {
+    fy: h.fy, ok: true,
+    frac: uses.map((v) => v / denom),
+    retainFrac: Math.max(0, oc - usesTotal) / denom,
+    financedFrac: Math.max(0, usesTotal - oc) / denom,
+  };
 });
 
 const solid = rows.filter((r) => r.ok);
 const skip = !!financialKind(company) || solid.length < 3;
+const anyFinanced = solid.some((r) => r.financedFrac > 0.002);
 
 const n = rows.length;
 const bw = n > 0 ? (W - GAP * (n - 1)) / n : W;
@@ -48,7 +60,10 @@ const bars = rows.map((r, i) => {
     if (f > 0.002) { const h = f * bh; segs.push({ cls: u.key, y: (H - PADB) - (cum + h), h }); cum += h; }
   });
   if (r.retainFrac > 0.002) { const h = r.retainFrac * bh; segs.push({ cls: "retain", y: (H - PADB) - (cum + h), h }); cum += h; }
-  return { ok: true, x, segs };
+  // The outlays beyond operating cash, hatched over the top of the stack: the top of the bar IS the
+  // marginal spending, so the hatch marks exactly the slice that was financed off the balance sheet.
+  const fin = r.financedFrac > 0.002 ? { y: (H - PADB) - cum, h: r.financedFrac * bh } : null;
+  return { ok: true, x, segs, fin };
 });
 ---
 
@@ -62,13 +77,28 @@ const bars = rows.map((r, i) => {
         <span class="lg"><i class="sw div"></i>Dividends</span>
         <span class="lg"><i class="sw acq"></i>Acquisitions</span>
         <span class="lg"><i class="sw retain"></i>Retained</span>
+        {anyFinanced ? <span class="lg"><i class="sw fin"></i>Beyond op. cash</span> : null}
       </span>
     </div>
-    <p class="note">Each year's operating cash, by what management did with it: the mix, and how it drifts.</p>
+    <p class="note">
+      {anyFinanced
+        ? "Each year's outlays against its operating cash: the mix, and how it drifts. The hatched cap is spending beyond that year's operating cash — financed from the balance sheet or borrowing, not operations."
+        : "Each year's operating cash, by what management did with it: the mix, and how it drifts."}
+    </p>
     <svg class="chart" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" role="img" aria-label="Capital allocation mix over the record">
+      {anyFinanced ? (
+        <defs>
+          <pattern id="caFinHatch" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+            <line class="finline" x1="0" y1="0" x2="0" y2="4" />
+          </pattern>
+        </defs>
+      ) : null}
       {bars.map((b) => (b.ok ? b.segs.map((s) => (
         <rect class={`bar ${s.cls}`} x={b.x.toFixed(1)} width={bw.toFixed(1)} y={s.y.toFixed(1)} height={s.h.toFixed(1)} />
       )) : null))}
+      {bars.map((b) => (b.ok && b.fin ? (
+        <rect class="fin" fill="url(#caFinHatch)" x={b.x.toFixed(1)} width={bw.toFixed(1)} y={b.fin.y.toFixed(1)} height={b.fin.h.toFixed(1)} />
+      ) : null))}
     </svg>
     {solid.length ? (
       <div class="axis"><span>FY{solid[0].fy}</span><span>FY{solid[solid.length - 1].fy}</span></div>
@@ -88,9 +118,12 @@ const bars = rows.map((r, i) => {
   .sw.div { background: var(--ink-dim); }
   .sw.acq { background: var(--muted); }
   .sw.retain { background: var(--rule-strong); }
+  .sw.fin { background: repeating-linear-gradient(135deg, var(--ink-dim) 0 2px, var(--paper) 2px 4px); border: 1px solid var(--rule-strong); }
   .note { font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--muted); margin: 8px 0 0; }
   .chart { width: 100%; height: 120px; display: block; margin: 12px 0 4px; }
   .chart .bar { stroke: var(--paper); stroke-width: 0.5; }
+  .chart .finline { stroke: var(--paper); stroke-width: 2; }
+  .chart .fin { stroke: var(--paper); stroke-width: 0.5; }
   .chart .reinvest { fill: var(--ink); }
   .chart .buyback { fill: var(--accent); }
   .chart .div { fill: var(--ink-dim); }
