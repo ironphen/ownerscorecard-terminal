@@ -1,0 +1,83 @@
+---
+// The groupings index: the 28 shelves, each linking to its comparative table (owner directive,
+// 2026-07-10 — the ValueLine/Moody's industry-section form). Purely additive beside the shelves
+// page and the industry chapters; nothing here ranks, scores, or recommends. Order is the fixed
+// shelves.json file order — alphabetical by sentence — never a ranking.
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import fundamentals from "../../data/fundamentals.json";
+import adr from "../../data/fundamentals.adr.json";
+import jp from "../../data/fundamentals.jp.json";
+import { SHELVES, industryLabelOf } from "../../lib/shelves.mjs";
+import { GROUPINGS, FAMILIES, groupingByNoun } from "../../lib/groupingColumns.mjs";
+import { dataAsOf, fmtAsOf } from "../../lib/freshness.mjs";
+
+// One classify pass over the three pools, the same read the shelves page makes.
+const countByNoun = new Map();
+const labelToNoun = new Map();
+for (const s of SHELVES) for (const ind of s.industries) labelToNoun.set(ind.label, s.noun);
+for (const c of [...(fundamentals.companies || []), ...(adr.companies || []), ...(jp.companies || [])]) {
+  const noun = labelToNoun.get(industryLabelOf(c));
+  if (!noun) continue;
+  countByNoun.set(noun, (countByNoun.get(noun) || 0) + 1);
+}
+
+const groupings = GROUPINGS.map((g) => ({
+  ...g,
+  count: countByNoun.get(g.noun) || 0,
+  columns: FAMILIES[g.family].columns.map((col) => col.label),
+})).filter((g) => g.count > 0);
+
+const total = groupings.reduce((a, g) => a + g.count, 0);
+const refreshed = fmtAsOf(dataAsOf);
+---
+
+<BaseLayout title="Groupings, Owner Scorecard" description="The catalog arranged by what the businesses do: each grouping is one comparative table, every member's filed figures in sortable columns.">
+  <header class="hero">
+    <h1>The groupings</h1>
+    <p class="lede">
+      The catalog arranged by what the businesses do: each grouping below is one comparative
+      table, every member a row, in columns of the line items that kind of business is read on.
+    </p>
+    <p class="sub">
+      Tables open largest first by latest-year revenue, the one objective order; every column
+      sorts both ways, and the re-ordering is the reader&rsquo;s own act. {total.toLocaleString()}
+      records across the three pools.
+    </p>
+    {refreshed ? <p class="dateline">From the latest filings · data as of {refreshed}.</p> : null}
+  </header>
+
+  <ul class="glist">
+    {groupings.map((g) => (
+      <li class="g">
+        <div class="gTop">
+          <a class="gNoun" href={`/groupings/${g.slug}`}>{g.noun}</a>
+          <span class="gN">{g.count.toLocaleString()} companies</span>
+        </div>
+        <p class="gCols">{g.columns.join(" · ")}</p>
+      </li>
+    ))}
+  </ul>
+
+  <p class="foot">
+    Every figure comes from the company&rsquo;s own SEC or EDINET filings, computed the same way as on
+    its page. A grouping&rsquo;s columns are the line items its kind of business is read on; they name
+    facts, weigh nothing, and form no rank.
+  </p>
+
+  <style>
+    .hero h1 { margin: 0 0 8px; }
+    .lede { font-family: var(--serif); font-size: 18px; line-height: 1.55; color: var(--ink-soft); margin: 0 0 10px; max-width: 68ch; }
+    .sub { color: var(--ink-dim); margin: 0; max-width: 68ch; line-height: 1.6; font-size: 14.5px; }
+    .dateline { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); margin: 10px 0 0; }
+
+    .glist { list-style: none; padding: 0; margin: 22px 0 0; }
+    .g { border-bottom: 1px solid var(--rule); padding: 14px 0; }
+    .gTop { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+    .gNoun { font-family: var(--serif); font-weight: 600; font-size: 17px; color: var(--ink); text-decoration: none; }
+    .gNoun:hover { color: var(--accent); }
+    .gN { font-family: var(--sans); font-variant-numeric: tabular-nums; font-size: 13px; color: var(--muted); flex: 0 0 auto; }
+    .gCols { margin: 5px 0 0; font-family: var(--sans); font-size: 12px; color: var(--muted); line-height: 1.6; }
+
+    .foot { font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--muted); border-top: 1px solid var(--rule-strong); margin-top: 28px; padding-top: 12px; max-width: 78ch; line-height: 1.6; }
+  </style>
+</BaseLayout>

@@ -16,6 +16,7 @@ import fundamentals from "../data/fundamentals.json";
 import adr from "../data/fundamentals.adr.json";
 import jp from "../data/fundamentals.jp.json";
 import { SHELVES, industryLabelOf } from "../lib/shelves.mjs";
+import { groupingByNoun } from "../lib/groupingColumns.mjs";
 import { dataAsOf, fmtAsOf } from "../lib/freshness.mjs";
 
 // One classify pass over the three pools; the same read scripts/shelvesTest.mjs guards.
@@ -31,7 +32,13 @@ const shelves = SHELVES.map((s) => {
   const industries = s.industries
     .map((ind) => ({ ...ind, count: countByLabel.get(ind.label) || 0 }))
     .filter((ind) => ind.count > 0);
-  return { noun: s.noun, industries, total: industries.reduce((a, ind) => a + ind.count, 0) };
+  return {
+    noun: s.noun,
+    industries,
+    total: industries.reduce((a, ind) => a + ind.count, 0),
+    // The shelf's grouping — the same members as ONE comparative table (lib/groupingColumns.mjs).
+    groupingSlug: groupingByNoun.get(s.noun)?.slug || null,
+  };
 }).filter((s) => s.industries.length > 0);
 
 const totalCompanies = shelves.reduce((a, s) => a + s.total, 0);
@@ -69,6 +76,12 @@ const refreshed = fmtAsOf(dataAsOf);
               <a class="ind" href={`/industries/${ind.slug}`}>{ind.label} <span class="n">{ind.count.toLocaleString()}</span></a>
             </>
           ))}
+          {s.groupingSlug ? (
+            <>
+              <span class="sep"> · </span>
+              <a class="ind gTbl" href={`/groupings/${s.groupingSlug}`}>the comparative table →</a>
+            </>
+          ) : null}
         </p>
       </li>
     ))}
@@ -94,6 +107,7 @@ const refreshed = fmtAsOf(dataAsOf);
     .ind { white-space: nowrap; color: var(--ink-dim); text-decoration: none; }
     .ind:hover { color: var(--accent); }
     .ind .n { font-variant-numeric: tabular-nums; color: var(--muted); }
+    .gTbl { font-family: var(--sans); font-size: 12.5px; color: var(--accent); }
     .sep { color: var(--muted); }
 
     .foot { font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--muted); border-top: 1px solid var(--rule-strong); margin-top: 28px; padding-top: 12px; max-width: 78ch; line-height: 1.6; }

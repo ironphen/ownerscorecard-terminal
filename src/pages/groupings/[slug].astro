@@ -1,0 +1,214 @@
+---
+// One grouping — one shelf as ONE comparative table (owner directive, 2026-07-10): every member
+// across the US, ADR and Japanese pools in a single dense table, its columns the line items this
+// kind of business is read on (hand-curated per shelf in lib/groupingColumns.mjs). The
+// ValueLine/Moody's industry-section form: the reader runs an eye down a column, and every column
+// sorts both ways — the re-ordering is the reader's own act on a reference surface, never the
+// page's verdict. The only default order is size (latest-year revenue, largest first), an
+// objective fact. No row or cell is ever highlighted; no composite is ever formed.
+//
+// Currency: monetary columns are stated in USD for foreign filers — the ADR conversion terms the
+// compare view uses (the filer's own ADS cover terms and the dated reference rate), the same
+// dated rate for the Japanese pool — so a money column sorts on one basis. A foreign filer whose
+// conversion terms are missing shows its money AS FILED and sorts to the back of the column:
+// never a guessed conversion. Ratios and margins are currency-free and computed from the record
+// as filed. Each company's own page keeps its records as filed.
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import fundamentals from "../../data/fundamentals.json";
+import adrData from "../../data/fundamentals.adr.json";
+import jpData from "../../data/fundamentals.jp.json";
+import adrRatios from "../../data/adrRatios.json";
+import rates from "../../data/rates.json";
+import { SHELVES, industryLabelOf, industrySlug } from "../../lib/shelves.mjs";
+import { GROUPINGS, FAMILIES, groupingBySlug, usdTerms, groupingCells, revenueSortUsd } from "../../lib/groupingColumns.mjs";
+import { dataAsOf, fmtAsOf } from "../../lib/freshness.mjs";
+
+export function getStaticPaths() {
+  return GROUPINGS.map((g) => ({ params: { slug: g.slug } }));
+}
+
+const slug = String(Astro.params.slug || "");
+const grouping = groupingBySlug.get(slug);
+if (!grouping) throw new Error(`groupings: no grouping for slug "${slug}"`);
+const family = FAMILIES[grouping.family];
+const shelf = SHELVES.find((s) => s.noun === grouping.noun);
+const shelfLabels = new Set(shelf.industries.map((ind) => ind.label));
+
+// Members across the three pools; presence on the shelf is the only criterion, exactly as the
+// shelves page and the chapters count it.
+const pools = [
+  ["us", fundamentals.companies || []],
+  ["adr", adrData.companies || []],
+  ["jp", jpData.companies || []],
+];
+const rows = [];
+let convertedCount = 0;
+let asFiledCount = 0;
+for (const [poolKey, pool] of pools) {
+  for (const c of pool) {
+    const label = industryLabelOf(c);
+    if (!shelfLabels.has(label)) continue;
+    const ticker = String(c.ticker || "").toUpperCase();
+    if (!ticker) continue;
+    const terms = usdTerms(c, adrRatios, rates);
+    if (terms.converted) convertedCount++;
+    if (terms.asFiled) asFiledCount++;
+    rows.push({
+      ticker,
+      name: c.name || ticker,
+      href: (poolKey === "jp" ? "/jp/" : "/c/") + ticker,
+      industry: label,
+      industryHref: industrySlug(label) ? `/industries/${industrySlug(label)}` : null,
+      cells: groupingCells(c, grouping.family, terms),
+      revSort: revenueSortUsd(c, terms),
+    });
+  }
+}
+
+// The default order: latest-year revenue in USD, largest first — size, the one objective order.
+// A member without a sortable revenue (an as-filed foreign filer, or an unreadable top line)
+// goes to the back, alphabetical by ticker there like every tie.
+rows.sort((a, b) => {
+  const ra = a.revSort == null ? -Infinity : a.revSort;
+  const rb = b.revSort == null ? -Infinity : b.revSort;
+  return rb - ra || (a.ticker < b.ticker ? -1 : a.ticker > b.ticker ? 1 : 0);
+});
+
+const hasForeign = convertedCount > 0 || asFiledCount > 0;
+const revenueColIdx = family.columns.findIndex((col) => col.key === "revenue"); // −1 on the insurer family
+const refreshed = fmtAsOf(dataAsOf);
+const description = `${grouping.noun} The ${rows.length.toLocaleString()} companies the library holds, in one comparative table: ${family.columns.map((c) => c.label).join(", ")} — every column sortable, largest first by revenue.`;
+---
+
+<BaseLayout title={`${grouping.noun} A grouping — Owner Scorecard`} description={description}>
+  <p class="back"><a href="/groupings">← The groupings</a></p>
+
+  <header class="hero">
+    <span class="kicker">A grouping · a comparative table</span>
+    <h1>{grouping.noun}</h1>
+    <p class="range">
+      {rows.length.toLocaleString()} companies across the library&rsquo;s three pools, one row each.
+      The columns are the line items this kind of business is read on; each header names its basis.
+      Rows open largest first by latest-year revenue, and every column sorts both ways — the
+      re-ordering is the reader&rsquo;s own act. A dash is a figure that could not be read; n/a is one
+      that does not apply to that member; both sit at the back of a sorted column.
+    </p>
+    {refreshed ? <p class="dateline">From the latest filings · data as of {refreshed}.</p> : null}
+  </header>
+
+  <div class="tableWrap">
+    <table class="grp" id="grpTable">
+      <thead>
+        <tr>
+          <th class="txt" data-t="s" scope="col"><button type="button">Ticker <span class="tri"></span></button></th>
+          <th class="txt" data-t="s" scope="col"><button type="button">Name <span class="tri"></span></button></th>
+          <th class="txt" data-t="s" scope="col"><button type="button">Industry <span class="tri"></span></button></th>
+          {family.columns.map((col, i) => (
+            <th class="num" data-t="n" scope="col" aria-sort={i === revenueColIdx ? "descending" : undefined}>
+              <button type="button">{col.label} <span class="tri">{i === revenueColIdx ? "▼" : ""}</span></button>
+              <span class="basis">{col.basis}</span>
+            </th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((r) => (
+          <tr>
+            <td class="txt tk" data-s={r.ticker}><a href={r.href}>{r.ticker}</a></td>
+            <td class="txt nm" data-s={r.name.toLowerCase()}>{r.name}</td>
+            <td class="txt ind" data-s={r.industry.toLowerCase()}>
+              {r.industryHref ? <a href={r.industryHref}>{r.industry}</a> : r.industry}
+            </td>
+            {r.cells.map((cell) => (
+              <td class={`num${cell.sort == null ? " off" : ""}`} data-s={cell.sort}>{cell.text}</td>
+            ))}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+
+  <p class="foot">
+    Every figure is recomputed from the company&rsquo;s own SEC or EDINET filings, the same way as on
+    its page; the columns name facts, weigh nothing, and form no rank.
+    {hasForeign ? (
+      <span>
+        {" "}Foreign filers are stated in US dollars at the dated reference rate ({rates.fxAsOf ? `as of ${rates.fxAsOf}` : "dated"})
+        so each money column sorts on one basis; their own pages keep the records as filed. A
+        foreign filer whose conversion terms are missing shows its money as filed and sorts to the
+        back of the column — never a guessed conversion. Ratios and margins are currency-free.
+      </span>
+    ) : null}
+  </p>
+
+  <script is:inline>
+    // Column sorting — the reader's own act on a reference table, per the owner directive. Plain
+    // DOM re-ordering of the rows already on the page: nothing is fetched, weighted, filtered,
+    // highlighted, or remembered. A cell without a sort key (a dash, an n/a, an as-filed foreign
+    // figure) goes to the back of the column whichever direction is chosen.
+    (function () {
+      var table = document.getElementById("grpTable");
+      if (!table || !table.tHead || !table.tBodies.length) return;
+      var ths = Array.prototype.slice.call(table.tHead.rows[0].cells);
+      var tbody = table.tBodies[0];
+      var cur = -1, dir = -1;
+      ths.forEach(function (th, i) {
+        if (th.getAttribute("aria-sort") === "descending") cur = i; // the server-rendered revenue order
+        var btn = th.querySelector("button");
+        if (btn) btn.addEventListener("click", function () { sortBy(i); });
+      });
+      function sortBy(i) {
+        var numeric = ths[i].getAttribute("data-t") === "n";
+        dir = cur === i ? -dir : numeric ? -1 : 1; // numbers open largest-first, text A-to-Z
+        cur = i;
+        var rows = Array.prototype.slice.call(tbody.rows);
+        rows.sort(function (ra, rb) {
+          var a = ra.cells[i] ? ra.cells[i].getAttribute("data-s") : null;
+          var b = rb.cells[i] ? rb.cells[i].getAttribute("data-s") : null;
+          if (a == null && b == null) return 0;
+          if (a == null) return 1;  // no key: to the back, either direction
+          if (b == null) return -1;
+          if (numeric) return (parseFloat(a) - parseFloat(b)) * dir;
+          return (a < b ? -1 : a > b ? 1 : 0) * dir;
+        });
+        for (var k = 0; k < rows.length; k++) tbody.appendChild(rows[k]);
+        ths.forEach(function (th, k) {
+          var tri = th.querySelector(".tri");
+          if (tri) tri.textContent = k === i ? (dir === 1 ? "▲" : "▼") : "";
+          if (k === i) th.setAttribute("aria-sort", dir === 1 ? "ascending" : "descending");
+          else th.removeAttribute("aria-sort");
+        });
+      }
+    })();
+  </script>
+
+  <style>
+    .back { margin: 0 0 10px; font-size: 13px; }
+    .kicker { font-family: var(--sans); font-size: 11px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--muted); }
+    .hero h1 { margin: 4px 0 0; }
+    .range { font-size: 13.5px; line-height: 1.6; color: var(--ink-dim); margin: 10px 0 0; max-width: 78ch; }
+    .dateline { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); margin: 8px 0 0; }
+
+    /* The wide table scrolls inside its own container; the page never scrolls sideways. */
+    .tableWrap { margin: 18px 0 0; overflow-x: auto; }
+    table.grp { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+    table.grp th, table.grp td { padding: 7px 10px; border-bottom: 1px solid var(--rule); white-space: nowrap; }
+    table.grp thead th { border-bottom: 2px solid var(--rule-strong); vertical-align: bottom; text-align: left; }
+    table.grp thead th.num { text-align: right; }
+    table.grp thead button { background: none; border: 0; padding: 0; margin: 0; cursor: pointer; font-family: var(--sans); font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink); }
+    table.grp thead button:hover { color: var(--accent); }
+    table.grp thead .tri { display: inline-block; min-width: 1em; font-size: 9px; color: var(--accent); }
+    table.grp thead .basis { display: block; font-family: var(--sans); font-weight: 400; text-transform: none; letter-spacing: 0; font-size: 10px; color: var(--muted); margin-top: 2px; max-width: 24ch; white-space: normal; }
+    table.grp thead th.num .basis { margin-left: auto; }
+
+    table.grp td.num { text-align: right; font-family: var(--sans); font-size: 12.5px; color: var(--ink); }
+    table.grp td.num.off { color: var(--faint); }
+    table.grp td.tk { font-family: var(--sans); font-weight: 700; font-size: 12.5px; }
+    table.grp td.nm { font-family: var(--serif); font-size: 13px; color: var(--ink-soft); max-width: 30ch; overflow: hidden; text-overflow: ellipsis; }
+    table.grp td.ind { font-family: var(--sans); font-size: 11.5px; }
+    table.grp td.ind a { color: var(--muted); }
+    table.grp td.ind a:hover { color: var(--accent); }
+
+    .foot { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); margin: 20px 0 0; line-height: 1.6; max-width: 78ch; border-top: 1px solid var(--rule-strong); padding-top: 12px; }
+  </style>
+</BaseLayout>
