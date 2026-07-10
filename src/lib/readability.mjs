@@ -9,7 +9,7 @@
 //
 // The reasons, each mirroring an existing guard:
 //   short-record          — fewer than four fiscal years with a readable revenue line, the
-//                           floor every through-cycle lens in lenses.mjs already requires
+//                           floor the through-cycle reads already require
 //   incoherent-current    — current assets above total assets on the latest annual lines
 //                           (the net-nets pick withholds on the same line, ca > ta × 1.02)
 //   incoherent-equity     — equity above total assets on the latest annual lines, which makes

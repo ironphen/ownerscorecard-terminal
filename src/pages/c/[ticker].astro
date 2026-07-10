@@ -28,7 +28,6 @@ import Cite from "../../components/Cite.astro";
 import language from "../../data/language.json";
 import segmentsData from "../../data/segments.json";
 import { classify } from "../../lib/archetype.mjs";
-import { computeLenses, LENS_BY_KEY } from "../../lib/lenses.mjs";
 import { businessPhrase, weakLede, pickNote } from "../../lib/business.mjs";
 import { compositionSentence } from "../../lib/segments.mjs";
 import { selectPeers } from "../../lib/peers.mjs";
@@ -104,9 +103,6 @@ const brief = fund ? (language?.companies?.[ticker]?.brief || []).filter((s) => 
 const fmtDate = (d) =>
   d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric", timeZone: "UTC" });
 
-// The archetype-trail: which of the discovery archetypes this company fits, so discovery and evaluation
-// are one loop. Same memoized computation the Archetypes pages run, so the trail can never disagree with them.
-const lensTrail = fund ? (computeLenses(allCompanies, language.companies).byTicker[ticker] || []) : [];
 
 // This company's place in the Manual (docs/discovery-design.md feature 2): the previous and next
 // ticker in its own volume, so a reader can proceed page to page the way the manuals were read.
@@ -199,14 +195,6 @@ const pageJsonLd = fund
       <p class="noteFlag">
         Read in Notes: <a href={`/notes/${related[0].id}`}>{related[0].data.title}</a>, {fmtDate(related[0].data.date)}
       </p>
-    ) : null}
-    {lensTrail.length ? (
-      <div class="lensTrail">
-        <span class="ltLabel">Fits <a href="/archetypes">archetypes</a></span>
-        {lensTrail.map((k) => (
-          <a class={LENS_BY_KEY[k].positive ? "ltChip" : "ltChip ltCaution"} href={`/archetypes/${k}`}>{LENS_BY_KEY[k].title}</a>
-        ))}
-      </div>
     ) : null}
   </header>
 
@@ -331,13 +319,6 @@ const pageJsonLd = fund
     .meta { color: var(--ink-dim); font-size: 13px; margin-top: 8px; }
     .noteFlag { font-family: var(--serif); font-size: 14.5px; color: var(--ink-soft); margin: 10px 0 0; }
     .noteFlag a { font-weight: 600; }
-    .lensTrail { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
-    .ltLabel { font-family: var(--sans); font-size: 10.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
-    .ltLabel a { color: var(--accent); }
-    .ltChip { font-family: var(--sans); font-size: 11.5px; color: var(--ink-soft); border: 1px solid var(--rule-strong); padding: 2px 8px; text-decoration: none; }
-    .ltChip:hover { border-color: var(--accent); color: var(--accent); }
-    .ltCaution { color: var(--warn, #b4690e); border-color: var(--warn, #b4690e); }
-    .ltCaution:hover { color: var(--warn, #b4690e); filter: brightness(1.12); }
 
 
     /* Sticky company bar, ticker always in view, plus section jump-nav. */

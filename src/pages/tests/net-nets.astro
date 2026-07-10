@@ -1,25 +1,23 @@
 ---
-// The Net-Net Ledger — the net-nets lens upgraded to a workbook. Same universe, same test, same
-// order (cushion, the lens's own figure) as the generic archetype page it replaces; what changes
-// is that every row lays out the as-filed components — current assets, total liabilities, diluted
-// shares, filing year — so the subtraction can be redone by hand. One client-side cell takes the
-// price the reader brings: it lives only in localStorage, keyed per ticker, and shows the price
-// as a percentage of NCAV per share. Typing a price never re-sorts and never filters — the ledger
-// keeps its cushion order no matter what price is typed.
+// The Net-Net Ledger — Graham's net-current-asset-value test as a workbook. His published
+// procedure, cited: every row lays out the as-filed components — current assets, total
+// liabilities, diluted shares, filing year — so the subtraction can be redone by hand, ordered by
+// cushion, the test's own figure. One client-side cell takes the price the reader brings: it
+// lives only in localStorage, keyed per ticker, and shows the price as a percentage of NCAV per
+// share. Typing a price never re-sorts and never filters — the ledger keeps its cushion order no
+// matter what price is typed.
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import fundamentals from "../../data/fundamentals.json";
 import adr from "../../data/fundamentals.adr.json";
-import language from "../../data/language.json";
-import { computeLenses, LENS_BY_KEY, GROUP_LABEL } from "../../lib/lenses.mjs";
+import { GRAHAM_TESTS, netNetRows } from "../../lib/lenses.mjs";
 import { fmtMoney, currencySymbol } from "../../lib/fundamentals.mjs";
 import { dataAsOf, fmtAsOf } from "../../lib/freshness.mjs";
 
 const companies = [...(fundamentals.companies || []), ...(adr.companies || [])];
-const { byLens } = computeLenses(companies, language.companies);
-const lens = LENS_BY_KEY["net-nets"];
+const test = GRAHAM_TESTS["net-nets"];
 
-const CAP = 200; // the strongest CAP by the lens figure; the rest clear the same test, named honestly below
-const allRows = byLens["net-nets"] || [];
+const CAP = 200; // the strongest CAP by the test's figure; the rest clear the same test, named honestly below
+const allRows = netNetRows(companies);
 const rows = allRows.slice(0, CAP);
 const truncated = allRows.length - rows.length;
 
@@ -35,14 +33,14 @@ const sharesStr = (n) => {
 const refreshed = fmtAsOf(dataAsOf);
 ---
 
-<BaseLayout title={`${lens.title}, Archetypes · Owner Scorecard`}>
-  <p class="back"><a href="/archetypes">← Archetypes</a></p>
+<BaseLayout title={`${test.title}, Graham's tests · Owner Scorecard`}>
+  <p class="back"><a href="/">← All companies</a> <span class="bSep" aria-hidden="true">·</span> <a href="/tests/defensive">The defensive workbook →</a></p>
 
   <header class="hero">
-    <span class="kicker">{GROUP_LABEL[lens.group]}</span>
-    <h1>{lens.title}</h1>
-    <p class="principle">{lens.principle}</p>
-    <p class="test"><span class="testLabel">The test</span>{lens.test}</p>
+    <span class="kicker">Graham's tests</span>
+    <h1>{test.title}</h1>
+    <p class="principle">{test.principle}</p>
+    <p class="test"><span class="testLabel">The test</span>{test.test}</p>
     <p class="practice">
       Graham's practice: he paid no more than about two-thirds of net current asset value, and he
       held these in wide diversification, dozens at a time, so that no single liquidation had to go
@@ -146,6 +144,7 @@ const refreshed = fmtAsOf(dataAsOf);
 
   <style>
     .back { margin: 0 0 10px; font-size: 13px; }
+    .bSep { margin: 0 4px; color: var(--faint); }
     .kicker { font-family: var(--sans); font-size: 11px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--accent); }
     .hero h1 { margin: 4px 0 0; }
     .principle { font-family: var(--serif); font-size: 15px; line-height: 1.62; color: var(--ink-soft); margin: 10px 0 0; max-width: 76ch; }

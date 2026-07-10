@@ -6,14 +6,12 @@
 
 // follow-context.json rows -> a Map keyed by ticker. Each entry carries the company page href
 // (pool 2 = Japan lives under /jp/, everything else under /c/ — company-index.json's own
-// convention), the industry chapter, the latest annual filing facts, and the archetype chips
-// (alphabetical by title, the Entry Block's order — an order with no argument in it).
+// convention), the industry chapter, and the latest annual filing facts.
 export function decodeContext(ctx) {
-  const lenses = (ctx?.lenses || []).map(([key, title, positive]) => ({ key, title, positive: !!positive }));
   const industries = (ctx?.industries || []).map(([label, slug]) => ({ label, slug }));
   const byTicker = new Map();
   for (const row of ctx?.rows || []) {
-    const [ticker, name, pool, ind, fy, form, periodEnd, memberships] = row;
+    const [ticker, name, pool, ind, fy, form, periodEnd] = row;
     byTicker.set(ticker, {
       ticker,
       name,
@@ -22,10 +20,6 @@ export function decodeContext(ctx) {
       fy,
       form,
       periodEnd,
-      lenses: (memberships || [])
-        .map((i) => lenses[i])
-        .filter(Boolean)
-        .sort((a, b) => a.title.localeCompare(b.title)),
     });
   }
   return byTicker;

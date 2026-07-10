@@ -1,7 +1,7 @@
-// The Entry Block's facts — docs/discovery-design.md feature 1. Five fixed lines, identical
+// The Entry Block's facts — docs/discovery-design.md feature 1. Four fixed lines, identical
 // wherever a company appears on a reading surface: identity and lede; the ten-year owner-earnings
 // row; the retained-capital arithmetic as a sentence of numbers; balance-sheet posture and
-// stewardship facts; the archetype chips. Everything here is a figure or a factual sentence built
+// stewardship facts. Everything here is a figure or a factual sentence built
 // from the same libraries the company page runs, so an entry can never disagree with the page it
 // links to. Absence renders "not read" (or, for a balance-sheet business, "not applied") — never
 // a mark against a filled cell, never a grade.

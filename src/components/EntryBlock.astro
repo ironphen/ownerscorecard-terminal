@@ -1,27 +1,25 @@
 ---
-// The Entry Block — docs/discovery-design.md feature 1. Five fixed lines, rendered identically
+// The Entry Block — docs/discovery-design.md feature 1. Four fixed lines, rendered identically
 // wherever a company appears on a reading surface (the Manual today; industry chapters and the
 // punch card later): (1) ticker, name, one-line lede; (2) the ten-year owner-earnings row with an
 // inline shape, no axes; (3) the retained-capital arithmetic as a sentence of numbers; (4) balance-
-// sheet posture and stewardship facts; (5) the archetype chips, alphabetical, never counted into a
-// number. Absence renders "not read" (or "not applied" where the read is a category error), never
-// as a mark against a filled cell. The fixed format is the point: it is what trains the eye.
+// sheet posture and stewardship facts. Absence renders "not read" (or "not applied" where the read
+// is a category error), never as a mark against a filled cell. The fixed format is the point: it
+// is what trains the eye. (The fifth line — coined archetype chips — was retired 2026-07: a
+// flatteringly-named category the publication awards is a verdict by arrangement.)
 //
 // Build-cheap by design — it renders ~3,530 times per build. The heavy work (capitalHistory, the
-// owner-earnings series, cashPosition) is memoized per company in lib/entryBlock.mjs, and the lens
-// membership arrives as a precomputed map (`lenses`), never recomputed per instance.
+// owner-earnings series, cashPosition) is memoized per company in lib/entryBlock.mjs.
 import Sparkline from "./Sparkline.astro";
 import language from "../data/language.json";
 import segmentsData from "../data/segments.json";
 import notes from "../data/notes.json";
 import { entryFacts } from "../lib/entryBlock.mjs";
 import { pickNote } from "../lib/business.mjs";
-import { LENS_BY_KEY } from "../lib/lenses.mjs";
 
-// company: the fundamentals record. lenses: the precomputed byTicker membership map from
-// computeLenses. n: this entry's number in the Manual's run (enables the resume-marker data
-// attributes). market: "jp" routes to /jp/, everything else to /c/.
-const { company, lenses = {}, n = null, market = "us" } = Astro.props;
+// company: the fundamentals record. n: this entry's number in the Manual's run (enables the
+// resume-marker data attributes). market: "jp" routes to /jp/, everything else to /c/.
+const { company, n = null, market = "us" } = Astro.props;
 
 const tk = String(company.ticker || "").toUpperCase();
 const facts = entryFacts(company, {
@@ -30,12 +28,6 @@ const facts = entryFacts(company, {
   note: pickNote(notes, tk),
 });
 const href = market === "jp" ? `/jp/${tk}` : `/c/${tk}`;
-
-// Line 5: the archetype chips, alphabetical by title — an order with no argument in it.
-const chips = (lenses[tk] || [])
-  .map((key) => ({ key, lens: LENS_BY_KEY[key] }))
-  .filter((c) => c.lens)
-  .sort((a, b) => a.lens.title.localeCompare(b.lens.title));
 
 // Line 4 always renders: posture first (or its honest absence), then the stewardship facts.
 const postureText =
@@ -75,13 +67,6 @@ const line4 = [postureText, ...facts.stewardship].join(" · ");
     <span class="eLab">Balance sheet</span>
     <span class="eSent">{line4}</span>
   </p>
-  {chips.length ? (
-    <p class="eChips">
-      {chips.map((c) => (
-        <a class={c.lens.positive ? "eChip" : "eChip eChipCaution"} href={`/archetypes/${c.key}`}>{c.lens.title}</a>
-      ))}
-    </p>
-  ) : null}
 </article>
 
 <style>
@@ -97,9 +82,4 @@ const line4 = [postureText, ...facts.stewardship].join(" · ");
   .eFigs :global(.eSpark) { margin-left: 4px; opacity: 0.85; }
   .eSent { font-family: var(--sans); font-size: 12.5px; }
   .eNone { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); }
-  .eChips { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin: 8px 0 0; }
-  .eChip { font-family: var(--sans); font-size: 11px; color: var(--ink-soft); border: 1px solid var(--rule-strong); padding: 1px 7px; text-decoration: none; }
-  .eChip:hover { border-color: var(--accent); color: var(--accent); }
-  .eChipCaution { color: var(--warn, #b4690e); border-color: var(--warn, #b4690e); }
-  .eChipCaution:hover { color: var(--warn, #b4690e); filter: brightness(1.12); }
 </style>

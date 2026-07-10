@@ -2,3 +2,20 @@
 # The bare path needs its own rule: the splat pattern only matches paths beneath it.
 /articles    /notes         301
 /articles/*  /notes/:splat  301
+
+# The coined archetypes retired (2026-07-10): a flatteringly-named category the publication
+# awards is a verdict by arrangement. The groupings are the browse now; Graham's two named
+# tests (his published procedures, cited) keep their name at /tests; the red-flags list's
+# successor is the /flags registers. Permanent — a considered restructuring, like /articles
+# above. These live HERE and not in astro.config redirects: a config redirect becomes a worker
+# route that imports its destination page module, and these destinations import the data pools
+# (~45MB), which would sink them into the worker past scripts/verifyStatic.mjs's ceiling.
+# First match wins: the named tests and red-flags before the catch-all splat.
+/archetypes/defensive    /tests/defensive   301
+/archetypes/defensive/   /tests/defensive   301
+/archetypes/net-nets     /tests/net-nets    301
+/archetypes/net-nets/    /tests/net-nets    301
+/archetypes/red-flags    /flags             301
+/archetypes/red-flags/   /flags             301
+/archetypes              /groupings         301
+/archetypes/*            /groupings         301

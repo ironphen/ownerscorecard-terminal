@@ -342,12 +342,12 @@ const jsonLdBlocks = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
           <kbd aria-hidden="true">/</kbd>
         </button>
         <a href="/catalog">Catalog</a>
-        <a href="/archetypes">Archetypes</a>
+        <a href="/groupings">Groupings</a>
         <a href="/compare">Compare</a>
         <a href="/concepts">Principles</a>
         <a href="/wire">Wire</a>
         <a href="/notes">Notes</a>
-        <a href="/archetypes" id="openAnywhere" title="A uniformly random company page">Open anywhere</a>
+        <a href="/groupings" id="openAnywhere" title="A uniformly random company page">Open anywhere</a>
         <a href="/account">Account</a>
         <button id="themeToggle" class="themeToggle" type="button" aria-label="Switch between light and dark theme" title="Switch theme">
           <span class="ttSun" aria-hidden="true">☀</span><span class="ttMoon" aria-hidden="true">☾</span>
@@ -400,7 +400,7 @@ const jsonLdBlocks = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
          every company in every pool — US, ADR, Japan, flagged and unreadable-record names included,
          because any weighting toward test-passers would be an implicit ranking. The href derives
          from the row's pool code exactly as search does. Without JS, or on a failed fetch, the
-         anchor's own href (/archetypes) is the door. */
+         anchor's own href (/groupings) is the door. */
       (function () {
         var door = document.getElementById("openAnywhere");
         if (!door) return;

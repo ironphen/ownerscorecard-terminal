@@ -24,7 +24,7 @@ const VOL_SUB = {
 
 <BaseLayout
   title="The Manual, Owner Scorecard"
-  description={`Every company in the library in one fixed format: ${total.toLocaleString()} entries across three volumes, in strict alphabetical order by ticker, each a five-line record read from the filings.`}
+  description={`Every company in the library in one fixed format: ${total.toLocaleString()} entries across three volumes, in strict alphabetical order by ticker, each a four-line record read from the filings.`}
 >
   <header class="hero">
     <h1>The Manual</h1>
@@ -34,11 +34,10 @@ const VOL_SUB = {
     </p>
     <p class="sub">
       The form is borrowed from the Moody's manuals Buffett read page by page: turn every page and
-      the obscure entry gets found, because every entry gets turned to. Each entry is the same five
-      lines — what it is, the owner-earnings record, the retained-capital arithmetic, the balance
-      sheet and stewardship facts, and the archetype tests it meets. Nothing is ranked and nothing
-      is scored; the reader brings the two things no entry carries, understanding of the business
-      and a price.
+      the obscure entry gets found, because every entry gets turned to. Each entry is the same four
+      lines — what it is, the owner-earnings record, the retained-capital arithmetic, and the
+      balance sheet and stewardship facts. Nothing is ranked and nothing is scored; the reader
+      brings the two things no entry carries, understanding of the business and a price.
     </p>
     {refreshed ? <p class="dateline">From the latest filings · data as of {refreshed}.</p> : null}
     <p class="resume" id="mResume" hidden></p>

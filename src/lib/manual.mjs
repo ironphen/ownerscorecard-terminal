@@ -5,7 +5,7 @@
 // no membership test — presence in the pool is the only criterion, withheld or flagged records
 // included, because the Manual is a reading surface, not a test.
 //
-// Memoized globally for the build, like computeLenses: every letter page, the index, and each of
+// Memoized globally for the build, like manualOrder's siblings: every letter page, the index, and each of
 // the ~3,530 company pages ask for the same canonical order, so the sort runs a single time.
 let _cache = null;
 

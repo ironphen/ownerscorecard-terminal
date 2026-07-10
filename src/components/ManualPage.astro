@@ -9,9 +9,9 @@ import EntryBlock from "./EntryBlock.astro";
 
 // vol: the volume object from manualOrder. letter: this page's letter (null for the single-page
 // Japan volume). entries: the page's entries in order. prevPage/nextPage: neighbors in the
-// Manual's page chain. lenses: the precomputed byTicker archetype map. total: entries in the
-// whole Manual. rail: the volume's letter links (lettered volumes only).
-const { vol, letter = null, entries = [], prevPage = null, nextPage = null, lenses = {}, total, rail = [] } = Astro.props;
+// Manual's page chain. total: entries in the whole Manual. rail: the volume's letter links
+// (lettered volumes only).
+const { vol, letter = null, entries = [], prevPage = null, nextPage = null, total, rail = [] } = Astro.props;
 
 const first = entries[0];
 const last = entries[entries.length - 1];
@@ -49,7 +49,7 @@ const VOL_NOTE = {
 
 <div id="mEntries" data-vol={vol.key}>
   {entries.map((e) => (
-    <EntryBlock company={e.company} lenses={lenses} n={e.n} market={vol.key} />
+    <EntryBlock company={e.company} n={e.n} market={vol.key} />
   ))}
 </div>
 
@@ -59,7 +59,7 @@ const VOL_NOTE = {
 </nav>
 
 <p class="foot">
-  The same five lines for every company, in strict ticker order; a figure that could not be read
+  The same four lines for every company, in strict ticker order; a figure that could not be read
   renders as "not read," never as a mark against the record beside it. The entries carry no
   ranking and form no score. What an entry cannot carry — understanding of the business, and a
   price — is yours.

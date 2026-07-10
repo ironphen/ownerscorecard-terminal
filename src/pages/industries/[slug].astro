@@ -11,9 +11,7 @@ import EntryBlock from "../../components/EntryBlock.astro";
 import fundamentals from "../../data/fundamentals.json";
 import adrData from "../../data/fundamentals.adr.json";
 import jpData from "../../data/fundamentals.jp.json";
-import language from "../../data/language.json";
 import { industryOrder, chapterFacts, chapterMemberHref } from "../../lib/chapters.mjs";
-import { computeLenses } from "../../lib/lenses.mjs";
 import { dataAsOf, fmtAsOf } from "../../lib/freshness.mjs";
 
 export function getStaticPaths() {
@@ -26,12 +24,6 @@ const { bySlug } = industryOrder(fundamentals.companies, adrData.companies, jpDa
 const chapter = bySlug.get(slug);
 const facts = chapterFacts(chapter);
 
-// The same memoized universe pass the manual, archetype and company pages run, so a chip here can
-// never disagree with the lens page it links to. JP names never enter this pass.
-const lenses = computeLenses(
-  [...(fundamentals.companies || []), ...(adrData.companies || [])],
-  language.companies
-).byTicker;
 
 const members = chapter.members;
 const first = members[0];
@@ -69,8 +61,8 @@ const netCashText =
 
 const refreshed = fmtAsOf(dataAsOf);
 const description = one
-  ? `${chapter.label}: the one company the library holds in this industry, as the same five-line record the Manual uses, under a computed factual header.`
-  : `${chapter.label}: the ${facts.count.toLocaleString()} companies the library holds in this industry, each as the same five-line record, in strict ticker order, under a computed factual header.`;
+  ? `${chapter.label}: the one company the library holds in this industry, as the same four-line record the Manual uses, under a computed factual header.`
+  : `${chapter.label}: the ${facts.count.toLocaleString()} companies the library holds in this industry, each as the same four-line record, in strict ticker order, under a computed factual header.`;
 ---
 
 <BaseLayout title={`${chapter.label}, an industry chapter — Owner Scorecard`} description={description}>
@@ -105,12 +97,12 @@ const description = one
 
   <div id="entries">
     {members.map((m) => (
-      <EntryBlock company={m.company} lenses={lenses} market={m.poolKey} />
+      <EntryBlock company={m.company} market={m.poolKey} />
     ))}
   </div>
 
   <p class="foot">
-    The same five lines for every member, in strict ticker order; a figure that could not be read
+    The same four lines for every member, in strict ticker order; a figure that could not be read
     renders as "not read," never as a mark against the record beside it. The header describes the
     list and names no member; the entries carry no ranking and form no score. What a chapter
     cannot carry — understanding of the business, and a price — is yours.

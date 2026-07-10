@@ -5,7 +5,7 @@
 // are reading surfaces, not tests, so withheld and flagged records sit in their alphabetical
 // place like everything else.
 //
-// Memoized globally for the build, like manualOrder and computeLenses: each of the ~219 chapter
+// Memoized globally for the build, like manualOrder: each of the ~219 chapter
 // pages and each of the ~3,530 company pages (for the industry prev/next pair) ask for the same
 // canonical order, so the pass over the pools runs a single time.
 import { industryLabelOf, industrySlug, shelfOfIndustry } from "./shelves.mjs";
@@ -19,8 +19,8 @@ const safe = (fn, c) => {
     return null;
   }
 };
-// The lower median, the same convention lenses.mjs uses, so a chapter figure can never disagree
-// with the lens arithmetic it mirrors.
+// The lower median, the same convention the company-page reads use, so a chapter figure can
+// never disagree with the arithmetic it mirrors.
 const median = (a) => (a.length ? [...a].sort((x, y) => x - y)[Math.floor((a.length - 1) / 2)] : null);
 
 let _cache = null;
@@ -81,8 +81,8 @@ export function chapterMemberHref(m) {
 }
 
 // The three per-member reads the chapter header aggregates. Same guards as the corresponding
-// computations in lenses.mjs companyFacts and lib/fundamentals.mjs, so a chapter figure can never
-// disagree with the lens pages or the company page: gross profitability is gross profit ÷ total
+// computations in lib/fundamentals.mjs, so a chapter figure can never
+// disagree with the company page: gross profitability is gross profit ÷ total
 // assets (grossMargin's own withholds, plus the plausibility band), capital intensity is capital
 // expenditure ÷ revenue, each the member's median across its readable years, at least three such
 // years required. All three are operating-company reads, withheld from banks, insurers and REITs

@@ -7,9 +7,7 @@ import ManualPage from "../../../components/ManualPage.astro";
 import fundamentals from "../../../data/fundamentals.json";
 import adrData from "../../../data/fundamentals.adr.json";
 import jpData from "../../../data/fundamentals.jp.json";
-import language from "../../../data/language.json";
 import { manualOrder, manualPageChain } from "../../../lib/manual.mjs";
-import { computeLenses } from "../../../lib/lenses.mjs";
 
 export function getStaticPaths() {
   const { volumes } = manualOrder(fundamentals.companies, adrData.companies, jpData.companies);
@@ -26,17 +24,11 @@ const chain = manualPageChain(volumes);
 const idx = chain.findIndex((p) => p.volKey === "us" && p.letter === letter);
 const rail = chain.filter((p) => p.volKey === "us").map((p) => ({ letter: p.letter, href: p.href }));
 
-// The same memoized universe pass the archetype pages and company pages run, so a chip here can
-// never disagree with the lens page it links to. JP names never enter this pass.
-const lenses = computeLenses(
-  [...(fundamentals.companies || []), ...(adrData.companies || [])],
-  language.companies
-).byTicker;
 ---
 
 <BaseLayout
   title={`The Manual: United States, ${letter} — Owner Scorecard`}
-  description={`Volume one of the Manual: the ${entries.length.toLocaleString()} United States companies whose tickers begin with ${letter}, each as the same five-line record, in strict alphabetical order.`}
+  description={`Volume one of the Manual: the ${entries.length.toLocaleString()} United States companies whose tickers begin with ${letter}, each as the same four-line record, in strict alphabetical order.`}
 >
   <ManualPage
     vol={vol}
@@ -44,7 +36,6 @@ const lenses = computeLenses(
     entries={entries}
     prevPage={idx > 0 ? chain[idx - 1] : null}
     nextPage={idx >= 0 && idx < chain.length - 1 ? chain[idx + 1] : null}
-    lenses={lenses}
     total={total}
     rail={rail}
   />

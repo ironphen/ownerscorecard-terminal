@@ -1,9 +1,9 @@
 ---
-// The Defensive Workbook — the defensive lens upgraded from a one-figure list to Graham's own
-// worksheet (docs/discovery-design.md, feature 6). One row per company, one column per
-// price-independent criterion; every cell carries the status word and the filed figure, and a
-// missed test states its shortfall in the test's own units, so any entry can be recomputed by
-// hand. Three strata only: the full-pass group, then benches one test short grouped by WHICH
+// The Defensive Workbook — Graham's defensive-investor checklist as his own worksheet
+// (docs/discovery-design.md, feature 6). His published procedure, cited: one row per company, one
+// column per price-independent criterion; every cell carries the status word and the filed figure,
+// and a missed test states its shortfall in the test's own units, so any entry can be recomputed
+// by hand. Three strata only: the full-pass group, then benches one test short grouped by WHICH
 // test, then a counted remainder. Never ordered by pass count — a count of tests met, used as
 // an ordering, is a composite score in a plain suit (section 5 of the design brief). Statuses
 // are words beside figures, never color-graded cells. Fully prerendered; no client JS.
@@ -13,13 +13,13 @@ import adr from "../../data/fundamentals.adr.json";
 import { grahamTests } from "../../lib/graham.mjs";
 import { financialKind } from "../../lib/archetype.mjs";
 import { fmtMoney } from "../../lib/fundamentals.mjs";
-import { LENS_BY_KEY, GROUP_LABEL } from "../../lib/lenses.mjs";
+import { GRAHAM_TESTS } from "../../lib/lenses.mjs";
 import { dataAsOf, fmtAsOf } from "../../lib/freshness.mjs";
 
-const lens = LENS_BY_KEY.defensive;
+const test = GRAHAM_TESTS.defensive;
 const refreshed = fmtAsOf(dataAsOf);
 
-// The same pools the other archetype pages read (US + ADR), one row per ticker.
+// The catalog's US and ADR pools, one row per ticker.
 const companies = [...(fundamentals.companies || []), ...(adr.companies || [])];
 const seen = new Set();
 const rows = [];
@@ -28,8 +28,8 @@ for (const company of companies) {
   if (!ticker || seen.has(ticker)) continue;
   seen.add(ticker);
   // The same gate the company page applies (Scorecard.astro): a bank, insurer or REIT never runs
-  // Graham's operating tests there — a category error — so it cannot sit in this workbook or wear
-  // the defensive chip either. Workbook, chip and company page agree.
+  // Graham's operating tests there — a category error — so it cannot sit in this workbook either.
+  // Workbook and company page agree.
   try { if (financialKind(company)) continue; } catch {}
   let g = null;
   try {
@@ -99,8 +99,8 @@ const rowData = (r) => ({
 });
 
 // Strata. A "near" counts as not-passing for membership, though the cell still says "near" with
-// its figure. The workbook bar is at least five testable criteria — the same floor the lens
-// itself uses — so a thin record can't full-pass on two cells, or sit a bench with tests unrun.
+// its figure. The workbook bar is at least five testable criteria, so a thin record can't
+// full-pass on two cells, or sit a bench with tests unrun.
 const notPassing = (g) => (g.tests || []).filter((t) => t.status !== "na" && t.status !== "pass");
 const byTicker = (a, b) => a.ticker.localeCompare(b.ticker);
 
@@ -148,13 +148,13 @@ const groupParts = [
 const colCount = CRITERIA.length + 2; // company + six criteria + moderate price
 ---
 
-<BaseLayout title="The defensive workbook, Archetypes · Owner Scorecard">
-  <p class="back"><a href="/archetypes">← Archetypes</a></p>
+<BaseLayout title="The defensive workbook, Graham's tests · Owner Scorecard">
+  <p class="back"><a href="/">← All companies</a> <span class="bSep" aria-hidden="true">·</span> <a href="/tests/net-nets">The net-net ledger →</a></p>
 
   <header class="hero">
-    <span class="kicker">{GROUP_LABEL[lens.group]}</span>
+    <span class="kicker">Graham's tests</span>
     <h1>The defensive workbook</h1>
-    <p class="principle">{lens.principle}</p>
+    <p class="principle">{test.principle}</p>
     <p class="explain">
       Graham ran the whole Dow through these tests and printed the table, every figure beside its
       verdict, so a reader could recompute any cell by hand. This page does the same for the record
@@ -237,15 +237,16 @@ const colCount = CRITERIA.length + 2; // company + six criteria + moderate price
   </p>
 
   <p class="foot">
-    From the company's SEC filings, computed the same way as on its page. The defensive chip that
-    appears on company pages marks a company clearing at least five of the testable criteria; the
-    price test is left to the company page, where you bring the price. Banks, insurers and REITs
+    From the company's SEC filings, computed the same way as on its page. The criteria are
+    Graham's own, from the defensive-investor chapters of The Intelligent Investor; the price test
+    is left to the company page, where you bring the price. Banks, insurers and REITs
     are absent by design: their pages read them on their own statements (return on equity, the
     combined ratio, funds from operations), and Graham's operating tests are a category error there.
   </p>
 
   <style>
     .back { margin: 0 0 10px; font-size: 13px; }
+    .bSep { margin: 0 4px; color: var(--faint); }
     .kicker { font-family: var(--sans); font-size: 11px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--accent); }
     .hero h1 { margin: 4px 0 0; }
     .principle { font-family: var(--serif); font-size: 15px; line-height: 1.62; color: var(--ink-soft); margin: 10px 0 0; max-width: 76ch; }

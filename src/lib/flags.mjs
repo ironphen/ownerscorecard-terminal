@@ -1,6 +1,6 @@
 // flags.mjs — the five named ways to die, each a register a reader can open to see who else
-// did this. A pure decomposition of the red-flags archetype (plus the bought-their-growth read
-// the acquisitions panel already computes): the same guarded reads the company page runs, split
+// did this. The same guarded reads the company page runs (plus the bought-their-growth read
+// the acquisitions panel already computes), split
 // out one register per disqualifying fact, each row carrying the fact's own figure. No score is
 // formed across registers; a register is a list of a single kind of fact, ordered by that fact's
 // own magnitude, and the reader draws the conclusion. Consumed by /flags (the hub and one page
@@ -123,8 +123,8 @@ export function firedRegisters(company, lang) {
 }
 
 // firedRegisters over the whole universe, once: per-register member lists, each ordered by the
-// fact's own magnitude (descending, alphabetical tiebreak). Memoized globally for the build, the
-// same way computeLenses is — the hub and every register page call this, and the dataset is
+// fact's own magnitude (descending, alphabetical tiebreak). Memoized globally for the build —
+// the hub and every register page call this, and the dataset is
 // always the same canonical set, so the heavy pass runs a single time and the hub's counts can
 // never disagree with the pages' rows. `langMap` is language.json's companies map, keyed by ticker.
 let _regCache = null;
