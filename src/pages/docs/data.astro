@@ -1,0 +1,325 @@
+---
+// The endpoint documentation — build-list item 3 in docs/marketing-plan.md: "the tinkerer hook
+// and the AI-citation hook are the same artifact: documented, stable, attributable data
+// endpoints." Written for a programmer and for an AI agent at once: each public endpoint with
+// its exact shape, one real truncated example, its freshness semantics, and the terms.
+//
+// The examples are not hand-copied: this page calls each endpoint module's own GET at build
+// time and truncates the real response, so a documented example can never drift from what the
+// endpoint actually serves. Fully prerendered; imports the data pools like every other static
+// page (never an SSR route, so nothing here can reach the worker bundle).
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import fundamentals from "../../data/fundamentals.json";
+import adrData from "../../data/fundamentals.adr.json";
+import jpData from "../../data/fundamentals.jp.json";
+import { SITE_URL, ORG } from "../../lib/seo.mjs";
+import { dataAsOf, dataAsOfLatest, fmtAsOf } from "../../lib/freshness.mjs";
+import { GET as recordGET } from "../c/[ticker].json.js";
+import { GET as cardGET } from "../compare/[ticker].json.js";
+import { GET as indexGET } from "../company-index.json.js";
+import { GET as wireGET } from "../wire-lite.json.js";
+import { GET as followGET } from "../follow-context.json.js";
+
+// ---- real examples, truncated -----------------------------------------------------------------
+// Elision is marked with "…" lines; everything else in a block is the endpoint's own output.
+const MORE = "__more__";
+const pick = (obj, keys, note) => {
+  const out = {};
+  let kept = 0;
+  for (const k of keys) if (obj && obj[k] !== undefined) { out[k] = obj[k]; kept++; }
+  const omitted = obj ? Object.keys(obj).length - kept : 0;
+  if (omitted > 0) out[MORE] = note || `${omitted} more fields`;
+  return out;
+};
+const shown = (value) =>
+  JSON.stringify(value, null, 2)
+    .replace(/"__more__": "([^"]*)"(,?)/g, "… $1")
+    .replace(/^(\s*)"(… [^"]*)"(,?)$/gm, "$1$2");
+
+const exampleCompany = (fundamentals.companies || []).find((c) => c.ticker === "ADBE");
+const asJson = async (res) => JSON.parse(await res.text());
+
+// /c/ADBE.json — the module's own GET, with the props its getStaticPaths would build.
+const recordFull = await asJson(
+  recordGET({ props: { company: exampleCompany, asOf: fundamentals.asOf || null, source: fundamentals.source || null } })
+);
+const lastYear = recordFull.record[recordFull.record.length - 1];
+const LINE_KEYS = [
+  "revenue", "operatingIncome", "netIncome", "cashFromOps", "capex",
+  "sharesDiluted", "totalDebt", "stockholdersEquity", "dividendsPaid",
+];
+const recordExample = {
+  ticker: recordFull.ticker,
+  name: recordFull.name,
+  cik: recordFull.cik,
+  latestFiling: recordFull.latestFiling,
+  sourceUrl: recordFull.sourceUrl,
+  record: [
+    `… ${recordFull.record.length - 1} earlier fiscal years`,
+    { fy: lastYear.fy, lines: pick(lastYear.lines, LINE_KEYS, "more line items") },
+  ],
+  latest: pick(recordFull.latest, LINE_KEYS.slice(0, 4), "more line items"),
+  provenance: recordFull.provenance,
+  page: recordFull.page,
+  publisher: recordFull.publisher,
+  suggestedCitation: recordFull.suggestedCitation,
+};
+
+// /compare/ADBE.json
+const cardFull = await asJson(cardGET({ props: { company: exampleCompany } }));
+const cardExample = {
+  ticker: cardFull.ticker,
+  name: cardFull.name,
+  pool: cardFull.pool,
+  currency: cardFull.currency,
+  fy: cardFull.fy,
+  recordYears: cardFull.recordYears,
+  spanLabel: cardFull.spanLabel,
+  quality: pick(cardFull.quality, ["roicThroughCycle", "operatingMarginThroughCycle", "grossMarginLatest"]),
+  survival: pick(cardFull.survival, ["netDebt", "netCash", "interestCoverage", "profitableYears"], "more fields, and graham: the defensive tests as rows"),
+  stewardship: pick(cardFull.stewardship, ["shareChange", "returnOnRetained"]),
+  price: pick(cardFull.price, ["mode", "shares", "netDebt", "oe", "gDeliv"], "more reverse-DCF inputs"),
+  [MORE]: "sym, form, archetype, basis, compounding",
+};
+
+// /company-index.json, /wire-lite.json, /follow-context.json
+const idxFull = await asJson(await indexGET());
+const idxExample = { v: idxFull.v, rows: [...idxFull.rows.slice(0, 3), `… ${idxFull.rows.length - 3} more rows`] };
+const wireFull = await asJson(await wireGET());
+const wireExample = { v: wireFull.v, asOf: wireFull.asOf, items: [...wireFull.items.slice(0, 2), `… ${wireFull.items.length - 2} more items`] };
+const followFull = await asJson(await followGET());
+const followExample = {
+  v: followFull.v,
+  industries: [...followFull.industries.slice(0, 2), `… ${followFull.industries.length - 2} more chapters`],
+  rows: [...followFull.rows.slice(0, 2), `… ${followFull.rows.length - 2} more rows`],
+};
+
+const counts = {
+  us: (fundamentals.companies || []).length,
+  adr: (adrData.companies || []).length,
+  jp: (jpData.companies || []).length,
+};
+
+const ATTRIBUTION = "Owner Scorecard (ownerscorecard.com), data from SEC filings";
+const oldest = fmtAsOf(dataAsOf);
+const newest = fmtAsOf(dataAsOfLatest);
+
+const nodeSnippet = `const res = await fetch("${SITE_URL}/c/ADBE.json");
+const rec = await res.json();
+
+console.log(rec.name, "FY" + rec.latestFiling.fy, "as of", rec.provenance.asOf);
+for (const year of rec.record.slice(-3)) {
+  const m = year.lines.operatingIncome / year.lines.revenue;
+  console.log(year.fy, (m * 100).toFixed(1) + "% operating margin");
+}
+console.log("Filed at:", rec.sourceUrl);
+console.log(rec.suggestedCitation);`;
+
+const pageDescription =
+  "Every public data endpoint, documented: the URL, the exact shape, one real example, the freshness semantics, and the terms. Free, no key, attribution requested.";
+---
+
+<BaseLayout
+  title="Data endpoints, Owner Scorecard"
+  description={pageDescription}
+  jsonLd={{
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    name: "Owner Scorecard data endpoints",
+    description: pageDescription,
+    publisher: ORG,
+    ...(dataAsOf ? { dateModified: dataAsOf } : {}),
+  }}
+>
+  <header class="hero">
+    <h1>The data, documented</h1>
+    <p class="lede">
+      Every figure this publication renders is also served as static JSON. This page documents
+      each public endpoint: its URL, its exact shape, one real example, its freshness, and the
+      terms. It is written for a programmer and for an AI agent alike.
+    </p>
+    <p class="sub">
+      Coverage today: {counts.us.toLocaleString("en-US")} US filers, {counts.adr.toLocaleString("en-US")} ADRs
+      (foreign 20-F filers), and {counts.jp.toLocaleString("en-US")} Japanese companies. A
+      machine-readable site guide lives at <a href="/llms.txt">/llms.txt</a>, with an expanded
+      index of the browse surfaces at <a href="/llms-full.txt">/llms-full.txt</a>.
+    </p>
+  </header>
+
+  <section class="band">
+    <h2>The terms</h2>
+    <p>
+      The endpoints are free. There is no key, no login, and no registered application.
+    </p>
+    <p>
+      There are no rate-limit promises beyond politeness. Everything here is a static file behind
+      a CDN; ordinary use needs no throttling. If you fetch in bulk, honor the cache headers and
+      keep to a few requests a second.
+    </p>
+    <p>
+      Attribution is requested, never required:
+      <em>"{ATTRIBUTION}"</em>. Company records and Notes carry a suggested citation on the page
+      and in the JSON; use it where a fuller cite fits.
+    </p>
+    <p>
+      Every figure is either as the company filed it or computed with the method named. The
+      computations are defined on the <a href="/concepts">Principles</a> page, and each JSON
+      record names its source under <code>provenance</code>.
+    </p>
+    <p>
+      The files carry no ratings, no estimates, and no price data, by design: the publication
+      presents the record and leaves the judgment to the reader, and a judgment quoted bare by a
+      machine reads as a rating.
+    </p>
+  </section>
+
+  <section class="band">
+    <h2>Freshness</h2>
+    <p>
+      Every data pool carries an <code>asOf</code> stamp written by the pipeline at its last
+      successful refresh, never the build clock. The record endpoints repeat their pool's stamp
+      under <code>provenance.asOf</code>; <code>/wire-lite.json</code> carries its own
+      <code>asOf</code> and refreshes daily. If a refresh silently stops, the stamp freezes and
+      the staleness is visible rather than hidden behind a fresh build date. The dateline in the
+      site masthead shows the oldest stamp across the core pools for the same reason.
+      {oldest ? (
+        <span>
+          As this page was built, the pools were stamped {oldest}{newest && newest !== oldest ? ` (oldest) to ${newest} (newest)` : ""}.
+        </span>
+      ) : null}
+    </p>
+  </section>
+
+  <section class="band">
+    <h2>Stability</h2>
+    <p>
+      URLs are permanent. Nothing that has been linked is allowed to 404; renamed surfaces leave
+      301 redirects behind (as <code>/articles</code> and <code>/archetypes</code> did).
+    </p>
+    <p>
+      The tuple-shaped files (<code>company-index</code>, <code>wire-lite</code>,
+      <code>follow-context</code>) carry a <code>v</code> field, and their rows only ever gain
+      trailing fields: a consumer indexing the positions documented below keeps working. The
+      object-shaped files (the record, the card) gain fields; existing fields are never renamed
+      or repurposed. An absent field means the company did not disclose that item, not zero.
+    </p>
+    <p>
+      Every endpoint is a static file, rebuilt at most daily. Responses revalidate cheaply with
+      ETags; <code>/company-index.json</code> also carries a one-hour browser TTL. If you cache
+      on your side, key on the <code>asOf</code> stamps: an unchanged stamp means unchanged
+      figures.
+    </p>
+  </section>
+
+  <section class="band">
+    <h2>The endpoints</h2>
+
+    <article class="ep">
+      <h3><code>/c/{"{TICKER}"}.json</code> — the full record</h3>
+      <p>
+        One company's record: roughly a decade of filed line items, the latest filing's
+        identifiers, provenance, and a suggested citation. Covers the US and ADR pools
+        (Japanese companies appear in the card and index endpoints below). <code>record</code> is
+        an array of fiscal years, oldest first; each year's <code>lines</code> holds the filed
+        line items in as-reported units (USD for US filers, home currency for ADRs).
+        <code>latest</code> repeats the most recent year's lines. Example:
+        <a href={`/c/ADBE.json`}>/c/ADBE.json</a>, truncated:
+      </p>
+      <pre><code>{shown(recordExample)}</code></pre>
+    </article>
+
+    <article class="ep">
+      <h3><code>/compare/{"{TICKER}"}.json</code> — the record card</h3>
+      <p>
+        The slim per-company card behind the <a href="/compare">Compare</a> page: the record
+        reduced to quality, compounding, survival, stewardship, and the inputs a reverse-DCF
+        needs to turn a price into "what you'd have to believe." All three pools, including
+        Japan. Ratios are decimals (0.06 is six percent), money is whole as-reported units,
+        <code>null</code> means not disclosed or not reliably computable. Example:
+        <a href={`/compare/ADBE.json`}>/compare/ADBE.json</a>, truncated:
+      </p>
+      <pre><code>{shown(cardExample)}</code></pre>
+    </article>
+
+    <article class="ep">
+      <h3><code>/company-index.json</code> — every covered company</h3>
+      <p>
+        One row per company across all three pools:
+        <code>[ticker, name, poolCode, prominence, place]</code>. <code>poolCode</code> 0 is the
+        United States, 1 is ADR, 2 is Japan; the page URL follows from it
+        (<code>/jp/&lt;ticker&gt;</code> for pool 2, <code>/c/&lt;ticker&gt;</code> otherwise).
+        <code>prominence</code> is a log-scaled revenue magnitude used only for ordering search
+        matches; <code>place</code> is the country (ADRs) or industry (Japan). Truncated:
+      </p>
+      <pre><code>{shown(idxExample)}</code></pre>
+    </article>
+
+    <article class="ep">
+      <h3><code>/wire-lite.json</code> — the day's filings</h3>
+      <p>
+        The <a href="/wire">Filing Wire</a> reduced to its public facts, one tuple per filing:
+        <code>[ticker, form, label, date, href, revYoyPct, oiYoyPct, quote]</code>.
+        <code>href</code> is null where the library has no page for the ticker. The last three
+        are null except on 10-K/10-Q items whose XBRL carried the comparison: year-over-year
+        revenue and operating-income change in percent, computed from the filing's own
+        prior-year figures, and the company's verbatim MD&amp;A sentence where one passed the
+        verification gates. Refreshes daily. Truncated:
+      </p>
+      <pre><code>{shown(wireExample)}</code></pre>
+    </article>
+
+    <article class="ep">
+      <h3><code>/follow-context.json</code> — names, chapters, latest filings</h3>
+      <p>
+        One compact row per company for putting a name, an industry chapter, and the latest
+        annual filing beside a bare ticker. <code>industries</code> is
+        <code>[label, slug]</code> per chapter (the slug routes to
+        <code>/industries/&lt;slug&gt;</code>); <code>rows</code> is
+        <code>[ticker, name, pool, industryIdx, fy, form, periodEnd]</code>, where
+        <code>industryIdx</code> points into <code>industries</code> and is −1 where no chapter
+        exists. Truncated:
+      </p>
+      <pre><code>{shown(followExample)}</code></pre>
+    </article>
+
+    <article class="ep">
+      <h3><code>/llms.txt</code> and <code>/llms-full.txt</code> — the site, for machines</h3>
+      <p>
+        Plain-text guides in the llms.txt convention: what the site is, where the surfaces live,
+        the URL patterns, the citation format, and the data vintage.
+        <a href="/llms-full.txt">/llms-full.txt</a> adds the full index of grouping tables and
+        industry chapters, one line each. Both are static text; neither inlines company data.
+      </p>
+    </article>
+  </section>
+
+  <section class="band">
+    <h2>A worked example</h2>
+    <p>From a shell:</p>
+    <pre><code>curl -s {SITE_URL}/c/ADBE.json</code></pre>
+    <p>Reading a record in Node (18 or later, no dependencies):</p>
+    <pre><code>{nodeSnippet}</code></pre>
+  </section>
+
+  <style>
+    .hero { max-width: 720px; }
+    .hero h1 { margin: 0 0 12px; }
+    .lede { font-size: 18.5px; color: var(--ink-soft); margin: 0 0 10px; }
+    .sub { color: var(--ink-dim); font-size: 15px; margin: 0; }
+    .band { margin-top: 34px; max-width: 720px; }
+    .band h2 { margin: 0 0 12px; }
+    .band p { color: var(--ink-soft); }
+    .ep { margin-top: 26px; }
+    .ep h3 { margin: 0 0 8px; font-size: 18px; }
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.92em; background: var(--surface-2); border-radius: 4px; padding: 1px 5px;
+    }
+    pre {
+      background: var(--surface); border: 1px solid var(--rule); border-radius: 6px;
+      padding: 14px 16px; overflow-x: auto; font-size: 13px; line-height: 1.5;
+      margin: 12px 0 0;
+    }
+    pre code { background: none; padding: 0; font-size: inherit; }
+  </style>
+</BaseLayout>
