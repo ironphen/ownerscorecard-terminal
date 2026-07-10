@@ -2,6 +2,14 @@
 // The account page — a ledger, not a profile. Three facts: who you are, the companies you
 // watch, and the wire arrangement. Server-rendered per user (the one personal page on the
 // site), never cached, and it gates nothing — every scorecard stays free with or without it.
+//
+// The follows section is a dashboard, not a list of bare tickers: each followed company carries
+// its name, its industry chapter, its latest annual filing, and its archetype memberships, with
+// a band above showing which of the reader's companies filed this week. All of that context is
+// joined ON THE CLIENT from two small static files (/follow-context.json and /wire-lite.json,
+// cached like company-index.json) — this route's worker bundle must never import the big data
+// JSONs (scripts/verifyStatic.mjs). Facts with dates, alphabetical by ticker, no sort controls:
+// a reading surface, never an alert feed.
 export const prerender = false;
 
 import BaseLayout from "../layouts/BaseLayout.astro";
@@ -40,16 +48,26 @@ const wireFreq = wirePref?.frequency === "daily" ? "daily" : "weekly";
 
     <h2 class="secTitle">Companies you follow</h2>
     {list.length ? (
-      <ul class="follows">
-        {list.map((f) => (
-          <li>
-            <a class="tkr" href={`/c/${f.ticker}`}>{f.ticker}</a>
-            <button class="unfollow" data-ticker={f.ticker} type="button" title="Stop following">remove</button>
-          </li>
-        ))}
-      </ul>
+      <>
+        <section class="band" id="band" hidden>
+          <h3 class="bandTitle">Filings this week, your companies</h3>
+          <ul class="bandList" id="bandList"></ul>
+          <p class="bandNone" id="bandNone" hidden>None of the companies you follow filed in the wire's window.</p>
+        </section>
+        <ul class="follows" id="follows">
+          {list.map((f) => (
+            <li data-ticker={f.ticker}>
+              <div class="fRow">
+                <a class="tkr" href={`/c/${f.ticker}`}>{f.ticker}</a>
+                <a class="fName" href={`/c/${f.ticker}`} hidden></a>
+                <button class="unfollow" data-ticker={f.ticker} type="button" title="Stop following">remove</button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </>
     ) : (
-      <p class="empty">None yet. Open any company and press <em>Follow</em>; its filings then reach you on the wire below.</p>
+      <p class="empty" id="noFollows">None yet. Open any company and press <em>Follow</em>; its filings then reach you on the wire below.</p>
     )}
 
     <h2 class="secTitle">The wire, by email</h2>
@@ -70,7 +88,7 @@ const wireFreq = wirePref?.frequency === "daily" ? "daily" : "weekly";
   </section>
 
   <style>
-    .acct { max-width: 560px; margin: 32px auto 0; }
+    .acct { max-width: 640px; margin: 32px auto 0; }
     .head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
     h1 { margin: 0; }
     .signout { font-family: var(--sans); font-size: 12.5px; letter-spacing: 0.04em; color: var(--muted); background: none; border: 1px solid var(--rule-strong); border-radius: 6px; padding: 5px 12px; cursor: pointer; }
@@ -78,11 +96,32 @@ const wireFreq = wirePref?.frequency === "daily" ? "daily" : "weekly";
     .who { color: var(--ink-dim); font-size: 14.5px; margin: 8px 0 28px; }
 
     .secTitle { border-bottom: 1px solid var(--rule-strong); padding-bottom: 6px; margin: 26px 0 10px; }
+
+    .band { margin: 0 0 18px; padding: 10px 12px 8px; border: 1px solid var(--rule-strong); }
+    .bandTitle { font-family: var(--sans); font-size: 11px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); margin: 0 0 4px; }
+    .bandList { list-style: none; padding: 0; margin: 0; }
+    .bandList li { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; padding: 6px 0; border-bottom: 1px solid var(--rule); font-size: 13px; }
+    .bandList li:last-child { border-bottom: 0; }
+    .bDate { font-family: var(--sans); font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; flex: 0 0 76px; }
+    .bTkr { font-family: var(--sans); font-weight: 700; font-variant-numeric: tabular-nums; flex: 0 0 auto; }
+    .bWhat { flex: 1 1 auto; min-width: 140px; color: var(--ink); }
+    .bForm { font-family: var(--sans); font-size: 10.5px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); border: 1px solid var(--rule); padding: 1px 6px; flex: 0 0 auto; }
+    .bWire { font-family: var(--sans); font-size: 12px; color: var(--accent); flex: 0 0 auto; }
+    .bandNone { font-family: var(--serif); font-style: italic; font-size: 13.5px; color: var(--muted); margin: 2px 0 4px; }
+
     .follows { list-style: none; padding: 0; margin: 0; }
-    .follows li { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--rule); }
-    .tkr { font-family: var(--sans); font-weight: 700; font-variant-numeric: tabular-nums; }
-    .unfollow { font-family: var(--sans); font-size: 11.5px; letter-spacing: 0.03em; color: var(--muted); background: none; border: 0; cursor: pointer; }
+    .follows li { padding: 10px 0; border-bottom: 1px solid var(--rule); }
+    .fRow { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+    .tkr { font-family: var(--sans); font-weight: 700; font-variant-numeric: tabular-nums; flex: 0 0 auto; }
+    .fName { font-family: var(--serif); font-size: 14px; color: var(--ink-soft); text-decoration: none; flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .fName:hover { color: var(--accent); }
+    .unfollow { font-family: var(--sans); font-size: 11.5px; letter-spacing: 0.03em; color: var(--muted); background: none; border: 0; cursor: pointer; margin-left: auto; flex: 0 0 auto; }
     .unfollow:hover { color: var(--bad); }
+    .fMeta { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin: 6px 0 0; font-family: var(--sans); font-size: 12.5px; line-height: 1.6; color: var(--ink-dim); font-variant-numeric: tabular-nums; }
+    .fChips { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin: 7px 0 0; }
+    .chip { font-family: var(--sans); font-size: 11px; color: var(--ink-soft); border: 1px solid var(--rule-strong); padding: 1px 7px; text-decoration: none; }
+    .chip:hover { border-color: var(--accent); color: var(--accent); }
+    .chipCaution { color: var(--warn, #b4690e); border-color: var(--warn, #b4690e); }
     .empty { color: var(--ink-dim); font-size: 14.5px; }
 
     .wireNote { color: var(--ink-dim); font-size: 14px; line-height: 1.5; margin: 0 0 12px; max-width: 60ch; }
@@ -107,15 +146,6 @@ const wireFreq = wirePref?.frequency === "daily" ? "daily" : "weekly";
         post("/api/auth/logout", {}).then(function () { location.href = "/"; }).catch(fail);
       });
 
-      document.querySelectorAll(".unfollow").forEach(function (b) {
-        b.addEventListener("click", function () {
-          post("/api/follow", { ticker: b.dataset.ticker }).then(function () {
-            try { localStorage.removeItem("osc-follow-" + b.dataset.ticker); } catch (e) {}
-            b.closest("li").remove();
-          }).catch(fail);
-        });
-      });
-
       var on = document.getElementById("wireOn");
       var freq = document.getElementById("wireFreq");
       function save() {
@@ -126,5 +156,125 @@ const wireFreq = wirePref?.frequency === "daily" ? "daily" : "weekly";
       on.addEventListener("change", save);
       freq.addEventListener("change", save);
     })();
+  </script>
+
+  <script>
+    // The dashboard join. Server HTML above already carries the bare tickers and remove buttons,
+    // so the page is whole without this script; everything here only adds context beside what the
+    // reader already sees, from the two cached static files. A fetch failure leaves the plain
+    // list standing — never a broken band.
+    import { decodeContext, filingLine, bandItems, fmtFilingDate } from "../lib/followDashboard.mjs";
+
+    const followsEl = document.getElementById("follows");
+    const err = document.getElementById("err");
+
+    const el = (tag, cls, text) => {
+      const n = document.createElement(tag);
+      if (cls) n.className = cls;
+      if (text != null) n.textContent = text;
+      return n;
+    };
+    const a = (cls, href, text) => {
+      const n = el("a", cls, text);
+      n.href = href;
+      return n;
+    };
+
+    function followedTickers() {
+      return followsEl
+        ? [...followsEl.querySelectorAll("li[data-ticker]")].map((li) => li.dataset.ticker)
+        : [];
+    }
+
+    // Each followed company's context: name, industry chapter, the latest annual filing on
+    // record, archetype chips. A ticker with no row (a follow on a company the library doesn't
+    // cover) keeps its bare line — absence stays absence.
+    function enrich(byTicker) {
+      if (!followsEl) return;
+      for (const li of followsEl.querySelectorAll("li[data-ticker]")) {
+        const entry = byTicker.get(li.dataset.ticker);
+        if (!entry) continue;
+        const row = li.querySelector(".fRow");
+        li.querySelector(".tkr").href = entry.href;
+        const name = li.querySelector(".fName");
+        name.textContent = entry.name;
+        name.href = entry.href;
+        name.hidden = false;
+
+        const meta = el("p", "fMeta");
+        if (entry.industry) meta.append(a("chip", "/industries/" + entry.industry.slug, entry.industry.label));
+        const line = filingLine(entry);
+        if (line) meta.append(el("span", "fFiling", line));
+        if (meta.childNodes.length) li.insertBefore(meta, row.nextSibling);
+
+        const chips = el("p", "fChips");
+        for (const lens of entry.lenses)
+          chips.append(a(lens.positive ? "chip" : "chip chipCaution", "/archetypes/" + lens.key, lens.title));
+        if (chips.childNodes.length) li.append(chips);
+      }
+    }
+
+    // The band, recomputed from whatever is still followed (an unfollow below re-renders it in
+    // place). Each item links to the company page and to /wire.
+    function renderBand(wireLite, byTicker) {
+      const band = document.getElementById("band");
+      if (!band) return;
+      const listEl = document.getElementById("bandList");
+      const none = document.getElementById("bandNone");
+      const items = bandItems(wireLite, followedTickers());
+      listEl.textContent = "";
+      for (const it of items) {
+        const li = el("li");
+        li.append(el("span", "bDate", fmtFilingDate(it.date)));
+        const href = (byTicker.get(it.ticker) || {}).href || it.href;
+        li.append(href ? a("bTkr", href, it.ticker) : el("span", "bTkr", it.ticker));
+        li.append(el("span", "bWhat", it.label));
+        li.append(el("span", "bForm", it.form));
+        li.append(a("bWire", "/wire", "on the wire →"));
+        listEl.append(li);
+      }
+      none.hidden = items.length > 0;
+      band.hidden = followedTickers().length === 0;
+    }
+
+    function wireUnfollows(rerender) {
+      for (const b of document.querySelectorAll(".unfollow")) {
+        b.addEventListener("click", () => {
+          fetch("/api/follow", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ticker: b.dataset.ticker }),
+          })
+            .then((r) => r.json().then((j) => ({ ok: r.ok, j })))
+            .then(({ ok, j }) => {
+              if (!ok) throw new Error((j && j.error) || "try again");
+              try { localStorage.removeItem("osc-follow-" + b.dataset.ticker); } catch (e) {}
+              b.closest("li").remove();
+              if (followsEl && !followsEl.querySelector("li")) {
+                const p = el("p", "empty");
+                p.innerHTML = "None yet. Open any company and press <em>Follow</em>; its filings then reach you on the wire below.";
+                followsEl.replaceWith(p);
+              }
+              rerender();
+            })
+            .catch((ex) => { err.textContent = ex.message; err.hidden = false; });
+        });
+      }
+    }
+
+    let rerenderBand = () => {};
+    wireUnfollows(() => rerenderBand());
+
+    if (followsEl) {
+      const j = (url) => fetch(url).then((r) => { if (!r.ok) throw new Error(url); return r.json(); });
+      Promise.all([j("/follow-context.json"), j("/wire-lite.json")])
+        .then(([ctx, wireLite]) => {
+          const byTicker = decodeContext(ctx);
+          enrich(byTicker);
+          rerenderBand = () => renderBand(wireLite, byTicker);
+          rerenderBand();
+        })
+        .catch(() => {}); // the plain list stands
+    }
   </script>
 </BaseLayout>
