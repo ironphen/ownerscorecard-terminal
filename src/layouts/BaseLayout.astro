@@ -2,6 +2,9 @@
 import SiteSearch from "../components/SiteSearch.astro";
 import { dataAsOf, fmtAsOf } from "../lib/freshness.mjs";
 import { SITE_NAME, DEFAULT_DESCRIPTION } from "../lib/seo.mjs";
+import { GROUPINGS } from "../lib/groupingColumns.mjs";
+// The random door's targets: the 28 grouping slugs, serialized into the inline script below.
+const groupingSlugs = GROUPINGS.map((g) => g.slug);
 const {
   title = "Owner Scorecard",
   description = DEFAULT_DESCRIPTION,
@@ -353,7 +356,7 @@ const jsonLdBlocks = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
         <a href="/concepts">Principles</a>
         <a href="/wire">Wire</a>
         <a href="/notes">Notes</a>
-        <a href="/groupings" id="openAnywhere" title="A uniformly random company page">Open anywhere</a>
+        <a href="/groupings" id="openAnywhere" title="A uniformly random grouping — one shelf's comparative table">Open anywhere</a>
         <a href="/account">Account</a>
         <button id="themeToggle" class="themeToggle" type="button" aria-label="Switch between light and dark theme" title="Switch theme">
           <span class="ttSun" aria-hidden="true">☀</span><span class="ttMoon" aria-hidden="true">☾</span>
@@ -400,31 +403,19 @@ const jsonLdBlocks = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
       })();
     </script>
 
-    <script is:inline>
-      /* "Open anywhere" (discovery design, feature 5): the uniform random door. One fetch of the
-         same compact index the search overlay uses (the browser caches it), one uniform draw across
-         every company in every pool — US, ADR, Japan, flagged and unreadable-record names included,
-         because any weighting toward test-passers would be an implicit ranking. The href derives
-         from the row's pool code exactly as search does. Without JS, or on a failed fetch, the
-         anchor's own href (/groupings) is the door. */
+    <script is:inline define:vars={{ groupingSlugs }}>
+      /* "Open anywhere": the uniform random door, opening a GROUPING — a shelf of comparables,
+         not a lone security (the owner's call: the browse surface is the comparative table).
+         The 28 slugs are serialized at build from the same stored list the /groupings pages are
+         built from, so the door can never point at a route that doesn't exist. Uniform draw —
+         weighting by size would be an implicit ranking. Without JS, the anchor's own href
+         (/groupings) is the door. */
       (function () {
         var door = document.getElementById("openAnywhere");
-        if (!door) return;
-        var busy = false;
+        if (!door || !groupingSlugs || !groupingSlugs.length) return;
         door.addEventListener("click", function (e) {
           e.preventDefault();
-          if (busy) return;
-          busy = true;
-          fetch("/company-index.json", { cache: "force-cache" })
-            .then(function (res) { return res.json(); })
-            .then(function (data) {
-              var rows = (data && data.rows) || [];
-              if (!rows.length) { window.location.href = door.getAttribute("href"); return; }
-              var r = rows[Math.floor(Math.random() * rows.length)];
-              window.location.href = (r[2] === 2 ? "/jp/" : "/c/") + r[0];
-            })
-            .catch(function () { window.location.href = door.getAttribute("href"); })
-            .finally(function () { busy = false; });
+          window.location.href = "/groupings/" + groupingSlugs[Math.floor(Math.random() * groupingSlugs.length)];
         });
       })();
     </script>
