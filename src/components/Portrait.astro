@@ -27,11 +27,17 @@ const hist = company.history || [];
 const revSeries = hist.map((h) => topLineRevenue(h.lines, company)).filter((v) => v != null);
 const prevRev = revSeries.length >= 2 ? revSeries[revSeries.length - 2] : null;
 const revGrowth = prevRev ? (rev - prevRev) / prevRev : null;
-let cagr = null;
+// The CAGR adapts its span down to the record (a 4-year history yields a 3-year CAGR), so the
+// label must carry the computed span — a hardcoded "5-yr" would mislabel every shorter record,
+// contradicted by the "4-yr average" beside it. Same interpolation avgLabel does below.
+let cagr = null, cagrSpan = null;
 if (revSeries.length >= 4) {
   const span = Math.min(5, revSeries.length - 1);
   const first = revSeries[revSeries.length - 1 - span];
-  if (first > 0) cagr = Math.pow(rev / first, 1 / span) - 1;
+  if (first > 0) {
+    cagr = Math.pow(rev / first, 1 / span) - 1;
+    cagrSpan = span;
+  }
 }
 
 // One vital-signs strip, the universal "is it a good business?" numbers, latest
@@ -205,7 +211,7 @@ const sp = spark(revSeries);
         {revGrowth != null ? (
           <span class={revGrowth < 0 ? "neg" : "pos"}>{revGrowth >= 0 ? "+" : ""}{pct(revGrowth, 1)} YoY</span>
         ) : null}
-        {cagr != null ? <span class="muted"> · {pct(cagr, 0)} 5-yr CAGR</span> : null}
+        {cagr != null ? <span class="muted"> · {pct(cagr, 0)} {cagrSpan}-yr CAGR</span> : null}
       </div>
     </div>
     {sp ? (

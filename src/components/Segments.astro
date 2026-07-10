@@ -52,9 +52,18 @@ const geo = showGeo ? prep(S.byGeography.items, 6) : null;
 const kindNoun = { segment: "segment", product: "line", geography: "region" };
 const kindPlural = { segment: "segments", product: "lines", geography: "regions" };
 
-// The operating-profit pool (positive segments only) for the profit bar's shares.
+// The operating-profit pool (positive segments only) for the profit bar's shares. A bar cannot
+// draw a negative width, so the shares are computed on the PROFITABLE segments' pool — and are
+// labeled as exactly that wherever a loss-maker exists, with the loss itself printed in dollars
+// in the legend and welded into the takeaway. Otherwise Meta reads "100% of segment operating
+// profit" with Reality Labs' $19B loss invisible — the one number this section exists to show.
 const oiPool = primary && primary.hasOI ? primary.items.filter((i) => (i.operatingIncome ?? 0) > 0).reduce((a, b) => a + b.operatingIncome, 0) : 0;
 const hasProfitBar = primary && primary.hasOI && oiPool > 0;
+const lossItems = hasProfitBar ? primary.items.filter((i) => (i.operatingIncome ?? 0) < 0) : [];
+const profitPoolNoun = lossItems.length ? "of the profitable segments' operating profit" : "of segment operating profit";
+const lossClause = lossItems.length
+  ? " " + lossItems.map((i) => `${i.label} ran a ${$(Math.abs(i.operatingIncome))} operating loss`).join("; ") + "."
+  : "";
 
 // One computed sentence: the single most useful thing the split says.
 let takeaway = null;
@@ -67,9 +76,9 @@ if (primary && total) {
     const topOI = [...withOI].sort((a, b) => (b.operatingIncome || 0) - (a.operatingIncome || 0))[0];
     const topOIpct = pct((topOI.operatingIncome || 0) / oiPool);
     if (topOI && topOI.label !== topRev.label) {
-      takeaway = `The largest slice of sales is ${topRev.label} at ${topRevPct}%, but the profit engine is ${topOI.label}: ${pct(topOI.revenue / total)}% of revenue and ${topOIpct}% of segment operating profit.`;
+      takeaway = `The largest slice of sales is ${topRev.label} at ${topRevPct}%, but the profit engine is ${topOI.label}: ${pct(topOI.revenue / total)}% of revenue and ${topOIpct}% ${profitPoolNoun}.${lossClause}`;
     } else if (topOI) {
-      takeaway = `The biggest segment, ${topRev.label}, is also where the profit is made: ${topRevPct}% of revenue and ${topOIpct}% of segment operating profit.`;
+      takeaway = `The biggest segment, ${topRev.label}, is also where the profit is made: ${topRevPct}% of revenue and ${topOIpct}% ${profitPoolNoun}.${lossClause}`;
     }
   }
   if (!takeaway) {
@@ -113,7 +122,7 @@ const sectionTitle = { segment: "by reportable segment", product: "by product li
 
     {hasProfitBar ? (
       <div class="block">
-        <div class="blabel">Operating profit <span class="dim">same segments</span></div>
+        <div class="blabel">Operating profit <span class="dim">{lossItems.length ? "profitable segments only" : "same segments"}</span></div>
         <div class="bar" role="img" aria-label="Operating profit by segment">
           {primary.items.map((it) => (
             <span class="seg" style={`width:${Math.max(0, it.operatingIncome || 0) / oiPool * 100}%;background:${it.color}`} title={`${it.label} ${pct(Math.max(0, it.operatingIncome || 0) / oiPool)}%`}></span>
@@ -130,7 +139,7 @@ const sectionTitle = { segment: "by reportable segment", product: "by product li
           <span class="vals">
             <b>{pct(it.revenue / total)}%</b> <span class="amt">{$(it.revenue)}</span>
             {hasProfitBar && it.operatingIncome != null ? (
-              <span class="oi">{it.operatingIncome < 0 ? "loss" : `${pct(Math.max(0, it.operatingIncome) / oiPool)}% of profit`}</span>
+              <span class="oi">{it.operatingIncome < 0 ? `loss of ${$(Math.abs(it.operatingIncome))}` : `${pct(Math.max(0, it.operatingIncome) / oiPool)}% of profit`}</span>
             ) : null}
           </span>
         </li>
@@ -146,7 +155,7 @@ const sectionTitle = { segment: "by reportable segment", product: "by product li
       </div>
     ) : null}
 
-    <p class="foot">From the segment footnote of the company's own {company?.market === "ADR" ? "20-F" : company?.market === "JP" ? "annual securities report" : "10-K"}. Shares are of total revenue; the profit bar shows each segment's share of segment operating profit, before unallocated corporate costs.</p>
+    <p class="foot">From the segment footnote of the company's own {company?.market === "ADR" ? "20-F" : company?.market === "JP" ? "annual securities report" : "10-K"}. Shares are of total revenue; the profit bar shows each segment's share {lossItems.length ? "of the profitable segments' operating profit (a loss-making segment carries its loss in dollars in the legend, not a share of the bar)," : "of segment operating profit,"} before unallocated corporate costs.</p>
   </section>
 ) : null}
 

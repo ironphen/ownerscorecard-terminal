@@ -11,6 +11,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 import fundamentals from "../../data/fundamentals.json";
 import adr from "../../data/fundamentals.adr.json";
 import { grahamTests } from "../../lib/graham.mjs";
+import { financialKind } from "../../lib/archetype.mjs";
 import { fmtMoney } from "../../lib/fundamentals.mjs";
 import { LENS_BY_KEY, GROUP_LABEL } from "../../lib/lenses.mjs";
 import { dataAsOf, fmtAsOf } from "../../lib/freshness.mjs";
@@ -26,6 +27,10 @@ for (const company of companies) {
   const ticker = String(company.ticker || "").toUpperCase();
   if (!ticker || seen.has(ticker)) continue;
   seen.add(ticker);
+  // The same gate the company page applies (Scorecard.astro): a bank, insurer or REIT never runs
+  // Graham's operating tests there — a category error — so it cannot sit in this workbook or wear
+  // the defensive chip either. Workbook, chip and company page agree.
+  try { if (financialKind(company)) continue; } catch {}
   let g = null;
   try {
     g = grahamTests(company);
@@ -72,8 +77,10 @@ function cell(r, name) {
     return { status: s, text: s === "pass" ? `no losses in ${t.years} yrs` : `${t.losses} loss year${t.losses > 1 ? "s" : ""} in ${t.years}` };
   }
   if (name === "Dividend record") {
-    if (s === "pass") return { status: s, text: `paid every year (${t.years})` };
-    return { status: s, text: t.paid === 0 ? `none paid in ${t.years} yrs` : `paid ${t.paid} of ${t.years} yrs` };
+    // An interior untagged year is unknown, not a break (graham.mjs): the cell names it.
+    const gap = t.untagged > 0 ? `, ${t.untagged} yr${t.untagged > 1 ? "s" : ""} untagged in the data` : "";
+    if (s === "pass") return { status: s, text: t.untagged > 0 ? `paid every tagged year (${t.paid} of ${t.years}${gap})` : `paid every year (${t.years})` };
+    return { status: s, text: t.paid === 0 ? `none paid in ${t.years} yrs` : `paid ${t.paid} of ${t.years} yrs${gap}` };
   }
   if (name === "Earnings growth") {
     if (s === "na") return { status: s, text: "negative early earnings" };
@@ -232,7 +239,9 @@ const colCount = CRITERIA.length + 2; // company + six criteria + moderate price
   <p class="foot">
     From the company's SEC filings, computed the same way as on its page. The defensive chip that
     appears on company pages marks a company clearing at least five of the testable criteria; the
-    price test is left to the company page, where you bring the price.
+    price test is left to the company page, where you bring the price. Banks, insurers and REITs
+    are absent by design: their pages read them on their own statements (return on equity, the
+    combined ratio, funds from operations), and Graham's operating tests are a category error there.
   </p>
 
   <style>

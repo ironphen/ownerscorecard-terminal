@@ -74,13 +74,29 @@ export function grahamTests(company) {
 
   // 5, Dividend record. Count over the FULL window: a year with no dividend is a
   // break in the record, not a row to drop (or a COVID suspension reads as "paid every year").
+  // A SINGLE year with no dividendsPaid tag, sandwiched between two paid years, is different:
+  // the filing simply didn't tag it (LHX's FY2020, paid in fact) — a real suspension shows as a
+  // RUN of empty years (Boeing's 2021–24), not one missing year inside a steady record. So an
+  // isolated null with a paid year on each side is named as untagged, not counted as a break;
+  // a null run, a leading gap (before a company began paying) and a trailing gap (after it
+  // stopped) all still count as unpaid, so a non-payer keeps failing and a suspender never
+  // reads as unbroken. A missing read is unknown; the streak is judged on the tagged years.
   const total = H.length;
   if (total >= 5) {
-    const paid = H.filter((h) => h.lines.dividendsPaid != null && Math.abs(h.lines.dividendsPaid) > 0).length;
-    add("Dividend record", "Uninterrupted dividends", paid === total ? `paid every year (${total})` : paid === 0 ? "none paid" : `${paid} of ${total} yrs`,
-      paid === total ? "pass" : paid === 0 ? "fail" : paid >= total * 0.9 ? "near" : "fail",
-      "An unbroken dividend was Graham's mark of durability. He wanted twenty years; the filings show about ten, and a single suspension breaks the streak. Non-payers, many fine modern compounders, fall outside his defensive net by design.",
-      { paid, years: total, delta: paid === total ? null : total - paid });
+    const dv = H.map((h) => h.lines.dividendsPaid);
+    const paidAt = (i) => i >= 0 && i < total && dv[i] != null && Math.abs(dv[i]) > 0;
+    const paid = dv.filter((v, i) => paidAt(i)).length;
+    const untagged = dv.filter((v, i) => v == null && paidAt(i - 1) && paidAt(i + 1)).length;
+    const unpaid = total - paid - untagged;
+    const known = total - untagged;
+    const value = unpaid === 0 && paid > 0
+      ? (untagged === 0 ? `paid every year (${total})` : `paid every tagged year (${paid} of ${total})`)
+      : paid === 0 ? "none paid" : untagged > 0 ? `${paid} of ${known} tagged yrs` : `${paid} of ${total} yrs`;
+    add("Dividend record", "Uninterrupted dividends", value,
+      unpaid === 0 && paid > 0 ? "pass" : paid === 0 ? "fail" : paid >= known * 0.9 ? "near" : "fail",
+      "An unbroken dividend was Graham's mark of durability. He wanted twenty years; the filings show about ten, and a single suspension breaks the streak. Non-payers, many fine modern compounders, fall outside his defensive net by design." +
+        (untagged > 0 ? ` ${untagged === 1 ? "One year" : `${untagged} years`} of this record ${untagged === 1 ? "is" : "are"} untagged in the data, with the dividend paid on both sides; a lone missing tag is treated as unknown, not a suspension, so the streak is judged on the tagged years.` : ""),
+      { paid, years: total, untagged, delta: unpaid === 0 && paid > 0 ? null : unpaid });
   }
 
   // 6, Earnings growth: net income up ≥ 33% over the record (3-yr averages, to smooth).
@@ -98,11 +114,23 @@ export function grahamTests(company) {
     }
   }
 
-  // 7, Moderate price (price-dependent → the reader-supplied calculator)
-  const eps = L.netIncome != null && L.sharesDiluted ? L.netIncome / L.sharesDiluted : null;
-  const bvps = L.stockholdersEquity != null && L.sharesDiluted ? L.stockholdersEquity / L.sharesDiluted : null;
+  // 7, Moderate price (price-dependent → the reader-supplied calculator). The calculator's Graham
+  // gate runs on THREE-YEAR-AVERAGE earnings (Valuation.astro's eps3 — Graham's own guard against
+  // paying for one peak year), so quote that same figure here, on the same share basis, with the
+  // latest year as the aside; otherwise the reader carries a peak-year EPS into a gate judged on
+  // the average.
+  const shV = company.sharesForValue?.val > 0
+    ? company.sharesForValue.val
+    : (company.ttm?.lines?.sharesDiluted ?? L.sharesDiluted); // Valuation.astro's exact share chain
+  const ni3 = H.filter((h) => h.lines.netIncome != null).slice(-3).map((h) => h.lines.netIncome);
+  const eps3 = ni3.length >= 2 && shV ? mean(ni3) / shV : null;
+  const eps = L.netIncome != null && shV ? L.netIncome / shV : null;
+  const bvps = L.stockholdersEquity != null && shV ? L.stockholdersEquity / shV : null;
+  const epsClause = eps3 != null
+    ? `Three-year average earnings are ${sym}${eps3.toFixed(2)}/share (latest year ${sym}${(eps ?? eps3).toFixed(2)}), the averaged base the calculator's gate runs on`
+    : eps ? `Earnings are ${sym}${eps.toFixed(2)}/share` : "";
   add("Moderate price", "P/E ≤ 15 and P/E × P/B ≤ 22.5", "decided by the price", "na",
-    `Graham's valuation gate, the wall he kept between a sound business and a sound investment. ${eps ? `Earnings are ${sym}${eps.toFixed(2)}/share` : ""}${eps && bvps ? " and " : ""}${bvps ? `book value ${sym}${bvps.toFixed(2)}/share` : ""}. Enter a price in “What the price implies” just below for the P/E, P/B, and whether it clears. But this is the rule Buffett outgrew: there's no hard P/E law, and a wonderful business can deserve a far richer multiple if the thesis holds, treat it as the bargain-hunter's floor, not a verdict on the price.`);
+    `Graham's valuation gate, the wall he kept between a sound business and a sound investment. ${epsClause}${epsClause && bvps ? ", and " : ""}${bvps ? `book value is ${sym}${bvps.toFixed(2)}/share` : ""}. Enter a price in “What the price implies” just below for the P/E, P/B, and whether it clears. But this is the rule Buffett outgrew: there's no hard P/E law, and a wonderful business can deserve a far richer multiple if the thesis holds, treat it as the bargain-hunter's floor, not a verdict on the price.`);
 
   const runnable = t.filter((x) => x.status !== "na");
   const passes = t.filter((x) => x.status === "pass").length;

@@ -95,7 +95,11 @@ const bizLine = fund
 // The company's own "in brief": up to two more verbatim sentences naming what it sells, kept
 // distinct from the lede by the detector (businessBrief). Sits under the lede so the whole opening
 // reads in the company's own voice. Empty, and so absent, until the filings re-fetch populates it.
-const brief = fund ? (language?.companies?.[ticker]?.brief || []).filter((s) => s && s !== bizLine) : [];
+// Each sentence runs the same guards the lede does (weakLede folds in the truncation-artifact
+// guard), so a splitter fragment ("Morgan and Chase brands, the Firm serves..."), a regulatory
+// boilerplate line or a product spec list is dropped rather than rendered broken; the stored data
+// itself is repaired at the next filings re-fetch.
+const brief = fund ? (language?.companies?.[ticker]?.brief || []).filter((s) => s && s !== bizLine && !weakLede(s)) : [];
 
 const fmtDate = (d) =>
   d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric", timeZone: "UTC" });

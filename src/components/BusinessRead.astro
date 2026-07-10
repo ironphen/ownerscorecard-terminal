@@ -116,12 +116,18 @@ const cyclical = (cls.overlays || []).some((o) => o.key === "cyclical");
 // Banks read on ROE, insurers on the combined ratio and float, REITs on FFO, asset
 // managers and exchanges on fee margins, health plans on the medical loss ratio, none
 // on ROIC; route each financial kind to its own lens (fk resolved above).
+// The quality read restates single-period ratios (a bank's efficiency ratio, a REIT's payout)
+// beside the vital-signs strip, and the strip reads the freshest twelve months (TTM). Feed the
+// quality functions the same TTM-first lines, or the brief says "52% efficiency ratio" while the
+// strip above it says 53% — two figures, no basis named (JPM). The through-the-record medians
+// those functions compute read `history` and are untouched.
 const isFin = !!fk;
-let moat = fk === "reit" ? reitQuality(company)
-  : fk === "insurer" ? insurerQuality(company, financialSubtype(company))
-  : fk === "managedCare" ? managedCareQuality(company)
-  : fk === "fee" ? feeQuality(company, financialSubtype(company))
-  : fk === "bank" ? financialQuality(company, financialSubtype(company))
+const coCurrent = company.ttm?.lines ? { ...company, lines: company.ttm.lines } : company;
+let moat = fk === "reit" ? reitQuality(coCurrent)
+  : fk === "insurer" ? insurerQuality(coCurrent, financialSubtype(company))
+  : fk === "managedCare" ? managedCareQuality(coCurrent)
+  : fk === "fee" ? feeQuality(coCurrent, financialSubtype(company))
+  : fk === "bank" ? financialQuality(coCurrent, financialSubtype(company))
   : null;
 const debtOk = debtReliable(company.lines || {}) && debtReliable(company.ttm?.lines || {});
 if (!isFin && debtOk && roicSeries.length >= 3 && roicMed != null) {

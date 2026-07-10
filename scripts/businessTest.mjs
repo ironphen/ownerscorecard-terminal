@@ -4,7 +4,10 @@
 // (the number stands alone) on the things that wear concentration's clothes — a geographic split, a
 // customer-type breakdown, a denial, an accounts-receivable share, or an ambiguous compound sentence.
 // Every quote here is the shape of a real 10-K sentence. Run with `npm test`.
-import { customerConcentration } from "../src/lib/business.mjs";
+// Also guards weakLede's newest patterns (segment-subject, product-line catalog, aspiration with a
+// modal) and the truncation-artifact guard — every case below is a real stored lede/brief shape, and
+// every "must NOT flag" case is a real description that sat adjacent to a flagged one in the audit.
+import { customerConcentration, weakLede, truncationArtifact } from "../src/lib/business.mjs";
 
 let pass = 0, fail = 0;
 const check = (name, cond) => { console.log((cond ? "ok   " : "FAIL ") + name); cond ? pass++ : fail++; };
@@ -48,6 +51,51 @@ check("a stray small/large number that isn't a revenue share → null",
 check("a 'more than X%' floor still reads the figure",
   pctOf(customerConcentration("During 2025, one customer comprised greater than 10.0% of our revenue.")) === 10);
 check("empty / non-string input → null", customerConcentration("") === null && customerConcentration(null) === null);
+
+// ---- weakLede: one segment standing in for the whole (AZZ's hero) ----
+check("segment-subject lede is weak",
+  weakLede("AZZ Precoat Metals segment provides aesthetic and corrosion protective coatings and related value-added services for steel and aluminum coil."));
+check("segment-subject with alias is weak",
+  weakLede('The AZZ Infrastructure Solutions segment ("AIS") represents our 40% non-controlling interest in the AIS Investment Holdings LLC.'));
+check("'operates in one business segment, the manufacture of pumps' (whole company) is NOT weak",
+  !weakLede("Gorman-Rupp Company operates in one business segment, the manufacture and sale of pumps and pump systems."));
+check("'we operate in two segments' (company-subject structure line) is NOT newly flagged by the segment pattern",
+  !weakLede("We operate as a single segment designed to serve customers worldwide through stores and digital channels."));
+
+// ---- weakLede: the company's product catalog, not the company (Apple's watch list) ----
+check("product-line spec list is weak",
+  weakLede("The Company's line of smartwatches, based on its watchOS operating system, includes Apple Watch Series 11, Apple Watch SE 3 and Apple Watch Ultra 3."));
+check("'lines of business include' (the whole company) is NOT weak",
+  !weakLede("The Company's lines of business include retail and commercial banking, and wealth management services."));
+
+// ---- weakLede: aspiration with a modal (RF's 'We will continue to evaluate...') ----
+check("'We will continue to evaluate...' is weak",
+  weakLede("We will continue to evaluate the impact of any changes in laws and any new regulations promulgated."));
+
+// ---- truncation artifacts: broken text is dropped, not rendered ----
+check("orphaned intro from a 'J.P.' split is truncated",
+  truncationArtifact("Morgan and Chase brands, the Firm serves millions of customers, predominantly in the U.S., and many of the world's most prominent clients globally."));
+check("dangling 'by U.S.' is truncated",
+  truncationArtifact("Banking and other financial services statutes, regulations and policies are continually under review by U.S."));
+check("dangling 'provider of U.S.' is truncated",
+  truncationArtifact("Venture Global is a long-term, low-cost provider of U.S."));
+check("subject-severed parenthetical is truncated",
+  truncationArtifact('(the "Company") is a leading designer, marketer and licensor of a broad range of quality casual footwear.'));
+check("lowercase start is truncated", truncationArtifact("ing services to banks, merchants, and billers."));
+check("'in both the U.S. and U.K.' (whole) is NOT truncated",
+  !truncationArtifact("We provide waste management services in both the U.S. and U.K."));
+check("'Medtronic plc, headquartered in Galway, Ireland, is...' is NOT truncated",
+  !truncationArtifact("Medtronic plc, headquartered in Galway, Ireland, is the leading global healthcare technology company."));
+check("a serial-verb subject ('Hormel develops, processes, and distributes...') is NOT truncated",
+  !truncationArtifact("Hormel Foods Corporation develops, processes, and distributes a wide array of food products in a variety of markets."));
+check("a compound-list subject ('Sleek cans, standard cans and bottles are sold...') is NOT truncated",
+  !truncationArtifact("Sleek cans, standard cans and bottles are sold primarily for off-premise retailers, which include grocery stores."));
+check("a participial opener ('Underpinned by..., we have...') is NOT truncated",
+  !truncationArtifact("Underpinned by the brokerage services, we have successfully expanded our product offerings to wealth management."));
+check("a scene-setting opener ('Under the X brands, the company sells...') is NOT truncated",
+  !truncationArtifact("Under the Good Health brands, the company sells snacks across North America."));
+check("a stranded relative preposition ('...the world we live in.') is NOT truncated",
+  !truncationArtifact("MillerKnoll is a collective of dynamic brands that comes together to design the world we live in."));
 
 console.log(`\n${pass} passed, ${fail} failed`);
 if (fail) process.exit(1);

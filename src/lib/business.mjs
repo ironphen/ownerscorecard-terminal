@@ -156,6 +156,7 @@ const NOT_A_DESCRIPTION = new RegExp(
   "^(" +
     "we are (leveraging|committed to|pursuing|executing|positioned|transforming|dedicated to|focused on (being|delivering|creating))|" +
     "we (strive|seek|aim|intend|plan|continue to|are confident)|" +
+    "we (will|shall|must) (strive|seek|aim|intend|plan|continue|evaluate|remain)|" +
     "our (public benefit |corporate )?(purpose|mission|vision|strateg|goals?|values|history|story|charter|culture)|" +
     "we (centrally )?produce our|" +
     "we (currently )?(market|sell)\\b[^.]{0,70}\\b(directly through|in (more than|over|excess of)|across (the )?(globe|world|\\d))|" +
@@ -164,6 +165,15 @@ const NOT_A_DESCRIPTION = new RegExp(
   ")",
   "i"
 );
+// One segment's description standing in for the whole company: the sentence's SUBJECT is a named
+// segment ("AZZ Precoat Metals segment provides...", "The Electrical segment manufactures..."), so
+// it describes a part, never the business. The verb must sit right against the segment subject
+// (only a short alias or quote between: 'segment ("AIS") represents'), so a whole-company sentence
+// that merely mentions a segment ("...operates in one business segment, the manufacture and sale
+// of pumps") is untouched; a "we"-led sentence is the company speaking, so it is exempt too.
+// Measured against every stored lede and brief: 37 flagged, each one a single-segment or
+// segment-boilerplate sentence, no whole-company description among them.
+const SEGMENT_SUBJECT = /^(?!we\b|We\b)[^.]{0,60}[Ss]egment\b\s*(?:\([^)]{0,30}\))?\s*["'”’]?\s*(?:also\s+|primarily\s+|mainly\s+|currently\s+|generally\s+)?(?:[A-Z]{2,6}\s+)?(?:provides?|represents?|includes?|consists?|comprises?|offers?|is|are|produces?|manufactures?|sells?|serves?|delivers?|designs?|engages?|engaged)\b/;
 // Boilerplate or non-company sentences that occasionally lead the extraction: the
 // auditor's own statement (the PCAOB independence language from the audit report), a
 // named property standing in for the business, or a forward-looking / mission line. When
@@ -186,6 +196,65 @@ const NOT_DESC = /\bcompetitors?\s+(include|are|consist|compete|comprise)|^(we|o
 // itself — so fall back to the segment mix. (A real company description says "<Company> is a …",
 // never "is the Company's …".)
 const PRODUCT_REF = /\bis\s+the\s+(compan|registrant|firm|group|corporation|business|parent)\w*['’]s\b/i;
+// The company's product catalog, not the company: "The Company's line of smartwatches ... includes
+// Apple Watch Series 11, Apple Watch SE 3 and Apple Watch Ultra 3." A sentence whose subject is the
+// company's LINE of products and whose verb enumerates them is a spec list; the segment mix or the
+// computed phrase says what the business is. "Line(s) of business" is the whole company, so exempt.
+// Measured against every stored lede and brief: flags only Apple's two watch/headphone spec lines.
+const PRODUCT_LINE = /^the (?:compan|registrant|firm|group)\w*['’]s\s+(?:line|lineup)s?\s+of\s+(?!business)[^.]{0,60}?\bincludes?\b/i;
+
+// ---- truncation artifacts: broken text, dropped rather than rendered ----
+// The sentence splitter occasionally breaks on a dotted abbreviation ("J.P.", "U.S.", "W.R."),
+// leaving fragments in the stored data. Fixed at render time (the stored data refreshes later):
+// a sentence that starts mid-word or on stray junk (an orphaned "(the "Company") is..." whose
+// subject the splitter severed), ends dangling on a conjunction/article or on a preposition still
+// pointing at its abbreviation ("under review by U.S."), or opens on the orphaned tail of a split
+// name ("[Under the J.P.] Morgan and Chase brands, the Firm serves..."). Each pattern measured
+// against every stored lede and brief (2,896 + 5,442): ~82 flagged, all genuinely broken text.
+const TRUNC_START = /^[^A-Z0-9"“‘À-Þ]/;
+// a bare conjunction or article can never end a sentence (a stranded preposition can: "we live in.")
+const TRUNC_END = /\s(?:and|or|but|nor|the|an|a|of|versus|vs)$/i;
+// a preposition/conjunction left pointing at a dotted abbreviation that needed its noun:
+// "review by U.S. [Congress]", "provider of U.S. [LNG]" — but "in both the U.S. and U.K." is whole.
+const TRUNC_ABBR = /\s(?:and|or|but|of|by|for|with|to|in|on|at|as|from|into|under|through|between|per)\s+(?:[A-Z]\.)+$/;
+const WHOLE_ABBR = /\b(?:the|both)\s+(?:[A-Z]\.)+(?:,?\s+(?:and|or)\s+(?:[A-Z]\.)+)+$/;
+// The orphaned-intro signature: a short verbless noun-phrase intro no legitimate opener explains
+// (not a preposition, participle, determiner or pronoun), ending in a bare plural common noun,
+// followed by a complete determiner-led clause — "Morgan and Chase brands, the Firm serves..."
+// A real subject ("Chevron Corporation, together with..."), a possessive ("Kodak's products,"),
+// a scene-setter ("Under the...", "Driven by...", "To that end,") and a serial-verb list
+// ("Hormel develops, processes, and distributes...") all fall through one of the exemptions.
+const INTRO_VERB = /\b(?:is|are|was|were|has|have|had|will|would|can|could|may|might|must|shall|should|do|does|did|provides|offers|serves|operates|sells|makes|owns|develops|designs|manufactures|produces|delivers|includes|consists|comprises|focuses|specializes|markets|represents|maintains|employs|engages|generates|earns|holds|runs|leases|invests|acquires|builds|creates|supports|enables|helps|works|uses|derives|reports|expects|believes|intends|continues|remains|became|become|becomes|grew|sold|held|ran|combines|connects|drives|leads|brings|turns|gives|takes|keeps|means|shows|allows|delivered|launched|announced|introduced|completed|acquired|expanded)\b/i;
+const INTRO_OPENER = /^(?:In|On|At|As|By|For|To|From|With|Under|Over|Through|Throughout|Across|Beyond|Between|Alongside|Together|Since|During|After|Before|Following|Prior|Beginning|Headquartered|Based|Founded|Formed|Established|Incorporated|Organized|Originally|Today|Currently|Additionally|Historically|Collectively|Traditionally|Also|However|Moreover|Further|Now|Like|Unlike|Via|Per|Amid|Among|Within|Without|Once|While|Although|Though|Whether|Because|If|When|Where|Beside|Besides|Against|Around|Above|Below|Near|Outside|Inside|Despite|Notwithstanding|Thus|Therefore|Then|Here|There|Overall|Meanwhile|Upon|Put|Every|And|But|So|Yet|More|Most|Ancillary|Subsequent|Pursuant|Consistent|Similar)$/;
+const INTRO_SUBJECT = /^(?:The|A|An|Our|We|Its|It|This|These|Those|They|My|His|Her|Their|Your|Each|Some|Many|All|Both|No|One|Two|Three|Several)$/i;
+function orphanIntro(s) {
+  const m = String(s).match(/^([^,.;:]{2,60}),\s+([^,.]{2,90}?)(?:[,.]|$)/);
+  if (!m) return false;
+  const intro = m[1].trim(), next = m[2].trim();
+  const words = intro.split(/\s+/);
+  if (words.length < 2 || words.length > 6) return false;
+  const firstWord = words[0], lastWord = words[words.length - 1];
+  if (!/^[A-Z]/.test(firstWord) || INTRO_OPENER.test(firstWord)) return false;
+  if (INTRO_SUBJECT.test(firstWord)) return false;         // a real subject, not an orphaned tail
+  if (/(?:ing|ed)$/i.test(firstWord)) return false;        // participial opener ("Underpinned by...,")
+  if (/['’]/.test(intro)) return false;                    // a possessive names its owner: a real subject
+  if (INTRO_VERB.test(intro)) return false;                // the intro carries its own verb
+  if (!/^[a-z]+[^siu]s$/.test(lastWord)) return false;     // must end in a bare plural common noun
+  if (!/^(?:the|our|we|it|its|this|these|those|they|he|she|a|an)\b/i.test(next)) return false;
+  if (!INTRO_VERB.test(next)) return false;                // ...followed by a complete clause
+  return true;
+}
+// True when the sentence is a splitter artifact rather than prose. Exported so the brief's
+// follow-on sentences run the same guard the hero's lede does (via weakLede below).
+export function truncationArtifact(s) {
+  if (!s || typeof s !== "string") return true;
+  const t = s.trim();
+  if (!t) return true;
+  if (TRUNC_START.test(t)) return true;
+  if (TRUNC_END.test(t.replace(/[.…]+\s*$/, ""))) return true;
+  if (TRUNC_ABBR.test(t) && !WHOLE_ABBR.test(t)) return true;
+  return orphanIntro(t);
+}
 // Benefit-speak about a program or initiative, not a description of the business: "Our exclusive
 // brands/private label merchandise program provides benefits for Dillard's and our customers."
 // A sentence whose subject is a program/initiative/platform and whose verb hands out benefits,
@@ -195,7 +264,8 @@ const BENEFIT_SPEAK = /\b(programs?|initiatives?|approach|model|platform)\b[^.]{
 export function weakLede(s) {
   if (!s || typeof s !== "string") return true;
   return /^we have entered\b/i.test(s) || WEAK_LEDE.test(s) || ALLCAPS_HEADING.test(s) || NOT_DESC.test(s) || PRODUCT_REF.test(s) ||
-    /\bvarious (facilities|services|agreements|arrangements)\b/i.test(s) || NOT_A_DESCRIPTION.test(s) || LEAKED.test(s) || BENEFIT_SPEAK.test(s);
+    /\bvarious (facilities|services|agreements|arrangements)\b/i.test(s) || NOT_A_DESCRIPTION.test(s) || LEAKED.test(s) || BENEFIT_SPEAK.test(s) ||
+    SEGMENT_SUBJECT.test(s) || PRODUCT_LINE.test(s) || truncationArtifact(s);
 }
 
 // A reviewed, model-drafted note (src/data/notes.json, governed by

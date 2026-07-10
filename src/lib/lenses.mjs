@@ -8,7 +8,7 @@ import { currentPosition } from "./currentPosition.mjs";
 import { grahamTests } from "./graham.mjs";
 import { capitalHistory } from "./capital.mjs";
 import { forensicScreen, fmtMoney, roicValue, operatingMargin, cashPosition, grossMargin, ownerEarningsAbs } from "./fundamentals.mjs";
-import { classify } from "./archetype.mjs";
+import { classify, financialKind } from "./archetype.mjs";
 
 const safe = (fn, c) => {
   try {
@@ -39,7 +39,12 @@ function companyFacts(company, langMap) {
   const shares = cur.sharesDiluted ?? company.lines?.sharesDiluted ?? null;
   const ta = company.lines?.totalAssets ?? null;
   const cp = safe(currentPosition, company);
-  const g = safe(grahamTests, company);
+  // Graham's defensive checklist is an operating-company panel: the company page (Scorecard.astro)
+  // withholds the whole panel from banks, insurers, REITs and their kin (financialKind) as a
+  // category error — a bank's current ratio and "debt vs working capital" mean nothing — so the
+  // defensive lens applies the SAME gate, or a financial wears a defensive chip its own page
+  // refuses to compute. Workbook (defensive.astro), chip and company page agree by construction.
+  const g = safe(financialKind, company) ? null : safe(grahamTests, company);
   const cap = safe(capitalHistory, company);
   const f = safe(forensicScreen, company);
   const lang = langMap?.[company.ticker] || null;
@@ -188,7 +193,7 @@ export const LENSES = [
     tagline: "Size, liquidity, debt, an unbroken earnings and dividend record.",
     principle:
       "The price-independent defensive-investor tests: adequate size, a current ratio of two, debt within working capital, an unbroken earnings record, a paid dividend, and a decade of growth. ",
-    test: "Clears at least five of the testable criteria. The price test is left to the company page, where you bring the price.",
+    test: "Clears at least five of the testable criteria. The price test is left to the company page, where you bring the price. Banks, insurers and REITs are excluded: their pages read them on their own statements, and these operating tests are a category error there.",
     positive: true,
     pick(F) {
       const g = F.g;
