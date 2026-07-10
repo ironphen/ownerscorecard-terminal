@@ -365,15 +365,20 @@ export function cashPosition(c) {
   const formula =
     `Cash ${$(cash || 0)}` + (st ? ` + ST investments ${$(st)}` : "") + ` − debt ${$(gross)}`;
 
+  // The gross multiple is context, not the headline: it earns a mention only when it differs
+  // from the net multiple at display precision (a cash-light balance sheet makes them identical,
+  // and "versus the gross figure" beside an equal figure reads as a contradiction).
+  const grossYears = oi && oi > 0 && gross > 0 ? gross / oi : null;
+  const grossDiffers = years != null && grossYears != null && grossYears.toFixed(1) !== years.toFixed(1);
   let note = netCash
     ? `Cash and short-term investments exceed every dollar of debt by ${$(-net)}, on net the company owes nothing, and can act from strength when others can't.`
-    : `Netting ${$(liquid)} of cash and short-term investments against ${$(gross)} of debt leaves ${$(net)} owed${years != null ? `, about ${years.toFixed(1)}× a year's operating profit, versus the gross figure beside it` : ""}.`;
+    : `Netting ${$(liquid)} of cash and short-term investments against ${$(gross)} of debt leaves ${$(net)} owed${years != null ? `, about ${years.toFixed(1)}× a year's operating profit${grossDiffers ? ` (${grossYears.toFixed(1)}× on the gross debt, before the cash)` : ""}` : ""}.`;
   if (lt) {
     const full = net - lt;
     note += ` It also holds ${$(lt)} in longer-dated marketable securities; counting those, it sits at ${full < 0 ? `net cash of ${$(-full)}` : `${$(full)} of net debt`}.`;
   }
-  note += " Net debt is the leverage figure that matters; the gross ratio ignores the cash already set against it. Strategic or illiquid investments aren't counted here.";
-  return { value, formula, tone, label, note };
+  note += " Net debt is the leverage figure that matters: the cash is already set against the debt. Strategic or illiquid investments aren't counted here.";
+  return { value, formula, tone, label, note, years };
 }
 
 // Capex vs. depreciation: a lens, not a grade.
@@ -940,16 +945,17 @@ export function buildScorecard(company) {
     wrap("Investing or harvesting?", null, capexVsDepreciation(company)),
   ];
 
-  // One leverage read, not two adjacent checklist lines. Net debt is the figure that matters — the
-  // cash is already set against the debt — carried with the gross years-to-repay as a secondary
-  // number, so the survival section states the balance sheet once. (Was "How heavy is the debt?"
-  // (gross debt ÷ operating income) plus a separate "Debt, net of cash"; the gross-only ratio
-  // ignored the very cash beside it, which is exactly what the net figure corrects.)
+  // One leverage read, not two adjacent checklist lines, and ONE BASIS in the headline: the net
+  // dollar and the net multiple of operating profit, the pair the note narrates. (The old headline
+  // paired the net dollar with the GROSS multiple, labeled "gross" — and on a cash-light balance
+  // sheet the two multiples display identically, so the note's "versus the gross figure beside it"
+  // read as a self-contradiction. The gross multiple now appears in the note, and only when it
+  // differs at display precision.)
   const cp = cashPosition(company);
   const lev = leverage(company);
-  const grossYears = lev && typeof lev.value === "string" && /^\d[\d.]*×$/.test(lev.value) ? ` · ${lev.value} gross` : "";
+  const netYears = cp && cp.years != null ? ` · ${cp.years.toFixed(1)}× operating profit` : "";
   const debtCheck = cp
-    ? { title: "How heavy is the debt, net of cash?", concept: "net-debt", value: `${cp.value}${grossYears}`, formula: cp.formula, tone: cp.tone, label: cp.label, note: cp.note }
+    ? { title: "How heavy is the debt, net of cash?", concept: "net-debt", value: `${cp.value}${netYears}`, formula: cp.formula, tone: cp.tone, label: cp.label, note: cp.note }
     : wrap("How heavy is the debt, net of cash?", "net-debt", lev);
 
   return {

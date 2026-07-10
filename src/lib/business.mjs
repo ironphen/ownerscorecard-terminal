@@ -186,10 +186,16 @@ const NOT_DESC = /\bcompetitors?\s+(include|are|consist|compete|comprise)|^(we|o
 // itself — so fall back to the segment mix. (A real company description says "<Company> is a …",
 // never "is the Company's …".)
 const PRODUCT_REF = /\bis\s+the\s+(compan|registrant|firm|group|corporation|business|parent)\w*['’]s\b/i;
+// Benefit-speak about a program or initiative, not a description of the business: "Our exclusive
+// brands/private label merchandise program provides benefits for Dillard's and our customers."
+// A sentence whose subject is a program/initiative/platform and whose verb hands out benefits,
+// advantages or value describes nothing the company does; the computed phrase is the better
+// opener. Measured against every stored lede before shipping: matches only marketing lines.
+const BENEFIT_SPEAK = /\b(programs?|initiatives?|approach|model|platform)\b[^.]{0,60}\b(provides?|delivers?|offers?)\s+(significant\s+)?(benefits?|advantages?|value)\b|\bprovides? benefits? (for|to)\b/i;
 export function weakLede(s) {
   if (!s || typeof s !== "string") return true;
   return /^we have entered\b/i.test(s) || WEAK_LEDE.test(s) || ALLCAPS_HEADING.test(s) || NOT_DESC.test(s) || PRODUCT_REF.test(s) ||
-    /\bvarious (facilities|services|agreements|arrangements)\b/i.test(s) || NOT_A_DESCRIPTION.test(s) || LEAKED.test(s);
+    /\bvarious (facilities|services|agreements|arrangements)\b/i.test(s) || NOT_A_DESCRIPTION.test(s) || LEAKED.test(s) || BENEFIT_SPEAK.test(s);
 }
 
 // A reviewed, model-drafted note (src/data/notes.json, governed by
