@@ -2,6 +2,7 @@
 import { classify, financialKind, financialSubtype } from "../lib/archetype.mjs";
 import { fmtMoney, currencySymbol, roicValue, liquidAssets, topLineRevenue, debtReliable, oiReliable, effectiveTaxRate, ownerEarningsAbs, freeCashFlowAbs, grossMargin, corruptGrossMarginYears, gmCorrupt } from "../lib/fundamentals.mjs";
 import { returnOnEquity, returnOnTangibleEquity, returnOnAssets, efficiencyRatio, tangibleEquity } from "../lib/financials.mjs";
+import { splitFactorsByFy } from "../lib/capital.mjs";
 import { ffo, ffoPerShare, ffoPayout, debtToAssets } from "../lib/reits.mjs";
 import { combinedRatio, lossRatio } from "../lib/insurers.mjs";
 import { medicalLossRatio } from "../lib/managedCare.mjs";
@@ -21,6 +22,10 @@ const debtOk = debtReliable(company.lines || {}) && debtReliable(company.ttm?.li
 // genuinely debt-free, or a year the tag was simply missed — so a null year only reads as net cash when
 // the company is debt-free throughout; if it shows real debt elsewhere, a null year is a gap, not zero.
 const everHadDebt = [...(company.history || []).map((h) => h.lines), company.lines, company.ttm?.lines].some((L) => L && L.totalDebt > 0);
+// Whether a dividend shows anywhere in the record. A null dividends-paid line is ambiguous — never
+// paid, or a year the tag was missed — so null reads as zero only for a company whose record never
+// shows a dividend; for a payer, a null year is unknown, not "kept every dollar".
+const everPaidDiv = [...(company.history || []).map((h) => h.lines), company.lines, company.ttm?.lines].some((L) => L && L.dividendsPaid != null && Math.abs(L.dividendsPaid) > 0);
 // Whether the operating line is a meaningful read (false for JP holding/trading companies
 // that earn through equity-method affiliates); the operating-margin and ROIC rows drop out
 // for those, since the record reads on return on equity instead.
@@ -93,9 +98,12 @@ const ROW = {
   // block: earnings kept (net income less dividends) as a share of equity is the rate book value
   // compounds from within, i.e. return on equity × the share of earnings retained. Neutral, not a verdict:
   // a high rate means heavy reinvestment, a low or negative one means cash returned — good or bad only
-  // against the returns that reinvestment earns. Dividends-null reads as full retention (none paid).
+  // against the returns that reinvestment earns. Dividends-null reads as full retention (none paid)
+  // only for a company that never shows a dividend; for a payer a null year is a gap in the data, and
+  // pretending it retained everything would print an ROE-size jump beside the real cells — so "—".
   retainedToEquity: { label: "Retained to equity", short: "Retained/eq", g: 2, kind: "neutral", get: (L) => {
     if (L.netIncome == null || !(L.stockholdersEquity > 0)) return "—";
+    if (L.dividendsPaid == null && everPaidDiv) return "—"; // unknown, not zero, for a dividend payer
     const div = L.dividendsPaid != null ? Math.abs(L.dividendsPaid) : 0;
     return marginStr(L.netIncome - div, L.stockholdersEquity, 0);
   } },
@@ -223,27 +231,36 @@ if (company.ttm?.lines) {
 }
 const lastI = cols.length - 1;
 
-// Normalize diluted shares to the latest basis so per-share rows stay continuous
-// across stock splits. EDGAR only restates ~3 years back, so a year older than
-// that can still be pre-split; detect the jump and scale earlier years to match.
+// Normalize diluted shares to the latest basis so per-share rows stay continuous across stock
+// splits. EDGAR only restates ~3 years back, so a year older than that can still be pre-split.
+// The corroborated detector in capital.mjs (one basis shared with the capital section and the
+// charts) decides whether a split-sized jump is a restatement — rescale earlier years by the
+// clean split ratio, never the raw jump, so a real buyback or issuance in the boundary year
+// stays visible (Apple's FY2018 buyback sat under its 4-for-1 restatement) — or real shares
+// issued (a merger, an offering, an IPO): those stay exactly as filed, and a note under the
+// table says what the jump was, so the per-share record is never rewritten around it.
+const shareNotes = [];
 {
-  const s = cols.map((c) => c.lines?.sharesDiluted ?? null);
-  const factor = new Array(s.length).fill(1);
-  let f = 1;
-  for (let i = s.length - 1; i > 0; i--) {
-    factor[i] = f;
-    let j = i - 1;
-    while (j >= 0 && s[j] == null) j--;
-    if (j >= 0 && s[i] != null && s[j] != null && s[j] > 0) {
-      const r = s[i] / s[j];
-      if (r > 1.4 || r < 0.7) f *= r; // a split (not buybacks) sits between j and i
-    }
-  }
-  factor[0] = f;
+  const pts = cols.map((c, i) => ({ fy: i, shares: c.lines?.sharesDiluted > 0 ? c.lines.sharesDiluted : null, revenue: c.lines?.revenue, dividendsPaid: c.lines?.dividendsPaid, totalAssets: c.lines?.totalAssets }));
+  const fac = splitFactorsByFy(pts);
   cols.forEach((c, i) => {
-    if (c.lines && c.lines.sharesDiluted != null && factor[i] !== 1)
-      c.lines = { ...c.lines, sharesDiluted: c.lines.sharesDiluted * factor[i] };
+    const f = fac.get(i) ?? 1;
+    if (c.lines && c.lines.sharesDiluted != null && f !== 1)
+      c.lines = { ...c.lines, sharesDiluted: c.lines.sharesDiluted * f };
   });
+  // Name the basis under the table: which jump was a split restatement (now rescaled) and which
+  // was real shares issued or retired (left as filed), so a cliff in the share row always carries
+  // its explanation rather than reading as a fabricated split or phantom dilution.
+  const mult = (m) => (m >= 1 ? `${+m.toFixed(2)}` : `1/${+(1 / m).toFixed(2)}`);
+  const present = pts.filter((p) => p.shares != null);
+  for (let k = 1; k < present.length; k++) {
+    const r = present[k].shares / present[k - 1].shares;
+    if (r < 1.4 && r > 1 / 1.4) continue;
+    const label = cols[present[k].fy].label;
+    const applied = (fac.get(present[k - 1].fy) ?? 1) / (fac.get(present[k].fy) ?? 1);
+    if (applied !== 1) shareNotes.push(`Share counts before ${label} are restated ×${mult(applied)} for a stock split, so per-share figures sit on one basis.`);
+    else shareNotes.push(`The diluted share count moved ×${mult(r)} into ${label} — shares ${r > 1 ? "issued" : "retired"}, not a split the totals corroborate — and the per-share figures carry the counts as filed.`);
+  }
 }
 
 // Withhold a mis-tagged cost-of-revenue year: a company whose gross margin swings between a moderate
@@ -352,6 +369,10 @@ const growth = PS_GROWTH
   .filter((g) => g.full || g.five);
 const showGrowth = growth.length >= 2 && fullSpan >= 3;
 const pctRate = (g) => (g == null ? "—" : `${g.rate >= 0 ? "+" : "−"}${(Math.abs(g.rate) * 100).toFixed(1)}%`);
+// A metric can have fewer years than the record (NVIDIA's owner earnings reach back only four years
+// of a nine-year table), and a rate must carry the span it was realized over — so where a metric's
+// actual span falls short of the column header, the cell says so beside the figure.
+const spanNote = (g, header) => (g && g.yrs !== header ? ` (${g.yrs}-yr)` : "");
 ---
 
 {hist.length >= 3 ? (
@@ -390,6 +411,9 @@ const pctRate = (g) => (g == null ? "—" : `${g.rate >= 0 ? "+" : "−"}${(Math
         </tbody>
       </table>
     </div>
+    {shareNotes.length ? (
+      <div class="basis">{shareNotes.map((n) => <p class="basisNote">{n}</p>)}</div>
+    ) : null}
     {showGrowth ? (
       <div class="growth">
         <div class="ghead">
@@ -402,8 +426,8 @@ const pctRate = (g) => (g == null ? "—" : `${g.rate >= 0 ? "+" : "−"}${(Math
             {growth.map((g) => (
               <tr>
                 <th class="rowlabel">{g.concept ? <Term id={g.concept}>{g.label}</Term> : g.label}</th>
-                <td class={g.full ? (g.full.rate < 0 ? "neg" : "pos") : ""}>{pctRate(g.full)}{g.full ? <span class="yr">/yr</span> : null}</td>
-                <td class={g.five ? (g.five.rate < 0 ? "neg" : "pos") : ""}>{pctRate(g.five)}{g.five ? <span class="yr">/yr</span> : null}</td>
+                <td class={g.full ? (g.full.rate < 0 ? "neg" : "pos") : ""}>{pctRate(g.full)}{g.full ? <span class="yr">/yr{spanNote(g.full, fullSpan)}</span> : null}</td>
+                <td class={g.five ? (g.five.rate < 0 ? "neg" : "pos") : ""}>{pctRate(g.five)}{g.five ? <span class="yr">/yr{spanNote(g.five, 5)}</span> : null}</td>
               </tr>
             ))}
           </tbody>
@@ -436,6 +460,10 @@ const pctRate = (g) => (g == null ? "—" : `${g.rate >= 0 ? "+" : "−"}${(Math
   td.neg { color: var(--bad); }
   td.pos { color: var(--good, #1a7a3c); }
   tbody tr:hover td, tbody tr:hover th.rowlabel { background: var(--surface-2); }
+
+  /* The share-count basis, named: a split restatement or a real issuance under the table. */
+  .basis { margin: 8px 0 0; }
+  .basisNote { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); margin: 2px 0 0; }
 
   /* Per-share growth (Value Line's "annual rates of change per sh"): a compact CAGR block under the
      record, the compounding an owner actually earned. Sits apart from the year grid since it summarizes

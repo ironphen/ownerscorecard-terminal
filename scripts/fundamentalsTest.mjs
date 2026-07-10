@@ -5,6 +5,7 @@
 // Also covers the scorecard reads (second half): one owner-earnings basis, missing tags read as
 // unknowns rather than virtues, and the loss/turn branches. Run with `npm test`.
 import { instantMap, quarterFlowMap, quarterSeries, latestObservation } from "./fetchFundamentals.mjs";
+import { splitFactorsByFy, capitalHistory } from "../src/lib/capital.mjs";
 import { capitalAllocation, coverage, coverageVerdict, cashPosition, ownerCash, cashConversionCycle, ownerEarningsAbs, freeCashFlowAbs } from "../src/lib/fundamentals.mjs";
 
 // SEC shape: facts["us-gaap"][Tag].units.USD = [ {val,end,form,filed[,start]} ]. Instants omit start.
@@ -151,6 +152,70 @@ check("quarterSeries: year-ago Q2 present for momentum", qs.some((q) => q.end ==
   const jpSvc = cashConversionCycle({ lines: { revenue: 1000, costOfRevenue: 300, receivables: 80, accountsPayable: 40 } });
   check("ccc: no-SIC filer with a modest cost line keeps its cycle", jpSvc != null, jpSvc);
 }
+
+// ---- capital.mjs: the split-corroboration rule ----
+// A true split restates the count and nothing else, so per-share revenue/dividends/assets drop by
+// the split ratio at the boundary; a merger or an offering issues real shares, so per-share values
+// stay continuous as filed. Only the corroborated case is rescaled, and by the snapped clean ratio.
+
+// A 4-for-1 restatement with a ~5% buyback alongside (raw jump ×3.80): the factor must be exactly
+// 4 — the raw ratio would scale the real buyback away (the Apple-FY2018 failure mode).
+const split4 = splitFactorsByFy([
+  { fy: 2016, shares: 100, revenue: 400, dividendsPaid: 10, totalAssets: 600 },
+  { fy: 2017, shares: 96, revenue: 430, dividendsPaid: 11, totalAssets: 640 },
+  { fy: 2018, shares: 365, revenue: 470, dividendsPaid: 12, totalAssets: 690 },
+  { fy: 2019, shares: 350, revenue: 500, dividendsPaid: 13, totalAssets: 720 },
+]);
+check("split: corroborated 4-for-1 applies the snapped 4, never the raw 3.80",
+  split4.get(2016) === 4 && split4.get(2017) === 4 && split4.get(2018) === 1, [...split4]);
+
+// A stock merger: the count jumps 1.5x but revenue, dividends and assets scale with it — per-share
+// values are continuous as filed, so nothing is rescaled (the Realty-Income/VEREIT failure mode).
+const merger = splitFactorsByFy([
+  { fy: 2016, shares: 100, revenue: 500, dividendsPaid: 60, totalAssets: 1000 },
+  { fy: 2017, shares: 104, revenue: 525, dividendsPaid: 63, totalAssets: 1050 },
+  { fy: 2018, shares: 156, revenue: 800, dividendsPaid: 95, totalAssets: 1500 },
+  { fy: 2019, shares: 160, revenue: 830, dividendsPaid: 100, totalAssets: 1550 },
+]);
+check("split: a stock merger's 1.5x jump stays as filed", [...merger.values()].every((f) => f === 1), [...merger]);
+
+// An IPO's conversion: per-share values read continuous at 2x (the converted shares were
+// economically there all along), but the jump lands loosely above the clean ratio (×2.3) — a real
+// split year moves the count only a few percent on its own, so the record stays as filed.
+const ipo = splitFactorsByFy([
+  { fy: 2019, shares: 95, revenue: 480, totalAssets: 900 },
+  { fy: 2020, shares: 100, revenue: 500, totalAssets: 1000 },
+  { fy: 2021, shares: 230, revenue: 620, totalAssets: 1150 },
+  { fy: 2022, shares: 240, revenue: 700, totalAssets: 1300 },
+]);
+check("split: an IPO's loose 2.3x jump is not rewritten as a 2-for-1", [...ipo.values()].every((f) => f === 1), [...ipo]);
+
+// ---- capital.mjs: the dividend-cut proxy ----
+const capCo = (rows) => capitalHistory({ history: rows.map(([fy, sh, rev, div]) => ({ fy, lines: { sharesDiluted: sh, revenue: rev, dividendsPaid: div, totalAssets: rev * 2, cashFromOps: rev * 0.3, capex: rev * 0.05, netIncome: rev * 0.15 } })) });
+
+// A one-year sub-10% wobble that recovers is the proxy (payment timing, preferred run-off), not a
+// cut (the Danaher failure mode); a deep drop where the total paid really fell is a cut.
+const wobble = capCo([[2020, 100, 900, 40], [2021, 100, 950, 37.6], [2022, 100, 1000, 44], [2023, 100, 1050, 48]]);
+check("everCut: a recovering sub-10% wobble is not a cut", wobble && wobble.everCut === false, wobble && wobble.everCut);
+const realCut = capCo([[2020, 100, 900, 40], [2021, 100, 950, 44], [2022, 100, 700, 30], [2023, 100, 750, 31]]);
+check("everCut: a deep drop with the total paid falling is a cut", realCut && realCut.everCut === true, realCut && realCut.everCut);
+// A mid-year issuance swells the denominator while the total paid still rose (the Takeda-Shire
+// failure mode): the per-share proxy dips deep for one year, but nothing was cut.
+const issuanceDip = capCo([[2020, 100, 900, 40], [2021, 100, 950, 40.4], [2022, 123, 1150, 40.8], [2023, 124, 1200, 50]]);
+check("everCut: a denominator-only dip (total paid rose) is not a cut", issuanceDip && issuanceDip.everCut === false, issuanceDip && issuanceDip.everCut);
+
+// ---- capital.mjs: funding deltas ----
+// The drawdown an owner watches spans cash + short-term investments, and the long-term portfolio
+// is surfaced separately (Apple funded returns by selling it down, not by borrowing).
+const funding = capitalHistory({ history: [
+  { fy: 2020, lines: { sharesDiluted: 100, revenue: 900, cashFromOps: 300, capex: 50, netIncome: 150, cashAndEquivalents: 20, shortTermInvestments: 47, longTermMarketable: 170, totalDebt: 79 } },
+  { fy: 2021, lines: { sharesDiluted: 100, revenue: 950, cashFromOps: 310, capex: 50, netIncome: 155, cashAndEquivalents: 25, shortTermInvestments: 40, longTermMarketable: 150, totalDebt: 80 } },
+  { fy: 2022, lines: { sharesDiluted: 100, revenue: 1000, cashFromOps: 320, capex: 50, netIncome: 160, cashAndEquivalents: 30, shortTermInvestments: 35, longTermMarketable: 120, totalDebt: 81 } },
+  { fy: 2023, lines: { sharesDiluted: 100, revenue: 1050, cashFromOps: 330, capex: 50, netIncome: 165, cashAndEquivalents: 46, shortTermInvestments: 23, longTermMarketable: 78, totalDebt: 83 } },
+] });
+check("funding: cash delta spans cash + short-term investments; long-term portfolio surfaced",
+  funding && funding.cashChange === 2 && funding.ltInvestChange === -92 && funding.debtChange === 4,
+  funding && { cashChange: funding.cashChange, ltInvestChange: funding.ltInvestChange, debtChange: funding.debtChange });
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

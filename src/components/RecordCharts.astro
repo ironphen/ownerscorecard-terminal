@@ -14,6 +14,7 @@
 // built separately, where the SVG is a stack and a two-line gap rather than a single sparkline.
 import { fmtMoney, topLineRevenue, roicValue, grossMargin, gmCorrupt, debtReliable, ownerEarningsAbs } from "../lib/fundamentals.mjs";
 import { financialKind } from "../lib/archetype.mjs";
+import { splitFactorsByFy } from "../lib/capital.mjs";
 
 const { company } = Astro.props;
 const hist = company.history || [];
@@ -36,15 +37,24 @@ const netDebtOf = (l) => (!debtReliable(l) || l.totalDebt == null ? null : l.tot
 const latestNetDebt = netDebtOf(company.ttm?.lines || company.lines || {});
 const leveraged = latestNetDebt != null && latestNetDebt > 0;
 
+// Share counts on one split basis — the same corroborated factors the record table and the
+// capital section use (capital.mjs), so a split restatement doesn't chart as a 4x dilution
+// cliff (Apple's pre-2018 years against its 4-for-1) and the "peak" mark lands on a real peak,
+// while real issuance (a merger, an IPO) stays the move it actually was.
+const sharePts = hist.map((h, i) => ({ fy: i, shares: h?.lines?.sharesDiluted > 0 ? h.lines.sharesDiluted : null, revenue: h?.lines?.revenue, dividendsPaid: h?.lines?.dividendsPaid, totalAssets: h?.lines?.totalAssets }));
+const shareFac = splitFactorsByFy(sharePts);
+const shareSeries = hist.map((h, i) => (h?.lines?.sharesDiluted != null ? h.lines.sharesDiluted * (shareFac.get(i) ?? 1) : null));
+const splitAdjusted = [...shareFac.values()].some((f) => f !== 1);
+
 // Financials run on a balance sheet, not on margins/ROIC, so they get the universally-honest
 // lines (revenue) plus share count; non-financials get the durability + per-share engine set.
 const metrics = fk
   ? [
-      { label: "Share count", series: serOf((l) => l.sharesDiluted), fmt: "count", worse: "high" },
+      { label: "Share count", series: shareSeries, fmt: "count", worse: "high" },
       { label: "Revenue", series: serOf((l) => topLineRevenue(l, company)), fmt: "money", worse: "low" },
     ]
   : [
-      { label: "Share count", series: serOf((l) => l.sharesDiluted), fmt: "count", worse: "high" },
+      { label: "Share count", series: shareSeries, fmt: "count", worse: "high" },
       { label: "ROIC", series: debtOk ? serOf(roicValue) : [], fmt: "pct", worse: "low" },
       { label: "Gross margin", series: serOf(grossM), fmt: "pct", worse: "low" },
       // Survival, only where it bites — a leveraged name; a net-cash fortress skips it (a flat, boring line).
@@ -89,7 +99,7 @@ const fyN = [...hist].reverse().find((h) => h.fy)?.fy;
       <h3 class="secTitle">The record, charted</h3>
       {fy0 && fyN && fy0 !== fyN ? <span class="span">FY{fy0}–{fyN}</span> : null}
     </div>
-    <p class="note">Each measure over its full record; the current point and the worst year marked.</p>
+    <p class="note">Each measure over its full record; the current point and the worst year marked.{splitAdjusted ? " Share counts on the current split basis." : ""}</p>
     <div class="grid">
       {charts.map((c) => (
         <div class="cell">
