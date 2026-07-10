@@ -40,6 +40,7 @@ import { getCollection } from "astro:content";
 import { ORG } from "../../lib/seo.mjs";
 import { dataAsOf } from "../../lib/freshness.mjs";
 import adrRatios from "../../data/adrRatios.json";
+import ogImages from "../../data/ogImages.json";
 
 // ADRs (foreign 20-F filers) carry US-style tickers and the same record shape, so they get the same
 // /c/[ticker] page as a US company; only the data source and currency differ. The two pools are
@@ -138,9 +139,16 @@ const pageJsonLd = fund
       ...(fund.fy ? { temporalCoverage: `FY${fund.fy}` } : {}),
     }
   : null;
+
+// The link preview (docs/marketing-plan.md, build-list item 2): the most-shared names carry their
+// own card — ticker, name, the record's sparkline, drawn at build by scripts/buildOgImages.mjs and
+// listed in the committed manifest. Every other page keeps the site default via the layout's
+// fallback, so a missing card can never point at a missing file.
+const ogImage = fund && ogImages.tickers.includes(ticker) ? `/og/${ticker}.png` : undefined;
+const ogImageAlt = ogImage ? `${name} (${ticker}): the owner's record at a glance.` : undefined;
 ---
 
-<BaseLayout title={`${ticker}, Owner Scorecard`} description={pageDescription} jsonLd={pageJsonLd}>
+<BaseLayout title={`${ticker}, Owner Scorecard`} description={pageDescription} jsonLd={pageJsonLd} ogImage={ogImage} ogImageAlt={ogImageAlt}>
   <p class="back">
     <a href="/">← All companies</a>
     {manEntry ? (

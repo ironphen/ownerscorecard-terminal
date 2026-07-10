@@ -7,6 +7,9 @@ src/data/benchmark.json
 dist/
 # generated types
 .astro/
+# per-company link-preview cards, drawn by scripts/buildOgImages.mjs at each build
+# (the tiny ticker manifest the pages read, src/data/ogImages.json, IS committed)
+public/og/
 
 # dependencies
 node_modules/

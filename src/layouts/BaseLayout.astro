@@ -8,6 +8,11 @@ const {
   ogType = "website",
   jsonLd = null,
   noindex = false,
+  // A page may carry its own 1200×630 link-preview card (the company pages point at their
+  // build-time card in /og/ — scripts/buildOgImages.mjs); everything else shares the default.
+  // A path only: the layout resolves it against the site host like the canonical above.
+  ogImage = "/og-default.png",
+  ogImageAlt = null,
 } = Astro.props;
 // The masthead carries the DATA's vintage (the pipeline's own as-of stamps), not the build clock, so
 // stale data shows as stale rather than wearing today's date. Falls back to nothing if unstamped.
@@ -47,9 +52,10 @@ const jsonLdBlocks = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
     <meta property="og:description" content={description} />
     <meta property="og:type" content={ogType} />
     <meta property="og:url" content={canonical} />
-    <meta property="og:image" content={new URL("/og-default.png", Astro.site).href} />
+    <meta property="og:image" content={new URL(ogImage, Astro.site).href} />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
+    {ogImageAlt ? <meta property="og:image:alt" content={ogImageAlt} /> : null}
     <meta name="twitter:card" content="summary_large_image" />
     {jsonLdBlocks.map((block) => (
       <script type="application/ld+json" is:inline set:html={JSON.stringify(block)} />

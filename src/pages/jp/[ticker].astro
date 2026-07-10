@@ -16,6 +16,7 @@ import fundamentals from "../../data/fundamentals.json";
 import adrData from "../../data/fundamentals.adr.json";
 import { manualOrder, manualHref } from "../../lib/manual.mjs";
 import { industryOrder, chapterMemberHref } from "../../lib/chapters.mjs";
+import ogImages from "../../data/ogImages.json";
 
 // The Japanese pool, a separate route and a separate dataset from the US catalog. These
 // pages are quantitative by design: the figures are read straight from each company's
@@ -61,9 +62,15 @@ const SECTOR_LABEL = {
   general: "Diversified",
 };
 const sectorLabel = fund ? SECTOR_LABEL[fund.sector] || "Diversified" : null;
+
+// Link preview, same wiring as /c/: a Japanese code carries its own card only if the generator
+// (scripts/buildOgImages.mjs) ever includes it in the manifest; today the subset is US+ADR, so
+// these pages keep the site default — but the door is wired.
+const ogImage = fund && ogImages.tickers.includes(ticker) ? `/og/${ticker}.png` : undefined;
+const ogImageAlt = ogImage ? `${name} (${ticker}): the owner's record at a glance.` : undefined;
 ---
 
-<BaseLayout title={`${ticker} ${name}, Owner Scorecard (Japan)`}>
+<BaseLayout title={`${ticker} ${name}, Owner Scorecard (Japan)`} ogImage={ogImage} ogImageAlt={ogImageAlt}>
   <p class="back">
     <a href="/japan">← Japan catalog</a>
     {manEntry ? (

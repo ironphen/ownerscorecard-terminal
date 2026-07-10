@@ -3,3 +3,7 @@
 # on deploy get a browser TTL, with stale-while-revalidate so a deploy still propagates fast.
 /company-index.json
   Cache-Control: public, max-age=3600, stale-while-revalidate=86400
+# Link-preview cards (scripts/buildOgImages.mjs) redraw only when a company's record changes,
+# so scrapers and browsers may hold them briefly; a deploy still propagates within the hour.
+/og/*
+  Cache-Control: public, max-age=3600, stale-while-revalidate=86400
