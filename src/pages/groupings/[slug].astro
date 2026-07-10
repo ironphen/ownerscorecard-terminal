@@ -20,7 +20,7 @@ import jpData from "../../data/fundamentals.jp.json";
 import adrRatios from "../../data/adrRatios.json";
 import rates from "../../data/rates.json";
 import { SHELVES, industryLabelOf, industrySlug } from "../../lib/shelves.mjs";
-import { GROUPINGS, FAMILIES, groupingBySlug, usdTerms, groupingCells, revenueSortUsd } from "../../lib/groupingColumns.mjs";
+import { GROUPINGS, FAMILIES, groupingBySlug, usdTerms, groupingCells, revenueSortUsd, groupLine } from "../../lib/groupingColumns.mjs";
 import { dataAsOf, fmtAsOf } from "../../lib/freshness.mjs";
 
 export function getStaticPaths() {
@@ -77,6 +77,10 @@ rows.sort((a, b) => {
 const hasForeign = convertedCount > 0 || asFiledCount > 0;
 const revenueColIdx = family.columns.findIndex((col) => col.key === "revenue"); // −1 on the insurer family
 const refreshed = fmtAsOf(dataAsOf);
+
+// The group line — Graham's group view: one dated sentence describing the list, built from the
+// same cells the table renders, naming no member. It describes; it never grades.
+const groupSentence = groupLine(family.columns, rows.map((r) => r.cells));
 const description = `${grouping.noun} The ${rows.length.toLocaleString()} companies the library holds, in one comparative table: ${family.columns.map((c) => c.label).join(", ")} — every column sortable, largest first by revenue.`;
 ---
 
@@ -88,23 +92,39 @@ const description = `${grouping.noun} The ${rows.length.toLocaleString()} compan
     <h1>{grouping.noun}</h1>
     <p class="range">
       {rows.length.toLocaleString()} companies across the library&rsquo;s three pools, one row each.
-      The columns are the line items this kind of business is read on; each header names its basis.
-      Rows open largest first by latest-year revenue, and every column sorts both ways — the
-      re-ordering is the reader&rsquo;s own act. A dash is a figure that could not be read; n/a is one
-      that does not apply to that member; both sit at the back of a sorted column.
+      The columns are the line items this kind of business is read on; each header names its basis,
+      and the margins and returns are medians over each company&rsquo;s readable record — the
+      through-cycle level, never one year&rsquo;s print. Rows open largest first by latest-year revenue,
+      and every column sorts both ways — the re-ordering is the reader&rsquo;s own act, and a sorted
+      view keeps its order in the address bar. The company stays in view as the columns scroll.
+      A dash is a figure that could not be read; n/a is one that does not apply to that member;
+      both sit at the back of a sorted column.
     </p>
     {refreshed ? <p class="dateline">From the latest filings · data as of {refreshed}.</p> : null}
   </header>
+
+  {groupSentence ? (
+    <p class="groupLine">
+      {groupSentence}
+      <span class="glNote"> Medians of this table&rsquo;s own columns, over the members each applies to{refreshed ? ` · data as of ${refreshed}` : ""}.</span>
+    </p>
+  ) : null}
+
+  <div class="pickBar">
+    <span class="pickHint" id="pickHint">Pick two to four to weigh side by side.</span>
+    <a class="cmpGo" id="cmpGo" aria-disabled="true" role="link" tabindex="-1">Compare these →</a>
+  </div>
 
   <div class="tableWrap">
     <table class="grp" id="grpTable">
       <thead>
         <tr>
-          <th class="txt" data-t="s" scope="col"><button type="button">Ticker <span class="tri"></span></button></th>
-          <th class="txt" data-t="s" scope="col"><button type="button">Name <span class="tri"></span></button></th>
-          <th class="txt" data-t="s" scope="col"><button type="button">Industry <span class="tri"></span></button></th>
+          <th class="sel" scope="col" aria-label="Pick companies to compare"></th>
+          <th class="txt tk" data-t="s" data-key="ticker" scope="col"><button type="button">Ticker <span class="tri"></span></button></th>
+          <th class="txt nm" data-t="s" data-key="name" scope="col"><button type="button">Name <span class="tri"></span></button></th>
+          <th class="txt" data-t="s" data-key="industry" scope="col"><button type="button">Industry <span class="tri"></span></button></th>
           {family.columns.map((col, i) => (
-            <th class="num" data-t="n" scope="col" aria-sort={i === revenueColIdx ? "descending" : undefined}>
+            <th class="num" data-t="n" data-key={col.key} scope="col" aria-sort={i === revenueColIdx ? "descending" : undefined}>
               <button type="button">{col.label} <span class="tri">{i === revenueColIdx ? "▼" : ""}</span></button>
               <span class="basis">{col.basis}</span>
             </th>
@@ -114,6 +134,7 @@ const description = `${grouping.noun} The ${rows.length.toLocaleString()} compan
       <tbody>
         {rows.map((r) => (
           <tr>
+            <td class="sel"><input type="checkbox" class="pick" data-tk={r.ticker} aria-label={`Pick ${r.ticker} to compare`} /></td>
             <td class="txt tk" data-s={r.ticker}><a href={r.href}>{r.ticker}</a></td>
             <td class="txt nm" data-s={r.name.toLowerCase()}>{r.name}</td>
             <td class="txt ind" data-s={r.industry.toLowerCase()}>
@@ -146,6 +167,10 @@ const description = `${grouping.noun} The ${rows.length.toLocaleString()} compan
     // DOM re-ordering of the rows already on the page: nothing is fetched, weighted, filtered,
     // highlighted, or remembered. A cell without a sort key (a dash, an n/a, an as-filed foreign
     // figure) goes to the back of the column whichever direction is chosen.
+    //
+    // The active sort is mirrored into the URL (?sort=<column key>&dir=asc|desc) and read back on
+    // load, so a sorted view is shareable — state in the address bar, nothing stored anywhere. The
+    // default view (largest first by revenue) keeps a clean URL.
     (function () {
       var table = document.getElementById("grpTable");
       if (!table || !table.tHead || !table.tBodies.length) return;
@@ -157,9 +182,11 @@ const description = `${grouping.noun} The ${rows.length.toLocaleString()} compan
         var btn = th.querySelector("button");
         if (btn) btn.addEventListener("click", function () { sortBy(i); });
       });
-      function sortBy(i) {
+      function sortBy(i, want) {
         var numeric = ths[i].getAttribute("data-t") === "n";
-        dir = cur === i ? -dir : numeric ? -1 : 1; // numbers open largest-first, text A-to-Z
+        if (want === "asc") dir = 1;
+        else if (want === "desc") dir = -1;
+        else dir = cur === i ? -dir : numeric ? -1 : 1; // numbers open largest-first, text A-to-Z
         cur = i;
         var rows = Array.prototype.slice.call(tbody.rows);
         rows.sort(function (ra, rb) {
@@ -178,6 +205,72 @@ const description = `${grouping.noun} The ${rows.length.toLocaleString()} compan
           if (k === i) th.setAttribute("aria-sort", dir === 1 ? "ascending" : "descending");
           else th.removeAttribute("aria-sort");
         });
+        syncSortURL(i);
+      }
+      function syncSortURL(i) {
+        try {
+          var u = new URL(location.href);
+          var key = ths[i].getAttribute("data-key");
+          if (!key || (key === "revenue" && dir === -1)) { // the default order: a clean URL
+            u.searchParams.delete("sort"); u.searchParams.delete("dir");
+          } else {
+            u.searchParams.set("sort", key);
+            u.searchParams.set("dir", dir === 1 ? "asc" : "desc");
+          }
+          history.replaceState(null, "", u);
+        } catch (e) {}
+      }
+      // Boot: apply a deep-linked sort. The default (revenue, descending) is already the
+      // server-rendered order, so it re-applies harmlessly.
+      try {
+        var q = new URL(location.href).searchParams;
+        var sk = q.get("sort");
+        if (sk) {
+          var sd = q.get("dir") === "asc" ? "asc" : "desc";
+          for (var si = 0; si < ths.length; si++) {
+            if (ths[si].getAttribute("data-key") === sk) { sortBy(si, sd); break; }
+          }
+        }
+      } catch (e) {}
+    })();
+  </script>
+
+  <script is:inline>
+    // The compare picker — the reader picks two to four members and weighs them side by side on
+    // /compare, the same head-to-head every company page links to. Picking is the reader's own
+    // act: it never sorts, never filters, never persists — the checks live only on this page,
+    // and the link carries the tickers in the URL (/compare?c=…), compare's own state format.
+    // A fifth pick replaces nothing; the link simply waits until the picks are two to four.
+    (function () {
+      var table = document.getElementById("grpTable");
+      var go = document.getElementById("cmpGo");
+      var hint = document.getElementById("pickHint");
+      if (!table || !go || !hint) return;
+      var picked = []; // tickers, in the order the reader picked them
+      Array.prototype.forEach.call(table.querySelectorAll("input.pick"), function (box) {
+        box.addEventListener("change", function () {
+          var tk = box.getAttribute("data-tk");
+          picked = picked.filter(function (t) { return t !== tk; });
+          if (box.checked) picked.push(tk);
+          update();
+        });
+      });
+      function update() {
+        var n = picked.length;
+        if (n >= 2 && n <= 4) {
+          go.setAttribute("href", "/compare?c=" + picked.join(","));
+          go.removeAttribute("aria-disabled");
+          go.removeAttribute("tabindex");
+        } else {
+          go.removeAttribute("href");
+          go.setAttribute("aria-disabled", "true");
+          go.setAttribute("tabindex", "-1");
+        }
+        hint.textContent =
+          n === 0 ? "Pick two to four to weigh side by side." :
+          n === 1 ? "One picked — pick at least one more." :
+          n <= 4 ? n + " picked." :
+          "Two to four is the most a head-to-head reads cleanly.";
       }
     })();
   </script>
@@ -189,12 +282,48 @@ const description = `${grouping.noun} The ${rows.length.toLocaleString()} compan
     .range { font-size: 13.5px; line-height: 1.6; color: var(--ink-dim); margin: 10px 0 0; max-width: 78ch; }
     .dateline { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); margin: 8px 0 0; }
 
-    /* The wide table scrolls inside its own container; the page never scrolls sideways. */
-    .tableWrap { margin: 18px 0 0; overflow-x: auto; }
-    table.grp { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+    /* The group line: a description of the list, dated, naming no member. */
+    .groupLine { font-family: var(--serif); font-size: 13.5px; line-height: 1.65; color: var(--ink-soft); margin: 14px 0 0; max-width: 88ch; border-top: 1px solid var(--rule); padding-top: 10px; }
+    .groupLine .glNote { font-style: italic; font-size: 12px; color: var(--muted); }
+
+    /* The compare picker's one control: a hint and a plain link, live only at two to four picks. */
+    .pickBar { display: flex; align-items: center; gap: 14px; margin: 12px 0 0; }
+    .pickHint { font-family: var(--sans); font-size: 12px; color: var(--muted); }
+    .cmpGo { font-family: var(--sans); font-size: 11.5px; font-weight: 600; letter-spacing: 0.03em; border: 1px solid var(--rule-strong); border-radius: 999px; padding: 4px 12px; color: var(--ink-dim); text-decoration: none; cursor: pointer; }
+    .cmpGo[aria-disabled="true"] { opacity: 0.45; pointer-events: none; cursor: default; }
+    .cmpGo:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* The frozen pane. The wide table scrolls inside its own container — sideways for the columns,
+       downward for the member list — so the page never scrolls sideways, the header row stays
+       visible (sticky top), and the company stays in view as the columns scroll (sticky left: the
+       pick box and ticker always; the name too where the screen affords it). Borders are kept per
+       cell (border-collapse: separate) because collapsed borders don't travel with sticky cells;
+       every sticky cell carries the page's own opaque background so no figure ever bleeds under
+       the company column, and the top-left cells take the highest z-index so they win both ways. */
+    .tableWrap { margin: 12px 0 0; overflow: auto; max-height: 82vh; }
+    table.grp { border-collapse: separate; border-spacing: 0; width: 100%; font-variant-numeric: tabular-nums; }
     table.grp th, table.grp td { padding: 7px 10px; border-bottom: 1px solid var(--rule); white-space: nowrap; }
-    table.grp thead th { border-bottom: 2px solid var(--rule-strong); vertical-align: bottom; text-align: left; }
+    table.grp thead th { position: sticky; top: 0; z-index: 2; background: var(--paper); border-bottom: 2px solid var(--rule-strong); vertical-align: bottom; text-align: left; }
     table.grp thead th.num { text-align: right; }
+
+    table.grp .sel { width: 34px; min-width: 34px; max-width: 34px; text-align: center; padding-left: 8px; padding-right: 4px; }
+    table.grp .sel input { accent-color: var(--accent); cursor: pointer; margin: 0; vertical-align: middle; }
+    /* The frozen HEADER cells name thead explicitly: Astro's scope attribute adds specificity to
+       every compound, so the three-element `table.grp thead th` rule (z-index: 2) would otherwise
+       outrank a bare `table.grp th.tk` (z-index: 3) and the scrolling column headers would paint
+       over the frozen corner while sliding under it. */
+    table.grp td.sel { position: sticky; left: 0; z-index: 1; background: var(--paper); }
+    table.grp thead th.sel { left: 0; z-index: 3; }
+    table.grp td.tk { position: sticky; left: 34px; z-index: 1; background: var(--paper); border-right: 1px solid var(--rule); }
+    table.grp thead th.tk { left: 34px; z-index: 3; border-right: 1px solid var(--rule); }
+    /* Fixed widths on the frozen columns so the name column's left offset is exact: 34 + 88 = 122.
+       88px clears the header's own min-content ("TICKER ▼"), so the column can never silently widen. */
+    table.grp th.tk, table.grp td.tk { width: 88px; min-width: 88px; max-width: 88px; }
+    @media (min-width: 720px) {
+      table.grp td.tk, table.grp thead th.tk { border-right: 0; }
+      table.grp td.nm { position: sticky; left: 122px; z-index: 1; background: var(--paper); border-right: 1px solid var(--rule); }
+      table.grp thead th.nm { position: sticky; left: 122px; z-index: 3; border-right: 1px solid var(--rule); }
+    }
     table.grp thead button { background: none; border: 0; padding: 0; margin: 0; cursor: pointer; font-family: var(--sans); font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink); }
     table.grp thead button:hover { color: var(--accent); }
     table.grp thead .tri { display: inline-block; min-width: 1em; font-size: 9px; color: var(--accent); }

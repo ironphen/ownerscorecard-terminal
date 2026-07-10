@@ -40,8 +40,9 @@ const refreshed = fmtAsOf(dataAsOf);
     </p>
     <p class="sub">
       Tables open largest first by latest-year revenue, the one objective order; every column
-      sorts both ways, and the re-ordering is the reader&rsquo;s own act. {total.toLocaleString()}
-      records across the three pools.
+      sorts both ways, and the re-ordering is the reader&rsquo;s own act. Margins and returns are
+      medians over each company&rsquo;s readable record — the through-cycle level, never one year&rsquo;s
+      print. {total.toLocaleString()} records across the three pools.
     </p>
     {refreshed ? <p class="dateline">From the latest filings · data as of {refreshed}.</p> : null}
   </header>

@@ -23,6 +23,7 @@ import {
   ownerEarningsAbs,
   debtReliable,
   oiReliable,
+  throughCycle,
   fmtMoney,
 } from "./fundamentals.mjs";
 import { tangibleEquity, returnOnTangibleEquity } from "./financials.mjs";
@@ -35,12 +36,17 @@ import { adrBasis } from "./adrBasis.mjs";
 // header names (period, construction, currency). 5–7 columns per family — dense enough to compare,
 // never a wall.
 // ---------------------------------------------------------------------------------------------
+// The quality ratios (margins and returns on capital) are read THROUGH THE CYCLE — the median over
+// the record's readable years, Graham's normalization — so one peak or trough year never sets the
+// figure; a member with under three readable years shows "—" rather than a single year dressed as a
+// level. The size lines (revenue, owner earnings, net debt, deposits, ...) stay latest-FY: size is a
+// current fact, not a level to normalize.
 const COL = {
   revenue: { key: "revenue", label: "Revenue", basis: "latest fiscal year, USD", type: "money" },
-  grossMargin: { key: "grossMargin", label: "Gross margin", basis: "latest fiscal year", type: "pct" },
-  operatingMargin: { key: "operatingMargin", label: "Operating margin", basis: "latest fiscal year", type: "pct" },
+  grossMargin: { key: "grossMargin", label: "Gross margin", basis: "median over the record", type: "pct" },
+  operatingMargin: { key: "operatingMargin", label: "Operating margin", basis: "median over the record", type: "pct" },
   ownerEarnings: { key: "ownerEarnings", label: "Owner earnings", basis: "op. cash − maintenance capex · latest FY, USD", type: "money" },
-  roic: { key: "roic", label: "Return on invested capital", basis: "after tax · latest fiscal year", type: "pct" },
+  roic: { key: "roic", label: "Return on invested capital", basis: "after tax · median over the record", type: "pct" },
   netDebt: { key: "netDebt", label: "Net debt", basis: "debt − cash & ST investments · latest FY, USD", type: "money" },
   netInterestIncome: { key: "netInterestIncome", label: "Net interest income", basis: "latest fiscal year, USD", type: "money" },
   deposits: { key: "deposits", label: "Deposits", basis: "latest fiscal year, USD", type: "money" },
@@ -197,6 +203,14 @@ function roteMedian(company) {
   return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
 }
 
+// The same through-cycle read for the operating quality ratios, via the shared throughCycle helper
+// (the window the durability read and the business brief already use, so the surfaces agree).
+// Null below three readable years — the caller renders "—", never one year dressed as a level.
+function medianOverRecord(company, metricFn) {
+  const tc = throughCycle(company, metricFn);
+  return tc ? tc.median : null;
+}
+
 // ---------------------------------------------------------------------------------------------
 // One row's cells. Each cell: { text, sort } — sort null means "no key on this column: to the
 // back", whichever direction the reader sorts. "—" is a figure that could not be read; "n/a" is a
@@ -223,24 +237,27 @@ export function groupingCells(company, familyKey, terms) {
     switch (key) {
       case "revenue":
         return money(topLineRevenue(L, company));
-      case "grossMargin": {
+      case "grossMargin":
+        // Median over the record's readable years, with the same corrupt-cost-line withholding the
+        // record table applies per year, so a mis-tagged near-100% year never enters the median.
         if (fk) return NA;
-        const gm = grossMargin(L);
-        return gm != null && gmCorrupt(gm, company) ? DASH : pct(gm);
-      }
+        return pct(medianOverRecord(company, (yl) => {
+          const gm = grossMargin(yl);
+          return gm != null && gmCorrupt(gm, company) ? null : gm;
+        }));
       case "operatingMargin":
         // Meaningful for an operating business and for a fee earner; a category error for a bank,
         // insurer or property trust, whose operating line is not how it earns.
         if (fk != null && fk !== "fee") return NA;
         if (!oiReliable(company)) return NA;
-        return pct(operatingMargin(L));
+        return pct(medianOverRecord(company, operatingMargin));
       case "ownerEarnings":
         if (fk) return NA;
         return money(ownerEarningsAbs(L, company));
       case "roic":
         if (fk) return NA;
         if (!oiReliable(company)) return NA;
-        return pct(roicValue(L));
+        return pct(medianOverRecord(company, roicValue));
       case "netDebt": {
         // The property family keeps the read for its financial members (leverage is exactly how a
         // REIT is judged); the operating families mark a bank or insurer "n/a" — deposits and
@@ -284,4 +301,37 @@ export function groupingCells(company, familyKey, terms) {
   };
 
   return family.columns.map((col) => cellFor(col.key));
+}
+
+// ---------------------------------------------------------------------------------------------
+// The group line — Graham's group view, the sentence ValueLine printed over an industry section:
+// one dated line describing the LIST, built from the very cells the table renders (their sort
+// keys), so it can never disagree with a figure on the page. Each fragment is the median of a
+// column over the members it applies to (an n/a or unreadable cell simply isn't in the median);
+// the net-debt column reads as a count of net-cash members instead, a fact, not a mixed-sign
+// median. It names no member, ranks nothing, and grades nothing — a description of the group,
+// never a verdict on anyone in it.
+// ---------------------------------------------------------------------------------------------
+function medianOf(vals) {
+  if (!vals.length) return null;
+  const s = [...vals].sort((a, b) => a - b);
+  const m = Math.floor(s.length / 2);
+  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+}
+
+export function groupLine(columns, cellRows) {
+  const parts = [];
+  columns.forEach((col, i) => {
+    const sorts = cellRows.map((r) => (r[i] ? r[i].sort : null)).filter((v) => v != null);
+    if (!sorts.length) return;
+    if (col.key === "netDebt") {
+      const cash = sorts.filter((v) => v < 0).length;
+      parts.push(`${cash} of ${sorts.length} hold net cash`);
+      return;
+    }
+    const m = medianOf(sorts);
+    if (col.type === "money") parts.push(`median ${col.label.toLowerCase()} ${fmtMoney(m, "USD")}`);
+    else parts.push(`median ${col.label.toLowerCase()} ${(m * 100).toFixed(1)}%`);
+  });
+  return parts.length ? `As a group: ${parts.join("; ")}.` : null;
 }
