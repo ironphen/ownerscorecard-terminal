@@ -48,6 +48,33 @@ a chair in the archive, never a seat at the desk.
 - JP (34 names): included if the chosen provider covers TSE cheaply; otherwise the JP pages
   simply keep today's behavior — never a guessed source.
 
+## The licensing reality (researched and adversarially verified, 2026-07-10)
+
+No retail-priced vendor licenses public display. Verified verbatim from the providers' own
+terms: EODHD's retail tiers are personal-use with "displaying" expressly prohibited (their
+$399/mo commercial tier is internal-use only; display is a custom quote); Polygon/Massive
+prohibits building anything "for use by end users other than you" and names CHARTS as
+prohibited Derived Works (display tier: $1,999/mo); Tiingo is "internal consumption only"
+with redistribution "upon special request... additional fees"; FMP bars display on all
+self-serve tiers; Twelve Data's cheapest display-licensed tier is Venture at $499/mo — the
+cheapest verified licensed path anywhere. Marketstack's terms are silent, and silence is not
+permission. Historical/EOD-only use changes NOTHING contractually — no provider's terms
+carve out delayed or historical data. Unlicensed routes (yfinance, scraping) are foreclosed
+by the publication's own doctrine: a provenance-first masthead cannot sit on unlicensed data.
+
+**The path chosen (what Warren would do — negotiate, never overpay, ship what's free):**
+1. DO NOT buy any retail tier (contractually barred) and DO NOT pay $499+/mo for a
+   convenience feature against $0 revenue — that is the institutional imperative in a party
+   hat. 2. The owner emails small-volume display quotes to Tiingo (their invitation is
+   explicit; $50/mo commercial base is the lowest anchor found) and EODHD, scoped to ~14,000
+   historical EOD requests/YEAR rendered as static quarterly charts with attribution — drafts
+   in marketing/quote-drafts/. 3. Meanwhile, ship the license-free version of the reader's
+   pain: THE PRICE MEMORY — the reader's own typed price persists on their device
+   (localStorage), returns as a dated line on the next visit ("using your price from Jul 7 —
+   type today's to update"), URL ?px= precedence preserved. Their number, remembered; no feed,
+   no license, most of the convenience. 4. The indexed chart and the quarterly reference chip
+   ship if and when a quote comes back inside sanity; the design above is ready for that day.
+
 ## What this never becomes
 
 No live or daily quotes; no intraday anything; no price alerts; no "52-week high" framing; no
