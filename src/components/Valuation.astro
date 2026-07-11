@@ -1,8 +1,10 @@
 ---
 // "What the price implies", a reader-supplied-price reverse-DCF. We pull no price
-// feed and store nothing: you bring the quote (off any broker), we do the math in
-// your browser. That sidesteps every market-data licence and keeps the page honest
-//, the only number we'd ever "redistribute" is the one you typed in. Never a price
+// feed and send nothing anywhere: you bring the quote (off any broker), we do the math in
+// your browser. The one thing remembered is the price you typed, kept on your own device
+// and returned dated on the next visit (the price memory, lib/priceMemory.mjs; an explicit
+// ?px= in the URL still wins). That sidesteps every market-data licence and keeps the page
+// honest, the only number we'd ever "redistribute" is the one you typed in. Never a price
 // target: it shows the owner-earnings growth a price implies, set against the record.
 import { classify, financialKind, financialSubtype } from "../lib/archetype.mjs";
 import { moatReport } from "../lib/durability.mjs";
@@ -324,13 +326,14 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
 
   {offModel ? (
     reitRunnable ? (
-      <div id="valBoxReit" data-ffops={ffops} data-dps={dpsReit ?? ""} data-name={name} data-sym={sym}>
+      <div id="valBoxReit" data-ffops={ffops} data-dps={dpsReit ?? ""} data-name={name} data-ticker={co.ticker} data-sym={sym}>
         <p class="intro">A REIT is priced on a multiple of its <b>funds from operations</b> (FFO), the cash it earns once the depreciation on its buildings is added back. Type today&rsquo;s price; we show the multiple you would pay and the income and growth it implies.</p>
         <div class="priceRow">
           <label for="pxr">Today&rsquo;s price</label>
           <span class="dollar">{sym}</span>
           <input id="pxr" type="number" inputmode="decimal" step="0.01" min="0" placeholder="e.g. 55.00" />
         </div>
+        <p class="pxMem" id="pxMemR" hidden></p>
         <p class="lede" id="ledeR">Enter a price above to run it.</p>
         <div class="compare">
           <div class="cmp"><span class="cl">Price / FFO</span><span class="cv hot" id="pffo">—</span></div>
@@ -346,13 +349,14 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
         <p class="foot">FFO about ${ffops.toFixed(2)} per share on {(shares / 1e6).toFixed(0)}M shares. The dials set the multiple they justify; your price sets the multiple you are paying. FFO here adds back depreciation and removes property-sale gains, the NAREIT method; it does not net out maintenance capex (AFFO), occupancy or lease terms, which the 10-K does.</p>
       </div>
     ) : bankRunnable ? (
-      <div id="valBoxBank" data-tbvps={tbvps} data-bvps={bvpsB} data-rotce={rotceMed} data-eps={epsB ?? ""} data-name={name} data-cycle={isInsurer ? "underwriting cycle" : "credit cycle"} data-sym={sym}>
+      <div id="valBoxBank" data-tbvps={tbvps} data-bvps={bvpsB} data-rotce={rotceMed} data-eps={epsB ?? ""} data-name={name} data-ticker={co.ticker} data-cycle={isInsurer ? "underwriting cycle" : "credit cycle"} data-sym={sym}>
         <p class="intro">{isInsurer ? "An" : "A"} {finKind} is worth a multiple of its <b>tangible book value</b>, and the multiple it deserves is set by the return it earns on that book. Type today&rsquo;s price; we show what you would be paying against what {name}&rsquo;s record justifies.</p>
         <div class="priceRow">
           <label for="pxb">Today&rsquo;s price</label>
           <span class="dollar">{sym}</span>
           <input id="pxb" type="number" inputmode="decimal" step="0.01" min="0" placeholder="e.g. 250.00" />
         </div>
+        <p class="pxMem" id="pxMemB" hidden></p>
         <p class="lede" id="ledeB">Enter a price above to run it.</p>
         <div class="compare">
           <div class="cmp"><span class="cl">Price / tangible book</span><span class="cv hot" id="ptbv">—</span></div>
@@ -377,17 +381,18 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
     )
   ) : !runnable ? (
     negMode ? (
-      <div id="valBoxNeg" data-rev={rev} data-shares={shares} data-netdebt={netDebt} data-name={name} data-oem={oeMarginNow ?? ""} data-profitable={profitableNeg ? "1" : "0"} data-sym={sym}>
+      <div id="valBoxNeg" data-rev={rev} data-shares={shares} data-netdebt={netDebt} data-name={name} data-ticker={co.ticker} data-oem={oeMarginNow ?? ""} data-profitable={profitableNeg ? "1" : "0"} data-sym={sym}>
         {profitableNeg ? (
-          <p class="intro">{name} is <b>profitable</b>, but owner earnings are <b>negative</b> this year because capital spending currently outruns operating cash, a build-out, so the owner-earnings reverse-DCF has no positive base to grow. We read the price from both ends instead: type a price to see the steady-state profitability it <b>demands</b>, then set the mature margin you would <b>believe</b> and weigh the two against each other. Nothing is stored.</p>
+          <p class="intro">{name} is <b>profitable</b>, but owner earnings are <b>negative</b> this year because capital spending currently outruns operating cash, a build-out, so the owner-earnings reverse-DCF has no positive base to grow. We read the price from both ends instead: type a price to see the steady-state profitability it <b>demands</b>, then set the mature margin you would <b>believe</b> and weigh the two against each other. Nothing leaves your browser.</p>
         ) : (
-          <p class="intro">Owner earnings are <b>negative</b> today, so the usual reverse-DCF has nothing to grow. That is exactly when a price makes its boldest promise, so we read it from both ends: type a price to see the future profitability it <b>demands</b>, then set the mature margin you would <b>believe</b> and weigh the two against each other. Nothing is stored.</p>
+          <p class="intro">Owner earnings are <b>negative</b> today, so the usual reverse-DCF has nothing to grow. That is exactly when a price makes its boldest promise, so we read it from both ends: type a price to see the future profitability it <b>demands</b>, then set the mature margin you would <b>believe</b> and weigh the two against each other. Nothing leaves your browser.</p>
         )}
         <div class="priceRow">
           <label for="pxn">Today&rsquo;s price</label>
           <span class="dollar">{sym}</span>
           <input id="pxn" type="number" inputmode="decimal" step="0.01" min="0" placeholder="e.g. 30.00" />
         </div>
+        <p class="pxMem" id="pxMemN" hidden></p>
         <p class="lede" id="ledeN">Enter a price to run it.</p>
         <div class="compare">
           <div class="cmp"><span class="cl">Owner earnings it must reach</span><span class="cv hot" id="reqOE">—</span></div>
@@ -408,7 +413,7 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
       <p class="note">A reverse-DCF needs positive owner earnings, or at least revenue, to anchor to, there's no clean base here. Judge this one on assets or normalized earnings, not a growth model.</p>
     )
   ) : (
-    <div id="valBox" data-oe={ownerEarnings} data-oe3={oeNormalized ?? ""} data-oemaint={ownerEarningsMaint ?? ""} data-oemaint3={oe3Maint ?? ""} data-sbc={sbcLatest ?? ""} data-gdeliv={(gDeliv5 ?? gDeliv) ?? ""} data-netdebt={netDebt} data-shares={shares} data-haveshares={haveShares ? "1" : "0"} data-name={name} data-eps3={eps3 ?? ""} data-bvps={bvps ?? ""} data-rev={rev ?? ""} data-grev={gRevRaw ?? ""} data-ni={niNow ?? ""} data-sym={sym} data-bonddefault={bondDefault ?? ""} data-oewins={oeWins ? JSON.stringify(oeWins) : ""}>
+    <div id="valBox" data-oe={ownerEarnings} data-oe3={oeNormalized ?? ""} data-oemaint={ownerEarningsMaint ?? ""} data-oemaint3={oe3Maint ?? ""} data-sbc={sbcLatest ?? ""} data-gdeliv={(gDeliv5 ?? gDeliv) ?? ""} data-netdebt={netDebt} data-shares={shares} data-haveshares={haveShares ? "1" : "0"} data-name={name} data-ticker={co.ticker} data-eps3={eps3 ?? ""} data-bvps={bvps ?? ""} data-rev={rev ?? ""} data-grev={gRevRaw ?? ""} data-ni={niNow ?? ""} data-sym={sym} data-bonddefault={bondDefault ?? ""} data-oewins={oeWins ? JSON.stringify(oeWins) : ""}>
       <p class="intro">
         Type today's close and see the
         owner-earnings growth you'd have to believe to justify it, beside what {name} has delivered.
@@ -427,6 +432,7 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
         <span class="dollar">{sym}</span>
         <input id="px" type="number" inputmode="decimal" step="0.01" min="0" placeholder="e.g. 220.50" />
       </div>
+      <p class="pxMem" id="pxMem" hidden></p>
 
       {!haveShares ? (
         <div class="priceRow shRow">
@@ -631,6 +637,11 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
 
   .gatenote { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); margin: 8px 0 0; line-height: 1.5; max-width: 70ch; }
 
+  /* The price memory's dated line, under the price row: the reader's own saved price named
+     with its day — staleness stated, never worn as currency. Quiet, like .gatenote/.bondAsOf. */
+  .pxMem { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); margin: 8px 0 0; line-height: 1.5; max-width: 70ch; }
+  .pxMem[hidden] { display: none; }
+
   /* Graham's bond yardstick: the owner-earnings yield against the bond the reader could hold instead. */
   .bondBox { margin: 18px 0 0; padding: 13px 0 0; border-top: 1px solid var(--rule); }
   .bondHead { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
@@ -655,6 +666,7 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
 
 <script>
   import { pv, solve } from "../lib/reverseDcf.mjs";
+  import { wirePriceMemory } from "../lib/priceMemory.mjs";
   (function () {
     const box = document.getElementById("valBox");
     if (!box) return;
@@ -940,12 +952,16 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
       const qb = new URL(location.href).searchParams.get("by");
       if (bondY) bondY.value = qb || box.dataset.bonddefault || "";
     } catch (e) {}
+    // The price memory: when the URL brought no price, the reader's own saved price returns,
+    // dated, and every valid edit is saved on their device; ?px= keeps precedence.
+    wirePriceMemory(box.dataset.ticker, px, document.getElementById("pxMem"));
     update();
   })();
 </script>
 
 <script>
   import { gordonMultiple } from "../lib/reverseDcf.mjs";
+  import { wirePriceMemory } from "../lib/priceMemory.mjs";
   (function () {
     const box = document.getElementById("valBoxNeg");
     if (!box) return;
@@ -997,12 +1013,15 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
     mm.addEventListener("input", () => { mmTouched = true; });
     [px, r, n, gr, mm].forEach((el) => el.addEventListener("input", update));
     try { const q = new URL(location.href).searchParams.get("px"); if (q) px.value = q; } catch (e) {}
+    // The price memory: the reader's own saved price returns dated when the URL brought none.
+    wirePriceMemory(box.dataset.ticker, px, document.getElementById("pxMemN"));
     update();
   })();
 </script>
 
 <script>
   import { justifiedBookMultiple } from "../lib/reverseDcf.mjs";
+  import { wirePriceMemory } from "../lib/priceMemory.mjs";
   (function () {
     const box = document.getElementById("valBoxBank");
     if (!box) return;
@@ -1042,12 +1061,15 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
     }
     [px, coe, gB].forEach((el) => el.addEventListener("input", update));
     try { const q = new URL(location.href).searchParams.get("px"); if (q) px.value = q; } catch (e) {}
+    // The price memory: the reader's own saved price returns dated when the URL brought none.
+    wirePriceMemory(box.dataset.ticker, px, document.getElementById("pxMemB"));
     update();
   })();
 </script>
 
 <script>
   import { gordonMultiple } from "../lib/reverseDcf.mjs";
+  import { wirePriceMemory } from "../lib/priceMemory.mjs";
   (function () {
     const box = document.getElementById("valBoxReit");
     if (!box) return;
@@ -1083,6 +1105,8 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
     }
     [px, r, g].forEach((el) => el.addEventListener("input", update));
     try { const q = new URL(location.href).searchParams.get("px"); if (q) px.value = q; } catch (e) {}
+    // The price memory: the reader's own saved price returns dated when the URL brought none.
+    wirePriceMemory(box.dataset.ticker, px, document.getElementById("pxMemR"));
     update();
   })();
 </script>
