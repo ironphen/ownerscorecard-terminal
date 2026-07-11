@@ -8,7 +8,7 @@
 // target: it shows the owner-earnings growth a price implies, set against the record.
 import { classify, financialKind, financialSubtype } from "../lib/archetype.mjs";
 import { moatReport } from "../lib/durability.mjs";
-import { fmtMoney, currencySymbol, liquidAssets, maintenanceCapex, ownerEarningsAbs } from "../lib/fundamentals.mjs";
+import { fmtMoney, currencySymbol, liquidAssets, maintenanceCapex, ownerEarningsAbs, debtReliable } from "../lib/fundamentals.mjs";
 import { tangibleEquity } from "../lib/financials.mjs";
 import { ffoPerShare } from "../lib/reits.mjs";
 import { earningsPower } from "../lib/normalize.mjs";
@@ -87,6 +87,10 @@ const overhangPct = sfv && dilutedCount && dilutedCount / sfv.val > 1.03
 const cfo = L.cashFromOps, capex = L.capex;
 const ownerEarnings = cfo != null && capex != null ? cfo - Math.abs(capex) : null;
 const netDebt = (L.totalDebt || 0) - (liquidAssets(L) || 0);
+// Whether the balance-sheet toggle may show at all: an under-captured debt line (a filer whose
+// interest bill proves debt the tags don't carry) would make "net cash" a fiction, so the
+// toggle requires the same reliability read the record table applies.
+const balanceOk = debtReliable(L);
 // `runnable` is decided below, once the normalized and steady-state bases are known: the latest
 // year can be negative on total capex (a build-out) while a through-cycle or maintenance-capex
 // base is solidly positive, and that should still run the owner-earnings tool, not the loss read.
@@ -413,7 +417,7 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
       <p class="note">A reverse-DCF needs positive owner earnings, or at least revenue, to anchor to, there's no clean base here. Judge this one on assets or normalized earnings, not a growth model.</p>
     )
   ) : (
-    <div id="valBox" data-oe={ownerEarnings} data-oe3={oeNormalized ?? ""} data-oemaint={ownerEarningsMaint ?? ""} data-oemaint3={oe3Maint ?? ""} data-sbc={sbcLatest ?? ""} data-gdeliv={(gDeliv5 ?? gDeliv) ?? ""} data-netdebt={netDebt} data-shares={shares} data-haveshares={haveShares ? "1" : "0"} data-name={name} data-ticker={co.ticker} data-eps3={eps3 ?? ""} data-bvps={bvps ?? ""} data-rev={rev ?? ""} data-grev={gRevRaw ?? ""} data-ni={niNow ?? ""} data-sym={sym} data-bonddefault={bondDefault ?? ""} data-oewins={oeWins ? JSON.stringify(oeWins) : ""}>
+    <div id="valBox" data-oe={ownerEarnings} data-oe3={oeNormalized ?? ""} data-oemaint={ownerEarningsMaint ?? ""} data-oemaint3={oe3Maint ?? ""} data-sbc={sbcLatest ?? ""} data-gdeliv={(gDeliv5 ?? gDeliv) ?? ""} data-netdebt={netDebt} data-balanceok={balanceOk ? "1" : "0"} data-shares={shares} data-haveshares={haveShares ? "1" : "0"} data-name={name} data-ticker={co.ticker} data-eps3={eps3 ?? ""} data-bvps={bvps ?? ""} data-rev={rev ?? ""} data-grev={gRevRaw ?? ""} data-ni={niNow ?? ""} data-sym={sym} data-bonddefault={bondDefault ?? ""} data-oewins={oeWins ? JSON.stringify(oeWins) : ""}>
       <p class="intro">
         Type today's close and see the
         owner-earnings growth you'd have to believe to justify it, beside what {name} has delivered.
@@ -457,6 +461,13 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
         {offerMaint ? <label class="tog"><input type="checkbox" id="oeMaint" checked={defaultMaint} /> Steady-state · maintenance capex{ownerEarningsMaint != null ? <> (<b>{$(ownerEarningsMaint)}</b>)</> : null}</label> : null}
       </div>
       <p class="baseUsed" id="baseUsed" aria-live="polite">—</p>
+
+      {/* The balance-sheet toggle (owner directive): shown only when the net cash or net debt
+          position is material against the price actually typed — Graham's arithmetic that a
+          buyer gets the cash and assumes the debt. One switch, symmetric by construction:
+          crediting cash and charging debt are the same lens, never a flattering-only one. */}
+      <label class="tog evTog" id="evTog" hidden><input type="checkbox" id="evOn" /> <span id="evLbl">Count the balance sheet</span></label>
+      <p class="gatenote evNote" id="evNote" hidden></p>
 
       <p class="lede" id="lede">Enter a price above to run it.</p>
       <p class="gatenote baseRates" id="baseRates" hidden></p>
@@ -582,6 +593,10 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
   .tog { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--ink-dim); cursor: pointer; user-select: none; }
   .tog input { accent-color: var(--accent); cursor: pointer; }
   .tog b { font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; }
+  /* The balance-sheet toggle stands alone under the base line: it acts on the PRICE side of the
+     arithmetic (the outlay), not the earnings base, so it is not grouped with the base toggles. */
+  .evTog { margin: 12px 0 0; }
+  .evTog[hidden] { display: none; }
   /* The owner-earnings figure actually feeding the model, named and updated as the toggles change —
      so "Normalize" is never a black box: you see the through-cycle number it switched the base to. */
   .baseUsed { font-family: var(--sans); font-size: 13.5px; color: var(--ink-dim); margin: 10px 0 0; line-height: 1.5; }
@@ -708,6 +723,16 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
     // the dials. The delivered rate appears as one labeled row of a general table, never as the
     // company's own number, and no cell is ever highlighted as fair; once a price is typed, the paid
     // multiple is located in prose, by the reader's own dials.
+    // The balance-sheet toggle: Graham's arithmetic that a buyer gets the cash and assumes the
+    // debt. ND = net debt as filed (negative = net cash); evAdj is what the toggle currently
+    // adds to the equity outlay (0 when off or immaterial), read by every priced figure and by
+    // the bond yardstick.
+    const ND = parseFloat(box.dataset.netdebt);
+    const BALOK = box.dataset.balanceok === "1";
+    const evTog = document.getElementById("evTog"), evOn = document.getElementById("evOn"), evLbl = document.getElementById("evLbl"), evNote = document.getElementById("evNote");
+    let evAdj = 0;
+    if (evOn) evOn.addEventListener("change", update);
+
     const R_COLS = [0.06, 0.08, 0.1, 0.12];
     const gLbl = (g, dp) => (g < 0 ? "−" : "") + Math.abs(g * 100).toFixed(dp) + "%";
     let SCHED_ROWS = [];
@@ -764,7 +789,7 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
       const BOND = parseFloat(bondY.value) / 100;
       const price = parseFloat(px.value), SH = curSH(), base = effOE();
       const haveEY = price > 0 && base > 0 && SH > 0;
-      const EY = haveEY ? base / (price * SH) : null;
+      const EY = haveEY ? base / (price * SH + evAdj) : null; // the toggle's outlay basis carries into the bond yardstick
       if (!(BOND > 0) || !haveEY) {
         bondCmp.hidden = true;
         bondLede.textContent = !(BOND > 0)
@@ -820,6 +845,7 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
         if (sensLoc) sensLoc.hidden = true;
         if (ladder) ladder.hidden = true;
         if (baseRates) baseRates.hidden = true;
+        if (evTog) evTog.hidden = true; if (evNote) evNote.hidden = true; evAdj = 0;
         if (pe) pe.textContent = "—"; if (pb) pb.textContent = "—"; if (ggate) { ggate.textContent = "—"; ggate.style.color = ""; }
         setURL(""); return;
       }
@@ -830,12 +856,36 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
         if (sensLoc) sensLoc.hidden = true;
         if (ladder) ladder.hidden = true;
         if (baseRates) baseRates.hidden = true;
+        if (evTog) evTog.hidden = true; if (evNote) evNote.hidden = true; evAdj = 0;
         if (pe) pe.textContent = "—"; if (pb) pb.textContent = "—"; if (ggate) { ggate.textContent = "—"; ggate.style.color = ""; }
         return;
       }
-      const mc = price * SH, res = solve(mc / base, rr, N, gT);
-      oeY.textContent = pcs(base / mc);
-      if (multPaid) multPaid.textContent = (mc / base).toFixed(1) + "×";
+      const mc = price * SH;
+      // Materiality is judged against the price actually being paid: the toggle appears only
+      // when the net position is at least a twentieth of the implied market cap (and the debt
+      // tagging is reliable). When on, the outlay becomes market cap plus net debt — net cash
+      // enters negative and credits the price; net debt is assumed by the buyer and charges it.
+      const evMaterial = BALOK && isFinite(ND) && ND !== 0 && Math.abs(ND) / mc >= 0.05;
+      const evOnNow = evMaterial && evOn && evOn.checked;
+      evAdj = evOnNow ? ND : 0;
+      if (evTog) {
+        evTog.hidden = !evMaterial;
+        if (evMaterial && evLbl) evLbl.textContent = ND < 0
+          ? "Count the " + usd(-ND) + " net cash: it comes with the purchase"
+          : "Count the " + usd(ND) + " net debt: the buyer assumes it";
+      }
+      if (evNote) {
+        if (evOnNow) {
+          evNote.hidden = false;
+          evNote.textContent = ND < 0
+            ? "Net of " + usd(-ND) + " in cash and investments beyond all debt, the operating business is priced at " + usd(mc + ND) + "; every figure below reads on that outlay."
+            : "With the " + usd(ND) + " of net debt a buyer assumes, the whole business costs " + usd(mc + ND) + "; every figure below reads on that outlay.";
+        } else evNote.hidden = true;
+      }
+      const mcEff = mc + evAdj;
+      const res = solve(mcEff / base, rr, N, gT);
+      oeY.textContent = pcs(base / mcEff);
+      if (multPaid) multPaid.textContent = (mcEff / base).toFixed(1) + "×";
       if (pe || pb || ggate) {
         const peV = EPS3 > 0 ? price / EPS3 : null, pbV = BVPS > 0 ? price / BVPS : null;
         if (pe) pe.textContent = peV != null ? peV.toFixed(1) + "×" : "n/m";
@@ -864,7 +914,9 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
       // Margin of safety, as Graham used it: a discipline the buyer applies to their own price,
       // shown as what a one-third cushion buys in belief-space. No second dollar is printed.
       if (cushionLine) {
-        const cres = !res.cap ? solve((0.7 * mc) / base, rr, N, gT) : null;
+        // A third below the PRICE: the equity outlay falls 30%; the balance-sheet position the
+        // toggle counts does not move with the quote, so it carries over unchanged.
+        const cres = !res.cap ? solve((0.7 * mc + evAdj) / base, rr, N, gT) : null;
         if (cres && !cres.cap && isFinite(cres.g)) {
           cushionLine.hidden = false;
           cushionLine.textContent = `A third below your price, the implied growth falls to ${pcs(cres.g)}/yr` + (!isNaN(GDELIV) ? `, against ${pcs(GDELIV)}/yr delivered` : "") + ".";
@@ -874,7 +926,7 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
       // never by highlighting a cell as fair.
       if (sensLoc) {
         if (base > 0 && SCHED_ROWS.length) {
-          const mult = (mc / base).toFixed(1);
+          const mult = (mcEff / base).toFixed(1);
           let wh;
           if (res.cap || res.g > SCHED_ROWS[SCHED_ROWS.length - 1].g) wh = `above the ${SCHED_ROWS[SCHED_ROWS.length - 1].pl} row`;
           else if (res.g < SCHED_ROWS[0].g) wh = `below the ${SCHED_ROWS[0].pl} row`;
@@ -889,7 +941,7 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
       // expected return without the page stating one.
       if (ladder && ladderTbl) {
         const RUNGS = [0.06, 0.08, 0.1, 0.12];
-        const rungs = base > 0 ? RUNGS.map((rq) => ({ rq, r: solve(mc / base, rq, N, gT) })).filter((x) => x.r) : [];
+        const rungs = base > 0 ? RUNGS.map((rq) => ({ rq, r: solve(mcEff / base, rq, N, gT) })).filter((x) => x.r) : [];
         if (rungs.length === RUNGS.length) {
           const marker = '<tr class="marker"><th>delivered</th><td>' + pcs(GDELIV) + "/yr</td></tr>";
           let placed = isNaN(GDELIV);
@@ -936,6 +988,7 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
           marginRow.hidden = false; reqRev.hidden = false;
         } else { if (marginRow) marginRow.hidden = true; if (reqRev) reqRev.hidden = true; }
       }
+      bondView(); // re-render the yardstick on this tick's outlay basis (evAdj was set above)
       setURL(px.value);
     }
     [px, r, n, g, shInput, mmDial].forEach((el) => el && el.addEventListener("input", update));
