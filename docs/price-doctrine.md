@@ -2,7 +2,7 @@
 
 The owner killed this initiative the same day it was scoped, after the licensing research
 came back. No quotes are being solicited, no chart ships, no price data ever enters the
-house. The doctrine stands in its pure form: THE READER BRINGS THE PRICE. The one surviving
+house. The doctrine stands in its pure form for the PRODUCT: THE READER BRINGS THE PRICE. The owner clarified same day: the research NOTES remain the one surface that may carry dated prices and hand-made price charts as part of an argument — the stance doctrine already said it (Notes are dated, priced, argued), and a handful of hand-cited dated prices in an editorial essay is ordinary commentary practice, categorically different from the systematic API display the licensing research killed. The one surviving
 artifact is the license-free PRICE MEMORY (shipped, fbb977c): the reader's own typed price
 persisted on their device with its date — their number, no feed. The design below is kept
 only as the record of what was considered and why the line held.
