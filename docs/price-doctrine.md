@@ -1,0 +1,58 @@
+# The quarterly price, and how it enters the house
+
+2026-07-10, on the owner's directive: a static ten-year price history per company, refreshed
+quarterly, feeding the reverse-DCF so readers stop hunting a quote elsewhere — funded properly
+("I am willing to put money into this project on things that Warren would deem worthwhile for
+his own use"). This document is the doctrine and the design; the provider/licensing research
+runs separately and picks the source.
+
+## Why a quarterly price is not a price feed
+
+The site's rule has been "the reader brings the price," and its deepest reason stands: this
+publication never pronounces on price. But a DATED historical price is a fact, not a verdict —
+Graham's tables were full of them, the Value Line sheet Buffett actually used opens with the
+ten-year price chart, Moody's printed price ranges. What the rule must keep banning is the
+verdict (targets, fair values) and the ticker-tape (live quotes that put Mr. Market at the desk).
+A QUARTERLY close is Buffett's own cadence — check the business constantly, the price
+occasionally — and it arrives with the same rhythm as the filings themselves. Mr. Market gets
+a chair in the archive, never a seat at the desk.
+
+## The two design rules
+
+1. **Price renders only against the business, never alone.** A bare price chart is Mr. Market's
+   mood diary. The chart is the de-rating form from our own moat note: per-share owner earnings
+   and the quarterly price, BOTH INDEXED to the starting year, so a decade of divergence shows
+   without asserting any fair multiple. (Value Line's earnings-line overlay scales price to a
+   chosen multiple — that choice smuggles in a valuation anchor; indexing does not.) No shading
+   of "cheap" regions, no bands, no annotations beyond the fiscal years. Financials/REITs use
+   the per-share line their pages already read on (tangible book per share / FFO per share).
+2. **The reference price wears its date, everywhere it acts.** The valuation tool's input stays
+   the reader's. Beside it, a dated chip: "Mar 31 close: $211.40". One click fills the input —
+   and every sentence computed from it renders in the PAST TENSE WITH THE DATE ("At $211.40,
+   the March 31 close, the market WAS pricing …"). The moment the reader types a price of their
+   own, the phrasing returns to the present. Staleness is stated, never worn as currency.
+
+## Architecture
+
+- `src/data/prices.json` — per ticker: ~40 quarterly adjusted closes (10 years), the as-of
+  date, and the source name; split/dividend-adjusted from the provider. Size ~1.5–2MB: a
+  build-data file, NEVER imported by anything BaseLayout or SSR touches (the 47MB worker
+  lesson).
+- `scripts/fetchPrices.mjs` + `.github/workflows/prices.yml` — quarterly cron (a few days
+  after quarter end), ~3,530 requests per run, merge-over-last-good, the same audits/test gate
+  discipline as every data workflow. Provider API key in repo secrets.
+- Chart: build-time SVG (RecordCharts conventions) on company pages — "The business and the
+  price, indexed" — dated, with the source named in the caption.
+- Valuation: the dated chip + past-tense lede rule above; the chip also renders in compare
+  columns. The share-count arithmetic already uses sharesForValue.
+- JP (34 names): included if the chosen provider covers TSE cheaply; otherwise the JP pages
+  simply keep today's behavior — never a guessed source.
+
+## What this never becomes
+
+No live or daily quotes; no intraday anything; no price alerts; no "52-week high" framing; no
+returns leaderboards; no price-based sorting anywhere a record table sorts; the /c/TICKER.json
+machine endpoint keeps carrying NO price (provenance surface for the record, and provider
+licenses restrict redistribution — display and raw redistribution are different rights). The
+budget rises for exactly one thing: data bought properly, with public display rights, from a
+named source.
