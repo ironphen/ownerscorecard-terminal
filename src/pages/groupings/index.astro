@@ -1,8 +1,9 @@
 ---
-// The groupings index: the 28 shelves, each linking to its comparative table (owner directive,
-// 2026-07-10 — the ValueLine/Moody's industry-section form). Purely additive beside the shelves
-// page and the industry chapters; nothing here ranks, scores, or recommends. Order is the fixed
-// shelves.json file order — alphabetical by sentence — never a ranking.
+// The groupings index — the one door to the catalog arranged by what the businesses do (owner
+// directive, 2026-07-10; the ValueLine/Moody's industry-section form). Each grouping: its
+// comparative table, its column list, and its industry chapters. Nothing here ranks, scores,
+// or recommends. Order is the fixed shelves.json file order — alphabetical by sentence —
+// never a ranking.
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import fundamentals from "../../data/fundamentals.json";
 import adr from "../../data/fundamentals.adr.json";
@@ -11,21 +12,30 @@ import { SHELVES, industryLabelOf } from "../../lib/shelves.mjs";
 import { GROUPINGS, FAMILIES, groupingByNoun } from "../../lib/groupingColumns.mjs";
 import { dataAsOf, fmtAsOf } from "../../lib/freshness.mjs";
 
-// One classify pass over the three pools, the same read the shelves page makes.
-const countByNoun = new Map();
-const labelToNoun = new Map();
-for (const s of SHELVES) for (const ind of s.industries) labelToNoun.set(ind.label, s.noun);
+// One classify pass over the three pools. This page absorbed the former shelves page
+// (/businesses — the owner's call, 2026-07-10: the shelves and the groupings were the same 28
+// nouns wearing two names on two routes), so each grouping carries both of its doors: the
+// comparative table, and the industry chapters that make it up. A curated industry with no
+// companies after a data refresh renders nothing — a zero row would link a chapter that no
+// longer builds.
+const countByLabel = new Map();
 for (const c of [...(fundamentals.companies || []), ...(adr.companies || []), ...(jp.companies || [])]) {
-  const noun = labelToNoun.get(industryLabelOf(c));
-  if (!noun) continue;
-  countByNoun.set(noun, (countByNoun.get(noun) || 0) + 1);
+  const label = industryLabelOf(c);
+  countByLabel.set(label, (countByLabel.get(label) || 0) + 1);
 }
+const shelfByNoun = new Map(SHELVES.map((s) => [s.noun, s]));
 
-const groupings = GROUPINGS.map((g) => ({
-  ...g,
-  count: countByNoun.get(g.noun) || 0,
-  columns: FAMILIES[g.family].columns.map((col) => col.label),
-})).filter((g) => g.count > 0);
+const groupings = GROUPINGS.map((g) => {
+  const industries = (shelfByNoun.get(g.noun)?.industries || [])
+    .map((ind) => ({ ...ind, count: countByLabel.get(ind.label) || 0 }))
+    .filter((ind) => ind.count > 0);
+  return {
+    ...g,
+    industries,
+    count: industries.reduce((a, ind) => a + ind.count, 0),
+    columns: FAMILIES[g.family].columns.map((col) => col.label),
+  };
+}).filter((g) => g.count > 0);
 
 const total = groupings.reduce((a, g) => a + g.count, 0);
 const refreshed = fmtAsOf(dataAsOf);
@@ -42,7 +52,10 @@ const refreshed = fmtAsOf(dataAsOf);
       Tables open largest first by latest-year revenue, the one objective order; every column
       sorts both ways, and the re-ordering is the reader&rsquo;s own act. Margins and returns are
       medians over each company&rsquo;s readable record — the through-cycle level, never one year&rsquo;s
-      print. {total.toLocaleString()} records across the three pools.
+      print. Under each grouping, its industries: each links to a chapter where every member is
+      read in full, entry by entry. {total.toLocaleString()} records across the three pools; which
+      businesses a reader understands is the reader&rsquo;s own question, and the one thing this page
+      does not answer.
     </p>
     {refreshed ? <p class="dateline">From the latest filings · data as of {refreshed}.</p> : null}
   </header>
@@ -52,9 +65,17 @@ const refreshed = fmtAsOf(dataAsOf);
       <li class="g">
         <div class="gTop">
           <a class="gNoun" href={`/groupings/${g.slug}`}>{g.noun}</a>
-          <span class="gN">{g.count.toLocaleString()} companies</span>
+          <span class="gN">{g.count.toLocaleString()} companies · <a class="gTbl" href={`/groupings/${g.slug}`}>the table →</a></span>
         </div>
         <p class="gCols">{g.columns.join(" · ")}</p>
+        <p class="gInds">
+          {g.industries.map((ind, i) => (
+            <>
+              {i > 0 ? <span class="gDot"> · </span> : null}
+              <a href={`/industries/${ind.slug}`}>{ind.label}</a> <span class="gIndN">{ind.count}</span>
+            </>
+          ))}
+        </p>
       </li>
     ))}
   </ul>
@@ -78,6 +99,12 @@ const refreshed = fmtAsOf(dataAsOf);
     .gNoun:hover { color: var(--accent); }
     .gN { font-family: var(--sans); font-variant-numeric: tabular-nums; font-size: 13px; color: var(--muted); flex: 0 0 auto; }
     .gCols { margin: 5px 0 0; font-family: var(--sans); font-size: 12px; color: var(--muted); line-height: 1.6; }
+    .gTbl { font-family: var(--sans); font-size: 12px; color: var(--accent); }
+    .gInds { margin: 7px 0 0; font-family: var(--serif); font-size: 13.5px; color: var(--ink-dim); line-height: 1.7; max-width: 90ch; }
+    .gInds a { color: var(--ink-soft); text-decoration: none; border-bottom: 1px solid var(--rule-strong); }
+    .gInds a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+    .gIndN { font-family: var(--sans); font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+    .gDot { color: var(--faint); }
 
     .foot { font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--muted); border-top: 1px solid var(--rule-strong); margin-top: 28px; padding-top: 12px; max-width: 78ch; line-height: 1.6; }
   </style>

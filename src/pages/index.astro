@@ -121,11 +121,7 @@ const fmtWireDate = (s) => new Date(s + "T00:00:00Z").toLocaleDateString("en-US"
         <div class="omniDefault" id="omniDefault" hidden>
           <a class="odConf" href="/groupings">
             <span class="odConfT">Browse the groupings</span>
-            <span class="odConfN">{groupingsN.toLocaleString()} comparative tables →</span>
-          </a>
-          <a class="odConf" href="/businesses">
-            <span class="odConfT">The shelves</span>
-            <span class="odConfN">every business, by what it does →</span>
+            <span class="odConfN">every business by what it does · {groupingsN.toLocaleString()} comparative tables →</span>
           </a>
         </div>
         <div class="omniCount" id="omniCount" aria-live="polite"></div>

@@ -45,8 +45,8 @@ export async function GET() {
     `- [Corrections](${SITE_URL}/corrections): the public log of published errors and their fixes`,
     "",
     "## Browse",
-    `- [Groupings](${SITE_URL}/groupings): ${GROUPINGS.length} comparative tables, one per kind of business, at /groupings/{slug} (for example ${SITE_URL}/groupings/lend-money); plain factual columns, never a ranking`,
-    `- [Businesses](${SITE_URL}/businesses): the whole library on one page, arranged by what the businesses do`,
+    `- [Groupings](${SITE_URL}/groupings): ${GROUPINGS.length} comparative tables, one per kind of business — the catalog arranged by what the businesses do, each grouping listing its industry chapters — at /groupings/{slug} (for example ${SITE_URL}/groupings/lend-money); plain factual columns, never a ranking`,
+
     `- [Industry chapters](${SITE_URL}/industries/enterprise-software): ${chapterCount} chapters at /industries/{slug}, each industry's companies across all pools; the full list is in /llms-full.txt`,
     `- [The Manual](${SITE_URL}/manual): every company in fixed alphabetical order, three volumes at /manual/us/{A-Z}, /manual/adr/{A-Z}, and /manual/japan`,
     `- [The Defensive Workbook](${SITE_URL}/tests/defensive): Graham's defensive-investor tests as his own worksheet, one row per company, every figure shown`,
