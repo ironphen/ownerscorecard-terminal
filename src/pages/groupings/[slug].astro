@@ -133,7 +133,7 @@ const description = `${grouping.noun} The ${rows.length.toLocaleString()} compan
       </thead>
       <tbody>
         {rows.map((r) => (
-          <tr>
+          <tr id={r.ticker}>
             <td class="sel"><input type="checkbox" class="pick" data-tk={r.ticker} aria-label={`Pick ${r.ticker} to compare`} /></td>
             <td class="txt tk" data-s={r.ticker}><a href={r.href}>{r.ticker}</a></td>
             <td class="txt nm" data-s={r.name.toLowerCase()}>{r.name}</td>
@@ -319,6 +319,13 @@ const description = `${grouping.noun} The ${rows.length.toLocaleString()} compan
     /* Fixed widths on the frozen columns so the name column's left offset is exact: 34 + 88 = 122.
        88px clears the header's own min-content ("TICKER ▼"), so the column can never silently widen. */
     table.grp th.tk, table.grp td.tk { width: 88px; min-width: 88px; max-width: 88px; }
+    /* Deep-link a single company's row: /groupings/{slug}#TICKER is a permanent address for one
+       company within a comparison, the granularity people actually argue at. The arrival visibly
+       lands — the row lifts, its frozen cells too (they carry their own opaque background, so the
+       highlight is set on them explicitly), and scroll-margin keeps it clear of the sticky header. */
+    table.grp tbody tr { scroll-margin-top: 76px; }
+    table.grp tbody tr:target > td { background: var(--tag-bg); }
+    table.grp tbody tr:target > td.tk { box-shadow: inset 3px 0 0 var(--accent); }
     @media (min-width: 720px) {
       table.grp td.tk, table.grp thead th.tk { border-right: 0; }
       table.grp td.nm { position: sticky; left: 122px; z-index: 1; background: var(--paper); border-right: 1px solid var(--rule); }

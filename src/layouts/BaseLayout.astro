@@ -330,11 +330,33 @@ const jsonLdBlocks = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
         .masthead { margin: 0 0 14px; }
         a { color: inherit; text-decoration: none; }
         main { margin-top: 0; }
+
+        /* A printed record page is an exhibit — an analyst attaches it, a student files it, and it
+           travels through inboxes and shared drives the site can never reach. So it must carry its
+           own provenance on every sheet, not just the first, and never split a table mid-figure.
+           This is the Value Line photocopy physics: the passed-around page was the distribution. */
+        @page { margin: 14mm 14mm 16mm; }
+        /* Repeat the record table's column headers on every printed page. */
+        thead { display: table-header-group; }
+        tfoot { display: table-footer-group; }
+        /* Keep a section, a table row, and a figure block from breaking across a page. */
+        .sec, section, tr, .perf, .cite, figure, .ownerBridge, .scorecard { break-inside: avoid; }
+        h1, h2, h3 { break-after: avoid; }
+        /* Source links print their URL so a paper exhibit resolves back to EDGAR/EDINET. */
+        .src[href]::after { content: " (" attr(href) ")"; font-size: 9px; color: #5b616c; word-break: break-all; }
+        /* A running footer on every sheet: the canonical URL and the data-as-of date, so page 3 of
+           a PDF still says where it came from and how current it is. */
+        body::after {
+          content: "ownerscorecard.com" attr(data-print-asof);
+          position: fixed; bottom: 4mm; left: 0; right: 0;
+          text-align: center; font-family: var(--sans); font-size: 8.5px; color: #5b616c;
+          letter-spacing: 0.04em;
+        }
       }
     </style>
   </head>
 
-  <body>
+  <body data-print-asof={refreshed ? ` · data as of ${refreshed}` : ""}>
     <a class="skipLink" href="#main">Skip to content</a>
     <header class="masthead">
       <hr class="mastRule" />
