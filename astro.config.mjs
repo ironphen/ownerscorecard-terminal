@@ -67,7 +67,6 @@ export default defineConfig({
     '/notes/the-de-rating': '/notes',
     '/notes/the-moat-and-the-multiple': '/notes',
     '/notes/the-two-investors-2026': '/notes',
-    '/notes/the-founding-letter': '/notes',
   },
   // Hover-gated only: the catalog view holds 3,503 company links, so 'viewport' or 'load'
   // strategies would fire thousands of requests per session against the Workers free tier.
