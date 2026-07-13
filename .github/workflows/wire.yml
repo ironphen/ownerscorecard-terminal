@@ -60,6 +60,7 @@ jobs:
       # The filings-tweet drafter used to run here (2026-07-08 – 2026-07-13); retired because the
       # hand-review step made it a daily chore. docs/marketing-plan.md records the decision.
       - name: Commit if changed
+        id: commit
         run: |
           if ! git diff --quiet -- src/data/wire.json src/data/rates.json src/data/fundamentals.json; then
             git config user.name "github-actions[bot]"
@@ -81,6 +82,23 @@ jobs:
               echo "::error::git push failed after 5 attempts — the wire/rates refresh was NOT published"
               exit 1
             fi
+            echo "pushed=1" >> "$GITHUB_OUTPUT"
           else
             echo "No change."
           fi
+      # Machine-to-machine only (doctrine-blessed): tell IndexNow which pages changed so Bing and
+      # its peers crawl the fresh wire and the day's lit-up records within minutes, not on the next
+      # passive recrawl. Fires only on a real push, waits for the deploy to be live (today's date
+      # visible in /wire-lite.json) before submitting, and is fully fail-soft — a ping problem never
+      # touches the data commit.
+      - name: Notify IndexNow of the day's changes
+        if: steps.commit.outputs.pushed == '1'
+        continue-on-error: true
+        run: |
+          today=$(date -u +%Y-%m-%d)
+          urls="/ /wire /wire.xml /wire-lite.json /sitemap-index.xml"
+          IFS=',' read -ra FILERS <<< "${{ steps.filers.outputs.tickers }}"
+          for t in "${FILERS[@]}"; do
+            [ -n "$t" ] && urls="$urls /c/$t /c/$t.json"
+          done
+          node scripts/pingIndexNow.mjs --wait-url=https://ownerscorecard.com/wire-lite.json --wait-text="$today" $urls

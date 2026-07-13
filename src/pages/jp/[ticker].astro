@@ -17,6 +17,7 @@ import adrData from "../../data/fundamentals.adr.json";
 import { manualOrder, manualHref } from "../../lib/manual.mjs";
 import { industryOrder, chapterMemberHref } from "../../lib/chapters.mjs";
 import ogImages from "../../data/ogImages.json";
+import { SITE_URL, ORG, companyDataset, corporationNode, breadcrumbList } from "../../lib/seo.mjs";
 
 // The Japanese pool, a separate route and a separate dataset from the US catalog. These
 // pages are quantitative by design: the figures are read straight from each company's
@@ -68,9 +69,53 @@ const sectorLabel = fund ? SECTOR_LABEL[fund.sector] || "Diversified" : null;
 // these pages keep the site default — but the door is wired.
 const ogImage = fund && ogImages.tickers.includes(ticker) ? `/og/${ticker}.png` : undefined;
 const ogImageAlt = ogImage ? `${name} (${ticker}): the owner's record at a glance.` : undefined;
+
+// Machine-readable identity, closing the /jp gap: until now these pages carried no meta
+// description and no JSON-LD, so a search or answer engine saw the generic sitewide description
+// and could not connect the securities code to the company. The record is read from EDINET, not
+// SEC EDGAR, so the Dataset names EDINET as its source and its twin is the /compare card (the
+// Japanese pool's machine endpoint); there is no SEC CIK to anchor, so none is claimed.
+const pageDescription = fund
+  ? `${name} (${ticker}): the ten-year owner's record. Revenue, margins, returns on capital, owner earnings, and debt, every figure read from the company's own EDINET filings.`
+  : undefined;
+const histYears = fund ? (fund.history || []).map((h) => h.fy).filter(Boolean) : [];
+const spanFrom = histYears.length ? Math.min(...histYears) : fund?.fy || null;
+const spanTo = histYears.length ? Math.max(...histYears) : fund?.fy || null;
+const pageUrl = `${SITE_URL}/jp/${ticker}`;
+const pageJsonLd = fund
+  ? [
+      {
+        "@context": "https://schema.org",
+        "@type": "WebPage",
+        name: `${name} (${ticker}), the owner's record`,
+        description: pageDescription,
+        about: corporationNode({ name, ticker, url: pageUrl }),
+        publisher: ORG,
+        ...(jp.asOf ? { dateModified: jp.asOf } : {}),
+        ...(fund.fy ? { temporalCoverage: `FY${fund.fy}` } : {}),
+      },
+      companyDataset({
+        ticker,
+        name,
+        pageUrl,
+        jsonUrl: `${SITE_URL}/compare/${ticker}.json`,
+        spanFrom: spanFrom ? `${spanFrom}` : null,
+        spanTo: spanTo ? `${spanTo}` : null,
+        asOf: jp.asOf || null,
+        sourceUrl: fund.sourceUrl || null,
+        filingSource: "EDINET filings",
+      }),
+      breadcrumbList([
+        { name: "Owner Scorecard", url: "/" },
+        { name: "Japan catalog", url: "/japan" },
+        indEntry ? { name: indEntry.label, url: chapterHref } : null,
+        { name: `${name} (${ticker})`, url: pageUrl },
+      ].filter(Boolean)),
+    ].filter(Boolean)
+  : null;
 ---
 
-<BaseLayout title={`${ticker} ${name}, Owner Scorecard (Japan)`} ogImage={ogImage} ogImageAlt={ogImageAlt}>
+<BaseLayout title={`${ticker} ${name}, Owner Scorecard (Japan)`} description={pageDescription} jsonLd={pageJsonLd} ogImage={ogImage} ogImageAlt={ogImageAlt}>
   <p class="back">
     <a href="/japan">← Japan catalog</a>
     {manEntry ? (

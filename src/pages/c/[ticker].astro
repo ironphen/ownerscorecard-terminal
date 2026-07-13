@@ -37,7 +37,7 @@ import jpFundamentals from "../../data/fundamentals.jp.json";
 import { manualOrder, manualHref } from "../../lib/manual.mjs";
 import { industryOrder, chapterMemberHref } from "../../lib/chapters.mjs";
 import { getCollection } from "astro:content";
-import { ORG } from "../../lib/seo.mjs";
+import { ORG, SITE_URL, companyDataset, corporationNode, breadcrumbList } from "../../lib/seo.mjs";
 import { dataAsOf } from "../../lib/freshness.mjs";
 import adrRatios from "../../data/adrRatios.json";
 import ogImages from "../../data/ogImages.json";
@@ -124,20 +124,48 @@ const chapterHref = indEntry ? `/industries/${indEntry.slug}` : null;
 const pageDescription = fund
   ? `${name} (${ticker}): the ten-year owner's record. Revenue, margins, returns on capital, owner earnings, buybacks, and debt, every figure traced to the company's own filings.`
   : undefined;
+// The record's fiscal-year span, for the Dataset's temporalCoverage.
+const histYears = fund ? (fund.history || []).map((h) => h.fy).filter(Boolean) : [];
+const spanFrom = histYears.length ? Math.min(...histYears) : fund?.fy || null;
+const spanTo = histYears.length ? Math.max(...histYears) : fund?.fy || null;
+const pageUrl = `${SITE_URL}/c/${ticker}`;
+
+// Three machine-readable blocks: the WebPage (what this is — a record, not a rating, and which
+// corporation it is about, anchored to the SEC CIK); the Dataset (the ten-year record, free and
+// licensed to the site's terms, with its JSON twin as the distribution — the shape Google Dataset
+// Search indexes); and the BreadcrumbList (the industry-chapter lattice the page already builds).
 const pageJsonLd = fund
-  ? {
-      "@context": "https://schema.org",
-      "@type": "WebPage",
-      name: `${name} (${ticker}), the owner's record`,
-      description: pageDescription,
-      about: { "@type": "Corporation", name, tickerSymbol: ticker },
-      publisher: ORG,
-      // Freshness from the pipeline's own stamp, never the build clock: crawlers learn to trust
-      // (or distrust) lastmod-style signals fast, and 3,550 pages "updated today" every deploy
-      // would poison the signal.
-      ...(dataAsOf ? { dateModified: dataAsOf } : {}),
-      ...(fund.fy ? { temporalCoverage: `FY${fund.fy}` } : {}),
-    }
+  ? [
+      {
+        "@context": "https://schema.org",
+        "@type": "WebPage",
+        name: `${name} (${ticker}), the owner's record`,
+        description: pageDescription,
+        about: corporationNode({ name, ticker, cik: fund.cik, url: pageUrl }),
+        publisher: ORG,
+        // Freshness from the pipeline's own stamp, never the build clock: crawlers learn to trust
+        // (or distrust) lastmod-style signals fast, and 3,550 pages "updated today" every deploy
+        // would poison the signal.
+        ...(dataAsOf ? { dateModified: dataAsOf } : {}),
+        ...(fund.fy ? { temporalCoverage: `FY${fund.fy}` } : {}),
+      },
+      companyDataset({
+        ticker,
+        name,
+        cik: fund.cik,
+        pageUrl,
+        jsonUrl: `${pageUrl}.json`,
+        spanFrom: spanFrom ? `${spanFrom}` : null,
+        spanTo: spanTo ? `${spanTo}` : null,
+        asOf: dataAsOf || null,
+        sourceUrl: fund.sourceUrl || null,
+      }),
+      breadcrumbList([
+        { name: "Owner Scorecard", url: "/" },
+        indEntry ? { name: indEntry.label, url: chapterHref } : null,
+        { name: `${name} (${ticker})`, url: pageUrl },
+      ].filter(Boolean)),
+    ].filter(Boolean)
   : null;
 
 // The link preview (docs/marketing-plan.md, build-list item 2): the most-shared names carry their

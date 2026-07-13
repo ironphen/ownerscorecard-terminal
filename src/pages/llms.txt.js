@@ -64,7 +64,8 @@ export async function GET() {
     `- [Full index](${SITE_URL}/llms-full.txt): every grouping table and industry chapter URL, one line each`,
     "",
     "## Feeds",
-    `- [RSS](${SITE_URL}/rss.xml)`,
+    `- [The Filing Wire (Atom)](${SITE_URL}/wire.xml): the day's SEC filings, newest first, one entry per filing keyed by its accession number, each linking the filer's record page — the site's daily-changing stream, machine-subscribable`,
+    `- [Research Notes (RSS)](${SITE_URL}/rss.xml): the publication's Notes as they are published`,
     `- [Sitemap](${SITE_URL}/sitemap-index.xml)`,
   ];
 

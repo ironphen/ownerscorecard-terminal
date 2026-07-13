@@ -1,8 +1,28 @@
 # Served by Cloudflare Workers static assets. HTML stays at its default (revalidate on every
 # request) because the daily wire rebuild must never serve stale; only files that change solely
 # on deploy get a browser TTL, with stale-while-revalidate so a deploy still propagates fast.
+
+# The public data endpoints are documented as "free, no key, meant to be fetched" (/docs/data),
+# but without a permissive CORS header a browser, notebook, or other-origin tool cannot read them
+# (server-side agents were never blocked). Access-Control-Allow-Origin: * makes the read-only,
+# already-public JSON and feeds fetchable from anywhere — the terms the page already states, now
+# enforced at the edge. One header per family; the cache rules ride alongside.
 /company-index.json
   Cache-Control: public, max-age=3600, stale-while-revalidate=86400
+  Access-Control-Allow-Origin: *
+/c/*.json
+  Access-Control-Allow-Origin: *
+/compare/*.json
+  Access-Control-Allow-Origin: *
+/wire-lite.json
+  Access-Control-Allow-Origin: *
+/follow-context.json
+  Access-Control-Allow-Origin: *
+/wire.xml
+  Access-Control-Allow-Origin: *
+/rss.xml
+  Access-Control-Allow-Origin: *
+
 # Link-preview cards (scripts/buildOgImages.mjs) redraw only when a company's record changes,
 # so scrapers and browsers may hold them briefly; a deploy still propagates within the hour.
 /og/*

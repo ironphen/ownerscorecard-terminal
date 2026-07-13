@@ -63,7 +63,8 @@ const jsonLdBlocks = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
     {jsonLdBlocks.map((block) => (
       <script type="application/ld+json" is:inline set:html={JSON.stringify(block)} />
     ))}
-    <link rel="alternate" type="application/rss+xml" title="Owner Scorecard" href="/rss.xml" />
+    <link rel="alternate" type="application/rss+xml" title="Owner Scorecard — Research Notes" href="/rss.xml" />
+    <link rel="alternate" type="application/atom+xml" title="Owner Scorecard — The Filing Wire" href="/wire.xml" />
 
     <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />

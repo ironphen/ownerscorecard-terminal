@@ -122,14 +122,31 @@ const pageDescription =
 <BaseLayout
   title="Data endpoints, Owner Scorecard"
   description={pageDescription}
-  jsonLd={{
-    "@context": "https://schema.org",
-    "@type": "WebPage",
-    name: "Owner Scorecard data endpoints",
-    description: pageDescription,
-    publisher: ORG,
-    ...(dataAsOf ? { dateModified: dataAsOf } : {}),
-  }}
+  jsonLd={[
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      name: "Owner Scorecard data endpoints",
+      description: pageDescription,
+      publisher: ORG,
+      ...(dataAsOf ? { dateModified: dataAsOf } : {}),
+    },
+    {
+      // The catalog node the per-company Dataset markup points back to (isPartOf #catalog).
+      // Types the endpoint documentation as what it is: the catalog of the site's open data.
+      "@context": "https://schema.org",
+      "@type": "DataCatalog",
+      "@id": `${SITE_URL}/docs/data#catalog`,
+      name: "Owner Scorecard open data",
+      description:
+        "Every figure the publication renders, also served as static JSON: per-company ten-year records, comparison cards, the company index, the daily filing wire, and follow-context — free, no key, attribution requested.",
+      url: `${SITE_URL}/docs/data`,
+      publisher: ORG,
+      isAccessibleForFree: true,
+      license: `${SITE_URL}/docs/data#terms`,
+      ...(dataAsOf ? { dateModified: dataAsOf } : {}),
+    },
+  ]}
 >
   <header class="hero">
     <h1>The data, documented</h1>
@@ -147,7 +164,7 @@ const pageDescription =
   </header>
 
   <section class="band">
-    <h2>The terms</h2>
+    <h2 id="terms">The terms</h2>
     <p>
       The endpoints are free. There is no key, no login, and no registered application.
     </p>
@@ -289,6 +306,21 @@ const pageDescription =
         the URL patterns, the citation format, and the data vintage.
         <a href="/llms-full.txt">/llms-full.txt</a> adds the full index of grouping tables and
         industry chapters, one line each. Both are static text; neither inlines company data.
+      </p>
+    </article>
+
+    <article class="ep">
+      <h3><code>/wire.xml</code> — the Filing Wire, as a feed</h3>
+      <p>
+        The <a href="/wire">Filing Wire</a> as an Atom 1.0 feed: one entry per SEC filing, newest
+        first, each keyed by its filing accession number (a stable, un-fakeable id that never
+        re-notifies a reader on rebuild) and dated with the filing's own date, never the build
+        clock. Every entry carries the plain-English label, the computed year-over-year figures
+        where the filing supplied them, and links to both the company's record page and the EDGAR
+        source; entries are tagged with the ticker and form so a reader's rules can filter per
+        company or per form. The Notes are published separately at
+        <a href="/rss.xml">/rss.xml</a>. Both feeds are discoverable from every page's
+        <code>&lt;link rel="alternate"&gt;</code> tags.
       </p>
     </article>
   </section>
