@@ -43,6 +43,7 @@ export async function GET() {
     `- [Principles](${SITE_URL}/concepts): how an owner reads a filing, and every measure used, defined`,
     `- [About](${SITE_URL}/about): what this publication is and is not`,
     `- [Corrections](${SITE_URL}/corrections): the public log of published errors and their fixes`,
+    `- [Terms of Use](${SITE_URL}/terms): the terms and disclaimer — informational only, not investment advice, data provided without warranty`,
     "",
     "## Browse",
     `- [Groupings](${SITE_URL}/groupings): ${GROUPINGS.length} comparative tables, one per kind of business — the catalog arranged by what the businesses do, each grouping listing its industry chapters — at /groupings/{slug} (for example ${SITE_URL}/groupings/lend-money); plain factual columns, never a ranking`,

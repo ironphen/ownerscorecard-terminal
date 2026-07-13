@@ -1,0 +1,191 @@
+---
+// The Terms of Use and legal disclaimer. A single page that states, in plain language, what the
+// publication is, that nothing here is advice, that the data carries no warranty, and that the
+// reader's decisions are the reader's own. It reinforces the posture the whole site is built on:
+// an impersonal, general-circulation financial publication that informs and never advises. The
+// running footer disclaimer on every page is the short form; this is the long form it points to.
+//
+// Plain register, consistent with /about and the founding letter. Effective date is a fixed
+// constant, updated by hand only when the terms themselves change (a legal document's date must
+// not move with every deploy).
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { ORG } from "../lib/seo.mjs";
+
+const EFFECTIVE = "July 13, 2026";
+const CONTACT = "hello@ownerscorecard.com";
+const pageDescription =
+  "Terms of Use and disclaimer for Owner Scorecard: an independent financial publication for informational purposes only, not investment advice, with no warranty on the data.";
+---
+
+<BaseLayout
+  title="Terms of Use, Owner Scorecard"
+  description={pageDescription}
+  jsonLd={{
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    name: "Owner Scorecard Terms of Use",
+    description: pageDescription,
+    publisher: ORG,
+  }}
+>
+  <section class="terms">
+    <h1>Terms of Use</h1>
+    <p class="eff">Effective {EFFECTIVE}</p>
+
+    <p>
+      These terms govern your use of Owner Scorecard (the "Site"), an independent financial
+      publication reachable at ownerscorecard.com. By using the Site you agree to these terms. If
+      you do not agree, please do not use the Site.
+    </p>
+
+    <h2>1. What Owner Scorecard is</h2>
+    <p>
+      Owner Scorecard is an independent publisher of financial information and research of general
+      and regular circulation. It presents the record a company files: roughly a decade of
+      revenue, margins, returns on capital, owner earnings, buybacks, share count, and debt, with
+      each figure traced to the company's own filings. It is a publication, read the same way by
+      everyone, and it is not tailored to any individual's financial situation.
+    </p>
+    <p>
+      Owner Scorecard is not registered as an investment adviser, broker-dealer, or financial
+      planner, and it does not act as one. Nothing on the Site creates an advisory, brokerage,
+      fiduciary, or other professional or client relationship between you and the publication.
+    </p>
+
+    <h2>2. Not investment advice</h2>
+    <p>
+      Everything on the Site is provided for informational and educational purposes only. Nothing
+      on the Site is, or should be taken as, investment, financial, legal, accounting, or tax
+      advice, or a recommendation, endorsement, offer, or solicitation to buy, sell, or hold any
+      security or to pursue any investment strategy. The Site carries no ratings, price targets,
+      or estimates by design, and no figure or page on it is a judgment about what any security is
+      worth or whether it should be owned.
+    </p>
+    <p>
+      The Site does not know your circumstances, goals, risk tolerance, or holdings, and nothing
+      on it is personalized to you. Any decision you make is your own.
+    </p>
+
+    <h2>3. The data, its sources, and its accuracy</h2>
+    <p>
+      The figures on the Site are drawn from public sources, principally filings made with the
+      U.S. Securities and Exchange Commission and the equivalent regulators for the ADR and Japan
+      catalogs, together with figures computed from those filings by methods defined on the
+      <a href="/concepts">Principles</a> page. These sources are believed to be reliable, but
+      their accuracy, completeness, and timeliness are not guaranteed.
+    </p>
+    <p>
+      The Site, and all data, text, and materials on it, are provided "as is" and "as available,"
+      without warranty of any kind, whether express or implied, including but not limited to any
+      implied warranties of accuracy, completeness, merchantability, fitness for a particular
+      purpose, or non-infringement. Filings can contain errors, data can be transcribed or
+      computed wrongly, and figures can be out of date. Where an error is found, it is corrected
+      in the open and logged in the public <a href="/corrections">corrections record</a>, but no
+      promise is made that the Site is free of error. You should verify any figure against the
+      company's original filing before relying on it. The primary sources are linked throughout
+      the Site for that purpose.
+    </p>
+
+    <h2>4. Your decisions are your own</h2>
+    <p>
+      You are solely responsible for your own investment decisions and their outcomes. Investing
+      in securities involves risk, including the possible loss of principal. Past performance is
+      not a guarantee or indication of future results. Before making any investment decision you
+      should do your own research and consult a qualified professional who can consider your
+      individual circumstances. You agree not to treat anything on the Site as a substitute for
+      that.
+    </p>
+
+    <h2>5. Limitation of liability</h2>
+    <p>
+      To the fullest extent permitted by law, Owner Scorecard, its founder, and anyone who
+      contributes to it will not be liable for any loss or damage of any kind arising out of or in
+      connection with your use of, or reliance on, the Site or anything on it. This includes,
+      without limitation, any direct, indirect, incidental, consequential, special, punitive, or
+      exemplary damages; any trading or investment losses; and any lost profits, lost data, or
+      lost opportunities, whether based in contract, tort, negligence, strict liability, or any
+      other theory, and whether or not the publication was advised of the possibility of such
+      damages. Some jurisdictions do not allow certain of these limitations, and in those places
+      the limitations apply to the fullest extent the law allows.
+    </p>
+
+    <h2>6. Indemnification</h2>
+    <p>
+      You agree to indemnify and hold harmless Owner Scorecard and its founder from any claim,
+      loss, liability, or expense (including reasonable legal fees) arising out of your use of the
+      Site, your breach of these terms, or your violation of any law or the rights of a third
+      party.
+    </p>
+
+    <h2>7. Positions and disclosure</h2>
+    <p>
+      The people who write here may own securities discussed on these pages. Positions may change,
+      and no position is ever announced, not when it is opened and not when it is closed. Around
+      any company the publication writes research on, personal trading stops five days before
+      publication and does not resume until ten days after it, and a dated log of every personal
+      trade is kept. The reasoning behind these rules is set out in
+      <a href="/notes/the-founding-letter">The Founding Letter</a>. Nothing on the Site is written
+      to move a price, and the publication earns nothing when you trade.
+    </p>
+
+    <h2>8. Use of the Site and its content</h2>
+    <p>
+      The underlying financial figures come from public filings and are facts, free for anyone to
+      use. The Site's own writing, arrangement, computations, and presentation are the property of
+      the publication. You are welcome to quote and cite the Site; attribution to Owner Scorecard
+      (ownerscorecard.com) is requested but not required, as set out in the
+      <a href="/docs/data">data terms</a>. You agree not to use the Site in any way that is
+      unlawful, that would disrupt or overburden it, or that would misrepresent it as offering the
+      advice it expressly does not offer.
+    </p>
+
+    <h2>9. Third-party links</h2>
+    <p>
+      The Site links to third-party sources, including the SEC's EDGAR system and other filing
+      databases. Those sites are not under the publication's control, and the publication is not
+      responsible for their content, accuracy, or availability. A link is not an endorsement.
+    </p>
+
+    <h2>10. Availability</h2>
+    <p>
+      The Site is offered free of charge and is provided on an "as available" basis. The
+      publication does not guarantee that the Site will be uninterrupted, current, or error-free,
+      and it may change, suspend, or discontinue any part of the Site at any time without notice.
+    </p>
+
+    <h2>11. Changes to these terms</h2>
+    <p>
+      These terms may be updated from time to time. When they change, the effective date above
+      will change to say so, and your continued use of the Site after that means you accept the
+      updated terms.
+    </p>
+
+    <h2>12. Governing law</h2>
+    <p>
+      These terms are governed by the laws of the United States and the state in which the
+      publication's founder resides, without regard to conflict-of-laws principles, to the extent
+      permitted by applicable law.
+    </p>
+
+    <h2>13. Contact</h2>
+    <p>
+      Questions about these terms can be sent to <a href={`mailto:${CONTACT}`}>{CONTACT}</a>. To
+      report a factual error in the data, the <a href="/corrections">corrections record</a>
+      describes how errors are handled and fixed.
+    </p>
+
+    <p class="fine">
+      Owner Scorecard is not registered as an investment adviser or broker-dealer. Nothing here is
+      investment advice or a recommendation to buy or sell any security.
+    </p>
+  </section>
+
+  <style>
+    .terms { max-width: 640px; }
+    .terms h1 { margin: 0 0 4px; }
+    .eff { font-size: 12px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); margin: 0 0 20px; }
+    .terms h2 { margin: 28px 0 10px; font-size: 1.15rem; }
+    .terms p { color: var(--ink-soft); }
+    .fine { font-size: 13.5px; color: var(--muted); margin-top: 28px; }
+  </style>
+</BaseLayout>
