@@ -281,9 +281,46 @@ async function main() {
     const rest = kept.filter((x) => !x.grave).slice(0, Math.max(0, CEILING - grave.length));
     kept = [...grave, ...rest].sort((a, b) => b.date.localeCompare(a.date) || a.ticker.localeCompare(b.ticker));
   }
-  const out = { asOf: new Date().toISOString().slice(0, 10), source: "SEC EDGAR, recent filings", items: kept };
+  const today = new Date().toISOString().slice(0, 10);
+  const out = { asOf: today, source: "SEC EDGAR, recent filings", items: kept };
   fs.writeFileSync(wirePath, JSON.stringify(out, null, 2) + "\n");
   console.log(`✅ Wire: ${out.items.length} filings across ${keepDates.size} filing days, ${kept.filter((x) => x.performance).length} with performance`);
+
+  // The permanent per-day archive: the rolling wire keeps only the last 7 filing days, so a link
+  // to "what filed on 2026-07-11" would rot within a week. Write each day to its own append-only
+  // file so /wire/{date} is a permanent, citable page. Days still inside the rolling window are
+  // rewritten each run (late filings and backfilled performance still change them); older days
+  // are written once and then frozen, which keeps daily git churn to the ~7 window files. Fully
+  // fail-soft: the archive can never break the wire.json write above.
+  try {
+    const daysDir = path.join(dataDir, "wire-days");
+    fs.mkdirSync(daysDir, { recursive: true });
+    const byDate = new Map();
+    for (const it of items) {
+      if (!it.date) continue;
+      if (!byDate.has(it.date)) byDate.set(it.date, []);
+      byDate.get(it.date).push(it);
+    }
+    let written = 0;
+    for (const [date, dayItems] of byDate) {
+      const file = path.join(daysDir, `${date}.json`);
+      const inWindow = keepDates.has(date);
+      // Freeze older days: write once if absent, then leave alone.
+      if (!inWindow && fs.existsSync(file)) continue;
+      dayItems.sort((a, b) => a.ticker.localeCompare(b.ticker));
+      const dayOut = { date, asOf: today, source: out.source, items: dayItems };
+      const body = JSON.stringify(dayOut, null, 2) + "\n";
+      // Skip a rewrite that would not change the file, so unchanged window days don't churn git.
+      let prior = null;
+      try { prior = fs.readFileSync(file, "utf8"); } catch {}
+      if (prior === body) continue;
+      fs.writeFileSync(file, body);
+      written++;
+    }
+    console.log(`   wire archive: ${written} day file(s) written/updated, ${byDate.size} day(s) seen`);
+  } catch (e) {
+    console.warn(`   ! wire archive skipped (non-fatal): ${e.message}`);
+  }
 }
 
 export { label8K, ITEM_8K, performanceFor };

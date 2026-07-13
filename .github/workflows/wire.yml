@@ -62,10 +62,10 @@ jobs:
       - name: Commit if changed
         id: commit
         run: |
-          if ! git diff --quiet -- src/data/wire.json src/data/rates.json src/data/fundamentals.json; then
+          if ! git diff --quiet -- src/data/wire.json src/data/rates.json src/data/fundamentals.json src/data/wire-days; then
             git config user.name "github-actions[bot]"
             git config user.email "github-actions[bot]@users.noreply.github.com"
-            git add src/data/wire.json src/data/rates.json src/data/fundamentals.json
+            git add src/data/wire.json src/data/rates.json src/data/fundamentals.json src/data/wire-days
             git commit -m "Refresh the filing wire, the risk-free rate, and the day's filers"
             # Rebase-and-retry so a concurrent push (an overlapping fundamentals run) can't silently
             # drop the day's wire + risk-free-rate refresh, the way a bare push otherwise would.
@@ -96,7 +96,7 @@ jobs:
         continue-on-error: true
         run: |
           today=$(date -u +%Y-%m-%d)
-          urls="/ /wire /wire.xml /wire-lite.json /sitemap-index.xml"
+          urls="/ /wire /wire/$today /wire.xml /wire-lite.json /sitemap-index.xml"
           IFS=',' read -ra FILERS <<< "${{ steps.filers.outputs.tickers }}"
           for t in "${FILERS[@]}"; do
             [ -n "$t" ] && urls="$urls /c/$t /c/$t.json"

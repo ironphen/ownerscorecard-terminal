@@ -1,0 +1,140 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import fundamentals from "../../data/fundamentals.json";
+import adrData from "../../data/fundamentals.adr.json";
+import Cite from "../../components/Cite.astro";
+import { SITE_URL, ORG, breadcrumbList } from "../../lib/seo.mjs";
+
+// Permanent per-day pages for the Filing Wire. The rolling /wire holds only the last 7 filing
+// days; these pages never move, so a link to "what filed on 2026-07-11" keeps resolving years
+// later — citation equity, and the never-404 discipline extended to the wire. The archive files
+// are written by scripts/fetchWire.mjs (append-only) and committed by the daily wire workflow.
+export async function getStaticPaths() {
+  const files = import.meta.glob("../../data/wire-days/*.json", { eager: true });
+  const days = Object.entries(files)
+    .map(([p, mod]) => ({ date: p.match(/([\d-]+)\.json$/)?.[1], data: mod.default || mod }))
+    .filter((d) => d.date)
+    .sort((a, b) => b.date.localeCompare(a.date));
+  return days.map((d, i) => ({
+    params: { date: d.date },
+    // prev is the OLDER day, next is the NEWER day (days is newest-first).
+    props: { day: d.data, prev: days[i + 1]?.date || null, next: days[i - 1]?.date || null },
+  }));
+}
+
+const { day, prev, next } = Astro.props;
+const known = new Set(
+  [...(fundamentals.companies || []), ...(adrData.companies || [])].map((c) => String(c.ticker || "").toUpperCase())
+);
+const items = day.items || [];
+const dateObj = new Date(day.date + "T00:00:00Z");
+const longDate = dateObj.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric", timeZone: "UTC" });
+
+const upDown = (l) => `${l.yoy < 0 ? "down" : "up"} ${Math.abs(l.yoy).toFixed(1)}%`;
+function perfLine(p) {
+  if (!p) return null;
+  const phrase = p.basis === "fy" ? "for the fiscal year" : p.basis === "ytd" ? "year to date" : "year over year";
+  const parts = [];
+  if (p.rev) parts.push(`Revenue ${upDown(p.rev)} ${phrase}`);
+  if (p.oi) parts.push(p.rev ? `operating income ${upDown(p.oi)}` : `Operating income ${upDown(p.oi)} ${phrase}`);
+  return parts.length ? parts.join("; ") : null;
+}
+
+const graveCount = items.filter((it) => it.grave).length;
+const pageUrl = `${SITE_URL}/wire/${day.date}`;
+const pageDescription = `Every SEC filing across the catalog on ${longDate}: ${items.length} filing${items.length === 1 ? "" : "s"}${graveCount ? `, ${graveCount} grave` : ""}, with each filer's own figures and the 8-K codes in plain English.`;
+
+// ItemList so an engine reads the day as a structured list of filings, plus the breadcrumb trail.
+const pageJsonLd = [
+  {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name: `The Filing Wire — ${longDate}`,
+    description: pageDescription,
+    publisher: ORG,
+    dateModified: day.asOf || day.date,
+    mainEntity: {
+      "@type": "ItemList",
+      numberOfItems: items.length,
+      itemListElement: items.slice(0, 100).map((it, i) => ({
+        "@type": "ListItem",
+        position: i + 1,
+        name: `${it.name || it.ticker} (${it.ticker}): ${it.label || it.form}`,
+        ...(known.has(String(it.ticker).toUpperCase()) ? { url: `${SITE_URL}/c/${String(it.ticker).toUpperCase()}` } : {}),
+      })),
+    },
+  },
+  breadcrumbList([
+    { name: "Owner Scorecard", url: "/" },
+    { name: "The Filing Wire", url: "/wire" },
+    { name: longDate, url: pageUrl },
+  ]),
+].filter(Boolean);
+---
+
+<BaseLayout title={`The Filing Wire, ${longDate}, Owner Scorecard`} description={pageDescription} jsonLd={pageJsonLd}>
+  <p class="back"><a href="/wire">← The Filing Wire</a></p>
+  <header class="hd">
+    <h1>The Filing Wire</h1>
+    <span class="asof">{longDate}</span>
+  </header>
+  <p class="lede">
+    Every filing across the catalog on this day, straight from EDGAR, with the 8-K codes translated
+    into plain English. This page is permanent; the rolling wire keeps only the most recent days.
+  </p>
+
+  <section class="day">
+    <ul>
+      {items.map((it) => (
+        <li class={it.grave ? "grave" : ""}>
+          <div class="row">
+            <span class="tkr">{known.has(String(it.ticker).toUpperCase()) ? <a href={`/c/${String(it.ticker).toUpperCase()}`}>{it.ticker}</a> : it.ticker}</span>
+            <span class="what">{it.label}</span>
+            <span class="form">{it.form}</span>
+            {it.url ? <a class="src" href={it.url} target="_blank" rel="noopener">source →</a> : null}
+          </div>
+          {it.performance && perfLine(it.performance) ? (
+            <div class="perf">
+              <p class="line">{perfLine(it.performance)}</p>
+              {it.performance.driver ? <p class="q">“{it.performance.driver}”</p> : null}
+              <p class="note">{it.performance.driver ? "figures computed from the filing's XBRL; the words are the company's" : "figures computed from the filing's XBRL"}</p>
+            </div>
+          ) : null}
+        </li>
+      ))}
+    </ul>
+  </section>
+
+  <nav class="daynav">
+    {prev ? <a href={`/wire/${prev}`}>← {prev}</a> : <span></span>}
+    <a href="/wire">the wire</a>
+    {next ? <a href={`/wire/${next}`}>{next} →</a> : <span></span>}
+  </nav>
+
+  <Cite citation={`Owner Scorecard, "The Filing Wire, ${longDate}," ${pageUrl}.`} />
+
+  <style>
+    .back { margin: 0 0 8px; font-size: 13px; }
+    .hd { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+    .hd h1 { margin: 0; }
+    .asof { font-size: 12px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); }
+    .lede { font-family: var(--serif); font-style: italic; font-size: clamp(16px, 2.4vw, 19px); line-height: 1.45; color: var(--ink-soft); margin: 10px 0 26px; max-width: 66ch; }
+    .day { margin: 0 0 22px; }
+    ul { list-style: none; padding: 0; margin: 0; }
+    li { padding: 9px 0; border-bottom: 1px solid var(--rule); }
+    .row { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+    .tkr { font-weight: 700; font-variant-numeric: tabular-nums; flex: 0 0 64px; }
+    .tkr a { color: var(--accent); }
+    .what { flex: 1 1 auto; min-width: 200px; color: var(--ink); }
+    .form { font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); border: 1px solid var(--rule); padding: 1px 6px; flex: 0 0 auto; }
+    .src { font-size: 12px; color: var(--accent); flex: 0 0 auto; }
+    li.grave .what { color: var(--bad); font-weight: 600; }
+    li.grave .tkr a { color: var(--bad); }
+    .perf { margin: 8px 0 2px; }
+    .perf .line { font-size: 13px; color: var(--accent); font-weight: 600; font-variant-numeric: tabular-nums; margin: 0 0 4px; }
+    .perf .q { font-family: var(--serif); font-size: 13.5px; line-height: 1.5; color: var(--ink-soft); border-left: 2px solid var(--accent); padding: 2px 0 2px 12px; margin: 5px 0; }
+    .perf .note { font-size: 11px; letter-spacing: 0.03em; color: var(--muted); margin: 4px 0 0; }
+    .daynav { display: flex; justify-content: space-between; gap: 12px; margin: 22px 0; font-size: 13px; }
+    .daynav a { color: var(--accent); }
+  </style>
+</BaseLayout>

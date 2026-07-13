@@ -43,7 +43,7 @@ function perfLine(p) {
   {items.length ? (
     groups.map((g) => (
       <section class="day">
-        <h2 class="date">{fmtDate(g.date)}</h2>
+        <h2 class="date"><a href={`/wire/${g.date}`}>{fmtDate(g.date)}</a></h2>
         <ul>
           {g.items.map((it) => (
             <li class={it.grave ? "grave" : ""}>
@@ -77,6 +77,8 @@ function perfLine(p) {
 
     .day { margin: 0 0 22px; }
     .date { font-family: var(--sans); font-size: 11.5px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 0 0 4px; border-bottom: 1px solid var(--rule-strong); padding-bottom: 5px; }
+    .date a { color: inherit; text-decoration: none; }
+    .date a:hover { color: var(--accent); }
     ul { list-style: none; padding: 0; margin: 0; }
     li { padding: 9px 0; border-bottom: 1px solid var(--rule); }
     .row { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
