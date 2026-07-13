@@ -40,7 +40,7 @@ export async function GET() {
     `- [Catalog](${SITE_URL}/catalog): search and browse every scorecard`,
     `- [The Filing Wire](${SITE_URL}/wire): the latest SEC filings as they arrive, with each filer's own figures`,
     `- [Compare](${SITE_URL}/compare): two to four businesses side by side, on the record and on what a price would have to assume`,
-    `- [Principles](${SITE_URL}/concepts): how an owner reads a filing, and every measure used, defined`,
+    `- [Principles](${SITE_URL}/concepts): how to read a filing, and every measure used, defined`,
     `- [About](${SITE_URL}/about): what this publication is and is not`,
     `- [Corrections](${SITE_URL}/corrections): the public log of published errors and their fixes`,
     `- [Terms of Use](${SITE_URL}/terms): the terms and disclaimer — informational only, not investment advice, data provided without warranty`,

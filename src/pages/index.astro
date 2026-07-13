@@ -75,7 +75,8 @@ const fmtWireDate = (s) => new Date(s + "T00:00:00Z").toLocaleDateString("en-US"
 ---
 
 <BaseLayout
-  title="Owner Scorecard, read a company the way an owner would"
+  title="Owner Scorecard"
+  description="Using Owner Scorecard alongside annual & quarterly filings is one of the ways that an individual enterprising investor can learn and navigate the world's massive universe of marketable securities and the businesses that they represent in an efficient manner."
   jsonLd={[
     {
       "@context": "https://schema.org",
@@ -89,13 +90,6 @@ const fmtWireDate = (s) => new Date(s + "T00:00:00Z").toLocaleDateString("en-US"
 >
   <!-- ============================ SEARCH (the default door) ============================ -->
   <section id="searchView">
-    <div class="lede">
-      <h1>Read any company the way an owner would.</h1>
-      <p class="sub">
-        Every figure traced to the company's own SEC filing. Each business laid out in the order an owner reads it.
-      </p>
-    </div>
-
     <div class="omni" id="omniBox">
       <div class="omniField">
         <svg class="omniIcon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -134,14 +128,6 @@ const fmtWireDate = (s) => new Date(s + "T00:00:00Z").toLocaleDateString("en-US"
         {STARTERS.map((s) => <button type="button" class="chip" data-q={s}>{s}</button>)}
       </div>
     </div>
-
-    <p class="entry">
-      Start with the <a href="/concepts">principles</a>: how to read a business, start to finish.
-      <span class="sep" aria-hidden="true">·</span>
-      <a class="browse" href="/catalog">Browse all {totalLabel} companies →</a>
-      <span class="sep" aria-hidden="true">·</span>
-      <a href="/groupings">Browse the groupings →</a>
-    </p>
 
     {wireFeed.length ? (
       <section class="wire">
@@ -200,11 +186,9 @@ const fmtWireDate = (s) => new Date(s + "T00:00:00Z").toLocaleDateString("en-US"
   <style>
     /* ---------------------------------- search view ---------------------------------- */
     #searchView { margin-top: 8px; }
-    .lede { max-width: 640px; margin: 22px auto 0; text-align: center; }
-    .lede h1 { font-size: clamp(27px, 4.6vw, 40px); margin: 0; line-height: 1.1; }
-    .sub { font-size: 15px; line-height: 1.55; color: var(--ink-dim); margin: 14px auto 0; max-width: 60ch; }
 
-    .omni { max-width: 640px; margin: 24px auto 0; }
+    .omni { max-width: 640px; margin: 44px auto 0; }
+    @media (max-width: 640px) { .omni { margin-top: 28px; } }
     .omniField {
       display: flex; align-items: center; gap: 10px;
       border: 1.5px solid var(--rule-strong); border-radius: 10px;
@@ -261,10 +245,6 @@ const fmtWireDate = (s) => new Date(s + "T00:00:00Z").toLocaleDateString("en-US"
       background: var(--surface); transition: border-color 0.1s, color 0.1s;
     }
     .chip:hover { border-color: var(--accent); color: var(--accent); }
-
-    .entry { text-align: center; font-size: 13.5px; color: var(--muted); margin: 22px auto 0; max-width: 640px; line-height: 1.7; }
-    .entry .sep { margin: 0 10px; color: var(--faint); }
-    .browse { font-weight: 600; }
 
     /* ---- writing band ---- */
     .writing { margin: 46px 0 0; }
