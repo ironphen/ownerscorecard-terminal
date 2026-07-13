@@ -2,8 +2,17 @@
 
 2026-07-10. The owner's directive: value-adding marketing/social strategies "aligned with what
 Warren Buffett would do in my shoes," executed while the Notes are hand-written. This document
-is the doctrine and the ranked build list; the X drafter (marketing/README.md) was the first
-piece.
+is the doctrine and the ranked build list.
+
+**RETIRED (2026-07-13): the X drafter and its notifier.** The owner's verdict: "the tweet
+drafter is too manual for me to keep up with and doesnt add value." The lesson stands as a
+constraint on everything below: any channel that needs a daily human act to function is a
+channel this publication does not run. Marketing here must be INFRASTRUCTURE — built once,
+maintained by the same workflows that maintain the data, earning citation while unattended.
+Removed: scripts/draftTweets.mjs, the wire.yml step, marketing/ (queue, log, README), and the
+12:45 UTC phone-notifier routine. The doctrine's anti-goals were never violated and survive
+unchanged; X remains available to the owner's own hand whenever he wants it, with no machinery
+underneath it.
 
 ## The doctrine: earn citation, never buy attention
 
@@ -33,10 +42,10 @@ Applied here:
 
 | # | Piece | Why it compounds | Status |
 |---|---|---|---|
-| 1 | X filings drafter + phone notifier | News-pegged, factual, daily; the publication's public pulse | SHIPPED (deterministic, in wire.yml) |
-| 2 | Per-company link previews (OG images) | Every link shared anywhere becomes the product's face: ticker, name, the record at a glance. The highest-traffic surface we don't control today is other people's feeds | BUILDING |
-| 3 | Answer-engine legibility (llms.txt depth, endpoint docs page) | The tinkerer hook and the AI-citation hook are the same artifact: documented, stable, attributable data endpoints | BUILDING |
-| 4 | Weekly "the week on the wire" thread draft | The digest artifact; one thread that summarizes what companies filed, figures verbatim | SHIPPED (Monday branch of the drafter) |
+| 1 | X filings drafter + phone notifier | (retired — required a daily human act; see header) | RETIRED 2026-07-13 |
+| 2 | Per-company link previews (OG images) | Every link shared anywhere becomes the product's face: ticker, name, the record at a glance. The highest-traffic surface we don't control today is other people's feeds | SHIPPED |
+| 3 | Answer-engine legibility (llms.txt depth, endpoint docs page) | The tinkerer hook and the AI-citation hook are the same artifact: documented, stable, attributable data endpoints | SHIPPED |
+| 4 | Weekly "the week on the wire" thread draft | (retired with the drafter) | RETIRED 2026-07-13 |
 | 5 | Wire email loop polish (forward hook, public day-permalinks) | The only owned push channel; forwarding is the only viral mechanic doctrine allows | queued |
 | 6 | The build-story page (how one person + AI built a free Value Line) | The one launch-day artifact (HN et al.); owned-methods posture makes it tellable | waits for the owner's voice; drafts only on his word |
 | 7 | Community presence (value-investing forums) | Human, manual, the owner's own hand — never automated | owner's judgment, not a build |

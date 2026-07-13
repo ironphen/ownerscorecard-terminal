@@ -57,19 +57,14 @@ jobs:
       # commit and emails the owner.
       - name: Test against the fresh data
         run: npm test
-      # The filings-tweet drafter: a deterministic template over the wire's own computed figures
-      # (marketing/README.md states the rules). Drafts land in marketing/tweet-queue.md as
-      # PENDING REVIEW in the same commit as the wire; the owner posts to X by hand. Idempotent
-      # per day; never blocks the wire.
-      - name: Draft the day's filing tweets
-        continue-on-error: true
-        run: node scripts/draftTweets.mjs
+      # The filings-tweet drafter used to run here (2026-07-08 – 2026-07-13); retired because the
+      # hand-review step made it a daily chore. docs/marketing-plan.md records the decision.
       - name: Commit if changed
         run: |
-          if ! git diff --quiet -- src/data/wire.json src/data/rates.json src/data/fundamentals.json marketing; then
+          if ! git diff --quiet -- src/data/wire.json src/data/rates.json src/data/fundamentals.json; then
             git config user.name "github-actions[bot]"
             git config user.email "github-actions[bot]@users.noreply.github.com"
-            git add src/data/wire.json src/data/rates.json src/data/fundamentals.json marketing
+            git add src/data/wire.json src/data/rates.json src/data/fundamentals.json
             git commit -m "Refresh the filing wire, the risk-free rate, and the day's filers"
             # Rebase-and-retry so a concurrent push (an overlapping fundamentals run) can't silently
             # drop the day's wire + risk-free-rate refresh, the way a bare push otherwise would.
