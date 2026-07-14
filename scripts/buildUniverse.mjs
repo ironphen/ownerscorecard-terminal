@@ -30,6 +30,50 @@ const MAX = Math.max(500, parseInt(process.env.UNIVERSE_MAX || "3000", 10) || 30
 // The ADR pool is smaller and read for prominence, so a tighter cap by market value keeps it to the
 // globally significant names (a TSMC or ASML, not a cross-listed micro-cap).
 const ADR_MAX = Math.max(100, parseInt(process.env.ADR_MAX || "1000", 10) || 1000);
+
+// Foreign issuers the Nasdaq screener mislabels as US-domiciled. Left in the US pool they trap in the
+// 10-K pipeline (which cannot read their IFRS filings) and are then evicted from the ADR pool by the
+// de-dup in main() — so they vanish from the catalog with no page. That is exactly how Thomson Reuters
+// disappeared: a manual move to the ADR pool was silently undone by the next rebuild. Each name here
+// files a 20-F or 40-F (verified against EDGAR), so it is pinned to the ADR pool by ticker with its
+// home country for the label. Pinning in code makes the routing survive every rebuild.
+const FORCE_ADR = new Map([
+  ["AAUC", "Canada"], ["AERO", "Mexico"], ["AMBP", "Luxembourg"], ["AQN", "Canada"],
+  ["AQNB", "Canada"], ["ARIS", "Canada"], ["AS", "Cayman Islands"], ["ASC", "Marshall Islands"],
+  ["AUGO", "British Virgin Islands"], ["AVAL", "Colombia"], ["AZUL", "Brazil"], ["BBUC", "Canada"],
+  ["BEPC", "Canada"], ["BIRK", "Jersey"], ["BLTE", "Cayman Islands"], ["BNT", "Bermuda"],
+  ["BRSL", "United Kingdom"], ["BULL", "Cayman Islands"], ["BULLW", "Cayman Islands"], ["BWLP", "Singapore"],
+  ["CAAP", "Luxembourg"], ["CDLR", "Denmark"], ["CEPU", "Argentina"], ["CINT", "Cayman Islands"],
+  ["CMBT", "Belgium"], ["CMDB", "Marshall Islands"], ["CNL", "Canada"], ["DLO", "Cayman Islands"],
+  ["DOX", "United Kingdom"], ["DSGX", "Canada"], ["ECO", "Marshall Islands"], ["FINV", "Cayman Islands"],
+  ["FLNG", "Bermuda"], ["FTS", "Canada"], ["FVRR", "Israel"], ["GFS", "Cayman Islands"],
+  ["GLAS", "Canada"], ["GLOB", "Spain"], ["GOOS", "Canada"], ["HAFN", "Bermuda"],
+  ["HSHP", "Bermuda"], ["HSLV", "Canada"], ["HUYA", "Cayman Islands"], ["IFS", "Peru"],
+  ["IPX", "Australia"], ["ISOU", "Canada"], ["ITRG", "Canada"], ["JBS", "Netherlands"],
+  ["JMIA", "Germany"], ["KLAR", "United Kingdom"], ["KOF", "Mexico"], ["LEGN", "Cayman Islands"],
+  ["LUXE", "Netherlands"], ["MICC", "Netherlands"], ["MSC", "British Virgin Islands"], ["MTA", "Canada"],
+  ["NFGC", "Canada"], ["NIO", "Cayman Islands"], ["ONON", "Switzerland"], ["ORLA", "Canada"],
+  ["PSFE", "Bermuda"], ["QNC", "Canada"], ["RSKD", "Israel"], ["RTO", "United Kingdom"],
+  ["SE", "Cayman Islands"], ["SGHC", "Guernsey"], ["SII", "Canada"], ["SKE", "Canada"],
+  ["SLSR", "Canada"], ["SMWB", "Israel"], ["SSYS", "Israel"], ["STN", "Canada"],
+  ["STVN", "Italy"], ["SUPV", "Argentina"], ["TME", "Cayman Islands"], ["TRI", "Canada"],
+  ["TTAM", "Belgium"], ["VIK", "Bermuda"], ["VLRS", "Mexico"], ["VTMX", "Mexico"],
+  ["ZGN", "Netherlands"], ["ZIM", "Israel"],
+]);
+
+// Closed-end funds (BlackRock/Calamos/Gabelli/PIMCO): portfolios of securities, not operating
+// businesses, so they do not belong in a catalog meant to be read "as an owner would." They file
+// N-CSR, never a 10-K, so they never produced a scorecard — this only keeps them out of the input.
+const EXCLUDE = new Set([
+  "AEF", "AIO", "ASA", "BCAT", "BCX", "BDJ", "BGR", "BKT", "BLW", "BME", "BST", "BSTZ",
+  "BTX", "BTZ", "CET", "CII", "CSQ", "DLY", "DSL", "ECAT", "ECCC", "ECCV", "ETB", "ETO",
+  "ETV", "ETW", "EVN", "FMN", "FOF", "FRA", "FSCO", "FTHY", "GAB", "GAM", "GDV", "GUT",
+  "HQH", "HQL", "IIM", "IQI", "KTF", "KYN", "LEO", "MCI", "MHD", "MIY", "MQY", "MUA",
+  "MUC", "MUJ", "MYI", "NAN", "NCV", "NCZ", "NDMO", "NIE", "NMCO", "NXP", "OXLC", "OXLCL",
+  "OXLCM", "OXLCN", "OXLCO", "OXLCZ", "PDI", "PDO", "PDX", "PMO", "PPT", "PSF", "PSUS", "PTA",
+  "RFI", "RFMZ", "RMT", "RNP", "RQI", "RVT", "SDHY", "SOR", "TBLD", "TY", "TYG", "VCV",
+  "VGM", "VKI", "VKQ", "VMO", "WHFCL", "XFLT",
+]);
 const UA =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 
@@ -81,6 +125,7 @@ export function parseScreener(json) {
   for (const r of rows) {
     let tk = String(r.symbol || "").trim().toUpperCase().replace(/[./]/g, "-");
     if (!/^[A-Z][A-Z-]{0,6}$/.test(tk)) continue; // a plain equity symbol (drops ^ = etc.)
+    if (FORCE_ADR.has(tk) || EXCLUDE.has(tk)) continue; // pinned to the ADR pool, or excluded outright
     const country = String(r.country || "").trim();
     if (country && country !== "United States") continue; // keep the US universe US
     const cap = parseFloat(String(r.marketCap || "").replace(/[^0-9.]/g, ""));
@@ -103,11 +148,13 @@ export function parseScreenerADR(json) {
   for (const r of rows) {
     const tk = String(r.symbol || "").trim().toUpperCase().replace(/[./]/g, "-");
     if (!/^[A-Z][A-Z-]{0,6}$/.test(tk)) continue;
+    if (EXCLUDE.has(tk)) continue;
     const country = String(r.country || "").trim();
-    if (!country || country === "United States") continue; // the ADRs are exactly the non-US rows
+    const forced = FORCE_ADR.get(tk);
+    if (!forced && (!country || country === "United States")) continue; // the ADRs are the non-US rows, plus the pinned foreign filers
     const cap = parseFloat(String(r.marketCap || "").replace(/[^0-9.]/g, ""));
     if (!(cap > 0)) continue;
-    out.push({ ticker: tk, name: cleanName(r.name), cap, country });
+    out.push({ ticker: tk, name: cleanName(r.name), cap, country: forced || country });
   }
   out.sort((a, b) => b.cap - a.cap);
   const seen = new Set();
@@ -151,7 +198,7 @@ async function main() {
   const merged = new Map();
   for (const r of top) merged.set(r.ticker, curated.get(r.ticker) ?? r.name ?? null);
   let extras = 0;
-  for (const [tk, nm] of curated) if (!merged.has(tk)) { merged.set(tk, nm); extras++; }
+  for (const [tk, nm] of curated) if (!merged.has(tk) && !FORCE_ADR.has(tk) && !EXCLUDE.has(tk)) { merged.set(tk, nm); extras++; }
   const list = [...merged.entries()]
     .sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0))
     .map(([ticker, name]) => (name ? { ticker, name } : { ticker }));
@@ -185,7 +232,7 @@ async function main() {
   const adrMerged = new Map();
   for (const r of adrTop) adrMerged.set(r.ticker, { ticker: r.ticker, name: adrCurated.get(r.ticker)?.name ?? r.name ?? undefined, country: r.country });
   let adrExtras = 0;
-  for (const [tk, t] of adrCurated) if (!adrMerged.has(tk)) { adrMerged.set(tk, t); adrExtras++; }
+  for (const [tk, t] of adrCurated) if (!adrMerged.has(tk) && !EXCLUDE.has(tk)) { adrMerged.set(tk, t); adrExtras++; }
   // A foreign-incorporated company that files a us-GAAP 10-K (Chubb, NXP, Garmin, Eaton…) is read by
   // the US pipeline and already lives in the US universe; drop it from the ADR pool so it isn't
   // double-listed in both catalogs. The ADR pool is for the IFRS/20-F filers the US side can't read.

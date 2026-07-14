@@ -18,6 +18,7 @@ import { pathToFileURL } from "node:url";
 import { passesQualityFloor } from "../src/lib/fundamentals.mjs";
 import { reconcileLeaseLadder } from "../src/lib/leases.mjs";
 import { compactJson } from "../src/lib/dataFile.mjs";
+import { buildCikMap, CIK_OVERRIDE, resolveCikLive } from "./cikResolve.mjs";
 
 const UA =
   process.env.SEC_USER_AGENT ||
@@ -580,10 +581,11 @@ function quarterSeries(facts, revTags, n = 8) {
 async function main() {
   process.stdout.write("Resolving tickers → CIK from SEC… ");
   const map = await getJSON("https://www.sec.gov/files/company_tickers.json");
-  const cikByTicker = {};
-  for (const row of Object.values(map)) {
-    cikByTicker[String(row.ticker).toUpperCase()] = String(row.cik_str).padStart(10, "0");
-  }
+  // The main file is incomplete; the exchange file fills a few of its gaps, and the live lookup
+  // below catches the rest. buildCikMap merges the two static files (main wins on overlap).
+  let exchMap = null;
+  try { exchMap = await getJSON("https://www.sec.gov/files/company_tickers_exchange.json"); } catch { /* the main file alone still works */ }
+  const cikByTicker = buildCikMap(map, exchMap);
   console.log("done.");
 
   const companies = [];
@@ -598,9 +600,12 @@ async function main() {
   const onlyFund = (process.env.ONLY_FUND || "").toUpperCase().split(",").map((s) => s.trim()).filter(Boolean);
   for (const { ticker, name } of universe.tickers) {
     if (onlyFund.length && !onlyFund.includes(ticker.toUpperCase())) continue;
-    const cik = cikByTicker[ticker.toUpperCase()];
+    let cik = cikByTicker[ticker.toUpperCase()] || CIK_OVERRIDE[ticker.toUpperCase()];
+    // Names SEC's static files omit (active large-caps like Marsh McLennan, Coterra, Hologic) get one
+    // live EDGAR lookup before we give up — otherwise they silently drop out of the catalog.
+    if (!cik) { await sleep(THROTTLE_MS); cik = await resolveCikLive(ticker); }
     if (!cik) {
-      console.warn(`  ! ${ticker}: no CIK in SEC map, skipping`);
+      console.warn(`  ! ${ticker}: no CIK (SEC map + EDGAR lookup), skipping`);
       continue;
     }
     await sleep(THROTTLE_MS);

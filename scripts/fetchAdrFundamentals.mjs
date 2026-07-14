@@ -25,6 +25,7 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { passesQualityFloor } from "../src/lib/fundamentals.mjs";
 import { compactJson } from "../src/lib/dataFile.mjs";
+import { buildCikMap, CIK_OVERRIDE, resolveCikLive } from "./cikResolve.mjs";
 
 const UA = process.env.SEC_USER_AGENT || "Owner Scorecard research (ryanreinsant@gmail.com)";
 const HEADERS = { "User-Agent": UA, "Accept-Encoding": "gzip, deflate" };
@@ -388,9 +389,9 @@ function deriveOpInc(opInc, rev, ni, tax, interest) {
 
 async function tickerCikMap() {
   const j = await getJSON("https://www.sec.gov/files/company_tickers.json");
-  const m = new Map();
-  for (const k in j) { const r = j[k]; if (r?.ticker && r?.cik_str) m.set(String(r.ticker).toUpperCase(), String(r.cik_str).padStart(10, "0")); }
-  return m;
+  let exch = null;
+  try { exch = await getJSON("https://www.sec.gov/files/company_tickers_exchange.json"); } catch { /* main file alone still works */ }
+  return new Map(Object.entries(buildCikMap(j, exch)));
 }
 
 async function main() {
@@ -405,8 +406,9 @@ async function main() {
   const companies = []; const withheld = new Set();
   for (const [ticker, meta] of names) {
     if (only.length && !only.includes(ticker)) continue;
-    const cik = cikMap.get(ticker.replace(/-/g, "")) || cikMap.get(ticker);
-    if (!cik) { console.warn(`  ! ${ticker}: no CIK in SEC map (not an SEC filer?), skipping`); continue; }
+    let cik = cikMap.get(ticker.replace(/-/g, "")) || cikMap.get(ticker) || CIK_OVERRIDE[ticker.toUpperCase()];
+    if (!cik) { await sleep(THROTTLE_MS); cik = await resolveCikLive(ticker); }
+    if (!cik) { console.warn(`  ! ${ticker}: no CIK (SEC map + EDGAR lookup), skipping`); continue; }
     await sleep(THROTTLE_MS);
     let facts;
     try { facts = await getJSON(`https://data.sec.gov/api/xbrl/companyfacts/CIK${cik}.json`); }

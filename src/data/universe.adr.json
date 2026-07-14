@@ -1,5 +1,5 @@
 {
-  "note": "ADR universe: foreign companies listed on US exchanges (Nasdaq screener, non-US rows) with market cap at least the US universe's floor — i.e. as large as the smallest US name we cover. They file Form 20-F with the SEC; read in IFRS/US-GAAP by the ADR pipeline. Rebuilt via scripts/buildUniverse.mjs.",
+  "note": "ADR universe: foreign companies listed on US exchanges (Nasdaq screener, non-US rows) with market cap at least the US universe's floor — i.e. as large as the smallest US name we cover. They file Form 20-F with the SEC; read in IFRS/US-GAAP by the ADR pipeline. Rebuilt via scripts/buildUniverse.mjs. Includes foreign issuers the screener mislabels as US-domiciled, pinned by scripts/buildUniverse.mjs (FORCE_ADR).",
   "tickers": [
     {
       "ticker": "AACG",
@@ -14,6 +14,11 @@
     {
       "ticker": "AAPG",
       "country": "China"
+    },
+    {
+      "ticker": "AAUC",
+      "name": "Allied Gold Corporation",
+      "country": "Canada"
     },
     {
       "ticker": "ABCL",
@@ -123,6 +128,11 @@
       "ticker": "AER",
       "name": "AerCap Holdings N.V.",
       "country": "Netherlands"
+    },
+    {
+      "ticker": "AERO",
+      "name": "Grupo Aeromexico S.A.B. de C.V.",
+      "country": "Mexico"
     },
     {
       "ticker": "AFRI",
@@ -237,6 +247,11 @@
       "country": "Luxembourg"
     },
     {
+      "ticker": "AMBP",
+      "name": "Ardagh Metal Packaging S.A.",
+      "country": "Luxembourg"
+    },
+    {
       "ticker": "AMBR",
       "name": "Amber International Holding Limited",
       "country": "Hong Kong"
@@ -296,6 +311,15 @@
       "country": "Taiwan"
     },
     {
+      "ticker": "AQN",
+      "name": "Algonquin Power & Utilities Corp.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "AQNB",
+      "country": "Canada"
+    },
+    {
       "ticker": "ARBE",
       "name": "Arbe Robotics Ltd.",
       "country": "Israel"
@@ -320,6 +344,11 @@
       "country": "Netherlands"
     },
     {
+      "ticker": "ARIS",
+      "name": "Aris Mining Corporation",
+      "country": "Canada"
+    },
+    {
       "ticker": "ARM",
       "name": "Arm Holdings plc",
       "country": "United Kingdom"
@@ -333,6 +362,16 @@
       "ticker": "ARX",
       "name": "Accelerant Holdings Class A",
       "country": "Cayman Islands"
+    },
+    {
+      "ticker": "AS",
+      "name": "Amer Sports Inc.",
+      "country": "Cayman Islands"
+    },
+    {
+      "ticker": "ASC",
+      "name": "Ardmore Shipping Corporation",
+      "country": "Marshall Islands"
     },
     {
       "ticker": "ASM",
@@ -411,6 +450,11 @@
       "country": "Israel"
     },
     {
+      "ticker": "AUGO",
+      "name": "Aura Minerals Inc.",
+      "country": "British Virgin Islands"
+    },
+    {
       "ticker": "AUNA",
       "name": "Auna SA",
       "country": "Peru"
@@ -428,6 +472,10 @@
     {
       "ticker": "AUTL",
       "country": "United Kingdom"
+    },
+    {
+      "ticker": "AVAL",
+      "country": "Colombia"
     },
     {
       "ticker": "AVX",
@@ -465,6 +513,11 @@
       "country": "United Kingdom"
     },
     {
+      "ticker": "AZUL",
+      "name": "Azul S.A.",
+      "country": "Brazil"
+    },
+    {
       "ticker": "BABA",
       "name": "Alibaba Group Holding Limited",
       "country": "China"
@@ -498,6 +551,10 @@
       "ticker": "BBDO",
       "name": "Banco Bradesco Sa",
       "country": "Brazil"
+    },
+    {
+      "ticker": "BBUC",
+      "country": "Canada"
     },
     {
       "ticker": "BBVA",
@@ -539,6 +596,10 @@
     },
     {
       "ticker": "BEP",
+      "country": "Canada"
+    },
+    {
+      "ticker": "BEPC",
       "country": "Canada"
     },
     {
@@ -629,6 +690,11 @@
       "country": "Canada"
     },
     {
+      "ticker": "BIRK",
+      "name": "Birkenstock Holding plc",
+      "country": "Jersey"
+    },
+    {
       "ticker": "BLDP",
       "name": "Ballard Power Systems Inc.",
       "country": "Canada"
@@ -641,6 +707,11 @@
     {
       "ticker": "BLSH",
       "name": "Bullish",
+      "country": "Cayman Islands"
+    },
+    {
+      "ticker": "BLTE",
+      "name": "Belite Bio Inc",
       "country": "Cayman Islands"
     },
     {
@@ -693,6 +764,10 @@
       "ticker": "BNS",
       "name": "Bank Nova Scotia Halifax Pfd 3",
       "country": "Canada"
+    },
+    {
+      "ticker": "BNT",
+      "country": "Bermuda"
     },
     {
       "ticker": "BNTX",
@@ -756,6 +831,10 @@
       "country": "United Kingdom"
     },
     {
+      "ticker": "BRSL",
+      "country": "United Kingdom"
+    },
+    {
       "ticker": "BSAC",
       "name": "Banco Santander - Chile ADS",
       "country": "Chile"
@@ -794,6 +873,16 @@
       "country": "Belgium"
     },
     {
+      "ticker": "BULL",
+      "name": "Webull Corporation",
+      "country": "Cayman Islands"
+    },
+    {
+      "ticker": "BULLW",
+      "name": "Webull Corporation",
+      "country": "Cayman Islands"
+    },
+    {
       "ticker": "BUUU",
       "country": "Hong Kong"
     },
@@ -813,6 +902,11 @@
       "country": "Israel"
     },
     {
+      "ticker": "BWLP",
+      "name": "BW LPG Limited",
+      "country": "Singapore"
+    },
+    {
       "ticker": "BWMX",
       "name": "Betterware de Mexico S.A.P.I. de C.V.",
       "country": "Mexico"
@@ -825,6 +919,11 @@
       "ticker": "BZUN",
       "name": "Baozun Inc.",
       "country": "China"
+    },
+    {
+      "ticker": "CAAP",
+      "name": "Corporacion America Airports SA",
+      "country": "Luxembourg"
     },
     {
       "ticker": "CAAS",
@@ -889,9 +988,18 @@
       "country": "China"
     },
     {
+      "ticker": "CDLR",
+      "country": "Denmark"
+    },
+    {
       "ticker": "CDRO",
       "name": "Codere Online Luxembourg S.A.",
       "country": "Luxembourg"
+    },
+    {
+      "ticker": "CEPU",
+      "name": "Central Puerto S.A.",
+      "country": "Argentina"
     },
     {
       "ticker": "CGAU",
@@ -943,6 +1051,11 @@
       "country": "Canada"
     },
     {
+      "ticker": "CINT",
+      "name": "CI&T Inc Class A",
+      "country": "Cayman Islands"
+    },
+    {
       "ticker": "CLB",
       "name": "Core Laboratories Inc.",
       "country": "Netherlands"
@@ -978,6 +1091,11 @@
       "country": "Canada"
     },
     {
+      "ticker": "CMBT",
+      "name": "CMB.TECH NV",
+      "country": "Belgium"
+    },
+    {
       "ticker": "CMCL",
       "name": "Caledonia Mining Corporation Plc",
       "country": "Canada"
@@ -986,6 +1104,11 @@
       "ticker": "CMCM",
       "name": "Cheetah Mobile Inc.",
       "country": "China"
+    },
+    {
+      "ticker": "CMDB",
+      "name": "Costamare Bulkers Holdings Limited",
+      "country": "Marshall Islands"
     },
     {
       "ticker": "CMPR",
@@ -1013,6 +1136,11 @@
     {
       "ticker": "CNI",
       "name": "Canadian National Railway Company",
+      "country": "Canada"
+    },
+    {
+      "ticker": "CNL",
+      "name": "Collective Mining Ltd.",
       "country": "Canada"
     },
     {
@@ -1239,6 +1367,11 @@
       "country": "Greece"
     },
     {
+      "ticker": "DLO",
+      "name": "DLocal",
+      "country": "Cayman Islands"
+    },
+    {
       "ticker": "DMC",
       "name": "Del Monte Corporation",
       "country": "Cayman Islands"
@@ -1260,6 +1393,11 @@
     {
       "ticker": "DOO",
       "country": "Canada"
+    },
+    {
+      "ticker": "DOX",
+      "name": "Amdocs",
+      "country": "United Kingdom"
     },
     {
       "ticker": "DOYU",
@@ -1312,6 +1450,11 @@
       "country": "China"
     },
     {
+      "ticker": "DSGX",
+      "name": "Descartes Systems",
+      "country": "Canada"
+    },
+    {
       "ticker": "DSWL",
       "name": "Deswell Industries Inc.",
       "country": "Macau"
@@ -1335,6 +1478,11 @@
       "ticker": "EC",
       "name": "Ecopetrol S.A.",
       "country": "Colombia"
+    },
+    {
+      "ticker": "ECO",
+      "name": "Okeanis Eco Tankers Corp.",
+      "country": "Marshall Islands"
     },
     {
       "ticker": "ECX",
@@ -1551,9 +1699,19 @@
       "country": "U.S. Virgin Islands"
     },
     {
+      "ticker": "FINV",
+      "name": "FinVolution Group",
+      "country": "Cayman Islands"
+    },
+    {
       "ticker": "FLEX",
       "name": "Flex Ltd.",
       "country": "Singapore"
+    },
+    {
+      "ticker": "FLNG",
+      "name": "FLEX LNG Ltd.",
+      "country": "Bermuda"
     },
     {
       "ticker": "FLUT",
@@ -1629,6 +1787,11 @@
       "country": "Canada"
     },
     {
+      "ticker": "FTS",
+      "name": "Fortis Inc.",
+      "country": "Canada"
+    },
+    {
       "ticker": "FUFU",
       "name": "BitFuFu Inc.",
       "country": "Singapore"
@@ -1642,6 +1805,10 @@
       "ticker": "FUTU",
       "name": "Futu Holdings Limited",
       "country": "Hong Kong"
+    },
+    {
+      "ticker": "FVRR",
+      "country": "Israel"
     },
     {
       "ticker": "GAMB",
@@ -1698,6 +1865,11 @@
       "country": "Canada"
     },
     {
+      "ticker": "GFS",
+      "name": "GlobalFoundries Inc.",
+      "country": "Cayman Islands"
+    },
+    {
       "ticker": "GGAL",
       "name": "Grupo Financiero Galicia S.A.",
       "country": "Argentina"
@@ -1738,6 +1910,10 @@
       "country": "Israel"
     },
     {
+      "ticker": "GLAS",
+      "country": "Canada"
+    },
+    {
       "ticker": "GLBE",
       "name": "Global-E Online Ltd.",
       "country": "Israel"
@@ -1751,6 +1927,11 @@
       "ticker": "GLNG",
       "name": "Golar Lng Ltd",
       "country": "Bermuda"
+    },
+    {
+      "ticker": "GLOB",
+      "name": "Globant S.A.",
+      "country": "Spain"
     },
     {
       "ticker": "GLRE",
@@ -1776,6 +1957,10 @@
       "ticker": "GNTA",
       "name": "Genenta Science S.p.A.",
       "country": "Italy"
+    },
+    {
+      "ticker": "GOOS",
+      "country": "Canada"
     },
     {
       "ticker": "GOTU",
@@ -1865,6 +2050,11 @@
       "ticker": "GTX",
       "name": "Garrett Motion Inc.",
       "country": "Switzerland"
+    },
+    {
+      "ticker": "HAFN",
+      "name": "Hafnia Limited",
+      "country": "Bermuda"
     },
     {
       "ticker": "HBM",
@@ -1980,6 +2170,16 @@
       "country": "United Kingdom"
     },
     {
+      "ticker": "HSHP",
+      "name": "Himalaya Shipping Ltd.",
+      "country": "Bermuda"
+    },
+    {
+      "ticker": "HSLV",
+      "name": "Highlander Silver Corp.",
+      "country": "Canada"
+    },
+    {
       "ticker": "HTCO",
       "name": "High-Trend International Group",
       "country": "Singapore"
@@ -2003,6 +2203,11 @@
       "ticker": "HUHU",
       "name": "HUHUTECH International Group Inc.",
       "country": "China"
+    },
+    {
+      "ticker": "HUYA",
+      "name": "HUYA Inc.",
+      "country": "Cayman Islands"
     },
     {
       "ticker": "HYFT",
@@ -2053,6 +2258,11 @@
       "ticker": "IFRX",
       "name": "InflaRx N.V.",
       "country": "Germany"
+    },
+    {
+      "ticker": "IFS",
+      "name": "Intercorp Financial Services Inc.",
+      "country": "Peru"
     },
     {
       "ticker": "IGIC",
@@ -2158,6 +2368,10 @@
       "country": "France"
     },
     {
+      "ticker": "IPX",
+      "country": "Australia"
+    },
+    {
       "ticker": "IQ",
       "name": "iQIYI Inc.",
       "country": "China"
@@ -2170,6 +2384,16 @@
     {
       "ticker": "IRS",
       "country": "Argentina"
+    },
+    {
+      "ticker": "ISOU",
+      "name": "IsoEnergy Ltd.",
+      "country": "Canada"
+    },
+    {
+      "ticker": "ITRG",
+      "name": "Integra Resources Corp.",
+      "country": "Canada"
     },
     {
       "ticker": "ITRN",
@@ -2194,6 +2418,11 @@
       "ticker": "IXHL",
       "name": "Incannex Healthcare Inc.",
       "country": "Australia"
+    },
+    {
+      "ticker": "JBS",
+      "name": "JBS N.V. Class A",
+      "country": "Netherlands"
     },
     {
       "ticker": "JD",
@@ -2239,6 +2468,11 @@
       "ticker": "JLHL",
       "name": "Julong Holding Limited",
       "country": "China"
+    },
+    {
+      "ticker": "JMIA",
+      "name": "Jumia Technologies AG",
+      "country": "Germany"
     },
     {
       "ticker": "JOYY",
@@ -2306,6 +2540,11 @@
       "country": "Canada"
     },
     {
+      "ticker": "KLAR",
+      "name": "Klarna Group plc",
+      "country": "United Kingdom"
+    },
+    {
       "ticker": "KLIC",
       "name": "Kulicke and Soffa Industries Inc.",
       "country": "Singapore"
@@ -2329,6 +2568,11 @@
       "ticker": "KNOP",
       "name": "KNOT Offshore Partners LP Common",
       "country": "United Kingdom"
+    },
+    {
+      "ticker": "KOF",
+      "name": "Coca-Cola FEMSA",
+      "country": "Mexico"
     },
     {
       "ticker": "KOS",
@@ -2412,6 +2656,11 @@
       "ticker": "LBTYK",
       "name": "Liberty Global Ltd. Class C",
       "country": "United Kingdom"
+    },
+    {
+      "ticker": "LEGN",
+      "name": "Legend Biotech Corporation",
+      "country": "Cayman Islands"
     },
     {
       "ticker": "LFS",
@@ -2508,6 +2757,11 @@
       "ticker": "LU",
       "name": "Lufax Holding Ltd",
       "country": "China"
+    },
+    {
+      "ticker": "LUXE",
+      "name": "LuxExperience B.V.",
+      "country": "Netherlands"
     },
     {
       "ticker": "LX",
@@ -2637,6 +2891,11 @@
       "country": "Bermuda"
     },
     {
+      "ticker": "MICC",
+      "name": "The Magnum Ice Cream Company N.V.",
+      "country": "Netherlands"
+    },
+    {
       "ticker": "MIST",
       "name": "Milestone Pharmaceuticals Inc.",
       "country": "Canada"
@@ -2702,6 +2961,10 @@
       "country": "United Kingdom"
     },
     {
+      "ticker": "MSC",
+      "country": "British Virgin Islands"
+    },
+    {
       "ticker": "MSLE",
       "name": "Satellos Bioscience Inc.",
       "country": "Canada"
@@ -2710,6 +2973,11 @@
       "ticker": "MT",
       "name": "Arcelor Mittal NY Registry Shares NEW",
       "country": "Luxembourg"
+    },
+    {
+      "ticker": "MTA",
+      "name": "Metalla Royalty & Streaming Ltd.",
+      "country": "Canada"
     },
     {
       "ticker": "MTC",
@@ -2826,6 +3094,11 @@
       "country": "Israel"
     },
     {
+      "ticker": "NFGC",
+      "name": "New Found Gold Corp",
+      "country": "Canada"
+    },
+    {
       "ticker": "NG",
       "name": "Novagold Resources Inc.",
       "country": "Canada"
@@ -2853,6 +3126,11 @@
       "ticker": "NICM",
       "name": "Nicola Mining Inc.",
       "country": "Canada"
+    },
+    {
+      "ticker": "NIO",
+      "name": "NIO Inc.",
+      "country": "Cayman Islands"
     },
     {
       "ticker": "NIPG",
@@ -3095,6 +3373,11 @@
       "country": "United Kingdom"
     },
     {
+      "ticker": "ONON",
+      "name": "On Holding AG",
+      "country": "Switzerland"
+    },
+    {
       "ticker": "OPRA",
       "name": "Opera Limited",
       "country": "Norway"
@@ -3108,6 +3391,11 @@
       "ticker": "ORIQU",
       "name": "Origin Investment Corp I",
       "country": "Singapore"
+    },
+    {
+      "ticker": "ORLA",
+      "name": "Orla Mining Ltd.",
+      "country": "Canada"
     },
     {
       "ticker": "ORMP",
@@ -3337,6 +3625,11 @@
       "country": "Netherlands"
     },
     {
+      "ticker": "PSFE",
+      "name": "Paysafe Limited",
+      "country": "Bermuda"
+    },
+    {
       "ticker": "PSIG",
       "name": "PS International Group Ltd.",
       "country": "Hong Kong"
@@ -3388,6 +3681,11 @@
       "ticker": "QH",
       "name": "Quhuo Limited American Depository Shares",
       "country": "China"
+    },
+    {
+      "ticker": "QNC",
+      "name": "Quantum eMotion Corp.",
+      "country": "Canada"
     },
     {
       "ticker": "QNTM",
@@ -3514,6 +3812,16 @@
       "country": "Hong Kong"
     },
     {
+      "ticker": "RSKD",
+      "name": "Riskified Ltd.",
+      "country": "Israel"
+    },
+    {
+      "ticker": "RTO",
+      "name": "Rentokil Initial plc",
+      "country": "United Kingdom"
+    },
+    {
       "ticker": "RY",
       "name": "Royal Bank Of Canada",
       "country": "Canada"
@@ -3616,6 +3924,11 @@
       "country": "Bermuda"
     },
     {
+      "ticker": "SE",
+      "name": "Sea Limited",
+      "country": "Cayman Islands"
+    },
+    {
       "ticker": "SEDG",
       "name": "SolarEdge Technologies Inc.",
       "country": "Israel"
@@ -3629,6 +3942,11 @@
       "ticker": "SFWL",
       "name": "Shengfeng Development Limited",
       "country": "China"
+    },
+    {
+      "ticker": "SGHC",
+      "name": "Super Group (SGHC) Limited",
+      "country": "Guernsey"
     },
     {
       "ticker": "SGML",
@@ -3675,6 +3993,11 @@
       "country": "India"
     },
     {
+      "ticker": "SII",
+      "name": "Sprott Inc.",
+      "country": "Canada"
+    },
+    {
       "ticker": "SILC",
       "name": "Silicom Ltd",
       "country": "Israel"
@@ -3692,6 +4015,11 @@
     {
       "ticker": "SJ",
       "country": "China"
+    },
+    {
+      "ticker": "SKE",
+      "name": "Skeena Resources Limited",
+      "country": "Canada"
     },
     {
       "ticker": "SKM",
@@ -3733,8 +4061,18 @@
       "country": "United Kingdom"
     },
     {
+      "ticker": "SLSR",
+      "name": "Solaris Resources Inc.",
+      "country": "Canada"
+    },
+    {
       "ticker": "SMFG",
       "country": "Japan"
+    },
+    {
+      "ticker": "SMWB",
+      "name": "Similarweb Ltd.",
+      "country": "Israel"
     },
     {
       "ticker": "SNDL",
@@ -3842,6 +4180,11 @@
       "country": "Canada"
     },
     {
+      "ticker": "SSYS",
+      "name": "Stratasys Ltd. Ordinary Shares (Israel)",
+      "country": "Israel"
+    },
+    {
       "ticker": "ST",
       "name": "Sensata Technologies Holding plc",
       "country": "Netherlands"
@@ -3872,6 +4215,11 @@
       "country": "Switzerland"
     },
     {
+      "ticker": "STN",
+      "name": "Stantec",
+      "country": "Canada"
+    },
+    {
       "ticker": "STNE",
       "name": "StoneCo Ltd. Class A",
       "country": "Brazil"
@@ -3882,9 +4230,19 @@
       "country": "Monaco"
     },
     {
+      "ticker": "STVN",
+      "name": "Stevanato Group S.p.A.",
+      "country": "Italy"
+    },
+    {
       "ticker": "SU",
       "name": "Suncor Energy  Inc.",
       "country": "Canada"
+    },
+    {
+      "ticker": "SUPV",
+      "name": "Grupo Supervielle S.A.",
+      "country": "Argentina"
     },
     {
       "ticker": "SUPX",
@@ -4099,6 +4457,11 @@
       "country": "Canada"
     },
     {
+      "ticker": "TME",
+      "name": "Tencent Music Entertainment Group",
+      "country": "Cayman Islands"
+    },
+    {
       "ticker": "TMQ",
       "name": "Trilogy Metals Inc.",
       "country": "Canada"
@@ -4127,6 +4490,11 @@
       "ticker": "TOYO",
       "name": "TOYO Co. Ltd",
       "country": "Japan"
+    },
+    {
+      "ticker": "TRI",
+      "name": "Thomson Reuters Corporation",
+      "country": "Canada"
     },
     {
       "ticker": "TRMD",
@@ -4175,6 +4543,11 @@
     {
       "ticker": "TSM",
       "country": "Taiwan"
+    },
+    {
+      "ticker": "TTAM",
+      "name": "Titan America SA",
+      "country": "Belgium"
     },
     {
       "ticker": "TTE",
@@ -4339,6 +4712,11 @@
       "country": "United Kingdom"
     },
     {
+      "ticker": "VIK",
+      "name": "Viking Holdings Ltd",
+      "country": "Bermuda"
+    },
+    {
       "ticker": "VINP",
       "name": "Vinci Compass Investments Ltd. Class A",
       "country": "Brazil"
@@ -4369,6 +4747,10 @@
       "country": "United Kingdom"
     },
     {
+      "ticker": "VLRS",
+      "country": "Mexico"
+    },
+    {
       "ticker": "VMET",
       "name": "Versamet Royalties Corporation",
       "country": "Canada"
@@ -4397,6 +4779,10 @@
       "ticker": "VTEX",
       "name": "VTEX Class A",
       "country": "United Kingdom"
+    },
+    {
+      "ticker": "VTMX",
+      "country": "Mexico"
     },
     {
       "ticker": "VZLA",
@@ -4655,9 +5041,19 @@
       "country": "China"
     },
     {
+      "ticker": "ZGN",
+      "name": "Ermenegildo Zegna N.V.",
+      "country": "Netherlands"
+    },
+    {
       "ticker": "ZH",
       "name": "Zhihu Inc.",
       "country": "China"
+    },
+    {
+      "ticker": "ZIM",
+      "name": "ZIM Integrated Shipping Services Ltd.",
+      "country": "Israel"
     },
     {
       "ticker": "ZJK",

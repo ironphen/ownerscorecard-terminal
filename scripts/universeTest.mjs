@@ -12,6 +12,8 @@ const payload = { data: { rows: [
   { symbol: "BRK/B", name: "Berkshire Hathaway Inc. Common Stock", country: "United States", marketCap: "1000000000000" },
   { symbol: "^XYZ", name: "Some Preferred", country: "United States", marketCap: "100" }, // junk symbol → dropped
   { symbol: "ZZZ", name: "Unpriced Co", country: "Germany", marketCap: "" }, // unpriced → dropped
+  { symbol: "TRI", name: "Thomson Reuters Corporation Common Stock", country: "United States", marketCap: "80000000000" }, // FORCE_ADR: pinned to ADR despite the US label
+  { symbol: "GAB", name: "Gabelli Equity Trust", country: "United States", marketCap: "2000000000" }, // EXCLUDE: closed-end fund, dropped from both
 ]}};
 
 const us = parseScreener(payload);
@@ -24,10 +26,14 @@ const check = (name, cond, got) => { const ok = !!cond; console.log((ok ? "ok   
 
 check("US set is US-only, market-cap sorted, BRK normalized", usT.join(",") === "AAPL,MSFT,BRK-B", usT);
 check("US set excludes every ADR", !usT.some((t) => ["TSM", "ASML", "NVO"].includes(t)), usT);
-check("ADR set is the foreign names, cap-sorted", adrT.join(",") === "TSM,NVO,ASML", adrT);
+check("ADR set is the foreign names + pinned filers, cap-sorted", adrT.join(",") === "TSM,NVO,ASML,TRI", adrT);
 check("ADR set excludes every US name", !adrT.some((t) => ["AAPL", "MSFT", "BRK-B"].includes(t)), adrT);
 check("ADR carries country", adr.find((r) => r.ticker === "ASML")?.country === "Netherlands", adr[0]);
-check("junk symbol and unpriced row dropped from both", usT.length === 3 && adrT.length === 3, { usT, adrT });
+check("junk symbol and unpriced row dropped from both", usT.length === 3 && adrT.length === 4, { usT, adrT });
+// FORCE_ADR / EXCLUDE: a foreign filer the screener mislabels US is pinned to the ADR pool with its
+// home country; a closed-end fund is dropped from both. Guards the Thomson-Reuters-class regression.
+check("FORCE_ADR name (US-labeled) pinned to ADR with home country", !usT.includes("TRI") && adr.find((r) => r.ticker === "TRI")?.country === "Canada", { usHasTRI: usT.includes("TRI"), tri: adr.find((r) => r.ticker === "TRI") });
+check("EXCLUDE (closed-end fund) dropped from both pools", !usT.includes("GAB") && !adrT.includes("GAB"), { usT, adrT });
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
