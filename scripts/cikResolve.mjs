@@ -15,9 +15,11 @@
 
 const SEC_UA = process.env.SEC_USER_AGENT || "OwnerScorecard research hello@ownerscorecard.com";
 
-// Renamed tickers even EDGAR's own ticker index has not caught up to. CIK verified via the prior
-// ticker (Fiserv filed as FISV before its 2023 rename to FI).
-export const CIK_OVERRIDE = { FI: "0000798354" };
+// Tickers SEC's own map resolves to the WRONG entity, verified case by case against companyfacts:
+//  - FI: Fiserv, filed as FISV before its 2023 rename; EDGAR's ticker index lags.
+//  - XOM: SEC maps XOM to CIK 2115436, an empty reorg shell with no annual financials; the real
+//    Exxon Mobil record (Revenues FY2011-2025, latest $332B) lives under the classic CIK 34088.
+export const CIK_OVERRIDE = { FI: "0000798354", XOM: "0000034088" };
 
 // Merge SEC's two ticker files into one upper-case-ticker → 10-digit-CIK map. The exchange file only
 // fills gaps the main file leaves (main wins on any overlap).

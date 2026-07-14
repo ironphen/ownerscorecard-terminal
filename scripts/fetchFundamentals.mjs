@@ -320,6 +320,11 @@ function revenueTagsFor(sic) {
   if (sicN >= 6500 && sicN <= 6799) return REIT_REVENUE;
   if (sicN >= 6300 && sicN <= 6399) return INSURER_REVENUE;
   if (sicN >= 6020 && sicN <= 6079) return BANK_REVENUE;
+  // Security broker-dealers (Morgan Stanley, Goldman) report their top line as total revenue net of
+  // interest expense and re-tagged it "RevenuesNetOfInterestExpense" mid-decade — the same tag switch
+  // the bank set handles. Without this they fall to the default tags (which lack that concept) and
+  // strand at their last "Revenues" year. The contract tag stays excluded so a fee sliver never wins.
+  if (sicN === 6211) return BANK_REVENUE;
   return CONCEPTS.revenue;
 }
 
@@ -600,7 +605,9 @@ async function main() {
   const onlyFund = (process.env.ONLY_FUND || "").toUpperCase().split(",").map((s) => s.trim()).filter(Boolean);
   for (const { ticker, name } of universe.tickers) {
     if (onlyFund.length && !onlyFund.includes(ticker.toUpperCase())) continue;
-    let cik = cikByTicker[ticker.toUpperCase()] || CIK_OVERRIDE[ticker.toUpperCase()];
+    // CIK_OVERRIDE wins over the SEC map: it exists precisely to correct tickers the map points at
+    // the wrong entity (XOM → an empty reorg shell), so it must take precedence, not fill a gap.
+    let cik = CIK_OVERRIDE[ticker.toUpperCase()] || cikByTicker[ticker.toUpperCase()];
     // Names SEC's static files omit (active large-caps like Marsh McLennan, Coterra, Hologic) get one
     // live EDGAR lookup before we give up — otherwise they silently drop out of the catalog.
     if (!cik) { await sleep(THROTTLE_MS); cik = await resolveCikLive(ticker); }

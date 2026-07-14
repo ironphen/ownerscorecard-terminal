@@ -406,7 +406,7 @@ async function main() {
   const companies = []; const withheld = new Set();
   for (const [ticker, meta] of names) {
     if (only.length && !only.includes(ticker)) continue;
-    let cik = cikMap.get(ticker.replace(/-/g, "")) || cikMap.get(ticker) || CIK_OVERRIDE[ticker.toUpperCase()];
+    let cik = CIK_OVERRIDE[ticker.toUpperCase()] || cikMap.get(ticker.replace(/-/g, "")) || cikMap.get(ticker);
     if (!cik) { await sleep(THROTTLE_MS); cik = await resolveCikLive(ticker); }
     if (!cik) { console.warn(`  ! ${ticker}: no CIK (SEC map + EDGAR lookup), skipping`); continue; }
     await sleep(THROTTLE_MS);
