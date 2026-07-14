@@ -19,6 +19,12 @@ import { join } from "node:path";
 const DIST = "dist";
 const HTML_FLOOR = 3000; // ~3,500 pages today; anything below this means the corpus flipped
 const WORKER_CEILING_BYTES = 5 * 1024 * 1024; // any big-JSON leak lands 20MB+ past this
+// Cloudflare Workers static-assets ceiling: 20,000 files per deployment on the free plan (100,000
+// on Workers Paid). Each covered company costs ~3 files (page + two JSON twins), so a large
+// international expansion could sail past this and break the deploy with a cryptic Cloudflare error.
+// Warn with runway, then fail loudly BEFORE Cloudflare does so the cause is unmistakable.
+const ASSET_CEILING = 20000;
+const ASSET_WARN = 18000;
 
 const walk = (dir, onFile) => {
   for (const name of readdirSync(dir)) {
@@ -36,6 +42,21 @@ if (!existsSync(DIST)) {
 
 let htmlCount = 0;
 walk(DIST, (p) => { if (p.endsWith(".html")) htmlCount++; });
+
+// The static-asset count is what Cloudflare enforces: every file served from dist/client/.
+let assetCount = 0;
+const clientDir = join(DIST, "client");
+if (existsSync(clientDir)) walk(clientDir, () => { assetCount++; });
+
+if (assetCount >= ASSET_CEILING) {
+  console.error(
+    `verifyStatic: FAIL — ${assetCount.toLocaleString()} static assets in ${clientDir}/ ` +
+    `(Cloudflare free-tier ceiling ${ASSET_CEILING.toLocaleString()}).\n` +
+    `The deploy would be rejected. Cover fewer names, drop a JSON twin per company, or move to ` +
+    `Workers Paid (raises the ceiling to 100,000).`
+  );
+  process.exit(1);
+}
 
 if (htmlCount < HTML_FLOOR) {
   console.error(
@@ -63,7 +84,13 @@ if (workerBytes > WORKER_CEILING_BYTES) {
   process.exit(1);
 }
 
+const assetNote =
+  assetCount >= ASSET_WARN
+    ? ` ⚠ ${assetCount.toLocaleString()}/${ASSET_CEILING.toLocaleString()} static assets — nearing the Cloudflare free-tier ceiling`
+    : ` (${assetCount.toLocaleString()}/${ASSET_CEILING.toLocaleString()} static assets)`;
+
 console.log(
   `verifyStatic: OK — ${htmlCount} static HTML pages` +
-  (workerBytes ? `, worker bundle ${(workerBytes / 1048576).toFixed(2)}MB` : ", no worker emitted") + "."
+  (workerBytes ? `, worker bundle ${(workerBytes / 1048576).toFixed(2)}MB` : ", no worker emitted") +
+  assetNote + "."
 );
