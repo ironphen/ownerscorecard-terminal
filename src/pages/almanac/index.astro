@@ -17,7 +17,11 @@ import { computeAlmanac } from "../../lib/almanac.mjs";
 import { SITE_URL, ORG } from "../../lib/seo.mjs";
 import { dataAsOf, fmtAsOf } from "../../lib/freshness.mjs";
 
-const a = computeAlmanac(fundamentals.companies || [], adrData.companies || [], jpData.companies || []);
+const a = computeAlmanac({
+  us: fundamentals.companies || [],
+  adr: adrData.companies || [],
+  homePools: [{ country: "Japan", companies: jpData.companies || [] }],
+});
 const asOf = fmtAsOf(dataAsOf);
 const n = (x) => (x == null ? "—" : x.toLocaleString("en-US"));
 const p = (v) => (v == null || !Number.isFinite(v) ? "—" : `${(v * 100).toFixed(1)}%`);
@@ -60,9 +64,10 @@ const pageJsonLd = [
       together. This is the universe Owner Scorecard covers, and it is a large but not complete,
       United-States-centered slice of the world's public companies, not the whole of it:
       {n(a.universe.us)} US filers, {n(a.universe.adr)} foreign companies with US-listed ADRs, and
-      {n(a.universe.jp)} large Japanese companies. Read the figures below as "of the companies here,"
-      never as "of all companies everywhere." They are computed from {n(a.universe.readable)}
-      readable records{asOf ? `, as of ${asOf}` : ""}. Returns and margins are read through the
+      {n(a.universe.home)} large Japanese companies. Read the figures below as "of the companies
+      here," never as "of all companies everywhere." A company listed both as an ADR and in its home
+      market is counted once. They are computed from {n(a.universe.readable)} readable
+      records{asOf ? `, as of ${asOf}` : ""}. Returns and margins are read through the
       cycle, the median over each company's own record, so one peak or trough year never sets a
       level. A company appears in a figure only where its record could be read; it is never counted
       as a zero.

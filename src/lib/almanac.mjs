@@ -39,8 +39,34 @@ export function shareAtLeast(values, threshold) {
   return { n: vals.length, pass, share: pass / vals.length };
 }
 
-export function computeAlmanac(usCompanies, adrCompanies, jpCompanies) {
-  const all = [...(usCompanies || []), ...(adrCompanies || []), ...(jpCompanies || [])];
+// Legal-suffix stripping for cross-pool identity: "Toyota Motor Corporation" (the ADR) and "Toyota
+// Motor" (the home-market listing) resolve to the same key. Deliberately conservative — only
+// corporate-form words are removed, never descriptive ones like "group" or "holdings" — and a match
+// is trusted ONLY within the same country, so an unrelated same-normalized name elsewhere is never
+// merged. When there is no ISIN in the data, this is the reliable cross-listing key available.
+const norm = (s) => String(s || "").toLowerCase()
+  .replace(/\b(corporation|corp|incorporated|inc|company|co|limited|ltd|plc)\b/g, "")
+  .replace(/[^a-z0-9]/g, "");
+
+// us: the US pool. adr: the ADR (SEC 20-F) pool. homePools: [{ country, companies }], one per
+// home-market catalog (Japan today; Europe/UK later, each keyed by its own country). A company
+// listed BOTH as an ADR and in its home market — Toyota, Sony, and the like — is counted once, as
+// the home-market listing, so the census never double-counts it. An ADR with no home-market pool
+// (a Chinese or Canadian filer with only a 20-F) is kept, since it is the only version there is.
+export function computeAlmanac({ us = [], adr = [], homePools = [] }) {
+  const homeByCountry = new Map();
+  const homeCompanies = [];
+  for (const pool of homePools) {
+    if (!homeByCountry.has(pool.country)) homeByCountry.set(pool.country, new Set());
+    const set = homeByCountry.get(pool.country);
+    for (const c of pool.companies || []) { const k = norm(c.name); if (k) set.add(k); homeCompanies.push(c); }
+  }
+  const adrDeduped = (adr || []).filter((c) => {
+    const set = homeByCountry.get(c.country);
+    return !(set && set.has(norm(c.name)));
+  });
+  const droppedDuplicates = (adr || []).length - adrDeduped.length;
+  const all = [...(us || []), ...adrDeduped, ...homeCompanies];
 
   // Collect the per-company figures once. A company that cannot be read is simply absent from the
   // metric it fails, never a zero — the same withholding the pages make.
@@ -113,7 +139,7 @@ export function computeAlmanac(usCompanies, adrCompanies, jpCompanies) {
   for (const k of defensivePassCounts) defHist[k] = (defHist[k] || 0) + 1;
 
   return {
-    universe: { total: all.length, readable, us: (usCompanies || []).length, adr: (adrCompanies || []).length, jp: (jpCompanies || []).length },
+    universe: { total: all.length, readable, us: (us || []).length, adr: adrDeduped.length, home: homeCompanies.length, droppedDuplicates },
     // Continuous distributions (decimals; 0.15 = 15%).
     distributions: {
       roicThroughCycle: distribution(roic),

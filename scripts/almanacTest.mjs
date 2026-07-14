@@ -42,8 +42,16 @@ console.log("\nshareAtLeast — base-rate math:");
 
 console.log("\ncomputeAlmanac — against the live universe (structure + doctrine + sanity):");
 {
-  const a = computeAlmanac(load("fundamentals.json"), load("fundamentals.adr.json"), load("fundamentals.jp.json"));
+  const a = computeAlmanac({
+    us: load("fundamentals.json"),
+    adr: load("fundamentals.adr.json"),
+    homePools: [{ country: "Japan", companies: load("fundamentals.jp.json") }],
+  });
   ok(a.universe.readable > 1000, `read a real universe (${a.universe.readable})`);
+  // De-dup: the four Japanese names listed both as ADRs (TM/SONY/HMC/TAK) and in the Japan pool
+  // must be counted once — dropped from the ADR side, kept as the home-market listing.
+  ok(a.universe.droppedDuplicates >= 4, `de-dups ADR/home duplicates (dropped ${a.universe.droppedDuplicates})`);
+  ok(a.universe.total === a.universe.us + a.universe.adr + a.universe.home, "total = us + deduped-adr + home (no double-count)");
   ok(a.distributions.roicThroughCycle.n > 500, "a real ROIC sample");
   // Sanity: a share is a probability in [0,1]; a median return sits in a plausible band.
   const shares = [a.baseRates.roicAtLeast15.share, a.baseRates.netCash.share, a.baseRates.passedAllDefensiveTests.share];
