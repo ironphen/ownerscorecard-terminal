@@ -1,121 +1,121 @@
 {
   "market": "JP",
   "currency": "JPY",
-  "note": "Japanese equities, a separate pool from the US universe. These never pass through the SIC/archetype engine; each carries a curated sector (the model lens) and industry label. Anchored by the five trading houses Berkshire holds; expanded 2026-07-14 to the Nikkei 225 (non-financial constituents). Financials (banks, insurers, securities) are held back until the JP financial scorecards are wired.",
+  "note": "Japanese equities, a separate pool from the US universe. These never pass through the SIC/archetype engine; each carries a curated sector (the model lens) and a shared industry label drawn from the same vocabulary as the US/ADR pools. Anchored by the five trading houses Berkshire holds; expanded 2026-07-14 to the Nikkei 225 (non-financial constituents). Financials (banks, insurers, securities) and the investment-holding company SoftBank Group are held back until their dedicated scorecards are wired.",
   "tickers": [
     {
       "ticker": "1332",
       "name": "Nissui",
       "sector": "consumer",
-      "industry": "Seafood & foods"
+      "industry": "Packaged food"
     },
     {
       "ticker": "1605",
       "name": "INPEX",
       "sector": "capital",
-      "industry": "Oil & gas E&P"
+      "industry": "Oil & gas"
     },
     {
       "ticker": "1721",
       "name": "Comsys Holdings",
       "sector": "capital",
-      "industry": "Telecom infrastructure construction"
+      "industry": "Heavy Construction Other Than Bldg Const - Contractors"
     },
     {
       "ticker": "1801",
       "name": "Taisei",
       "sector": "capital",
-      "industry": "General contractor"
+      "industry": "General Bldg Contractors - Nonresidential Bldgs"
     },
     {
       "ticker": "1802",
       "name": "Obayashi",
       "sector": "capital",
-      "industry": "General contractor"
+      "industry": "General Bldg Contractors - Nonresidential Bldgs"
     },
     {
       "ticker": "1803",
       "name": "Shimizu",
       "sector": "capital",
-      "industry": "General contractor"
+      "industry": "General Bldg Contractors - Nonresidential Bldgs"
     },
     {
       "ticker": "1808",
       "name": "Haseko",
       "sector": "capital",
-      "industry": "Construction"
+      "industry": "General Bldg Contractors - Residential Bldgs"
     },
     {
       "ticker": "1812",
       "name": "Kajima",
       "sector": "capital",
-      "industry": "General contractor"
+      "industry": "General Bldg Contractors - Nonresidential Bldgs"
     },
     {
       "ticker": "1925",
       "name": "Daiwa House Industry",
       "sector": "capital",
-      "industry": "Homebuilding & real estate"
+      "industry": "General Bldg Contractors - Residential Bldgs"
     },
     {
       "ticker": "1928",
       "name": "Sekisui House",
       "sector": "capital",
-      "industry": "Homebuilding"
+      "industry": "General Bldg Contractors - Residential Bldgs"
     },
     {
       "ticker": "1963",
       "name": "JGC Holdings",
       "sector": "capital",
-      "industry": "Engineering & construction"
+      "industry": "Engineering"
     },
     {
       "ticker": "2002",
       "name": "Nisshin Seifun Group",
       "sector": "consumer",
-      "industry": "Flour milling & foods"
+      "industry": "Packaged food"
     },
     {
       "ticker": "2269",
       "name": "Meiji Holdings",
       "sector": "consumer",
-      "industry": "Food & pharmaceuticals"
+      "industry": "Packaged food"
     },
     {
       "ticker": "2282",
       "name": "NH Foods",
       "sector": "consumer",
-      "industry": "Meat & foods"
+      "industry": "Packaged food"
     },
     {
       "ticker": "2413",
       "name": "M3",
       "sector": "assetLight",
-      "industry": "Medical information platform"
+      "industry": "Internet platforms"
     },
     {
       "ticker": "2432",
       "name": "DeNA",
       "sector": "assetLight",
-      "industry": "Mobile games & internet"
+      "industry": "Video games"
     },
     {
       "ticker": "2501",
       "name": "Sapporo Holdings",
       "sector": "consumer",
-      "industry": "Beverages (beer) & real estate"
+      "industry": "Beverages"
     },
     {
       "ticker": "2502",
       "name": "Asahi Group Holdings",
       "sector": "consumer",
-      "industry": "Beverages (beer)"
+      "industry": "Beverages"
     },
     {
       "ticker": "2503",
       "name": "Kirin Holdings",
       "sector": "consumer",
-      "industry": "Beverages (beer)"
+      "industry": "Beverages"
     },
     {
       "ticker": "2768",
@@ -127,19 +127,19 @@
       "ticker": "2801",
       "name": "Kikkoman",
       "sector": "consumer",
-      "industry": "Soy sauce & foods"
+      "industry": "Packaged food"
     },
     {
       "ticker": "2802",
       "name": "Ajinomoto",
       "sector": "consumer",
-      "industry": "Food & seasonings"
+      "industry": "Packaged food"
     },
     {
       "ticker": "2871",
       "name": "Nichirei",
       "sector": "consumer",
-      "industry": "Frozen foods"
+      "industry": "Packaged food"
     },
     {
       "ticker": "2914",
@@ -157,7 +157,7 @@
       "ticker": "3092",
       "name": "ZOZO",
       "sector": "assetLight",
-      "industry": "Fashion e-commerce platform"
+      "industry": "E-commerce"
     },
     {
       "ticker": "3099",
@@ -169,25 +169,25 @@
       "ticker": "3289",
       "name": "Tokyu Fudosan Holdings",
       "sector": "capital",
-      "industry": "Real estate developer"
+      "industry": "Real estate"
     },
     {
       "ticker": "3382",
       "name": "Seven & i Holdings",
       "sector": "consumer",
-      "industry": "Convenience stores (7-Eleven)"
+      "industry": "Grocery"
     },
     {
       "ticker": "3401",
       "name": "Teijin",
       "sector": "capital",
-      "industry": "Synthetic fibers & materials"
+      "industry": "Chemicals"
     },
     {
       "ticker": "3402",
       "name": "Toray Industries",
       "sector": "capital",
-      "industry": "Synthetic fibers & carbon fiber"
+      "industry": "Chemicals"
     },
     {
       "ticker": "3405",
@@ -199,13 +199,13 @@
       "ticker": "3407",
       "name": "Asahi Kasei",
       "sector": "capital",
-      "industry": "Diversified chemicals"
+      "industry": "Chemicals"
     },
     {
       "ticker": "3436",
       "name": "SUMCO",
       "sector": "capital",
-      "industry": "Silicon wafers"
+      "industry": "Chemicals & silicon"
     },
     {
       "ticker": "3659",
@@ -217,7 +217,7 @@
       "ticker": "3697",
       "name": "SHIFT",
       "sector": "assetLight",
-      "industry": "Software testing services"
+      "industry": "IT services"
     },
     {
       "ticker": "3861",
@@ -271,7 +271,7 @@
       "ticker": "4151",
       "name": "Kyowa Kirin",
       "sector": "assetLight",
-      "industry": "Pharmaceuticals"
+      "industry": "Pharma"
     },
     {
       "ticker": "4183",
@@ -295,19 +295,19 @@
       "ticker": "4307",
       "name": "Nomura Research Institute",
       "sector": "assetLight",
-      "industry": "IT services & consulting"
+      "industry": "IT services"
     },
     {
       "ticker": "4324",
       "name": "Dentsu Group",
       "sector": "assetLight",
-      "industry": "Advertising"
+      "industry": "Media"
     },
     {
       "ticker": "4385",
       "name": "Mercari",
       "sector": "assetLight",
-      "industry": "E-commerce marketplace"
+      "industry": "E-commerce"
     },
     {
       "ticker": "4452",
@@ -325,31 +325,31 @@
       "ticker": "4503",
       "name": "Astellas Pharma",
       "sector": "assetLight",
-      "industry": "Pharmaceuticals"
+      "industry": "Pharma"
     },
     {
       "ticker": "4506",
       "name": "Sumitomo Pharma",
       "sector": "assetLight",
-      "industry": "Pharmaceuticals"
+      "industry": "Pharma"
     },
     {
       "ticker": "4507",
       "name": "Shionogi",
       "sector": "assetLight",
-      "industry": "Pharmaceuticals"
+      "industry": "Pharma"
     },
     {
       "ticker": "4519",
       "name": "Chugai Pharmaceutical",
       "sector": "assetLight",
-      "industry": "Pharmaceuticals"
+      "industry": "Pharma"
     },
     {
       "ticker": "4523",
       "name": "Eisai",
       "sector": "assetLight",
-      "industry": "Pharmaceuticals"
+      "industry": "Pharma"
     },
     {
       "ticker": "4543",
@@ -367,7 +367,7 @@
       "ticker": "4578",
       "name": "Otsuka Holdings",
       "sector": "assetLight",
-      "industry": "Pharmaceuticals & nutraceuticals"
+      "industry": "Pharma"
     },
     {
       "ticker": "4661",
@@ -379,55 +379,55 @@
       "ticker": "4689",
       "name": "LY Corporation",
       "sector": "assetLight",
-      "industry": "Internet services"
+      "industry": "Internet platforms"
     },
     {
       "ticker": "4704",
       "name": "Trend Micro",
       "sector": "assetLight",
-      "industry": "Cybersecurity software"
+      "industry": "Enterprise software"
     },
     {
       "ticker": "4751",
       "name": "CyberAgent",
       "sector": "assetLight",
-      "industry": "Internet media & games"
+      "industry": "Internet platforms"
     },
     {
       "ticker": "4755",
       "name": "Rakuten Group",
       "sector": "assetLight",
-      "industry": "Internet & e-commerce"
+      "industry": "Internet platforms"
     },
     {
       "ticker": "4901",
       "name": "Fujifilm Holdings",
       "sector": "capital",
-      "industry": "Imaging, healthcare & materials"
+      "industry": "Office electronics"
     },
     {
       "ticker": "4902",
       "name": "Konica Minolta",
       "sector": "capital",
-      "industry": "Office equipment"
+      "industry": "Office electronics"
     },
     {
       "ticker": "4911",
       "name": "Shiseido",
       "sector": "consumer",
-      "industry": "Cosmetics"
+      "industry": "Household & personal care"
     },
     {
       "ticker": "5019",
       "name": "Idemitsu Kosan",
       "sector": "capital",
-      "industry": "Oil refining"
+      "industry": "Oil & gas"
     },
     {
       "ticker": "5020",
       "name": "ENEOS Holdings",
       "sector": "capital",
-      "industry": "Oil refining"
+      "industry": "Oil & gas"
     },
     {
       "ticker": "5101",
@@ -445,103 +445,103 @@
       "ticker": "5201",
       "name": "AGC",
       "sector": "capital",
-      "industry": "Glass & materials"
+      "industry": "Glass Products"
     },
     {
       "ticker": "5214",
       "name": "Nippon Electric Glass",
       "sector": "capital",
-      "industry": "Glass"
+      "industry": "Glass Products"
     },
     {
       "ticker": "5233",
       "name": "Taiheiyo Cement",
       "sector": "capital",
-      "industry": "Cement"
+      "industry": "Building materials"
     },
     {
       "ticker": "5301",
       "name": "Tokai Carbon",
       "sector": "capital",
-      "industry": "Carbon products"
+      "industry": "Specialty chemicals"
     },
     {
       "ticker": "5332",
       "name": "TOTO",
       "sector": "capital",
-      "industry": "Sanitary ware"
+      "industry": "Building materials"
     },
     {
       "ticker": "5333",
       "name": "NGK Insulators",
       "sector": "capital",
-      "industry": "Ceramics"
+      "industry": "Auto parts"
     },
     {
       "ticker": "5401",
       "name": "Nippon Steel",
       "sector": "capital",
-      "industry": "Steel"
+      "industry": "Steel & metals"
     },
     {
       "ticker": "5406",
       "name": "Kobe Steel",
       "sector": "capital",
-      "industry": "Steel"
+      "industry": "Steel & metals"
     },
     {
       "ticker": "5411",
       "name": "JFE Holdings",
       "sector": "capital",
-      "industry": "Steel"
+      "industry": "Steel & metals"
     },
     {
       "ticker": "5631",
       "name": "Japan Steel Works",
       "sector": "capital",
-      "industry": "Heavy machinery & steel"
+      "industry": "Industrial machinery"
     },
     {
       "ticker": "5706",
       "name": "Mitsui Mining & Smelting",
       "sector": "capital",
-      "industry": "Smelting & materials"
+      "industry": "Metals"
     },
     {
       "ticker": "5711",
       "name": "Mitsubishi Materials",
       "sector": "capital",
-      "industry": "Nonferrous metals"
+      "industry": "Metals"
     },
     {
       "ticker": "5713",
       "name": "Sumitomo Metal Mining",
       "sector": "capital",
-      "industry": "Mining & smelting"
+      "industry": "Metals"
     },
     {
       "ticker": "5714",
       "name": "Dowa Holdings",
       "sector": "capital",
-      "industry": "Nonferrous metals & smelting"
+      "industry": "Metals"
     },
     {
       "ticker": "5801",
       "name": "Furukawa Electric",
       "sector": "capital",
-      "industry": "Cables & electronics"
+      "industry": "Electrical equipment"
     },
     {
       "ticker": "5802",
       "name": "Sumitomo Electric Industries",
       "sector": "capital",
-      "industry": "Cables & auto components"
+      "industry": "Electrical equipment"
     },
     {
       "ticker": "5803",
       "name": "Fujikura",
       "sector": "capital",
-      "industry": "Cables & optical fiber"
+      "industry": "Electrical equipment"
     },
     {
       "ticker": "6098",
@@ -553,7 +553,7 @@
       "ticker": "6103",
       "name": "Okuma",
       "sector": "capital",
-      "industry": "Machine tools (CNC)"
+      "industry": "Machine tools"
     },
     {
       "ticker": "6113",
@@ -583,7 +583,7 @@
       "ticker": "6302",
       "name": "Sumitomo Heavy Industries",
       "sector": "capital",
-      "industry": "Heavy machinery"
+      "industry": "Industrial conglomerate"
     },
     {
       "ticker": "6305",
@@ -601,7 +601,7 @@
       "ticker": "6361",
       "name": "Ebara",
       "sector": "capital",
-      "industry": "Pumps & environmental equipment"
+      "industry": "Industrial machinery"
     },
     {
       "ticker": "6367",
@@ -625,13 +625,13 @@
       "ticker": "6473",
       "name": "JTEKT",
       "sector": "capital",
-      "industry": "Auto parts & bearings"
+      "industry": "Auto parts"
     },
     {
       "ticker": "6479",
       "name": "MinebeaMitsumi",
       "sector": "capital",
-      "industry": "Bearings & electronic components"
+      "industry": "Bearings"
     },
     {
       "ticker": "6501",
@@ -655,19 +655,19 @@
       "ticker": "6506",
       "name": "Yaskawa Electric",
       "sector": "capital",
-      "industry": "Motion control & robots"
+      "industry": "Robotics & automation"
     },
     {
       "ticker": "6526",
       "name": "Socionext",
       "sector": "capital",
-      "industry": "Semiconductors (fabless)"
+      "industry": "Semiconductors"
     },
     {
       "ticker": "6532",
       "name": "BayCurrent",
       "sector": "assetLight",
-      "industry": "Consulting"
+      "industry": "IT services"
     },
     {
       "ticker": "6594",
@@ -679,19 +679,19 @@
       "ticker": "6645",
       "name": "Omron",
       "sector": "capital",
-      "industry": "Industrial automation"
+      "industry": "Factory-automation sensors"
     },
     {
       "ticker": "6701",
       "name": "NEC",
       "sector": "capital",
-      "industry": "IT & network solutions"
+      "industry": "IT services"
     },
     {
       "ticker": "6702",
       "name": "Fujitsu",
       "sector": "capital",
-      "industry": "IT services & electronics"
+      "industry": "IT services"
     },
     {
       "ticker": "6723",
@@ -703,19 +703,19 @@
       "ticker": "6724",
       "name": "Seiko Epson",
       "sector": "capital",
-      "industry": "Printers & precision"
+      "industry": "Office electronics"
     },
     {
       "ticker": "6752",
       "name": "Panasonic Holdings",
       "sector": "capital",
-      "industry": "Electronics & batteries"
+      "industry": "Electronics & entertainment"
     },
     {
       "ticker": "6753",
       "name": "Sharp",
       "sector": "capital",
-      "industry": "Electronics & displays"
+      "industry": "Electronics & entertainment"
     },
     {
       "ticker": "6758",
@@ -727,7 +727,7 @@
       "ticker": "6762",
       "name": "TDK",
       "sector": "capital",
-      "industry": "Electronic components & batteries"
+      "industry": "Electronic components"
     },
     {
       "ticker": "6770",
@@ -739,7 +739,7 @@
       "ticker": "6841",
       "name": "Yokogawa Electric",
       "sector": "capital",
-      "industry": "Industrial automation"
+      "industry": "Instruments"
     },
     {
       "ticker": "6857",
@@ -763,7 +763,7 @@
       "ticker": "6920",
       "name": "Lasertec",
       "sector": "capital",
-      "industry": "Semiconductor inspection equipment"
+      "industry": "Semiconductor equipment"
     },
     {
       "ticker": "6954",
@@ -781,7 +781,7 @@
       "ticker": "6971",
       "name": "Kyocera",
       "sector": "capital",
-      "industry": "Electronic components & ceramics"
+      "industry": "Electronic components"
     },
     {
       "ticker": "6976",
@@ -799,31 +799,31 @@
       "ticker": "6988",
       "name": "Nitto Denko",
       "sector": "capital",
-      "industry": "Specialty materials & films"
+      "industry": "Specialty chemicals"
     },
     {
       "ticker": "7004",
       "name": "Kanadevia",
       "sector": "capital",
-      "industry": "Environmental & industrial plant"
+      "industry": "Engineering"
     },
     {
       "ticker": "7011",
       "name": "Mitsubishi Heavy Industries",
       "sector": "capital",
-      "industry": "Heavy machinery"
+      "industry": "Industrial conglomerate"
     },
     {
       "ticker": "7012",
       "name": "Kawasaki Heavy Industries",
       "sector": "capital",
-      "industry": "Heavy machinery"
+      "industry": "Industrial conglomerate"
     },
     {
       "ticker": "7013",
       "name": "IHI",
       "sector": "capital",
-      "industry": "Heavy machinery & aerospace"
+      "industry": "Industrial conglomerate"
     },
     {
       "ticker": "7201",
@@ -835,7 +835,7 @@
       "ticker": "7202",
       "name": "Isuzu Motors",
       "sector": "capital",
-      "industry": "Commercial vehicles"
+      "industry": "Automakers"
     },
     {
       "ticker": "7203",
@@ -877,7 +877,7 @@
       "ticker": "7272",
       "name": "Yamaha Motor",
       "sector": "capital",
-      "industry": "Motorcycles & marine engines"
+      "industry": "Motorcycles"
     },
     {
       "ticker": "7309",
@@ -895,19 +895,19 @@
       "ticker": "7532",
       "name": "Pan Pacific International Holdings",
       "sector": "consumer",
-      "industry": "Discount retail (Don Quijote)"
+      "industry": "Discount & variety retail"
     },
     {
       "ticker": "7731",
       "name": "Nikon",
       "sector": "capital",
-      "industry": "Optics & precision equipment"
+      "industry": "Photographic Equipment & Supplies"
     },
     {
       "ticker": "7733",
       "name": "Olympus",
       "sector": "assetLight",
-      "industry": "Medical devices (endoscopes)"
+      "industry": "Medical devices"
     },
     {
       "ticker": "7735",
@@ -925,37 +925,37 @@
       "ticker": "7751",
       "name": "Canon",
       "sector": "capital",
-      "industry": "Imaging & office equipment"
+      "industry": "Office electronics"
     },
     {
       "ticker": "7752",
       "name": "Ricoh",
       "sector": "capital",
-      "industry": "Office equipment"
+      "industry": "Office electronics"
     },
     {
       "ticker": "7832",
       "name": "Bandai Namco Holdings",
       "sector": "assetLight",
-      "industry": "Toys, games & IP"
+      "industry": "Toys & leisure"
     },
     {
       "ticker": "7911",
       "name": "TOPPAN Holdings",
       "sector": "capital",
-      "industry": "Printing & electronic materials"
+      "industry": "Commercial Printing"
     },
     {
       "ticker": "7912",
       "name": "Dai Nippon Printing",
       "sector": "capital",
-      "industry": "Printing & electronic materials"
+      "industry": "Commercial Printing"
     },
     {
       "ticker": "7951",
       "name": "Yamaha Corporation",
       "sector": "consumer",
-      "industry": "Musical instruments & audio"
+      "industry": "Toys & leisure"
     },
     {
       "ticker": "7974",
@@ -1015,109 +1015,109 @@
       "ticker": "8252",
       "name": "Marui Group",
       "sector": "consumer",
-      "industry": "Retail & consumer credit"
+      "industry": "Department stores"
     },
     {
       "ticker": "8267",
       "name": "Aeon",
       "sector": "consumer",
-      "industry": "Retail (GMS & supermarkets)"
+      "industry": "Grocery"
     },
     {
       "ticker": "8801",
       "name": "Mitsui Fudosan",
       "sector": "capital",
-      "industry": "Real estate developer"
+      "industry": "Real estate"
     },
     {
       "ticker": "8802",
       "name": "Mitsubishi Estate",
       "sector": "capital",
-      "industry": "Real estate developer"
+      "industry": "Real estate"
     },
     {
       "ticker": "8804",
       "name": "Tokyo Tatemono",
       "sector": "capital",
-      "industry": "Real estate developer"
+      "industry": "Real estate"
     },
     {
       "ticker": "8830",
       "name": "Sumitomo Realty & Development",
       "sector": "capital",
-      "industry": "Real estate developer"
+      "industry": "Real estate"
     },
     {
       "ticker": "9001",
       "name": "Tobu Railway",
       "sector": "capital",
-      "industry": "Railway"
+      "industry": "Railroads"
     },
     {
       "ticker": "9005",
       "name": "Tokyu",
       "sector": "capital",
-      "industry": "Railway & real estate"
+      "industry": "Railroads"
     },
     {
       "ticker": "9007",
       "name": "Odakyu Electric Railway",
       "sector": "capital",
-      "industry": "Railway"
+      "industry": "Railroads"
     },
     {
       "ticker": "9008",
       "name": "Keio",
       "sector": "capital",
-      "industry": "Railway"
+      "industry": "Railroads"
     },
     {
       "ticker": "9009",
       "name": "Keisei Electric Railway",
       "sector": "capital",
-      "industry": "Railway"
+      "industry": "Railroads"
     },
     {
       "ticker": "9020",
       "name": "East Japan Railway (JR East)",
       "sector": "capital",
-      "industry": "Railway"
+      "industry": "Railroads"
     },
     {
       "ticker": "9021",
       "name": "West Japan Railway (JR West)",
       "sector": "capital",
-      "industry": "Railway"
+      "industry": "Railroads"
     },
     {
       "ticker": "9022",
       "name": "Central Japan Railway (JR Central)",
       "sector": "capital",
-      "industry": "Railway"
+      "industry": "Railroads"
     },
     {
       "ticker": "9064",
       "name": "Yamato Holdings",
       "sector": "capital",
-      "industry": "Parcel delivery & logistics"
+      "industry": "Logistics"
     },
     {
       "ticker": "9101",
       "name": "Nippon Yusen (NYK)",
       "sector": "capital",
-      "industry": "Shipping"
+      "industry": "Marine shipping"
     },
     {
       "ticker": "9104",
       "name": "Mitsui O.S.K. Lines",
       "sector": "capital",
-      "industry": "Shipping"
+      "industry": "Marine shipping"
     },
     {
       "ticker": "9107",
       "name": "Kawasaki Kisen (K Line)",
       "sector": "capital",
-      "industry": "Shipping"
+      "industry": "Marine shipping"
     },
     {
       "ticker": "9147",
@@ -1165,37 +1165,37 @@
       "ticker": "9501",
       "name": "Tokyo Electric Power (TEPCO)",
       "sector": "capital",
-      "industry": "Electric utility"
+      "industry": "Utilities"
     },
     {
       "ticker": "9502",
       "name": "Chubu Electric Power",
       "sector": "capital",
-      "industry": "Electric utility"
+      "industry": "Utilities"
     },
     {
       "ticker": "9503",
       "name": "Kansai Electric Power",
       "sector": "capital",
-      "industry": "Electric utility"
+      "industry": "Utilities"
     },
     {
       "ticker": "9531",
       "name": "Tokyo Gas",
       "sector": "capital",
-      "industry": "Gas utility"
+      "industry": "Gas utilities"
     },
     {
       "ticker": "9532",
       "name": "Osaka Gas",
       "sector": "capital",
-      "industry": "Gas utility"
+      "industry": "Gas utilities"
     },
     {
       "ticker": "9602",
       "name": "Toho",
       "sector": "assetLight",
-      "industry": "Film & entertainment"
+      "industry": "Entertainment"
     },
     {
       "ticker": "9697",
@@ -1207,7 +1207,7 @@
       "ticker": "9735",
       "name": "Secom",
       "sector": "assetLight",
-      "industry": "Security services"
+      "industry": "Business services"
     },
     {
       "ticker": "9766",
@@ -1219,19 +1219,13 @@
       "ticker": "9843",
       "name": "Nitori Holdings",
       "sector": "consumer",
-      "industry": "Furniture & home retail"
+      "industry": "Home furnishings"
     },
     {
       "ticker": "9983",
       "name": "Fast Retailing",
       "sector": "retail",
       "industry": "Apparel retail (Uniqlo)"
-    },
-    {
-      "ticker": "9984",
-      "name": "SoftBank Group",
-      "sector": "general",
-      "industry": "Investment holding company"
     }
   ]
 }
