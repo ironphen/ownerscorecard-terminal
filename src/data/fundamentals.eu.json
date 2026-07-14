@@ -3,7 +3,7 @@
   "source": "Company ESEF annual reports (Inline XBRL), read from the issuer's filed consolidated financial statements",
   "market": "EU",
   "currency": "EUR",
-  "note": "European home-market pool (ESEF / IFRS). Pilot: Campari. Figures are as-filed in the reporting currency; ratios are currency-neutral and comparable across pools. 2015-2016 share count and EPS restated onto the post-2017-split base.",
+  "note": "European home-market pool (ESEF / IFRS). Pilot: Campari, FY2015-2025 read from the issuer's own annual reports. Figures are as-filed in the reporting currency; ratios are currency-neutral and comparable across pools. Bases: operatingIncome = REPORTED operating result (not adjusted-EBIT APM); capex = purchase of PP&E + intangibles (recurring capacity investment, separate from business acquisitions such as Courvoisier); totalDebt = gross financial debt ex put/earn-out; 2015-2016 shares and EPS restated onto the post-2017-split base; FY2025 interestExpense stated ex a EUR 49.6m one-off Courvoisier earn-out remeasurement gain (88.7m net interest, not the reported 50.7m net financial expense).",
   "companies": [
     {
       "ticker": "CPR",
@@ -17,29 +17,29 @@
       "sector": "consumer",
       "industry": "Distillers & Vintners",
       "accountingStandard": "IFRS",
-      "fy": 2024,
-      "periodEnd": "2024-12-31",
+      "fy": 2025,
+      "periodEnd": "2025-12-31",
       "form": "Annual Report (ESEF, Inline XBRL)",
-      "sourceUrl": "https://www.camparigroup.com/sites/default/files/downloads/01.1%20Campari%20Group_Annual%20Report%20for%20the%20year%20ended%2031%20December%202024.pdf",
+      "sourceUrl": "https://www.camparigroup.com/sites/default/files/downloads/01.1%20Campari%20Group_Annual%20Report%20for%20the%20year%20ended%2031%20December%202025_0.pdf",
       "lines": {
-        "revenue": 3069700000,
-        "operatingIncome": 392400000,
-        "netIncome": 201600000,
-        "interestExpense": 77300000,
-        "cashFromOps": 670500000,
-        "capex": 460100000,
-        "dividendsPaid": 78100000,
-        "stockholdersEquity": 3854000000,
-        "totalAssets": 8483300000,
-        "cashAndEquivalents": 666300000,
-        "currentAssets": 2938200000,
-        "currentLiabilities": 1241900000,
-        "totalDebt": 2893800000,
-        "epsBasic": 0.17,
-        "sharesDiluted": 1250652701,
-        "costOfRevenue": 1303000000,
-        "receivables": 425800000,
-        "goodwill": 2420100000
+        "revenue": 3051200000,
+        "operatingIncome": 567500000,
+        "netIncome": 346300000,
+        "interestExpense": 88700000,
+        "cashFromOps": 687600000,
+        "capex": 299300000,
+        "dividendsPaid": 78000000,
+        "stockholdersEquity": 3862800000,
+        "totalAssets": 8111400000,
+        "cashAndEquivalents": 703300000,
+        "currentAssets": 2963500000,
+        "currentLiabilities": 1336700000,
+        "totalDebt": 2608900000,
+        "epsBasic": 0.29,
+        "sharesDiluted": 1259199529,
+        "costOfRevenue": 1211100000,
+        "receivables": 327100000,
+        "goodwill": 2233400000
       },
       "history": [
         {
@@ -265,6 +265,29 @@
             "costOfRevenue": 1303000000,
             "receivables": 425800000,
             "goodwill": 2420100000
+          }
+        },
+        {
+          "fy": 2025,
+          "lines": {
+            "revenue": 3051200000,
+            "operatingIncome": 567500000,
+            "netIncome": 346300000,
+            "interestExpense": 88700000,
+            "cashFromOps": 687600000,
+            "capex": 299300000,
+            "dividendsPaid": 78000000,
+            "stockholdersEquity": 3862800000,
+            "totalAssets": 8111400000,
+            "cashAndEquivalents": 703300000,
+            "currentAssets": 2963500000,
+            "currentLiabilities": 1336700000,
+            "totalDebt": 2608900000,
+            "epsBasic": 0.29,
+            "sharesDiluted": 1259199529,
+            "costOfRevenue": 1211100000,
+            "receivables": 327100000,
+            "goodwill": 2233400000
           }
         }
       ]
