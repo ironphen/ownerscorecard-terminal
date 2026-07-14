@@ -26,7 +26,7 @@ const D = a.distributions;
 const B = a.baseRates;
 
 const pageUrl = `${SITE_URL}/almanac`;
-const pageDescription = `A census of ${n(a.universe.readable)} companies' ten-year records: the distribution of returns on capital, margins, growth, and balance-sheet strength, and how many clear Graham's defensive tests. Base rates computed from primary SEC and EDINET filings.`;
+const pageDescription = `A census of the ${n(a.universe.readable)} companies Owner Scorecard covers (US filers, foreign ADRs, and large Japanese companies — a large but not complete, US-centered slice, not all world equities): the distribution of returns on capital, margins, growth, and balance-sheet strength, and how many clear Graham's defensive tests. Base rates computed from primary SEC and EDINET filings.`;
 
 // The Almanac is itself a dataset — census statistics over the catalog. Marked up so it is citable.
 const pageJsonLd = [
@@ -56,12 +56,16 @@ const pageJsonLd = [
   <header class="hero">
     <h1>The Almanac</h1>
     <p class="lede">
-      A census of the whole catalog: what the record of every company the library holds looks like,
-      taken together. The figures below are computed from {n(a.universe.readable)} readable records
-      across the United States, ADR, and Japan pools{asOf ? `, as of ${asOf}` : ""}. Returns and
-      margins are read through the cycle, the median over each company's own record, so one peak or
-      trough year never sets a level. A company appears in a figure only where its record could be
-      read; it is never counted as a zero.
+      A census of the catalog: what the record of every company the library holds looks like, taken
+      together. This is the universe Owner Scorecard covers, and it is a large but not complete,
+      United-States-centered slice of the world's public companies, not the whole of it:
+      {n(a.universe.us)} US filers, {n(a.universe.adr)} foreign companies with US-listed ADRs, and
+      {n(a.universe.jp)} large Japanese companies. Read the figures below as "of the companies here,"
+      never as "of all companies everywhere." They are computed from {n(a.universe.readable)}
+      readable records{asOf ? `, as of ${asOf}` : ""}. Returns and margins are read through the
+      cycle, the median over each company's own record, so one peak or trough year never sets a
+      level. A company appears in a figure only where its record could be read; it is never counted
+      as a zero.
     </p>
   </header>
 
