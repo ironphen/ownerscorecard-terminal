@@ -66,8 +66,27 @@ console.log("\ncomputeAlmanac — against the live universe (structure + doctrin
   ok(!/"name"|"ticker"|"company"/i.test(blob), "no name/ticker/company field leaks into the census");
   // A crude ranked-list guard: the output holds only numbers and the fixed metric keys, never an
   // array of company-shaped objects.
-  const knownKeys = new Set(["universe", "distributions", "baseRates", "defensiveHistogram"]);
+  const knownKeys = new Set(["universe", "distributions", "baseRates", "defensiveHistogram", "grahamCriteria", "groups"]);
   ok(Object.keys(a).every((k) => knownKeys.has(k)), "top-level shape is census sections only");
+
+  // The new Buffett/Graham metrics: present, sane, and probabilities where they are shares.
+  ok(a.distributions.roeThroughCycle && a.distributions.roeThroughCycle.n > 500, "a real ROE sample");
+  ok(a.distributions.currentRatio && a.distributions.currentRatio.n > 100, "a real current-ratio sample");
+  const newShares = [a.baseRates.durableRoic15.share, a.baseRates.roeAtLeast15.share, a.baseRates.currentRatioAtLeast2.share, a.baseRates.interestCoverAtLeast10.share];
+  ok(newShares.every((s) => s == null || (s >= 0 && s <= 1)), "new base-rate shares within [0,1]");
+  // Durability is a subset of the median test: no more names clear the bar in EVERY year than clear
+  // it at the median, so the durable share cannot exceed the median-based share.
+  ok(a.baseRates.durableRoic15.share == null || a.baseRates.roicAtLeast15.share == null || a.baseRates.durableRoic15.share <= a.baseRates.roicAtLeast15.share + 1e-9, "durable-15 share ≤ median-15 share");
+  // Per-criterion Graham base rates: a non-empty list, each a probability, no identity leak.
+  ok(Array.isArray(a.grahamCriteria) && a.grahamCriteria.length >= 4, `graham criteria broken out (${a.grahamCriteria.length})`);
+  ok(a.grahamCriteria.every((c) => c.share == null || (c.share >= 0 && c.share <= 1)), "each graham-criterion share within [0,1]");
+
+  // Grouping: an array of per-shelf censuses, in the fixed shelf order, each above the sample floor,
+  // each carrying the same census shape and never a company identity.
+  ok(Array.isArray(a.groups) && a.groups.length >= 3, `census sliced by shelf-grouping (${a.groups.length} groups)`);
+  ok(a.groups.every((g) => g.readable >= 30), "every group clears the sample floor");
+  ok(a.groups.every((g) => g.distributions && g.baseRates && g.defensiveHistogram), "every group carries a full census");
+  ok(a.groups.every((g) => typeof g.noun === "string" && /^They .+\.$/.test(g.noun)), "every group is labelled by its shelf sentence");
 }
 
 if (fails) { console.error(`\n❌ almanacTest: ${fails} failure(s)`); process.exit(1); }

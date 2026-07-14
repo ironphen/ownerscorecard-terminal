@@ -7,7 +7,8 @@
 //
 // Doctrine, held strictly: distributions and counts only, never a ranked list of named companies
 // (that would be a verdict). It states what the population looks like, never which companies are the
-// good ones. Present, never pronounce: the figures are given plainly, without an adjective on them.
+// good ones. The reader may slice the census by our shelf-groupings (the selector below), always in
+// the fixed shelf order — a reading order, never a ranking of the groups against each other.
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import fundamentals from "../../data/fundamentals.json";
 import adrData from "../../data/fundamentals.adr.json";
@@ -29,16 +30,83 @@ const a = computeAlmanac({
 const asOf = fmtAsOf(dataAsOf);
 const jpN = (jpData.companies || []).length;
 const euN = (euData.companies || []).length;
+
 const n = (x) => (x == null ? "—" : x.toLocaleString("en-US"));
 const p = (v) => (v == null || !Number.isFinite(v) ? "—" : `${(v * 100).toFixed(1)}%`);
-const range = (d) => (d && d.n ? `${p(d.p10)} to ${p(d.p90)}` : "—");
-const D = a.distributions;
-const B = a.baseRates;
+const x = (v) => (v == null || !Number.isFinite(v) ? "—" : `${v.toFixed(1)}×`); // a ratio, e.g. 2.1×
+const rangeOf = (d) => (d && d.n ? `${p(d.p10)} to ${p(d.p90)}` : "—");
+const frac = (b) => `<span class="frac">(${n(b.pass)} of ${n(b.n)})</span>`;
+const br = (b) => (b ? `${p(b.share)} ${frac(b)}` : "—"); // a base rate: the share, with its fraction
+const withN = (s, dn) => `${s} <span class="frac">(n ${n(dn)})</span>`;
+
+// The canonical Graham criteria (their keys/labels are the same across every census); used to render
+// one per-criterion row and to look each up in a group's own tally.
+const CRIT = a.grahamCriteria;
+
+// Every stat cell the page shows, formatted for ONE census, keyed by a stable data-stat id. The
+// selector swaps these pre-formatted strings, so all formatting lives here (server-side) and the
+// client never re-implements it.
+function cells(c) {
+  const D = c.distributions, B = c.baseRates, H = c.defensiveHistogram;
+  const m = {
+    // return on capital
+    "d.roic.n": n(D.roicThroughCycle.n),
+    "d.roic.median": p(D.roicThroughCycle.median),
+    "d.roic.range": rangeOf(D.roicThroughCycle),
+    "br.roic10": br(B.roicAtLeast10),
+    "br.roic15": br(B.roicAtLeast15),
+    "br.roic20": br(B.roicAtLeast20),
+    "br.durable15": br(B.durableRoic15),
+    "br.durable10": br(B.durableRoic10),
+    // return on equity
+    "d.roe.median": withN(p(D.roeThroughCycle.median), D.roeThroughCycle.n),
+    "br.roe15": br(B.roeAtLeast15),
+    "br.roe20": br(B.roeAtLeast20),
+    // margins & growth
+    "d.opMargin": withN(p(D.operatingMarginThroughCycle.median), D.operatingMarginThroughCycle.n),
+    "d.grossMargin": withN(p(D.grossMarginLatest.median), D.grossMarginLatest.n),
+    "d.oeMargin": withN(p(D.ownerEarningsMarginThroughCycle.median), D.ownerEarningsMarginThroughCycle.n),
+    "d.revGrowth": withN(p(D.revenueGrowthDelivered.median), D.revenueGrowthDelivered.n),
+    "br.grewRev": br(B.grewRevenue),
+    "br.profitable": br(B.profitableEveryYear),
+    // balance sheet & shares
+    "br.netCash": br(B.netCash),
+    "d.currentRatio": withN(x(D.currentRatio.median), D.currentRatio.n),
+    "br.currentRatio2": br(B.currentRatioAtLeast2),
+    "d.interestCover": withN(x(D.interestCoverage.median), D.interestCoverage.n),
+    "br.interestCover10": br(B.interestCoverAtLeast10),
+    "br.reduced": br(B.reducedShareCount),
+    "br.diluted": br(B.dilutedShareCount),
+    // defensive composite
+    "br.passedAll": br(B.passedAllDefensiveTests),
+  };
+  // defensive histogram (0..6 tests passed)
+  for (let k = 0; k <= 6; k++) {
+    m[`hist.${k}.count`] = n(H.counts[k] || 0);
+    m[`hist.${k}.share`] = p(H.n ? (H.counts[k] || 0) / H.n : null);
+  }
+  // per-criterion Graham base rates (look each canonical criterion up in this census)
+  for (const cr of CRIT) {
+    const g = (c.grahamCriteria || []).find((z) => z.key === cr.key);
+    m[`gc.${cr.key}`] = g ? br(g) : "—";
+  }
+  return m;
+}
+
+// The views the selector offers: the whole catalog first, then each shelf-group in the fixed shelf
+// order. Each carries a one-line subtitle stating the sample it rests on.
+const wholeSub = `${n(a.universe.readable)} readable records across the whole catalog${asOf ? `, as of ${asOf}` : ""}.`;
+const views = {
+  all: { label: "All businesses", sub: wholeSub, cells: cells(a) },
+};
+for (const g of a.groups) {
+  views[g.slug] = { label: g.noun, sub: `${n(g.readable)} readable records among businesses that ${g.noun.replace(/^They\s+/i, "").replace(/\.$/, "")}.`, cells: cells(g) };
+}
+const C = views.all.cells; // the default (whole-catalog) rendering
 
 const pageUrl = `${SITE_URL}/almanac`;
-const pageDescription = `A census of the ${n(a.universe.readable)} companies Owner Scorecard covers (US filers, foreign ADRs, and large Japanese companies — a large but not complete, US-centered slice, not all world equities): the distribution of returns on capital, margins, growth, and balance-sheet strength, and how many clear Graham's defensive tests. Base rates computed from primary SEC and EDINET filings.`;
+const pageDescription = `A census of the ${n(a.universe.readable)} companies Owner Scorecard covers (US filers, foreign ADRs, large Japanese and European companies — a large but not complete, US-centered slice, not all world equities): the distribution of returns on capital and equity, margins, growth, balance-sheet strength, and how many clear Graham's defensive tests — sliceable by business type. Base rates computed from primary SEC and EDINET filings.`;
 
-// The Almanac is itself a dataset — census statistics over the catalog. Marked up so it is citable.
 const pageJsonLd = [
   {
     "@context": "https://schema.org",
@@ -53,9 +121,10 @@ const pageJsonLd = [
     isPartOf: { "@id": `${SITE_URL}/docs/data#catalog` },
     ...(dataAsOf ? { dateModified: dataAsOf } : {}),
     variableMeasured: [
-      "10-year return on invested capital (through-cycle median)",
-      "operating margin", "gross margin", "revenue growth", "owner-earnings growth",
-      "net cash rate", "share-count change", "Graham defensive-test pass rate",
+      "return on invested capital (through-cycle median)", "return on equity (through-cycle median)",
+      "worst-year return on capital", "operating margin", "gross margin", "revenue growth",
+      "owner-earnings growth", "net cash rate", "current ratio", "interest coverage",
+      "share-count change", "Graham defensive-test pass rate",
     ],
   },
   { "@context": "https://schema.org", "@type": "WebPage", name: "The Almanac", description: pageDescription, publisher: ORG, ...(dataAsOf ? { dateModified: dataAsOf } : {}) },
@@ -72,29 +141,56 @@ const pageJsonLd = [
       {n(a.universe.us)} US filers, {n(a.universe.adr)} foreign companies with US-listed ADRs,
       {n(jpN)} large Japanese companies, and {n(euN)} European {euN === 1 ? "company" : "companies"}.
       Read the figures below as "of the companies here," never as "of all companies everywhere." A
-      company listed both as an ADR and in its home market is counted once. They are computed from
-      {n(a.universe.readable)} readable records{asOf ? `, as of ${asOf}` : ""}. Returns and margins are read through the
-      cycle, the median over each company's own record, so one peak or trough year never sets a
-      level. A company appears in a figure only where its record could be read; it is never counted
-      as a zero.
+      company listed both as an ADR and in its home market is counted once. Returns and margins are
+      read through the cycle, the median over each company's own record, so one peak or trough year
+      never sets a level. A company appears in a figure only where its record could be read; it is
+      never counted as a zero.
     </p>
   </header>
+
+  <div class="grouping">
+    <label for="grouping">Read the census across</label>
+    <select id="grouping">
+      {Object.entries(views).map(([slug, v]) => (<option value={slug}>{slug === "all" ? v.label : v.label.replace(/^They\s+/i, "They ").replace(/\.$/, "")}</option>))}
+    </select>
+    <p class="grouping-sub" id="grouping-sub">{views.all.sub}</p>
+  </div>
 
   <section class="band">
     <h2>Return on capital, over a decade</h2>
     <p class="note">
       Return on invested capital, the through-cycle median for each company, then the distribution
       across the catalog. Not computed for banks, insurers, and property trusts, whose capital is
-      not deployed the same way.
+      not deployed the same way. The <em>durability</em> lines count the companies that cleared the
+      bar not just at the median but in their <em>worst</em> readable year — Buffett's line between a
+      franchise and a single good year.
     </p>
     <table class="stat">
       <tbody>
-        <tr><th>Companies with a readable return</th><td>{n(D.roicThroughCycle.n)}</td></tr>
-        <tr><th>Median return on capital</th><td>{p(D.roicThroughCycle.median)}</td></tr>
-        <tr><th>The middle 80% (10th to 90th percentile)</th><td>{range(D.roicThroughCycle)}</td></tr>
-        <tr class="rule"><th>Cleared 10% through the cycle</th><td>{p(B.roicAtLeast10.share)} <span class="frac">({n(B.roicAtLeast10.pass)} of {n(B.roicAtLeast10.n)})</span></td></tr>
-        <tr><th>Cleared 15%</th><td>{p(B.roicAtLeast15.share)} <span class="frac">({n(B.roicAtLeast15.pass)} of {n(B.roicAtLeast15.n)})</span></td></tr>
-        <tr><th>Cleared 20%</th><td>{p(B.roicAtLeast20.share)} <span class="frac">({n(B.roicAtLeast20.pass)} of {n(B.roicAtLeast20.n)})</span></td></tr>
+        <tr><th>Companies with a readable return</th><td data-stat="d.roic.n" set:html={C["d.roic.n"]} /></tr>
+        <tr><th>Median return on capital</th><td data-stat="d.roic.median" set:html={C["d.roic.median"]} /></tr>
+        <tr><th>The middle 80% (10th to 90th percentile)</th><td data-stat="d.roic.range" set:html={C["d.roic.range"]} /></tr>
+        <tr class="rule"><th>Cleared 10% through the cycle</th><td data-stat="br.roic10" set:html={C["br.roic10"]} /></tr>
+        <tr><th>Cleared 15%</th><td data-stat="br.roic15" set:html={C["br.roic15"]} /></tr>
+        <tr><th>Cleared 20%</th><td data-stat="br.roic20" set:html={C["br.roic20"]} /></tr>
+        <tr class="rule"><th>Cleared 15% in <em>every</em> year <span class="sub">(durable)</span></th><td data-stat="br.durable15" set:html={C["br.durable15"]} /></tr>
+        <tr><th>Cleared 10% in every year</th><td data-stat="br.durable10" set:html={C["br.durable10"]} /></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="band">
+    <h2>Return on equity</h2>
+    <p class="note">
+      A high return on equity is the figure Buffett calls the primary test of managerial performance.
+      Read it beside the debt below: equity returns can be lifted by borrowing, so a high return is
+      worth most where it is earned without much debt.
+    </p>
+    <table class="stat">
+      <tbody>
+        <tr><th>Median return on equity <span class="sub">(through the cycle)</span></th><td data-stat="d.roe.median" set:html={C["d.roe.median"]} /></tr>
+        <tr class="rule"><th>Cleared 15% on equity</th><td data-stat="br.roe15" set:html={C["br.roe15"]} /></tr>
+        <tr><th>Cleared 20%</th><td data-stat="br.roe20" set:html={C["br.roe20"]} /></tr>
       </tbody>
     </table>
   </section>
@@ -103,23 +199,32 @@ const pageJsonLd = [
     <h2>Margins and growth</h2>
     <table class="stat">
       <tbody>
-        <tr><th>Median operating margin <span class="sub">(through the cycle, operating businesses)</span></th><td>{p(D.operatingMarginThroughCycle.median)} <span class="frac">(n {n(D.operatingMarginThroughCycle.n)})</span></td></tr>
-        <tr><th>Median gross margin <span class="sub">(latest year)</span></th><td>{p(D.grossMarginLatest.median)} <span class="frac">(n {n(D.grossMarginLatest.n)})</span></td></tr>
-        <tr><th>Median owner-earnings margin</th><td>{p(D.ownerEarningsMarginThroughCycle.median)} <span class="frac">(n {n(D.ownerEarningsMarginThroughCycle.n)})</span></td></tr>
-        <tr class="rule"><th>Median revenue growth <span class="sub">(delivered, annualized over the record)</span></th><td>{p(D.revenueGrowthDelivered.median)} <span class="frac">(n {n(D.revenueGrowthDelivered.n)})</span></td></tr>
-        <tr><th>Grew revenue over the record</th><td>{p(B.grewRevenue.share)} <span class="frac">({n(B.grewRevenue.pass)} of {n(B.grewRevenue.n)})</span></td></tr>
-        <tr><th>Profitable in every year <span class="sub">(records of five years or more)</span></th><td>{p(B.profitableEveryYear.share)} <span class="frac">({n(B.profitableEveryYear.pass)} of {n(B.profitableEveryYear.n)})</span></td></tr>
+        <tr><th>Median operating margin <span class="sub">(through the cycle, operating businesses)</span></th><td data-stat="d.opMargin" set:html={C["d.opMargin"]} /></tr>
+        <tr><th>Median gross margin <span class="sub">(latest year)</span></th><td data-stat="d.grossMargin" set:html={C["d.grossMargin"]} /></tr>
+        <tr><th>Median owner-earnings margin</th><td data-stat="d.oeMargin" set:html={C["d.oeMargin"]} /></tr>
+        <tr class="rule"><th>Median revenue growth <span class="sub">(delivered, annualized over the record)</span></th><td data-stat="d.revGrowth" set:html={C["d.revGrowth"]} /></tr>
+        <tr><th>Grew revenue over the record</th><td data-stat="br.grewRev" set:html={C["br.grewRev"]} /></tr>
+        <tr><th>Profitable in every year <span class="sub">(records of five years or more)</span></th><td data-stat="br.profitable" set:html={C["br.profitable"]} /></tr>
       </tbody>
     </table>
   </section>
 
   <section class="band">
     <h2>The balance sheet, and what management did with the shares</h2>
+    <p class="note">
+      The current ratio (current assets over current liabilities) and interest coverage (operating
+      profit over interest) are Graham's and Buffett's tests of financial strength — the cushion a
+      business carries into a bad year.
+    </p>
     <table class="stat">
       <tbody>
-        <tr><th>Carry net cash <span class="sub">(cash and investments above all debt)</span></th><td>{p(B.netCash.share)} <span class="frac">({n(B.netCash.pass)} of {n(B.netCash.n)})</span></td></tr>
-        <tr class="rule"><th>Reduced the share count over the record <span class="sub">(net of issuance)</span></th><td>{p(B.reducedShareCount.share)} <span class="frac">({n(B.reducedShareCount.pass)} of {n(B.reducedShareCount.n)})</span></td></tr>
-        <tr><th>Increased the share count</th><td>{p(B.dilutedShareCount.share)} <span class="frac">({n(B.dilutedShareCount.pass)} of {n(B.dilutedShareCount.n)})</span></td></tr>
+        <tr><th>Carry net cash <span class="sub">(cash and investments above all debt)</span></th><td data-stat="br.netCash" set:html={C["br.netCash"]} /></tr>
+        <tr><th>Median current ratio</th><td data-stat="d.currentRatio" set:html={C["d.currentRatio"]} /></tr>
+        <tr><th>Current ratio above 2 <span class="sub">(Graham's defensive bar)</span></th><td data-stat="br.currentRatio2" set:html={C["br.currentRatio2"]} /></tr>
+        <tr><th>Median interest coverage</th><td data-stat="d.interestCover" set:html={C["d.interestCover"]} /></tr>
+        <tr><th>Cover interest at least 10&times;</th><td data-stat="br.interestCover10" set:html={C["br.interestCover10"]} /></tr>
+        <tr class="rule"><th>Reduced the share count over the record <span class="sub">(net of issuance)</span></th><td data-stat="br.reduced" set:html={C["br.reduced"]} /></tr>
+        <tr><th>Increased the share count</th><td data-stat="br.diluted" set:html={C["br.diluted"]} /></tr>
       </tbody>
     </table>
   </section>
@@ -129,8 +234,8 @@ const pageJsonLd = [
     <p class="note">
       How many of the applicable <a href="/tests/defensive">defensive-investor tests</a> each company
       clears (adequate size, strong liquidity, conservative debt, an unbroken earnings record, a
-      dividend record, earnings growth). The price tests are left to the reader and are not counted
-      here. A company enters the count only where at least four of the tests could be read.
+      dividend record, earnings growth), and the base rate for each test on its own. The price tests
+      are left to the reader and are not counted here.
     </p>
     <table class="stat hist">
       <thead><tr><th>Tests passed</th><th>Companies</th><th>Share</th></tr></thead>
@@ -138,35 +243,66 @@ const pageJsonLd = [
         {[6, 5, 4, 3, 2, 1, 0].map((k) => (
           <tr>
             <td>{k}</td>
-            <td>{n(a.defensiveHistogram.counts[k] || 0)}</td>
-            <td>{p(a.defensiveHistogram.n ? (a.defensiveHistogram.counts[k] || 0) / a.defensiveHistogram.n : null)}</td>
+            <td data-stat={`hist.${k}.count`} set:html={C[`hist.${k}.count`]} />
+            <td data-stat={`hist.${k}.share`} set:html={C[`hist.${k}.share`]} />
           </tr>
         ))}
       </tbody>
     </table>
     <p class="note">
-      Passed every applicable defensive test: <strong>{p(B.passedAllDefensiveTests.share)}</strong>
-      ({n(B.passedAllDefensiveTests.pass)} of {n(B.passedAllDefensiveTests.n)}). The full worksheet,
-      company by company, is the <a href="/tests/defensive">defensive workbook</a>.
+      Passed every applicable defensive test: <strong data-stat="br.passedAll" set:html={C["br.passedAll"]} />.
+      The full worksheet, company by company, is the <a href="/tests/defensive">defensive workbook</a>.
     </p>
+    <h3 class="sub-h">Each test on its own</h3>
+    <table class="stat">
+      <tbody>
+        {CRIT.map((cr) => (
+          <tr><th>{cr.label}</th><td data-stat={`gc.${cr.key}`} set:html={C[`gc.${cr.key}`]} /></tr>
+        ))}
+      </tbody>
+    </table>
   </section>
 
   <p class="foot">
     The Almanac refreshes as the companies file. It counts and it distributes; it does not rank, and
-    it names no company as better than another. To read any single company's record, use the
-    <a href="/catalog">catalog</a>; to compare a kind of business against its peers, the
-    <a href="/groupings">groupings</a>.
+    it names no company as better than another. Reading it across a business type slices the same
+    census by our <a href="/groupings">groupings</a> — never a ranking of the groups against one
+    another. To read any single company's record, use the <a href="/catalog">catalog</a>.
   </p>
 
   <Cite citation={`Owner Scorecard, "The Almanac,"${asOf ? ` data as of ${asOf},` : ""} ${pageUrl}.`} />
+
+  <script type="application/json" id="almanac-views" set:html={JSON.stringify(views)} />
+  <script>
+    const el = document.getElementById("almanac-views");
+    const views = el ? JSON.parse(el.textContent) : {};
+    const sel = document.getElementById("grouping");
+    const sub = document.getElementById("grouping-sub");
+    function apply(key) {
+      const v = views[key];
+      if (!v) return;
+      if (sub) sub.textContent = v.sub;
+      for (const k in v.cells) {
+        const cell = document.querySelector('[data-stat="' + k + '"]');
+        if (cell) cell.innerHTML = v.cells[k];
+      }
+    }
+    sel && sel.addEventListener("change", (e) => apply(e.target.value));
+  </script>
 
   <style>
     .hero { max-width: 760px; }
     .hero h1 { margin: 0 0 12px; }
     .lede { font-size: 17px; line-height: 1.55; color: var(--ink-soft); margin: 0; }
+    .grouping { max-width: 760px; margin: 28px 0 4px; display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 10px; }
+    .grouping label { font-size: 14px; color: var(--ink-dim); }
+    .grouping select { font: inherit; font-size: 14px; padding: 4px 8px; border: 1px solid var(--rule-strong); border-radius: 6px; background: var(--surface, transparent); color: var(--ink); max-width: 100%; }
+    .grouping-sub { flex-basis: 100%; margin: 4px 0 0; font-size: 13px; color: var(--muted); }
     .band { margin-top: 40px; max-width: 760px; }
     .band h2 { margin: 0 0 8px; }
+    .sub-h { margin: 26px 0 6px; font-size: 15px; font-weight: 600; color: var(--ink); }
     .note { font-size: 14px; color: var(--ink-dim); margin: 0 0 14px; line-height: 1.5; max-width: 68ch; }
+    .note em { font-style: italic; color: var(--ink); }
     table.stat { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
     table.stat th { text-align: left; font-weight: 400; color: var(--ink); padding: 9px 0; border-bottom: 1px solid var(--rule); vertical-align: baseline; }
     table.stat td { text-align: right; font-weight: 600; color: var(--ink); padding: 9px 0 9px 16px; border-bottom: 1px solid var(--rule); white-space: nowrap; vertical-align: baseline; }
