@@ -100,7 +100,7 @@ export const FAMILIES = {
 };
 
 // ---------------------------------------------------------------------------------------------
-// The 28 groupings: one per shelf, in shelves.json file order (a fixed reading order, never a
+// The 29 groupings: one per shelf, in shelves.json file order (a fixed reading order, never a
 // ranking). Slugs are hand-written and stored, like the industry slugs in shelves.json, so a
 // later change to any slug rule can never silently move a URL.
 // ---------------------------------------------------------------------------------------------
@@ -130,6 +130,7 @@ const GROUPING_DEFS = [
   { noun: "They publish and entertain.", slug: "publish-and-entertain", family: "general" },
   { noun: "They run restaurants, hotels and casinos.", slug: "run-restaurants-hotels-and-casinos", family: "heavy" },
   { noun: "They run stores.", slug: "run-stores", family: "general" },
+  { noun: "They span several businesses.", slug: "span-several-businesses", family: "general" },
   { noun: "They supply and rent out goods.", slug: "supply-and-rent-out-goods", family: "general" },
   { noun: "They take oil, gas and ore from the ground.", slug: "take-oil-gas-and-ore-from-the-ground", family: "general" },
   { noun: "They write software.", slug: "write-software", family: "general" },
