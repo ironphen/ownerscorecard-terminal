@@ -39,6 +39,7 @@ export async function GET() {
     "## Core",
     `- [Catalog](${SITE_URL}/catalog): search and browse every scorecard`,
     `- [The Filing Wire](${SITE_URL}/wire): the latest SEC filings as they arrive, with each filer's own figures`,
+    `- [The Almanac](${SITE_URL}/almanac): a census of the whole catalog — base rates from primary filings, e.g. what fraction of companies earned 15% on capital over a decade, how many carry net cash, how many clear Graham's defensive tests; distributions and counts only, never a ranking`,
     `- [Compare](${SITE_URL}/compare): two to four businesses side by side, on the record and on what a price would have to assume`,
     `- [Principles](${SITE_URL}/concepts): how to read a filing, and every measure used, defined`,
     `- [About](${SITE_URL}/about): what this publication is and is not`,

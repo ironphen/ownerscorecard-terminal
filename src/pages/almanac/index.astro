@@ -1,0 +1,167 @@
+---
+// The Almanac — a census of the whole catalog, built from the same figures the compare cards use.
+// A base-rate reference nobody else publishes free from primary filings: what fraction of companies
+// earned 15% on capital over a decade, how many carry net cash, how many clear Graham's defensive
+// tests. This is a PULL artifact — the kind of page a journalist or an answer engine cites without a
+// byline, because it answers a real question with no other free source.
+//
+// Doctrine, held strictly: distributions and counts only, never a ranked list of named companies
+// (that would be a verdict). It states what the population looks like, never which companies are the
+// good ones. Present, never pronounce: the figures are given plainly, without an adjective on them.
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import fundamentals from "../../data/fundamentals.json";
+import adrData from "../../data/fundamentals.adr.json";
+import jpData from "../../data/fundamentals.jp.json";
+import Cite from "../../components/Cite.astro";
+import { computeAlmanac } from "../../lib/almanac.mjs";
+import { SITE_URL, ORG } from "../../lib/seo.mjs";
+import { dataAsOf, fmtAsOf } from "../../lib/freshness.mjs";
+
+const a = computeAlmanac(fundamentals.companies || [], adrData.companies || [], jpData.companies || []);
+const asOf = fmtAsOf(dataAsOf);
+const n = (x) => (x == null ? "—" : x.toLocaleString("en-US"));
+const p = (v) => (v == null || !Number.isFinite(v) ? "—" : `${(v * 100).toFixed(1)}%`);
+const range = (d) => (d && d.n ? `${p(d.p10)} to ${p(d.p90)}` : "—");
+const D = a.distributions;
+const B = a.baseRates;
+
+const pageUrl = `${SITE_URL}/almanac`;
+const pageDescription = `A census of ${n(a.universe.readable)} companies' ten-year records: the distribution of returns on capital, margins, growth, and balance-sheet strength, and how many clear Graham's defensive tests. Base rates computed from primary SEC and EDINET filings.`;
+
+// The Almanac is itself a dataset — census statistics over the catalog. Marked up so it is citable.
+const pageJsonLd = [
+  {
+    "@context": "https://schema.org",
+    "@type": "Dataset",
+    name: "The Owner Scorecard Almanac",
+    description: pageDescription,
+    url: pageUrl,
+    isAccessibleForFree: true,
+    license: `${SITE_URL}/docs/data#terms`,
+    creator: { "@id": `${SITE_URL}/#organization` },
+    publisher: { "@id": `${SITE_URL}/#organization` },
+    isPartOf: { "@id": `${SITE_URL}/docs/data#catalog` },
+    ...(dataAsOf ? { dateModified: dataAsOf } : {}),
+    variableMeasured: [
+      "10-year return on invested capital (through-cycle median)",
+      "operating margin", "gross margin", "revenue growth", "owner-earnings growth",
+      "net cash rate", "share-count change", "Graham defensive-test pass rate",
+    ],
+  },
+  { "@context": "https://schema.org", "@type": "WebPage", name: "The Almanac", description: pageDescription, publisher: ORG, ...(dataAsOf ? { dateModified: dataAsOf } : {}) },
+];
+---
+
+<BaseLayout title="The Almanac, Owner Scorecard" description={pageDescription} jsonLd={pageJsonLd}>
+  <header class="hero">
+    <h1>The Almanac</h1>
+    <p class="lede">
+      A census of the whole catalog: what the record of every company the library holds looks like,
+      taken together. The figures below are computed from {n(a.universe.readable)} readable records
+      across the United States, ADR, and Japan pools{asOf ? `, as of ${asOf}` : ""}. Returns and
+      margins are read through the cycle, the median over each company's own record, so one peak or
+      trough year never sets a level. A company appears in a figure only where its record could be
+      read; it is never counted as a zero.
+    </p>
+  </header>
+
+  <section class="band">
+    <h2>Return on capital, over a decade</h2>
+    <p class="note">
+      Return on invested capital, the through-cycle median for each company, then the distribution
+      across the catalog. Not computed for banks, insurers, and property trusts, whose capital is
+      not deployed the same way.
+    </p>
+    <table class="stat">
+      <tbody>
+        <tr><th>Companies with a readable return</th><td>{n(D.roicThroughCycle.n)}</td></tr>
+        <tr><th>Median return on capital</th><td>{p(D.roicThroughCycle.median)}</td></tr>
+        <tr><th>The middle 80% (10th to 90th percentile)</th><td>{range(D.roicThroughCycle)}</td></tr>
+        <tr class="rule"><th>Cleared 10% through the cycle</th><td>{p(B.roicAtLeast10.share)} <span class="frac">({n(B.roicAtLeast10.pass)} of {n(B.roicAtLeast10.n)})</span></td></tr>
+        <tr><th>Cleared 15%</th><td>{p(B.roicAtLeast15.share)} <span class="frac">({n(B.roicAtLeast15.pass)} of {n(B.roicAtLeast15.n)})</span></td></tr>
+        <tr><th>Cleared 20%</th><td>{p(B.roicAtLeast20.share)} <span class="frac">({n(B.roicAtLeast20.pass)} of {n(B.roicAtLeast20.n)})</span></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="band">
+    <h2>Margins and growth</h2>
+    <table class="stat">
+      <tbody>
+        <tr><th>Median operating margin <span class="sub">(through the cycle, operating businesses)</span></th><td>{p(D.operatingMarginThroughCycle.median)} <span class="frac">(n {n(D.operatingMarginThroughCycle.n)})</span></td></tr>
+        <tr><th>Median gross margin <span class="sub">(latest year)</span></th><td>{p(D.grossMarginLatest.median)} <span class="frac">(n {n(D.grossMarginLatest.n)})</span></td></tr>
+        <tr><th>Median owner-earnings margin</th><td>{p(D.ownerEarningsMarginThroughCycle.median)} <span class="frac">(n {n(D.ownerEarningsMarginThroughCycle.n)})</span></td></tr>
+        <tr class="rule"><th>Median revenue growth <span class="sub">(delivered, annualized over the record)</span></th><td>{p(D.revenueGrowthDelivered.median)} <span class="frac">(n {n(D.revenueGrowthDelivered.n)})</span></td></tr>
+        <tr><th>Grew revenue over the record</th><td>{p(B.grewRevenue.share)} <span class="frac">({n(B.grewRevenue.pass)} of {n(B.grewRevenue.n)})</span></td></tr>
+        <tr><th>Profitable in every year <span class="sub">(records of five years or more)</span></th><td>{p(B.profitableEveryYear.share)} <span class="frac">({n(B.profitableEveryYear.pass)} of {n(B.profitableEveryYear.n)})</span></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="band">
+    <h2>The balance sheet, and what management did with the shares</h2>
+    <table class="stat">
+      <tbody>
+        <tr><th>Carry net cash <span class="sub">(cash and investments above all debt)</span></th><td>{p(B.netCash.share)} <span class="frac">({n(B.netCash.pass)} of {n(B.netCash.n)})</span></td></tr>
+        <tr class="rule"><th>Reduced the share count over the record <span class="sub">(net of issuance)</span></th><td>{p(B.reducedShareCount.share)} <span class="frac">({n(B.reducedShareCount.pass)} of {n(B.reducedShareCount.n)})</span></td></tr>
+        <tr><th>Increased the share count</th><td>{p(B.dilutedShareCount.share)} <span class="frac">({n(B.dilutedShareCount.pass)} of {n(B.dilutedShareCount.n)})</span></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="band">
+    <h2>Graham's defensive tests</h2>
+    <p class="note">
+      How many of the applicable <a href="/tests/defensive">defensive-investor tests</a> each company
+      clears (adequate size, strong liquidity, conservative debt, an unbroken earnings record, a
+      dividend record, earnings growth). The price tests are left to the reader and are not counted
+      here. A company enters the count only where at least four of the tests could be read.
+    </p>
+    <table class="stat hist">
+      <thead><tr><th>Tests passed</th><th>Companies</th><th>Share</th></tr></thead>
+      <tbody>
+        {[6, 5, 4, 3, 2, 1, 0].map((k) => (
+          <tr>
+            <td>{k}</td>
+            <td>{n(a.defensiveHistogram.counts[k] || 0)}</td>
+            <td>{p(a.defensiveHistogram.n ? (a.defensiveHistogram.counts[k] || 0) / a.defensiveHistogram.n : null)}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+    <p class="note">
+      Passed every applicable defensive test: <strong>{p(B.passedAllDefensiveTests.share)}</strong>
+      ({n(B.passedAllDefensiveTests.pass)} of {n(B.passedAllDefensiveTests.n)}). The full worksheet,
+      company by company, is the <a href="/tests/defensive">defensive workbook</a>.
+    </p>
+  </section>
+
+  <p class="foot">
+    The Almanac refreshes as the companies file. It counts and it distributes; it does not rank, and
+    it names no company as better than another. To read any single company's record, use the
+    <a href="/catalog">catalog</a>; to compare a kind of business against its peers, the
+    <a href="/groupings">groupings</a>.
+  </p>
+
+  <Cite citation={`Owner Scorecard, "The Almanac,"${asOf ? ` data as of ${asOf},` : ""} ${pageUrl}.`} />
+
+  <style>
+    .hero { max-width: 760px; }
+    .hero h1 { margin: 0 0 12px; }
+    .lede { font-size: 17px; line-height: 1.55; color: var(--ink-soft); margin: 0; }
+    .band { margin-top: 40px; max-width: 760px; }
+    .band h2 { margin: 0 0 8px; }
+    .note { font-size: 14px; color: var(--ink-dim); margin: 0 0 14px; line-height: 1.5; max-width: 68ch; }
+    table.stat { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+    table.stat th { text-align: left; font-weight: 400; color: var(--ink); padding: 9px 0; border-bottom: 1px solid var(--rule); vertical-align: baseline; }
+    table.stat td { text-align: right; font-weight: 600; color: var(--ink); padding: 9px 0 9px 16px; border-bottom: 1px solid var(--rule); white-space: nowrap; vertical-align: baseline; }
+    table.stat tr.rule th, table.stat tr.rule td { border-top: 2px solid var(--rule-strong); }
+    .sub { display: block; font-size: 12px; color: var(--muted); font-weight: 400; margin-top: 2px; }
+    .frac { font-size: 12px; color: var(--muted); font-weight: 400; }
+    table.hist thead th { text-align: right; font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--rule-strong); }
+    table.hist thead th:first-child { text-align: left; }
+    table.hist td { font-weight: 600; }
+    table.hist td:first-child { text-align: left; font-weight: 700; }
+    .foot { max-width: 68ch; font-size: 14px; color: var(--ink-dim); margin: 40px 0 0; line-height: 1.55; }
+  </style>
+</BaseLayout>
