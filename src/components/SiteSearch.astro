@@ -146,7 +146,7 @@ import { SEARCH_ALIASES } from "../lib/searchAliases.mjs";
     function build(r) {
       const ticker = String(r[0] || ""), name = String(r[1] || ticker), pool = r[2] || 0, prom = r[3] || 0, place = String(r[4] || "");
       const nl = name.toLowerCase();
-      const href = pool === 2 ? "/jp/" + ticker : "/c/" + ticker;
+      const href = (pool === 2 ? "/jp/" : pool === 3 ? "/eu/" : "/c/") + ticker;
       const hay = nl + " " + ticker.toLowerCase() + " " + place.toLowerCase();
       return { ticker, name, place, href, pool, prom, tl: ticker.toLowerCase(), words: nl.split(/[^a-z0-9]+/).filter(Boolean), nlsq: sq(nl), nksq: sq(sortKey(name)), haysq: sq(hay) };
     }

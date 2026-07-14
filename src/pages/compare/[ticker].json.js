@@ -1,6 +1,7 @@
 import fundamentals from "../../data/fundamentals.json";
 import adrData from "../../data/fundamentals.adr.json";
 import jpData from "../../data/fundamentals.jp.json";
+import euData from "../../data/fundamentals.eu.json";
 import { buildCompareCard } from "../../lib/compareCard.mjs";
 
 // One slim card per company at /compare/<ticker>.json, generated at build time (the same way the
@@ -12,6 +13,7 @@ export function getStaticPaths() {
     ...(fundamentals.companies || []),
     ...(adrData.companies || []),
     ...(jpData.companies || []),
+    ...(euData.companies || []),
   ];
   const seen = new Set();
   const paths = [];

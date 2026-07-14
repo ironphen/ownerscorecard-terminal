@@ -54,12 +54,20 @@ const norm = (s) => String(s || "").toLowerCase()
 // the home-market listing, so the census never double-counts it. An ADR with no home-market pool
 // (a Chinese or Canadian filer with only a 20-F) is kept, since it is the only version there is.
 export function computeAlmanac({ us = [], adr = [], homePools = [] }) {
+  // Key each home-market company by its OWN country (falling back to the pool's), so a single
+  // multi-country pool (a European pool spanning Italy, the UK, France) still de-dups each name
+  // against an ADR from the matching country. Japan's companies carry no country field and fall
+  // back to the pool label "Japan".
   const homeByCountry = new Map();
   const homeCompanies = [];
   for (const pool of homePools) {
-    if (!homeByCountry.has(pool.country)) homeByCountry.set(pool.country, new Set());
-    const set = homeByCountry.get(pool.country);
-    for (const c of pool.companies || []) { const k = norm(c.name); if (k) set.add(k); homeCompanies.push(c); }
+    for (const c of pool.companies || []) {
+      const country = c.country || pool.country;
+      if (!homeByCountry.has(country)) homeByCountry.set(country, new Set());
+      const k = norm(c.name);
+      if (k) homeByCountry.get(country).add(k);
+      homeCompanies.push(c);
+    }
   }
   const adrDeduped = (adr || []).filter((c) => {
     const set = homeByCountry.get(c.country);

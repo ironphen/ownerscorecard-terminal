@@ -1,0 +1,132 @@
+---
+// The European home-market pool (ESEF / IFRS), read from each issuer's filed Inline-XBRL annual
+// report. Same quantitative machinery as the US and Japan pages — the record, owner earnings, the
+// scorecard, capital allocation, the inversion checks, and the reverse-DCF — run in the reporting
+// currency. Pilot pool: Campari. The narrative (business description, risks) is not machine-read,
+// so the page stays quantitative and says so, exactly like the Japan pages.
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import eu from "../../data/fundamentals.eu.json";
+import TenYear from "../../components/TenYear.astro";
+import OwnerEarningsBridge from "../../components/OwnerEarningsBridge.astro";
+import Scorecard from "../../components/Scorecard.astro";
+import Capital from "../../components/Capital.astro";
+import Inversion from "../../components/Inversion.astro";
+import Valuation from "../../components/Valuation.astro";
+import CompareLink from "../../components/CompareLink.astro";
+import ActHeader from "../../components/ActHeader.astro";
+import Segments from "../../components/Segments.astro";
+import { SITE_URL, ORG, companyDataset, corporationNode, breadcrumbList } from "../../lib/seo.mjs";
+
+export function getStaticPaths() {
+  return (eu.companies || []).map((c) => ({ params: { ticker: String(c.ticker) } }));
+}
+
+const ticker = String(Astro.params.ticker || "");
+const fund = (eu.companies || []).find((c) => String(c.ticker) === ticker) || null;
+const name = fund?.name || "";
+const ccySym = fund?.currency === "EUR" ? "€" : fund?.currency === "GBP" ? "£" : fund?.currency || "";
+
+const histYears = fund ? (fund.history || []).map((h) => h.fy).filter(Boolean) : [];
+const spanFrom = histYears.length ? Math.min(...histYears) : fund?.fy || null;
+const spanTo = histYears.length ? Math.max(...histYears) : fund?.fy || null;
+const pageUrl = `${SITE_URL}/eu/${ticker}`;
+
+const pageDescription = fund
+  ? `${name} (${ticker}): the ten-year owner's record. Revenue, margins, returns on capital, owner earnings, and debt, every figure read from the company's own ESEF annual report, in ${fund.currency}.`
+  : undefined;
+
+const pageJsonLd = fund
+  ? [
+      {
+        "@context": "https://schema.org",
+        "@type": "WebPage",
+        name: `${name} (${ticker}), the owner's record`,
+        description: pageDescription,
+        about: corporationNode({ name, ticker, url: pageUrl }),
+        publisher: ORG,
+        ...(eu.asOf ? { dateModified: eu.asOf } : {}),
+        ...(fund.fy ? { temporalCoverage: `FY${fund.fy}` } : {}),
+      },
+      companyDataset({
+        ticker,
+        name,
+        pageUrl,
+        jsonUrl: `${SITE_URL}/compare/${ticker}.json`,
+        spanFrom: spanFrom ? `${spanFrom}` : null,
+        spanTo: spanTo ? `${spanTo}` : null,
+        asOf: eu.asOf || null,
+        sourceUrl: fund.sourceUrl || null,
+        filingSource: "ESEF filings",
+      }),
+      breadcrumbList([
+        { name: "Owner Scorecard", url: "/" },
+        { name: `${name} (${ticker})`, url: pageUrl },
+      ]),
+    ].filter(Boolean)
+  : null;
+---
+
+<BaseLayout title={`${ticker} ${name}, Owner Scorecard (Europe)`} description={pageDescription} jsonLd={pageJsonLd}>
+  <p class="back"><a href="/catalog">← Catalog</a></p>
+
+  {fund ? (
+    <>
+      <header class="hero" id="top">
+        <h1>{ticker} · {name}</h1>
+        <div class="ident">
+          {fund.industry ? <span class="ichip">{fund.industry}</span> : null}
+          <span class="jp">{fund.market || "Europe"} · {ccySym}</span>
+          {fund.accountingStandard ? <span class="std">{fund.accountingStandard}</span> : null}
+        </div>
+        <div class="meta">Latest filing: FY{fund.fy} annual report · ESEF (Inline XBRL)</div>
+      </header>
+
+      <section class="band note">
+        <p>
+          This is a quantitative scorecard. The numbers below are read from {name}&rsquo;s ESEF
+          annual report, in {fund.currency}. The narrative — what the business does, its risks,
+          what changed this year — is not machine-read here, so we do not paraphrase it.
+          {fund.sourceUrl ? (
+            <a href={fund.sourceUrl} target="_blank" rel="noopener"> The filed annual report →</a>
+          ) : null}
+        </p>
+      </section>
+
+      <div id="sec-mix" class="sec"><Segments company={fund} /></div>
+
+      <section class="actGroup">
+        <ActHeader n="I" title="The record" lede="What the business has done across the cycle, read straight from the ESEF filing: the multi-year record, and the walk from reported profit to the cash an owner could take out." />
+        <div id="sec-record" class="sec"><TenYear company={fund} /></div>
+        <div id="sec-bridge" class="sec"><OwnerEarningsBridge company={fund} /></div>
+      </section>
+
+      <section class="actGroup">
+        <ActHeader n="II" title="Quality &amp; stewardship" lede="Returns, the balance sheet, and stewardship. The same checks the US pages run, in the reporting currency." />
+        <div id="sec-scorecard" class="sec"><Scorecard company={fund} /></div>
+        <div id="sec-capital" class="sec"><Capital company={fund} /></div>
+        <div id="sec-inversion" class="sec"><Inversion company={fund} /></div>
+      </section>
+
+      <section class="actGroup">
+        <ActHeader n="III" title="The price" lede="What a price would have to assume, set against the record above. You bring the price, in the reporting currency." />
+        <div id="sec-price" class="sec"><Valuation company={fund} /><CompareLink company={fund} /></div>
+      </section>
+    </>
+  ) : (
+    <p>Not found.</p>
+  )}
+
+  <style>
+    .back { margin: 0 0 10px; font-size: 13px; }
+    .hero { margin: 0 0 18px; }
+    .hero h1 { margin: 0 0 8px; }
+    .ident { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 12px; }
+    .ichip, .jp, .std, .model { border: 1px solid var(--rule); padding: 2px 8px; border-radius: 3px; color: var(--ink-soft); }
+    .jp { color: var(--muted); }
+    .meta { font-size: 12.5px; color: var(--muted); margin-top: 8px; }
+    .band.note { margin: 0 0 22px; }
+    .band.note p { font-size: 14px; color: var(--ink-soft); max-width: 70ch; line-height: 1.55; }
+    .actGroup { margin: 0 0 10px; }
+    .sec { margin: 0 0 6px; }
+  </style>
+</BaseLayout>

@@ -12,6 +12,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 import fundamentals from "../../data/fundamentals.json";
 import adrData from "../../data/fundamentals.adr.json";
 import jpData from "../../data/fundamentals.jp.json";
+import euData from "../../data/fundamentals.eu.json";
 import Cite from "../../components/Cite.astro";
 import { computeAlmanac } from "../../lib/almanac.mjs";
 import { SITE_URL, ORG } from "../../lib/seo.mjs";
@@ -20,9 +21,14 @@ import { dataAsOf, fmtAsOf } from "../../lib/freshness.mjs";
 const a = computeAlmanac({
   us: fundamentals.companies || [],
   adr: adrData.companies || [],
-  homePools: [{ country: "Japan", companies: jpData.companies || [] }],
+  homePools: [
+    { country: "Japan", companies: jpData.companies || [] },
+    { country: "Europe", companies: euData.companies || [] },
+  ],
 });
 const asOf = fmtAsOf(dataAsOf);
+const jpN = (jpData.companies || []).length;
+const euN = (euData.companies || []).length;
 const n = (x) => (x == null ? "—" : x.toLocaleString("en-US"));
 const p = (v) => (v == null || !Number.isFinite(v) ? "—" : `${(v * 100).toFixed(1)}%`);
 const range = (d) => (d && d.n ? `${p(d.p10)} to ${p(d.p90)}` : "—");
@@ -63,11 +69,11 @@ const pageJsonLd = [
       A census of the catalog: what the record of every company the library holds looks like, taken
       together. This is the universe Owner Scorecard covers, and it is a large but not complete,
       United-States-centered slice of the world's public companies, not the whole of it:
-      {n(a.universe.us)} US filers, {n(a.universe.adr)} foreign companies with US-listed ADRs, and
-      {n(a.universe.home)} large Japanese companies. Read the figures below as "of the companies
-      here," never as "of all companies everywhere." A company listed both as an ADR and in its home
-      market is counted once. They are computed from {n(a.universe.readable)} readable
-      records{asOf ? `, as of ${asOf}` : ""}. Returns and margins are read through the
+      {n(a.universe.us)} US filers, {n(a.universe.adr)} foreign companies with US-listed ADRs,
+      {n(jpN)} large Japanese companies, and {n(euN)} European {euN === 1 ? "company" : "companies"}.
+      Read the figures below as "of the companies here," never as "of all companies everywhere." A
+      company listed both as an ADR and in its home market is counted once. They are computed from
+      {n(a.universe.readable)} readable records{asOf ? `, as of ${asOf}` : ""}. Returns and margins are read through the
       cycle, the median over each company's own record, so one peak or trough year never sets a
       level. A company appears in a figure only where its record could be read; it is never counted
       as a zero.

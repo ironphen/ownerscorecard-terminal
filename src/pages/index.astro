@@ -366,7 +366,7 @@ const fmtWireDate = (s) => new Date(s + "T00:00:00Z").toLocaleDateString("en-US"
                 const hay = nl + " " + ticker.toLowerCase() + " " + place.toLowerCase();
                 INDEX.push({
                   name, ticker, place,
-                  href: (poolCode === 2 ? "/jp/" : "/c/") + ticker,
+                  href: (poolCode === 2 ? "/jp/" : poolCode === 3 ? "/eu/" : "/c/") + ticker,
                   pool: poolCode,
                   prom: row[3] | 0,
                   tl: ticker.toLowerCase(),
