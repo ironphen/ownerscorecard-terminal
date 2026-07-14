@@ -3,7 +3,7 @@
   "source": "Company ESEF annual reports (Inline XBRL), read from the issuer's filed consolidated financial statements",
   "market": "EU",
   "currency": "EUR",
-  "note": "European home-market pool (ESEF / IFRS), read from each issuer's own annual reports. Figures as-filed in the reporting currency; ratios are currency-neutral. operatingIncome = REPORTED operating result (not adjusted APM); capex = purchase of PP&E + intangibles (ex-acquisitions); totalDebt = gross financial debt ex put/earn-out. Pernod Ricard and Heineken are pending an enrichment round (equity total / net revenue). Depreciation to be added across the pool to enable the steady-state valuation base.",
+  "note": "European home-market pool (ESEF / IFRS), read from each issuer's own annual reports. Figures as-filed in the reporting currency; ratios currency-neutral. operatingIncome = REPORTED operating result (not adjusted APM); capex = purchase of PP&E + intangibles (ex-acquisitions); totalDebt = gross financial debt ex put/earn-out; depreciation = D&A add-back from the cash-flow statement (ex-impairments, incl. IFRS-16 right-of-use from adoption). Pernod equity = total attributable to owners (not the subtotal); Heineken revenue = NET revenue (ex-excise), its cost-of-sales dropped to avoid a mismatched gross-margin basis.",
   "companies": [
     {
       "ticker": "BC",
@@ -37,7 +37,8 @@
         "sharesDiluted": 67975949,
         "epsBasic": 1.9865,
         "receivables": 101622000,
-        "goodwill": 0
+        "goodwill": 0,
+        "depreciation": 180612000
       },
       "history": [
         {
@@ -59,7 +60,8 @@
             "sharesDiluted": 68000000,
             "epsBasic": 0.49026,
             "receivables": 45628000,
-            "goodwill": 0
+            "goodwill": 0,
+            "depreciation": 18149000
           }
         },
         {
@@ -81,7 +83,8 @@
             "sharesDiluted": 68000000,
             "epsBasic": 0.53525,
             "receivables": 47231000,
-            "goodwill": 0
+            "goodwill": 0,
+            "depreciation": 20047000
           }
         },
         {
@@ -103,7 +106,8 @@
             "sharesDiluted": 68000000,
             "epsBasic": 0.75172,
             "receivables": 45178000,
-            "goodwill": 7045000
+            "goodwill": 7045000,
+            "depreciation": 22755000
           }
         },
         {
@@ -125,7 +129,8 @@
             "sharesDiluted": 68000000,
             "epsBasic": 0.74547,
             "receivables": 61444000,
-            "goodwill": 7045000
+            "goodwill": 7045000,
+            "depreciation": 25605000
           }
         },
         {
@@ -147,7 +152,8 @@
             "sharesDiluted": 68000000,
             "epsBasic": 0.77284,
             "receivables": 58622000,
-            "goodwill": 7045000
+            "goodwill": 7045000,
+            "depreciation": 86250000
           }
         },
         {
@@ -169,7 +175,8 @@
             "sharesDiluted": 68000000,
             "epsBasic": -0.48847,
             "receivables": 78871000,
-            "goodwill": 7045000
+            "goodwill": 7045000,
+            "depreciation": 104284000
           }
         },
         {
@@ -191,7 +198,8 @@
             "sharesDiluted": 68000000,
             "epsBasic": 0.78415,
             "receivables": 72809000,
-            "goodwill": 7045000
+            "goodwill": 7045000,
+            "depreciation": 116275000
           }
         },
         {
@@ -213,7 +221,8 @@
             "sharesDiluted": 68000000,
             "epsBasic": 1.18528,
             "receivables": 76608000,
-            "goodwill": 0
+            "goodwill": 0,
+            "depreciation": 131945000
           }
         },
         {
@@ -235,7 +244,8 @@
             "sharesDiluted": 67991109,
             "epsBasic": 1.68576,
             "receivables": 78170000,
-            "goodwill": 0
+            "goodwill": 0,
+            "depreciation": 138845000
           }
         },
         {
@@ -257,7 +267,8 @@
             "sharesDiluted": 67996131,
             "epsBasic": 1.75713,
             "receivables": 82092000,
-            "goodwill": 0
+            "goodwill": 0,
+            "depreciation": 153004000
           }
         },
         {
@@ -279,7 +290,8 @@
             "sharesDiluted": 67975949,
             "epsBasic": 1.9865,
             "receivables": 101622000,
-            "goodwill": 0
+            "goodwill": 0,
+            "depreciation": 180612000
           }
         }
       ]
@@ -318,7 +330,8 @@
         "sharesDiluted": 1259199529,
         "costOfRevenue": 1211100000,
         "receivables": 327100000,
-        "goodwill": 2233400000
+        "goodwill": 2233400000,
+        "depreciation": 148300000
       },
       "history": [
         {
@@ -340,7 +353,8 @@
             "epsBasic": 0.15,
             "sharesDiluted": 1156110150,
             "costOfRevenue": 739800000,
-            "receivables": 295900000
+            "receivables": 295900000,
+            "depreciation": 47400000
           }
         },
         {
@@ -362,7 +376,8 @@
             "epsBasic": 0.14,
             "sharesDiluted": 1158249216,
             "costOfRevenue": 741900000,
-            "receivables": 306400000
+            "receivables": 306400000,
+            "depreciation": 52700000
           }
         },
         {
@@ -384,7 +399,8 @@
             "epsBasic": 0.31,
             "sharesDiluted": 1180022862,
             "costOfRevenue": 741100000,
-            "receivables": 317500000
+            "receivables": 317500000,
+            "depreciation": 57100000
           }
         },
         {
@@ -406,7 +422,8 @@
             "epsBasic": 0.26,
             "sharesDiluted": 1179922358,
             "costOfRevenue": 683600000,
-            "receivables": 285900000
+            "receivables": 285900000,
+            "depreciation": 53800000
           }
         },
         {
@@ -428,7 +445,8 @@
             "epsBasic": 0.27,
             "sharesDiluted": 1169855022,
             "costOfRevenue": 721300000,
-            "receivables": 316900000
+            "receivables": 316900000,
+            "depreciation": 71800000
           }
         },
         {
@@ -451,7 +469,8 @@
             "sharesDiluted": 1156253726,
             "costOfRevenue": 746100000,
             "receivables": 281800000,
-            "goodwill": 1356600000
+            "goodwill": 1356600000,
+            "depreciation": 78000000
           }
         },
         {
@@ -474,7 +493,8 @@
             "sharesDiluted": 1146285352,
             "costOfRevenue": 875800000,
             "receivables": 290400000,
-            "goodwill": 1416300000
+            "goodwill": 1416300000,
+            "depreciation": 79700000
           }
         },
         {
@@ -497,7 +517,8 @@
             "sharesDiluted": 1140220211,
             "costOfRevenue": 1109000000,
             "receivables": 308500000,
-            "goodwill": 1911800000
+            "goodwill": 1911800000,
+            "depreciation": 90500000
           }
         },
         {
@@ -520,7 +541,8 @@
             "sharesDiluted": 1139171963,
             "costOfRevenue": 1218500000,
             "receivables": 374300000,
-            "goodwill": 1850800000
+            "goodwill": 1850800000,
+            "depreciation": 110200000
           }
         },
         {
@@ -543,7 +565,8 @@
             "sharesDiluted": 1250652701,
             "costOfRevenue": 1303000000,
             "receivables": 425800000,
-            "goodwill": 2420100000
+            "goodwill": 2420100000,
+            "depreciation": 127700000
           }
         },
         {
@@ -566,7 +589,8 @@
             "sharesDiluted": 1259199529,
             "costOfRevenue": 1211100000,
             "receivables": 327100000,
-            "goodwill": 2233400000
+            "goodwill": 2233400000,
+            "depreciation": 148300000
           }
         }
       ]
@@ -604,7 +628,8 @@
         "epsBasic": 1.059,
         "costOfRevenue": 8072000000,
         "receivables": 3504000000,
-        "goodwill": 2949000000
+        "goodwill": 2949000000,
+        "depreciation": 1718000000
       },
       "history": [
         {
@@ -627,7 +652,8 @@
             "epsBasic": 0.95,
             "costOfRevenue": 4610000000,
             "receivables": 2435000000,
-            "goodwill": 2521000000
+            "goodwill": 2521000000,
+            "depreciation": 440000000
           }
         },
         {
@@ -650,7 +676,8 @@
             "epsBasic": 0.895,
             "costOfRevenue": 4251000000,
             "receivables": 2686000000,
-            "goodwill": 2699000000
+            "goodwill": 2699000000,
+            "depreciation": 473000000
           }
         },
         {
@@ -673,7 +700,8 @@
             "epsBasic": 1.06,
             "costOfRevenue": 4680000000,
             "receivables": 2592000000,
-            "goodwill": 2723000000
+            "goodwill": 2723000000,
+            "depreciation": 361000000
           }
         },
         {
@@ -696,7 +724,8 @@
             "epsBasic": 1.217,
             "costOfRevenue": 4634000000,
             "receivables": 2678000000,
-            "goodwill": 2678000000
+            "goodwill": 2678000000,
+            "depreciation": 493000000
           }
         },
         {
@@ -719,7 +748,8 @@
             "epsBasic": 1.307,
             "costOfRevenue": 4866000000,
             "receivables": 2694000000,
-            "goodwill": 2682000000
+            "goodwill": 2682000000,
+            "depreciation": 374000000
           }
         },
         {
@@ -742,7 +772,8 @@
             "epsBasic": 0.601,
             "costOfRevenue": 4654000000,
             "receivables": 2111000000,
-            "goodwill": 1912000000
+            "goodwill": 1912000000,
+            "depreciation": 1839000000
           }
         },
         {
@@ -765,7 +796,8 @@
             "epsBasic": 1.138,
             "costOfRevenue": 5038000000,
             "receivables": 2385000000,
-            "goodwill": 1957000000
+            "goodwill": 1957000000,
+            "depreciation": 447000000
           }
         },
         {
@@ -788,7 +820,8 @@
             "epsBasic": 1.402,
             "costOfRevenue": 5973000000,
             "receivables": 2933000000,
-            "goodwill": 2287000000
+            "goodwill": 2287000000,
+            "depreciation": 828000000
           }
         },
         {
@@ -811,7 +844,8 @@
             "epsBasic": 1.649,
             "costOfRevenue": 6899000000,
             "receivables": 2720000000,
-            "goodwill": 2227000000
+            "goodwill": 2227000000,
+            "depreciation": 1066000000
           }
         },
         {
@@ -834,7 +868,8 @@
             "epsBasic": 1.732,
             "costOfRevenue": 8071000000,
             "receivables": 3487000000,
-            "goodwill": 2860000000
+            "goodwill": 2860000000,
+            "depreciation": 493000000
           }
         },
         {
@@ -857,7 +892,299 @@
             "epsBasic": 1.059,
             "costOfRevenue": 8072000000,
             "receivables": 3504000000,
-            "goodwill": 2949000000
+            "goodwill": 2949000000,
+            "depreciation": 1718000000
+          }
+        }
+      ]
+    },
+    {
+      "ticker": "HEIA",
+      "name": "Heineken N.V.",
+      "market": "Euronext Amsterdam",
+      "currency": "EUR",
+      "country": "Netherlands",
+      "isin": "NL0000009165",
+      "sic": "2082",
+      "sector": "consumer",
+      "industry": "Brewers",
+      "accountingStandard": "IFRS",
+      "fy": 2025,
+      "periodEnd": "2025-12-31",
+      "form": "Annual Report (ESEF, Inline XBRL)",
+      "sourceUrl": "https://www.theheinekencompany.com/sites/heineken-corp/files/heineken-corp/investors/results-reports-webcasts-presentations/2016/heineken-nv-full-annual-reportInteractived-0.pdf",
+      "lines": {
+        "revenue": 28753000000,
+        "operatingIncome": 3406000000,
+        "netIncome": 1885000000,
+        "interestExpense": 666000000,
+        "cashFromOps": 5012000000,
+        "capex": 2402000000,
+        "dividendsPaid": 1276000000,
+        "stockholdersEquity": 17978000000,
+        "totalAssets": 53753000000,
+        "cashAndEquivalents": 4773000000,
+        "currentAssets": 12893000000,
+        "currentLiabilities": 13932000000,
+        "totalDebt": 19279000000,
+        "sharesDiluted": 557024742,
+        "epsBasic": 3.39,
+        "receivables": 4488000000,
+        "goodwill": 11588000000,
+        "depreciation": 2609000000
+      },
+      "history": [
+        {
+          "fy": 2015,
+          "lines": {
+            "revenue": 20511000000,
+            "operatingIncome": 3075000000,
+            "netIncome": 1892000000,
+            "interestExpense": 409000000,
+            "cashFromOps": 3489000000,
+            "capex": 1730000000,
+            "dividendsPaid": 909000000,
+            "stockholdersEquity": 13535000000,
+            "totalAssets": 37714000000,
+            "cashAndEquivalents": 824000000,
+            "currentAssets": 5914000000,
+            "currentLiabilities": 8516000000,
+            "totalDebt": 12597000000,
+            "sharesDiluted": 572944188,
+            "epsBasic": 3.31,
+            "receivables": 2873000000,
+            "goodwill": 11324000000,
+            "depreciation": 1594000000
+          }
+        },
+        {
+          "fy": 2016,
+          "lines": {
+            "revenue": 20792000000,
+            "operatingIncome": 2755000000,
+            "netIncome": 1540000000,
+            "interestExpense": 493000000,
+            "cashFromOps": 3718000000,
+            "capex": 1866000000,
+            "dividendsPaid": 1031000000,
+            "stockholdersEquity": 13238000000,
+            "totalAssets": 39321000000,
+            "cashAndEquivalents": 3035000000,
+            "currentAssets": 8137000000,
+            "currentLiabilities": 10397000000,
+            "totalDebt": 14604000000,
+            "sharesDiluted": 570370392,
+            "epsBasic": 2.7,
+            "receivables": 3052000000,
+            "goodwill": 11029000000,
+            "depreciation": 1817000000
+          }
+        },
+        {
+          "fy": 2017,
+          "lines": {
+            "revenue": 21888000000,
+            "operatingIncome": 3352000000,
+            "netIncome": 1935000000,
+            "interestExpense": 519000000,
+            "cashFromOps": 3882000000,
+            "capex": 1833000000,
+            "dividendsPaid": 1011000000,
+            "stockholdersEquity": 13321000000,
+            "totalAssets": 41034000000,
+            "cashAndEquivalents": 2442000000,
+            "currentAssets": 8248000000,
+            "currentLiabilities": 10458000000,
+            "totalDebt": 15513000000,
+            "sharesDiluted": 570652111,
+            "epsBasic": 3.39,
+            "receivables": 3496000000,
+            "goodwill": 11205000000,
+            "depreciation": 1587000000
+          }
+        },
+        {
+          "fy": 2018,
+          "lines": {
+            "revenue": 22471000000,
+            "operatingIncome": 3137000000,
+            "netIncome": 1903000000,
+            "interestExpense": 495000000,
+            "cashFromOps": 4388000000,
+            "capex": 2055000000,
+            "dividendsPaid": 1090000000,
+            "stockholdersEquity": 14358000000,
+            "totalAssets": 41956000000,
+            "cashAndEquivalents": 2903000000,
+            "currentAssets": 9070000000,
+            "currentLiabilities": 10450000000,
+            "totalDebt": 14986000000,
+            "sharesDiluted": 570663632,
+            "epsBasic": 3.34,
+            "receivables": 3740000000,
+            "goodwill": 11194000000,
+            "depreciation": 1693000000
+          }
+        },
+        {
+          "fy": 2019,
+          "lines": {
+            "revenue": 23969000000,
+            "operatingIncome": 3633000000,
+            "netIncome": 2166000000,
+            "interestExpense": 513000000,
+            "cashFromOps": 4337000000,
+            "capex": 2101000000,
+            "dividendsPaid": 1223000000,
+            "stockholdersEquity": 16147000000,
+            "totalAssets": 46504000000,
+            "cashAndEquivalents": 1821000000,
+            "currentAssets": 8419000000,
+            "currentLiabilities": 12307000000,
+            "totalDebt": 17052000000,
+            "sharesDiluted": 574217111,
+            "epsBasic": 3.78,
+            "receivables": 4123000000,
+            "goodwill": 11465000000,
+            "depreciation": 1959000000
+          }
+        },
+        {
+          "fy": 2020,
+          "lines": {
+            "revenue": 19715000000,
+            "operatingIncome": 778000000,
+            "netIncome": -204000000,
+            "interestExpense": 590000000,
+            "cashFromOps": 3136000000,
+            "capex": 1640000000,
+            "dividendsPaid": 811000000,
+            "stockholdersEquity": 13392000000,
+            "totalAssets": 42632000000,
+            "cashAndEquivalents": 4000000000,
+            "currentAssets": 9020000000,
+            "currentLiabilities": 10868000000,
+            "totalDebt": 18196000000,
+            "sharesDiluted": 575625598,
+            "epsBasic": -0.36,
+            "receivables": 2807000000,
+            "goodwill": 10678000000,
+            "depreciation": 2874000000
+          }
+        },
+        {
+          "fy": 2021,
+          "lines": {
+            "revenue": 21941000000,
+            "operatingIncome": 4483000000,
+            "netIncome": 3324000000,
+            "interestExpense": 399000000,
+            "cashFromOps": 4181000000,
+            "capex": 1597000000,
+            "dividendsPaid": 796000000,
+            "stockholdersEquity": 17356000000,
+            "totalAssets": 48850000000,
+            "cashAndEquivalents": 3248000000,
+            "currentAssets": 9578000000,
+            "currentLiabilities": 12094000000,
+            "totalDebt": 16873000000,
+            "sharesDiluted": 575969395,
+            "epsBasic": 5.77,
+            "receivables": 3662000000,
+            "goodwill": 11810000000,
+            "depreciation": 1959000000
+          }
+        },
+        {
+          "fy": 2022,
+          "lines": {
+            "revenue": 28719000000,
+            "operatingIncome": 4283000000,
+            "netIncome": 2682000000,
+            "interestExpense": 336000000,
+            "cashFromOps": 4496000000,
+            "capex": 2011000000,
+            "dividendsPaid": 1099000000,
+            "stockholdersEquity": 19551000000,
+            "totalAssets": 52406000000,
+            "cashAndEquivalents": 2765000000,
+            "currentAssets": 11015000000,
+            "currentLiabilities": 14190000000,
+            "totalDebt": 16377000000,
+            "sharesDiluted": 576026120,
+            "epsBasic": 4.66,
+            "receivables": 4531000000,
+            "goodwill": 12250000000,
+            "depreciation": 1886000000
+          }
+        },
+        {
+          "fy": 2023,
+          "lines": {
+            "revenue": 30362000000,
+            "operatingIncome": 3229000000,
+            "netIncome": 2304000000,
+            "interestExpense": 925000000,
+            "cashFromOps": 4430000000,
+            "capex": 2677000000,
+            "dividendsPaid": 1335000000,
+            "stockholdersEquity": 20056000000,
+            "totalAssets": 55153000000,
+            "cashAndEquivalents": 2377000000,
+            "currentAssets": 11399000000,
+            "currentLiabilities": 14825000000,
+            "totalDebt": 18238000000,
+            "sharesDiluted": 563979620,
+            "epsBasic": 4.09,
+            "receivables": 5019000000,
+            "goodwill": 12238000000,
+            "depreciation": 3096000000
+          }
+        },
+        {
+          "fy": 2024,
+          "lines": {
+            "revenue": 29821000000,
+            "operatingIncome": 3517000000,
+            "netIncome": 978000000,
+            "interestExpense": 805000000,
+            "cashFromOps": 5503000000,
+            "capex": 2465000000,
+            "dividendsPaid": 1199000000,
+            "stockholdersEquity": 19581000000,
+            "totalAssets": 53773000000,
+            "cashAndEquivalents": 2350000000,
+            "currentAssets": 10899000000,
+            "currentLiabilities": 14238000000,
+            "totalDebt": 17049000000,
+            "sharesDiluted": 560639030,
+            "epsBasic": 1.75,
+            "receivables": 4588000000,
+            "goodwill": 12301000000,
+            "depreciation": 2605000000
+          }
+        },
+        {
+          "fy": 2025,
+          "lines": {
+            "revenue": 28753000000,
+            "operatingIncome": 3406000000,
+            "netIncome": 1885000000,
+            "interestExpense": 666000000,
+            "cashFromOps": 5012000000,
+            "capex": 2402000000,
+            "dividendsPaid": 1276000000,
+            "stockholdersEquity": 17978000000,
+            "totalAssets": 53753000000,
+            "cashAndEquivalents": 4773000000,
+            "currentAssets": 12893000000,
+            "currentLiabilities": 13932000000,
+            "totalDebt": 19279000000,
+            "sharesDiluted": 557024742,
+            "epsBasic": 3.39,
+            "receivables": 4488000000,
+            "goodwill": 11588000000,
+            "depreciation": 2609000000
           }
         }
       ]
@@ -895,7 +1222,8 @@
         "epsBasic": 0.59,
         "costOfRevenue": 4015000000,
         "receivables": 824000000,
-        "goodwill": 3666000000
+        "goodwill": 3666000000,
+        "depreciation": 2044000000
       },
       "history": [
         {
@@ -918,7 +1246,8 @@
             "epsBasic": 5.52,
             "costOfRevenue": 4510000000,
             "receivables": 1137100000,
-            "goodwill": 3758800000
+            "goodwill": 3758800000,
+            "depreciation": 409600000
           }
         },
         {
@@ -941,7 +1270,8 @@
             "epsBasic": 6.46,
             "costOfRevenue": 4595300000,
             "receivables": 1196400000,
-            "goodwill": 3533500000
+            "goodwill": 3533500000,
+            "depreciation": 432000000
           }
         },
         {
@@ -964,7 +1294,8 @@
             "epsBasic": 14.17,
             "costOfRevenue": 5344700000,
             "receivables": 1366500000,
-            "goodwill": 3421200000
+            "goodwill": 3421200000,
+            "depreciation": 516400000
           }
         },
         {
@@ -987,7 +1318,8 @@
             "epsBasic": 29.49,
             "costOfRevenue": 3467000000,
             "receivables": 849500000,
-            "goodwill": 2399200000
+            "goodwill": 2399200000,
+            "depreciation": 491900000
           }
         },
         {
@@ -1010,7 +1342,8 @@
             "epsBasic": 18.4,
             "costOfRevenue": 4108500000,
             "receivables": 996000000,
-            "goodwill": 2525900000
+            "goodwill": 2525900000,
+            "depreciation": 1245300000
           }
         },
         {
@@ -1033,7 +1366,8 @@
             "epsBasic": 17.2,
             "costOfRevenue": 3590600000,
             "receivables": 824200000,
-            "goodwill": 2452200000
+            "goodwill": 2452200000,
+            "depreciation": 1439000000
           }
         },
         {
@@ -1056,7 +1390,8 @@
             "epsBasic": 25.49,
             "costOfRevenue": 4576700000,
             "receivables": 977200000,
-            "goodwill": 2891200000
+            "goodwill": 2891200000,
+            "depreciation": 1453200000
           }
         },
         {
@@ -1079,7 +1414,8 @@
             "epsBasic": 29.34,
             "costOfRevenue": 5153000000,
             "receivables": 1180000000,
-            "goodwill": 4053000000
+            "goodwill": 4053000000,
+            "depreciation": 1666000000
           }
         },
         {
@@ -1102,7 +1438,8 @@
             "epsBasic": 24.38,
             "costOfRevenue": 4639000000,
             "receivables": 1151000000,
-            "goodwill": 7112000000
+            "goodwill": 7112000000,
+            "depreciation": 1823000000
           }
         },
         {
@@ -1125,7 +1462,8 @@
             "epsBasic": 9.24,
             "costOfRevenue": 4513000000,
             "receivables": 1003000000,
-            "goodwill": 6277000000
+            "goodwill": 6277000000,
+            "depreciation": 2113000000
           }
         },
         {
@@ -1148,7 +1486,8 @@
             "epsBasic": 0.59,
             "costOfRevenue": 4015000000,
             "receivables": 824000000,
-            "goodwill": 3666000000
+            "goodwill": 3666000000,
+            "depreciation": 2044000000
           }
         }
       ]
@@ -1186,7 +1525,8 @@
         "epsBasic": 21.86,
         "costOfRevenue": 27279000000,
         "receivables": 4332000000,
-        "goodwill": 18315000000
+        "goodwill": 18315000000,
+        "depreciation": 8001000000
       },
       "history": [
         {
@@ -1209,7 +1549,8 @@
             "epsBasic": 7.11,
             "costOfRevenue": 12553000000,
             "receivables": 2521000000,
-            "goodwill": 10122000000
+            "goodwill": 10122000000,
+            "depreciation": 2081000000
           }
         },
         {
@@ -1232,7 +1573,8 @@
             "epsBasic": 7.92,
             "costOfRevenue": 13039000000,
             "receivables": 2685000000,
-            "goodwill": 10401000000
+            "goodwill": 10401000000,
+            "depreciation": 2143000000
           }
         },
         {
@@ -1255,7 +1597,8 @@
             "epsBasic": 10.21,
             "costOfRevenue": 14783000000,
             "receivables": 2737000000,
-            "goodwill": 16514000000
+            "goodwill": 16514000000,
+            "depreciation": 2375000000
           }
         },
         {
@@ -1278,7 +1621,8 @@
             "epsBasic": 12.64,
             "costOfRevenue": 15625000000,
             "receivables": 3222000000,
-            "goodwill": 13727000000
+            "goodwill": 13727000000,
+            "depreciation": 2302000000
           }
         },
         {
@@ -1301,7 +1645,8 @@
             "epsBasic": 14.25,
             "costOfRevenue": 18123000000,
             "receivables": 3450000000,
-            "goodwill": 16034000000
+            "goodwill": 16034000000,
+            "depreciation": 5108000000
           }
         },
         {
@@ -1324,7 +1669,8 @@
             "epsBasic": 9.33,
             "costOfRevenue": 15871000000,
             "receivables": 2756000000,
-            "goodwill": 16042000000
+            "goodwill": 16042000000,
+            "depreciation": 6050000000
           }
         },
         {
@@ -1347,7 +1693,8 @@
             "epsBasic": 23.9,
             "costOfRevenue": 20355000000,
             "receivables": 3787000000,
-            "goodwill": 25904000000
+            "goodwill": 25904000000,
+            "depreciation": 5830000000
           }
         },
         {
@@ -1370,7 +1717,8 @@
             "epsBasic": 28.05,
             "costOfRevenue": 24988000000,
             "receivables": 4258000000,
-            "goodwill": 24782000000
+            "goodwill": 24782000000,
+            "depreciation": 6226000000
           }
         },
         {
@@ -1393,7 +1741,8 @@
             "epsBasic": 30.34,
             "costOfRevenue": 26876000000,
             "receivables": 4728000000,
-            "goodwill": 24022000000
+            "goodwill": 24022000000,
+            "depreciation": 7177000000
           }
         },
         {
@@ -1416,7 +1765,8 @@
             "epsBasic": 25.13,
             "costOfRevenue": 27918000000,
             "receivables": 4730000000,
-            "goodwill": 20307000000
+            "goodwill": 20307000000,
+            "depreciation": 7796000000
           }
         },
         {
@@ -1439,7 +1789,8 @@
             "epsBasic": 21.86,
             "costOfRevenue": 27279000000,
             "receivables": 4332000000,
-            "goodwill": 18315000000
+            "goodwill": 18315000000,
+            "depreciation": 8001000000
           }
         }
       ]
@@ -1477,7 +1828,8 @@
         "epsBasic": 2.31,
         "costOfRevenue": 685931000,
         "receivables": 292133000,
-        "goodwill": 603417000
+        "goodwill": 603417000,
+        "depreciation": 336684000
       },
       "history": [
         {
@@ -1500,7 +1852,8 @@
             "epsBasic": 0.67,
             "costOfRevenue": 225495000,
             "receivables": 89782000,
-            "goodwill": 155582000
+            "goodwill": 155582000,
+            "depreciation": 35959000
           }
         },
         {
@@ -1523,7 +1876,8 @@
             "epsBasic": 0.79,
             "costOfRevenue": 252303000,
             "receivables": 104864000,
-            "goodwill": 155582000
+            "goodwill": 155582000,
+            "depreciation": 41635000
           }
         },
         {
@@ -1546,7 +1900,8 @@
             "epsBasic": 0.99,
             "costOfRevenue": 276186000,
             "receivables": 120708000,
-            "goodwill": 155582000
+            "goodwill": 155582000,
+            "depreciation": 47273000
           }
         },
         {
@@ -1569,7 +1924,8 @@
             "epsBasic": 1.32,
             "costOfRevenue": 320232000,
             "receivables": 155047000,
-            "goodwill": 155582000
+            "goodwill": 155582000,
+            "depreciation": 56499000
           }
         },
         {
@@ -1592,7 +1948,8 @@
             "epsBasic": 1.42,
             "costOfRevenue": 362424000,
             "receivables": 167919000,
-            "goodwill": 155582000
+            "goodwill": 155582000,
+            "depreciation": 171123000
           }
         },
         {
@@ -1615,7 +1972,8 @@
             "epsBasic": 1.19,
             "costOfRevenue": 350775000,
             "receivables": 174144000,
-            "goodwill": 155582000
+            "goodwill": 155582000,
+            "depreciation": 200976000
           }
         },
         {
@@ -1638,7 +1996,8 @@
             "epsBasic": 1.48,
             "costOfRevenue": 479197000,
             "receivables": 234274000,
-            "goodwill": 603417000
+            "goodwill": 603417000,
+            "depreciation": 246519000
           }
         },
         {
@@ -1661,7 +2020,8 @@
             "epsBasic": 2.26,
             "costOfRevenue": 615047000,
             "receivables": 296550000,
-            "goodwill": 603417000
+            "goodwill": 603417000,
+            "depreciation": 264917000
           }
         },
         {
@@ -1684,7 +2044,8 @@
             "epsBasic": 2.27,
             "costOfRevenue": 683387000,
             "receivables": 325608000,
-            "goodwill": 603417000
+            "goodwill": 603417000,
+            "depreciation": 291700000
           }
         },
         {
@@ -1707,7 +2068,8 @@
             "epsBasic": 2.36,
             "costOfRevenue": 682367000,
             "receivables": 326382000,
-            "goodwill": 603417000
+            "goodwill": 603417000,
+            "depreciation": 306844000
           }
         },
         {
@@ -1730,7 +2092,8 @@
             "epsBasic": 2.31,
             "costOfRevenue": 685931000,
             "receivables": 292133000,
-            "goodwill": 603417000
+            "goodwill": 603417000,
+            "depreciation": 336684000
           }
         }
       ]
@@ -1768,7 +2131,8 @@
         "epsBasic": 11.48,
         "costOfRevenue": 11313400000,
         "receivables": 5500300000,
-        "goodwill": 14469700000
+        "goodwill": 14469700000,
+        "depreciation": 1817400000
       },
       "history": [
         {
@@ -1791,7 +2155,8 @@
             "epsBasic": 5.92,
             "costOfRevenue": 7277400000,
             "receivables": 3627700000,
-            "goodwill": 8151500000
+            "goodwill": 8151500000,
+            "depreciation": 933800000
           }
         },
         {
@@ -1814,7 +2179,8 @@
             "epsBasic": 5.55,
             "costOfRevenue": 7341700000,
             "receivables": 3941800000,
-            "goodwill": 8792500000
+            "goodwill": 8792500000,
+            "depreciation": 1424500000
           }
         },
         {
@@ -1837,7 +2203,8 @@
             "epsBasic": 6.4,
             "costOfRevenue": 7359200000,
             "receivables": 3923400000,
-            "goodwill": 8872300000
+            "goodwill": 8872300000,
+            "depreciation": 1218500000
           }
         },
         {
@@ -1860,7 +2227,8 @@
             "epsBasic": 6.96,
             "costOfRevenue": 7331600000,
             "receivables": 3983200000,
-            "goodwill": 9597100000
+            "goodwill": 9597100000,
+            "depreciation": 1109300000
           }
         },
         {
@@ -1883,7 +2251,8 @@
             "epsBasic": 6.7,
             "costOfRevenue": 8064700000,
             "receivables": 4086700000,
-            "goodwill": 9585600000
+            "goodwill": 9585600000,
+            "depreciation": 1958300000
           }
         },
         {
@@ -1906,7 +2275,8 @@
             "epsBasic": 6.37,
             "costOfRevenue": 7532300000,
             "receivables": 3511300000,
-            "goodwill": 10514200000
+            "goodwill": 10514200000,
+            "depreciation": 2028100000
           }
         },
         {
@@ -1929,7 +2299,8 @@
             "epsBasic": 8.24,
             "costOfRevenue": 8433300000,
             "receivables": 4021000000,
-            "goodwill": 11074500000
+            "goodwill": 11074500000,
+            "depreciation": 1781000000
           }
         },
         {
@@ -1952,7 +2323,8 @@
             "epsBasic": 10.65,
             "costOfRevenue": 10577400000,
             "receivables": 4755500000,
-            "goodwill": 11717700000
+            "goodwill": 11717700000,
+            "depreciation": 1536100000
           }
         },
         {
@@ -1975,7 +2347,8 @@
             "epsBasic": 11.55,
             "costOfRevenue": 10767000000,
             "receivables": 5092700000,
-            "goodwill": 13102600000
+            "goodwill": 13102600000,
+            "depreciation": 1715000000
           }
         },
         {
@@ -1998,7 +2371,8 @@
             "epsBasic": 11.99,
             "costOfRevenue": 11227000000,
             "receivables": 5601800000,
-            "goodwill": 13382000000
+            "goodwill": 13382000000,
+            "depreciation": 1855300000
           }
         },
         {
@@ -2021,7 +2395,8 @@
             "epsBasic": 11.48,
             "costOfRevenue": 11313400000,
             "receivables": 5500300000,
-            "goodwill": 14469700000
+            "goodwill": 14469700000,
+            "depreciation": 1817400000
           }
         }
       ]
@@ -2059,7 +2434,8 @@
         "epsBasic": 1.51,
         "costOfRevenue": 319500000,
         "receivables": 170500000,
-        "goodwill": 24300000
+        "goodwill": 24300000,
+        "depreciation": 46100000
       },
       "history": [
         {
@@ -2082,7 +2458,8 @@
             "epsBasic": 1.91,
             "costOfRevenue": 347000000,
             "receivables": 248700000,
-            "goodwill": 28200000
+            "goodwill": 28200000,
+            "depreciation": 18600000
           }
         },
         {
@@ -2105,7 +2482,8 @@
             "epsBasic": 2.11,
             "costOfRevenue": 384900000,
             "receivables": 232800000,
-            "goodwill": 26000000
+            "goodwill": 26000000,
+            "depreciation": 18800000
           }
         },
         {
@@ -2128,7 +2506,8 @@
             "epsBasic": 3.87,
             "costOfRevenue": 364200000,
             "receivables": 224000000,
-            "goodwill": 51800000
+            "goodwill": 51800000,
+            "depreciation": 20400000
           }
         },
         {
@@ -2151,7 +2530,8 @@
             "epsBasic": 2.98,
             "costOfRevenue": 366300000,
             "receivables": 209800000,
-            "goodwill": 45600000
+            "goodwill": 45600000,
+            "depreciation": 21600000
           }
         },
         {
@@ -2174,7 +2554,8 @@
             "epsBasic": 3.18,
             "costOfRevenue": 415100000,
             "receivables": 271100000,
-            "goodwill": 48300000
+            "goodwill": 48300000,
+            "depreciation": 30300000
           }
         },
         {
@@ -2197,7 +2578,8 @@
             "epsBasic": 2.28,
             "costOfRevenue": 347900000,
             "receivables": 199400000,
-            "goodwill": 29100000
+            "goodwill": 29100000,
+            "depreciation": 33400000
           }
         },
         {
@@ -2220,7 +2602,8 @@
             "epsBasic": 2.89,
             "costOfRevenue": 330100000,
             "receivables": 158100000,
-            "goodwill": 31900000
+            "goodwill": 31900000,
+            "depreciation": 34000000
           }
         },
         {
@@ -2243,7 +2626,8 @@
             "epsBasic": 4.21,
             "costOfRevenue": 411800000,
             "receivables": 253600000,
-            "goodwill": 31900000
+            "goodwill": 31900000,
+            "depreciation": 40000000
           }
         },
         {
@@ -2266,7 +2650,8 @@
             "epsBasic": 5.79,
             "costOfRevenue": 444700000,
             "receivables": 268700000,
-            "goodwill": 24000000
+            "goodwill": 24000000,
+            "depreciation": 41000000
           }
         },
         {
@@ -2289,7 +2674,8 @@
             "epsBasic": 3.64,
             "costOfRevenue": 344000000,
             "receivables": 238200000,
-            "goodwill": 24600000
+            "goodwill": 24600000,
+            "depreciation": 45100000
           }
         },
         {
@@ -2312,7 +2698,8 @@
             "epsBasic": 2.36,
             "costOfRevenue": 289800000,
             "receivables": 187500000,
-            "goodwill": 25100000
+            "goodwill": 25100000,
+            "depreciation": 46800000
           }
         },
         {
@@ -2335,7 +2722,311 @@
             "epsBasic": 1.51,
             "costOfRevenue": 319500000,
             "receivables": 170500000,
-            "goodwill": 24300000
+            "goodwill": 24300000,
+            "depreciation": 46100000
+          }
+        }
+      ]
+    },
+    {
+      "ticker": "RI",
+      "name": "Pernod Ricard SA",
+      "market": "Euronext Paris",
+      "currency": "EUR",
+      "country": "France",
+      "isin": "FR0000120693",
+      "sic": "2085",
+      "sector": "consumer",
+      "industry": "Distillers & Vintners",
+      "accountingStandard": "IFRS",
+      "fy": 2025,
+      "periodEnd": "2025-06-30",
+      "form": "Annual Report (ESEF, Inline XBRL)",
+      "sourceUrl": "https://www.pernod-ricard.com/sites/default/files/inline-files/Consolidated%20financial%20statements%20FY25.PDF",
+      "lines": {
+        "revenue": 10959000000,
+        "operatingIncome": 2743000000,
+        "netIncome": 1626000000,
+        "interestExpense": 492000000,
+        "cashFromOps": 1788000000,
+        "capex": 667000000,
+        "dividendsPaid": 1201000000,
+        "stockholdersEquity": 16226000000,
+        "totalAssets": 37080000000,
+        "cashAndEquivalents": 1829000000,
+        "currentAssets": 12292000000,
+        "currentLiabilities": 6442000000,
+        "totalDebt": 12588000000,
+        "sharesDiluted": 252011273,
+        "epsBasic": 6.47,
+        "costOfRevenue": 4443000000,
+        "receivables": 1484000000,
+        "goodwill": 6406000000,
+        "depreciation": 422000000
+      },
+      "history": [
+        {
+          "fy": 2015,
+          "lines": {
+            "revenue": 8558000000,
+            "operatingIncome": 1590000000,
+            "netIncome": 861000000,
+            "interestExpense": 489000000,
+            "cashFromOps": 1035000000,
+            "capex": 323000000,
+            "dividendsPaid": 461000000,
+            "stockholdersEquity": 13288000000,
+            "totalAssets": 30398000000,
+            "cashAndEquivalents": 545000000,
+            "currentAssets": 7419000000,
+            "currentLiabilities": 5138000000,
+            "totalDebt": 9511000000,
+            "sharesDiluted": 266230412,
+            "epsBasic": 3.26,
+            "costOfRevenue": 3262000000,
+            "receivables": 1152000000,
+            "goodwill": 5494000000,
+            "depreciation": 214000000
+          }
+        },
+        {
+          "fy": 2016,
+          "lines": {
+            "revenue": 8682000000,
+            "operatingIncome": 2095000000,
+            "netIncome": 1235000000,
+            "interestExpense": 432000000,
+            "cashFromOps": 1336000000,
+            "capex": 333000000,
+            "dividendsPaid": 497000000,
+            "stockholdersEquity": 13506000000,
+            "totalAssets": 30598000000,
+            "cashAndEquivalents": 569000000,
+            "currentAssets": 7282000000,
+            "currentLiabilities": 4955000000,
+            "totalDebt": 9362000000,
+            "sharesDiluted": 265632528,
+            "epsBasic": 4.68,
+            "costOfRevenue": 3311000000,
+            "receivables": 1068000000,
+            "goodwill": 5486000000,
+            "depreciation": 219000000
+          }
+        },
+        {
+          "fy": 2017,
+          "lines": {
+            "revenue": 9010000000,
+            "operatingIncome": 2232000000,
+            "netIncome": 1393000000,
+            "interestExpense": 374000000,
+            "cashFromOps": 1642000000,
+            "capex": 367000000,
+            "dividendsPaid": 511000000,
+            "stockholdersEquity": 13886000000,
+            "totalAssets": 30088000000,
+            "cashAndEquivalents": 677000000,
+            "currentAssets": 7521000000,
+            "currentLiabilities": 4256000000,
+            "totalDebt": 8545000000,
+            "sharesDiluted": 265477729,
+            "epsBasic": 5.27,
+            "costOfRevenue": 3407000000,
+            "receivables": 1134000000,
+            "goodwill": 5397000000,
+            "depreciation": 219000000
+          }
+        },
+        {
+          "fy": 2018,
+          "lines": {
+            "revenue": 8987000000,
+            "operatingIncome": 2296000000,
+            "netIncome": 1577000000,
+            "interestExpense": 301000000,
+            "cashFromOps": 1776000000,
+            "capex": 374000000,
+            "dividendsPaid": 551000000,
+            "stockholdersEquity": 14978000000,
+            "totalAssets": 29558000000,
+            "cashAndEquivalents": 754000000,
+            "currentAssets": 7821000000,
+            "currentLiabilities": 3743000000,
+            "totalDebt": 7691000000,
+            "sharesDiluted": 265543003,
+            "epsBasic": 5.97,
+            "costOfRevenue": 3383000000,
+            "receivables": 1122000000,
+            "goodwill": 5319000000,
+            "depreciation": 216000000
+          }
+        },
+        {
+          "fy": 2019,
+          "lines": {
+            "revenue": 9182000000,
+            "operatingIncome": 2375000000,
+            "netIncome": 1455000000,
+            "interestExpense": 310000000,
+            "cashFromOps": 1701000000,
+            "capex": 388000000,
+            "dividendsPaid": 645000000,
+            "stockholdersEquity": 16182000000,
+            "totalAssets": 31045000000,
+            "cashAndEquivalents": 923000000,
+            "currentAssets": 8375000000,
+            "currentLiabilities": 4826000000,
+            "totalDebt": 7555000000,
+            "sharesDiluted": 265419549,
+            "epsBasic": 5.51,
+            "costOfRevenue": 3533000000,
+            "receivables": 1226000000,
+            "goodwill": 5391000000,
+            "depreciation": 226000000
+          }
+        },
+        {
+          "fy": 2020,
+          "lines": {
+            "revenue": 8448000000,
+            "operatingIncome": 978000000,
+            "netIncome": 329000000,
+            "interestExpense": 366000000,
+            "cashFromOps": 1181000000,
+            "capex": 365000000,
+            "dividendsPaid": 849000000,
+            "stockholdersEquity": 14211000000,
+            "totalAssets": 31525000000,
+            "cashAndEquivalents": 1935000000,
+            "currentAssets": 9485000000,
+            "currentLiabilities": 4563000000,
+            "totalDebt": 10416000000,
+            "sharesDiluted": 264036831,
+            "epsBasic": 1.25,
+            "costOfRevenue": 3361000000,
+            "receivables": 906000000,
+            "goodwill": 5611000000,
+            "depreciation": 350000000
+          }
+        },
+        {
+          "fy": 2021,
+          "lines": {
+            "revenue": 8824000000,
+            "operatingIncome": 2361000000,
+            "netIncome": 1305000000,
+            "interestExpense": 371000000,
+            "cashFromOps": 1999000000,
+            "capex": 433000000,
+            "dividendsPaid": 704000000,
+            "stockholdersEquity": 15075000000,
+            "totalAssets": 32147000000,
+            "cashAndEquivalents": 2078000000,
+            "currentAssets": 10321000000,
+            "currentLiabilities": 4218000000,
+            "totalDebt": 9594000000,
+            "sharesDiluted": 261513904,
+            "epsBasic": 5,
+            "costOfRevenue": 3531000000,
+            "receivables": 1126000000,
+            "goodwill": 5505000000,
+            "depreciation": 367000000
+          }
+        },
+        {
+          "fy": 2022,
+          "lines": {
+            "revenue": 10701000000,
+            "operatingIncome": 2963000000,
+            "netIncome": 1996000000,
+            "interestExpense": 260000000,
+            "cashFromOps": 2294000000,
+            "capex": 506000000,
+            "dividendsPaid": 826000000,
+            "stockholdersEquity": 16253000000,
+            "totalAssets": 36012000000,
+            "cashAndEquivalents": 2527000000,
+            "currentAssets": 11896000000,
+            "currentLiabilities": 6107000000,
+            "totalDebt": 11171000000,
+            "sharesDiluted": 259719441,
+            "epsBasic": 7.71,
+            "costOfRevenue": 4228000000,
+            "receivables": 1388000000,
+            "goodwill": 6145000000,
+            "depreciation": 381000000
+          }
+        },
+        {
+          "fy": 2023,
+          "lines": {
+            "revenue": 12137000000,
+            "operatingIncome": 3265000000,
+            "netIncome": 2262000000,
+            "interestExpense": 327000000,
+            "cashFromOps": 2033000000,
+            "capex": 702000000,
+            "dividendsPaid": 1072000000,
+            "stockholdersEquity": 16715000000,
+            "totalAssets": 37676000000,
+            "cashAndEquivalents": 1609000000,
+            "currentAssets": 12008000000,
+            "currentLiabilities": 6935000000,
+            "totalDebt": 11871000000,
+            "sharesDiluted": 256878253,
+            "epsBasic": 8.84,
+            "costOfRevenue": 4891000000,
+            "receivables": 1814000000,
+            "goodwill": 6750000000,
+            "depreciation": 417000000
+          }
+        },
+        {
+          "fy": 2024,
+          "lines": {
+            "revenue": 11598000000,
+            "operatingIncome": 2724000000,
+            "netIncome": 1476000000,
+            "interestExpense": 437000000,
+            "cashFromOps": 1727000000,
+            "capex": 773000000,
+            "dividendsPaid": 1208000000,
+            "stockholdersEquity": 16797000000,
+            "totalAssets": 39185000000,
+            "cashAndEquivalents": 2683000000,
+            "currentAssets": 13065000000,
+            "currentLiabilities": 7091000000,
+            "totalDebt": 13618000000,
+            "sharesDiluted": 253188307,
+            "epsBasic": 5.84,
+            "costOfRevenue": 4623000000,
+            "receivables": 1581000000,
+            "goodwill": 6806000000,
+            "depreciation": 441000000
+          }
+        },
+        {
+          "fy": 2025,
+          "lines": {
+            "revenue": 10959000000,
+            "operatingIncome": 2743000000,
+            "netIncome": 1626000000,
+            "interestExpense": 492000000,
+            "cashFromOps": 1788000000,
+            "capex": 667000000,
+            "dividendsPaid": 1201000000,
+            "stockholdersEquity": 16226000000,
+            "totalAssets": 37080000000,
+            "cashAndEquivalents": 1829000000,
+            "currentAssets": 12292000000,
+            "currentLiabilities": 6442000000,
+            "totalDebt": 12588000000,
+            "sharesDiluted": 252011273,
+            "epsBasic": 6.47,
+            "costOfRevenue": 4443000000,
+            "receivables": 1484000000,
+            "goodwill": 6406000000,
+            "depreciation": 422000000
           }
         }
       ]
@@ -2373,7 +3064,8 @@
         "epsBasic": 43.15,
         "costOfRevenue": 4623000000,
         "receivables": 418000000,
-        "goodwill": 180000000
+        "goodwill": 180000000,
+        "depreciation": 926000000
       },
       "history": [
         {
@@ -2396,7 +3088,8 @@
             "epsBasic": 9.32,
             "costOfRevenue": 1642500000,
             "receivables": 303000000,
-            "goodwill": 37900000
+            "goodwill": 37900000,
+            "depreciation": 178600000
           }
         },
         {
@@ -2419,7 +3112,8 @@
             "epsBasic": 10.53,
             "costOfRevenue": 1681900000,
             "receivables": 307200000,
-            "goodwill": 36600000
+            "goodwill": 36600000,
+            "depreciation": 201800000
           }
         },
         {
@@ -2442,7 +3136,8 @@
             "epsBasic": 11.7,
             "costOfRevenue": 1659300000,
             "receivables": 255900000,
-            "goodwill": 32900000
+            "goodwill": 32900000,
+            "depreciation": 201100000
           }
         },
         {
@@ -2465,7 +3160,8 @@
             "epsBasic": 13.48,
             "costOfRevenue": 1791000000,
             "receivables": 280700000,
-            "goodwill": 15700000
+            "goodwill": 15700000,
+            "depreciation": 217000000
           }
         },
         {
@@ -2488,7 +3184,8 @@
             "epsBasic": 14.66,
             "costOfRevenue": 2124900000,
             "receivables": 317900000,
-            "goodwill": 16200000
+            "goodwill": 16200000,
+            "depreciation": 447700000
           }
         },
         {
@@ -2511,7 +3208,8 @@
             "epsBasic": 13.27,
             "costOfRevenue": 2013300000,
             "receivables": 249700000,
-            "goodwill": 42400000
+            "goodwill": 42400000,
+            "depreciation": 514200000
           }
         },
         {
@@ -2534,7 +3232,8 @@
             "epsBasic": 23.37,
             "costOfRevenue": 2580000000,
             "receivables": 333000000,
-            "goodwill": 42000000
+            "goodwill": 42000000,
+            "depreciation": 563000000
           }
         },
         {
@@ -2557,7 +3256,8 @@
             "epsBasic": 32.2,
             "costOfRevenue": 3389000000,
             "receivables": 383000000,
-            "goodwill": 0
+            "goodwill": 0,
+            "depreciation": 607000000
           }
         },
         {
@@ -2580,7 +3280,8 @@
             "epsBasic": 41.19,
             "costOfRevenue": 3720000000,
             "receivables": 431000000,
-            "goodwill": 72000000
+            "goodwill": 72000000,
+            "depreciation": 772000000
           }
         },
         {
@@ -2603,7 +3304,8 @@
             "epsBasic": 43.93,
             "costOfRevenue": 4511000000,
             "receivables": 478000000,
-            "goodwill": 228000000
+            "goodwill": 228000000,
+            "depreciation": 844000000
           }
         },
         {
@@ -2626,7 +3328,8 @@
             "epsBasic": 43.15,
             "costOfRevenue": 4623000000,
             "receivables": 418000000,
-            "goodwill": 180000000
+            "goodwill": 180000000,
+            "depreciation": 926000000
           }
         }
       ]
