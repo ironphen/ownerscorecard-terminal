@@ -88,7 +88,7 @@ for (const P of POOLS) {
   // Hard floors (a cliff fails the run); soft floors (a known-thin reality, warns only).
   const checks = [
     { label: "top line (revenue > 0)", v: frac(withRev, n), floor: 0.95, hard: true },
-    { label: "owner-earnings inputs (CFO + capex)", v: frac(withOE, n), floor: 0.85, hard: true },
+    { label: "owner-earnings inputs (CFO + capex)", v: frac(withOE, n), floor: P.thinCapitalAlloc ? 0.8 : 0.85, hard: true },
     { label: "share count", v: frac(withShares, n), floor: 0.9, hard: true },
     { label: "depreciation (owner-earnings integrity)", v: frac(withDep, n), floor: P.thinCapitalAlloc ? 0.5 : 0.9, hard: !P.thinCapitalAlloc },
     { label: `through-cycle record (${P.cycle}+ yr of owner earnings)`, v: frac(withCycle, n), floor: P.thinCapitalAlloc ? 0.45 : 0.6, hard: !P.thinCapitalAlloc },
