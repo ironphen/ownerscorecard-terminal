@@ -41,6 +41,8 @@ import { ORG, SITE_URL, companyDataset, corporationNode, breadcrumbList } from "
 import { dataAsOf } from "../../lib/freshness.mjs";
 import adrRatios from "../../data/adrRatios.json";
 import ogImages from "../../data/ogImages.json";
+import wire from "../../data/wire.json";
+import { perfLine, perfNote } from "../../lib/wirePerf.mjs";
 
 // ADRs (foreign 20-F filers) carry US-style tickers and the same record shape, so they get the same
 // /c/[ticker] page as a US company; only the data source and currency differ. The two pools are
@@ -103,6 +105,18 @@ const brief = fund ? (language?.companies?.[ticker]?.brief || []).filter((s) => 
 
 const fmtDate = (d) =>
   d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric", timeZone: "UTC" });
+
+// The most recent quarterly filing (10-Q) the wire holds for this company: the interim read the ten-year
+// annual record below cannot carry. A quarter always covers a period past the last annual, so it never
+// restates the record. wire.json is joined here at build (442 items, keyed by ticker). Its figures and the
+// company's own MD&A sentence are shown exactly as /wire renders them (the same perfLine helper); where a
+// 10-Q carried no comparable XBRL, the filing and its EDGAR source stand alone. Absent, nothing renders.
+const recentFiling = fund
+  ? ((wire?.items || [])
+      .filter((it) => String(it.ticker || "").toUpperCase() === ticker && /^10-Q/.test(it.form || ""))
+      .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0))[0] || null)
+  : null;
+const recentLine = recentFiling ? perfLine(recentFiling.performance) : null;
 
 
 // This company's place in the Manual (docs/discovery-design.md feature 2): the previous and next
@@ -216,7 +230,7 @@ const ogImageAlt = ogImage ? `${name} (${ticker}): the owner's record at a glanc
     {brief.length ? <div class="leadMore">{brief.map((s) => <p>{s}</p>)}</div> : null}
     {fund ? (
       <div class="meta">
-        Latest filing: FY{fund.fy} {fund.form}
+        Latest annual: FY{fund.fy} {fund.form}
         {fund.market === "ADR" ? (
           <span class="adrBasisMeta">
             {fund.currency && fund.currency !== "USD" ? ` · figures as filed, in ${fund.currency}` : ""}
@@ -259,6 +273,27 @@ const ogImageAlt = ogImage ? `${name} (${ticker}): the owner's record at a glanc
   {fund ? (
     <section id="act-record" class="actGroup">
       <ActHeader n="II" title="The record" lede="Ten years of arithmetic, read across the cycle." />
+      {recentFiling ? (
+        <div id="sec-recent" class="sec recent">
+          <div class="recentHead">
+            <span class="recentTag">Most recent quarterly filing</span>
+            <span class="recentForm">{recentFiling.form}</span>
+            <span class="recentWhen">filed {fmtDate(new Date(recentFiling.date + "T00:00:00Z"))}</span>
+            {recentFiling.url ? (
+              <a class="recentSrc" href={recentFiling.url} target="_blank" rel="noopener noreferrer">Source at SEC EDGAR &rarr;</a>
+            ) : null}
+          </div>
+          {recentLine ? <p class="recentLine">{recentLine}</p> : null}
+          {recentFiling.performance?.driver ? (
+            <p class="recentQuote">&ldquo;{recentFiling.performance.driver}&rdquo;</p>
+          ) : null}
+          <p class="recentNote">
+            {recentLine
+              ? perfNote(!!recentFiling.performance?.driver)
+              : "No comparable figures were tagged in this filing's XBRL."}
+          </p>
+        </div>
+      ) : null}
       <div id="sec-record" class="sec"><TenYear company={fund} /></div>
       <div id="sec-drivers" class="sec"><Drivers company={fund} /></div>
       <div id="sec-recordcharts" class="sec"><RecordCharts company={fund} /></div>
@@ -382,7 +417,19 @@ const ogImageAlt = ogImage ? `${name} (${ticker}): the owner's record at a glanc
     .history li { padding: 10px 0; display: flex; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--rule); }
     .hDate { color: var(--muted); flex: 0 0 auto; }
     .hLinks { flex: 1 1 auto; text-align: right; }
-    @media (max-width: 560px) { .cbar-nm { display: none; } }
+
+    /* The freshest filing, sitting above the ten-year record it cannot yet be part of. A quiet card,
+       not a callout: the record is the point, this is the note that a quarter has since been filed. */
+    .recent { border: 1px solid var(--rule-strong); border-left: 3px solid var(--accent); padding: 12px 14px; margin: 4px 0 22px; }
+    .recentHead { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; }
+    .recentTag { font-family: var(--sans); font-size: 11px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); }
+    .recentForm { font-family: var(--sans); font-weight: 700; font-size: 12.5px; letter-spacing: 0.02em; color: var(--ink); }
+    .recentWhen { font-size: 12.5px; color: var(--muted); }
+    .recentSrc { font-family: var(--sans); font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase; margin-left: auto; flex: 0 0 auto; }
+    .recentLine { font-family: var(--serif); font-size: 15px; line-height: 1.5; color: var(--ink); margin: 9px 0 0; }
+    .recentQuote { font-family: var(--serif); font-style: italic; font-size: 14px; line-height: 1.6; color: var(--ink-dim); margin: 8px 0 0; max-width: 72ch; }
+    .recentNote { font-size: 11.5px; color: var(--muted); margin: 8px 0 0; }
+    @media (max-width: 560px) { .cbar-nm { display: none; } .recentSrc { margin-left: 0; } }
   </style>
 
   <script is:inline>

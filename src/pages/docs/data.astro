@@ -275,12 +275,15 @@ const pageDescription =
       <h3><code>/wire-lite.json</code> — the day's filings</h3>
       <p>
         The <a href="/wire">Filing Wire</a> reduced to its public facts, one tuple per filing:
-        <code>[ticker, form, label, date, href, revYoyPct, oiYoyPct, quote]</code>.
-        <code>href</code> is null where the library has no page for the ticker. The last three
-        are null except on 10-K/10-Q items whose XBRL carried the comparison: year-over-year
-        revenue and operating-income change in percent, computed from the filing's own
-        prior-year figures, and the company's verbatim MD&amp;A sentence where one passed the
-        verification gates. Refreshes daily. Truncated:
+        <code>[ticker, form, label, date, href, revYoyPct, oiYoyPct, quote, grave, basis]</code>.
+        <code>href</code> is null where the library has no page for the ticker.
+        <code>revYoyPct</code>, <code>oiYoyPct</code> and <code>quote</code> are null except on
+        10-K/10-Q items whose XBRL carried the comparison: year-over-year revenue and operating-income
+        change in percent, computed from the filing's own prior-year figures, and the company's
+        verbatim MD&amp;A sentence where one passed the verification gates. <code>grave</code> is 1
+        when the filing reports an SEC-defined material 8-K event and 0 otherwise; <code>basis</code>
+        names the comparison period (<code>fy</code>, <code>ytd</code>, or <code>yoy</code>) where
+        those figures are present. Refreshes daily. Truncated:
       </p>
       <pre><code>{shown(wireExample)}</code></pre>
     </article>
