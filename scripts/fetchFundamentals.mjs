@@ -312,6 +312,14 @@ const INSURER_REVENUE = ["Revenues", "RevenueFromContractWithCustomerExcludingAs
 // Used for depository SICs (6020-6079).
 const BANK_REVENUE = ["Revenues", "RevenuesNetOfInterestExpense"];
 
+// An aircraft, equipment or fleet lessor (Air Lease, United Rentals, AerCap) books its top line as the
+// combined "Revenues" total — basic rents plus maintenance, interest and asset-sale revenue. The ASC 606
+// contract tag captures only the services sliver a lessor also earns (Air Lease $0.33B against a $3.0B
+// total, United Rentals $3.7B against $16.1B), so the total must win. Like REIT rent, lease income
+// carries no excise, so taking the largest across these tags is safe — it never overstates. SIC 7359
+// (equipment rental & leasing).
+const LESSOR_REVENUE = ["Revenues", "OperatingLeaseLeaseIncome", "OperatingLeasesIncomeStatementLeaseRevenue", "RevenueNotFromContractWithCustomer", "RevenueFromContractWithCustomerExcludingAssessedTax", "RevenueFromContractWithCustomerIncludingAssessedTax"];
+
 // The revenue tags a filer's industry calls for (see the REIT/insurer/bank notes above):
 // rent-first for REITs, the combined total for insurers and banks, the contract-revenue
 // order for everyone else. Shared with the wire, which reads the same top line per filing.
@@ -320,6 +328,9 @@ function revenueTagsFor(sic) {
   if (sicN >= 6500 && sicN <= 6799) return REIT_REVENUE;
   if (sicN >= 6300 && sicN <= 6399) return INSURER_REVENUE;
   if (sicN >= 6020 && sicN <= 6079) return BANK_REVENUE;
+  // Equipment/aircraft/fleet lessors: the combined "Revenues" total, largest-wins, never the contract
+  // sliver (see LESSOR_REVENUE).
+  if (sicN === 7359) return LESSOR_REVENUE;
   // Security broker-dealers (Morgan Stanley, Goldman) report their top line as total revenue net of
   // interest expense and re-tagged it "RevenuesNetOfInterestExpense" mid-decade — the same tag switch
   // the bank set handles. Without this they fall to the default tags (which lack that concept) and
@@ -648,8 +659,11 @@ async function main() {
     const isReitCo = sicN >= 6500 && sicN <= 6799;
     const isInsurerCo = sicN >= 6300 && sicN <= 6399;
     const isBankCo = sicN >= 6020 && sicN <= 6079;
+    // A lessor takes the largest revenue tag (its combined total, never the contract sliver), the same
+    // safe pick-max as REIT rent.
+    const isLessorCo = sicN === 7359;
     const revTags = revenueTagsFor(sic);
-    const revAnnualBy = annualByYear(facts, revTags, "USD", isReitCo || isInsurerCo);
+    const revAnnualBy = annualByYear(facts, revTags, "USD", isReitCo || isInsurerCo || isLessorCo);
     // Most banks book no combined total-revenue tag at all — their top line is two components, net
     // interest income plus noninterest income. For any year the total tags miss, reconstruct the total
     // from those components (both required, so a half-tagged year never understates). This is what lets
@@ -670,7 +684,7 @@ async function main() {
         if (!existing || existing.val < nii.val)
           revAnnualBy[fy] = { val: nii.val + noni.val, end: nii.end || noni.end, filed: (nii.filed || "") > (noni.filed || "") ? nii.filed : noni.filed, form: nii.form || noni.form };
       }
-    } else if (!isReitCo && !isInsurerCo) {
+    } else if (!isReitCo && !isInsurerCo && !isLessorCo) {
       // A non-financial whose chosen revenue falls below its own cost of goods has tagged only its
       // ASC 606 contract revenue — a partial that excludes, for a trader, the bulk of the top line
       // (Archer-Daniels reads $25B of contract revenue against an $85B total; Bunge $17B against $53B).

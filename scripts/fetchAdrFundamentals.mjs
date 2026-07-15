@@ -202,6 +202,14 @@ function rowsFor(facts, tags, unit) {
   return null;
 }
 
+// An aircraft or equipment lessor (AerCap, Air Lease) books its top line as the combined total revenue
+// — lease income plus maintenance, interest and asset-sale revenue — under ifrs-full:Revenue or, for a
+// US-GAAP-filing lessor like AerCap, us-gaap:Revenues. The ASC 606 contract tag is only the services
+// sliver (AerCap $0.02B against an $8.5B total), so for a lessor the total must win; the total is always
+// the largest and carries no excise, so preferring it never overstates. SIC 7359.
+const ADR_LESSOR_REVENUE = ["Revenue", "Revenues", "LeaseIncome", "OperatingLeaseLeaseIncome", "OperatingLeasesIncomeStatementLeaseRevenue", "RevenueNotFromContractWithCustomer", "RevenueFromContractsWithCustomers", "RevenueFromContractWithCustomerExcludingAssessedTax"];
+const isLessorSic = (sic) => Number(sic) === 7359;
+
 // Detect the reporting currency: the 3-letter currency unit carrying the most observations on the
 // core monetary concepts. Foreign issuers report in EUR/TWD/CHF/GBP/JPY; some in USD.
 function detectCurrency(facts) {
@@ -472,10 +480,14 @@ async function main() {
     // (most IFRS banks, and Mizuho) leave revenue null so topLineRevenue reconstructs from net interest
     // income + noninterest income. Non-financials are unaffected.
     const fkRev = financialKind({ market: "ADR", sic });
+    // A lessor reads its combined total revenue, never the ASC 606 contract sliver (see ADR_LESSOR_REVENUE).
+    const isLessor = isLessorSic(sic);
+    if (isLessor) ha.revenue = collectAnnual(facts, ADR_LESSOR_REVENUE, ccy);
+    const revConcepts = isLessor ? ADR_LESSOR_REVENUE : CONCEPTS.revenue;
     const bankNetRev = fkRev === "bank" ? collectAnnual(facts, ["RevenuesNetOfInterestExpense"], ccy) : null;
     const revenueAt = (fy) => (fkRev === "bank" ? (bankNetRev[fy] ?? null) : (ha.revenue[fy] ?? null));
 
-    const anchor = pickAnnual(facts, CONCEPTS.revenue, ccy) || pickAnnual(facts, CONCEPTS.netIncome, ccy);
+    const anchor = pickAnnual(facts, revConcepts, ccy) || pickAnnual(facts, CONCEPTS.netIncome, ccy);
     const years = [...new Set([...Object.keys(ha.revenue), ...Object.keys(ha.netIncome)])].map(Number).sort((x, y) => x - y).slice(-10);
     const debtYear = (fy) => maxOf((hi.longTermDebt[fy] != null || hi.currentDebt[fy] != null) ? (hi.longTermDebt[fy] || 0) + (hi.currentDebt[fy] || 0) : null);
     const history = years.map((fy) => ({
@@ -522,7 +534,16 @@ async function main() {
     }));
 
     const tf = (tags) => ttmFlow(facts, tags, ccy)?.val ?? null;
-    const ttmRev = fkRev === "bank" ? ttmFlow(facts, ["RevenuesNetOfInterestExpense"], ccy) : ttmFlow(facts, CONCEPTS.revenue, ccy);
+    let ttmRev = fkRev === "bank" ? ttmFlow(facts, ["RevenuesNetOfInterestExpense"], ccy) : ttmFlow(facts, revConcepts, ccy);
+    // Anti-freeze: rowsFor/ttmFlow stop at the FIRST revenue tag with data, so a filer that retagged its
+    // top line mid-record (Franco-Nevada moved Revenue→RevenueFromContractsWithCustomers in 2018) has its
+    // TTM stranded at the old tag's final year (2017's $0.68B) while the merged annual `anchor` is current
+    // ($1.82B FY2025). When the TTM top line is older than the merged annual, the merged annual — which is
+    // per-year priority-correct — is the real latest revenue. Never picks a sub-line tag; only the anchor.
+    if (fkRev !== "bank" && anchor?.fy != null && anchor.val != null) {
+      const ttmY = ttmRev?.asOf ? new Date(ttmRev.asOf).getUTCFullYear() : null;
+      if (ttmY == null || ttmY < anchor.fy) ttmRev = { val: anchor.val, asOf: anchor.end, isFY: true };
+    }
     const ttm = ttmRev ? {
       asOf: ttmRev.asOf, isFY: ttmRev.isFY,
       lines: {
