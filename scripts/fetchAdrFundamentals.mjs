@@ -50,7 +50,9 @@ const CONCEPTS = {
   // Mizuho) tags its whole gross ordinary income under "Revenues" (interest expense not yet removed)
   // and its true top line under the net tag — picking the gross doubled the read. Only banks carry the
   // net tag, so listing it first is a no-op for every non-financial.
-  revenue: ["Revenue", "RevenueFromContractsWithCustomers", "RevenueFromContractWithCustomerExcludingAssessedTax", "RevenuesNetOfInterestExpense", "Revenues", "RevenueFromContractWithCustomerIncludingAssessedTax"],
+  // The last two are airline/shipping IFRS revenue tags (Volaris, BW LPG) that some transport filers
+  // use in place of the generic Revenue; ranked last, they only fill a filer the general tags miss.
+  revenue: ["Revenue", "RevenueFromContractsWithCustomers", "RevenueFromContractWithCustomerExcludingAssessedTax", "RevenuesNetOfInterestExpense", "Revenues", "RevenueFromContractWithCustomerIncludingAssessedTax", "RevenueFromRenderingOfTransportServices", "RevenueFromRenderingOfPassengerTransportServices"],
   costOfRevenue: ["CostOfSales", "CostOfGoodsAndServicesSold", "CostOfRevenue", "CostOfGoodsSold"],
   grossProfit: ["GrossProfit"],
   operatingIncome: ["ProfitLossFromOperatingActivities", "OperatingIncomeLoss"],
