@@ -76,6 +76,11 @@ jobs:
         with:
           node-version: 22
       - run: npm ci
+      # Keep the pre-fetch data as the delta baseline: auditIntegrity's cross-refresh check reads
+      # PRIOR_DIR to flag a top line that swung >60% or a currency that flipped between refreshes —
+      # the re-tag/carry-over class no point-in-time audit can see.
+      - name: Snapshot prior data
+        run: mkdir -p "$RUNNER_TEMP/prior" && cp src/data/*.json "$RUNNER_TEMP/prior/"
       # Rebuild the US universe from the Nasdaq screener (top names by market cap): every month
       # on the schedule, and on demand. dryrun fetches and reports only (the fetch step below is
       # skipped); write/monthly overwrites universe.json, which the fetch then reads. A failed or
@@ -184,9 +189,13 @@ jobs:
       # shown beside it. A confirmed contradiction (error) fails the step and blocks the commit;
       # softer warnings print for review. Runs the same lib functions the pages render from, so it
       # can never drift from the display.
+      # Scoped to the pools this workflow writes: JP and EU refreshes run these checks in their
+      # own workflows, so a break there reddens the responsible run, not this one.
       - name: Audit believability
         if: ${{ github.event.inputs.debug == '' }}
         run: npm run audit:believe
+        env:
+          POOLS: US,ADR
       # Ingestion guardrail: across all three pools (US, ADR, Japan), is the data GBM analysis needs
       # actually PRESENT and FRESH — owner-earnings inputs, depreciation, a through-cycle record, a
       # share count — or has a whole layer quietly cratered or a pool stopped refreshing? A coverage
@@ -202,6 +211,17 @@ jobs:
       - name: Audit integrity
         if: ${{ github.event.inputs.debug == '' }}
         run: npm run audit:integrity
+        env:
+          PRIOR_DIR: ${{ runner.temp }}/prior
+      # The series gate: fiscal-year structure, share-count steps, TTM vintage — the record read AS
+      # A SERIES (docs/correctness-campaign.md N3). Gated by the committed identity baseline
+      # (continuity-baseline.json): the known pre-campaign tail passes by name, one NEW break
+      # blocks. Scoped to the pools this workflow writes.
+      - name: Audit continuity
+        if: ${{ github.event.inputs.debug == '' }}
+        run: npm run audit:continuity
+        env:
+          POOLS: US,ADR
       # The full test suite, against the freshly fetched data, BEFORE the push. A push made with
       # the workflow token does not trigger the CI workflow (GitHub suppresses recursive runs), so
       # without this step a data refresh that breaks the product lands silently green — which is

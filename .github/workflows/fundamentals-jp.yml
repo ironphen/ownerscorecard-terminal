@@ -49,6 +49,9 @@ jobs:
         with:
           node-version: 22
       - run: npm ci
+      # The delta baseline for auditIntegrity's cross-refresh check (top-line swings, currency flips).
+      - name: Snapshot prior data
+        run: mkdir -p "$RUNNER_TEMP/prior" && cp src/data/*.json "$RUNNER_TEMP/prior/"
       - name: Parser self-test
         run: node scripts/edinetTest.mjs
       # Diagnostic: measure JP segment extractability and print to the log; writes/commits nothing. When
@@ -93,6 +96,17 @@ jobs:
       - name: Audit integrity
         if: ${{ github.event.inputs.probe_segments != 'true' }}
         run: npm run audit:integrity
+        env:
+          PRIOR_DIR: ${{ runner.temp }}/prior
+      # The series gate (fy structure, share steps, TTM vintage), held to the committed identity
+      # baseline. Believability also runs here now — before this line a JP refresh committed weekly
+      # with B1–B6 never executed against it. Both scoped to the pool this workflow writes, so a
+      # break in another pool can never block a healthy JP refresh.
+      - name: Audit continuity and believability
+        if: ${{ github.event.inputs.probe_segments != 'true' }}
+        run: npm run audit:continuity && npm run audit:believe
+        env:
+          POOLS: JP
       # The full test suite against the fresh data, before the push: a workflow-token push does
       # not trigger CI, so this is the only test gate a data refresh ever passes. Red blocks the
       # commit and emails the owner.

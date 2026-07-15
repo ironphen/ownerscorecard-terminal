@@ -13,8 +13,23 @@
 //
 // Thresholds are deliberately blunt: the failure modes they catch are order-of-magnitude events
 // (3,500 pages -> a handful; a few hundred KB -> tens of MB), not edge cases.
-import { readdirSync, statSync, existsSync } from "node:fs";
-import { join } from "node:path";
+//
+//   3. The content itself must be honest (docs/correctness-campaign.md, N4 — the L3 oracle's first
+//      cut). Three checks read every emitted HTML file:
+//      - MOJIBAKE: a double-encoded byte sequence ("â€™", "Ã©", U+FFFD) anywhere is a hard fail —
+//        the tell of a hand-draft pasted without the Word-decode, or a template mis-encoding.
+//      - ABSURD FIGURES: a dollar magnitude of $10T+ rendered on a company page OUTSIDE prose is a
+//        hard fail. No computed figure legitimately reaches it (the largest filers run low
+//        single-digit trillions), and it is the last line of defense for the stale-derived class
+//        (the AXS $1.3T debt wall shipped exactly this way). Paragraphs are exempt because they
+//        carry the company's own verbatim words, where huge figures are real and correct — BNY
+//        custodies $59T, Clearwater platforms $10T, and a filer may quote a $24T world-trade
+//        statistic. Our computed figures render in tables, walls and spans, never in <p>. Dollar
+//        amounts only: yen figures in trillions are ordinary and correct.
+//      - IDENTITY: a company page must actually carry its own ticker; a page that lost it rendered
+//        from the wrong (or an empty) record.
+import { readdirSync, readFileSync, statSync, existsSync } from "node:fs";
+import { join, sep } from "node:path";
 
 const DIST = "dist";
 const HTML_FLOOR = 3000; // ~3,500 pages today; anything below this means the corpus flipped
@@ -81,6 +96,71 @@ if (workerBytes > WORKER_CEILING_BYTES) {
     `An on-demand route (or its transitive imports) is pulling in src/data/*.json. ` +
     `SSR routes read only Supabase.`
   );
+  process.exit(1);
+}
+
+// ---- content tripwires (the L3 layer's first cut) ----
+// One pass over every emitted HTML file. ~4,300 files read once; a few seconds inside a 3-minute
+// build. Failures collect and report together so one run shows the full extent, not the first hit.
+// These fire at deploy time, the LAST line of defense; the same mojibake tells are also scanned in
+// the committed data by audit:integrity, which runs in every data workflow BEFORE the commit — a
+// data-borne artifact must turn the responsible workflow red, not freeze deploys days later.
+const MOJIBAKE = ["�", "â€", "â‚¬", "Ã©", "Ã¨", "Ã¤", "Ã¶", "Ã¼", "Ã±", "Ã¸", "Ã¥", "Â£", "Â¥", "Â«", "Â»"];
+// Ten-trillion-plus in the compact forms the templates use ("$12.3T", "€ 10T") or spelled out.
+// Honest limits, stated plainly: this catches the ≥10T band only — the historic AXS wall printed
+// $1.3T, and the 1–10T band cannot be policed page-wide because $3–4T market caps are real; that
+// band is auditBelievability B7's job at the DATA level, where the wall ties to balance-sheet
+// debt. Dollar, euro and sterling only (¥10T is an ordinary yen figure), and the symbol must not
+// follow a letter: NT$/HK$-scale currencies reach 10T legitimately. Company pages only: Notes
+// prose may discuss trillion-dollar aggregates.
+const ABSURD_MONEY = /(?<![A-Za-z])[$€£]\s?(\d{2,}(?:[.,]\d+)?)\s?(?:T\b|\s?trillion)/i;
+// Verbatim company language legitimately names huge figures (BNY custodies $59T; Clearwater
+// platforms $10T; a filer may quote a $24T world-trade statistic). It renders in KNOWN prose
+// containers — the lede, the "in brief" block, MD&A quotes — so exactly those are exempt, by
+// class, not every <p>: computed figures do appear in other paragraphs (coverage intros), and a
+// blanket <p> exemption would hide the very class this exists to catch.
+const VERBATIM_BLOCKS = [
+  /<p class="lede"[^]*?<\/p>/gi,
+  /<div class="leadMore"[^]*?<\/div>/gi,
+  /<p class="recentQuote"[^]*?<\/p>/gi,
+  /<p class="bQ"[^]*?<\/p>/gi,
+];
+const isCompanyPage = (p) => {
+  const parts = p.split(sep);
+  const i = parts.indexOf("client");
+  const seg = i >= 0 ? parts[i + 1] : null;
+  return (seg === "c" || seg === "eu" || seg === "jp") && parts[i + 2] && p.endsWith("index.html");
+};
+const tickerOf = (p) => { const parts = p.split(sep); return parts[parts.length - 2]; };
+
+const contentFails = [];
+walk(DIST, (p) => {
+  if (!p.endsWith(".html")) return;
+  const html = readFileSync(p, "utf8");
+  for (const m of MOJIBAKE) {
+    if (html.includes(m)) { contentFails.push(`${p}: mojibake ${JSON.stringify(m)} — a double-encoded paste or template mis-encoding`); break; }
+  }
+  if (isCompanyPage(p)) {
+    let computed = html;
+    for (const re of VERBATIM_BLOCKS) computed = computed.replace(re, "");
+    const abs = computed.match(ABSURD_MONEY);
+    if (abs && parseFloat(abs[1].replace(",", ".")) >= 10) contentFails.push(`${p}: renders ${abs[0].trim()} outside verbatim prose — no computed figure reaches ten trillion; a stale or mis-scaled derived value`);
+    // Identity, honestly scoped: the <head> always carries the ticker via the route-derived
+    // canonical URL, so only the BODY counts — this catches an empty or garbled render, not a
+    // wrong-record render (route-derived chips appear either way; wrong-record is the data
+    // audits' job). Word-boundary so one-letter tickers (F, T) can't match inside a word.
+    const ticker = tickerOf(p);
+    const body = html.slice(html.indexOf("</head>"));
+    if (ticker && !new RegExp(`\\b${ticker.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`).test(body)) {
+      contentFails.push(`${p}: page body does not contain its own ticker "${ticker}" — an empty or garbled render`);
+    }
+  }
+});
+
+if (contentFails.length) {
+  console.error(`verifyStatic: FAIL — ${contentFails.length} content tripwire(s):`);
+  for (const f of contentFails.slice(0, 20)) console.error(`  ${f}`);
+  if (contentFails.length > 20) console.error(`  … ${contentFails.length - 20} more`);
   process.exit(1);
 }
 

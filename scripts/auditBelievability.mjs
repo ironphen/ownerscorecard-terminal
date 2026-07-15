@@ -35,13 +35,18 @@ const load = (f) => { try { return JSON.parse(fs.readFileSync(path.join(dataDir,
 const ONLY = (process.env.ONLY || "").split(",").map((s) => s.trim().toUpperCase()).filter(Boolean);
 const STRICT = process.argv.includes("--strict");
 
-// Every pool a reader can land on: the US universe plus the ADR and Japan pools, all rendered by
-// the same components, so a contradiction in any of them is just as visible.
+// Every pool a reader can land on: the US universe plus the ADR, Japan and EU pools, all rendered
+// by the same components, so a contradiction in any of them is just as visible. POOLS scopes the
+// gate to the pools a workflow actually writes (POOLS=JP for the Japan refresh), so a break in one
+// pool reddens only the workflow responsible for it and can never block a healthy refresh
+// elsewhere; unset (local runs) reads everything.
+const POOLS_ONLY = (process.env.POOLS || "").split(",").map((s) => s.trim().toUpperCase()).filter(Boolean);
 const pools = [
   ["US", load("fundamentals.json").companies || []],
   ["ADR", load("fundamentals.adr.json").companies || []],
   ["JP", load("fundamentals.jp.json").companies || []],
-];
+  ["EU", load("fundamentals.eu.json").companies || []],
+].filter(([pool]) => !POOLS_ONLY.length || POOLS_ONLY.includes(pool));
 let companies = pools.flatMap(([pool, list]) => list.map((c) => ({ ...c, _pool: pool })));
 if (ONLY.length) companies = companies.filter((c) => ONLY.includes(String(c.ticker).toUpperCase()));
 

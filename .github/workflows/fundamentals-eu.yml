@@ -36,6 +36,9 @@ jobs:
         with:
           node-version: 22
       - run: npm ci
+      # The delta baseline for auditIntegrity's cross-refresh check (top-line swings, currency flips).
+      - name: Snapshot prior data
+        run: mkdir -p "$RUNNER_TEMP/prior" && cp src/data/*.json "$RUNNER_TEMP/prior/"
       - name: Parser self-test
         run: node scripts/euTest.mjs
       # filings.xbrl.org occasionally tears down a TLS socket mid-parse, which undici surfaces as an
@@ -61,6 +64,16 @@ jobs:
         run: npm run audit:coverage
       - name: Audit integrity
         run: npm run audit:integrity
+        env:
+          PRIOR_DIR: ${{ runner.temp }}/prior
+      # The series gate (identity-baseline) plus believability, which now loads the EU pool —
+      # before this line an EU refresh committed monthly with B1–B6 never executed against it.
+      # Both scoped to the pool this workflow writes, so a break in another pool can never block
+      # a healthy EU refresh.
+      - name: Audit continuity and believability
+        run: npm run audit:continuity && npm run audit:believe
+        env:
+          POOLS: EU
       - name: Test against the fresh data
         run: npm test
       - name: Commit if changed

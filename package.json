@@ -23,6 +23,7 @@
     "audit:believe": "node scripts/auditBelievability.mjs",
     "audit:coverage": "node scripts/auditCoverage.mjs",
     "audit:integrity": "node scripts/auditIntegrity.mjs",
+    "audit:continuity": "node scripts/auditContinuity.mjs",
     "audit:lang": "node scripts/auditLanguage.mjs",
     "audit:jp": "node scripts/auditJp.mjs",
     "probe:adr-dividends": "node scripts/probeAdrDividends.mjs",

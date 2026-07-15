@@ -92,7 +92,23 @@ for (const P of POOLS) {
   if (opGtRev) note(opGtRev > OPINC_SPIKE ? "error" : "warn", "opinc-over-rev", `${P.key}: ${opGtRev} operating compan${opGtRev === 1 ? "y has" : "ies have"} operating income above revenue (impossible; understated top line): ${examples.join(", ")}`);
 }
 
-// 4) CROSS-REFRESH DELTA — if a prior data dir is provided, flag a company whose top line swung by more
+// 4) MOJIBAKE IN THE DATA — the committed JSON must not carry double-encoded text ("â€™" for an
+//    apostrophe, "Ã©" for é). The rendered pages have the same tripwire in verifyStatic, but that
+//    runs at DEPLOY time, after the commit: a data-borne artifact would land green, then fail every
+//    deploy after it with the signal buried in the Cloudflare dashboard. Here it turns the data
+//    workflow itself red, before the commit, with the file named. Raw-text scan, all data files —
+//    base64 and legitimate accented/Japanese text cannot contain these sequences.
+const MOJIBAKE = ["�", "â€", "â‚¬", "Ã©", "Ã¨", "Ã¤", "Ã¶", "Ã¼", "Ã±", "Ã¸", "Ã¥", "Â£", "Â¥", "Â«", "Â»"];
+for (const f of fs.readdirSync(dataDir).filter((n) => n.endsWith(".json"))) {
+  let raw = "";
+  try { raw = fs.readFileSync(path.join(dataDir, f), "utf8"); } catch { continue; }
+  for (const m of MOJIBAKE) {
+    const i = raw.indexOf(m);
+    if (i >= 0) { note("error", "mojibake-in-data", `${f}: contains ${JSON.stringify(m)} at offset ${i} (${JSON.stringify(raw.slice(Math.max(0, i - 40), i + 20))}) — double-encoded text committed; fix the producer, not the file`); break; }
+  }
+}
+
+// 5) CROSS-REFRESH DELTA — if a prior data dir is provided, flag a company whose top line swung by more
 //    than 60% or whose reporting currency flipped between refreshes. Catches re-tags (gross↔net), a
 //    stale carry-over resurfacing, or a currency mis-detection. Off by default (needs a prior snapshot).
 const PRIOR = process.env.PRIOR_DIR;

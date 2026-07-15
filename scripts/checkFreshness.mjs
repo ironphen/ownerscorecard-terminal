@@ -20,7 +20,7 @@ import path from "node:path";
 const dataDir = path.join(process.cwd(), "src", "data");
 const MAX_FRESH_DAYS = Number(process.env.MAX_FRESH_DAYS || 6);
 const read = (f) => { try { return JSON.parse(fs.readFileSync(path.join(dataDir, f), "utf8")); } catch { return null; } };
-const FILES = ["fundamentals.json", "fundamentals.adr.json", "fundamentals.jp.json", "language.json", "rates.json", "wire.json"];
+const FILES = ["fundamentals.json", "fundamentals.adr.json", "fundamentals.jp.json", "fundamentals.eu.json", "language.json", "rates.json", "wire.json"];
 
 const stamps = FILES.map((f) => ({ f, asOf: read(f)?.asOf })).filter((x) => typeof x.asOf === "string" && /^\d{4}-\d{2}-\d{2}/.test(x.asOf));
 if (!stamps.length) { console.error("❌ No as-of stamps found — cannot verify freshness."); process.exit(1); }

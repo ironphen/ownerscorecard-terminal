@@ -81,9 +81,14 @@ Rules of engagement:
 - **N6 — EU parity pack.** Load EU into auditBelievability; add fundamentals.eu.json
   to checkFreshness; fix withheld-drops-prior (one below-floor parse currently
   deletes a previously good record — switch to JP-style carry + logged error).
-- **N7 — error-ratchet baseline.** Committed error-baseline.json: per-company
-  ERROR counts above baseline block, baseline only auto-lowers. Converts the
-  print-and-exit-0 error tier into a one-way gate.
+- **N7 — identity baseline.** SHIPPED as continuity-baseline.json, redesigned in
+  Wave 1's adversarial review from counts to IDENTITY SETS (the ticker list per
+  pool/code): counts open silent headroom when fixes land and pass same-code
+  swaps; sets fail any NEW name immediately, print fixed names as prunable, and
+  make every failure actionable by ticker. A corrupt baseline file fails loudly
+  as its own headline (the hand-edit flow invites typos). Gates are POOL-SCOPED
+  per workflow (POOLS=JP etc.) so a break in one pool reddens only the workflow
+  that writes it.
 - **N8 — ADR robustness parity.** Port fixShareScale; atomic tmp+rename write;
   the missing revenue−costsAndExpenses branch in ADR deriveOpInc (the comment
   claims it, the code lacks it); currency-vs-country cross-check.
@@ -126,3 +131,29 @@ run universe-wide → first error map. Wave 2: N2, N5, N9, N8. Wave 3: N1, the b
 rig, plus the shelf-by-shelf verified sweeps the map orders — biggest names
 deepest, financial shelves expected worst (the deferred EU banks live there).
 Every wave: build → adversarial workflow review → fix → gate → ship.
+
+## Wave 1 shipped (2026-07-15) — the first error map
+
+Detectors live: auditContinuity (series gate, identity baseline, pool-scoped),
+verifyStatic content tripwires (mojibake / absurd-money ≥10T with verbatim-prose
+exemption by class / body-ticker identity), the same mojibake tells scanned in
+committed DATA by auditIntegrity (pre-commit, so a data artifact reddens the
+responsible workflow instead of freezing deploys), EU loaded into believability
+and the freshness heartbeat, the EU withheld-drops-prior fix, PRIOR_DIR set in
+all four workflows (the cross-refresh delta ran for the first time ever).
+
+The map (error tier, all verified classes): 176 share-scale mistags (121 ADR —
+no fixShareScale there; N8 fixes the cohort), 27 frozen TTMs shown as current
+(BLK, DTE among them; BPOP's is from 2012 — N8's purge + guard), 5 fy desyncs,
+1 undated record (CNI). Zero Jan-1-trap hits — the EU fyOf normalization holds
+universe-wide. Warn tier (the suspect list, verify-before-counting): 1,039
+revenue swings, 886 share steps — including AAPL's own series mixing
+split-adjusted and as-filed share bases at FY2017→FY2018, the basis-seam class
+that makes per-share arithmetic wrong across the seam; a Wave 2/3 decision.
+
+Adversarial review of the wave: 22 confirmed findings, all fixed pre-commit
+except two accepted-and-documented: (a) one bad filer still blocks the whole
+daily wire commit (conservative by design for now; revisit if it fires), and
+(b) the $1–10T absurd-money band is unpoliceable page-wide ($3–4T market caps
+are real) — that band belongs to B7 at the data level, where the wall ties to
+balance-sheet debt.

@@ -20,6 +20,9 @@ jobs:
         with:
           node-version: 22
       - run: npm ci
+      # The delta baseline for auditIntegrity's cross-refresh check (top-line swings, currency flips).
+      - name: Snapshot prior data
+        run: mkdir -p "$RUNNER_TEMP/prior" && cp src/data/*.json "$RUNNER_TEMP/prior/"
       - run: npm run fetch:wire
         env:
           SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT }}
@@ -51,7 +54,10 @@ jobs:
       # bar before it is committed, or a bad merge would publish sitewide.
       - name: Audit the refreshed data
         if: steps.filers.outputs.tickers != ''
-        run: npm run audit && npm run audit:believe && npm run audit:coverage && npm run audit:integrity
+        run: npm run audit && npm run audit:believe && npm run audit:coverage && npm run audit:integrity && npm run audit:continuity
+        env:
+          PRIOR_DIR: ${{ runner.temp }}/prior
+          POOLS: US,ADR
       # The full test suite against the fresh data, before the push: a workflow-token push does
       # not trigger CI, so this is the only test gate a wire refresh ever passes. Red blocks the
       # commit and emails the owner.

@@ -350,11 +350,16 @@ async function main() {
 
   // Carry over the last good file: a targeted run (ONLY_EU) fetches a few names, and a full run can drop
   // one to a transient error — the rest must survive. Overlay the fresh records and write the union,
-  // dropping only names no longer in the universe.
+  // dropping only names no longer in the universe. A WITHHELD name keeps its prior record too: a fetch
+  // that came back empty or below the floor is a statement about today's fetch, not about the good
+  // record already on file — deleting it would turn a transient parse failure into a vanished company
+  // (the JP fetcher's carry rule; docs/correctness-campaign.md N6). The prior record's own staleness is
+  // auditCoverage's stranded-names check to flag, loudly, not this writer's to erase silently.
   let prior = [];
   try { prior = JSON.parse(fs.readFileSync(path.join(dataDir, "fundamentals.eu.json"), "utf8")).companies || []; } catch { /* first run */ }
   const inUniverse = new Set(rows.map((u) => u.ticker.toUpperCase()));
-  const byTicker = new Map(prior.filter((c) => inUniverse.has(String(c.ticker).toUpperCase()) && !withheld.has(c.ticker)).map((c) => [c.ticker, c]));
+  const byTicker = new Map(prior.filter((c) => inUniverse.has(String(c.ticker).toUpperCase())).map((c) => [c.ticker, c]));
+  for (const t of withheld) if (byTicker.has(t)) console.warn(`  ↩ ${t}: today's fetch withheld — carrying the prior record (FY${byTicker.get(t).fy})`);
   for (const r of fresh) byTicker.set(r.ticker, r);
   const companies = [...byTicker.values()].sort((a, b) => a.ticker.localeCompare(b.ticker));
   const carried = companies.length - fresh.length;
