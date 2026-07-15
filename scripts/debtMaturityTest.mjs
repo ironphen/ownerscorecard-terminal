@@ -131,5 +131,14 @@ console.log("\nSeparators — semicolon-delimited rows and a 'Thereafter-$' dash
   eq(r && r.thereafter, 25130, "McDonald's 'Thereafter-$' dash artifact captured");
 }
 
+console.log("\nAbsolute ceiling — a trillion-scale table is rejected even with no balance-sheet anchor (Axis Capital shape):");
+{
+  // An insurer's investment/reserve maturity ladder mis-read as a debt schedule sums into the trillions.
+  // It self-reconciles to its own declared total (so the 2% gate passes), so only a size ceiling stops it.
+  const t = "Long-term debt maturities are as follows (in millions): 2026 $ 250,000 2027 230,000 2028 220,000 2029 210,000 2030 200,000 Thereafter 210,000 Total $ 1,320,000";
+  eq(extractDebtMaturity(t, 2025, null), null, "trillion-scale, no anchor → null (absolute ceiling)");
+  eq(extractDebtMaturity(t, 2025, 1340), null, "trillion-scale, real $1.34B anchor → null (3× bound)");
+}
+
 if (fails) { console.error(`\n❌ debtMaturityTest: ${fails} failure(s)`); process.exit(1); }
 console.log("\n✅ debtMaturityTest passed");

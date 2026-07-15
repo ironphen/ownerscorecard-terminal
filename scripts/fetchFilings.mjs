@@ -1388,7 +1388,11 @@ async function main() {
     if (!filings.length) { console.warn(`  ! ${tk}: no annual report found`); continue; }
 
     // Balance-sheet long-term debt ($ millions), the reconciliation anchor for the maturity ladder.
-    const totalDebtMillions = c.lines?.totalDebt != null ? c.lines.totalDebt / 1e6 : null;
+    // Prefer the trailing-twelve-months figure, then the latest annual — the SAME source the believability
+    // gate checks the extracted wall against, so the extractor's anchor can't diverge from the gate's and
+    // let through a wall the gate then rejects (which is how Axis Capital's mis-parse blocked a refresh).
+    const anchorDebt = c.ttm?.lines?.totalDebt ?? c.lines?.totalDebt;
+    const totalDebtMillions = anchorDebt != null ? anchorDebt / 1e6 : null;
     let cur, prior;
     try {
       await sleep(THROTTLE);

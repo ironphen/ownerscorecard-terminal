@@ -163,6 +163,13 @@ export function extractDebtMaturity(text, fy, totalDebtMillions = null) {
     // the 3× bound the believability gate enforces on the committed data, so the extractor never emits a
     // wall that gate would have to reject — turning a refresh-blocking error into a quiet, correct blank.
     if (totalDebtMillions && totalDebtMillions > 0 && total > totalDebtMillions * 3) continue;
+    // Absolute implausibility ceiling — the backstop for when that balance-sheet anchor is unavailable
+    // (a filer whose totalDebt didn't resolve at the moment this ran, which the 3× bound above then
+    // can't apply). No single issuer's debt-maturity schedule reaches into the trillions; the largest US
+    // debt stacks are a few hundred billion. A total that size is a wrong table — an insurer's investment-
+    // maturity or reserve ladder (Axis Capital parsed a $1.3T one), the same failure mode as Barrick's
+    // "$413T" — so withhold it rather than emit a wall the believability gate would then have to reject.
+    if (total > 1_000_000) continue; // $1T, in $ millions
     scored.push({ layout: c.layout, schedule, thereafter, declaredTotal, total, basis });
   }
   if (!scored.length) return null;
