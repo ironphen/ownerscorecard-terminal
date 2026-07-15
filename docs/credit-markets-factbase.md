@@ -128,3 +128,49 @@ working; and software stress must stay contained to equity values as Lincoln's m
 Not a forecast, not a position, not a Note. A dated, sourced fact base and a set of dials.
 The publication's posture: watch the dials, update the readings, and if a Note ever concludes
 from this material it goes through the full doctrine loop — dated, priced, argued, hand-written.
+
+## Addendum (2026-07-15): quote pack and fresh readings for "Weeds and Flowers" (src/content/articles/weeds-and-flowers.mdx; working title was "The Businessman's Investment")
+
+Material verified for the first concluding Note (owner waived the hand-write step for this one;
+Claude drafted end-to-end under the doctrine loop: 4-architecture master-draft fan-out, 12-critic
+panel, solo rewrite, 4-agent hostile verify).
+
+**Buffett quote pack** — each fetched verbatim from berkshirehathaway.com letters (2026-07-15):
+- 1988 letter (arbitrage discussion): "We do not have, never have had, and never will have an
+  opinion about where the stock market, interest rates, or business activity will be a year from
+  now." (Wording verbatim-exact; appears in no other 1977–1997 letter.)
+- 1984 letter (WPPSS): "Our approach to bond investment - treating it as an unusual sort of
+  'business' with special advantages and disadvantages - may strike you as a bit quirky." +
+  "viewed bond investment with a businessman's perspective" + "We extend this business-valuation
+  approach even to bond purchases such as WPPSS." (Singular "an unusual sort of 'business'".)
+- 1990 letter: names RJR Nabisco explicitly ("Our other major portfolio change last year was
+  large additions to our holdings of RJR Nabisco bonds, securities that we first bought in late
+  1989") + "more than compensates for the risk we incur (though that is far from nil)" +
+  "Mountains of junk bonds were sold by those who didn't care to those who didn't think - and
+  there was no shortage of either." + the no-'y'-day rule. NOTE: buying began late 1989 — anchor
+  claims to the LETTER, not a purchase year.
+- 2002 letter: "commitments in this sector sextupled, reaching $8.3 billion by yearend."
+- 2003 letter: "Yesterday's weeds are today being priced as flowers." — an EXIT observation
+  (market grown expensive), never a buy rationale.
+- Fortune, Nov 22, 1999 ("Mr. Buffett on the Stock Market", co-bylined Carol J. Loomis, distilled
+  from two 1999 talks): rates "act on financial valuations the way gravity acts on matter."
+- NYT op-ed "Buy American. I Am." (online Oct 16, 2008): "I can't predict the short-term
+  movements of the stock market..." — priced conclusion + forecast disclaimer in one document.
+
+**Fresh dial readings (2026-07-15 pull)** — FRED via convextrade.com mirror (direct FRED CSV
+returned 403 to automated fetch; mirror's Jul 9 = 270bp matched the factbase's 2.70%, confirming
+series identity):
+- HY OAS (BAMLH0A0HYM2): 2.70 (Jul 9) → 2.69 (Jul 10) → **2.69 (Jul 13)**.
+- IG OAS (BAMLC0A0CM): 75–76bp early Jul → **78bp (Jul 13)** — top of the ~71–80 band, drifted
+  up ~3bp in a week. Band claim still holds; watch it.
+- Jul 9–15 events consistent with the thesis, no staleness risk: PitchBook Jul 9 HY wrap (heavy
+  calendar, AI/software names weak), Planview failed $1.5B BSL-to-private-credit refi, Bloomberg
+  Jul 11: primary dealers net short corporate debt for the first time.
+
+**Not verified (deliberately loosened in the Note):** the internal sequencing/dates of Meta's two
+raises (Beignet vs the $30B deal) — Note says only "across October and November"; the $125B book
+pinned to "Oct-Nov 2025" in the panel. The ~130–150bp IG alarm zone remains a house reference
+line, not record-derived — the Note's panel intro no longer claims derivation. "Operating cash
+carries most of hyperscaler capex" appears only inside the attributed absorption case, never in
+the publication's own voice — a capex-vs-OCF figure is worth adding to this factbase for the
+next reading.
