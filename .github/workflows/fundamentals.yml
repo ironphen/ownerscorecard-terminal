@@ -195,6 +195,13 @@ jobs:
       - name: Audit coverage
         if: ${{ github.event.inputs.debug == '' }}
         run: npm run audit:coverage
+      # The silent-failure gate: bellwether mega-caps must still be present with a plausible, recent
+      # top line; financials must nearly all resolve one; no operating income exceeds revenue at scale.
+      # Catches the classes coverage/data can't — a mega-cap vanishing, a category going hollow, an
+      # impossible figure — before the commit ships them.
+      - name: Audit integrity
+        if: ${{ github.event.inputs.debug == '' }}
+        run: npm run audit:integrity
       # The full test suite, against the freshly fetched data, BEFORE the push. A push made with
       # the workflow token does not trigger the CI workflow (GitHub suppresses recursive runs), so
       # without this step a data refresh that breaks the product lands silently green — which is

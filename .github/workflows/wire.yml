@@ -51,7 +51,7 @@ jobs:
       # bar before it is committed, or a bad merge would publish sitewide.
       - name: Audit the refreshed data
         if: steps.filers.outputs.tickers != ''
-        run: npm run audit && npm run audit:believe && npm run audit:coverage
+        run: npm run audit && npm run audit:believe && npm run audit:coverage && npm run audit:integrity
       # The full test suite against the fresh data, before the push: a workflow-token push does
       # not trigger CI, so this is the only test gate a wire refresh ever passes. Red blocks the
       # commit and emails the owner.

@@ -88,6 +88,11 @@ jobs:
       - name: Audit coverage
         if: ${{ github.event.inputs.probe_segments != 'true' }}
         run: npm run audit:coverage
+      # The silent-failure gate: bellwethers present, financials resolve a top line, no impossible
+      # operating-income-over-revenue at scale — catches a mega-cap vanishing or a category going hollow.
+      - name: Audit integrity
+        if: ${{ github.event.inputs.probe_segments != 'true' }}
+        run: npm run audit:integrity
       # The full test suite against the fresh data, before the push: a workflow-token push does
       # not trigger CI, so this is the only test gate a data refresh ever passes. Red blocks the
       # commit and emails the owner.
