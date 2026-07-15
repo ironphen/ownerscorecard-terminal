@@ -1,6 +1,6 @@
 {
-  "_note": "High-water company counts for the catalog-shrink guard in auditCoverage.mjs. A fetch can drop a whole cohort (mass-withholding, a truncated response) rather than just degrade a field, and every surviving company still reads clean — so the per-field ratio floors pass while the catalog quietly shrinks. This guards the absolute count: a pool materially below its high-water mark fails the run. Bump these upward as the universe grows; the guard only protects, it never auto-lowers.",
-  "US": 2652,
-  "ADR": 862,
+  "_note": "High-water company counts for the catalog-shrink guard in auditCoverage.mjs. A fetch can drop a whole cohort (mass-withholding, a truncated response) rather than just degrade a field, and every surviving company still reads clean — so the per-field ratio floors pass while the catalog quietly shrinks. This guards the absolute count: a pool materially below its high-water mark fails the run. Bump these upward as the universe grows; the guard never auto-lowers, so a DELIBERATE pool change is reset here by hand. 2026-07-15: the form-type reroute moved ~120 foreign-incorporated 10-K filers (Accenture, Flutter, Teva…) out of the ADR pool into US where they belong, so ADR's true size dropped to ~743 and US grew to ~2878 — the new marks below.",
+  "US": 2878,
+  "ADR": 743,
   "JP": 34
 }
