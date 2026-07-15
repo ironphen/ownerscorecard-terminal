@@ -1,0 +1,86 @@
+# Refreshes the European pool (fundamentals.eu.json) from ESEF Inline-XBRL annual reports, read through
+# filings.xbrl.org (XBRL International's free filing index). Separate from the US/ADR/JP workflows so no
+# pool blocks another. ESEF reports are annual, so this runs monthly and on demand, and on a push that
+# touches the EU pipeline (so a pipeline change refreshes the data straight away).
+name: Fundamentals (Europe)
+
+on:
+  workflow_dispatch:
+    inputs:
+      tickers:
+        description: "Limit the run to these tickers (comma-separated; blank = all). The rest carry over."
+        type: string
+        default: ""
+      debug:
+        description: "Dump the concepts a filer tags (comma-separated tickers)"
+        type: string
+        default: ""
+  push:
+    branches: [main]
+    paths:
+      - "scripts/fetchEuFundamentals.mjs"
+      - "src/data/universe.eu.json"
+      - ".github/workflows/fundamentals-eu.yml"
+  schedule:
+    - cron: "0 9 1 * *" # 1st of the month 09:00 UTC, after the US/ADR monthly rebuild
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - name: Parser self-test
+        run: node scripts/euTest.mjs
+      # filings.xbrl.org occasionally tears down a TLS socket mid-parse, which undici surfaces as an
+      # uncatchable assertion; the fetcher recovers from it in-process, but retry the whole run up to three
+      # times as a belt-and-braces (it is idempotent — it rebuilds and carries the prior file over).
+      - name: Fetch European fundamentals
+        run: |
+          for i in 1 2 3; do
+            npm run fetch:fundamentals:eu && exit 0
+            echo "fetch:fundamentals:eu attempt $i failed; retrying…"
+            sleep 10
+          done
+          echo "fetch:fundamentals:eu failed after 3 attempts; the prior good file carries over."
+        env:
+          SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT }}
+          ONLY_EU: ${{ github.event.inputs.tickers }}
+          EU_DEBUG: ${{ github.event.inputs.debug }}
+      # The same gates the other pools clear before a commit: coverage (the ESEF-thin floors), the
+      # silent-failure integrity net, and the full test suite against the fresh data (a workflow-token
+      # push does not trigger CI, so this is the only test gate an EU refresh passes). Red blocks the
+      # commit and emails the owner.
+      - name: Audit coverage
+        run: npm run audit:coverage
+      - name: Audit integrity
+        run: npm run audit:integrity
+      - name: Test against the fresh data
+        run: npm test
+      - name: Commit if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add src/data/fundamentals.eu.json src/data/universe.eu.json
+          if git diff --cached --quiet; then
+            echo "No change."
+          else
+            git commit -m "Refresh European fundamentals (ESEF)"
+            pushed=""
+            for i in 1 2 3 4 5; do
+              git push && pushed=1 && break
+              echo "push rejected; rebasing on origin/$GITHUB_REF_NAME and retrying ($i)…"
+              git pull --rebase origin "$GITHUB_REF_NAME" || { git rebase --abort; true; }
+              sleep $((i * 3))
+            done
+            if [ -z "$pushed" ]; then
+              echo "::error::git push failed after 5 attempts — the EU refresh was NOT published"
+              exit 1
+            fi
+          fi

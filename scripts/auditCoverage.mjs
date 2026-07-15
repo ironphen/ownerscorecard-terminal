@@ -62,6 +62,12 @@ const POOLS = [
   { key: "US", file: "fundamentals.json", cycle: 7, hasLanguage: true, hasSegments: true },
   { key: "ADR", file: "fundamentals.adr.json", cycle: 7, hasLanguage: true, hasSegments: false, thinCapitalAlloc: true },
   { key: "JP", file: "fundamentals.jp.json", cycle: 5, hasLanguage: false, hasSegments: false, thinCapitalAlloc: true },
+  // Europe (ESEF): thinnest of the pools by design. filings.xbrl.org gives every issuer's revenue,
+  // earnings, balance sheet and (derived from EPS) share count cleanly, but capex and depreciation are
+  // tagged idiosyncratically across countries — many ESEF filers report no clean capex line at all — so
+  // owner earnings resolve for only about half the pool. oeFloor holds it to that ESEF reality: the guard
+  // still catches a crater (a drop well below it) without false-failing on the data Europe simply lacks.
+  { key: "EU", file: "fundamentals.eu.json", cycle: 5, hasLanguage: false, hasSegments: false, thinCapitalAlloc: true, oeFloor: 0.5, cycleFloor: 0.3 },
 ];
 
 const report = [];
@@ -88,10 +94,10 @@ for (const P of POOLS) {
   // Hard floors (a cliff fails the run); soft floors (a known-thin reality, warns only).
   const checks = [
     { label: "top line (revenue > 0)", v: frac(withRev, n), floor: 0.95, hard: true },
-    { label: "owner-earnings inputs (CFO + capex)", v: frac(withOE, n), floor: P.thinCapitalAlloc ? 0.8 : 0.85, hard: true },
+    { label: "owner-earnings inputs (CFO + capex)", v: frac(withOE, n), floor: P.oeFloor ?? (P.thinCapitalAlloc ? 0.8 : 0.85), hard: true },
     { label: "share count", v: frac(withShares, n), floor: 0.9, hard: true },
-    { label: "depreciation (owner-earnings integrity)", v: frac(withDep, n), floor: P.thinCapitalAlloc ? 0.5 : 0.9, hard: !P.thinCapitalAlloc },
-    { label: `through-cycle record (${P.cycle}+ yr of owner earnings)`, v: frac(withCycle, n), floor: P.thinCapitalAlloc ? 0.45 : 0.6, hard: !P.thinCapitalAlloc },
+    { label: "depreciation (owner-earnings integrity)", v: frac(withDep, n), floor: P.depFloor ?? (P.thinCapitalAlloc ? 0.5 : 0.9), hard: !P.thinCapitalAlloc },
+    { label: `through-cycle record (${P.cycle}+ yr of owner earnings)`, v: frac(withCycle, n), floor: P.cycleFloor ?? (P.thinCapitalAlloc ? 0.45 : 0.6), hard: !P.thinCapitalAlloc },
   ];
   if (P.hasLanguage) checks.push({ label: "filing language", v: frac(langCount, n), floor: P.key === "ADR" ? 0.7 : 0.88, hard: true });
   if (P.hasSegments) checks.push({ label: "segment breakdown", v: frac(segCount, n), floor: 0.5, hard: false });

@@ -1,0 +1,212 @@
+{
+  "note": "European companies filing ESEF Inline-XBRL annual reports, resolved to their LEI. The fetcher (scripts/fetchEuFundamentals.mjs) reads each entitys filings from filings.xbrl.org (XBRL Internationals free filing index) and parses the IFRS xBRL-JSON facts. Curated by hand for which names + their SIC (Europe has no market-cap screener like the US); the FINANCIALS are fetched automatically. Rebuild/expand by adding {ticker,name,country,isin,lei,sic,market} rows.",
+  "tickers": [
+    {
+      "ticker": "AD",
+      "name": "Koninklijke Ahold Delhaize N.V.",
+      "country": "Netherlands",
+      "isin": "NL0011794037",
+      "lei": "724500C9GNBV20UYRX36",
+      "sic": "5411",
+      "market": "Euronext Amsterdam"
+    },
+    {
+      "ticker": "AI",
+      "name": "Air Liquide SA",
+      "country": "France",
+      "isin": "FR0000120073",
+      "lei": "969500MMPQVHK671GT54",
+      "sic": "2810",
+      "market": "Euronext Paris"
+    },
+    {
+      "ticker": "AIR",
+      "name": "Airbus SE",
+      "country": "France",
+      "isin": "NL0000235190",
+      "lei": "MINO79WLOO247M1IL051",
+      "sic": "3721",
+      "market": "Euronext Paris"
+    },
+    {
+      "ticker": "BC",
+      "name": "Brunello Cucinelli S.p.A.",
+      "country": "Italy",
+      "isin": "IT0004764699",
+      "lei": "5493003CX2RZ0FOBH256",
+      "sic": "2300",
+      "market": "Euronext Milan"
+    },
+    {
+      "ticker": "BN",
+      "name": "Danone SA",
+      "country": "France",
+      "isin": "FR0000120644",
+      "lei": "969500KMUQ2B6CBAF162",
+      "sic": "2020",
+      "market": "Euronext Paris"
+    },
+    {
+      "ticker": "CPR",
+      "name": "Davide Campari-Milano N.V.",
+      "country": "Italy",
+      "isin": "NL0015435975",
+      "lei": "213800ED5AN2J56N6Z02",
+      "sic": "2085",
+      "market": "Euronext Milan"
+    },
+    {
+      "ticker": "DG",
+      "name": "Vinci SA",
+      "country": "France",
+      "isin": "FR0000125486",
+      "lei": "213800WFQ334R8UXUG83",
+      "sic": "1600",
+      "market": "Euronext Paris"
+    },
+    {
+      "ticker": "DGE",
+      "name": "Diageo plc",
+      "country": "United Kingdom",
+      "isin": "GB0002374006",
+      "lei": "213800ZVIELEA55JMJ32",
+      "sic": "2085",
+      "market": "London Stock Exchange"
+    },
+    {
+      "ticker": "EL",
+      "name": "EssilorLuxottica SA",
+      "country": "France",
+      "isin": "FR0000121667",
+      "lei": "549300M3VH1A3ER1TB49",
+      "sic": "3851",
+      "market": "Euronext Paris"
+    },
+    {
+      "ticker": "ENEL",
+      "name": "Enel SpA",
+      "country": "Italy",
+      "isin": "IT0003128367",
+      "lei": "WOCMU6HCI0OJWNPRZS33",
+      "sic": "4911",
+      "market": "Borsa Italiana"
+    },
+    {
+      "ticker": "HEIA",
+      "name": "Heineken N.V.",
+      "country": "Netherlands",
+      "isin": "NL0000009165",
+      "lei": "724500K5PTPSST86UQ23",
+      "sic": "2082",
+      "market": "Euronext Amsterdam"
+    },
+    {
+      "ticker": "IBE",
+      "name": "Iberdrola SA",
+      "country": "Spain",
+      "isin": "ES0144580Y14",
+      "lei": "5QK37QC7NWOJ8D7WVQ45",
+      "sic": "4911",
+      "market": "Bolsa de Madrid"
+    },
+    {
+      "ticker": "ITX",
+      "name": "Industria de Diseno Textil SA (Inditex)",
+      "country": "Spain",
+      "isin": "ES0148396007",
+      "lei": "549300TTCXZOGZM2EY83",
+      "sic": "5651",
+      "market": "Bolsa de Madrid"
+    },
+    {
+      "ticker": "KER",
+      "name": "Kering SA",
+      "country": "France",
+      "isin": "FR0000121485",
+      "lei": "549300VGEJKB7SVUZR78",
+      "sic": "2300",
+      "market": "Euronext Paris"
+    },
+    {
+      "ticker": "MC",
+      "name": "LVMH Moët Hennessy Louis Vuitton SE",
+      "country": "France",
+      "isin": "FR0000121014",
+      "lei": "IOG4E947OATN0KJYSD45",
+      "sic": "2300",
+      "market": "Euronext Paris"
+    },
+    {
+      "ticker": "MONC",
+      "name": "Moncler S.p.A.",
+      "country": "Italy",
+      "isin": "IT0004965148",
+      "lei": "815600EBD7FB00525B20",
+      "sic": "2300",
+      "market": "Euronext Milan"
+    },
+    {
+      "ticker": "NG",
+      "name": "National Grid plc",
+      "country": "United Kingdom",
+      "isin": "GB00BDR05C01",
+      "lei": "8R95QZMKZLJX5Q2XR704",
+      "sic": "4931",
+      "market": "London Stock Exchange"
+    },
+    {
+      "ticker": "OR",
+      "name": "L'Oréal SA",
+      "country": "France",
+      "isin": "FR0000120321",
+      "lei": "529900JI1GG6F7RKVI53",
+      "sic": "2844",
+      "market": "Euronext Paris"
+    },
+    {
+      "ticker": "RCO",
+      "name": "Rémy Cointreau SA",
+      "country": "France",
+      "isin": "FR0000130395",
+      "lei": "5493004V6A3Z027YT216",
+      "sic": "2085",
+      "market": "Euronext Paris"
+    },
+    {
+      "ticker": "RI",
+      "name": "Pernod Ricard SA",
+      "country": "France",
+      "isin": "FR0000120693",
+      "lei": "52990097YFPX9J0H5D87",
+      "sic": "2085",
+      "market": "Euronext Paris"
+    },
+    {
+      "ticker": "RMS",
+      "name": "Hermès International SCA",
+      "country": "France",
+      "isin": "FR0000052292",
+      "lei": "969500Y4IJGHJE2MTJ13",
+      "sic": "3170",
+      "market": "Euronext Paris"
+    },
+    {
+      "ticker": "SAF",
+      "name": "Safran SA",
+      "country": "France",
+      "isin": "FR0000073272",
+      "lei": "969500UIC89GT3UL7L24",
+      "sic": "3724",
+      "market": "Euronext Paris"
+    },
+    {
+      "ticker": "SU",
+      "name": "Schneider Electric SE",
+      "country": "France",
+      "isin": "FR0000121972",
+      "lei": "969500A1YF1XUYYXS284",
+      "sic": "3613",
+      "market": "Euronext Paris"
+    }
+  ]
+}

@@ -12,6 +12,7 @@
     "fetch:fundamentals": "node scripts/fetchFundamentals.mjs",
     "fetch:fundamentals:jp": "node scripts/fetchEdinetFundamentals.mjs",
     "fetch:fundamentals:adr": "node scripts/fetchAdrFundamentals.mjs",
+    "fetch:fundamentals:eu": "node scripts/fetchEuFundamentals.mjs",
     "fetch:filings": "node scripts/fetchFilings.mjs",
     "fetch:wire": "node scripts/fetchWire.mjs",
     "fetch:rates": "node scripts/fetchRates.mjs",
@@ -27,7 +28,7 @@
     "probe:adr-dividends": "node scripts/probeAdrDividends.mjs",
     "probe:segments": "node scripts/probeSegments.mjs",
     "probe:segments:jp": "node scripts/probeSegmentsJp.mjs",
-    "test": "node scripts/heroTest.mjs && node scripts/extractionTest.mjs && node scripts/edinetTest.mjs && node scripts/buffettReadTest.mjs && node scripts/candorTest.mjs && node scripts/fundamentalsTest.mjs && node scripts/universeTest.mjs && node scripts/formTypeTest.mjs && node scripts/fundamentalsAdrTest.mjs && node scripts/segmentTest.mjs && node scripts/peersTest.mjs && node scripts/inversionTest.mjs && node scripts/currentPositionTest.mjs && node scripts/durabilityTest.mjs && node scripts/businessTest.mjs && node scripts/grahamTest.mjs && node scripts/priceMemoryTest.mjs && node scripts/needleTest.mjs && node scripts/probeAdrDividendsTest.mjs && node scripts/compareCardTest.mjs && node scripts/compTest.mjs && node scripts/debtMaturityTest.mjs && node scripts/leasesTest.mjs && node scripts/acquisitionsTest.mjs && node scripts/lensesTest.mjs && node scripts/wirePerfTest.mjs && node scripts/wireFeedTest.mjs && node scripts/seoTest.mjs && node scripts/almanacTest.mjs && node scripts/shelvesTest.mjs && node scripts/groupingsTest.mjs && node scripts/lintNotes.mjs",
+    "test": "node scripts/heroTest.mjs && node scripts/extractionTest.mjs && node scripts/edinetTest.mjs && node scripts/buffettReadTest.mjs && node scripts/candorTest.mjs && node scripts/fundamentalsTest.mjs && node scripts/universeTest.mjs && node scripts/formTypeTest.mjs && node scripts/fundamentalsAdrTest.mjs && node scripts/euTest.mjs && node scripts/segmentTest.mjs && node scripts/peersTest.mjs && node scripts/inversionTest.mjs && node scripts/currentPositionTest.mjs && node scripts/durabilityTest.mjs && node scripts/businessTest.mjs && node scripts/grahamTest.mjs && node scripts/priceMemoryTest.mjs && node scripts/needleTest.mjs && node scripts/probeAdrDividendsTest.mjs && node scripts/compareCardTest.mjs && node scripts/compTest.mjs && node scripts/debtMaturityTest.mjs && node scripts/leasesTest.mjs && node scripts/acquisitionsTest.mjs && node scripts/lensesTest.mjs && node scripts/wirePerfTest.mjs && node scripts/wireFeedTest.mjs && node scripts/seoTest.mjs && node scripts/almanacTest.mjs && node scripts/shelvesTest.mjs && node scripts/groupingsTest.mjs && node scripts/lintNotes.mjs",
     "fetch:drivers": "node scripts/fetchDrivers.mjs",
     "fetch:adr:ratios": "node scripts/fetchAdrRatios.mjs"
   },
