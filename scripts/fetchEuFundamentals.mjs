@@ -51,7 +51,11 @@ const CONCEPTS = {
   revenue: ["NetSales", "RevenueLessExciseTaxExpense", "Revenue", "RevenueFromContractsWithCustomers", "Revenues", "RevenueFromContractWithCustomerExcludingAssessedTax", "RevenueFromRenderingOfTransportServices"],
   costOfRevenue: ["CostOfSales", "CostOfGoodsAndServicesSold", "CostOfRevenue"],
   operatingIncome: ["ProfitLossFromOperatingActivities", "OperatingIncomeLoss"],
-  netIncome: ["ProfitLossAttributableToOwnersOfParent", "ProfitLoss", "NetIncomeLoss"],
+  // Attributable-to-owners first, then the total (which includes noncontrolling interest) only as a last
+  // resort. Diageo tags its attributable line under the ...OrdinaryEquityHolders... variant rather than the
+  // standard ...OwnersOfParent, so without it the read falls through to total ProfitLoss and overstates
+  // owners' income by the NCI (Diageo FY2025: £2,354m attributable vs £2,538m total, a 7.8% overstatement).
+  netIncome: ["ProfitLossAttributableToOwnersOfParent", "ProfitLossAttributableToOrdinaryEquityHoldersOfParentEntity", "ProfitLoss", "NetIncomeLoss"],
   incomeTaxExpense: ["IncomeTaxExpenseContinuingOperations", "IncomeTaxExpenseBenefit"],
   interestExpense: ["FinanceCosts", "InterestExpense", "InterestAndDebtExpense"],
   cashFromOps: ["CashFlowsFromUsedInOperatingActivities", "CashFlowsFromUsedInOperatingActivitiesContinuingOperations", "NetCashFlowsFromUsedInOperatingActivities", "NetCashProvidedByUsedInOperatingActivities"],
