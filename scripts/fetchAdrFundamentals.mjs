@@ -24,6 +24,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { passesQualityFloor } from "../src/lib/fundamentals.mjs";
+import { financialKind } from "../src/lib/archetype.mjs";
 import { compactJson } from "../src/lib/dataFile.mjs";
 import { buildCikMap, CIK_OVERRIDE, resolveCikLive } from "./cikResolve.mjs";
 
@@ -45,7 +46,11 @@ const isAnyForm = (form) => isForm(form, ANNUAL_FORMS) || isForm(form, INTERIM_F
 // so an IFRS filer reads its IFRS line and a US-GAAP filer falls through to the US-GAAP one.
 const CONCEPTS = {
   // income statement
-  revenue: ["Revenue", "RevenueFromContractsWithCustomers", "RevenueFromContractWithCustomerExcludingAssessedTax", "Revenues", "RevenueFromContractWithCustomerIncludingAssessedTax"],
+  // "RevenuesNetOfInterestExpense" ranks above the gross "Revenues": a US-GAAP-filing bank (MUFG,
+  // Mizuho) tags its whole gross ordinary income under "Revenues" (interest expense not yet removed)
+  // and its true top line under the net tag — picking the gross doubled the read. Only banks carry the
+  // net tag, so listing it first is a no-op for every non-financial.
+  revenue: ["Revenue", "RevenueFromContractsWithCustomers", "RevenueFromContractWithCustomerExcludingAssessedTax", "RevenuesNetOfInterestExpense", "Revenues", "RevenueFromContractWithCustomerIncludingAssessedTax"],
   costOfRevenue: ["CostOfSales", "CostOfGoodsAndServicesSold", "CostOfRevenue", "CostOfGoodsSold"],
   grossProfit: ["GrossProfit"],
   operatingIncome: ["ProfitLossFromOperatingActivities", "OperatingIncomeLoss"],
@@ -460,13 +465,21 @@ async function main() {
     const shAnnual = collectAnnual(facts, CONCEPTS.sharesDiluted, "shares");
     const shInstant = collectInstant(facts, CONCEPTS.sharesOutstanding, "shares");
 
+    // A bank tags a gross "Revenues" (interest expense not yet removed) that overstates its top line by
+    // roughly the interest it pays. Read a bank on the net-of-interest tag alone; where a filer lacks it
+    // (most IFRS banks, and Mizuho) leave revenue null so topLineRevenue reconstructs from net interest
+    // income + noninterest income. Non-financials are unaffected.
+    const fkRev = financialKind({ market: "ADR", sic });
+    const bankNetRev = fkRev === "bank" ? collectAnnual(facts, ["RevenuesNetOfInterestExpense"], ccy) : null;
+    const revenueAt = (fy) => (fkRev === "bank" ? (bankNetRev[fy] ?? null) : (ha.revenue[fy] ?? null));
+
     const anchor = pickAnnual(facts, CONCEPTS.revenue, ccy) || pickAnnual(facts, CONCEPTS.netIncome, ccy);
     const years = [...new Set([...Object.keys(ha.revenue), ...Object.keys(ha.netIncome)])].map(Number).sort((x, y) => x - y).slice(-10);
     const debtYear = (fy) => maxOf((hi.longTermDebt[fy] != null || hi.currentDebt[fy] != null) ? (hi.longTermDebt[fy] || 0) + (hi.currentDebt[fy] || 0) : null);
     const history = years.map((fy) => ({
       fy,
       lines: {
-        revenue: ha.revenue[fy] ?? null,
+        revenue: revenueAt(fy),
         operatingIncome: deriveOpInc(ha.operatingIncome[fy] ?? null, ha.revenue[fy] ?? null, ha.netIncome[fy] ?? null, ha.incomeTaxExpense[fy] ?? null, ha.interestExpense[fy] ?? null),
         interestExpense: ha.interestExpense[fy] ?? null,
         incomeTaxExpense: ha.incomeTaxExpense[fy] ?? null,
@@ -507,7 +520,7 @@ async function main() {
     }));
 
     const tf = (tags) => ttmFlow(facts, tags, ccy)?.val ?? null;
-    const ttmRev = ttmFlow(facts, CONCEPTS.revenue, ccy);
+    const ttmRev = fkRev === "bank" ? ttmFlow(facts, ["RevenuesNetOfInterestExpense"], ccy) : ttmFlow(facts, CONCEPTS.revenue, ccy);
     const ttm = ttmRev ? {
       asOf: ttmRev.asOf, isFY: ttmRev.isFY,
       lines: {
@@ -550,6 +563,9 @@ async function main() {
     // way the US fetcher assembles `lines` from latest annual flows plus latest instants.
     const latestLines = history.length ? { ...history[history.length - 1].lines } : {};
     if (ttm?.lines) for (const [k, v] of Object.entries(ttm.lines)) if (v != null) latestLines[k] = v;
+    // A bank's snapshot revenue follows the same net-of-interest rule as its history and ttm, so a gross
+    // "Revenues" tag can never leak into the top-line read through the latest-year overlay above.
+    if (fkRev === "bank") latestLines.revenue = revenueAt(anchor?.fy ?? (history.length ? history[history.length - 1].fy : null));
 
     const rec = {
       ticker, name: meta.name || facts.entityName || ticker, cik, sic, sicDescription,
@@ -591,7 +607,11 @@ async function main() {
   let fieldsCarried = 0;
   const carryFields = (f, p) => {
     if (!p?.lines || !f?.lines || f.fy == null || f.fy !== p.fy) return f;
+    // A bank's null revenue is deliberate — it reconstructs from net interest income + noninterest
+    // income, so carrying the prior "revenue" back would restore the gross figure the fix removes.
+    const bankRev = financialKind(f) === "bank";
     for (const k of Object.keys(p.lines)) {
+      if (bankRev && k === "revenue") continue;
       if (f.lines[k] == null && p.lines[k] != null) { f.lines[k] = p.lines[k]; fieldsCarried++; }
     }
     return f;
