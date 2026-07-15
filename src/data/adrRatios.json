@@ -1,5 +1,5 @@
 {
- "asOf": "2026-07-14",
+ "asOf": "2026-07-15",
  "source": "Parsed from each filer's 20-F/40-F cover on SEC EDGAR; the verbatim clause is retained per company",
  "companies": {
   "AACG": {
@@ -16,6 +16,13 @@
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/2023311/000121390026049412/ea0285148-20f_ascentage.htm"
   },
+  "AAUC": {
+   "basis": "direct",
+   "ratio": 1,
+   "quote": "Common Shares, no par value",
+   "form": "40-F",
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1993344/000162828026022512/aaue-20251231.htm"
+  },
   "ABEV": {
    "basis": "ads",
    "ratio": 1,
@@ -29,13 +36,6 @@
    "quote": null,
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1957489/000121390026048085/ea0286865-20f_ableview.htm"
-  },
-  "ABUS": {
-   "basis": null,
-   "ratio": null,
-   "quote": null,
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1447028/000119312513129590/d508557d20f.htm"
   },
   "ACB": {
    "basis": "direct",
@@ -64,13 +64,6 @@
    "quote": "American depositary shares, each representing one and one quarter (1.25) of our ordinary",
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1818838/000110465926038612/adag-20251231x20f.htm"
-  },
-  "ADCT": {
-   "basis": "direct",
-   "ratio": 1,
-   "quote": "Common Shares, par value CHF 0.08 per share",
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1771910/000162828023008056/adc-20221231.htm"
   },
   "ADSE": {
    "basis": null,
@@ -226,12 +219,12 @@
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1898416/000189841626000004/alvo-20251231.htm"
   },
-  "AMBR": {
-   "basis": null,
-   "ratio": null,
-   "quote": null,
+  "AMBP": {
+   "basis": "direct",
+   "ratio": 1,
+   "quote": "Ordinary Shares, with a nominal value of &#8364;0.01 per share",
    "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1697818/000110465926060362/ambr-20251231x20f.htm"
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1845097/000110465926024068/ambp-20251231x20f.htm"
   },
   "AMX": {
    "basis": null,
@@ -261,13 +254,6 @@
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/2044255/000121390026043573/ea0285064-20f_antalpha.htm"
   },
-  "AOSL": {
-   "basis": null,
-   "ratio": null,
-   "quote": null,
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1387467/000119312510203833/d20f.htm"
-  },
   "API": {
    "basis": "ads",
    "ratio": 4,
@@ -281,6 +267,20 @@
    "quote": "Common Shares,",
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1026980/000162828026028187/apwc-20251231.htm"
+  },
+  "AQN": {
+   "basis": "direct",
+   "ratio": 1,
+   "quote": "Common shares, no par value",
+   "form": "40-F",
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1174169/000117416926000015/aqunf-20251231_d2.htm"
+  },
+  "AQNB": {
+   "basis": "direct",
+   "ratio": 1,
+   "quote": "Common shares, no par value",
+   "form": "40-F",
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1174169/000117416926000015/aqunf-20251231_d2.htm"
   },
   "ARBE": {
    "basis": null,
@@ -303,6 +303,13 @@
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1508478/000162828026028950/arco-20251231.htm"
   },
+  "ARIS": {
+   "basis": "direct",
+   "ratio": 1,
+   "quote": "Common Shares, no par value",
+   "form": "40-F",
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1964504/000196450426000012/aris-20251231_d2.htm"
+  },
   "ARM": {
    "basis": "ads",
    "ratio": 1,
@@ -316,6 +323,20 @@
    "quote": null,
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1859690/000110465925119500/arqq-20250930x20f.htm"
+  },
+  "AS": {
+   "basis": null,
+   "ratio": null,
+   "quote": null,
+   "form": "20-F",
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1988894/000198889426000004/as-20251231.htm"
+  },
+  "ASC": {
+   "basis": null,
+   "ratio": null,
+   "quote": null,
+   "form": "20-F",
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1577437/000110465926024690/asc-20251231x20f.htm"
   },
   "ASM": {
    "basis": "direct",
@@ -408,13 +429,6 @@
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1799207/000119312526168210/d108315d20f.htm"
   },
-  "AUPH": {
-   "basis": null,
-   "ratio": null,
-   "quote": null,
-   "form": "40-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1600620/000162828020003036/auph-123119x40xf.htm"
-  },
   "AURE": {
    "basis": null,
    "ratio": null,
@@ -422,12 +436,12 @@
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1765850/000121390026001478/ea0271640-20f_aurelion.htm"
   },
-  "AUTL": {
-   "basis": "ads",
-   "ratio": 1,
-   "quote": "American Depositary Shares, also referred to as ADSs. Each ADS represents one ordinary",
+  "AVAL": {
+   "basis": null,
+   "ratio": null,
+   "quote": null,
    "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1730463/000173046323000016/autl-20221231.htm"
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1504764/000110465926044493/aval-20251231x20f.htm"
   },
   "AXG": {
    "basis": null,
@@ -457,6 +471,20 @@
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/901832/000110465926019130/azn-20251231x20f.htm"
   },
+  "AZUL": {
+   "basis": null,
+   "ratio": null,
+   "quote": null,
+   "form": "20-F",
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1432364/000162828026023423/azul-20251231.htm"
+  },
+  "B": {
+   "basis": "direct",
+   "ratio": 1,
+   "quote": "Common Shares",
+   "form": "40-F",
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/756894/000119312526079253/d833573d40f.htm"
+  },
   "BABA": {
    "basis": "ads",
    "ratio": 8,
@@ -478,13 +506,6 @@
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1001290/000100129026000008/bap-20251231.htm"
   },
-  "BB": {
-   "basis": null,
-   "ratio": null,
-   "quote": null,
-   "form": "40-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1070235/000107023519000014/bb-02282019x40f.htm"
-  },
   "BBAR": {
    "basis": "ads",
    "ratio": 3,
@@ -505,6 +526,13 @@
    "quote": "American Depositary Shares, with each common share ADS representing one common",
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1160330/000129281426001753/bbdform20f_2025.htm"
+  },
+  "BBUC": {
+   "basis": "direct",
+   "ratio": 1,
+   "quote": "Class A Subordinate Voting Shares",
+   "form": "20-F",
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1654795/000162828026022148/bbu-20251231.htm"
   },
   "BBVA": {
    "basis": "ads",
@@ -547,6 +575,13 @@
    "quote": "Limited Partnership Units",
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1533232/000153323226000011/bep-20251231.htm"
+  },
+  "BEPC": {
+   "basis": "direct",
+   "ratio": 1,
+   "quote": "Class A Exchangeable Subordinate Voting Shares",
+   "form": "20-F",
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1791863/000179186326000004/bepc-20251231.htm"
   },
   "BEPH": {
    "basis": "direct",
@@ -660,6 +695,13 @@
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1406234/000140623426000002/bip-20251231.htm"
   },
+  "BIRK": {
+   "basis": null,
+   "ratio": null,
+   "quote": null,
+   "form": "20-F",
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1977102/000119312525323599/birk-20250930.htm"
+  },
   "BLDP": {
    "basis": "direct",
    "ratio": 1,
@@ -751,6 +793,13 @@
    "form": "40-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/9631/000119312525304643/d936350d40f.htm"
   },
+  "BNT": {
+   "basis": "direct",
+   "ratio": 1,
+   "quote": "Class A Exchangeable Limited Voting Shares",
+   "form": "20-F",
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1837429/000183742926000008/bnt-20251231.htm"
+  },
   "BNTX": {
    "basis": "ads",
    "ratio": 1,
@@ -814,6 +863,13 @@
    "form": "40-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1867834/000110465926037580/brag-20251231x40f.htm"
   },
+  "BRSL": {
+   "basis": "direct",
+   "ratio": 1,
+   "quote": "Ordinary Shares, nominal value $0.10",
+   "form": "20-F",
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1619762/000162828026011083/igt-20251231.htm"
+  },
   "BSAC": {
    "basis": null,
    "ratio": null,
@@ -842,6 +898,13 @@
    "form": "40-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1279495/000127949526000007/bte-20251231.htm"
   },
+  "BTG": {
+   "basis": "direct",
+   "ratio": 1,
+   "quote": "Common Shares, no par value",
+   "form": "40-F",
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1429937/000110465926026310/tm266740d1_40f.htm"
+  },
   "BTI": {
    "basis": "ads",
    "ratio": 1,
@@ -856,19 +919,26 @@
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1668717/000119312526088105/d65314d20f.htm"
   },
+  "BULL": {
+   "basis": null,
+   "ratio": null,
+   "quote": null,
+   "form": "20-F",
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1866364/000121390026041653/ea0283691-20f_webull.htm"
+  },
+  "BULLW": {
+   "basis": null,
+   "ratio": null,
+   "quote": null,
+   "form": "20-F",
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1866364/000121390026041653/ea0283691-20f_webull.htm"
+  },
   "BUUU": {
    "basis": "direct",
    "ratio": 1,
    "quote": "Class A Ordinary Shares, of no par value",
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/2047273/000121390025104702/ea0262735-20f_buuugroup.htm"
-  },
-  "BVC": {
-   "basis": "ads",
-   "ratio": 2,
-   "quote": "American depositary shares (each ADS represents two of our ordinary",
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1785680/000143774925031287/sant20250630c_20f.htm"
   },
   "BVN": {
    "basis": "ads",
@@ -883,6 +953,13 @@
    "quote": "American Depositary Shares each representing one Ordinary",
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1505065/000117184326002568/f20f_032726.htm"
+  },
+  "BWLP": {
+   "basis": null,
+   "ratio": null,
+   "quote": null,
+   "form": "20-F",
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1649313/000110465926037215/bwlp-20251231x20f.htm"
   },
   "BWMX": {
    "basis": null,
@@ -904,6 +981,13 @@
    "quote": "American Depositary Shares, each representing three Class",
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1625414/000110465926047177/bzun-20251231x20f.htm"
+  },
+  "CAAP": {
+   "basis": null,
+   "ratio": null,
+   "quote": null,
+   "form": "20-F",
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1717393/000110465926029442/caap-20251231x20f.htm"
   },
   "CAAS": {
    "basis": null,
@@ -975,12 +1059,12 @@
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/888746/000129281426002680/ccuform20f_2025.htm"
   },
-  "CD": {
-   "basis": null,
-   "ratio": null,
-   "quote": null,
+  "CDLR": {
+   "basis": "ads",
+   "ratio": 4,
+   "quote": "American Depositary Shares, each representing four (4) ordinary",
    "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1527762/000164117225007755/form20-f.htm"
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1978867/000197886726000022/cdlr-20251231.htm"
   },
   "CDRO": {
    "basis": "direct",
@@ -989,12 +1073,12 @@
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1866782/000182912626004041/codereonline_20f.htm"
   },
-  "CGC": {
-   "basis": null,
-   "ratio": null,
-   "quote": null,
-   "form": "40-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1737927/000156459019023506/cgc-40f_20190331.htm"
+  "CEPU": {
+   "basis": "ads",
+   "ratio": 10,
+   "quote": "American Depositary Shares, each representing 10 common",
+   "form": "20-F",
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1717161/000129281426002446/cepuform20f_2025.htm"
   },
   "CGEN": {
    "basis": "direct",
@@ -1066,26 +1150,19 @@
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1724542/000121390025099739/ea0259441-20f_clpsincor.htm"
   },
-  "CLS": {
-   "basis": null,
-   "ratio": null,
-   "quote": null,
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1030894/000103089424000009/cls-20231231.htm"
-  },
-  "CLVT": {
-   "basis": null,
-   "ratio": null,
-   "quote": null,
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1764046/000114420419026899/tv521656_20f.htm"
-  },
   "CM": {
    "basis": "direct",
    "ratio": 1,
    "quote": "Common Shares",
    "form": "40-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1045520/000119312525307488/d91021d40f.htm"
+  },
+  "CMBT": {
+   "basis": "direct",
+   "ratio": 1,
+   "quote": "Ordinary Shares, no par value",
+   "form": "20-F",
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1604481/000160448126000004/eurn-20251231.htm"
   },
   "CMCL": {
    "basis": "direct",
@@ -1101,6 +1178,13 @@
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1597835/000119312526171821/cmcm-20251231.htm"
   },
+  "CMDB": {
+   "basis": "direct",
+   "ratio": 1,
+   "quote": "Common Stock, $0.0001 par value per share",
+   "form": "20-F",
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/2033535/000114036126011994/ef20066084_20f.htm"
+  },
   "CMRE": {
    "basis": "direct",
    "ratio": 1,
@@ -1115,13 +1199,6 @@
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1913847/000162828026046005/cnck-20260331.htm"
   },
-  "CNH": {
-   "basis": "direct",
-   "ratio": 1,
-   "quote": "Common Shares, par value &#8364;0.01",
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1567094/000162828022004478/cnhi-20211231.htm"
-  },
   "CNI": {
    "basis": "direct",
    "ratio": 1,
@@ -1135,13 +1212,6 @@
    "quote": "Common Shares, no par value",
    "form": "40-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1017413/000101741326000018/cnq-20251231.htm"
-  },
-  "CNTB": {
-   "basis": "ads",
-   "ratio": 1,
-   "quote": "American Depositary Shares, each representing one Ordinary",
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1835268/000183526824000014/cntb-20231231.htm"
   },
   "COE": {
    "basis": "ads",
@@ -1185,20 +1255,6 @@
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1119769/000117891326002118/zk2634939.htm"
   },
-  "CRON": {
-   "basis": null,
-   "ratio": null,
-   "quote": null,
-   "form": "40-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1656472/000119312519085847/d711365d40f.htm"
-  },
-  "CRTO": {
-   "basis": "ads",
-   "ratio": 1,
-   "quote": "American Depositary Shares, each representing one The Nasdaq Stock Market LLC ordinary",
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1576427/000119312515109401/d893756d20f.htm"
-  },
   "CSAN": {
    "basis": "ads",
    "ratio": 4,
@@ -1241,13 +1297,6 @@
    "form": "40-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1475260/000147526026000008/cve-20251231_d2.htm"
   },
-  "CWCO": {
-   "basis": null,
-   "ratio": null,
-   "quote": null,
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/928340/000095014400008420/e20-f.txt"
-  },
   "CX": {
    "basis": null,
    "ratio": null,
@@ -1282,20 +1331,6 @@
    "quote": "American Depositary Shares, each representing the right to receive one Class",
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1656081/000165608125000039/dava-20250630.htm"
-  },
-  "DB": {
-   "basis": "direct",
-   "ratio": 1,
-   "quote": "Ordinary shares, no par value",
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1159508/000115950826000017/db-20251231.htm"
-  },
-  "DBVT": {
-   "basis": "ads",
-   "ratio": 0.5,
-   "quote": "American Depositary Shares, each representing one-half of one ordinary",
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1613780/000119312520080633/d862302d20f.htm"
   },
   "DCBO": {
    "basis": "direct",
@@ -1339,19 +1374,19 @@
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/2010499/000164117225018847/form20-f.htm"
   },
-  "DGXX": {
-   "basis": null,
-   "ratio": null,
-   "quote": null,
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1854368/000121390025025829/ea0236201-20f_digipower.htm"
-  },
   "DHT": {
    "basis": "direct",
    "ratio": 1,
    "quote": "Common Stock, par value $0.01 per share",
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1331284/000114036126010407/ef20059925_20f.htm"
+  },
+  "DLO": {
+   "basis": null,
+   "ratio": null,
+   "quote": null,
+   "form": "20-F",
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1846832/000207097926000113/dlo-20251231.htm"
   },
   "DNN": {
    "basis": null,
@@ -1360,19 +1395,19 @@
    "form": "40-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1063259/000110465926036912/dnn-20251231x40f.htm"
   },
-  "DOLE": {
-   "basis": "direct",
-   "ratio": 1,
-   "quote": "Ordinary Shares, $0.01 par value per share",
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1857475/000185747525000008/dole-20241231.htm"
-  },
   "DOO": {
    "basis": "direct",
    "ratio": 1,
    "quote": "Subordinate Voting Shares",
    "form": "40-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1748797/000119312526125055/d76000d40f.htm"
+  },
+  "DOX": {
+   "basis": null,
+   "ratio": null,
+   "quote": null,
+   "form": "20-F",
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1062579/000119312525319187/dox-20250930.htm"
   },
   "DOYU": {
    "basis": "ads",
@@ -1401,6 +1436,13 @@
    "quote": "American Depositary Shares, each representing ten ordinary",
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1023512/000162828025047346/drd-20250630.htm"
+  },
+  "DSGX": {
+   "basis": null,
+   "ratio": null,
+   "quote": null,
+   "form": "40-F",
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1050140/000110465926026450/dsgx-20260131x40f.htm"
   },
   "DSWL": {
    "basis": null,
@@ -1436,6 +1478,13 @@
    "quote": null,
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1444406/000110465926053172/ec-20251231x20f.htm"
+  },
+  "ECO": {
+   "basis": null,
+   "ratio": null,
+   "quote": null,
+   "form": "20-F",
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1964954/000110465926032731/eco-20251231x20f.htm"
   },
   "ECX": {
    "basis": "direct",
@@ -1528,13 +1577,6 @@
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1355444/000162828026021824/erj-20251231.htm"
   },
-  "ENB": {
-   "basis": null,
-   "ratio": null,
-   "quote": null,
-   "form": "40-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/895728/000110465917010184/a16-23211_140f.htm"
-  },
   "ENGS": {
    "basis": "direct",
    "ratio": 1,
@@ -1556,12 +1598,12 @@
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1922641/000117891326001828/zk2634901.htm"
   },
-  "ENTX": {
+  "ENLV": {
    "basis": null,
    "ratio": null,
    "quote": null,
    "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1638097/000117891321001087/zk2125744.htm"
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1596812/000121390026033857/ea0282960-20f_enlivex.htm"
   },
   "EQNR": {
    "basis": "ads",
@@ -1647,12 +1689,19 @@
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1468522/000162828026011789/fer-20251231.htm"
   },
-  "FLUT": {
-   "basis": null,
-   "ratio": null,
-   "quote": null,
-   "form": "40-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1635327/000163532720000014/tsgi-form40xfyearendx2019q4.htm"
+  "FINV": {
+   "basis": "ads",
+   "ratio": 5,
+   "quote": "American depositary shares, each of which represents five Class",
+   "form": "20-F",
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1691445/000149315226019597/form20-f.htm"
+  },
+  "FLNG": {
+   "basis": "direct",
+   "ratio": 1,
+   "quote": "Ordinary Shares, par value $0.01 per share",
+   "form": "20-F",
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1772253/000162828026012574/flng-20251231.htm"
   },
   "FLX": {
    "basis": "ads",
@@ -1682,13 +1731,6 @@
    "form": "40-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1456346/000110465926032133/fnv-20251231x40f.htm"
   },
-  "FOCL": {
-   "basis": "ads",
-   "ratio": 1,
-   "quote": "American Depositary Shares , each representing one Ordinary",
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1041934/000155837025003828/edap-20241231x20f.htm"
-  },
   "FORTY": {
    "basis": "ads",
    "ratio": 1,
@@ -1717,6 +1759,13 @@
    "form": "40-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1637810/000117184326000985/fsv20251231_40f.htm"
   },
+  "FTS": {
+   "basis": "direct",
+   "ratio": 1,
+   "quote": "Common Shares, without par value",
+   "form": "40-F",
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1666175/000166617526000013/fts-20251231.htm"
+  },
   "FUFU": {
    "basis": null,
    "ratio": null,
@@ -1737,6 +1786,13 @@
    "quote": "American depositary shares, each of which represents eight Class",
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1754581/000110465926043451/futu-20251231x20f.htm"
+  },
+  "FVRR": {
+   "basis": "direct",
+   "ratio": 1,
+   "quote": "Ordinary shares, no par value",
+   "form": "20-F",
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1762301/000117891326000858/zk2634486.htm"
   },
   "GAMB": {
    "basis": "direct",
@@ -1815,6 +1871,13 @@
    "form": "40-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1966287/000121390026027268/ea0280590-40f_greenfire.htm"
   },
+  "GFS": {
+   "basis": "direct",
+   "ratio": 1,
+   "quote": "Ordinary shares, par value US$0.02 per share",
+   "form": "20-F",
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1709048/000170904826000022/gfs-20251231.htm"
+  },
   "GGAL": {
    "basis": "ads",
    "ratio": 10,
@@ -1864,6 +1927,13 @@
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/897322/000117891326000929/zk2634518.htm"
   },
+  "GLAS": {
+   "basis": null,
+   "ratio": null,
+   "quote": null,
+   "form": "40-F",
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1848731/000184873126000015/glasf-20251231.htm"
+  },
   "GLBE": {
    "basis": "direct",
    "ratio": 1,
@@ -1885,6 +1955,13 @@
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1207179/000162828026021198/glng-20251231.htm"
   },
+  "GLOB": {
+   "basis": null,
+   "ratio": null,
+   "quote": null,
+   "form": "20-F",
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1557860/000162828026012910/glob-20251231.htm"
+  },
   "GMHS": {
    "basis": "direct",
    "ratio": 1,
@@ -1898,6 +1975,13 @@
    "quote": "Ordinary shares, no par value per share",
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1847806/000149315226009371/form20-f.htm"
+  },
+  "GOOS": {
+   "basis": "direct",
+   "ratio": 1,
+   "quote": "Subordinate voting shares",
+   "form": "20-F",
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1690511/000169051126000012/goos-20260329.htm"
   },
   "GOTU": {
    "basis": "ads",
@@ -1990,6 +2074,13 @@
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1639877/000110465926034859/gsm-20251231x20f.htm"
   },
+  "HAFN": {
+   "basis": "direct",
+   "ratio": 1,
+   "quote": "Ordinary shares",
+   "form": "20-F",
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1815779/000114036126015278/ef20060668.htm"
+  },
   "HBM": {
    "basis": "direct",
    "ratio": 1,
@@ -2045,13 +2136,6 @@
    "quote": "Common Shares",
    "form": "40-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1847409/000162828026004157/hiti-20251031.htm"
-  },
-  "HIVE": {
-   "basis": "direct",
-   "ratio": 1,
-   "quote": "Common Shares",
-   "form": "40-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1720424/000106299325012159/form40f.htm"
   },
   "HLN": {
    "basis": "ads",
@@ -2109,6 +2193,13 @@
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1089113/000108911326000010/hsbc-20251231.htm"
   },
+  "HSHP": {
+   "basis": "direct",
+   "ratio": 1,
+   "quote": "Common shares, par value $1.00 per share",
+   "form": "20-F",
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1959455/000195945526000024/hshp-20251231.htm"
+  },
   "HTCO": {
    "basis": null,
    "ratio": null,
@@ -2144,6 +2235,13 @@
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1945415/000121390026048296/ea0287116-20f_huhutech.htm"
   },
+  "HUYA": {
+   "basis": "ads",
+   "ratio": 1,
+   "quote": "American Depositary Shares , each representing one Class",
+   "form": "20-F",
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1728190/000110465926048944/huya-20251231x20f.htm"
+  },
   "HYFT": {
    "basis": null,
    "ratio": null,
@@ -2157,20 +2255,6 @@
    "quote": "Common Shares, no par value",
    "form": "40-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1203464/000106299326001022/form40f.htm"
-  },
-  "IAUX": {
-   "basis": "direct",
-   "ratio": 1,
-   "quote": "Common shares, no par value",
-   "form": "40-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1853962/000162828024010631/iaux-20231231.htm"
-  },
-  "IBEX": {
-   "basis": null,
-   "ratio": null,
-   "quote": null,
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1720420/000155837022014803/ibex-20220630x20f.htm"
   },
   "ICG": {
    "basis": "ads",
@@ -2200,6 +2284,13 @@
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1708688/000121390026032065/ea0281674-20f_inflarx.htm"
   },
+  "IFS": {
+   "basis": null,
+   "ratio": null,
+   "quote": null,
+   "form": "20-F",
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1615903/000119312526177617/ifs-20251231.htm"
+  },
   "IGIC": {
    "basis": "direct",
    "ratio": 1,
@@ -2220,13 +2311,6 @@
    "quote": null,
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1876183/000110465926028162/tmb-20251231x20f.htm"
-  },
-  "IMCR": {
-   "basis": "ads",
-   "ratio": 1,
-   "quote": "American Depositary Shares, each representing one ordinary",
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1671927/000114036123009313/brhc10048769_20f.htm"
   },
   "IMMP": {
    "basis": "ads",
@@ -2262,13 +2346,6 @@
    "quote": null,
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1857030/000149315226020743/form20-f.htm"
-  },
-  "INDV": {
-   "basis": "direct",
-   "ratio": 1,
-   "quote": "Ordinary shares, $0.50 nominal value per share",
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1625297/000162529724000017/indv-20231231.htm"
   },
   "INFY": {
    "basis": null,
@@ -2319,19 +2396,19 @@
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1722608/000119312526107079/iq-20251231.htm"
   },
-  "IREN": {
-   "basis": "direct",
-   "ratio": 1,
-   "quote": "Ordinary shares, no par value",
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1878848/000162828024038677/iren-20240630.htm"
-  },
   "IRS": {
    "basis": null,
    "ratio": null,
    "quote": null,
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/933267/000165495425012190/irsa_20f.htm"
+  },
+  "ITRG": {
+   "basis": "direct",
+   "ratio": 1,
+   "quote": "Common Shares, no par value",
+   "form": "40-F",
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1722387/000172238726000004/itrg-20251231_d2.htm"
   },
   "ITRN": {
    "basis": null,
@@ -2361,12 +2438,12 @@
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1070304/000119312526276640/d29000d20f.htm"
   },
-  "IXHL": {
-   "basis": "ads",
-   "ratio": 25,
-   "quote": "American Depositary Shares (&#8220;ADSs), with each ADS representing 25 ordinary",
+  "JBS": {
+   "basis": null,
+   "ratio": null,
+   "quote": null,
    "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1873875/000121390023081650/f20f2023_incannex.htm"
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1791942/000121390026034213/ea0282342-20f_jbsnv.htm"
   },
   "JD": {
    "basis": "ads",
@@ -2396,13 +2473,6 @@
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1737339/000110465926035657/jg-20251231x20f.htm"
   },
-  "JHX": {
-   "basis": null,
-   "ratio": null,
-   "quote": null,
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1159152/000115915225000012/jhx-20250331.htm"
-  },
   "JKS": {
    "basis": "ads",
    "ratio": 4,
@@ -2423,6 +2493,13 @@
    "quote": "Class A ordinary shares, par value US$0.0001 per share",
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/2007846/000149315226006699/form20-f.htm"
+  },
+  "JMIA": {
+   "basis": "ads",
+   "ratio": 2,
+   "quote": "Each ADS currently represents two ordinary",
+   "form": "20-F",
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1756708/000175670826000015/jmia-20251231.htm"
   },
   "JXG": {
    "basis": null,
@@ -2459,13 +2536,6 @@
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1795589/000110465926047100/kc-20251231x20f.htm"
   },
-  "KEEL": {
-   "basis": null,
-   "ratio": null,
-   "quote": null,
-   "form": "40-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1812477/000121390025026575/ea0234268-40f_bitfarms.htm"
-  },
   "KEN": {
    "basis": null,
    "ratio": null,
@@ -2486,6 +2556,13 @@
    "quote": null,
    "form": "40-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/701818/000110465926035268/kgc-20251231x40f.htm"
+  },
+  "KLAR": {
+   "basis": null,
+   "ratio": null,
+   "quote": null,
+   "form": "20-F",
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/2003292/000200329226000007/klar-20251231.htm"
   },
   "KMDA": {
    "basis": null,
@@ -2514,6 +2591,13 @@
    "quote": null,
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1564180/000110465926044664/knop-20251231x20f.htm"
+  },
+  "KOF": {
+   "basis": null,
+   "ratio": null,
+   "quote": null,
+   "form": "20-F",
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/910631/000162828026025313/kof-20251231.htm"
   },
   "KRKR": {
    "basis": null,
@@ -2577,6 +2661,13 @@
    "quote": null,
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1922097/000110465926052024/lanv-20251231x20f.htm"
+  },
+  "LEGN": {
+   "basis": "ads",
+   "ratio": 2,
+   "quote": "American depositary shares, each representing two ordinary",
+   "form": "20-F",
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1801198/000180119826000008/legn-20251231.htm"
   },
   "LFS": {
    "basis": "ads",
@@ -2690,19 +2781,19 @@
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1816007/000119312526194102/d88899d20f.htm"
   },
+  "LUXE": {
+   "basis": "ads",
+   "ratio": 1,
+   "quote": "American Depositary Shares, each representing one ordinary",
+   "form": "20-F",
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1831907/000110465925104454/luxe-20250630x20f.htm"
+  },
   "LX": {
    "basis": "ads",
    "ratio": 2,
    "quote": "American depositary shares, each of which represents two Class",
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1708259/000119312526189256/lx-20251231.htm"
-  },
-  "LXFR": {
-   "basis": "ads",
-   "ratio": 1,
-   "quote": "each ADS represented one ordinary",
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1096056/000109605618000011/luxfer20-f2017.htm"
   },
   "LYG": {
    "basis": "ads",
@@ -2809,6 +2900,13 @@
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/2033377/000149315226004907/form20-f.htm"
   },
+  "MICC": {
+   "basis": null,
+   "ratio": null,
+   "quote": null,
+   "form": "20-F",
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/2071668/000110465926029805/micc-20251231x20f.htm"
+  },
   "MKDW": {
    "basis": "direct",
    "ratio": 1,
@@ -2879,13 +2977,6 @@
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1610601/000119312526183444/d13143d20f.htm"
   },
-  "MREO": {
-   "basis": "ads",
-   "ratio": 5,
-   "quote": "American Depositary Shares, each representing five ordinary",
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1719714/000119312523082264/d430075d20f.htm"
-  },
   "MRX": {
    "basis": "direct",
    "ratio": 1,
@@ -2893,12 +2984,26 @@
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1997464/000199746426000018/mar-20251231.htm"
   },
+  "MSC": {
+   "basis": "ads",
+   "ratio": 4,
+   "quote": "American depositary shares each representing four Class",
+   "form": "20-F",
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1713334/000119312526105026/d31011d20f.htm"
+  },
   "MT": {
    "basis": null,
    "ratio": null,
    "quote": null,
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1243429/000124342926000020/mt-20251231.htm"
+  },
+  "MTA": {
+   "basis": "direct",
+   "ratio": 1,
+   "quote": "Common shares, no par value",
+   "form": "40-F",
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1722606/000106299326001632/form40f.htm"
   },
   "MTC": {
    "basis": null,
@@ -2919,7 +3024,7 @@
    "ratio": 1,
    "quote": "American depositary shares, each of which represents one share of common",
    "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/67088/000006708825000011/mufg-20250331.htm"
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/67088/000162828026047095/mufg-20260331.htm"
   },
   "MWC": {
    "basis": "ads",
@@ -2948,20 +3053,6 @@
    "quote": null,
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/2026514/000121390026038838/ea0280623-20f_namib.htm"
-  },
-  "NAMS": {
-   "basis": null,
-   "ratio": null,
-   "quote": null,
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1936258/000095017023011412/nams-20221231.htm"
-  },
-  "NAMSW": {
-   "basis": null,
-   "ratio": null,
-   "quote": null,
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1936258/000095017023011412/nams-20221231.htm"
   },
   "NAT": {
    "basis": "direct",
@@ -3019,6 +3110,13 @@
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1849396/000117891326000712/zk2634437.htm"
   },
+  "NFGC": {
+   "basis": null,
+   "ratio": null,
+   "quote": null,
+   "form": "40-F",
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1840616/000110465926034548/nfgc-20251231x40f.htm"
+  },
   "NGG": {
    "basis": "ads",
    "ratio": 5,
@@ -3032,6 +3130,13 @@
    "quote": "American Depositary Shares, each representing one Ordinary",
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1003935/000100393526000010/nice-20251231.htm"
+  },
+  "NIO": {
+   "basis": "ads",
+   "ratio": 1,
+   "quote": "American depositary shares (each representing one Class",
+   "form": "20-F",
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1736541/000110465926041765/nio-20251231x20f.htm"
   },
   "NIPG": {
    "basis": "ads",
@@ -3060,13 +3165,6 @@
    "quote": "American Depositary Shares, each representing one share of Common",
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1163653/000119312526277134/d116282d20f.htm"
-  },
-  "NNDM": {
-   "basis": "ads",
-   "ratio": 1,
-   "quote": "American Depositary Shares each representing one Ordinary",
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1643303/000141057825001194/nndm-20241231x20f.htm"
   },
   "NNNN": {
    "basis": null,
@@ -3166,6 +3264,13 @@
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/353278/000035327826000012/nvo-20251231.htm"
   },
+  "NVS": {
+   "basis": null,
+   "ratio": null,
+   "quote": null,
+   "form": "20-F",
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1114448/000111444826000004/nvs-20251231.htm"
+  },
   "NVX": {
    "basis": "ads",
    "ratio": 4,
@@ -3215,13 +3320,6 @@
    "form": "40-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1431852/000110465926036344/odv-20251231x40f.htm"
   },
-  "OEC": {
-   "basis": null,
-   "ratio": null,
-   "quote": null,
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1609804/000160980419000010/a20-f2018usxgaap.htm"
-  },
   "OGI": {
    "basis": "direct",
    "ratio": 1,
@@ -3257,12 +3355,26 @@
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/2030834/000121390025074959/ea0250581-20f_oneconst.htm"
   },
+  "ONON": {
+   "basis": null,
+   "ratio": null,
+   "quote": null,
+   "form": "20-F",
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1858985/000185898526000008/onholdingag-20251231.htm"
+  },
   "OPRA": {
    "basis": "ads",
    "ratio": 1,
    "quote": "American Depositary Shares, each representing one ordinary",
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1737450/000173745026000005/opra-20251231.htm"
+  },
+  "ORLA": {
+   "basis": null,
+   "ratio": null,
+   "quote": null,
+   "form": "40-F",
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1680056/000110465926032222/orla-20251231x40f.htm"
   },
   "OTLY": {
    "basis": "ads",
@@ -3460,19 +3572,19 @@
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1876431/000162828026028623/pre-20251231.htm"
   },
-  "PROF": {
-   "basis": null,
-   "ratio": null,
-   "quote": null,
-   "form": "40-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1628808/000141057824000149/prof-20231231x40f.htm"
-  },
   "PRQR": {
    "basis": null,
    "ratio": null,
    "quote": null,
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1612940/000110465926026713/prqr-20251231x20f.htm"
+  },
+  "PSFE": {
+   "basis": null,
+   "ratio": null,
+   "quote": null,
+   "form": "20-F",
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1833835/000119312526088095/psfe-20251231.htm"
   },
   "PSIG": {
    "basis": null,
@@ -3551,20 +3663,6 @@
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1837493/000118518526001072/iinn20f123125.htm"
   },
-  "QUCY": {
-   "basis": null,
-   "ratio": null,
-   "quote": null,
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1874252/000121390025026430/ea0235678-20f_mainz.htm"
-  },
-  "QURE": {
-   "basis": null,
-   "ratio": null,
-   "quote": null,
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1590560/000104746916011896/a2228066z20-f.htm"
-  },
   "RACE": {
    "basis": "direct",
    "ratio": 1,
@@ -3628,6 +3726,13 @@
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/929869/000110465926017277/relx-20251231x20f.htm"
   },
+  "RERE": {
+   "basis": "ads",
+   "ratio": 2,
+   "quote": "American depositary shares (every three ADSs represent two Class",
+   "form": "20-F",
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1838957/000119312526146260/rere-20251231.htm"
+  },
   "RIO": {
    "basis": "ads",
    "ratio": 1,
@@ -3662,6 +3767,20 @@
    "quote": "Ordinary Shares, par value US$0.001",
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1945240/000164117225021681/form20-f.htm"
+  },
+  "RSKD": {
+   "basis": "direct",
+   "ratio": 1,
+   "quote": "Class A ordinary shares, no par value",
+   "form": "20-F",
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1851112/000185111226000007/rskd-20251231.htm"
+  },
+  "RTO": {
+   "basis": "ads",
+   "ratio": 5,
+   "quote": "American Depositary Shares, each representing five ordinary",
+   "form": "20-F",
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/930157/000110465926034062/rto-20251231x20f.htm"
   },
   "RY": {
    "basis": "direct",
@@ -3726,19 +3845,12 @@
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1000184/000110465926020058/sap-20251231x20f.htm"
   },
-  "SATL": {
+  "SB": {
    "basis": "direct",
    "ratio": 1,
-   "quote": "Class A Ordinary Shares",
+   "quote": "Common Stock, $0.001 par value per share",
    "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1874315/000162828024016229/satl-20231231.htm"
-  },
-  "SATLW": {
-   "basis": "direct",
-   "ratio": 1,
-   "quote": "Class A Ordinary Shares",
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1874315/000162828024016229/satl-20231231.htm"
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1434754/000162828026014408/sb-20251231.htm"
   },
   "SBLK": {
    "basis": "direct",
@@ -3775,12 +3887,12 @@
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1936804/000121390026048537/ea0287753-20f_suncar.htm"
   },
-  "SDRL": {
-   "basis": "direct",
+  "SE": {
+   "basis": "ads",
    "ratio": 1,
-   "quote": "Common Shares, par value $0.01 per share",
+   "quote": "American Depositary Shares, each representing one Class",
    "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1737706/000162828024013140/sdrl-20231231.htm"
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1703399/000114036126015366/ef20067274_20f.htm"
   },
   "SFL": {
    "basis": "direct",
@@ -3795,6 +3907,13 @@
    "quote": null,
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1863218/000121390026035301/ea0282579-20f_shengfeng.htm"
+  },
+  "SGHC": {
+   "basis": "direct",
+   "ratio": 1,
+   "quote": "Ordinary shares",
+   "form": "20-F",
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1878057/000162828026025609/sghc-20251231.htm"
   },
   "SGML": {
    "basis": "direct",
@@ -3838,13 +3957,6 @@
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1987240/000110465926062643/shmd-20251231x20f.htm"
   },
-  "SHOP": {
-   "basis": "direct",
-   "ratio": 1,
-   "quote": "Class A Subordinate Voting Shares",
-   "form": "40-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1594805/000159480524000007/shop-20231231.htm"
-  },
   "SID": {
    "basis": "ads",
    "ratio": 1,
@@ -3858,6 +3970,13 @@
    "quote": "ADSs (each representing one",
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1094324/000155485526001437/sify-20260331.htm"
+  },
+  "SII": {
+   "basis": "direct",
+   "ratio": 1,
+   "quote": "Common Shares without par value",
+   "form": "40-F",
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1512920/000162828026009474/sii-20251231_d2.htm"
   },
   "SILC": {
    "basis": "direct",
@@ -3922,19 +4041,19 @@
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1939965/000121390026057974/ea0290046-20f_brerahold.htm"
   },
-  "SLN": {
-   "basis": "ads",
-   "ratio": 3,
-   "quote": "American Depositary Shares, each representing 3 ordinary",
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1479615/000095017024030519/sln-20231231.htm"
-  },
   "SMFG": {
    "basis": null,
    "ratio": null,
    "quote": null,
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1022837/000119312526283871/d118844d20f.htm"
+  },
+  "SMWB": {
+   "basis": "direct",
+   "ratio": 1,
+   "quote": "Ordinary shares, par value 0.01 NIS",
+   "form": "20-F",
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1842731/000184273126000018/smwb-20251231.htm"
   },
   "SNDL": {
    "basis": null,
@@ -3956,6 +4075,13 @@
    "quote": "Common Shares",
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1993727/000117891326002328/zk2635101.htm"
+  },
+  "SNY": {
+   "basis": "ads",
+   "ratio": 1,
+   "quote": "American Depositary Shares, each representing one half of one ordinary",
+   "form": "20-F",
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1121404/000162828026008403/sny-20251231.htm"
   },
   "SOBO": {
    "basis": "direct",
@@ -4048,12 +4174,12 @@
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/314590/000141057825001910/ssl-20250630x20f.htm"
   },
-  "SSRM": {
+  "SSYS": {
    "basis": "direct",
    "ratio": 1,
-   "quote": "Common Shares without par value",
-   "form": "40-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/921638/000119312521099112/d146288d40f.htm"
+   "quote": "Ordinary Shares, par value NIS 0.01 per share",
+   "form": "20-F",
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1517396/000162828026015079/ssys-20251231.htm"
   },
   "STAK": {
    "basis": "direct",
@@ -4083,6 +4209,13 @@
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/932787/000093278726000009/stm-20251231.htm"
   },
+  "STN": {
+   "basis": "direct",
+   "ratio": 1,
+   "quote": "Common Shares",
+   "form": "40-F",
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1131383/000113138326000007/stn-20251231.htm"
+  },
   "STNG": {
    "basis": "direct",
    "ratio": 1,
@@ -4090,12 +4223,26 @@
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1483934/000148393426000021/stng-20251231.htm"
   },
+  "STVN": {
+   "basis": null,
+   "ratio": null,
+   "quote": null,
+   "form": "20-F",
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1849853/000119312526091540/stvn-20251231.htm"
+  },
   "SU": {
    "basis": null,
    "ratio": null,
    "quote": null,
    "form": "40-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/311337/000110465926020411/su-20251231x40f.htm"
+  },
+  "SUPV": {
+   "basis": "ads",
+   "ratio": 5,
+   "quote": "American Depositary Shares, each representing 5 Class",
+   "form": "20-F",
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1517399/000110465926040713/supv-20251231x20f.htm"
   },
   "SUPX": {
    "basis": null,
@@ -4173,13 +4320,6 @@
    "quote": null,
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1978954/000119312526140232/tbbb-20251231.htm"
-  },
-  "TBLA": {
-   "basis": "direct",
-   "ratio": 1,
-   "quote": "Ordinary shares, no par value",
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1840502/000114036122010978/brhc10035439_20f.htm"
   },
   "TC": {
    "basis": "ads",
@@ -4293,6 +4433,13 @@
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/911971/000091197126000015/tk-20251231.htm"
   },
+  "TLK": {
+   "basis": null,
+   "ratio": null,
+   "quote": null,
+   "form": "20-F",
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1001807/000110465926062051/tmb-20251231x20f.htm"
+  },
   "TLX": {
    "basis": "ads",
    "ratio": 1,
@@ -4307,19 +4454,19 @@
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1094517/000119312526264811/d101983d20f.htm"
   },
+  "TME": {
+   "basis": "ads",
+   "ratio": 2,
+   "quote": "American depositary shares, each ADS represents two Class",
+   "form": "20-F",
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1744676/000119312526160257/tme-20251231.htm"
+  },
   "TNK": {
    "basis": "direct",
    "ratio": 1,
    "quote": "Class A common shares, par value of $0.01 per share",
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1419945/000141994526000007/tnk-20251231.htm"
-  },
-  "TOP": {
-   "basis": null,
-   "ratio": null,
-   "quote": null,
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1848275/000121390025075728/ea0250765-20f_topfin.htm"
   },
   "TORO": {
    "basis": "direct",
@@ -4341,6 +4488,13 @@
    "quote": null,
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1985273/000121390026037921/ea0283695-20f_toyo.htm"
+  },
+  "TRI": {
+   "basis": null,
+   "ratio": null,
+   "quote": null,
+   "form": "40-F",
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1075124/000119312526094222/tri-20251231.htm"
   },
   "TRMD": {
    "basis": "direct",
@@ -4411,6 +4565,13 @@
    "quote": "each ADS represents five (5) common",
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1046179/000162828026025362/tsm-20251231.htm"
+  },
+  "TTAM": {
+   "basis": "direct",
+   "ratio": 1,
+   "quote": "Common Shares, no nominal value",
+   "form": "20-F",
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/2035304/000203530426000047/ttam-20251231.htm"
   },
   "TTE": {
    "basis": null,
@@ -4496,20 +4657,6 @@
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1033767/000119312526193757/d91630d20f.htm"
   },
-  "URG": {
-   "basis": null,
-   "ratio": null,
-   "quote": null,
-   "form": "40-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1375205/000114420413012297/v333292_40f.htm"
-  },
-  "URGN": {
-   "basis": null,
-   "ratio": null,
-   "quote": null,
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1668243/000156459018005876/urgn-20f_20171231.htm"
-  },
   "UROY": {
    "basis": null,
    "ratio": null,
@@ -4537,13 +4684,6 @@
    "quote": null,
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1030471/000119312526177148/utsi-20251231.htm"
-  },
-  "UUUU": {
-   "basis": null,
-   "ratio": null,
-   "quote": null,
-   "form": "40-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1385849/000106299315001408/form40f.htm"
   },
   "UXIN": {
    "basis": "ads",
@@ -4594,13 +4734,6 @@
    "form": "40-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1293135/000110465926023553/vet-20251231x40f.htm"
   },
-  "VFF": {
-   "basis": null,
-   "ratio": null,
-   "quote": null,
-   "form": "40-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1584549/000119312519080988/d630703d40f.htm"
-  },
   "VFS": {
    "basis": null,
    "ratio": null,
@@ -4614,6 +4747,20 @@
    "quote": null,
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1913510/000110465926052266/vfs-20251231x20f.htm"
+  },
+  "VIK": {
+   "basis": null,
+   "ratio": null,
+   "quote": null,
+   "form": "20-F",
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1745201/000174520126000007/vik-20251231.htm"
+  },
+  "VINP": {
+   "basis": null,
+   "ratio": null,
+   "quote": null,
+   "form": "20-F",
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1826286/000119312526164057/d79123d20f.htm"
   },
   "VIOT": {
    "basis": "ads",
@@ -4635,6 +4782,13 @@
    "quote": "Each ADS represents one common",
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1762506/000119312526187099/d936340d20f.htm"
+  },
+  "VIV": {
+   "basis": "ads",
+   "ratio": 2,
+   "quote": "American Depositary Shares (as evidenced by American Depositary Receipts), each representing two Common",
+   "form": "20-F",
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1066119/000207097926000018/viv-20251231.htm"
   },
   "VIVO": {
    "basis": "direct",
@@ -4664,6 +4818,13 @@
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1793663/000119312526076504/ck0001793663-20251231.htm"
   },
+  "VTMX": {
+   "basis": "ads",
+   "ratio": 10,
+   "quote": "American Depositary Shares, each representing ten ordinary",
+   "form": "20-F",
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1969373/000196937326000010/vtmx-20251231.htm"
+  },
   "WAVE": {
    "basis": null,
    "ratio": null,
@@ -4684,13 +4845,6 @@
    "quote": null,
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1866501/000119312526149722/wbx-20251231.htm"
-  },
-  "WCN": {
-   "basis": null,
-   "ratio": null,
-   "quote": null,
-   "form": "40-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1318220/000104746916010684/a2227552z40-f.htm"
   },
   "WDH": {
    "basis": "ads",
@@ -4956,7 +5110,7 @@
    "ratio": null,
    "quote": null,
    "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1993463/000141057825001545/ysxt-20250331x20f.htm"
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1993463/000110465926082653/ysxt-20260331x20f.htm"
   },
   "YTRA": {
    "basis": "direct",
@@ -4979,12 +5133,26 @@
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1997403/000137647426000319/zt_20f.htm"
   },
+  "ZGN": {
+   "basis": null,
+   "ratio": null,
+   "quote": null,
+   "form": "20-F",
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1877787/000187778726000015/zgn-20251231.htm"
+  },
   "ZH": {
    "basis": "ads",
    "ratio": 3,
    "quote": "American depositary shares (each representing three Class",
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1835724/000110465926044557/zh-20251231x20f.htm"
+  },
+  "ZIM": {
+   "basis": null,
+   "ratio": null,
+   "quote": null,
+   "form": "20-F",
+   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1654126/000117891326000784/zk2634463.htm"
   },
   "ZJK": {
    "basis": "direct",
@@ -5007,13 +5175,6 @@
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1687451/000118518526000396/zkin20f012126.htm"
   },
-  "ZLAB": {
-   "basis": "ads",
-   "ratio": 1,
-   "quote": "American depositary shares, each representing one ordinary",
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1704292/000156459020019745/zlab-20f_20191231.htm"
-  },
   "ZOOZ": {
    "basis": "direct",
    "ratio": 1,
@@ -5034,489 +5195,6 @@
    "quote": null,
    "form": "20-F",
    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1975641/000121390026048584/ea0287565-20f_zhengye.htm"
-  },
-  "AAUC": {
-   "basis": "direct",
-   "ratio": 1,
-   "quote": "Common Shares, no par value",
-   "form": "40-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1993344/000162828026022512/aaue-20251231.htm"
-  },
-  "AMBP": {
-   "basis": "direct",
-   "ratio": 1,
-   "quote": "Ordinary Shares, with a nominal value of &#8364;0.01 per share",
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1845097/000110465926024068/ambp-20251231x20f.htm"
-  },
-  "AQN": {
-   "basis": "direct",
-   "ratio": 1,
-   "quote": "Common shares, no par value",
-   "form": "40-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1174169/000117416926000015/aqunf-20251231_d2.htm"
-  },
-  "AQNB": {
-   "basis": "direct",
-   "ratio": 1,
-   "quote": "Common shares, no par value",
-   "form": "40-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1174169/000117416926000015/aqunf-20251231_d2.htm"
-  },
-  "ARIS": {
-   "basis": "direct",
-   "ratio": 1,
-   "quote": "Common Shares, no par value",
-   "form": "40-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1964504/000196450426000012/aris-20251231_d2.htm"
-  },
-  "AS": {
-   "basis": null,
-   "ratio": null,
-   "quote": null,
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1988894/000198889426000004/as-20251231.htm"
-  },
-  "ASC": {
-   "basis": null,
-   "ratio": null,
-   "quote": null,
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1577437/000110465926024690/asc-20251231x20f.htm"
-  },
-  "AVAL": {
-   "basis": null,
-   "ratio": null,
-   "quote": null,
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1504764/000110465926044493/aval-20251231x20f.htm"
-  },
-  "AZUL": {
-   "basis": null,
-   "ratio": null,
-   "quote": null,
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1432364/000162828026023423/azul-20251231.htm"
-  },
-  "BBUC": {
-   "basis": "direct",
-   "ratio": 1,
-   "quote": "Class A Subordinate Voting Shares",
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1654795/000162828026022148/bbu-20251231.htm"
-  },
-  "BEPC": {
-   "basis": "direct",
-   "ratio": 1,
-   "quote": "Class A Exchangeable Subordinate Voting Shares",
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1791863/000179186326000004/bepc-20251231.htm"
-  },
-  "BIRK": {
-   "basis": null,
-   "ratio": null,
-   "quote": null,
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1977102/000119312525323599/birk-20250930.htm"
-  },
-  "BNT": {
-   "basis": "direct",
-   "ratio": 1,
-   "quote": "Class A Exchangeable Limited Voting Shares",
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1837429/000183742926000008/bnt-20251231.htm"
-  },
-  "BRSL": {
-   "basis": "direct",
-   "ratio": 1,
-   "quote": "Ordinary Shares, nominal value $0.10",
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1619762/000162828026011083/igt-20251231.htm"
-  },
-  "BULL": {
-   "basis": null,
-   "ratio": null,
-   "quote": null,
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1866364/000121390026041653/ea0283691-20f_webull.htm"
-  },
-  "BULLW": {
-   "basis": null,
-   "ratio": null,
-   "quote": null,
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1866364/000121390026041653/ea0283691-20f_webull.htm"
-  },
-  "CAAP": {
-   "basis": null,
-   "ratio": null,
-   "quote": null,
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1717393/000110465926029442/caap-20251231x20f.htm"
-  },
-  "CDLR": {
-   "basis": "ads",
-   "ratio": 4,
-   "quote": "American Depositary Shares, each representing four (4) ordinary",
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1978867/000197886726000022/cdlr-20251231.htm"
-  },
-  "CEPU": {
-   "basis": "ads",
-   "ratio": 10,
-   "quote": "American Depositary Shares, each representing 10 common",
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1717161/000129281426002446/cepuform20f_2025.htm"
-  },
-  "CMBT": {
-   "basis": "direct",
-   "ratio": 1,
-   "quote": "Ordinary Shares, no par value",
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1604481/000160448126000004/eurn-20251231.htm"
-  },
-  "CMDB": {
-   "basis": "direct",
-   "ratio": 1,
-   "quote": "Common Stock, $0.0001 par value per share",
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/2033535/000114036126011994/ef20066084_20f.htm"
-  },
-  "DLO": {
-   "basis": null,
-   "ratio": null,
-   "quote": null,
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1846832/000207097926000113/dlo-20251231.htm"
-  },
-  "DOX": {
-   "basis": null,
-   "ratio": null,
-   "quote": null,
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1062579/000119312525319187/dox-20250930.htm"
-  },
-  "DSGX": {
-   "basis": null,
-   "ratio": null,
-   "quote": null,
-   "form": "40-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1050140/000110465926026450/dsgx-20260131x40f.htm"
-  },
-  "ECO": {
-   "basis": null,
-   "ratio": null,
-   "quote": null,
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1964954/000110465926032731/eco-20251231x20f.htm"
-  },
-  "FINV": {
-   "basis": "ads",
-   "ratio": 5,
-   "quote": "American depositary shares, each of which represents five Class",
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1691445/000149315226019597/form20-f.htm"
-  },
-  "FLNG": {
-   "basis": "direct",
-   "ratio": 1,
-   "quote": "Ordinary Shares, par value $0.01 per share",
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1772253/000162828026012574/flng-20251231.htm"
-  },
-  "FTS": {
-   "basis": "direct",
-   "ratio": 1,
-   "quote": "Common Shares, without par value",
-   "form": "40-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1666175/000166617526000013/fts-20251231.htm"
-  },
-  "FVRR": {
-   "basis": "direct",
-   "ratio": 1,
-   "quote": "Ordinary shares, no par value",
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1762301/000117891326000858/zk2634486.htm"
-  },
-  "GFS": {
-   "basis": "direct",
-   "ratio": 1,
-   "quote": "Ordinary shares, par value US$0.02 per share",
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1709048/000170904826000022/gfs-20251231.htm"
-  },
-  "GLAS": {
-   "basis": null,
-   "ratio": null,
-   "quote": null,
-   "form": "40-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1848731/000184873126000015/glasf-20251231.htm"
-  },
-  "GLOB": {
-   "basis": null,
-   "ratio": null,
-   "quote": null,
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1557860/000162828026012910/glob-20251231.htm"
-  },
-  "GOOS": {
-   "basis": "direct",
-   "ratio": 1,
-   "quote": "Subordinate voting shares",
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1690511/000169051126000012/goos-20260329.htm"
-  },
-  "HAFN": {
-   "basis": "direct",
-   "ratio": 1,
-   "quote": "Ordinary shares",
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1815779/000114036126015278/ef20060668.htm"
-  },
-  "HSHP": {
-   "basis": "direct",
-   "ratio": 1,
-   "quote": "Common shares, par value $1.00 per share",
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1959455/000195945526000024/hshp-20251231.htm"
-  },
-  "HUYA": {
-   "basis": "ads",
-   "ratio": 1,
-   "quote": "American Depositary Shares , each representing one Class",
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1728190/000110465926048944/huya-20251231x20f.htm"
-  },
-  "IFS": {
-   "basis": null,
-   "ratio": null,
-   "quote": null,
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1615903/000119312526177617/ifs-20251231.htm"
-  },
-  "ITRG": {
-   "basis": "direct",
-   "ratio": 1,
-   "quote": "Common Shares, no par value",
-   "form": "40-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1722387/000172238726000004/itrg-20251231_d2.htm"
-  },
-  "JBS": {
-   "basis": null,
-   "ratio": null,
-   "quote": null,
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1791942/000121390026034213/ea0282342-20f_jbsnv.htm"
-  },
-  "JMIA": {
-   "basis": "ads",
-   "ratio": 2,
-   "quote": "Each ADS currently represents two ordinary",
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1756708/000175670826000015/jmia-20251231.htm"
-  },
-  "KLAR": {
-   "basis": null,
-   "ratio": null,
-   "quote": null,
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/2003292/000200329226000007/klar-20251231.htm"
-  },
-  "KOF": {
-   "basis": null,
-   "ratio": null,
-   "quote": null,
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/910631/000162828026025313/kof-20251231.htm"
-  },
-  "LEGN": {
-   "basis": "ads",
-   "ratio": 2,
-   "quote": "American depositary shares, each representing two ordinary",
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1801198/000180119826000008/legn-20251231.htm"
-  },
-  "LUXE": {
-   "basis": "ads",
-   "ratio": 1,
-   "quote": "American Depositary Shares, each representing one ordinary",
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1831907/000110465925104454/luxe-20250630x20f.htm"
-  },
-  "MICC": {
-   "basis": null,
-   "ratio": null,
-   "quote": null,
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/2071668/000110465926029805/micc-20251231x20f.htm"
-  },
-  "MSC": {
-   "basis": "ads",
-   "ratio": 4,
-   "quote": "American depositary shares each representing four Class",
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1713334/000119312526105026/d31011d20f.htm"
-  },
-  "MTA": {
-   "basis": "direct",
-   "ratio": 1,
-   "quote": "Common shares, no par value",
-   "form": "40-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1722606/000106299326001632/form40f.htm"
-  },
-  "NFGC": {
-   "basis": null,
-   "ratio": null,
-   "quote": null,
-   "form": "40-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1840616/000110465926034548/nfgc-20251231x40f.htm"
-  },
-  "NIO": {
-   "basis": "ads",
-   "ratio": 1,
-   "quote": "American depositary shares (each representing one Class",
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1736541/000110465926041765/nio-20251231x20f.htm"
-  },
-  "ONON": {
-   "basis": null,
-   "ratio": null,
-   "quote": null,
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1858985/000185898526000008/onholdingag-20251231.htm"
-  },
-  "ORLA": {
-   "basis": null,
-   "ratio": null,
-   "quote": null,
-   "form": "40-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1680056/000110465926032222/orla-20251231x40f.htm"
-  },
-  "PSFE": {
-   "basis": null,
-   "ratio": null,
-   "quote": null,
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1833835/000119312526088095/psfe-20251231.htm"
-  },
-  "RSKD": {
-   "basis": "direct",
-   "ratio": 1,
-   "quote": "Class A ordinary shares, no par value",
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1851112/000185111226000007/rskd-20251231.htm"
-  },
-  "RTO": {
-   "basis": "ads",
-   "ratio": 5,
-   "quote": "American Depositary Shares, each representing five ordinary",
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/930157/000110465926034062/rto-20251231x20f.htm"
-  },
-  "SE": {
-   "basis": "ads",
-   "ratio": 1,
-   "quote": "American Depositary Shares, each representing one Class",
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1703399/000114036126015366/ef20067274_20f.htm"
-  },
-  "SGHC": {
-   "basis": "direct",
-   "ratio": 1,
-   "quote": "Ordinary shares",
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1878057/000162828026025609/sghc-20251231.htm"
-  },
-  "SII": {
-   "basis": "direct",
-   "ratio": 1,
-   "quote": "Common Shares without par value",
-   "form": "40-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1512920/000162828026009474/sii-20251231_d2.htm"
-  },
-  "SMWB": {
-   "basis": "direct",
-   "ratio": 1,
-   "quote": "Ordinary shares, par value 0.01 NIS",
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1842731/000184273126000018/smwb-20251231.htm"
-  },
-  "SSYS": {
-   "basis": "direct",
-   "ratio": 1,
-   "quote": "Ordinary Shares, par value NIS 0.01 per share",
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1517396/000162828026015079/ssys-20251231.htm"
-  },
-  "STN": {
-   "basis": "direct",
-   "ratio": 1,
-   "quote": "Common Shares",
-   "form": "40-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1131383/000113138326000007/stn-20251231.htm"
-  },
-  "STVN": {
-   "basis": null,
-   "ratio": null,
-   "quote": null,
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1849853/000119312526091540/stvn-20251231.htm"
-  },
-  "SUPV": {
-   "basis": "ads",
-   "ratio": 5,
-   "quote": "American Depositary Shares, each representing 5 Class",
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1517399/000110465926040713/supv-20251231x20f.htm"
-  },
-  "TME": {
-   "basis": "ads",
-   "ratio": 2,
-   "quote": "American depositary shares, each ADS represents two Class",
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1744676/000119312526160257/tme-20251231.htm"
-  },
-  "TRI": {
-   "basis": null,
-   "ratio": null,
-   "quote": null,
-   "form": "40-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1075124/000119312526094222/tri-20251231.htm"
-  },
-  "TTAM": {
-   "basis": "direct",
-   "ratio": 1,
-   "quote": "Common Shares, no nominal value",
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/2035304/000203530426000047/ttam-20251231.htm"
-  },
-  "VIK": {
-   "basis": null,
-   "ratio": null,
-   "quote": null,
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1745201/000174520126000007/vik-20251231.htm"
-  },
-  "VTMX": {
-   "basis": "ads",
-   "ratio": 10,
-   "quote": "American Depositary Shares, each representing ten ordinary",
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1969373/000196937326000010/vtmx-20251231.htm"
-  },
-  "ZGN": {
-   "basis": null,
-   "ratio": null,
-   "quote": null,
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1877787/000187778726000015/zgn-20251231.htm"
-  },
-  "ZIM": {
-   "basis": null,
-   "ratio": null,
-   "quote": null,
-   "form": "20-F",
-   "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1654126/000117891326000784/zk2634463.htm"
   }
  }
 }
