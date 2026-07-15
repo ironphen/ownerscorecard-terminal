@@ -100,8 +100,15 @@ const wireFreq = wirePref?.frequency === "daily" ? "daily" : "weekly";
     .band { margin: 0 0 18px; padding: 10px 12px 8px; border: 1px solid var(--rule-strong); }
     .bandTitle { font-family: var(--sans); font-size: 11px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); margin: 0 0 4px; }
     .bandList { list-style: none; padding: 0; margin: 0; }
-    .bandList li { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; padding: 6px 0; border-bottom: 1px solid var(--rule); font-size: 13px; }
+    .bandList li { padding: 6px 0; border-bottom: 1px solid var(--rule); font-size: 13px; }
     .bandList li:last-child { border-bottom: 0; }
+    .bRow { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+    .bandList li.grave .bWhat { color: var(--bad); font-weight: 600; }
+    .bandList li.grave .bTkr { color: var(--bad); }
+    .bPerf { margin: 6px 0 2px; }
+    .bLine { font-size: 12.5px; color: var(--accent); font-weight: 600; font-variant-numeric: tabular-nums; margin: 0; }
+    .bQ { font-family: var(--serif); font-size: 13px; line-height: 1.5; color: var(--ink-soft); border-left: 2px solid var(--accent); padding: 1px 0 1px 11px; margin: 5px 0; }
+    .bNote { font-size: 10.5px; letter-spacing: 0.03em; color: var(--muted); margin: 3px 0 0; }
     .bDate { font-family: var(--sans); font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; flex: 0 0 76px; }
     .bTkr { font-family: var(--sans); font-weight: 700; font-variant-numeric: tabular-nums; flex: 0 0 auto; }
     .bWhat { flex: 1 1 auto; min-width: 140px; color: var(--ink); }
@@ -164,6 +171,7 @@ const wireFreq = wirePref?.frequency === "daily" ? "daily" : "weekly";
     // reader already sees, from the two cached static files. A fetch failure leaves the plain
     // list standing — never a broken band.
     import { decodeContext, filingLine, bandItems, fmtFilingDate } from "../lib/followDashboard.mjs";
+    import { perfPhrase, perfNote } from "../lib/wirePerf.mjs";
 
     const followsEl = document.getElementById("follows");
     const err = document.getElementById("err");
@@ -211,7 +219,9 @@ const wireFreq = wirePref?.frequency === "daily" ? "daily" : "weekly";
     }
 
     // The band, recomputed from whatever is still followed (an unfollow below re-renders it in
-    // place). Each item links to the company page and to /wire.
+    // place). Each item carries what the filing DISCLOSED — the same figures, the company's own
+    // sentence, and the grave-event mark that /wire shows — so the reader learns it here, on the
+    // page built for their companies, without clicking out. Links to the company page and to /wire.
     function renderBand(wireLite, byTicker) {
       const band = document.getElementById("band");
       if (!band) return;
@@ -221,12 +231,23 @@ const wireFreq = wirePref?.frequency === "daily" ? "daily" : "weekly";
       listEl.textContent = "";
       for (const it of items) {
         const li = el("li");
-        li.append(el("span", "bDate", fmtFilingDate(it.date)));
+        if (it.grave) li.classList.add("grave");
+        const row = el("div", "bRow");
+        row.append(el("span", "bDate", fmtFilingDate(it.date)));
         const href = (byTicker.get(it.ticker) || {}).href || it.href;
-        li.append(href ? a("bTkr", href, it.ticker) : el("span", "bTkr", it.ticker));
-        li.append(el("span", "bWhat", it.label));
-        li.append(el("span", "bForm", it.form));
-        li.append(a("bWire", "/wire", "on the wire →"));
+        row.append(href ? a("bTkr", href, it.ticker) : el("span", "bTkr", it.ticker));
+        row.append(el("span", "bWhat", it.label));
+        row.append(el("span", "bForm", it.form));
+        row.append(a("bWire", "/wire", "on the wire →"));
+        li.append(row);
+        const line = perfPhrase({ revYoy: it.revYoy, oiYoy: it.oiYoy, basis: it.basis });
+        if (line) {
+          const perf = el("div", "bPerf");
+          perf.append(el("p", "bLine", line));
+          if (it.quote) perf.append(el("p", "bQ", "“" + it.quote + "”"));
+          perf.append(el("p", "bNote", perfNote(!!it.quote)));
+          li.append(perf);
+        }
         listEl.append(li);
       }
       none.hidden = items.length > 0;

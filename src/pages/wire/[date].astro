@@ -4,6 +4,7 @@ import fundamentals from "../../data/fundamentals.json";
 import adrData from "../../data/fundamentals.adr.json";
 import Cite from "../../components/Cite.astro";
 import { SITE_URL, ORG, breadcrumbList } from "../../lib/seo.mjs";
+import { perfLine } from "../../lib/wirePerf.mjs";
 
 // Permanent per-day pages for the Filing Wire. The rolling /wire holds only the last 7 filing
 // days; these pages never move, so a link to "what filed on 2026-07-11" keeps resolving years
@@ -29,16 +30,6 @@ const known = new Set(
 const items = day.items || [];
 const dateObj = new Date(day.date + "T00:00:00Z");
 const longDate = dateObj.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric", timeZone: "UTC" });
-
-const upDown = (l) => `${l.yoy < 0 ? "down" : "up"} ${Math.abs(l.yoy).toFixed(1)}%`;
-function perfLine(p) {
-  if (!p) return null;
-  const phrase = p.basis === "fy" ? "for the fiscal year" : p.basis === "ytd" ? "year to date" : "year over year";
-  const parts = [];
-  if (p.rev) parts.push(`Revenue ${upDown(p.rev)} ${phrase}`);
-  if (p.oi) parts.push(p.rev ? `operating income ${upDown(p.oi)}` : `Operating income ${upDown(p.oi)} ${phrase}`);
-  return parts.length ? parts.join("; ") : null;
-}
 
 const graveCount = items.filter((it) => it.grave).length;
 const pageUrl = `${SITE_URL}/wire/${day.date}`;

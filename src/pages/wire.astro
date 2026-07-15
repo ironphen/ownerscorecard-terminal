@@ -2,6 +2,7 @@
 import BaseLayout from "../layouts/BaseLayout.astro";
 import wire from "../data/wire.json";
 import fundamentals from "../data/fundamentals.json";
+import { perfLine } from "../lib/wirePerf.mjs";
 
 const known = new Set((fundamentals.companies || []).map((c) => String(c.ticker).toUpperCase()));
 const items = wire?.items || [];
@@ -16,17 +17,8 @@ for (const it of items) {
   else groups.push({ date: it.date, items: [it] });
 }
 
-// The performance line: up/down and a percentage per proven line, nothing else. Both dollar
-// figures behind each percentage ride in the item (rev.cur/rev.prior, oi.cur/oi.prior); the
-// basis names the comparison (a fiscal year, a quarter year over year, or the year to date).
-const upDown = (l) => `${l.yoy < 0 ? "down" : "up"} ${Math.abs(l.yoy).toFixed(1)}%`;
-function perfLine(p) {
-  const phrase = p.basis === "fy" ? "for the fiscal year" : p.basis === "ytd" ? "year to date" : "year over year";
-  const parts = [];
-  if (p.rev) parts.push(`Revenue ${upDown(p.rev)} ${phrase}`);
-  if (p.oi) parts.push(p.rev ? `operating income ${upDown(p.oi)}` : `Operating income ${upDown(p.oi)} ${phrase}`);
-  return parts.length ? parts.join("; ") : null;
-}
+// The performance line (up/down and a percentage per proven line) is shared from lib/wirePerf.mjs,
+// so /wire, the per-day page, the Atom feed, the account band and the company page all read alike.
 ---
 
 <BaseLayout title="The Filing Wire, Owner Scorecard">

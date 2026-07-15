@@ -51,7 +51,10 @@ export function bandItems(wireLite, followedTickers, days = 7) {
     floor = d.toISOString().slice(0, 10);
   }
   return (wireLite?.items || [])
-    .map(([ticker, form, label, date, href]) => ({ ticker, form, label, date, href }))
+    .map(([ticker, form, label, date, href, revYoy, oiYoy, quote, grave, basis]) => ({
+      ticker, form, label, date, href,
+      revYoy: revYoy ?? null, oiYoy: oiYoy ?? null, quote: quote ?? null, grave: grave === 1, basis: basis ?? null,
+    }))
     .filter((it) => followed.has(it.ticker) && (!floor || it.date >= floor))
     .sort((a, b) =>
       a.date < b.date ? 1 : a.date > b.date ? -1 : a.ticker < b.ticker ? -1 : a.ticker > b.ticker ? 1 : 0

@@ -9,11 +9,14 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 import fundamentals from "../data/fundamentals.json";
 import JapanCatalog from "../components/JapanCatalog.astro";
 import AdrCatalog from "../components/AdrCatalog.astro";
+import EuCatalog from "../components/EuCatalog.astro";
 import jpData from "../data/fundamentals.jp.json";
 import adrData from "../data/fundamentals.adr.json";
+import euData from "../data/fundamentals.eu.json";
 
 const jpCount = (jpData.companies || []).length;
 const adrCount = (adrData.companies || []).length;
+const euCount = (euData.companies || []).length;
 
 // Alphabetical by NAME, the way the manuals were: a leading "The" doesn't decide the letter
 // (The Coca-Cola Company files under C); a name opening on a number or symbol lands under "#".
@@ -33,18 +36,19 @@ for (const r of rows) {
   groups.get(k).push(r);
 }
 const order = [...LETTERS.filter((l) => groups.has(l)), ...(groups.has("#") ? ["#"] : [])];
-const totalLabel = (rows.length + jpCount + adrCount).toLocaleString("en-US");
+const totalLabel = (rows.length + jpCount + adrCount + euCount).toLocaleString("en-US");
 ---
 
 <BaseLayout
   title="The Catalog, Owner Scorecard"
-  description={`Every company Owner Scorecard covers: ${totalLabel} across the United States, Japan, and ADRs, alphabetical by name, each a door to its ten-year owner's record.`}
+  description={`Every company Owner Scorecard covers: ${totalLabel} across the United States, Japan, Europe, and ADRs, alphabetical by name, each a door to its owner's record.`}
 >
   <p class="backRow"><a href="/" class="back">← Back to search</a></p>
 
   <div class="poolTabs" role="tablist" aria-label="Choose a market">
     <button class="poolTab" data-pool="us" role="tab" aria-selected="true" id="tab-us">United States<span class="ct">{rows.length}</span></button>
     <button class="poolTab" data-pool="jp" role="tab" aria-selected="false" id="tab-jp">Japan<span class="ct">{jpCount}</span></button>
+    {euCount ? <button class="poolTab" data-pool="eu" role="tab" aria-selected="false" id="tab-eu">Europe<span class="ct">{euCount}</span></button> : null}
     {adrCount ? <button class="poolTab" data-pool="adr" role="tab" aria-selected="false" id="tab-adr">ADRs<span class="ct">{adrCount}</span></button> : null}
   </div>
 
@@ -99,6 +103,12 @@ const totalLabel = (rows.length + jpCount + adrCount).toLocaleString("en-US");
   <div id="pool-jp" role="tabpanel" aria-labelledby="tab-jp" hidden>
     <JapanCatalog />
   </div>
+
+  {euCount ? (
+    <div id="pool-eu" role="tabpanel" aria-labelledby="tab-eu" hidden>
+      <EuCatalog />
+    </div>
+  ) : null}
 
   {adrCount ? (
     <div id="pool-adr" role="tabpanel" aria-labelledby="tab-adr" hidden>
@@ -157,8 +167,8 @@ const totalLabel = (rows.length + jpCount + adrCount).toLocaleString("en-US");
        still land here via the front door's redirect stub). */
     (function () {
       const tabs = Array.from(document.querySelectorAll(".poolTab"));
-      const panels = { us: document.getElementById("pool-us"), jp: document.getElementById("pool-jp"), adr: document.getElementById("pool-adr") };
-      const poolHash = { jp: "#japan", adr: "#adrs" };
+      const panels = { us: document.getElementById("pool-us"), jp: document.getElementById("pool-jp"), eu: document.getElementById("pool-eu"), adr: document.getElementById("pool-adr") };
+      const poolHash = { jp: "#japan", eu: "#europe", adr: "#adrs" };
 
       function setPool(p) {
         if (!panels[p]) p = "us";
@@ -173,6 +183,7 @@ const totalLabel = (rows.length + jpCount + adrCount).toLocaleString("en-US");
 
       const h = location.hash;
       if (h === "#japan") setPool("jp");
+      else if (h === "#europe") setPool("eu");
       else if (h === "#adrs") setPool("adr");
 
       /* "/" focuses the visible pool's own filter box. */
@@ -180,7 +191,7 @@ const totalLabel = (rows.length + jpCount + adrCount).toLocaleString("en-US");
         if (e.key !== "/") return;
         const tag = ((document.activeElement || {}).tagName || "").toLowerCase();
         if (tag === "input" || tag === "textarea" || tag === "select") return;
-        const box = document.querySelector('#pool-us:not([hidden]) #q, #pool-jp:not([hidden]) #jp-q, #pool-adr:not([hidden]) #adr-q');
+        const box = document.querySelector('#pool-us:not([hidden]) #q, #pool-jp:not([hidden]) #jp-q, #pool-eu:not([hidden]) #eu-q, #pool-adr:not([hidden]) #adr-q');
         if (box) { e.preventDefault(); box.focus(); }
       });
     })();

@@ -3,6 +3,8 @@
 // here: the caller passes the wire object and the set of tickers that have a /c page, so this
 // stays a string transform with no build-time coupling.
 import { SITE_URL, SITE_NAME } from "./seo.mjs";
+import { perfLine } from "./wirePerf.mjs";
+export { perfLine }; // re-exported so wire.xml and the offline test keep their import site
 
 export const xmlEscape = (s) =>
   String(s ?? "")
@@ -15,18 +17,6 @@ export const xmlEscape = (s) =>
 // A filing date carries no clock, so its Atom timestamp anchors at midnight UTC — the same
 // convention the wire page renders dates in.
 export const stamp = (d) => `${d}T00:00:00Z`;
-
-// The performance line, mirrored from wire.astro: a direction and a percentage per proven line,
-// the basis named, nothing derived.
-const upDown = (l) => `${l.yoy < 0 ? "down" : "up"} ${Math.abs(l.yoy).toFixed(1)}%`;
-export function perfLine(p) {
-  if (!p) return null;
-  const phrase = p.basis === "fy" ? "for the fiscal year" : p.basis === "ytd" ? "year to date" : "year over year";
-  const parts = [];
-  if (p.rev) parts.push(`Revenue ${upDown(p.rev)} ${phrase}`);
-  if (p.oi) parts.push(p.rev ? `operating income ${upDown(p.oi)}` : `Operating income ${upDown(p.oi)} ${phrase}`);
-  return parts.length ? parts.join("; ") : null;
-}
 
 function entry(it, knownSet) {
   const ticker = String(it.ticker || "").toUpperCase();

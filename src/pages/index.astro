@@ -4,12 +4,14 @@ import fundamentals from "../data/fundamentals.json";
 import { getCollection } from "astro:content";
 import jpData from "../data/fundamentals.jp.json";
 import adrData from "../data/fundamentals.adr.json";
+import euData from "../data/fundamentals.eu.json";
 import wire from "../data/wire.json";
 import { SHELVES, industryLabelOf } from "../lib/shelves.mjs";
 import { GROUPINGS } from "../lib/groupingColumns.mjs";
 import { ORG } from "../lib/seo.mjs";
 const jpCount = (jpData.companies || []).length;
 const adrCount = (adrData.companies || []).length;
+const euCount = (euData.companies || []).length;
 
 // The front door is a search box, not a screener. A screener pulls toward a verdict — filter to "the
 // ones that pass" and you have implied they are the good ones, the one thing we never do. So instead
@@ -21,7 +23,7 @@ const adrCount = (adrData.companies || []).length;
 // instead of carrying every catalog row in hidden DOM.
 const usTickers = (fundamentals.companies || []).map((c) => String(c.ticker || "").toUpperCase()).filter(Boolean);
 
-const totalCount = usTickers.length + jpCount + adrCount;
+const totalCount = usTickers.length + jpCount + adrCount + euCount;
 const totalLabel = totalCount.toLocaleString("en-US");
 
 const articles = (
