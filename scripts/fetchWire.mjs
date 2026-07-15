@@ -141,8 +141,8 @@ async function performanceFor(c, r, i) {
     const tPri = priD.getTime();
 
     const sicN = Number(c.sic) || 0;
-    const revTags = revenueTagsFor(c.sic);
-    const pickMax = (sicN >= 6500 && sicN <= 6799) || (sicN >= 6300 && sicN <= 6399); // REIT rent / insurer total (see fetchFundamentals)
+    const revTags = revenueTagsFor(c.sic, facts);
+    const pickMax = (sicN >= 6500 && sicN <= 6799) || (sicN >= 6300 && sicN <= 6399) || sicN === 7359 || sicN === 6211; // REIT rent / insurer total / lessor / broker-or-asset-manager (see fetchFundamentals)
 
     let basis, rev, oi;
     if (form.startsWith("10-K")) {

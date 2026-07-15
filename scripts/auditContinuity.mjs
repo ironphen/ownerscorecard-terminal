@@ -90,19 +90,32 @@ for (const P of POOLS) {
       note("error", "fy-behind-history", P.key, t, `headline fy=FY${c.fy} but history reaches FY${fys[fys.length - 1]} — record/headline desync`);
     }
 
-    // C3 — TTM vintage: a TTM block dated at or before the annual period end it sits beside is a
-    // frozen carry-over shown as current (the fetcher's anti-freeze guard covers the ADR revenue
-    // line only; this covers every pool and every line, because one shared asOf stamps the whole
-    // block). Full-date compare against periodEnd where the record carries one — a TTM frozen
-    // eleven months inside the same calendar year must not hide behind a year-granularity check —
-    // with a 14-day tolerance for 52/53-week fiscal calendars; year-compare where periodEnd is
-    // absent. ttm.isFY is exempt from the periodEnd compare: the fetcher stamps the FY itself as
-    // the TTM when no fresher quarter exists, which is honest and equal-dated, not frozen.
+    // C2b — the ANNUAL revenue series itself going stale behind the headline: the record has
+    // recent years but their revenue is null because the filer's revenue tag stranded (L3Harris's
+    // pattern). Warn tier — it also catches companies whose revenue genuinely ceased — but it
+    // guards the prune flow: a name whose frozen TTM was honestly dropped must not read as fixed
+    // while its annual top line is still missing recent years. Financials exempt (reconstructed).
+    if (!financialKind(c) && c.fy != null) {
+      const revYears = hist.filter((h) => h.lines && topLineRevenue(h.lines, c) != null).map((h) => Number(h.fy));
+      if (revYears.length && Math.max(...revYears) < Number(c.fy) - 1) {
+        note("warn", "revenue-record-stale", P.key, t, `latest year with a readable top line is FY${Math.max(...revYears)}, ${Number(c.fy) - Math.max(...revYears)} behind the FY${c.fy} headline — a stranded revenue tag, or revenue genuinely ceased; verify before treating the record as current`);
+      }
+    }
+
+    // C3 — TTM vintage: a TTM block dated before the annual period end it sits beside is a frozen
+    // carry-over shown as current (the fetcher's anti-freeze guards cover pieces; this covers every
+    // pool and every line, because one shared asOf stamps the whole block). Full-date compare
+    // against periodEnd where the record carries one — a TTM frozen eleven months inside the same
+    // calendar year must not hide behind a year-granularity check — with a 14-day tolerance for
+    // 52/53-week fiscal calendars; year-compare where periodEnd is absent. isFY does NOT exempt:
+    // the honest freshest-is-the-FY case carries asOf equal to periodEnd and passes on the date;
+    // an isFY block dated a year earlier is an OLD annual masquerading as current (BlackRock's
+    // committed block sat at 2024-12-31 beside a FY2025 record, isFY true, and was exactly this).
     if (c.ttm && typeof c.ttm.asOf === "string") {
       const ty = Number(c.ttm.asOf.slice(0, 4));
       if (typeof c.periodEnd === "string" && c.periodEnd.length >= 10) {
         const tol = new Date(Date.parse(c.periodEnd.slice(0, 10) + "T00:00:00Z") - 14 * 86400000).toISOString().slice(0, 10);
-        if (!c.ttm.isFY && c.ttm.asOf.slice(0, 10) < tol) {
+        if (c.ttm.asOf.slice(0, 10) < tol) {
           note("error", "ttm-stale", P.key, t, `ttm asOf ${c.ttm.asOf} predates the FY${c.fy} period end ${c.periodEnd.slice(0, 10)} — a frozen TTM shown as current`);
         }
       } else if (Number.isFinite(ty) && c.fy != null && ty < Number(c.fy)) {
@@ -190,7 +203,8 @@ console.log(`\nauditContinuity: ${errs.length} error(s), ${warns.length} warning
 
 if (process.env.REPORT) {
   const errTickers = {};
-  for (const f of errs) { const k = `${f.pool}/${f.code}`; (errTickers[k] = errTickers[k] || []).push(f.ticker); }
+  for (const f of errs) { const k = `${f.pool}/${f.code}`; (errTickers[k] = errTickers[k] || new Set()).add(f.ticker); }
+  for (const k of Object.keys(errTickers)) errTickers[k] = [...errTickers[k]].sort();
   fs.writeFileSync(process.env.REPORT, JSON.stringify({ asOf: new Date().toISOString().slice(0, 10), errTickers, findings }, null, 1));
   console.log(`report written: ${process.env.REPORT}`);
 }

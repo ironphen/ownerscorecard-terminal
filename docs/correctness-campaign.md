@@ -157,3 +157,42 @@ daily wire commit (conservative by design for now; revisit if it fires), and
 (b) the $1–10T absurd-money band is unpoliceable page-wide ($3–4T market caps
 are real) — that band belongs to B7 at the data level, where the wall ties to
 balance-sheet debt.
+
+## Wave 2 shipped (2026-07-15) — the stranded-tag repairs
+
+What the map's error tier turned out to be: not "frozen TTMs" but STRANDED
+REVENUE TAGS. BlackRock's whole ten-year record ran ~40% understated (its
+"Revenues" tag carries a stray partial; its real top line is the ASC 606
+contract tag — FY2023 committed 11.1B against the true 17.9B). DTE's record
+ENDED at FY2017 (it stopped tagging "Revenues" in 2018 and reports only
+RegulatedAndUnregulatedOperatingRevenue, which no list carried). Fixes, each a
+pipeline rule: UTILITY_REVENUE (data-driven — only filers actually using the
+utility tag reroute, because SIC 4900–4991 also holds waste haulers whose
+"Revenues" is a gross pre-eliminations figure ~15% high: Republic Services);
+BROKER_REVENUE pick-max for 6211 (brokers' net-of-interest total vs asset
+managers' contract total — the largest is the top line in both, MS/GS/SCHW
+verified untouched); ttmFlow staleness guard (a TTM older than the annual
+beside it is dropped whole — one asOf stamps the block, and mixed vintages
+under a single date is the stale-derived dishonesty; per-line vintage is
+future schema work); ADR anti-freeze tightened to full-date + a bank
+drop-branch.
+
+Share-scale normalization rebuilt as src/lib/shareScale.mjs, shared by both
+fetchers: MAJORITY-CLUSTER reference (never Math.max — the review proved the
+max-anchored port would have scaled 69 correct ADR records UP toward single
+mistagged-HIGH years while erasing the C4 audit signal that catches the
+class), corrections only for runs BOUNDED both sides by majority years
+(Amerant's 3-year thousands run: fixed; BRCC's genuine pre-SPAC 109k and
+Fresenius's first-year ×1000-HIGH: as-filed, flagged, for the L1 re-read),
+×1000 steps both directions (Freedom Holding's interior ×1000-HIGH years:
+corrected down). The case law is frozen in scripts/shareScaleTest.mjs, wired
+into npm test.
+
+Wave-2 review: 14 findings, 12 confirmed, including two blockers that never
+shipped (Republic Services' record rewritten +15%; the ADR share corruption).
+Verified casualties-to-be RSG/KNTK/TRGP/NGL now refetch byte-identical.
+auditContinuity gained C2b (revenue-record-stale warn — the L3Harris pattern:
+an honest TTM drop must not make a record with a stranded ANNUAL series read
+as fixed). Deferred, documented: single-tag-coherent TTM stitching; per-line
+TTM vintage in the schema; pre-revenue shells tripping the staleness guard
+(honest but noisy); the wire's per-filing tag reads share the fixed lists.

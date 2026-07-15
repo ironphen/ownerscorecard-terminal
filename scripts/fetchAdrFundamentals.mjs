@@ -27,6 +27,9 @@ import { passesQualityFloor } from "../src/lib/fundamentals.mjs";
 import { financialKind } from "../src/lib/archetype.mjs";
 import { compactJson } from "../src/lib/dataFile.mjs";
 import { buildCikMap, CIK_OVERRIDE, resolveCikLive } from "./cikResolve.mjs";
+// From the shared lib, NOT from fetchFundamentals.mjs — importing another fetcher executes its
+// top-level startup (a universe.json read), coupling this pipeline's launch to that file.
+import { normalizeShareScale } from "../src/lib/shareScale.mjs";
 
 const UA = process.env.SEC_USER_AGENT || "Owner Scorecard research (ryanreinsant@gmail.com)";
 const HEADERS = { "User-Agent": UA, "Accept-Encoding": "gzip, deflate" };
@@ -472,8 +475,16 @@ async function main() {
 
     const ha = Object.fromEntries(Object.keys(CONCEPTS).map((k) => [k, collectAnnual(facts, CONCEPTS[k], ccy)]));
     const hi = Object.fromEntries(["totalAssets", "currentAssets", "currentLiabilities", "totalLiabilities", "cashAndEquivalents", "shortTermInvestments", "receivables", "inventory", "netPPE", "operatingLeaseAsset", "accountsPayable", "equity", "goodwill", "intangibleAssets", "longTermDebt", "currentDebt", "deposits", "lossReserves"].map((k) => [k, collectInstant(facts, CONCEPTS[k], ccy)]));
+    // Share counts, normalized across the record: a filer that tags one year's count in thousands
+    // against whole-share neighbors (121 ADR names at the campaign kickoff — this pool never had the
+    // US pool's normalizeShareScale) gets the ref-compare and V-shape passes the US pool gets, on the
+    // MERGED weighted-average/period-end series the history actually reads. Same shared code, so the
+    // two pools can never drift.
     const shAnnual = collectAnnual(facts, CONCEPTS.sharesDiluted, "shares");
     const shInstant = collectInstant(facts, CONCEPTS.sharesOutstanding, "shares");
+    const shMerged = normalizeShareScale(Object.fromEntries(
+      [...new Set([...Object.keys(shAnnual), ...Object.keys(shInstant)])].map((fy) => [fy, shAnnual[fy] ?? shInstant[fy] ?? null])
+    ));
 
     // A bank tags a gross "Revenues" (interest expense not yet removed) that overstates its top line by
     // roughly the interest it pays. Read a bank on the net-of-interest tag alone; where a filer lacks it
@@ -529,7 +540,7 @@ async function main() {
         claimsIncurred: ha.claimsIncurred[fy] ?? null,
         investmentIncome: ha.investmentIncome[fy] ?? null,
         lossReserves: hi.lossReserves[fy] ?? null,
-        sharesDiluted: shAnnual[fy] ?? shInstant[fy] ?? null,
+        sharesDiluted: shMerged[fy] ?? null,
       },
     }));
 
@@ -540,9 +551,18 @@ async function main() {
     // TTM stranded at the old tag's final year (2017's $0.68B) while the merged annual `anchor` is current
     // ($1.82B FY2025). When the TTM top line is older than the merged annual, the merged annual — which is
     // per-year priority-correct — is the real latest revenue. Never picks a sub-line tag; only the anchor.
+    // Full-date compare with a 14-day 52/53-week tolerance, not calendar-year: a TTM frozen eleven
+    // months inside the annual's own calendar year must not hide behind year granularity (mirrors
+    // auditContinuity C3 and the US fetcher's guard).
+    const staleVsAnchor = (r) => anchor?.end && (!r?.asOf || new Date(r.asOf).getTime() < new Date(anchor.end).getTime() - 14 * 86400000);
     if (fkRev !== "bank" && anchor?.fy != null && anchor.val != null) {
-      const ttmY = ttmRev?.asOf ? new Date(ttmRev.asOf).getUTCFullYear() : null;
-      if (ttmY == null || ttmY < anchor.fy) ttmRev = { val: anchor.val, asOf: anchor.end, isFY: true };
+      if (staleVsAnchor(ttmRev)) ttmRev = { val: anchor.val, asOf: anchor.end, isFY: true };
+    } else if (fkRev === "bank" && ttmRev && staleVsAnchor(ttmRev)) {
+      // A bank's TTM stitches from the net-of-interest tag alone; where that tag stranded, the
+      // stitch is a wrong number shown as current. There is no clean anchor to substitute (the
+      // bank top line is reconstructed from components), so drop the block — the FY lines stand.
+      console.warn(`  ! ${ticker}: bank TTM stitch ends ${ttmRev.asOf}, older than the FY end ${anchor?.end} — stranded tag; dropping the TTM block`);
+      ttmRev = null;
     }
     const ttm = ttmRev ? {
       asOf: ttmRev.asOf, isFY: ttmRev.isFY,

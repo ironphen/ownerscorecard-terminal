@@ -16,6 +16,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { passesQualityFloor } from "../src/lib/fundamentals.mjs";
+import { normalizeShareScale, majorityShareRef } from "../src/lib/shareScale.mjs";
 import { reconcileLeaseLadder } from "../src/lib/leases.mjs";
 import { compactJson } from "../src/lib/dataFile.mjs";
 import { buildCikMap, CIK_OVERRIDE, resolveCikLive } from "./cikResolve.mjs";
@@ -320,10 +321,36 @@ const BANK_REVENUE = ["Revenues", "RevenuesNetOfInterestExpense"];
 // (equipment rental & leasing).
 const LESSOR_REVENUE = ["Revenues", "OperatingLeaseLeaseIncome", "OperatingLeasesIncomeStatementLeaseRevenue", "RevenueNotFromContractWithCustomer", "RevenueFromContractWithCustomerExcludingAssessedTax", "RevenueFromContractWithCustomerIncludingAssessedTax"];
 
-// The revenue tags a filer's industry calls for (see the REIT/insurer/bank notes above):
+// A regulated utility's top line commonly lives under the industry tag
+// "RegulatedAndUnregulatedOperatingRevenue" — DTE stopped tagging "Revenues" entirely at Q1 2018
+// and reports ONLY under it, which stranded DTE's TTM on 2018 quarters for years while the annual
+// record limped along on the contract tag other utilities use. "Revenues" stays first (the years
+// it exists it is the complete total); the utility tag and the contract tags fill the years a
+// filer leaves it blank. Electric/gas/water/sanitary SICs (4900–4991).
+const UTILITY_REVENUE = ["Revenues", "RegulatedAndUnregulatedOperatingRevenue", "RevenueFromContractWithCustomerExcludingAssessedTax", "RevenueFromContractWithCustomerIncludingAssessedTax"];
+
+// Security broker-dealers AND asset managers share SIC 6211 but tag opposite ways: Morgan Stanley
+// and Goldman book the total as "RevenuesNetOfInterestExpense" (the ASC 606 contract tag is only
+// their fee sliver and must never win), while BlackRock's top line IS contract revenue — nearly
+// all fees — and its "Revenues" tag carries a partial figure that stranded at FY2024 ($12.8B
+// against a $24.2B contract-tag total). So 6211 reads pick-max across all three: for a
+// broker-dealer the net-of-interest total always exceeds its fee sliver, and for an asset manager
+// the contract total always exceeds the stray partial — the largest is the real top line in both,
+// and fee revenue carries no excise so the size comparison is safe.
+const BROKER_REVENUE = ["Revenues", "RevenuesNetOfInterestExpense", "RevenueFromContractWithCustomerExcludingAssessedTax"];
+
+// The revenue tags a filer's industry calls for (see the REIT/insurer/bank/utility notes above):
 // rent-first for REITs, the combined total for insurers and banks, the contract-revenue
 // order for everyone else. Shared with the wire, which reads the same top line per filing.
-function revenueTagsFor(sic) {
+//
+// The utility branch is DATA-DRIVEN, not SIC-driven: the 4900–4991 band also holds waste haulers
+// and midstream partnerships whose "Revenues" tag is a gross pre-eliminations figure (Republic
+// Services: ~15% above its real top line every year) or an abandoned pre-merger series (Kinetik),
+// so re-prioritizing "Revenues" first by SIC alone silently corrupts them. Only a filer that
+// actually reports under the utility industry tag gets the utility list; everyone else in the
+// band keeps the default contract-first order, exactly as before. Callers without facts on hand
+// (none today) get the safe default too.
+function revenueTagsFor(sic, facts) {
   const sicN = Number(sic) || 0;
   if (sicN >= 6500 && sicN <= 6799) return REIT_REVENUE;
   if (sicN >= 6300 && sicN <= 6399) return INSURER_REVENUE;
@@ -331,11 +358,9 @@ function revenueTagsFor(sic) {
   // Equipment/aircraft/fleet lessors: the combined "Revenues" total, largest-wins, never the contract
   // sliver (see LESSOR_REVENUE).
   if (sicN === 7359) return LESSOR_REVENUE;
-  // Security broker-dealers (Morgan Stanley, Goldman) report their top line as total revenue net of
-  // interest expense and re-tagged it "RevenuesNetOfInterestExpense" mid-decade — the same tag switch
-  // the bank set handles. Without this they fall to the default tags (which lack that concept) and
-  // strand at their last "Revenues" year. The contract tag stays excluded so a fee sliver never wins.
-  if (sicN === 6211) return BANK_REVENUE;
+  // Broker-dealers and asset managers: pick-max across the totals (see BROKER_REVENUE).
+  if (sicN === 6211) return BROKER_REVENUE;
+  if (sicN >= 4900 && sicN <= 4991 && facts?.facts?.["us-gaap"]?.RegulatedAndUnregulatedOperatingRevenue) return UTILITY_REVENUE;
   return CONCEPTS.revenue;
 }
 
@@ -406,18 +431,15 @@ const latestEntry = (by) => {
 // the reference. Self-anchored to the largest (correct-scale) value in the series, so a
 // dual-class filer whose count is genuinely small (Berkshire's A-share basis) is never scaled,
 // having no larger sibling to anchor against.
+// Single-value scale fix against an already-trusted reference (the record's normalized scale):
+// used for the latest-annual and TTM counts captured separately below. The RECORD normalization
+// lives in src/lib/shareScale.mjs (majority-cluster, interior-only, both directions) — shared with
+// the ADR fetcher so the two pools can never drift, and deliberately NOT max-anchored: a single
+// mistagged-HIGH year must never become the reference the whole record is scaled toward.
 function fixShareScale(v, ref) {
   if (v == null || v <= 0 || ref == null || ref <= 0) return v;
   while (v * 1000 <= ref) v *= 1000;
   return v;
-}
-function normalizeShareScale(byYear) {
-  const vals = Object.values(byYear).filter((v) => v != null && v > 0);
-  if (vals.length < 2) return byYear; // no reference scale to compare against
-  const ref = Math.max(...vals);
-  const out = {};
-  for (const fy in byYear) out[fy] = fixShareScale(byYear[fy], ref);
-  return out;
 }
 
 // Of two share-count observations, the one whose period ends latest (ties go to the first,
@@ -498,11 +520,16 @@ function durations(facts, tags, unit = "USD") {
 // TTM(flow) = prior full year + current year-to-date − prior-year same-period YTD,
 // using the cumulative durations 10-Qs report. If the freshest data is already a
 // full year (a 10-K with no newer quarter), TTM equals that year. null if unclean.
-function ttmFlow(facts, tags, unit = "USD") {
+// pickMax mirrors the annual merge for the cohorts whose largest total is the real top line
+// (REIT/insurer/lessor/broker): on a same-end, same-duration tie across tags, the larger value
+// wins — otherwise a stray partial "Revenues" sharing the FY end date (BlackRock's pattern)
+// could win the TTM on array order while the annual record, pick-max-correct, disagrees.
+function ttmFlow(facts, tags, unit = "USD", pickMax = false) {
   const all = durations(facts, tags, unit);
   if (!all.length) return null;
+  const byVal = (a, b) => (pickMax ? b.val - a.val : 0);
   const maxEnd = all.reduce((m, e) => (new Date(e.end) > new Date(m) ? e.end : m), all[0].end);
-  const cur = all.filter((e) => e.end === maxEnd).sort((a, b) => b.dur - a.dur || b.filed.localeCompare(a.filed))[0];
+  const cur = all.filter((e) => e.end === maxEnd).sort((a, b) => b.dur - a.dur || byVal(a, b) || b.filed.localeCompare(a.filed))[0];
   if (!cur) return null;
   if (cur.dur >= 350 && cur.dur <= 380) return { val: cur.val, asOf: cur.end, isFY: true };
   const prevEnd = new Date(cur.end);
@@ -510,12 +537,12 @@ function ttmFlow(facts, tags, unit = "USD") {
   const prevEndStr = prevEnd.toISOString().slice(0, 10);
   const priorYTD = all
     .filter((e) => Math.abs(days(e.end, prevEndStr)) <= 20 && Math.abs(e.dur - cur.dur) <= 25)
-    .sort((a, b) => b.filed.localeCompare(a.filed))[0];
+    .sort((a, b) => byVal(a, b) || b.filed.localeCompare(a.filed))[0];
   const priorFY = all
     .filter((e) => e.dur >= 350 && e.dur <= 380 && Math.abs(days(e.end, cur.start)) <= 45)
-    .sort((a, b) => b.filed.localeCompare(a.filed))[0];
+    .sort((a, b) => byVal(a, b) || b.filed.localeCompare(a.filed))[0];
   if (priorYTD && priorFY) return { val: priorFY.val + cur.val - priorYTD.val, asOf: cur.end, isFY: false };
-  const fy = all.filter((e) => e.dur >= 350 && e.dur <= 380).sort((a, b) => new Date(b.end) - new Date(a.end))[0];
+  const fy = all.filter((e) => e.dur >= 350 && e.dur <= 380).sort((a, b) => new Date(b.end) - new Date(a.end) || byVal(a, b))[0];
   return fy ? { val: fy.val, asOf: fy.end, isFY: true } : null;
 }
 
@@ -662,8 +689,12 @@ async function main() {
     // A lessor takes the largest revenue tag (its combined total, never the contract sliver), the same
     // safe pick-max as REIT rent.
     const isLessorCo = sicN === 7359;
-    const revTags = revenueTagsFor(sic);
-    const revAnnualBy = annualByYear(facts, revTags, "USD", isReitCo || isInsurerCo || isLessorCo);
+    // Broker-dealers/asset managers (6211) take the largest across the totals: the net-of-interest
+    // total beats a broker's fee sliver, the contract total beats an asset manager's stray partial
+    // "Revenues" (see BROKER_REVENUE).
+    const isBrokerCo = sicN === 6211;
+    const revTags = revenueTagsFor(sic, facts);
+    const revAnnualBy = annualByYear(facts, revTags, "USD", isReitCo || isInsurerCo || isLessorCo || isBrokerCo);
     // Most banks book no combined total-revenue tag at all — their top line is two components, net
     // interest income plus noninterest income. For any year the total tags miss, reconstruct the total
     // from those components (both required, so a half-tagged year never understates). This is what lets
@@ -940,7 +971,9 @@ async function main() {
     for (const fy in sharesInstant) if (ha.sharesDiluted[fy] == null) ha.sharesDiluted[fy] = sharesInstant[fy];
     ha.sharesDiluted = normalizeShareScale(ha.sharesDiluted);
     ha.repurchasedShares = normalizeShareScale(ha.repurchasedShares);
-    const shareRef = Math.max(0, ...Object.values(ha.sharesDiluted).filter((v) => v != null));
+    // The majority-scale reference, never the max: a single mistagged-HIGH history year must not
+    // become the scale the current count gets "corrected" toward (src/lib/shareScale.mjs).
+    const shareRef = majorityShareRef(ha.sharesDiluted) ?? Math.max(0, ...Object.values(ha.sharesDiluted).filter((v) => v != null));
     const hi = {
       equity: collectInstant(facts, CONCEPTS.stockholdersEquity),
       cash: collectInstant(facts, CONCEPTS.cashAndEquivalents),
@@ -1023,7 +1056,21 @@ async function main() {
     // quarter filed since the last 10-K. Flows are TTM-summed; balance sheet and
     // share count are taken at the latest quarter.
     const tf = (tags, unit = "USD") => ttmFlow(facts, tags, unit)?.val ?? null;
-    const ttmRev = ttmFlow(facts, revTags);
+    let ttmRev = ttmFlow(facts, revTags, "USD", isReitCo || isInsurerCo || isLessorCo || isBrokerCo);
+    // A TTM older than the annual record it sits beside is a frozen carry-over — the stitch found
+    // its freshest four quarters on a tag the filer abandoned (DTE stranded at Q1 2018, BPOP at
+    // 2012) — and showing it as "current" is a wrong number, which is worse than a missing one.
+    // Drop the whole block. The real rationale, stated honestly: the OTHER tf() lines stitch their
+    // own tags and are often still fresh, but ONE shared asOf stamps the whole block — there is no
+    // way to carry fresh netIncome beside a stale revenue without mislabeling one of them, and a
+    // mixed-vintage block under a single date is exactly the stale-derived dishonesty this
+    // campaign exists to kill. With ttm null the page reads the fiscal-year lines, which are
+    // honest and dated. Per-line vintage is future schema work (docs/correctness-campaign.md).
+    // Fourteen-day tolerance for 52/53-week calendars, mirroring auditContinuity C3.
+    if (ttmRev?.asOf && anchor?.end && new Date(ttmRev.asOf).getTime() < new Date(anchor.end).getTime() - 14 * 86400000) {
+      console.warn(`  ! ${ticker}: TTM stitch ends ${ttmRev.asOf}, older than the FY end ${anchor.end} — a stranded tag; dropping the TTM block (the FY lines stand)`);
+      ttmRev = null;
+    }
     const ttmLtd = latestObservation(facts, CONCEPTS.longTermDebt, "USD", true)?.val;
     const ttmCurDebt = latestObservation(facts, CONCEPTS.currentDebt, "USD", true)?.val;
     const ttm = ttmRev
