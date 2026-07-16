@@ -8,7 +8,7 @@
 // target: it shows the owner-earnings growth a price implies, set against the record.
 import { classify, financialKind, financialSubtype } from "../lib/archetype.mjs";
 import { moatReport } from "../lib/durability.mjs";
-import { fmtMoney, currencySymbol, liquidAssets, maintenanceCapex, ownerEarningsAbs, debtReliable } from "../lib/fundamentals.mjs";
+import { fmtMoney, currencySymbol, liquidAssets, maintenanceCapex, maintenanceCapexFor, ownerEarningsAbs, debtReliable } from "../lib/fundamentals.mjs";
 import { tangibleEquity } from "../lib/financials.mjs";
 import { ffoPerShare } from "../lib/reits.mjs";
 import { earningsPower } from "../lib/normalize.mjs";
@@ -97,8 +97,12 @@ const balanceOk = debtReliable(L);
 
 // Graham's price-gate inputs: 3-year average earnings (his method, to avoid paying
 // for a peak) and current book value, both per share.
-const niH = (co.history || []).filter((h) => h?.lines?.netIncome != null).slice(-3).map((h) => h.lines.netIncome);
+const niH3 = (co.history || []).filter((h) => h?.lines?.netIncome != null).slice(-3);
+const niH = niH3.map((h) => h.lines.netIncome);
 const eps3 = niH.length >= 2 && shares ? niH.reduce((a, b) => a + b, 0) / niH.length / shares : null;
+// The averaging window's actual fiscal years, named on the label — a bare "3-yr" leaves the
+// reader to guess which years the average was read over.
+const eps3Span = niH3.length >= 2 ? `’${String(niH3[0].fy).slice(-2)}–’${String(niH3[niH3.length - 1].fy).slice(-2)}` : null;
 const bvps = L.stockholdersEquity != null && shares ? L.stockholdersEquity / shares : null;
 
 // An honest base, on demand: a 3-year average of owner earnings (Graham's normalization,
@@ -127,7 +131,11 @@ const dep = L.depreciation;
 // carves growth capex out only for a business spending above depreciation while it grows.
 const maintCx = maintenanceCapex(co);
 const ownerEarningsMaint = cfo != null && maintCx != null ? cfo - maintCx : null;
-const oeHistMaint = (co.history || []).map((h) => (h.lines.cashFromOps != null && h.lines.depreciation != null ? h.lines.cashFromOps - h.lines.depreciation : null));
+// The steady-state history reads the SAME per-year maintenance definition the whole site reads
+// (ownerEarningsAbs = CFO − maintenanceCapexFor), never raw depreciation — a third quiet variant
+// of "owner earnings" was exactly the mixing the 1986 appendix was written against. Where a year
+// can't support the maintenance estimate, the year is withheld from the average, never blended.
+const oeHistMaint = (co.history || []).map((h) => ownerEarningsAbs(h.lines, company));
 const oem3vals = [...oeHistMaint].reverse().filter((v) => v != null).slice(0, 3);
 const oe3Maint = oem3vals.length >= 2 ? oem3vals.reduce((a, b) => a + b, 0) / oem3vals.length : ownerEarningsMaint;
 // Show the steady-state toggle only where it actually differs — a real builder whose growth capex
@@ -137,8 +145,16 @@ const offerMaint = ownerEarningsMaint != null && ownerEarnings != null && maintC
 // The owner-earnings growth the business actually delivered, as a number, to anchor a
 // reference value against (never a target): what the record would be worth on its own record.
 const oeSeries = oeHist.filter((v) => v != null);
-const gDeliv = trendGrowth(oeSeries.slice(-8));
-const oeWin = sparkWin(oeSeries, 7, null);
+// The delivered-growth fallback and the sparkline both read the MAINTENANCE-based series — the
+// same family as gDeliv5, the windows, and the durability card — so the delivered row is one
+// definition top to bottom. The old fallback quietly dropped to the total-capex series when the
+// five-point window was short, mixing families inside a single readout; and the sparkline drew
+// the total-capex shape beside a maintenance-based number. (The remaining cross-family seam —
+// this maintenance-based delivered row against the free-cash-flow interactive base — is the
+// design doc's A1 part 2: both families precomputed, swapped with the Steady-state toggle.)
+const oeMaintSeries = oeHistMaint.filter((v) => v != null);
+const gDeliv = trendGrowth(oeMaintSeries.slice(-8));
+const oeWin = sparkWin(oeMaintSeries, 7, null);
 
 // A positive base to anchor the reverse-DCF can come from the latest year, the through-cycle
 // normalization, or — for a business mid-build-out whose total capex buries the cash it throws
@@ -149,7 +165,12 @@ const oeWin = sparkWin(oeSeries, 7, null);
 const maintBasePos = offerMaint && (((ownerEarningsMaint ?? -1) > 0) || ((oe3Maint ?? -1) > 0));
 const normBasePos = (oeNormalized ?? -1) > 0;
 const defaultMaint = !(ownerEarnings > 0) && maintBasePos;
-const defaultNorm = !(ownerEarnings > 0) && !defaultMaint && normBasePos;
+// Symmetric by rule, not by convenience: the through-cycle base pre-checks when the latest year
+// is a trough (rescuing the tool, the long-standing case) AND when it is a peak — Graham's
+// averaging exists precisely to avoid pricing on a flattering year (Intelligent Investor ch.14),
+// and a default that corrects the record only in the direction that raises the base is the tool
+// quietly pronouncing in the price's favor. Clearing the toggle reads the year as filed.
+const defaultNorm = (!(ownerEarnings > 0) && !defaultMaint && normBasePos) || (cycleRead === "above" && normBasePos);
 const runnable = (ownerEarnings != null && ownerEarnings > 0) || defaultMaint || defaultNorm;
 
 // Book-value valuation: a bank or an insurer is worth a multiple of tangible book set
@@ -450,7 +471,7 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
       {cycleRead ? (
         <p class="cyclenote">
           Through the cycle, {name} earns about <b>{$(ep.normOE)}</b> on its {pctS(ep.normOeMargin, 1)} median
-          owner-earnings margin. This year&rsquo;s {pctS(ep.latestOeMargin, 1)} margin runs <b>{cycleRead === "at" ? "in line with" : cycleRead}</b> that{cycleRead === "above" ? "; the reported figure may flatter a peak you'd be paying on" : cycleRead === "below" ? "; the reported figure may understate a lean year" : ""}. <b>Normalize</b>, below, values the price on that through-cycle figure rather than the latest year.
+          owner-earnings margin. This year&rsquo;s {pctS(ep.latestOeMargin, 1)} margin runs <b>{cycleRead === "at" ? "in line with" : cycleRead}</b> that{cycleRead === "above" ? "; the reported figure may flatter a peak you'd be paying on" : cycleRead === "below" ? "; the reported figure may understate a lean year" : ""}. <b>Normalize</b>, below, values the price on that through-cycle figure rather than the latest year.{cycleRead === "above" && defaultNorm ? " It comes pre-checked here for that reason, the same rule that already normalizes a trough; clear it to price the year as filed." : ""}
         </p>
       ) : null}
 
@@ -507,7 +528,7 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
       {eps3 != null && bvps != null ? (
         <>
           <div class="compare gate">
-            <div class="cmp"><span class="cl">P/E (3-yr earnings)</span><span class="cv" id="pe">—</span></div>
+            <div class="cmp"><span class="cl">P/E (3-yr earnings{eps3Span ? ` ${eps3Span}` : ""})</span><span class="cv" id="pe">—</span></div>
             <div class="cmp"><span class="cl">P/B</span><span class="cv" id="pb">—</span></div>
             <div class="cmp"><span class="cl">Graham’s price gate</span><span class="cv" id="ggate">—</span></div>
           </div>
@@ -546,7 +567,7 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
                 : ` (a weighted ${sfv.basis}, the only count this filer tags)`}`
             : `on ${(shares / 1e6).toFixed(0)}M diluted shares`)
           : "on the share count you enter above"}; net {netDebt >= 0 ? `debt ${$(netDebt)}` : `cash ${$(-netDebt)}`}.{overhangPct != null ? ` The if-converted diluted count is ${(dilutedCount / 1e6).toFixed(0)}M, ${overhangPct}% above the shares outstanding: the dilution overhang (convertibles, options) a buyer inherits.` : ""}
-        The base is the latest year by default; <b>Normalize</b> values it on the through-cycle median owner-earnings margin (to avoid paying on a peak year), and <b>Net of stock comp</b> treats option pay as the expense it is.{offerMaint ? (<> Capex ({$(Math.abs(capex))}) runs well above depreciation ({$(dep)}), so this is a build-out; <b>Steady-state</b> swaps total capex for maintenance (≈ depreciation), lifting the base to about {$(ownerEarningsMaint)}, the cash it would throw off if it stopped expanding.</>) : null}
+        {defaultNorm ? <>The base opens on the through-cycle figure (the latest year sits {cycleRead === "above" ? "above" : "off"} the record&rsquo;s own median, and Graham&rsquo;s averaging cuts both ways); clear <b>Normalize</b> to use the year as filed.</> : defaultMaint ? <>The base opens on the steady-state figure (the latest year is negative on total capex mid-build-out); clear <b>Steady-state</b> to use the year as filed.</> : <>The base is the latest year by default; <b>Normalize</b> values it on the through-cycle median owner-earnings margin (to avoid paying on a peak year).</>} <b>Net of stock comp</b> treats option pay as the expense it is.{offerMaint ? (<> Capex ({$(Math.abs(capex))}) runs well above depreciation ({$(dep)}), so this is a build-out; <b>Steady-state</b> swaps total capex for maintenance (≈ depreciation), lifting the base to about {$(ownerEarningsMaint)}, the cash it would throw off if it stopped expanding.</>) : null}
         The dials set the multiple a growth belief justifies; the price, and every dollar on this page, is yours.
       </p>
     </div>
