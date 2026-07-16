@@ -501,6 +501,97 @@ function sharesForValueOf(facts, shareRef) {
   return null;
 }
 
+// ---- the cover-text fallback (step 4 of the share chain; the STZ/dual-class hole) ----
+// Thirteen real companies — Constellation Brands, Brookfield, Planet Fitness, Greif among them —
+// carry NO share fact anywhere in companyfacts: every count is tagged under class-member
+// dimensions, and the companyfacts API strips dimensioned facts. The one place the count is
+// required in plain text is the filing cover ("Indicate the number of shares outstanding of each
+// of the issuer's classes of common stock, as of the latest practicable date"). Rule, per the
+// campaign's L1 discipline (read the filing when XBRL fails, corroborate before trusting):
+//   - fires ONLY when the whole XBRL chain above yielded nothing (never overrides a tagged count);
+//   - parses the covers of BOTH the latest 10-K and the latest 10-Q;
+//   - accepts only when the two documents corroborate within 20% (real counts drift slowly;
+//     a parse gone wrong does not corroborate) — one parse alone is not enough to print;
+//   - sums the classes of COMMON stock; preferred never counts; a wrong number is worse than a
+//     missing one, so any ambiguity returns null and the page stays honestly blank.
+async function getText(url) {
+  for (let attempt = 1; attempt <= 4; attempt++) {
+    try {
+      const res = await fetch(url, { headers: HEADERS, signal: AbortSignal.timeout(60_000) });
+      if (res.status === 429) { await sleep(1000 * attempt); continue; }
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return await res.text();
+    } catch (err) {
+      if (attempt === 4) throw err;
+      await sleep(500 * attempt);
+    }
+  }
+}
+
+// Parse a filing's cover for the outstanding-common count. Pure function; unit-tested against the
+// verbatim covers of all thirteen filers in scripts/coverSharesTest.mjs. Returns a share count or
+// null — never a guess.
+export function parseCoverShares(html) {
+  // The cover lives at the top of the document; 40k chars of stripped text is generous.
+  const text = html.replace(/<[^>]+>/g, " ").replace(/&#160;|&nbsp;/g, " ").replace(/&#8217;|&rsquo;/g, "'").replace(/\s+/g, " ").slice(0, 40000);
+  const anchor = text.search(/number of shares outstanding of each|shares outstanding of each of the (?:issuer|registrant)|number of shares of (?:the registrant'?s? )?(?:[\w$.\s]{0,40})?common (?:stock|shares)[^.]{0,80}outstanding|number of outstanding shares of|(?:registrant had|there were) (?:issued and outstanding )?[\d,]+ shares of|as of [a-z]+ \d{1,2}, \d{4},? [\d,]+ (?:class [a-z] )?common shares|shares of common stock outstanding/i);
+  if (anchor < 0) return null;
+  const region = text.slice(anchor, anchor + 1200);
+  // Collect count candidates: large comma-grouped integers (or 7+ digit plain integers) that are
+  // not dollars, not percentages, and not dates. Class names nearby are how covers present them.
+  const counts = [];
+  const numRe = /(?:^|[\s(])(\d{1,3}(?:,\d{3}){1,4}|\d{7,12})(?:\.\d+)?(?=[\s,.)]|$)/g;
+  let m;
+  while ((m = numRe.exec(region))) {
+    const before = region.slice(Math.max(0, m.index - 24), m.index);
+    const after = region.slice(m.index + m[0].length, m.index + m[0].length + 40);
+    if (/[$€£]\s*$/.test(before) || /^\s*(%|percent|dollars)/i.test(after)) continue;
+    // A four-digit year alone is never a count; the digit floor (≥5 digits grouped or ≥7 plain)
+    // already excludes it, but a "2,026"-style artifact is caught by the plausibility band below.
+    const context = region.slice(Math.max(0, m.index - 160), m.index + 80);
+    if (/preferred/i.test(context) && !/common/i.test(context)) continue;
+    counts.push(Number(m[1].replace(/,/g, "")));
+  }
+  const plausible = counts.filter((v) => v >= 1e5 && v <= 5e10);
+  if (!plausible.length) return null;
+  // A single-class cover states one number; a dual-class cover states one per class. Sum the
+  // distinct values (a repeated value is the same figure restated, not a second class).
+  const distinct = [...new Set(plausible)];
+  return distinct.reduce((a, b) => a + b, 0);
+}
+
+async function coverShareCount(cik) {
+  try {
+    const padded = String(cik).padStart(10, "0");
+    const sub = await getJSON(`https://data.sec.gov/submissions/CIK${padded}.json`);
+    const r = sub?.filings?.recent;
+    if (!r) return null;
+    const pick = (form) => {
+      for (let i = 0; i < r.form.length; i++) {
+        if (r.form[i] === form) return { acc: r.accessionNumber[i].replace(/-/g, ""), doc: r.primaryDocument[i], filed: r.filingDate[i], form };
+      }
+      return null;
+    };
+    const tenK = pick("10-K"), tenQ = pick("10-Q");
+    if (!tenK || !tenQ) return null; // corroboration needs both
+    const reads = [];
+    for (const f of [tenK, tenQ]) {
+      await sleep(THROTTLE_MS);
+      const html = await getText(`https://www.sec.gov/Archives/edgar/data/${Number(cik)}/${f.acc}/${f.doc}`);
+      const val = parseCoverShares(html);
+      if (val != null) reads.push({ val, form: f.form, filed: f.filed });
+    }
+    if (reads.length < 2) return null;
+    const [a, b] = reads;
+    const ratio = a.val > b.val ? a.val / b.val : b.val / a.val;
+    if (ratio > 1.2) return null; // the two covers disagree; refuse
+    const fresher = new Date(a.filed) >= new Date(b.filed) ? a : b;
+    return { val: fresher.val, asOf: fresher.filed, form: fresher.form, basis: "cover-text" };
+  } catch {
+    return null; // a fetch failure is a missing count, never an error that breaks the run
+  }
+}
+
 // ---- trailing twelve months ----
 // All duration observations (10-K and 10-Q) for a concept.
 function durations(facts, tags, unit = "USD") {
@@ -1184,8 +1275,12 @@ async function main() {
       form: anchor?.form ?? "10-K",
       sourceUrl,
       // The dated instantaneous share count the valuation multiplies a price by; the record
-      // tables keep the weighted-average diluted series. See sharesForValueOf above.
-      sharesForValue: sharesForValueOf(facts, shareRef),
+      // tables keep the weighted-average diluted series. See sharesForValueOf above. When the
+      // whole XBRL chain is empty AND the history carries no count either (the dual-class
+      // dimension-stripped hole: STZ, BAM, PLNT...), the cover-text fallback reads the filing
+      // covers themselves, corroborated across the 10-K and 10-Q, or stays honestly null.
+      sharesForValue: sharesForValueOf(facts, shareRef)
+        ?? (Object.values(ha.sharesDiluted).every((v) => v == null) ? await coverShareCount(cik) : null),
       lines: {
         operatingIncome: deriveOpInc(oi?.val ?? null, revLatest, pick(CONCEPTS.costsAndExpenses), pick(CONCEPTS.netIncome), pick(CONCEPTS.incomeTaxExpense), pick(CONCEPTS.interestExpense)),
         interestExpense: pick(CONCEPTS.interestExpense),
