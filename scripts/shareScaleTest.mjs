@@ -37,8 +37,30 @@ t("conoco-zoo-with-cover-counts",
 // A genuine pre-SPAC count whose own year has NO cover fact (the shell hadn't filed): falls to the
 // conservative passes, edge stays as-filed even though LATER covers exist.
 t("brcc-cover-absent-for-shell-year", { 2019: 1.09e5, 2021: 9.27e7, 2022: 9.5e7, 2023: 9.6e7 }, [], { 2021: 2.1e8, 2022: 2.1e8, 2023: 2.12e8 });
-// A cover count that disagrees by a non-thousandfold factor arbitrates nothing (5× trust boundary).
+// A cover count that disagrees by a non-thousandfold factor arbitrates nothing (2× trust boundary).
 t("cover-disagrees-oddly-refuses", { 2020: 4.2e7, 2021: 4.3e6, 2022: 4.3e7 }, [], { 2021: 4.3e7 });
+// Chesapeake/Expand: a 1-for-200 reverse split; later 10-Ks restate the comparative weighted
+// averages ÷200, but the covers keyed to those years are PRE-split. The restated values are
+// GENUINE, and ×1000-stepping them lands at ~4.3–5.0× of the stale covers — inside the old 5×
+// band (which corrupted them into fictional counts), outside the 2× band (they stay as-filed).
+t("chesapeake-presplit-covers-refused",
+  { 2017: 9.06e8, 2018: 4.546e6, 2019: 8.325e6, 2020: 9.773e6, 2021: 1.05e8 },
+  [],
+  { 2017: 9.08e8, 2018: 9.137e8, 2019: 1.954e9, 2020: 9.78e6, 2021: 1.17e8 });
+// Mizuho: ONE year's cover is itself tagged ×1000 low — the arbiter mistagged. The cover-median
+// sanity check skips it, and pass 2 then fixes the value's interior ×1000 V normally.
+t("mizuho-mistagged-cover-skipped",
+  { 2021: 2.537e9, 2022: 2.537e9, 2023: 2.5366e6, 2024: 2.5371e9, 2025: 2.537e9 },
+  ["2023"],
+  { 2021: 2.54e9, 2022: 2.54e9, 2023: 2.54e6, 2024: 2.54e9, 2025: 2.54e9 });
+// Regency Centers: the series fell through to the LP-units concept (~750k against ~171M real
+// shares). ×1000-stepping lands at ~4.4× of the true covers — a wrong CONCEPT, not a scale
+// mistag; the 2× band refuses, the values stay as-filed and loudly flagged, never "corrected"
+// into plausible-looking fiction.
+t("regency-lp-units-not-scaled",
+  { 2019: 1.678e8, 2020: 1.695e8, 2021: 7.62e5, 2022: 7.483e5, 2023: 9.531e5 },
+  [],
+  { 2019: 1.68e8, 2020: 1.69e8, 2021: 1.712e8, 2022: 1.711e8, 2023: 1.846e8 });
 
 // The CI identity-baseline gate blocked the first full-pool refetch with 47 NEW breaks — records
 // the ORIGINAL max-anchored rule normalized correctly that the class-quantized redesign refused

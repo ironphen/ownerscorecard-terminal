@@ -50,17 +50,27 @@ export function normalizeShareScale(byYear, coverByYear = {}) {
   if (years.length < 2) return byYear;
   const out = { ...byYear };
 
-  // PASS 0 — the filer's own cover count (see above). Within 5× is agreement (diluted vs
-  // outstanding never differ that much); a clean ×1000ᵏ off corrects; anything else stays for
-  // the audits — a cover count can be mistagged too, and 5× is the trust boundary.
+  // PASS 0 — the filer's own cover count (see above). Two trust rules, both learned from real
+  // corruption the adjudication caught:
+  //   - The cover must agree with its SIBLING covers: a cover sitting ≥100× off the median of the
+  //     record's other covers is itself presumed mistagged and arbitrates nothing (Mizuho tags one
+  //     year's cover ×1000 low — the arbiter needed arbitrating).
+  //   - Agreement means ~1×, not "within 5×": a genuine thousands mistag corrects to 1.0–1.3× of
+  //     its own cover (diluted vs outstanding), while every observed FALSE correction landed at
+  //     4.2–4.9× — reverse-split restatements measured against pre-split covers (Chesapeake's
+  //     1-for-200, Wearable Devices' 240:1) and a wrong-concept series (Regency's LP units). The
+  //     band is 2×; anything outside stays as-filed for the audits and the filing re-read.
+  const coverVals = Object.values(coverByYear).filter((v) => v != null && v > 0);
+  const coverMed = coverVals.length ? medianOf(coverVals) : null;
   for (const y of years) {
     const d = coverByYear[y];
     if (d == null || d <= 0) continue;
+    if (coverMed != null && coverVals.length >= 3 && (d >= coverMed * 100 || d <= coverMed / 100)) continue;
     const distD = (x) => Math.abs(Math.log10(x / d));
     let s = out[y];
     while (distD(s * 1000) < distD(s)) s *= 1000;
     while (distD(s / 1000) < distD(s)) s /= 1000;
-    if (s !== out[y] && s >= d / 5 && s <= d * 5) out[y] = s;
+    if (s !== out[y] && s >= d / 2 && s <= d * 2) out[y] = s;
   }
 
   const vals = years.map((y) => out[y]);
