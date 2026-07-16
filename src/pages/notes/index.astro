@@ -19,6 +19,7 @@ const fmtDate = (d) =>
 >
   <header class="hero">
     <h1>Notes</h1>
+    <p class="ledgerLine">Notes that reach a dated conclusion are entered, verbatim, in <a href="/ledger">the Ledger</a>.</p>
   </header>
 
   {articles.length ? (
@@ -43,6 +44,7 @@ const fmtDate = (d) =>
 
   <style>
     .hero h1 { margin: 0 0 10px; }
+    .ledgerLine { font-family: var(--serif); font-style: italic; font-size: 14px; color: var(--muted); margin: 0 0 6px; }
 
     .list { list-style: none; padding-left: 0; margin: 0; }
     li { padding: 14px 0; border-bottom: 1px solid var(--rule); }

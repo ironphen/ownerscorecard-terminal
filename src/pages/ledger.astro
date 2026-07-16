@@ -1,0 +1,93 @@
+---
+// The Ledger: every dated, priced conclusion this publication has ever reached, in one place,
+// verbatim, oldest first. The conventions that make it worth anything, enforced by construction:
+// a note that concludes carries its conclusion in frontmatter and appears here automatically (the
+// complete denominator — nothing concluding stays off the list); an entry is never edited or
+// removed after publication; and the publication never grades its own entries — no returns, no
+// scorecard, no commentary on how an entry aged. The reader holds the record to what followed.
+// Business notes and letters conclude nothing and do not appear.
+import { getCollection } from "astro:content";
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { ORG } from "../lib/seo.mjs";
+
+const entries = (
+  await getCollection("articles", ({ data }) => (import.meta.env.PROD ? !data.draft : true) && !!data.conclusion)
+).sort((a, b) => a.data.date.valueOf() - b.data.date.valueOf());
+
+const fmtDate = (d) =>
+  d.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric", timeZone: "UTC" });
+
+const description =
+  "Every dated conclusion this publication has reached, quoted verbatim and listed in order. Entries are never edited, never removed, and never graded by the publication itself.";
+---
+
+<BaseLayout
+  title="The Ledger, Owner Scorecard"
+  description={description}
+  jsonLd={{
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name: "The Ledger",
+    description,
+    publisher: ORG,
+  }}
+>
+  <section class="ledger">
+    <h1>The Ledger</h1>
+
+    <p class="intro">
+      Some research Notes reach a conclusion: dated, anchored to the prices of a named day, and
+      argued from the record. Every such conclusion is entered here, quoted verbatim from the
+      note that reached it, in the order it was published. Nothing on this page is ever edited
+      or removed, and the publication does not grade its own entries. The record accumulates,
+      and the reader holds it to what followed, whether that flatters an entry or embarrasses
+      it.
+    </p>
+
+    <p class="intro">
+      A conclusion is a reading of price against value on its date. It is not a recommendation,
+      a target, or a position, and no position is ever announced. Notes that present a business
+      or an idea without concluding do not appear here.
+    </p>
+
+    {entries.length ? (
+      <ol class="entries">
+        {entries.map((e) => (
+          <li class="entry">
+            <div class="head">
+              <span class="date">{fmtDate(e.data.date)}</span>
+              <a class="note" href={`/notes/${e.id}`}>{e.data.title}</a>
+            </div>
+            <blockquote class="conclusion">{e.data.conclusion}</blockquote>
+          </li>
+        ))}
+      </ol>
+    ) : (
+      <p class="empty">No conclusions yet.</p>
+    )}
+
+    <p class="count">{entries.length === 1 ? "One entry." : `${entries.length} entries.`}</p>
+  </section>
+</BaseLayout>
+
+<style>
+  .ledger { max-width: 640px; }
+  .ledger h1 { margin: 0 0 16px; }
+  .intro { color: var(--ink-soft); }
+  .entries { list-style: none; counter-reset: entry; padding: 0; margin: 28px 0 0; }
+  .entry { counter-increment: entry; border-top: 1px solid var(--rule-strong); padding: 18px 0 22px; }
+  .entry .head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  .entry .head::before {
+    content: "No. " counter(entry);
+    font-family: var(--sans); font-size: 11.5px; font-weight: 700; letter-spacing: 0.07em;
+    text-transform: uppercase; color: var(--muted); flex: 0 0 auto;
+  }
+  .date { font-size: 13.5px; color: var(--muted); flex: 0 0 auto; }
+  .note { font-family: var(--sans); font-weight: 700; }
+  .conclusion {
+    font-family: var(--serif); font-size: 17px; line-height: 1.6; color: var(--ink);
+    margin: 10px 0 0; padding-left: 14px; border-left: 3px solid var(--accent);
+  }
+  .count { font-size: 13px; color: var(--muted); margin-top: 20px; }
+  .empty { font-family: var(--serif); font-style: italic; color: var(--muted); margin-top: 24px; }
+</style>

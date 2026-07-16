@@ -22,6 +22,14 @@ const articles = defineCollection({
     // /corrections. The rule that makes this worth anything: NEVER silently fix a published
     // number — log it or don't touch it. Bump `updated` alongside.
     corrections: z.array(z.object({ date: z.coerce.date(), note: z.string() })).default([]),
+    // The ledger. A note that reaches a dated, priced conclusion carries it here VERBATIM — the
+    // exact sentence, quoted from the note's own text — and is listed on /ledger automatically.
+    // The rules that make the ledger worth anything: every concluding note carries this field
+    // (the complete denominator — no concluding note stays off the list), an entry is never
+    // edited or removed after publication, and the publication never grades its own entries.
+    // The reader checks the record against what followed. Business notes and letters conclude
+    // nothing and leave this absent.
+    conclusion: z.string().optional(),
   }),
 });
 

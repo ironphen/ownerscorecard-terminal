@@ -110,6 +110,10 @@ const jsonLd = {
       </aside>
     ) : null}
 
+    {article.data.conclusion ? (
+      <p class="ledgerFoot">This note's conclusion is entered, verbatim and permanently, in <a href="/ledger">the Ledger</a>.</p>
+    ) : null}
+
     {recordLinks.length ? (
       <aside class="after">
         <h2 class="afterTitle">The records behind this note</h2>
@@ -137,6 +141,7 @@ const jsonLd = {
     .back { margin: 0 0 10px; }
     .hero h1 { margin: 0; }
     .byline { font-family: var(--serif); font-style: italic; color: var(--ink-dim); font-size: 15px; margin: 6px 0 0; }
+    .ledgerFoot { font-family: var(--serif); font-style: italic; font-size: 14px; color: var(--muted); border-top: 1px solid var(--rule); margin-top: 28px; padding-top: 12px; }
     .meta { color: var(--ink-dim); font-size: 14px; margin-top: 6px; }
     .section {
       border: 1px solid var(--rule);
