@@ -187,7 +187,14 @@ const bankRisk = isInsurer
 const tEq = tangibleEquity(L);
 const tbvps = tEq != null && shares ? tEq / shares : null;
 const bvpsB = L.stockholdersEquity != null && shares ? L.stockholdersEquity / shares : null;
-const epsB = L.netIncome != null && shares ? L.netIncome / shares : null;
+// A bank's P/E and earnings yield read on the 3-year average, never the latest year alone: a
+// bank at a credit-cycle peak is the canonical flattering single-year multiple (reserve releases
+// and benign charge-offs inflate exactly the year a buyer is shown), and Intelligent Investor
+// ch.14 applies the same averaged standard to financial enterprises. The label carries the span.
+const niB3 = (co.history || []).filter((h) => h?.lines?.netIncome != null).slice(-3);
+const epsB = niB3.length >= 2 && shares ? niB3.reduce((a, b) => a + b.lines.netIncome, 0) / niB3.length / shares
+  : (L.netIncome != null && shares ? L.netIncome / shares : null);
+const epsBSpan = niB3.length >= 2 ? `’${String(niB3[0].fy).slice(-2)}–’${String(niB3[niB3.length - 1].fy).slice(-2)}` : null;
 const rotceH = (co.history || [])
   .map((h) => { const t = tangibleEquity(h.lines); return h.lines.netIncome != null && t && t > 0 ? h.lines.netIncome / t : null; })
   .filter((v) => v != null);
@@ -212,7 +219,11 @@ const ffopsH = ffopsPairs.map((p) => p.v);
 const ffoGrowthRaw = trendGrowth(ffopsH.slice(-6));
 const ffoWin = sparkWin(ffopsH, 5, ffops);
 const ffoRange = winRangeYrs(ffopsPairs);
-const reitGrowthPct = ffoGrowthRaw == null ? 3 : Math.max(0, Math.min(8, Math.round(ffoGrowthRaw * 100)));
+// The growth dial rests at a fixed neutral value, never at the delivered rate: presetting a dial
+// to the record's own growth quietly asserts the past continues — the projection Security
+// Analysis ch.37 warns against. The delivered rate stays exactly where it belongs, as the labeled
+// anchor beside the dial, one fact among the reader's choices.
+const reitGrowthPct = 3;
 const reitRunnable = isReit && ffops != null && ffops > 0 && shares != null && shares > 0;
 
 // Negative-owner-earnings mode: a reverse-DCF can't grow a negative base, so we flip
@@ -225,7 +236,10 @@ const gRevRaw = trendGrowth(revH.slice(-6));
 const revWin = sparkWin(revH, 5, co.ttm?.lines?.revenue);
 const revRange = winRangeYrs(revPairs);
 const negMode = !runnable && !offModel && rev != null && rev > 0 && shares != null && shares > 0;
-const gRevPct = gRevRaw == null ? 15 : Math.max(0, Math.min(45, Math.round((gRevRaw * 100) / 5) * 5));
+// Same rule as the REIT dial: the revenue dial rests flat (0%), never at the delivered rate —
+// the lede already words a zero rest honestly ("on revenue grown flat"), and the delivered rate
+// remains the labeled anchor beside the dial for the reader to adopt or reject.
+const gRevPct = 0;
 const oeMarginNow = ownerEarnings != null && rev ? ownerEarnings / rev : null;
 // Negative owner earnings come in two very different kinds: a genuine loss, and a
 // profitable business whose capital spending currently outruns its operating cash (a
@@ -370,12 +384,32 @@ const name = co.name || co.ticker;
 const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.abs(v * 100).toFixed(dp)}%`);
 // The risk-free anchor for Graham's bond test, fetched on the daily refresh (public-domain
 // government data), prefilled as an editable default and dated so it never reads as live.
-// A yen record is measured against the yen bond: Japanese pages anchor to the 10-year JGB,
-// everything else to the 10-year Treasury.
-const isJpMarket = co.market === "JP";
-const bondDefault = isJpMarket ? (rates?.jp10y ?? null) : (rates?.tenYear != null ? rates.tenYear : null);
-const bondName = isJpMarket ? "10-year JGB" : "10-year Treasury";
-const bondRawAsOf = isJpMarket ? rates?.jp10yAsOf : rates?.asOf;
+// ONE risk-free yardstick for every market, the 10-year US Treasury: the reader's alternative
+// to any equity here — US, Japanese, or European — is the same riskless bond, and a per-market
+// anchor would make the same implied growth read differently across borders (arrangement is a
+// pronouncement). The JGB anchor was considered and dropped for exactly that reason.
+const bondDefault = rates?.tenYear != null ? rates.tenYear : null;
+const bondName = "10-year Treasury";
+// The required-return dial rests on the dated long-bond yield, not on a house number: the bond
+// field already opens on a dated public fact, and one control defaulting to the publication's 9%
+// was the last suggested assumption on the page (Buffett, 2000: the Aesop yardstick rate is the
+// long-bond yield; risk lives in the certainty of the flows and the price paid, never in a
+// fiddled rate). Snapped to the dial's half-point step.
+const rFloor = 4;
+const rSnap = bondDefault != null ? Math.round(bondDefault * 2) / 2 : null;
+const rRest = rSnap != null ? Math.min(15, Math.max(rFloor, rSnap)) : 9;
+// When the snap lands outside the dial's range, the floor (or top) wins and the copy must say
+// so: "rests on the Treasury, no premium added" would turn false the moment the bond left
+// [3.75%, 15.25%]. rBound names that state for the template and the lede's at-rest clause; the
+// clamp also keeps the rendered value inside the input's range, so the browser never silently
+// moves value off defaultValue and breaks the untouched-dial test.
+const rBound = rSnap != null && rRest !== rSnap;
+// The terminal-growth rest sits at least a point below the required-return rest, by
+// construction: a perpetuity growing at or above the discount rate has no finite value, so a
+// resting state that collides would greet the first price typed with an error instead of an
+// answer. Inert while the Treasury rest stays above 3.5%; insurance for any low-rate regime.
+const gTermRest = Math.min(2.5, Math.max(0, rRest - 1));
+const bondRawAsOf = rates?.asOf;
 const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }) : null;
 ---
 
@@ -420,18 +454,21 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
           <input id="pxr" type="number" inputmode="decimal" step="0.01" min="0" placeholder="e.g. 55.00" />
         </div>
         <p class="pxMem" id="pxMemR" hidden></p>
+        {/* Assumptions before the answer, in every mode alike (design doc §2: the four modes
+            move together — divergent arrangement between modes would itself pronounce). */}
+        <div class="dials">
+          <span class="dialsLbl">The assumptions</span>
+          <label>Required return <output id="rOutR">8%</output><input id="rR" type="range" min="5" max="12" step="0.5" value="8" /></label>
+          <label>FFO / share growth <output id="gOutR">{reitGrowthPct}%</output><input id="gR" type="range" min="0" max="8" step="0.5" value={reitGrowthPct} /></label>
+          <DeliveredGrowth cagr={ffoGrowthRaw} series={ffoWin} label="FFO / share, delivered" range={ffoRange} />
+        </div>
+        <p class="dialsNote">The justified multiple is 1 ÷ (required return − growth), a perpetuity on FFO. At an 8% required return and 3% growth, a REIT is worth about 20× FFO. </p>
         <p class="lede" id="ledeR">Enter a price above to run it.</p>
         <div class="compare">
           <div class="cmp"><span class="cl">Price / FFO</span><span class="cv hot" id="pffo">—</span></div>
           <div class="cmp"><span class="cl">Justified by growth</span><span class="cv" id="justpffo">—</span></div>
           <div class="cmp"><span class="cl">Dividend yield</span><span class="cv" id="dyR">—</span></div>
-        </div>        <div class="dials">
-          <span class="dialsLbl">The assumptions</span>
-          <label>Discount rate <output id="rOutR">8%</output><input id="rR" type="range" min="5" max="12" step="0.5" value="8" /></label>
-          <label>FFO / share growth <output id="gOutR">{reitGrowthPct}%</output><input id="gR" type="range" min="0" max="8" step="0.5" value={reitGrowthPct} /></label>
-          <DeliveredGrowth cagr={ffoGrowthRaw} series={ffoWin} label="FFO / share, delivered" range={ffoRange} />
         </div>
-        <p class="dialsNote">The justified multiple is 1 ÷ (discount rate − growth), a perpetuity on FFO. At an 8% discount and 3% growth, a REIT is worth about 20× FFO. </p>
         <p class="foot">FFO about ${ffops.toFixed(2)} per share on {(shares / 1e6).toFixed(0)}M shares. The dials set the multiple they justify; your price sets the multiple you are paying. FFO here adds back depreciation and removes property-sale gains, the NAREIT method; it does not net out maintenance capex (AFFO), occupancy or lease terms, which the 10-K does.</p>
       </div>
     ) : bankRunnable ? (
@@ -443,6 +480,13 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
           <input id="pxb" type="number" inputmode="decimal" step="0.01" min="0" placeholder="e.g. 250.00" />
         </div>
         <p class="pxMem" id="pxMemB" hidden></p>
+        <div class="dials">
+          <span class="dialsLbl">The assumptions</span>
+          <label>Cost of equity <output id="coeOut">10%</output><input id="coeB" type="range" min="8" max="14" step="0.5" value="10" /></label>
+          <label>Long-term growth <output id="gOutB">3%</output><input id="gB" type="range" min="0" max="6" step="0.5" value="3" /></label>
+          <DeliveredGrowth cagr={tbvGrowthRaw} series={tbvWin} label="Tangible book / share, delivered" range={tbvRange} />
+          <p class="dialsNote">The justified multiple is (return on tangible equity − growth) ÷ (cost of equity − growth). {isInsurer ? "An" : "A"} {finKind} earning exactly its cost of equity is worth about one times tangible book; the premium above that prices each point of durable excess return. A higher cost of equity lowers the justified multiple for {isInsurer ? "an" : "a"} {finKind}.</p>
+        </div>
         <p class="lede" id="ledeB">Enter a price above to run it.</p>
         <div class="compare">
           <div class="cmp"><span class="cl">Price / tangible book</span><span class="cv hot" id="ptbv">—</span></div>
@@ -451,15 +495,10 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
         </div>        <div class="compare gate">
           <div class="cmp"><span class="cl">Price / book</span><span class="cv" id="pbBank">—</span></div>
           <div class="cmp"><span class="cl">Earnings yield</span><span class="cv" id="eyBank">—</span></div>
-          <div class="cmp"><span class="cl">P/E</span><span class="cv" id="peBank">—</span></div>
+          <div class="cmp"><span class="cl">P/E ({epsBSpan ? `${niB3.length}-yr avg ${epsBSpan}` : "earnings"})</span><span class="cv" id="peBank">—</span></div>
+          <div class="cmp"><span class="cl">Graham’s price gate</span><span class="cv" id="ggateBank">—</span></div>
         </div>
-        <div class="dials">
-          <span class="dialsLbl">The assumptions</span>
-          <label>Cost of equity <output id="coeOut">10%</output><input id="coeB" type="range" min="8" max="14" step="0.5" value="10" /></label>
-          <label>Long-term growth <output id="gOutB">3%</output><input id="gB" type="range" min="0" max="6" step="0.5" value="3" /></label>
-          <DeliveredGrowth cagr={tbvGrowthRaw} series={tbvWin} label="Tangible book / share, delivered" range={tbvRange} />
-          <p class="dialsNote">The justified multiple is (return on tangible equity − growth) ÷ (cost of equity − growth). {isInsurer ? "An" : "A"} {finKind} earning exactly its cost of equity is worth about one times tangible book; the premium above that prices each point of durable excess return. A higher cost of equity lowers the justified multiple for {isInsurer ? "an" : "a"} {finKind}.</p>
-        </div>
+        <p class="gatenote">Graham applied the same standards to financial enterprises (Intelligent Investor ch.14): the 15× multiple cap on averaged earnings, and P/E times price-to-book at most 22.5. The gate marks the bargain-hunter&rsquo;s floor, not a verdict.</p>
         <p class="foot">Tangible book {$(tEq)} on {(shares / 1e6).toFixed(0)}M shares, a {pctS(rotceMed)} normalized return on it. The dials set the multiple such a return would justify; your price sets the multiple you are paying. It assumes the {finKind} keeps earning that return; {bankRisk} changes it, which is what the record and the 10-K are for.</p>
       </div>
     ) : (
@@ -479,27 +518,27 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
           <input id="pxn" type="number" inputmode="decimal" step="0.01" min="0" placeholder="e.g. 30.00" />
         </div>
         <p class="pxMem" id="pxMemN" hidden></p>
+        <div class="dials">
+          <span class="dialsLbl">The assumptions</span>
+          <label>Required return <output id="rOutN">9%</output><input id="rN" type="range" min="4" max="15" step="0.5" value="9" /></label>
+          <label>Years to get there <output id="nOutN">10</output><input id="nN" type="range" min="5" max="15" step="1" value="10" /></label>
+          <label>Revenue growth <output id="grOutN">{gRevPct}%</output><input id="grN" type="range" min="0" max="45" step="5" value={gRevPct} /></label>
+          <DeliveredGrowth cagr={gRevRaw} series={revWin} label="Revenue, delivered" range={revRange} />
+          <label>Mature owner-earnings margin <output id="mmOutN">15%</output><input id="mmN" type="range" min="3" max="40" step="1" value="15" /></label>
+        </div>
         <p class="lede" id="ledeN">Enter a price to run it.</p>
         <div class="compare">
           <div class="cmp"><span class="cl">Owner earnings it must reach</span><span class="cv hot" id="reqOE">—</span></div>
           <div class="cmp"><span class="cl">Margin the price demands</span><span class="cv hot" id="reqM">—</span></div>
           <div class="cmp"><span class="cl">Owner-earnings margin today</span><span class="cv neg">{pctS(oeMarginNow)}</span></div>
         </div>
-        <div class="dials">
-          <span class="dialsLbl">The assumptions</span>
-          <label>Discount rate <output id="rOutN">9%</output><input id="rN" type="range" min="4" max="15" step="0.5" value="9" /></label>
-          <label>Years to get there <output id="nOutN">10</output><input id="nN" type="range" min="5" max="15" step="1" value="10" /></label>
-          <label>Revenue growth <output id="grOutN">{gRevPct}%</output><input id="grN" type="range" min="0" max="45" step="5" value={gRevPct} /></label>
-          <DeliveredGrowth cagr={gRevRaw} series={revWin} label="Revenue, delivered" range={revRange} />
-          <label>Mature owner-earnings margin <output id="mmOutN">15%</output><input id="mmN" type="range" min="3" max="40" step="1" value="15" /></label>
-        </div>
-        <p class="foot">Two reads of one future. From your price: the owner earnings the company must reach, valued at a mature multiple and discounted back at your rate, expressed as the margin it implies on revenue grown at your rate. From your belief: the mature margin you would credit, set on the dial below. When the margin the price demands runs above the one you would believe, you are paying for a future taken on faith. For a deep cyclical at a trough, normalized through-cycle earnings are the better lens; this mode is for the genuinely unprofitable, and for the profitable business whose capital spending currently outruns its cash.</p>
+        <p class="foot">Two reads of one future. From your price: the owner earnings the company must reach, valued at a mature multiple and discounted back at your rate, expressed as the margin it implies on revenue grown at your rate. From your belief: the mature margin you would credit, set on the dial above. When the margin the price demands runs above the one you would believe, you are paying for a future taken on faith. For a deep cyclical at a trough, normalized through-cycle earnings are the better lens; this mode is for the genuinely unprofitable, and for the profitable business whose capital spending currently outruns its cash.</p>
       </div>
     ) : (
       <p class="note">A reverse-DCF needs positive owner earnings, or at least revenue, to anchor to, there's no clean base here. Judge this one on assets or normalized earnings, not a growth model.</p>
     )
   ) : (
-    <div id="valBox" data-oe={ownerEarnings} data-oe3={oeNormalized ?? ""} data-oemaint={ownerEarningsMaint ?? ""} data-oemaint3={oe3Maint ?? ""} data-sbc={sbcLatest ?? ""} data-gdeliv-total={famTotal.gCmp ?? ""} data-gdeliv-maint={famMaint.gCmp ?? ""} data-netdebt={netDebt} data-balanceok={balanceOk ? "1" : "0"} data-shares={shares} data-haveshares={haveShares ? "1" : "0"} data-name={name} data-ticker={co.ticker} data-eps3={eps3 ?? ""} data-bvps={bvps ?? ""} data-rev={rev ?? ""} data-grev={gRevRaw ?? ""} data-ni={niNow ?? ""} data-sym={sym} data-bonddefault={bondDefault ?? ""} data-oewins-total={famTotal.wins ? JSON.stringify(famTotal.wins) : ""} data-oewins-maint={famMaint.wins ? JSON.stringify(famMaint.wins) : ""}>
+    <div id="valBox" data-oe={ownerEarnings} data-oe3={oeNormalized ?? ""} data-oemaint={ownerEarningsMaint ?? ""} data-oemaint3={oe3Maint ?? ""} data-sbc={sbcLatest ?? ""} data-gdeliv-total={famTotal.gCmp ?? ""} data-gdeliv-maint={famMaint.gCmp ?? ""} data-netdebt={netDebt} data-balanceok={balanceOk ? "1" : "0"} data-shares={shares} data-haveshares={haveShares ? "1" : "0"} data-name={name} data-ticker={co.ticker} data-eps3={eps3 ?? ""} data-bvps={bvps ?? ""} data-rev={rev ?? ""} data-grev={gRevRaw ?? ""} data-ni={niNow ?? ""} data-sym={sym} data-bonddefault={bondDefault ?? ""} data-bondname={bondName} data-bondasof={bondAsOf ?? ""} data-oewins-total={famTotal.wins ? JSON.stringify(famTotal.wins) : ""} data-oewins-maint={famMaint.wins ? JSON.stringify(famMaint.wins) : ""}>
       <p class="intro">
         Type today's close and see the
         owner-earnings growth you'd have to believe to justify it, beside what {name} has delivered.
@@ -551,6 +590,21 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
       <label class="tog evTog" id="evTog" hidden><input type="checkbox" id="evOn" /> <span id="evLbl">Count the balance sheet</span></label>
       <p class="gatenote evNote" id="evNote" hidden></p>
 
+      {/* The declaration cluster, completed: your price, your base (the toggles above), your
+          required return, your horizon — everything the reader asserts, stated before anything
+          is answered. Dials-last was inherited layout, never a ratified decision; the other
+          three modes moved with it (§2: the four modes move together, because divergent
+          arrangement between modes would itself pronounce). The dials-above-everything version was
+          rejected (the page's identity is price in, implied assumptions out), but assumptions
+          BESIDE the price is Graham's own discipline: write it down before you watch the tape. */}
+      <div class="dials">
+        <span class="dialsLbl">The assumptions</span>
+        <label>Required return <output id="rOut">{rRest}%</output><input id="r" type="range" min={rFloor} max="15" step="0.5" value={rRest} /></label>
+        <label>Years of high growth <output id="nOut">10</output><input id="n" type="range" min="5" max="15" step="1" value="10" /></label>
+        <label>Terminal growth <output id="gOut">{gTermRest}%</output><input id="g" type="range" min="0" max="4" step="0.25" value={gTermRest} /></label>
+        <p class="dialsNote" id="rDecomp">{bondDefault != null ? (rBound ? <>The dial rests at {rRest}%, the closest it reaches to the {bondName} — {bondDefault}%{bondAsOf ? ` as of ${bondAsOf}` : ""}; the premium you demand for equity risk is yours to add.</> : <>The dial rests on the {bondName} — {bondDefault}%{bondAsOf ? ` as of ${bondAsOf}` : ""}, snapped to the half-point step; the premium you demand for equity risk is yours to add.</>) : <>The required return is anchored to the long government-bond yield, plus the premium you demand for risk.</>}</p>
+      </div>
+
       <p class="lede" id="lede">Enter a price above to run it.</p>
       <p class="gatenote baseRates" id="baseRates" hidden></p>
 
@@ -562,7 +616,10 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
             treatment — never a maintenance-based number beside a free-cash-flow base. */}
         <div class="cmp famRow" data-fam="total" hidden={defaultMaint}><span class="cl">{famTotal.label}</span><span class="cv">{famTotal.value}</span>{famTotal.spark ? <Sparkline series={famTotal.spark} klass="cmpSpark" /> : null}</div>
         <div class="cmp famRow" data-fam="maint" hidden={!defaultMaint}><span class="cl">{famMaint.label}</span><span class="cv">{famMaint.value}</span>{famMaint.spark ? <Sparkline series={famMaint.spark} klass="cmpSpark" /> : null}</div>
-        <div class="cmp"><span class="cl">Multiple paid</span><span class="cv" id="multPaid">—</span></div>
+        {/* "Multiple paid" removed: the exact reciprocal of the owner-earnings yield two cells
+            away, and the multiple survives in the schedule-location prose and the ops line —
+            each redundant readout dilutes the one comparison that carries the tool. Its slot
+            goes to Graham's ch.20 accumulated-spread arithmetic, in the bond yardstick below. */}
         <div class="cmp"><span class="cl">Owner-earnings yield</span><span class="cv" id="oeY">—</span></div>
       </div>
 
@@ -579,7 +636,7 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
 
       <div class="sens" id="sens" hidden>
         <span class="sensLbl">What a growth belief costs, in multiples</span>
-        <div class="sensWrap"><table class="sensTbl" id="sensTbl" aria-label="Owner-earnings multiple a growth belief justifies, by discount rate"></table></div>
+        <div class="sensWrap"><table class="sensTbl" id="sensTbl" aria-label="Owner-earnings multiple a growth belief justifies, by required return"></table></div>
         <p class="sensLoc" id="sensLoc" hidden></p>
         <p class="sensNote" id="sensNote"></p>
       </div>
@@ -593,7 +650,7 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
       {eps3 != null && bvps != null ? (
         <>
           <div class="compare gate">
-            <div class="cmp"><span class="cl">P/E (3-yr earnings{eps3Span ? ` ${eps3Span}` : ""})</span><span class="cv" id="pe">—</span></div>
+            <div class="cmp"><span class="cl">P/E ({niH3.length}-yr earnings{eps3Span ? ` ${eps3Span}` : ""})</span><span class="cv" id="pe">—</span></div>
             <div class="cmp"><span class="cl">P/B</span><span class="cv" id="pb">—</span></div>
             <div class="cmp"><span class="cl">Graham’s price gate</span><span class="cv" id="ggate">—</span></div>
           </div>
@@ -613,14 +670,7 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
           <div class="cmp"><span class="cl">High-grade bond yield</span><span class="cv" id="bondYOut">—</span></div>
           <div class="cmp"><span class="cl">Margin over the bond</span><span class="cv" id="spreadB">—</span></div>
         </div>
-      </div>
-
-      <div class="dials">
-        <span class="dialsLbl">The assumptions</span>
-        <label>Discount rate <output id="rOut">9%</output><input id="r" type="range" min="4" max="15" step="0.5" value="9" /></label>
-        <label>Years of high growth <output id="nOut">10</output><input id="n" type="range" min="5" max="15" step="1" value="10" /></label>
-        <label>Terminal growth <output id="gOut">2.5%</output><input id="g" type="range" min="0" max="4" step="0.25" value="2.5" /></label>
-        <p class="dialsNote">The discount rate is anchored to the long government-bond yield ({bondDefault != null ? <>the {bondName} is about {bondDefault}% as of {bondAsOf}</> : "~4–5% in the US today"}, plus the premium you demand for risk).</p>
+        <p class="gatenote" id="accSpread"></p>
       </div>
 
       <p class="foot">
@@ -804,7 +854,6 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
     const cushionLine = document.getElementById("cushionLine");
     const EPS3 = parseFloat(box.dataset.eps3), BVPS = parseFloat(box.dataset.bvps);
     const REV = parseFloat(box.dataset.rev), GREV = parseFloat(box.dataset.grev), NI = parseFloat(box.dataset.ni);
-    const multPaid = document.getElementById("multPaid");
     const sens = document.getElementById("sens"), sensTbl = document.getElementById("sensTbl"), sensNote = document.getElementById("sensNote"), sensLoc = document.getElementById("sensLoc");
     const ladder = document.getElementById("ladder"), ladderTbl = document.getElementById("ladderTbl"), ladderNote = document.getElementById("ladderNote");
     const baseRates = document.getElementById("baseRates");
@@ -846,7 +895,7 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
     function renderSens(gT, N) {
       if (!sens || !sensTbl) return;
       SCHED_ROWS = schedRows();
-      let html = "<thead><tr><th>growth · disc</th>" + R_COLS.map((rr) => "<th>" + (rr * 100).toFixed(0) + "%</th>").join("") + "</tr></thead><tbody>";
+      let html = "<thead><tr><th>growth · return</th>" + R_COLS.map((rr) => "<th>" + (rr * 100).toFixed(0) + "%</th>").join("") + "</tr></thead><tbody>";
       for (const row of SCHED_ROWS) {
         html += "<tr" + (row.deliv ? ' class="deliv"' : "") + "><th>" + row.lbl + "</th>";
         for (const rr of R_COLS) {
@@ -857,7 +906,7 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
       }
       sensTbl.innerHTML = html + "</tbody>";
       sens.hidden = false;
-      if (sensNote) sensNote.textContent = "Each cell is the owner-earnings multiple that growth belief justifies at that discount rate, held " + N + " years, then " + (gT * 100).toFixed(1) + "% forever; the horizon and terminal rate follow the dials below." + (SCHED_ROWS.some((r) => r.deliv) ? " The row marked delivered is the rate this record actually compounded at; the other rows are anyone's beliefs." : "");
+      if (sensNote) sensNote.textContent = "Each cell is the owner-earnings multiple that growth belief justifies at that required return, held " + N + " years, then " + (gT * 100).toFixed(1) + "% forever; the horizon and terminal rate follow the dials above." + (SCHED_ROWS.some((r) => r.deliv) ? " The row marked delivered is the rate this record actually compounded at; the other rows are anyone's beliefs." : "");
     }
 
     // The base the whole tool runs on, made honest by the toggles: a 3-year average instead of
@@ -875,6 +924,22 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
     function dials() {
       const rr = parseFloat(r.value) / 100, N = parseInt(n.value, 10), gT = parseFloat(g.value) / 100;
       rOut.textContent = r.value + "%"; nOut.textContent = N; gOut.textContent = parseFloat(g.value) + "%";
+      // The live decomposition beside the dial: required return = the dated bond + the premium
+      // the reader demands. "At rest" is the dial literally untouched (its rendered default),
+      // never a numeric tolerance — the snap to the half-point step means the resting value can
+      // sit up to 0.25 off the bond, and a tolerance test would call that gap a reader's choice.
+      const rd = document.getElementById("rDecomp");
+      const BD = parseFloat(box.dataset.bonddefault);
+      if (rd && !isNaN(BD)) {
+        const prem = rr * 100 - BD;
+        const bname = box.dataset.bondname || "long bond", basof = box.dataset.bondasof;
+        const rest0 = parseFloat(r.defaultValue), bound = rest0 !== Math.round(BD * 2) / 2;
+        rd.textContent = r.value === r.defaultValue
+          ? (bound
+            ? `The dial rests at ${rest0}%, the closest it reaches to the ${bname} — ${BD}%${basof ? " as of " + basof : ""}; the premium you demand for equity risk is yours to add.`
+            : `The dial rests on the ${bname} — ${BD}%${basof ? " as of " + basof : ""}, snapped to the half-point step; the premium you demand for equity risk is yours to add.`)
+          : `${(rr * 100).toFixed(1)}% = the ${BD}% ${bname}${basof ? " (" + basof + ")" : ""} ${prem >= 0 ? "+" : "−"} ${Math.abs(prem).toFixed(2)} points you ${prem >= 0 ? "demand for equity risk" : "give up against the bond"}.`;
+      }
       return { rr, N, gT };
     }
     function setURL(v) { try { const u = new URL(location.href); v ? u.searchParams.set("px", v) : u.searchParams.delete("px"); history.replaceState(null, "", u); } catch (e) {} }
@@ -891,6 +956,8 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
       const EY = haveEY ? base / (price * SH + evAdj) : null; // the toggle's outlay basis carries into the bond yardstick
       if (!(BOND > 0) || !haveEY) {
         bondCmp.hidden = true;
+        const accEl0 = document.getElementById("accSpread");
+        if (accEl0) accEl0.textContent = "";
         bondLede.textContent = !(BOND > 0)
           ? "Graham measured a stock against the bond you could own instead, the heart of his margin of safety. Enter today’s high-grade bond yield (the 10-year government bond, or a AAA corporate) to weigh the owner-earnings yield against it. Nothing is stored."
           : "Enter a price above to set the owner-earnings yield, then this weighs it against the bond.";
@@ -903,13 +970,18 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
       const spread = EY - BOND;
       spreadB.textContent = (spread >= 0 ? "+" : "−") + Math.abs(spread * 100).toFixed(1) + " pts";
       spreadB.style.color = spread >= 0 ? "var(--good)" : "var(--bad)";
+      // Graham's ch.20 accumulation: the yield spread, held ten years, as a share of the price
+      // paid — his own worked arithmetic ran to roughly half the purchase price. Dated inputs,
+      // no adjective; it takes the slot the redundant "Multiple paid" readout used to fill.
+      const accEl = document.getElementById("accSpread");
+      if (accEl) accEl.textContent = `Held ten years, that spread accumulates to about ${(spread >= 0 ? "" : "−") + Math.abs(spread * 1000).toFixed(0)}% of ${evAdj !== 0 ? "the outlay" : "the price paid"}, before any change in the business — Graham’s margin, expressed as arithmetic.`;
       const ratio = EY / BOND;
       let s;
       if (EY >= 2 * BOND) s = `The owner-earnings yield is about ${ratio.toFixed(1)}× the bond, comfortably above it: the wide cushion Graham looked for. You are paid far more to own the business than to hold the bond.`;
       else if (EY >= BOND) s = `The owner-earnings yield sits above the bond, but short of the roughly 2× cushion Graham’s defensive rule asked for. The margin over the bond is your pay for the equity’s risk; weigh whether it is enough.`;
       else s = `The owner-earnings yield is below the bond: today, the riskless bond pays more. The equity has to grow into that gap to earn its risk, which is exactly the growth the reverse-DCF above asks you to believe.`;
       const prem = rr - BOND;
-      if (prem > 0.001) s += ` Your ${(rr * 100).toFixed(0)}% discount rate is this ${(BOND * 100).toFixed(2)}% bond plus about a ${(prem * 100).toFixed(1)}-point premium for the risk.`;
+      if (prem > 0.001) s += ` Your ${(rr * 100).toFixed(1)}% required return is this ${(BOND * 100).toFixed(2)}% bond plus a ${(prem * 100).toFixed(2)}-point premium for the risk.`;
       bondLede.textContent = s;
     }
 
@@ -927,7 +999,18 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
         const norm = oeNorm && oeNorm.checked;
         const sbc = oeSbc && oeSbc.checked && SBC > 0;
         const kind = maint ? (norm ? "steady-state owner earnings, 3-year average" : "steady-state owner earnings (maintenance capex)") : (norm ? "through-cycle (normalized) owner earnings" : "latest-year owner earnings");
-        baseUsed.innerHTML = "Base in use: <b>" + usd(base) + "</b>" + (SH > 0 && isFinite(base / SH) ? " · <b>" + SYM + (base / SH).toFixed(2) + "</b>/share" : "") + ", " + kind + (sbc ? ", net of " + usd(SBC) + " stock comp" : "") + ".";
+        // Material stock comp is named even with the toggle OFF: operating cash adds it back, so
+        // the unchecked box is the flattering default, and the flattering default does not get
+        // to be silent (Buffett, 1998: if options aren't compensation, what are they?). The
+        // exact-dollar "includes" claim is true only for a latest-year base — an averaged or
+        // normalized base embeds averaged SBC, so those get the looser (and true) wording.
+        const sbcClause = sbc ? ", net of " + usd(SBC) + " stock comp"
+          : (base > 0 && SBC > 0.05 * base
+            ? (norm
+              ? "; stock comp (" + usd(SBC) + " last year) is added back in the cash flow behind this base — the toggle above expenses it"
+              : "; includes " + usd(SBC) + " of stock comp the cash flow adds back — the toggle above expenses it")
+            : "");
+        baseUsed.innerHTML = "Base in use: <b>" + usd(base) + "</b>" + (SH > 0 && isFinite(base / SH) ? " · <b>" + SYM + (base / SH).toFixed(2) + "</b>/share" : "") + ", " + kind + sbcClause + ".";
       }
 
       // The multiples schedule renders before any price: general arithmetic anyone may apply,
@@ -940,7 +1023,7 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
       const price = parseFloat(px.value);
       if (!(price > 0)) {
         lede.textContent = "Enter a price above to run it."; impG.textContent = "—"; oeY.textContent = "—";
-        if (multPaid) multPaid.textContent = "—"; if (ops) ops.hidden = true;
+        if (ops) ops.hidden = true;
         if (cushionLine) cushionLine.hidden = true;
         if (sensLoc) sensLoc.hidden = true;
         if (ladder) ladder.hidden = true;
@@ -951,7 +1034,7 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
       }
       if (!(SH > 0)) {
         lede.textContent = "Enter the shares outstanding above to run it."; impG.textContent = "—"; oeY.textContent = "—";
-        if (multPaid) multPaid.textContent = "—"; if (ops) ops.hidden = true;
+        if (ops) ops.hidden = true;
         if (cushionLine) cushionLine.hidden = true;
         if (sensLoc) sensLoc.hidden = true;
         if (ladder) ladder.hidden = true;
@@ -985,7 +1068,6 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
       const mcEff = mc + evAdj;
       const res = solve(mcEff / base, rr, N, gT);
       oeY.textContent = pcs(base / mcEff);
-      if (multPaid) multPaid.textContent = (mcEff / base).toFixed(1) + "×";
       if (pe || pb || ggate) {
         const peV = EPS3 > 0 ? price / EPS3 : null, pbV = BVPS > 0 ? price / BVPS : null;
         if (pe) pe.textContent = peV != null ? peV.toFixed(1) + "×" : "n/m";
@@ -995,12 +1077,24 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
           else { ggate.textContent = "n/m"; ggate.style.color = ""; }
         }
       }
-      if (!res) { impG.textContent = "—"; lede.textContent = "Set the discount rate above the terminal rate."; if (cushionLine) cushionLine.hidden = true; if (sensLoc) sensLoc.hidden = true; if (ladder) ladder.hidden = true; if (baseRates) baseRates.hidden = true; return; }
+      if (!res) { impG.textContent = "—"; lede.textContent = "Set the required return above the terminal rate to run it."; if (ops) ops.hidden = true; if (cushionLine) cushionLine.hidden = true; if (sensLoc) sensLoc.hidden = true; if (ladder) ladder.hidden = true; if (baseRates) baseRates.hidden = true; bondView(); return; }
       impG.textContent = res.cap ? "100%+/yr" : pcs(res.g) + "/yr";
       const P = SYM + price.toFixed(2);
       if (res.cap) lede.innerHTML = `At <b>${P}</b>, even <b class="hot">100%+/yr</b> growth for a decade can't justify the price on owner earnings alone.`;
       else if (res.g < 0) lede.innerHTML = `At <b>${P}</b>, the market is pricing owner earnings to <b>shrink ${pcs(res.g)}/yr</b> for ${N} years, priced for decline.`;
-      else lede.innerHTML = `At <b>${P}</b>, the market is pricing <b>${esc(NAME)}</b> to grow owner earnings about <b class="hot">${pcs(res.g)}</b>/yr for ${N} years, then ${(gT * 100).toFixed(1)}% forever, discounted at ${(rr * 100).toFixed(0)}%.`;
+      else {
+        // Zero-premium honesty: at rest the dial is the dated bond snapped to the step, and that
+        // is named — but the printed rate is always the rate the arithmetic actually used (the
+        // dial's), never the unsnapped bond figure. A wrong number is worse than a missing one.
+        const BD0 = parseFloat(box.dataset.bonddefault);
+        // "No equity premium added" may only be claimed when the rest actually IS the snapped
+        // bond — when the dial's floor or top won instead, the plain rate prints.
+        const atBond = !isNaN(BD0) && r.value === r.defaultValue && parseFloat(r.defaultValue) === Math.round(BD0 * 2) / 2;
+        const disc = atBond
+          ? `discounted at <b>${(rr * 100).toFixed(1)}%</b> — the dial's rest on the ${box.dataset.bondname || "long bond"}, no equity premium added; that premium is yours to add above`
+          : `discounted at ${(rr * 100).toFixed(1)}%`;
+        lede.innerHTML = `At <b>${P}</b>, the market is pricing <b>${esc(NAME)}</b> to grow owner earnings about <b class="hot">${pcs(res.g)}</b>/yr for ${N} years, then ${(gT * 100).toFixed(1)}% forever, ${disc}.`;
+      }
       // The base rate against the requirement: how often the record's own rolling five-year
       // windows delivered what the price implies. A count, symmetric whether flattering or
       // damning; no adjective attached.
@@ -1036,7 +1130,7 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
           if (res.cap || res.g > SCHED_ROWS[SCHED_ROWS.length - 1].g) wh = `above the ${SCHED_ROWS[SCHED_ROWS.length - 1].pl} row`;
           else if (res.g < SCHED_ROWS[0].g) wh = `below the ${SCHED_ROWS[0].pl} row`;
           else { let i = 1; while (i < SCHED_ROWS.length && SCHED_ROWS[i].g < res.g) i++; wh = `between the ${SCHED_ROWS[i - 1].pl} and ${SCHED_ROWS[i].pl} rows`; }
-          sensLoc.textContent = `At your discount rate and horizon, the ${mult}× you are paying sits ${wh} of the schedule.`;
+          sensLoc.textContent = `At your required return and horizon, the ${mult}× you are paying sits ${wh} of the schedule.`;
           sensLoc.hidden = false;
         } else sensLoc.hidden = true;
       }
@@ -1066,9 +1160,11 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
       if (ops) {
         ops.hidden = false;
         // Implied market cap, and the multiples that price is on each trailing figure an owner watches.
+        // No revenue multiple here for a business with positive owner earnings — a promoter's
+        // denominator (Buffett, 2000, on metric-shopping). Revenue stays where it is load-bearing:
+        // the implied-margin arithmetic below, and the negative mode, which has nothing else.
         let mcs = `At <b>${P}</b>, the implied market cap is <b class="hot">${usd(mc)}</b>: <b>${(mc / base).toFixed(1)}×</b> owner earnings`;
         if (NI > 0) mcs += `, <b>${(mc / NI).toFixed(1)}×</b> earnings`;
-        if (REV > 0) mcs += `, <b>${(mc / REV).toFixed(1)}×</b> revenue`;
         if (opsMc) opsMc.innerHTML = mcs + ".";
 
         // Owner earnings the price implies by the terminal year, and what revenue must do to deliver
@@ -1077,26 +1173,47 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
         // honest end-state to read, so the operating lines fold away and only the multiples remain.
         const solved = !res.cap && res.g != null && isFinite(res.g) && res.g > 0;
         const oeN = solved ? base * Math.pow(1 + res.g, N) : null;
+        let margDemands = false; // does the price actually demand a margin belief?
         if (solved && impOps) {
           let s = `To justify it, owner earnings would compound to about <b class="hot">${usd(oeN)}</b> by year ${N}, <b>${(oeN / base).toFixed(1)}×</b> today’s.`;
           if (REV > 0 && !isNaN(GREV) && GREV > -0.5) {
             const revN = REV * Math.pow(1 + GREV, N), margN = oeN / revN, margNow = base / REV;
+            margDemands = margN > margNow;
             s += ` On revenue grown at its delivered ${pcs(GREV)}/yr to ${usd(revN)}, that is an owner-earnings margin near <b class="hot">${pcs(margN)}</b> (about ${pcs(margNow)} today).`;
+          } else if (REV > 0) {
+            // No usable delivered revenue rate (a short record, or collapse below the −50%
+            // band): on flat revenue any solved growth demands margin expansion, so the margin
+            // dial stays available rather than silently vanishing for exactly the filers whose
+            // margin question is most open.
+            margDemands = true;
           }
           impOps.innerHTML = s; impOps.hidden = false;
         } else if (impOps) impOps.hidden = true;
 
-        if (solved && REV > 0 && marginRow && reqRev) {
+        // Two gates on the margin machinery (Graham 1958: precise formulas with imprecise
+        // assumptions justify any value one wishes). The DIAL appears only when the price
+        // actually demands a margin above today's — the case where a margin belief is the
+        // question; and the derived revenue requirement prints only after the reader has set
+        // the dial. The reader's belief must be the reader's; the site's 25% rest is a resting
+        // place, never an assumption that computes anything.
+        if (solved && REV > 0 && marginRow && reqRev && margDemands) {
+          marginRow.hidden = false;
           const mm = mmDial ? parseFloat(mmDial.value) / 100 : 0.25;
           if (mmOut) mmOut.textContent = (mm * 100).toFixed(0) + "%";
-          const revReq = oeN / mm, grReq = Math.pow(revReq / REV, 1 / N) - 1;
-          reqRev.innerHTML = `At a <b>${(mm * 100).toFixed(0)}%</b> mature owner-earnings margin, revenue must reach <b class="hot">${usd(revReq)}</b> by year ${N}: a <b class="hot">${pcs(grReq)}/yr</b> climb` + (!isNaN(GREV) && GREV > -0.5 ? ` (it has delivered ${pcs(GREV)}/yr)` : "") + ".";
-          marginRow.hidden = false; reqRev.hidden = false;
+          if (mmMainTouched) {
+            const revReq = oeN / mm, grReq = Math.pow(revReq / REV, 1 / N) - 1;
+            reqRev.innerHTML = `At a <b>${(mm * 100).toFixed(0)}%</b> mature owner-earnings margin, revenue must reach <b class="hot">${usd(revReq)}</b> by year ${N}: a <b class="hot">${pcs(grReq)}/yr</b> climb` + (!isNaN(GREV) && GREV > -0.5 ? ` (it has delivered ${pcs(GREV)}/yr)` : "") + ".";
+            reqRev.hidden = false;
+          } else reqRev.hidden = true;
         } else { if (marginRow) marginRow.hidden = true; if (reqRev) reqRev.hidden = true; }
       }
       bondView(); // re-render the yardstick on this tick's outlay basis (evAdj was set above)
       setURL(px.value);
     }
+    // The reader's belief must be the reader's: the requirement line renders only after the
+    // margin dial has actually been set (the same touched-gate the negative mode has always had).
+    let mmMainTouched = false;
+    if (mmDial) mmDial.addEventListener("input", () => { mmMainTouched = true; });
     [px, r, n, g, shInput, mmDial].forEach((el) => el && el.addEventListener("input", update));
     [oeNorm, oeSbc, oeMaint].forEach((el) => el && el.addEventListener("change", update));
     // The bond yield carries in the URL (like the price), so a shared link keeps the whole comparison.
@@ -1158,10 +1275,10 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
       const P = SYM + price.toFixed(2);
       let verdict;
       if (reqMargin > 1) verdict = `, more owner earnings than the business would have revenue: a margin above 100%, which is arithmetically unreachable.`;
-      else if (reqMargin > 0.45) verdict = `, a margin higher than all but a handful of businesses have sustained; the filings and the peer set are where you weigh whether this one can, ${FROM}.`;
-      else if (reqMargin > 0.3) verdict = `, in the range of the most profitable software businesses; the record is where you weigh whether it gets there, ${FROM}.`;
-      else if (!mmTouched) verdict = `, ${FROM}. The margin dial below asks what you would credit at maturity; that comparison is yours to make.`;
-      else if (reqMargin > mgn) verdict = `, above the ${mm.value}% margin you set below; the price implies more than your own input credits.`;
+      else if (reqMargin > 0.45) verdict = `, a margin above 45% of revenue, sustained; the filings and its peers’ records are where you weigh whether this business can hold one, ${FROM}.`;
+      else if (reqMargin > 0.3) verdict = `, a margin above 30% of revenue, sustained; the record and its peers are where you weigh it, ${FROM}.`;
+      else if (!mmTouched) verdict = `, ${FROM}. The margin dial above asks what you would credit at maturity; that comparison is yours to make.`;
+      else if (reqMargin > mgn) verdict = `, above the ${mm.value}% margin you set above; the price implies more than your own input credits.`;
       else verdict = `, at or below the ${mm.value}% you would credit, ${FROM}.`;
       lede.innerHTML = `At <b>${P}</b>, to earn you ${r.value}% a year, ${esc(NAME)} must be worth ${usd(valN)} in ${N} years. At ~${M.toFixed(0)}× owner earnings, that is <b class="hot">${usd(requiredOE)}</b> a year, on revenue grown ${g > 0 ? "at " + gr.value + "%/yr" : "flat"} to ${usd(revN)}: an owner-earnings margin of <b class="hot">${reqMargin > 3 ? ">300%" : pcs(reqMargin)}</b>${verdict}`;
       setURL(px.value);
@@ -1205,12 +1322,23 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
       const justified = justifiedBookMultiple(ROTCE, c, g);
       just.textContent = justified != null ? justified.toFixed(1) + "×" : "—";
       const price = parseFloat(px.value);
-      if (!(price > 0)) { lede.textContent = "Enter a price above to run it."; [ptbv, pbB, eyB, peB].forEach((e) => (e.textContent = "—")); setURL(""); return; }
+      if (!(price > 0)) { lede.textContent = "Enter a price above to run it."; [ptbv, pbB, eyB, peB].forEach((e) => (e.textContent = "—")); const gg0 = document.getElementById("ggateBank"); if (gg0) { gg0.textContent = "—"; gg0.style.color = ""; } setURL(""); return; }
       const ptb = price / TBVPS;
       ptbv.textContent = ptb.toFixed(2) + "×";
       pbB.textContent = (price / BVPS).toFixed(2) + "×";
       if (EPS > 0) { eyB.textContent = ((EPS / price) * 100).toFixed(1) + "%"; peB.textContent = (price / EPS).toFixed(1) + "×"; }
       else { eyB.textContent = "n/m"; peB.textContent = "n/m"; }
+      // Graham's ch.14 gate, extended to financial enterprises: 15x the averaged earnings, and
+      // PE x PB no more than 22.5. Rendered exactly as the main-mode gate renders it — the two
+      // gates must never speak in different registers about the same standard.
+      const ggB = document.getElementById("ggateBank");
+      if (ggB) {
+        if (EPS > 0 && BVPS > 0) {
+          const peV = price / EPS, pbV = price / BVPS;
+          const ok = peV <= 15 && peV * pbV <= 22.5;
+          ggB.textContent = ok ? "Clears" : "Above his line"; ggB.style.color = ok ? "var(--good)" : "var(--muted)";
+        } else { ggB.textContent = "n/m"; ggB.style.color = ""; }
+      }
       const P = SYM + price.toFixed(2), R = (ROTCE * 100).toFixed(0);
       if (justified == null) { lede.textContent = "Set the cost of equity above the growth rate."; setURL(px.value); return; }
       // Two multiples, stated plainly: the one the reader is paying, and the one the dials
@@ -1256,10 +1384,10 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
       const dy = DPS > 0 ? DPS / price : null;
       dyR.textContent = dy != null ? (dy * 100).toFixed(1) + "%" : "—";
       const P = SYM + price.toFixed(2);
-      if (justified == null) { lede.textContent = "Set the discount rate above the growth rate."; setURL(px.value); return; }
+      if (justified == null) { lede.textContent = "Set the required return above the growth rate."; setURL(px.value); return; }
       // Two multiples, stated plainly; which is larger is the reader's own reading.
       const income = dy != null ? ` The income alone is a ${(dy * 100).toFixed(1)}% yield.` : "";
-      lede.innerHTML = `At <b>${P}</b>, you pay <b class="hot">${pf.toFixed(1)}×</b> funds from operations for ${esc(NAME)}; ${g.value}% FFO growth at an ${r.value}% discount rate supports about <b>${justified.toFixed(1)}×</b>.${income}`;
+      lede.innerHTML = `At <b>${P}</b>, you pay <b class="hot">${pf.toFixed(1)}×</b> funds from operations for ${esc(NAME)}; ${g.value}% FFO growth at a required return of ${r.value}% supports about <b>${justified.toFixed(1)}×</b>.${income}`;
       setURL(px.value);
     }
     [px, r, g].forEach((el) => el.addEventListener("input", update));

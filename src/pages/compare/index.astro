@@ -1,6 +1,14 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { SEARCH_ALIASES } from "../../lib/searchAliases.mjs";
+import rates from "../../data/rates.json";
+
+// The one required return rests where the company pages rest it: on the dated 10-year Treasury,
+// snapped to the dial's half-point step and clamped to its range — one risk-free yardstick on
+// every surface, never a house number (Valuation.astro carries the full rationale).
+const bondDefault = rates?.tenYear != null ? rates.tenYear : null;
+const rRest = bondDefault != null ? Math.min(15, Math.max(4, Math.round(bondDefault * 2) / 2)) : 9;
+const bondAsOf = rates?.asOf ? new Date(rates.asOf).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }) : null;
 
 // Weigh against another business — the head-to-head compare view. Munger's first question about any
 // investment is "compared to what?", and the honest answer is the other things you could own. This
@@ -47,8 +55,8 @@ import { SEARCH_ALIASES } from "../../lib/searchAliases.mjs";
     <div class="ctlRow">
       <label class="ctl">
         <span class="ctlLbl">Your required return</span>
-        <span class="ctlVal"><output id="rOut">9%</output></span>
-        <input id="rDial" type="range" min="4" max="15" step="0.5" value="9" aria-label="Required return (discount rate)" />
+        <span class="ctlVal"><output id="rOut">{rRest}%</output></span>
+        <input id="rDial" type="range" min="4" max="15" step="0.5" value={rRest} aria-label="Required return" />
       </label>
       <div class="bases" role="group" aria-label="Owner-earnings base">
         <span class="ctlLbl">Base</span>
@@ -59,8 +67,8 @@ import { SEARCH_ALIASES } from "../../lib/searchAliases.mjs";
       <button class="copyLink" id="cmpCopy" type="button" title="The whole comparison lives in the URL">Copy link</button>
     </div>
     <p class="ctlNote">
-      One required return, applied to every column as its discount rate: the opportunity-cost hurdle,
-      held equal across the businesses. Owner-earnings columns then grow for ten years and 2.5%
+      One required return, applied to every column: the opportunity-cost hurdle,
+      held equal across the businesses. {bondDefault != null ? <>It rests on the 10-year Treasury — {bondDefault}%{bondAsOf ? ` as of ${bondAsOf}` : ""}, snapped to the half-point step; the premium you demand for equity risk is yours to add. </> : null}Owner-earnings columns grow for ten years and 2.5%
       thereafter; a bank is read on its return on tangible book, a REIT on its FFO. The base toggles
       make the owner-earnings figure honest and apply where they fit.
     </p>
@@ -218,7 +226,7 @@ import { SEARCH_ALIASES } from "../../lib/searchAliases.mjs";
       const cards = {};              // ticker -> card JSON (cached)
       const prices = {};             // ticker -> price string
       const userShares = {};         // ticker -> shares in millions (only for filers whose count is untagged)
-      let rate = 9;
+      let rate = parseFloat(rDial.value) || 9; // the server-rendered rest (dated Treasury, snapped); ?r= in the URL still wins below
       const base = { norm: false, sbc: false, maint: false };
 
       // ---- formatting ----
