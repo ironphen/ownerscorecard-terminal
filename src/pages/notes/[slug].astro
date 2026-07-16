@@ -41,9 +41,12 @@ const idx = published.findIndex((a) => a.id === article.id);
 const newer = idx > 0 ? published[idx - 1] : null;
 const older = idx >= 0 && idx < published.length - 1 ? published[idx + 1] : null;
 
-// Structured data: the Note as an Article, authored and published by the publication itself —
-// notes carry Owner Scorecard's name, not a personal byline, by choice. `about` links each
-// covered ticker to its scorecard so machines connect the essay to the company pages.
+// Structured data: the Note as an Article. Notes carry Ryan Reinsant's byline — the founder
+// reversed the original no-byline choice on 2026-07-16: the ledger's trust rests on a name that
+// cannot walk away from it. The structured-data `author` stays the publication for now (the
+// Person-entity question is deliberately open); the visible byline is the human commitment.
+// `about` links each covered ticker to its scorecard so machines connect the essay to the
+// company pages.
 const description = article.data.description || `${article.data.title}, a research note from Owner Scorecard.`;
 const canonical = new URL(Astro.url.pathname, Astro.site).href;
 const iso = (d) => d.toISOString().slice(0, 10);
@@ -75,6 +78,7 @@ const jsonLd = {
   <article>
     <header class="hero">
       <h1>{article.data.title}</h1>
+      <p class="byline">by Ryan Reinsant</p>
       <div class="meta">
         <span class="section">{article.data.section}</span>
         {article.data.draft ? <span class="draft">draft</span> : null}
@@ -132,6 +136,7 @@ const jsonLd = {
   <style>
     .back { margin: 0 0 10px; }
     .hero h1 { margin: 0; }
+    .byline { font-family: var(--serif); font-style: italic; color: var(--ink-dim); font-size: 15px; margin: 6px 0 0; }
     .meta { color: var(--ink-dim); font-size: 14px; margin-top: 6px; }
     .section {
       border: 1px solid var(--rule);
