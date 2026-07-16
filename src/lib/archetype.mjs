@@ -75,7 +75,11 @@ const SIC3_LABEL = {
   "401": "Railroads", "421": "Trucking & logistics", "440": "Cruise & shipping", "441": "Cruise & shipping",
   "451": "Airlines", "452": "Airlines", "470": "Logistics", "473": "Logistics",
   "481": "Telecom", "482": "Telecom", "489": "Telecom", "483": "Media", "484": "Media",
-  "461": "Pipelines", "491": "Utilities", "492": "Gas utilities", "493": "Utilities", "494": "Water utilities", "495": "Waste services",
+  // 490/496/497/499 complete the utility family: without them a filer re-resolved to SIC 4900
+  // ("Electric & Other Services Combined"), 4961 (steam), or 4991 (cogeneration) falls through to
+  // its raw sicDescription and lands as an unshelved orphan label — which blocked a full-pool
+  // refetch when one did ("Electric", shelvesTest). Every 49xx now reads Utilities-family.
+  "461": "Pipelines", "490": "Utilities", "491": "Utilities", "492": "Gas utilities", "493": "Utilities", "494": "Water utilities", "495": "Waste services", "496": "Utilities", "497": "Utilities", "499": "Utilities",
   // retail & distribution
   "520": "Home & building retail", "521": "Home & building retail", "523": "Home & building retail",
   "531": "General retail", "533": "Discount retail", "540": "Grocery", "541": "Grocery",
