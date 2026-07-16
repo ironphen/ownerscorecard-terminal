@@ -305,6 +305,67 @@ const dLabel = oeGrowth != null
 const dValue = oeGrowth != null ? `${oeGrowth.replace("/yr", "")}/yr`
   : recentOe != null ? gFmt(recentOe.g)
   : "—";
+
+// ---- the TOTAL-capex (free-cash-flow) family, precomputed beside the maintenance family ----
+// The interactive base opens on CFO − total capex; the delivered row, the sparkline, the rolling
+// windows and the ladder marker must read the SAME capex treatment as the base in use, or the
+// comparison is apples against oranges (a maintenance-based delivered series systematically beats
+// a free-cash-flow implied requirement — the exact bias the 1986 appendix was written against).
+// Both families are computed here and swapped client-side with the Steady-state toggle; each is
+// internally consistent, and neither ever borrows the other's years.
+const oeFcfPts = (co.history || [])
+  .filter((h) => h?.lines?.revenue != null)
+  .map((h) => ({ fy: h.fy, v: h.lines.cashFromOps != null && h.lines.capex != null ? h.lines.cashFromOps - Math.abs(h.lines.capex) : null }))
+  .filter((p) => p.v != null);
+const famOf = (pts) => {
+  const gFull = deliveredOe(pts);
+  const g5 = pts.length > 5 ? deliveredOe(pts.slice(-5)) : null;
+  let recent = null;
+  if (gFull == null) {
+    let i = pts.length - 1;
+    while (i >= 0 && pts[i].v > 0) i--;
+    const run = pts.slice(i + 1);
+    if (run.length >= 2) {
+      const yrs = run[run.length - 1].fy - run[0].fy;
+      if (yrs > 0) recent = { g: Math.pow(run[run.length - 1].v / run[0].v, 1 / yrs) - 1, fromFy: run[0].fy };
+    }
+  }
+  const wins = (() => {
+    if (pts.length < 8) return null;
+    const out = [];
+    for (let i = 0; i + 5 < pts.length; i++) {
+      const a = pts[i], b = pts[i + 5];
+      if (b.fy - a.fy === 5 && a.v > 0 && b.v > 0) out.push(+(Math.pow(b.v / a.v, 1 / 5) - 1).toFixed(4));
+    }
+    return out.length >= 3 ? out : null;
+  })();
+  const fullRange = pts.length >= 2 ? `${yy(pts[0].fy)}→${yy(pts[pts.length - 1].fy)}` : null;
+  const label = gFull != null
+    ? (fullRange ? `Owner-earnings growth · ${fullRange}` : "Owner-earnings growth, delivered")
+    : recent != null ? `Owner-earnings growth · since FY${recent.fromFy}`
+    : "Owner-earnings growth, delivered";
+  const value = gFull != null ? gFmt(gFull) : recent != null ? gFmt(recent.g) : "—";
+  // The single rate comparisons run against: the full-record read where it exists, else the
+  // recent five-point window, else the turnaround run. One number per family, stated on the row.
+  const gCmp = gFull ?? g5 ?? recent?.g ?? null;
+  return { gCmp, wins, label, value, spark: sparkWin(pts.map((p) => p.v), 7, null) };
+};
+const famTotal = famOf(oeFcfPts);
+// The maintenance family keeps the durability card's own figure where it exists (same
+// 2-year-averaged-endpoint method; the two surfaces must never disagree), with the row's label
+// and value as already assembled above.
+const maintFullG = (() => {
+  if (oeGrowth == null) return null;
+  const p = parseFloat(String(oeGrowth).replace("−", "-")) / 100;
+  return Number.isFinite(p) ? p : null;
+})();
+const famMaint = {
+  gCmp: maintFullG ?? gDeliv5 ?? recentOe?.g ?? null,
+  wins: oeWins,
+  label: dLabel,
+  value: dValue,
+  spark: oeWin,
+};
 const name = co.name || co.ticker;
 const pctS = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${Math.abs(v * 100).toFixed(dp)}%`);
 // The risk-free anchor for Graham's bond test, fetched on the daily refresh (public-domain
@@ -438,7 +499,7 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
       <p class="note">A reverse-DCF needs positive owner earnings, or at least revenue, to anchor to, there's no clean base here. Judge this one on assets or normalized earnings, not a growth model.</p>
     )
   ) : (
-    <div id="valBox" data-oe={ownerEarnings} data-oe3={oeNormalized ?? ""} data-oemaint={ownerEarningsMaint ?? ""} data-oemaint3={oe3Maint ?? ""} data-sbc={sbcLatest ?? ""} data-gdeliv={(gDeliv5 ?? gDeliv) ?? ""} data-netdebt={netDebt} data-balanceok={balanceOk ? "1" : "0"} data-shares={shares} data-haveshares={haveShares ? "1" : "0"} data-name={name} data-ticker={co.ticker} data-eps3={eps3 ?? ""} data-bvps={bvps ?? ""} data-rev={rev ?? ""} data-grev={gRevRaw ?? ""} data-ni={niNow ?? ""} data-sym={sym} data-bonddefault={bondDefault ?? ""} data-oewins={oeWins ? JSON.stringify(oeWins) : ""}>
+    <div id="valBox" data-oe={ownerEarnings} data-oe3={oeNormalized ?? ""} data-oemaint={ownerEarningsMaint ?? ""} data-oemaint3={oe3Maint ?? ""} data-sbc={sbcLatest ?? ""} data-gdeliv-total={famTotal.gCmp ?? ""} data-gdeliv-maint={famMaint.gCmp ?? ""} data-netdebt={netDebt} data-balanceok={balanceOk ? "1" : "0"} data-shares={shares} data-haveshares={haveShares ? "1" : "0"} data-name={name} data-ticker={co.ticker} data-eps3={eps3 ?? ""} data-bvps={bvps ?? ""} data-rev={rev ?? ""} data-grev={gRevRaw ?? ""} data-ni={niNow ?? ""} data-sym={sym} data-bonddefault={bondDefault ?? ""} data-oewins-total={famTotal.wins ? JSON.stringify(famTotal.wins) : ""} data-oewins-maint={famMaint.wins ? JSON.stringify(famMaint.wins) : ""}>
       <p class="intro">
         Type today's close and see the
         owner-earnings growth you'd have to believe to justify it, beside what {name} has delivered.
@@ -496,7 +557,11 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
       <div class="compare">
         <div class="cmp"><span class="cl">Implied by the price</span><span class="cv hot" id="impG">—</span></div>
         {gDeliv5 != null ? <div class="cmp"><span class="cl">Owner-earnings growth · {range5 ?? "5 yr"}</span><span class="cv">{gFmt(gDeliv5)}</span></div> : null}
-        <div class="cmp"><span class="cl">{dLabel}</span><span class="cv">{dValue}</span>{oeWin ? <Sparkline series={oeWin} klass="cmpSpark" /> : null}</div>
+        {/* The delivered row, once per capex family: the Steady-state toggle decides which one
+            shows, so the label, the rate, and the sparkline always share the base's own capex
+            treatment — never a maintenance-based number beside a free-cash-flow base. */}
+        <div class="cmp famRow" data-fam="total" hidden={defaultMaint}><span class="cl">{famTotal.label}</span><span class="cv">{famTotal.value}</span>{famTotal.spark ? <Sparkline series={famTotal.spark} klass="cmpSpark" /> : null}</div>
+        <div class="cmp famRow" data-fam="maint" hidden={!defaultMaint}><span class="cl">{famMaint.label}</span><span class="cv">{famMaint.value}</span>{famMaint.spark ? <Sparkline series={famMaint.spark} klass="cmpSpark" /> : null}</div>
         <div class="cmp"><span class="cl">Multiple paid</span><span class="cv" id="multPaid">—</span></div>
         <div class="cmp"><span class="cl">Owner-earnings yield</span><span class="cv" id="oeY">—</span></div>
       </div>
@@ -708,8 +773,21 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
     if (!box) return;
     const OE = parseFloat(box.dataset.oe), SH_DATA = parseFloat(box.dataset.shares), NAME = box.dataset.name || "this company";
     const SYM = box.dataset.sym || "$";
-    const OE3 = parseFloat(box.dataset.oe3), SBC = parseFloat(box.dataset.sbc) || 0, GDELIV = parseFloat(box.dataset.gdeliv);
+    const OE3 = parseFloat(box.dataset.oe3), SBC = parseFloat(box.dataset.sbc) || 0;
     const OEM = parseFloat(box.dataset.oemaint), OEM3 = parseFloat(box.dataset.oemaint3);
+    // Two delivered/window families, one per capex treatment; the Steady-state toggle picks the
+    // one the base actually runs on, so every comparison on the page shares the base's own
+    // definition. Net-of-stock-comp has no per-year series here, so with SBC on the comparisons
+    // are WITHHELD rather than run gross-vs-net (a mixed comparison is a quiet wrong number).
+    const GD_T = parseFloat(box.dataset.gdelivTotal), GD_M = parseFloat(box.dataset.gdelivMaint);
+    let WINS_T = null, WINS_M = null;
+    try { WINS_T = JSON.parse(box.dataset.oewinsTotal || "null"); } catch (e) {}
+    try { WINS_M = JSON.parse(box.dataset.oewinsMaint || "null"); } catch (e) {}
+    const famMaintOn = () => { const el = document.getElementById("oeMaint"); return !!(el && el.checked); };
+    const sbcOn = () => { const el = document.getElementById("oeSbc"); return !!(el && el.checked && SBC > 0); };
+    const famG = () => (sbcOn() ? NaN : famMaintOn() ? GD_M : GD_T);
+    const famWins = () => (sbcOn() ? null : famMaintOn() ? WINS_M : WINS_T);
+    const famRows = () => document.querySelectorAll(".famRow").forEach((el) => { el.hidden = (el.dataset.fam === "maint") !== famMaintOn(); });
     const px = document.getElementById("px");
     // When the filing's share count is missing (Up-C / multi-class filers), the reader supplies it
     // in millions; otherwise SH comes straight from the record. Market cap can't be formed without it.
@@ -730,7 +808,6 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
     const sens = document.getElementById("sens"), sensTbl = document.getElementById("sensTbl"), sensNote = document.getElementById("sensNote"), sensLoc = document.getElementById("sensLoc");
     const ladder = document.getElementById("ladder"), ladderTbl = document.getElementById("ladderTbl"), ladderNote = document.getElementById("ladderNote");
     const baseRates = document.getElementById("baseRates");
-    let WINS = null; try { WINS = JSON.parse(box.dataset.oewins || "null"); } catch (e) {}
     const baseUsed = document.getElementById("baseUsed");
     const ops = document.getElementById("ops"), opsMc = document.getElementById("opsMc"), impOps = document.getElementById("impOps");
     const marginRow = document.getElementById("marginRow"), mmDial = document.getElementById("mmDial"), mmOut = document.getElementById("mmOut"), reqRev = document.getElementById("reqRev");
@@ -759,9 +836,10 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
     let SCHED_ROWS = [];
     function schedRows() {
       let rows = [0, 0.05, 0.15, 0.2].map((g) => ({ g, lbl: gLbl(g, 0) + "/yr", pl: gLbl(g, 0) + "/yr", deliv: false }));
-      if (!isNaN(GDELIV) && GDELIV >= -0.05 && GDELIV <= 0.30) {
-        rows = rows.filter((r) => Math.abs(r.g - GDELIV) >= 0.0025);
-        rows.push({ g: GDELIV, lbl: gLbl(GDELIV, 1) + "/yr · delivered", pl: gLbl(GDELIV, 1) + "/yr (delivered)", deliv: true });
+      const GD = famG();
+      if (!isNaN(GD) && GD >= -0.05 && GD <= 0.30) {
+        rows = rows.filter((r) => Math.abs(r.g - GD) >= 0.0025);
+        rows.push({ g: GD, lbl: gLbl(GD, 1) + "/yr · delivered", pl: gLbl(GD, 1) + "/yr (delivered)", deliv: true });
       }
       return rows.sort((a, b) => a.g - b.g);
     }
@@ -836,6 +914,7 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
     }
 
     function update() {
+      famRows();
       bondView();
       const { rr, N, gT } = dials();
       const base = effOE();
@@ -926,7 +1005,11 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
       // windows delivered what the price implies. A count, symmetric whether flattering or
       // damning; no adjective attached.
       if (baseRates) {
-        if (WINS && WINS.length >= 3 && !res.cap && isFinite(res.g)) {
+        const WINS = famWins();
+        if (sbcOn() && baseRates) {
+          baseRates.hidden = false;
+          baseRates.textContent = "With the base net of stock comp, the delivered comparisons are withheld: the record's series is gross of stock comp, and a net base against a gross record would be a quiet mismatch.";
+        } else if (WINS && WINS.length >= 3 && !res.cap && isFinite(res.g)) {
           const k = WINS.filter((w) => w > res.g).length;
           baseRates.textContent = `Across its filed record, ${NAME} grew owner earnings above ${pcs(res.g)}/yr in ${k} of its ${WINS.length} rolling five-year windows.`;
           baseRates.hidden = false;
@@ -939,8 +1022,9 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
         // toggle counts does not move with the quote, so it carries over unchanged.
         const cres = !res.cap ? solve((0.7 * mc + evAdj) / base, rr, N, gT) : null;
         if (cres && !cres.cap && isFinite(cres.g)) {
+          const GD = famG();
           cushionLine.hidden = false;
-          cushionLine.textContent = `A third below your price, the implied growth falls to ${pcs(cres.g)}/yr` + (!isNaN(GDELIV) ? `, against ${pcs(GDELIV)}/yr delivered` : "") + ".";
+          cushionLine.textContent = `A third below your price, the implied growth falls to ${pcs(cres.g)}/yr` + (!isNaN(GD) ? `, against ${pcs(GD)}/yr delivered` : "") + ".";
         } else cushionLine.hidden = true;
       }
       // Locate the paid multiple in the schedule, in prose and by the reader's own dials —
@@ -964,17 +1048,18 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
         const RUNGS = [0.06, 0.08, 0.1, 0.12];
         const rungs = base > 0 ? RUNGS.map((rq) => ({ rq, r: solve(mcEff / base, rq, N, gT) })).filter((x) => x.r) : [];
         if (rungs.length === RUNGS.length) {
-          const marker = '<tr class="marker"><th>delivered</th><td>' + pcs(GDELIV) + "/yr</td></tr>";
-          let placed = isNaN(GDELIV);
+          const GD = famG();
+          const marker = '<tr class="marker"><th>delivered</th><td>' + pcs(GD) + "/yr</td></tr>";
+          let placed = isNaN(GD);
           let html = "<thead><tr><th>return required</th><th>growth to believe</th></tr></thead><tbody>";
           for (const x of rungs) {
-            if (!placed && !x.r.cap && GDELIV <= x.r.g) { html += marker; placed = true; }
+            if (!placed && !x.r.cap && GD <= x.r.g) { html += marker; placed = true; }
             html += "<tr><th>" + (x.rq * 100).toFixed(0) + "%/yr</th><td>" + (x.r.cap ? "100%+/yr" : pcs(x.r.g) + "/yr") + "</td></tr>";
           }
-          if (!placed) html += marker;
+          if (!placed && !isNaN(GD)) html += marker;
           ladderTbl.innerHTML = html + "</tbody>";
           ladder.hidden = false;
-          if (ladderNote) ladderNote.textContent = "Each rung is the owner-earnings growth " + NAME + " must compound for " + N + " years (then " + (gT * 100).toFixed(1) + "% forever) for " + SYM + price.toFixed(2) + " to return that rate." + (!isNaN(GDELIV) ? " The delivered line is the rate the record actually compounded at." : "");
+          if (ladderNote) ladderNote.textContent = "Each rung is the owner-earnings growth " + NAME + " must compound for " + N + " years (then " + (gT * 100).toFixed(1) + "% forever) for " + SYM + price.toFixed(2) + " to return that rate." + (!isNaN(GD) ? " The delivered line is the rate the record actually compounded at." : "");
         } else ladder.hidden = true;
       }
       // The operating picture behind the price.
