@@ -6,9 +6,13 @@ below carries a confidence mark; nothing prints unverified.*
 
 ## The founder's viewing notes (primary observation of the footage, 2026-07-16)
 
-Source: archival lecture footage, youtube.com/watch?v=sgEZ2wr9anM (provenance to verify: who
-filmed, which course or venue, exact date). Companion footage: youtube.com/watch?v=tFv8eLe59JA,
-reportedly mobile brokerage buses selling shares around Massachusetts towns.
+Source: archival footage of a COLUMBIA UNIVERSITY lecture, Graham appearing alongside the Dean
+(youtube.com/watch?v=sgEZ2wr9anM). Corrected by the founder 2026-07-16: this is the university
+lecture, NOT Senate testimony — the Fulbright hearings are a separate 1955 primary source from
+the same season, listed below. Provenance to verify: which Dean (Courtney C. Brown took the
+Business School deanship in 1954 — confirm against the footage), who filmed, exact date.
+Companion footage: youtube.com/watch?v=tFv8eLe59JA, reportedly mobile brokerage buses selling
+shares around Massachusetts towns.
 
 As watched — to be re-verified against the footage before any quotation prints:
 
