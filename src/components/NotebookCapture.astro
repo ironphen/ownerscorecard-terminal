@@ -13,6 +13,7 @@ const { ticker, mode, suffix = "", bondDefault = null, bondName = "", bondAsOf =
 
 <div
   class="nbCap"
+  hidden
   data-ticker={ticker}
   data-mode={mode}
   data-suffix={suffix}
@@ -23,12 +24,12 @@ const { ticker, mode, suffix = "", bondDefault = null, bondName = "", bondAsOf =
   data-periodend={periodEnd}
   data-form={form}
 >
-  <button class="nbToggle" type="button">Your notebook</button>
+  <button class="nbToggle" type="button">Enter this in your notebook — dated, yours.</button>
   <div class="nbBody" hidden>
     <p class="nbLine">
-      Keep this appraisal: a dated snapshot of the price you typed, the assumptions you set,
-      and what the page showed for them. A snapshot is never edited after it is saved.
-      Your notebook is yours alone — the publication cannot read it.
+      A dated snapshot of the price you typed, the assumptions you set, and what the page
+      showed for them. A snapshot is never edited after it is saved. Your notebook is yours
+      alone — the publication cannot read it.
     </p>
     <div class="nbRow">
       <input class="nbBecause" type="text" maxlength="500" placeholder="Because… (optional)" />
@@ -77,56 +78,87 @@ const { ticker, mode, suffix = "", bondDefault = null, bondName = "", bondAsOf =
 
 <script>
   import { buildSnapshotPayload, snapshotSummary } from "../lib/notebookCapture.mjs";
+  import { localISO } from "../lib/priceMemory.mjs";
+
+  const $ = (id) => document.getElementById(id);
+  const txt = (id) => $(id)?.textContent || null;
+  const vis = (id) => { const el = $(id); return el && !el.hidden ? el.textContent : null; };
 
   // Per-mode element reads: the reader's controls and the sentences the page rendered for
-  // them. Everything read here is either reader-set or already on the reader's screen.
+  // them (§3.2 — inputs, readout verbatim + parsed numerics, and the filed basis). Everything
+  // read here is either reader-set or already on the reader's screen; a snapshot is a frozen
+  // copy, never re-derived later.
   const COLLECT = {
-    main: () => ({
-      price: document.getElementById("px")?.value,
-      dials: {
-        required: document.getElementById("r")?.value,
-        years: document.getElementById("n")?.value,
-        terminal: document.getElementById("g")?.value,
-        matureMargin: document.getElementById("mmDial")?.value,
-      },
-      toggles: {
-        normalized: !!document.getElementById("oeNorm")?.checked,
-        sbcExpensed: !!document.getElementById("oeSbc")?.checked,
-        steadyState: !!document.getElementById("oeMaint")?.checked,
-        balanceSheet: !!document.getElementById("evOn")?.checked,
-      },
-      lede: document.getElementById("lede")?.textContent,
-      base: document.getElementById("baseUsed")?.textContent,
-      extra: document.getElementById("baseRates")?.textContent,
-    }),
+    main: () => {
+      const box = $("valBox");
+      const maint = !!$("oeMaint")?.checked;
+      return {
+        price: $("px")?.value,
+        sharesEntered: $("shInput")?.value,
+        bondField: $("bondY")?.value,
+        dials: {
+          required: $("r")?.value,
+          years: $("n")?.value,
+          terminal: $("g")?.value,
+          matureMargin: vis("marginRow") != null ? $("mmDial")?.value : null,
+        },
+        toggles: {
+          normalized: !!$("oeNorm")?.checked,
+          sbcExpensed: !!$("oeSbc")?.checked,
+          steadyState: maint,
+          balanceSheet: !!$("evOn")?.checked,
+        },
+        lede: txt("lede"),
+        base: txt("baseUsed"),
+        extra: vis("baseRates"),
+        readout: {
+          implied: txt("impG"),
+          oeYield: txt("oeY"),
+          spread: vis("bondCmp") != null ? txt("spreadB") : null,
+          gate: txt("ggate"),
+          marginAsk: vis("reqRev"),
+        },
+        record: {
+          sym: box?.dataset.sym,
+          shares: box?.dataset.shares,
+          netDebt: box?.dataset.netdebt,
+          deliveredG: maint ? box?.dataset.gdelivMaint : box?.dataset.gdelivTotal,
+        },
+      };
+    },
     reit: () => ({
-      price: document.getElementById("pxr")?.value,
-      dials: {
-        required: document.getElementById("rR")?.value,
-        growth: document.getElementById("gR")?.value,
-      },
-      lede: document.getElementById("ledeR")?.textContent,
+      price: $("pxr")?.value,
+      dials: { required: $("rR")?.value, growth: $("gR")?.value },
+      lede: txt("ledeR"),
+      readout: { priceToFfo: txt("pffo"), justified: txt("justpffo"), divYield: txt("dyR") },
     }),
     bank: () => ({
-      price: document.getElementById("pxb")?.value,
-      dials: {
-        coe: document.getElementById("coeB")?.value,
-        growth: document.getElementById("gB")?.value,
+      price: $("pxb")?.value,
+      dials: { coe: $("coeB")?.value, growth: $("gB")?.value },
+      lede: txt("ledeB"),
+      readout: {
+        priceToTbv: txt("ptbv"),
+        justified: txt("justptbv"),
+        pe: txt("peBank"),
+        gate: txt("ggateBank"),
       },
-      lede: document.getElementById("ledeB")?.textContent,
-      extra: document.getElementById("ggateBank")?.textContent ? "Graham’s price gate: " + document.getElementById("ggateBank").textContent : null,
     }),
     neg: () => ({
-      price: document.getElementById("pxn")?.value,
+      price: $("pxn")?.value,
       dials: {
-        required: document.getElementById("rN")?.value,
-        years: document.getElementById("nN")?.value,
-        revGrowth: document.getElementById("grN")?.value,
-        matureMargin: document.getElementById("mmN")?.value,
+        required: $("rN")?.value,
+        years: $("nN")?.value,
+        revGrowth: $("grN")?.value,
+        matureMargin: $("mmN")?.value,
       },
-      lede: document.getElementById("ledeN")?.textContent,
+      lede: txt("ledeN"),
+      readout: { mustReach: txt("reqOE"), marginDemanded: txt("reqM") },
     }),
   };
+
+  // The price input each mode gates on: the control appears only with a priced reading and
+  // otherwise does not exist (§3.6 / guard 5 — it can never solicit an empty save).
+  const PRICE_INPUT = { main: "px", reit: "pxr", bank: "pxb", neg: "pxn" };
 
   const fmtWhen = (iso) => {
     try {
@@ -201,6 +233,15 @@ const { ticker, mode, suffix = "", bondDefault = null, bondName = "", bondAsOf =
         .catch(() => { loaded = false; say("Couldn’t reach the notebook — try again."); });
     };
 
+    // Price-gate the whole control: it appears with the priced output and otherwise does not
+    // exist. Watched on input; the delayed initial check covers the price-memory restore and
+    // ?px=, which set the field programmatically during page boot.
+    const pxEl = document.getElementById(PRICE_INPUT[mode] || "");
+    const gate = () => { root.hidden = !(pxEl && parseFloat(pxEl.value) > 0); };
+    if (pxEl) pxEl.addEventListener("input", gate);
+    gate();
+    setTimeout(gate, 500);
+
     toggle.addEventListener("click", () => {
       body.hidden = !body.hidden;
       if (!body.hidden) load();
@@ -210,6 +251,7 @@ const { ticker, mode, suffix = "", bondDefault = null, bondName = "", bondAsOf =
       const fields = COLLECT[mode] ? COLLECT[mode]() : null;
       if (!fields) return;
       fields.mode = mode;
+      fields.date = localISO();
       const by = parseFloat(root.dataset.bondyield);
       if (Number.isFinite(by)) fields.bond = { yield: by, name: root.dataset.bondname, asOf: root.dataset.bondasof };
       fields.vintage = { fy: root.dataset.fy, periodEnd: root.dataset.periodend, form: root.dataset.form };

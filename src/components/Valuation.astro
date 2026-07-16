@@ -511,9 +511,9 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
     negMode ? (
       <div id="valBoxNeg" data-rev={rev} data-shares={shares} data-netdebt={netDebt} data-name={name} data-ticker={co.ticker} data-oem={oeMarginNow ?? ""} data-profitable={profitableNeg ? "1" : "0"} data-sym={sym}>
         {profitableNeg ? (
-          <p class="intro">{name} is <b>profitable</b>, but owner earnings are <b>negative</b> this year because capital spending currently outruns operating cash, a build-out, so the owner-earnings reverse-DCF has no positive base to grow. We read the price from both ends instead: type a price to see the steady-state profitability it <b>demands</b>, then set the mature margin you would <b>believe</b> and weigh the two against each other. Nothing leaves your browser.</p>
+          <p class="intro">{name} is <b>profitable</b>, but owner earnings are <b>negative</b> this year because capital spending currently outruns operating cash, a build-out, so the owner-earnings reverse-DCF has no positive base to grow. We read the price from both ends instead: type a price to see the steady-state profitability it <b>demands</b>, then set the mature margin you would <b>believe</b> and weigh the two against each other. Nothing leaves your browser unless you enter it in your notebook.</p>
         ) : (
-          <p class="intro">Owner earnings are <b>negative</b> today, so the usual reverse-DCF has nothing to grow. That is exactly when a price makes its boldest promise, so we read it from both ends: type a price to see the future profitability it <b>demands</b>, then set the mature margin you would <b>believe</b> and weigh the two against each other. Nothing leaves your browser.</p>
+          <p class="intro">Owner earnings are <b>negative</b> today, so the usual reverse-DCF has nothing to grow. That is exactly when a price makes its boldest promise, so we read it from both ends: type a price to see the future profitability it <b>demands</b>, then set the mature margin you would <b>believe</b> and weigh the two against each other. Nothing leaves your browser unless you enter it in your notebook.</p>
         )}
         <div class="priceRow">
           <label for="pxn">Today&rsquo;s price</label>
@@ -964,7 +964,7 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
         const accEl0 = document.getElementById("accSpread");
         if (accEl0) accEl0.textContent = "";
         bondLede.textContent = !(BOND > 0)
-          ? "Graham measured a stock against the bond you could own instead, the heart of his margin of safety. Enter today’s high-grade bond yield (the 10-year government bond, or a AAA corporate) to weigh the owner-earnings yield against it. Nothing is stored."
+          ? "Graham measured a stock against the bond you could own instead, the heart of his margin of safety. Enter today’s high-grade bond yield (the 10-year government bond, or a AAA corporate) to weigh the owner-earnings yield against it. Nothing is stored unless you enter it in your notebook."
           : "Enter a price above to set the owner-earnings yield, then this weighs it against the bond.";
         return;
       }

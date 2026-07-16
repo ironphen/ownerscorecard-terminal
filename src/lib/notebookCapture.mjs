@@ -22,9 +22,13 @@ const clip = (v, cap) => {
   return s.length > cap ? s.slice(0, cap - 1) + "…" : s;
 };
 
-// fields: { mode, price, dials: {label: value}, toggles?: {label: bool}, lede, base?, extra?,
-//           bond?: {name, yield, asOf}, vintage?: {fy, periodEnd, form} }
+// fields: { mode, price, date?, dials: {label: value}, toggles?: {label: bool}, lede, base?,
+//           extra?, readout?: {label: shortText}, record?: {label: numberOrShortText},
+//           sharesEntered?, bondField?, bond?: {name, yield, asOf},
+//           vintage?: {fy, periodEnd, form} }
 // Returns the payload object, or null when the capture has no priced appraisal to record.
+// A snapshot is a frozen copy of the computed figures, never a pointer re-derived later
+// (design doc §3.2) — everything here is copied at capture time.
 export function buildSnapshotPayload(fields) {
   const mode = ["main", "reit", "bank", "neg"].includes(fields?.mode) ? fields.mode : null;
   const price = num(fields?.price);
@@ -38,6 +42,35 @@ export function buildSnapshotPayload(fields) {
   if (Object.keys(dials).length === 0) return null;
 
   const payload = { v: 1, mode, price, dials };
+
+  // The client's local calendar date: an evening capture in the Americas must not
+  // post-date itself when the server clock is already tomorrow (§3.2).
+  const date = typeof fields?.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(fields.date) ? fields.date : null;
+  if (date) payload.date = date;
+
+  const sharesEntered = num(fields?.sharesEntered);
+  if (sharesEntered != null && sharesEntered > 0) payload.sharesEntered = sharesEntered;
+  const bondField = num(fields?.bondField);
+  if (bondField != null && bondField > 0) payload.bondField = bondField;
+
+  // The rendered numerics as the page showed them ("what you save is exactly what you read").
+  const readout = {};
+  for (const [k, v] of Object.entries(fields?.readout ?? {})) {
+    const s = clip(v, 90);
+    if (s && s !== "—" && /^[a-zA-Z][\w]{0,23}$/.test(k) && Object.keys(readout).length < 8) readout[k] = s;
+  }
+  if (Object.keys(readout).length) payload.readout = readout;
+
+  // The filed basis the appraisal ran against: an appraisal without its record is unanchored.
+  const record = {};
+  for (const [k, v] of Object.entries(fields?.record ?? {})) {
+    if (!/^[a-zA-Z][\w]{0,23}$/.test(k) || Object.keys(record).length >= 8) continue;
+    const n = num(v);
+    if (n != null) { record[k] = n; continue; }
+    const s = clip(v, 40);
+    if (s) record[k] = s;
+  }
+  if (Object.keys(record).length) payload.record = record;
 
   const toggles = {};
   for (const [k, v] of Object.entries(fields?.toggles ?? {})) {
@@ -74,15 +107,22 @@ export function buildSnapshotPayload(fields) {
   return payload;
 }
 
-// One line that names a snapshot in a list: the reader's price and the headline dial values.
+// One line that names a snapshot in a list, §3.6 register:
+// "Jun 3, 2026 — $211.40 · 9% / 10yr / 2.5% · implied +14%/yr". The date comes from the row.
 export function snapshotSummary(payload) {
   if (!payload || typeof payload !== "object") return "";
   const bits = [];
-  if (payload.price != null) bits.push(`at ${payload.price}`);
+  const sym = typeof payload.record?.sym === "string" ? payload.record.sym : "";
+  if (payload.price != null) bits.push(`${sym}${payload.price}`);
   const d = payload.dials ?? {};
-  if (d.required != null) bits.push(`${d.required}% required`);
-  if (d.coe != null) bits.push(`${d.coe}% cost of equity`);
-  if (d.growth != null) bits.push(`${d.growth}% growth`);
-  if (d.matureMargin != null) bits.push(`${d.matureMargin}% mature margin`);
-  return bits.join(", ");
+  const dialBits = [];
+  if (d.required != null) dialBits.push(`${d.required}%`);
+  if (d.coe != null) dialBits.push(`${d.coe}% coe`);
+  if (d.years != null) dialBits.push(`${d.years}yr`);
+  if (d.terminal != null) dialBits.push(`${d.terminal}%`);
+  if (d.growth != null) dialBits.push(`${d.growth}% growth`);
+  if (d.matureMargin != null) dialBits.push(`${d.matureMargin}% margin`);
+  if (dialBits.length) bits.push(dialBits.join(" / "));
+  if (payload.readout?.implied) bits.push(`implied ${payload.readout.implied}`);
+  return bits.join(" · ");
 }

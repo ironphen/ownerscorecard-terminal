@@ -107,7 +107,24 @@ t("capture: long lede is clipped, not rejected",
   (() => { const p = buildSnapshotPayload({ ...mainFields, lede: "x".repeat(5000) }); return p && p.lede.length <= 700 && validPayload(p) !== null; })());
 t("capture: hostile dial keys are dropped",
   (() => { const p = buildSnapshotPayload({ ...mainFields, dials: { required: "9", "__proto__x; drop": "1" } }); return p && Object.keys(p.dials).length === 1; })());
-t("capture: summary names the declaration", snapshotSummary(built).includes("at 210.55") && snapshotSummary(built).includes("4.5% required"));
+const richFields = {
+  ...mainFields,
+  date: "2026-07-16",
+  sharesEntered: "",
+  bondField: "4.6",
+  readout: { implied: "+8.2%/yr", oeYield: "3.1%", gate: "—", spread: null },
+  record: { sym: "$", shares: "14840000000", netDebt: "48000000000", deliveredG: "0.086" },
+};
+const rich = buildSnapshotPayload(richFields);
+t("capture: local calendar date rides along", rich.date === "2026-07-16");
+t("capture: bad date is dropped", buildSnapshotPayload({ ...richFields, date: "yesterday" }).date === undefined);
+t("capture: empty shares field never becomes a claim", rich.sharesEntered === undefined);
+t("capture: bond in the field is a number", rich.bondField === 4.6);
+t("capture: readout keeps figures, drops em-dash and null", rich.readout.implied === "+8.2%/yr" && rich.readout.gate === undefined && rich.readout.spread === undefined);
+t("capture: record carries the filed basis as numbers", rich.record.shares === 14840000000 && rich.record.sym === "$");
+t("capture: rich payload still clears the API gate", validPayload(rich) !== null);
+t("capture: summary reads like the design's one-liner",
+  (() => { const s = snapshotSummary(rich); return s.startsWith("$210.55") && s.includes("4.5% / 10yr / 2.5%") && s.includes("implied +8.2%/yr"); })());
 t("capture: summary of garbage is empty", snapshotSummary(null) === "" && snapshotSummary("x") === "");
 
 if (failed) { console.error(`\n❌ notebookTest: ${failed} failure(s).`); process.exit(1); }
