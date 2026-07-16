@@ -969,7 +969,18 @@ async function main() {
     // correct scale, applied to the latest-annual and TTM counts captured separately below.
     const sharesInstant = collectInstant(facts, CONCEPTS.sharesOutstanding, "shares");
     for (const fy in sharesInstant) if (ha.sharesDiluted[fy] == null) ha.sharesDiluted[fy] = sharesInstant[fy];
-    ha.sharesDiluted = normalizeShareScale(ha.sharesDiluted);
+    // The cover-page count (dei namespace, always raw units) arbitrates scale per year — the
+    // filing's own testimony, needing no majority vote (ConocoPhillips tagged TEN consecutive
+    // years in thousands; the cover counts corrected every one). Instants, keyed by period year.
+    const coverByYear = {};
+    for (const o of facts?.facts?.dei?.EntityCommonStockSharesOutstanding?.units?.shares || []) {
+      if (!o.end || o.val == null || o.val <= 0) continue;
+      const fy = new Date(o.end).getUTCFullYear();
+      if (!coverByYear[fy] || (o.filed || "") > coverByYear[fy].filed) coverByYear[fy] = { val: o.val, filed: o.filed || "" };
+    }
+    for (const fy in coverByYear) coverByYear[fy] = coverByYear[fy].val;
+    ha.sharesDiluted = normalizeShareScale(ha.sharesDiluted, coverByYear);
+    // Repurchased shares are a fraction of outstanding — the cover count does not arbitrate them.
     ha.repurchasedShares = normalizeShareScale(ha.repurchasedShares);
     // The majority-scale reference, never the max: a single mistagged-HIGH history year must not
     // become the scale the current count gets "corrected" toward (src/lib/shareScale.mjs).

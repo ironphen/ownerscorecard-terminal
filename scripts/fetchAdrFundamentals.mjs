@@ -477,14 +477,22 @@ async function main() {
     const hi = Object.fromEntries(["totalAssets", "currentAssets", "currentLiabilities", "totalLiabilities", "cashAndEquivalents", "shortTermInvestments", "receivables", "inventory", "netPPE", "operatingLeaseAsset", "accountsPayable", "equity", "goodwill", "intangibleAssets", "longTermDebt", "currentDebt", "deposits", "lossReserves"].map((k) => [k, collectInstant(facts, CONCEPTS[k], ccy)]));
     // Share counts, normalized across the record: a filer that tags one year's count in thousands
     // against whole-share neighbors (121 ADR names at the campaign kickoff — this pool never had the
-    // US pool's normalizeShareScale) gets the ref-compare and V-shape passes the US pool gets, on the
-    // MERGED weighted-average/period-end series the history actually reads. Same shared code, so the
-    // two pools can never drift.
+    // US pool's normalizeShareScale) gets the same shared rule the US pool gets, on the MERGED
+    // weighted-average/period-end series the history actually reads. The dei cover count arbitrates
+    // per year where a 20-F carries one (many don't — those fall to the conservative passes, which
+    // refuse edges: Fresenius's first-year ×1000-HIGH stays as-filed and flagged, never an anchor).
     const shAnnual = collectAnnual(facts, CONCEPTS.sharesDiluted, "shares");
     const shInstant = collectInstant(facts, CONCEPTS.sharesOutstanding, "shares");
+    const coverByYear = {};
+    for (const o of facts?.facts?.dei?.EntityCommonStockSharesOutstanding?.units?.shares || []) {
+      if (!o.end || o.val == null || o.val <= 0) continue;
+      const fy = new Date(o.end).getUTCFullYear();
+      if (!coverByYear[fy] || (o.filed || "") > coverByYear[fy].filed) coverByYear[fy] = { val: o.val, filed: o.filed || "" };
+    }
+    for (const fy in coverByYear) coverByYear[fy] = coverByYear[fy].val;
     const shMerged = normalizeShareScale(Object.fromEntries(
       [...new Set([...Object.keys(shAnnual), ...Object.keys(shInstant)])].map((fy) => [fy, shAnnual[fy] ?? shInstant[fy] ?? null])
-    ));
+    ), coverByYear);
 
     // A bank tags a gross "Revenues" (interest expense not yet removed) that overstates its top line by
     // roughly the interest it pays. Read a bank on the net-of-interest tag alone; where a filer lacks it
