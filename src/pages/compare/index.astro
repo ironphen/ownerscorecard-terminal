@@ -3,11 +3,11 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 import { SEARCH_ALIASES } from "../../lib/searchAliases.mjs";
 import rates from "../../data/rates.json";
 
-// The one required return rests where the company pages rest it: on the dated 10-year Treasury,
-// snapped to the dial's half-point step and clamped to its range — one risk-free yardstick on
-// every surface, never a house number (Valuation.astro carries the full rationale).
+// The one required return rests where the company pages rest it — 9%, the founder's resting
+// place for an equity hurdle — with the dated 10-year Treasury named beside it as the
+// reference the premium is measured against (Valuation.astro carries the full rationale).
 const bondDefault = rates?.tenYear != null ? rates.tenYear : null;
-const rRest = bondDefault != null ? Math.min(15, Math.max(4, Math.round(bondDefault * 2) / 2)) : 9;
+const rRest = 9;
 const bondAsOf = rates?.asOf ? new Date(rates.asOf).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }) : null;
 
 // Weigh against another business — the head-to-head compare view. Munger's first question about any
@@ -68,7 +68,7 @@ const bondAsOf = rates?.asOf ? new Date(rates.asOf).toLocaleDateString("en-US", 
     </div>
     <p class="ctlNote">
       One required return, applied to every column: the opportunity-cost hurdle,
-      held equal across the businesses. {bondDefault != null ? <>It rests on the 10-year Treasury — {bondDefault}%{bondAsOf ? ` as of ${bondAsOf}` : ""}, snapped to the half-point step; the premium you demand for equity risk is yours to add. </> : null}Owner-earnings columns grow for ten years and 2.5%
+      held equal across the businesses. {bondDefault != null ? <>For reference, the 10-year Treasury is {bondDefault}%{bondAsOf ? ` as of ${bondAsOf}` : ""}; the gap above it is the equity premium you price. </> : null}Owner-earnings columns grow for ten years and 2.5%
       thereafter; a bank is read on its return on tangible book, a REIT on its FFO. The base toggles
       make the owner-earnings figure honest and apply where they fit.
     </p>

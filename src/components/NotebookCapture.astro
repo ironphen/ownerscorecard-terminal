@@ -84,6 +84,17 @@ const { ticker, mode, suffix = "", bondDefault = null, bondName = "", bondAsOf =
   const txt = (id) => $(id)?.textContent || null;
   const vis = (id) => { const el = $(id); return el && !el.hidden ? el.textContent : null; };
 
+  // The two mature-margin dials are touch-gated BELIEFS (design guard 1): untouched, they are
+  // nobody's declaration and no derived figure renders from them — so untouched they must
+  // never enter a snapshot either. A reader's dated record saying "25% margin" they never set
+  // is exactly the laundering the notebook exists to prevent. Touch is tracked here, the same
+  // signal the page's own arithmetic gates on.
+  const touched = {};
+  ["mmDial", "mmN"].forEach((id) => {
+    const el = $(id);
+    if (el) el.addEventListener("input", () => { touched[id] = true; });
+  });
+
   // Per-mode element reads: the reader's controls and the sentences the page rendered for
   // them (§3.2 — inputs, readout verbatim + parsed numerics, and the filed basis). Everything
   // read here is either reader-set or already on the reader's screen; a snapshot is a frozen
@@ -100,7 +111,7 @@ const { ticker, mode, suffix = "", bondDefault = null, bondName = "", bondAsOf =
           required: $("r")?.value,
           years: $("n")?.value,
           terminal: $("g")?.value,
-          matureMargin: vis("marginRow") != null ? $("mmDial")?.value : null,
+          matureMargin: touched.mmDial && vis("marginRow") != null ? $("mmDial")?.value : null,
         },
         toggles: {
           normalized: !!$("oeNorm")?.checked,
@@ -149,7 +160,7 @@ const { ticker, mode, suffix = "", bondDefault = null, bondName = "", bondAsOf =
         required: $("rN")?.value,
         years: $("nN")?.value,
         revGrowth: $("grN")?.value,
-        matureMargin: $("mmN")?.value,
+        matureMargin: touched.mmN ? $("mmN")?.value : null,
       },
       lede: txt("ledeN"),
       readout: { mustReach: txt("reqOE"), marginDemanded: txt("reqM") },
