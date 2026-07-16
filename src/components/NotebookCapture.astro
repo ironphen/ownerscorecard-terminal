@@ -1,0 +1,238 @@
+---
+// The notebook's capture line — the smallest door into the Owner's Notebook. One line under
+// the valuation readout: the reader may freeze their current appraisal (price, dials, what
+// the page showed for it) as a dated snapshot, with an optional because-line. Reader-initiated
+// only; nothing is captured automatically, and nothing here suggests an assumption.
+//
+// The page stays fully static: the strip is inert HTML until clicked; the first click lazily
+// fetches the reader's prior snapshots for this ticker (401 → the sign-in door, same as
+// Follow). Snapshots are append-only at the database — saved here, deletable here, never
+// editable anywhere.
+const { ticker, mode, suffix = "", bondDefault = null, bondName = "", bondAsOf = "", fy = null, periodEnd = "", form = "" } = Astro.props;
+---
+
+<div
+  class="nbCap"
+  data-ticker={ticker}
+  data-mode={mode}
+  data-suffix={suffix}
+  data-bondyield={bondDefault ?? ""}
+  data-bondname={bondName}
+  data-bondasof={bondAsOf}
+  data-fy={fy ?? ""}
+  data-periodend={periodEnd}
+  data-form={form}
+>
+  <button class="nbToggle" type="button">Your notebook</button>
+  <div class="nbBody" hidden>
+    <p class="nbLine">
+      Keep this appraisal: a dated snapshot of the price you typed, the assumptions you set,
+      and what the page showed for them. A snapshot is never edited after it is saved.
+      Your notebook is yours alone — the publication cannot read it.
+    </p>
+    <div class="nbRow">
+      <input class="nbBecause" type="text" maxlength="500" placeholder="Because… (optional)" />
+      <button class="nbSave" type="button">Save it, dated</button>
+    </div>
+    <p class="nbMsg" hidden></p>
+    <ul class="nbList"></ul>
+  </div>
+</div>
+
+<style>
+  .nbCap { margin: 10px 0 4px; font-family: var(--sans); }
+  .nbToggle {
+    font-size: 12px; font-weight: 600; letter-spacing: 0.05em; color: var(--accent);
+    background: none; border: none; padding: 0; cursor: pointer;
+  }
+  .nbToggle:hover { text-decoration: underline; }
+  .nbBody { margin-top: 6px; }
+  .nbLine { font-size: 12.5px; color: var(--muted); margin: 0 0 8px; max-width: 62ch; }
+  .nbRow { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .nbBecause {
+    flex: 1 1 220px; font-size: 13px; padding: 5px 8px;
+    border: 1px solid var(--rule); border-radius: 4px; background: var(--paper); color: var(--ink);
+  }
+  .nbSave {
+    font-size: 12px; font-weight: 600; letter-spacing: 0.05em; color: var(--accent);
+    background: none; border: 1px solid var(--accent); border-radius: 999px;
+    padding: 4px 14px; cursor: pointer;
+  }
+  .nbSave:hover { background: var(--accent-tint); }
+  .nbSave:disabled { opacity: 0.5; cursor: default; }
+  .nbMsg { font-size: 12.5px; color: var(--muted); margin: 6px 0 0; }
+  .nbList { list-style: none; margin: 8px 0 0; padding: 0; }
+  .nbList li {
+    font-size: 12.5px; color: var(--ink); padding: 5px 0; border-top: 1px solid var(--rule);
+    display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap;
+  }
+  .nbList .nbWhen { color: var(--muted); white-space: nowrap; }
+  .nbList .nbBecauseTxt { color: var(--muted); font-style: italic; }
+  .nbList .nbDel {
+    margin-left: auto; font-size: 11px; color: var(--muted); background: none; border: none;
+    cursor: pointer; padding: 0;
+  }
+  .nbList .nbDel:hover { color: var(--bad); text-decoration: underline; }
+</style>
+
+<script>
+  import { buildSnapshotPayload, snapshotSummary } from "../lib/notebookCapture.mjs";
+
+  // Per-mode element reads: the reader's controls and the sentences the page rendered for
+  // them. Everything read here is either reader-set or already on the reader's screen.
+  const COLLECT = {
+    main: () => ({
+      price: document.getElementById("px")?.value,
+      dials: {
+        required: document.getElementById("r")?.value,
+        years: document.getElementById("n")?.value,
+        terminal: document.getElementById("g")?.value,
+        matureMargin: document.getElementById("mmDial")?.value,
+      },
+      toggles: {
+        normalized: !!document.getElementById("oeNorm")?.checked,
+        sbcExpensed: !!document.getElementById("oeSbc")?.checked,
+        steadyState: !!document.getElementById("oeMaint")?.checked,
+        balanceSheet: !!document.getElementById("evOn")?.checked,
+      },
+      lede: document.getElementById("lede")?.textContent,
+      base: document.getElementById("baseUsed")?.textContent,
+      extra: document.getElementById("baseRates")?.textContent,
+    }),
+    reit: () => ({
+      price: document.getElementById("pxr")?.value,
+      dials: {
+        required: document.getElementById("rR")?.value,
+        growth: document.getElementById("gR")?.value,
+      },
+      lede: document.getElementById("ledeR")?.textContent,
+    }),
+    bank: () => ({
+      price: document.getElementById("pxb")?.value,
+      dials: {
+        coe: document.getElementById("coeB")?.value,
+        growth: document.getElementById("gB")?.value,
+      },
+      lede: document.getElementById("ledeB")?.textContent,
+      extra: document.getElementById("ggateBank")?.textContent ? "Graham’s price gate: " + document.getElementById("ggateBank").textContent : null,
+    }),
+    neg: () => ({
+      price: document.getElementById("pxn")?.value,
+      dials: {
+        required: document.getElementById("rN")?.value,
+        years: document.getElementById("nN")?.value,
+        revGrowth: document.getElementById("grN")?.value,
+        matureMargin: document.getElementById("mmN")?.value,
+      },
+      lede: document.getElementById("ledeN")?.textContent,
+    }),
+  };
+
+  const fmtWhen = (iso) => {
+    try {
+      return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    } catch {
+      return iso;
+    }
+  };
+
+  document.querySelectorAll(".nbCap").forEach((root) => {
+    const ticker = root.dataset.ticker;
+    const mode = root.dataset.mode;
+    const toggle = root.querySelector(".nbToggle");
+    const body = root.querySelector(".nbBody");
+    const because = root.querySelector(".nbBecause");
+    const save = root.querySelector(".nbSave");
+    const msg = root.querySelector(".nbMsg");
+    const list = root.querySelector(".nbList");
+    if (!toggle || !body || !save || !list) return;
+
+    const say = (text) => { msg.textContent = text; msg.hidden = !text; };
+    const signIn = () => { location.href = "/auth/login?next=" + encodeURIComponent(location.pathname); };
+
+    const row = (s) => {
+      const li = document.createElement("li");
+      const when = document.createElement("span");
+      when.className = "nbWhen";
+      when.textContent = fmtWhen(s.taken_at);
+      li.appendChild(when);
+      const sum = document.createElement("span");
+      sum.textContent = snapshotSummary(s.payload);
+      li.appendChild(sum);
+      if (s.because) {
+        const b = document.createElement("span");
+        b.className = "nbBecauseTxt";
+        b.textContent = "— " + s.because;
+        li.appendChild(b);
+      }
+      const del = document.createElement("button");
+      del.className = "nbDel";
+      del.type = "button";
+      del.textContent = "delete";
+      del.addEventListener("click", () => {
+        del.disabled = true;
+        fetch("/api/notebook/delete", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: s.id, kind: "snapshot" }),
+        })
+          .then((r) => (r.ok ? li.remove() : Promise.reject()))
+          .catch(() => { del.disabled = false; say("Couldn’t delete — try again."); });
+      });
+      li.appendChild(del);
+      return li;
+    };
+
+    let loaded = false;
+    const load = () => {
+      if (loaded) return;
+      loaded = true;
+      fetch("/api/notebook?ticker=" + encodeURIComponent(ticker))
+        .then((r) => {
+          if (r.status === 401) { say("Sign in to keep a notebook — one click, and it stays yours alone."); return null; }
+          return r.ok ? r.json() : Promise.reject();
+        })
+        .then((j) => {
+          if (!j) return;
+          list.textContent = "";
+          (j.snapshots || []).forEach((s) => list.appendChild(row(s)));
+          if (!j.snapshots || !j.snapshots.length) say("No snapshots for this company yet.");
+        })
+        .catch(() => { loaded = false; say("Couldn’t reach the notebook — try again."); });
+    };
+
+    toggle.addEventListener("click", () => {
+      body.hidden = !body.hidden;
+      if (!body.hidden) load();
+    });
+
+    save.addEventListener("click", () => {
+      const fields = COLLECT[mode] ? COLLECT[mode]() : null;
+      if (!fields) return;
+      fields.mode = mode;
+      const by = parseFloat(root.dataset.bondyield);
+      if (Number.isFinite(by)) fields.bond = { yield: by, name: root.dataset.bondname, asOf: root.dataset.bondasof };
+      fields.vintage = { fy: root.dataset.fy, periodEnd: root.dataset.periodend, form: root.dataset.form };
+      const payload = buildSnapshotPayload(fields);
+      if (!payload) { say("Type a price first — the snapshot records what your price implies."); return; }
+      save.disabled = true;
+      fetch("/api/notebook/snapshot", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ticker, payload, because: because?.value || undefined }),
+      })
+        .then((r) => {
+          if (r.status === 401) { signIn(); return null; }
+          return r.ok ? r.json() : r.json().then((e) => Promise.reject(e?.error));
+        })
+        .then((j) => {
+          if (!j) return;
+          list.prepend(row(j.snapshot));
+          if (because) because.value = "";
+          say("Saved, dated " + fmtWhen(j.snapshot.taken_at) + ". A snapshot is never edited.");
+        })
+        .catch((e) => say(typeof e === "string" ? e : "Couldn’t save — try again."))
+        .finally(() => { save.disabled = false; });
+    });
+  });
+</script>

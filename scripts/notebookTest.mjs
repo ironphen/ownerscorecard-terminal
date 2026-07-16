@@ -15,6 +15,7 @@ import {
   validTicker, validId, validNoteBody, validBecause, validPayload,
   NOTE_KINDS, NOTE_MAX_CHARS, BECAUSE_MAX_CHARS, PAYLOAD_MAX_BYTES, PAYLOAD_MAX_KEYS,
 } from "../src/lib/notebook.mjs";
+import { buildSnapshotPayload, snapshotSummary } from "../src/lib/notebookCapture.mjs";
 
 let failed = 0;
 const t = (name, ok) => {
@@ -83,6 +84,31 @@ t("payload: rejects an empty object", validPayload({}) === null);
 t("payload: rejects too many keys", validPayload(Object.fromEntries(Array.from({ length: PAYLOAD_MAX_KEYS + 1 }, (_, i) => [`k${i}`, 1]))) === null);
 t("payload: rejects oversized blobs", validPayload({ blob: "x".repeat(PAYLOAD_MAX_BYTES) }) === null);
 t("kinds: exactly note and snapshot", NOTE_KINDS.size === 2 && NOTE_KINDS.has("note") && NOTE_KINDS.has("snapshot"));
+
+// --- 5: the capture builder — its output must always clear the API's own gate ---
+const mainFields = {
+  mode: "main", price: "210.55",
+  dials: { required: "4.5", years: "10", terminal: "2.5" },
+  toggles: { normalized: false, sbcExpensed: true, steadyState: false, balanceSheet: false },
+  lede: "At $210.55, the market is pricing Apple to grow owner earnings about 8.2%/yr…  ",
+  base: "Base in use: $98.4B, latest-year owner earnings.",
+  bond: { yield: "4.58", name: "10-year Treasury", asOf: "Jul 14, 2026" },
+  vintage: { fy: "2025", periodEnd: "2025-09-27", form: "10-K" },
+};
+const built = buildSnapshotPayload(mainFields);
+t("capture: builds a full main-mode payload", built != null && built.mode === "main" && built.price === 210.55);
+t("capture: numbers are numbers", built.dials.required === 4.5 && built.bond.yield === 4.58 && built.vintage.fy === 2025);
+t("capture: output clears the API's validPayload gate", validPayload(built) !== null);
+t("capture: no price → no snapshot", buildSnapshotPayload({ ...mainFields, price: "" }) === null);
+t("capture: zero/negative price → no snapshot", buildSnapshotPayload({ ...mainFields, price: "0" }) === null);
+t("capture: no dials → no snapshot", buildSnapshotPayload({ ...mainFields, dials: {} }) === null);
+t("capture: unknown mode → no snapshot", buildSnapshotPayload({ ...mainFields, mode: "screener" }) === null);
+t("capture: long lede is clipped, not rejected",
+  (() => { const p = buildSnapshotPayload({ ...mainFields, lede: "x".repeat(5000) }); return p && p.lede.length <= 700 && validPayload(p) !== null; })());
+t("capture: hostile dial keys are dropped",
+  (() => { const p = buildSnapshotPayload({ ...mainFields, dials: { required: "9", "__proto__x; drop": "1" } }); return p && Object.keys(p.dials).length === 1; })());
+t("capture: summary names the declaration", snapshotSummary(built).includes("at 210.55") && snapshotSummary(built).includes("4.5% required"));
+t("capture: summary of garbage is empty", snapshotSummary(null) === "" && snapshotSummary("x") === "");
 
 if (failed) { console.error(`\n❌ notebookTest: ${failed} failure(s).`); process.exit(1); }
 console.log("\n✅ notebookTest passed.");
