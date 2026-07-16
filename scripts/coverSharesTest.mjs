@@ -47,6 +47,19 @@ t("hlne-there-were (10-K)",
   "As of May 19, 2026, there were 43,697,364 shares of the registrant's Class A common stock and 11,836,450 shares of the registrant's Class B common stock outstanding.",
   55533814);
 
+t("stz-cover-table (10-K)",
+  "The number of shares outstanding with respect to each of the classes of common stock of Constellation Brands, Inc., as of April 17, 2026, is set forth below: Class Number of Shares Outstanding Class A Common Stock, par value $.01 per share 172,172,544 Class 1 Common Stock, par value $.01 per share 25,923",
+  172172544);
+t("wttr-two-numbers-one-shares (10-K)",
+  "There were 105,140,543 and 16,221,101 shares of the registrant's Class A and Class B common stock, respectively, outstanding as of February 16, 2026.",
+  121361644);
+t("bam-tiny-class-b-below-floor (10-K)",
+  "As of February 23, 2026, the registrant had 1,638,147,590 Class A Limited Voting Shares and 21,280 Class B Limited Voting Shares outstanding.",
+  // The 21,280-share Class B sits below the 1e5 plausibility floor and is omitted — a 0.0013%
+  // understatement, immaterial and accepted; the floor is what keeps date fragments and par
+  // values out of the sum, and the corroboration band absorbs the difference.
+  1638147590);
+
 // --- synthetic guards ---
 t("single-class",
   "The number of shares of the registrant common stock outstanding as of April 10, 2026 was 84,512,331.",

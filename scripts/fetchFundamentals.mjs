@@ -532,9 +532,12 @@ async function getText(url) {
 // verbatim covers of all thirteen filers in scripts/coverSharesTest.mjs. Returns a share count or
 // null — never a guess.
 export function parseCoverShares(html) {
-  // The cover lives at the top of the document; 40k chars of stripped text is generous.
-  const text = html.replace(/<[^>]+>/g, " ").replace(/&#160;|&nbsp;/g, " ").replace(/&#8217;|&rsquo;/g, "'").replace(/\s+/g, " ").slice(0, 40000);
-  const anchor = text.search(/number of shares outstanding of each|shares outstanding of each of the (?:issuer|registrant)|number of shares of (?:the registrant'?s? )?(?:[\w$.\s]{0,40})?common (?:stock|shares)[^.]{0,80}outstanding|number of outstanding shares of|(?:registrant had|there were) (?:issued and outstanding )?[\d,]+ shares of|as of [a-z]+ \d{1,2}, \d{4},? [\d,]+ (?:class [a-z] )?common shares|shares of common stock outstanding/i);
+  // The cover is the first VISIBLE text, but inline-XBRL documents carry an enormous hidden
+  // <ix:header> metadata block (contexts, units — tens of thousands of characters) before any
+  // rendered content, so it is stripped first; the window is then generous for the true cover.
+  const visible = html.replace(/<ix:header[^]*?<\/ix:header>/gi, " ").replace(/<(script|style)[^]*?<\/\1>/gi, " ");
+  const text = visible.replace(/<[^>]+>/g, " ").replace(/&#160;|&nbsp;/g, " ").replace(/&#8217;|&rsquo;/g, "'").replace(/\s+/g, " ").slice(0, 120000);
+  const anchor = text.search(/number of shares outstanding (?:of|with respect to) each|shares outstanding of each of the (?:issuer|registrant)|number of shares of (?:the registrant'?s? )?(?:[\w$.\s]{0,40})?common (?:stock|shares)[^.]{0,80}outstanding|number of outstanding shares of|(?:registrant had|there were) (?:issued and outstanding )?[\d,]+ (?:[\w$.,]+ ){0,6}?shares|as of [a-z]+ \d{1,2}, \d{4},? [\d,]+ (?:class [a-z] )?common shares|shares of common stock outstanding/i);
   if (anchor < 0) return null;
   const region = text.slice(anchor, anchor + 1200);
   // Collect count candidates: large comma-grouped integers (or 7+ digit plain integers) that are
