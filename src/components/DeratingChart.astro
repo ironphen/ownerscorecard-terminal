@@ -4,10 +4,11 @@
 // data (monthly closes the author supplied); nothing wired in, no runtime, no price feed. Zero-
 // anchored like the record charts, so a two-thirds fall reads as a two-thirds fall.
 //   chart="price" — Adobe's monthly price, the S&P 500 rebased to the same start for scale.
-//   chart="pe"    — Adobe's price divided by its own trailing full-year earnings: the multiple.
+//   chart="pe"    — Adobe's price divided by its own full-year earnings: the multiple.
 const { chart = "price" } = Astro.props;
 
-// Monthly closing prices, Jan 2018 → Jul 2026 (author-supplied CSV).
+// Monthly closing prices, Jan 2018 → Jul 2026 (author-supplied CSV). The final point is the
+// July 15, 2026 close, taken before July closed; the caption says so.
 const ADBE = [
   199.76,209.13,216.08,221.60,249.28,243.81,244.68,263.51,269.95,245.76,250.89,226.24,
   247.82,262.50,266.49,289.25,270.90,294.65,298.86,284.51,276.25,277.93,309.53,329.81,
@@ -17,7 +18,7 @@ const ADBE = [
   370.34,323.95,385.37,377.56,417.79,488.99,546.17,559.34,509.90,532.06,611.01,596.60,
   617.78,560.28,504.60,462.83,444.76,555.54,551.65,574.41,517.78,478.08,515.93,444.68,
   437.45,438.56,383.53,374.98,415.09,386.88,357.69,356.70,352.75,340.31,320.13,349.99,
-  293.25,262.41,243.08,246.10,259.21,205.02,219.72,
+  293.25,262.41,243.08,246.10,259.21,205.02,224.56,
 ];
 const SPY = [
   281.90,271.65,263.15,264.51,270.94,271.28,281.33,290.31,290.72,270.63,275.65,249.92,
@@ -30,8 +31,9 @@ const SPY = [
   601.82,594.18,559.39,554.54,589.39,617.85,632.08,645.05,666.18,682.06,683.39,681.92,
   691.97,685.99,650.34,718.66,756.48,746.77,744.78,
 ];
-// Adobe's GAAP EPS by fiscal year (from the record). Each month is valued on the most recent full
-// year; 2026 rides on FY2025 until FY2026 reports.
+// Adobe's GAAP EPS by fiscal year (from the record). Convention: each calendar year's months are
+// divided by that same fiscal year's reported EPS, so months early in a year are shown on earnings
+// reported near its end; 2026 rides on FY2025 until FY2026 reports. The figcaption states this.
 const EPS = { 2018: 5.20, 2019: 6.00, 2020: 10.83, 2021: 10.02, 2022: 10.10, 2023: 11.82, 2024: 12.36, 2025: 16.70 };
 const BASE = 2018;
 const N = ADBE.length;
@@ -60,8 +62,8 @@ const fmt = (v) => (isPrice ? `$${Math.round(v)}` : `${Math.round(v)}×`);
 const years = [0, 24, 48, 72, 96]; // Jan of 2018, 2020, 2022, 2024, 2026
 const title = isPrice ? "Adobe's price, 2018–2026" : "Adobe's price ÷ its own earnings";
 const caption = isPrice
-  ? "Monthly closing price. The S&P 500, rebased to Adobe's 2018 start, is the faint line: the market kept climbing while Adobe cratered, so the fall is Adobe's alone."
-  : "The multiple, month by month: Adobe's price divided by its most recent full-year earnings. Nearly every dollar of the decline is this line coming down, not the earnings.";
+  ? "Monthly closing price; the last point is the July 15, 2026 close. The S&P 500, rebased to Adobe's 2018 start, is the faint line: the market kept climbing while Adobe cratered, so the fall is Adobe's alone."
+  : "The multiple, month by month: each year's price divided by that fiscal year's reported earnings, with 2026 shown on fiscal 2025. Nearly every dollar of the decline is this line coming down, not the earnings.";
 ---
 
 <figure class="drc">

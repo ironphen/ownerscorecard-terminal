@@ -64,8 +64,8 @@ export default defineConfig({
   // imports its destination page module, and those destinations import the data pools — ~45MB
   // into the Cloudflare worker, past scripts/verifyStatic.mjs's ceiling.
   redirects: {
-    '/notes/the-de-rating': '/notes',
-    '/notes/the-moat-and-the-multiple': '/notes',
+    // The note's original slug from its first publication era: saved URLs land on the piece.
+    '/notes/the-de-rating': '/notes/the-moat-and-the-multiple',
     '/notes/the-two-investors-2026': '/notes',
   },
   // Hover-gated only: the catalog view holds 3,503 company links, so 'viewport' or 'load'
