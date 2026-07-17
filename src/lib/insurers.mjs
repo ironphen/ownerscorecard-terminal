@@ -66,11 +66,15 @@ export function buildInsurerScorecard(company, subtype = "insurer") {
     note: "Money held against future claims and invested in the meantime. Buffett's insight was that good underwriting makes this float cost less than nothing, a pool of other people's money the owners earn on. Measured here from loss and claim reserves only; it excludes unearned premiums and funds held, so the true float is somewhat larger than shown. The larger it is against equity, the more that leverage works, for better or worse.",
   };
   const inv = L.investmentIncome;
+  // The "% on the float" ratio is withheld above 15%: for a life insurer the tagged lossReserves
+  // is a P&C sliver of the real float, so the raw ratio prints impossibles (MET 130%, RGA 205%) —
+  // the same cap the Peers table applies (2026-07-17 correctness sweep #2). The dollar income stays.
+  const yld = fl && inv != null && inv / fl > 0 && inv / fl <= 0.15 ? inv / fl : null;
   const invCheck = inv == null ? none("Investment income", "Net investment income wasn't found.", "insurance-float") : {
     title: "Investment income",
     concept: "insurance-float",
-    value: $(inv), formula: `Net investment income ${$(inv)}${fl ? `, ${pc(inv / fl, 1)} on the float` : ""}`,
-    tone: "info", label: fl ? `${pc(inv / fl, 1)} on the float` : "earned on investments",
+    value: $(inv), formula: `Net investment income ${$(inv)}${yld != null ? `, ${pc(yld, 1)} on the float` : ""}`,
+    tone: "info", label: yld != null ? `${pc(yld, 1)} on the float` : "earned on investments",
     note: "What the float and capital earned this year. This is the second engine: an insurer that breaks even on underwriting still wins if the float is large and invested well.",
   };
 

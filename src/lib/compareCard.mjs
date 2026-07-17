@@ -93,12 +93,18 @@ function survival(company, vm) {
   const oi = L.operatingIncome, debt = L.totalDebt, ie = L.interestExpense;
   const ca = L.currentAssets, cl = L.currentLiabilities;
   const leverageYears = debtReliable(L) && debt != null && oi != null && oi > 0 ? rate(debt / oi) : null;
-  const interestCoverage = oi != null && ie != null && Math.abs(ie) > 0 ? rate(oi / Math.abs(ie)) : null;
+  // Interest coverage and Graham's defensive tests are non-financial reads: a bank's interest
+  // expense is a cost of goods, not leverage, and the defensive workbook / company page exclude
+  // financials from the Graham tests by category. Withholding them here (matching quality()'s
+  // financial gate) keeps the almanac's interest-coverage distribution and defensive census from
+  // counting 673/767 financials the other surfaces exclude (2026-07-17 correctness sweep #2).
+  const fin = financialKind(company);
+  const interestCoverage = !fin && oi != null && ie != null && Math.abs(ie) > 0 ? rate(oi / Math.abs(ie)) : null;
   const currentRatio = ca != null && cl != null && cl > 0 ? rate(ca / cl) : null;
   // Graham's defensive tests as FACTS, one per test — name, the figure, and where it stands —
   // never reduced to a count (a count is halfway to a score, the least doctrinal possible form
   // and the least useful to Graham, who compared candidates test by test).
-  const g = grahamTests(company);
+  const g = fin ? { tests: [] } : grahamTests(company);
   const grahamRows = (g.tests || []).map((t) => ({ name: t.name, value: t.value ?? null, status: t.status, criterion: t.criterion ?? null }));
   const ni = (company.history || []).map((h) => h?.lines?.netIncome).filter((v) => v != null);
   const profitable = ni.filter((v) => v > 0).length;

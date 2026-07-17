@@ -109,7 +109,11 @@ function censusFrom(cards) {
     }
 
     if (Array.isArray(sv.graham)) {
-      const applicable = sv.graham.filter((t) => t.status === "pass" || t.status === "fail");
+      // "near" is not a pass: the composite ("passed every applicable defensive test") must
+      // count every testable result, so a near breaks the all-pass rather than being dropped
+      // from the denominator (2026-07-17 correctness sweep #2). Only "na" (not applicable) is
+      // excluded from the testable set.
+      const applicable = sv.graham.filter((t) => t.status !== "na");
       if (applicable.length >= 4) {
         const passes = applicable.filter((t) => t.status === "pass").length;
         defensivePassCounts.push(passes);

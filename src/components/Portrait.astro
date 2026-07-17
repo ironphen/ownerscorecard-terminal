@@ -5,6 +5,7 @@ import { ffoMargin, ffoPayout, debtToAssets } from "../lib/reits.mjs";
 import { combinedRatio, lossRatio } from "../lib/insurers.mjs";
 import { netMargin, feeReturnOnEquity } from "../lib/feeFinancials.mjs";
 import { medicalLossRatio } from "../lib/managedCare.mjs";
+import { floatYield } from "../lib/peers.mjs";
 import { financialKind, financialSubtype, classify } from "../lib/archetype.mjs";
 import Term from "./Term.astro";
 
@@ -18,8 +19,12 @@ const fk = financialKind(company);
 const isLife = fk === "insurer" && financialSubtype(company) === "life-insurer";
 const isReit = fk === "reit", isBank = fk === "bank", isInsurer = fk === "insurer" && !isLife;
 const isFee = fk === "fee", isManagedCare = fk === "managedCare";
-// Net investment yield: what the float earns, the life insurer's engine.
-const investmentYield = (l) => (l && l.investmentIncome != null && l.lossReserves ? l.investmentIncome / l.lossReserves : null);
+// Net investment yield: what the float earns, the life insurer's engine — through the SAME
+// plausibility cap the Peers table uses (floatYield), so the two surfaces cannot diverge. A
+// life insurer's real float lives in policy reserves the pipeline doesn't tag; the P&C
+// lossReserves tag is a sliver, so the raw ratio prints impossibles (MET 130%, RGA 205%) —
+// withheld above 15% (2026-07-17 correctness sweep #2).
+const investmentYield = (l) => floatYield(l || {});
 const L = company.lines || {};
 const rev = topLineRevenue(L, company);
 const hist = company.history || [];

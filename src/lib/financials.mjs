@@ -89,7 +89,9 @@ export function buildFinancialScorecard(company, subtype = "bank") {
     concept: "rotce",
     value: pc(rotce), formula: `Net income ÷ (equity − goodwill ${$(L.goodwill || 0)} − intangibles ${$(L.intangibleAssets || 0)})`,
     tone: rotce < 0 ? "bad" : rotce < 0.12 ? "warn" : rotce < 0.15 ? "ok" : "good",
-    label: rotce < 0 ? "Loss" : rotce < 0.12 ? "Modest" : rotce < 0.18 ? "Strong" : "Very high (≥18%)",
+    // Label bands track the tone bands exactly — the [0.12, 0.15) ok-band read "Strong" while its
+    // amber tone said otherwise (2026-07-17 correctness sweep #2).
+    label: rotce < 0 ? "Loss" : rotce < 0.12 ? "Modest" : rotce < 0.15 ? "Solid" : rotce < 0.18 ? "Strong" : "Very high (≥18%)",
     note: "The cleaner return, stripping out the goodwill paid for past acquisitions. This is the number a buyer of the whole bank actually earns on the hard capital.",
   };
   const eff = efficiencyRatio(L);

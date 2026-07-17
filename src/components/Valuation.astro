@@ -1090,9 +1090,10 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
         }
       }
       if (!res) { impG.textContent = "—"; lede.textContent = "Set the required return above the terminal rate to run it."; if (ops) ops.hidden = true; if (cushionLine) cushionLine.hidden = true; if (sensLoc) sensLoc.hidden = true; if (ladder) ladder.hidden = true; if (baseRates) baseRates.hidden = true; bondView(); return; }
-      impG.textContent = res.cap ? "100%+/yr" : pcs(res.g) + "/yr";
+      impG.textContent = res.cap ? "100%+/yr" : res.floor ? "−50%+/yr" : pcs(res.g) + "/yr";
       const P = SYM + price.toFixed(2);
       if (res.cap) lede.innerHTML = `At <b>${P}</b>, even <b class="hot">100%+/yr</b> growth for a decade can't justify the price on owner earnings alone.`;
+      else if (res.floor) lede.innerHTML = `At <b>${P}</b>, the market is pricing owner earnings to <b>shrink 50%+/yr</b> for ${N} years — a collapse steeper than the model resolves, priced for decline.`;
       else if (res.g < 0) lede.innerHTML = `At <b>${P}</b>, the market is pricing owner earnings to <b>shrink ${pcs(res.g)}/yr</b> for ${N} years, priced for decline.`;
       else lede.innerHTML = `At <b>${P}</b>, the market is pricing <b>${esc(NAME)}</b> to grow owner earnings about <b class="hot">${pcs(res.g)}</b>/yr for ${N} years, then ${(gT * 100).toFixed(1)}% forever, discounted at ${(rr * 100).toFixed(1)}%.`;
       // The base rate against the requirement: how often the record's own rolling five-year
@@ -1112,9 +1113,10 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
       // Margin of safety, as Graham used it: a discipline the buyer applies to their own price,
       // shown as what a one-third cushion buys in belief-space. No second dollar is printed.
       if (cushionLine) {
-        // A third below the PRICE: the equity outlay falls 30%; the balance-sheet position the
-        // toggle counts does not move with the quote, so it carries over unchanged.
-        const cres = !res.cap ? solve((0.7 * mc + evAdj) / base, rr, N, gT) : null;
+        // A third below the PRICE: the equity outlay falls to two-thirds; the balance-sheet
+        // position the toggle counts does not move with the quote, so it carries over unchanged.
+        // (Was 0.7×, a 30% cut, mislabeled "a third" — 2026-07-17 correctness sweep #2.)
+        const cres = !res.cap ? solve(((2 / 3) * mc + evAdj) / base, rr, N, gT) : null;
         if (cres && !cres.cap && isFinite(cres.g)) {
           const GD = famG();
           cushionLine.hidden = false;

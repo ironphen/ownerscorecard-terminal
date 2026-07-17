@@ -146,7 +146,7 @@ if (!isFin && debtOk && roicSeries.length >= 3 && roicMed != null) {
 
   let s2 = "";
   if (oeMed != null && oeMed >= 0.03)
-    s2 = `${roicInflated ? "The steadier read is owner earnings" : "Owner earnings agree"}: roughly ${pc(oeMed)} of revenue reaches owners as cash${oeStable ? ", consistently" : ", though it swings"}` +
+    s2 = `${roicInflated ? "The steadier read is owner earnings" : (band === "high" || band === "mid") ? "Owner earnings agree" : "By owner earnings"}: roughly ${pc(oeMed)} of revenue reaches owners as cash${oeStable ? ", consistently" : ", though it swings"}` +
       `${negativeCCC ? ", and customers and suppliers fund the business through negative working capital" : ""}.`;
   else if (oeMed != null) s2 = "Owner earnings, the cash-based check, have been thin too.";
   else if (negativeCCC) s2 = "Customers and suppliers fund the business through negative working capital, a structural edge the ratio does not show.";

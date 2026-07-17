@@ -20,7 +20,7 @@ const USES = [
   { key: "reinvest", of: (l) => abs(l.capex) },
   { key: "buyback", of: (l) => Math.max(0, abs(l.buybacks) - abs(l.stockBasedComp)) },
   { key: "div", of: (l) => abs(l.dividendsPaid) },
-  { key: "acq", of: (l) => abs(l.acquisitionSpend) },
+  { key: "acq", of: (l) => Math.max(0, l.acquisitionSpend) }, // a net-divestiture year (negative) is not acquisition spending — floor at zero, not abs (2026-07-17 sweep #2)
 ];
 
 const W = 320, H = 120, PADT = 6, PADB = 14, GAP = 3;

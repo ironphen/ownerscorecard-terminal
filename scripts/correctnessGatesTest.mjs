@@ -8,7 +8,9 @@ import { buildCompareCard } from "../src/lib/compareCard.mjs";
 import { valuationModel } from "../src/lib/valuationInputs.mjs";
 import { industryOf } from "../src/lib/archetype.mjs";
 import { netDebtOf, oiReliable } from "../src/lib/fundamentals.mjs";
+import { floatYield, FLOAT_YIELD_CAP } from "../src/lib/peers.mjs";
 import TAXONOMY from "../src/data/taxonomy.json" with { type: "json" };
+import ADR_RATIOS from "../src/data/adrRatios.json" with { type: "json" };
 
 const load = (f) => { try { return JSON.parse(readFileSync("src/data/" + f, "utf8")).companies || []; } catch { return []; } };
 const us = load("fundamentals.json"), adr = load("fundamentals.adr.json"), jp = load("fundamentals.jp.json");
@@ -76,6 +78,42 @@ if (ttmName) {
   const cd = card(ttmName.ticker);
   t(`price.vintage.ttm true for a TTM-stitched filer (${ttmName.ticker})`, cd?.price?.vintage?.ttm === true && !!cd.price.vintage.asOf);
 }
+
+// ---- sweep #2 gates ----
+
+// 7. The "yield on float" is capped (a life insurer's tagged lossReserves is a P&C sliver, so the
+//    raw ratio prints impossibles). floatYield — the one shared computation — withholds above 15%.
+t("floatYield withholds MetLife's impossible ratio (130% > cap)", floatYield({ investmentIncome: 23029e6, lossReserves: 17640e6 }) === null);
+t("floatYield keeps a plausible insurer yield (8%)", (() => { const y = floatYield({ investmentIncome: 800, lossReserves: 10000 }); return y != null && Math.abs(y - 0.08) < 1e-9; })());
+t("FLOAT_YIELD_CAP is 15%", FLOAT_YIELD_CAP === 0.15);
+
+// 8. Financials are excluded from the survival Graham tests and interest-coverage on the card, so
+//    the almanac census / interest-coverage distribution don't count banks/insurers/REITs.
+for (const tk of ["JPM", "ACGL", "O"]) { // bank, insurer, REIT
+  const cd = card(tk); if (!cd) continue;
+  const gr = cd.survival?.graham;
+  t(`${tk} (financial) carries no Graham defensive tests on the card`, Array.isArray(gr) && gr.length === 0);
+  t(`${tk} (financial) has no interest-coverage on the card`, cd.survival?.interestCoverage == null);
+}
+
+// 9. The ADR ratios the sweep corrected stay corrected (parser-error regression guard), and no
+//    "ads" ratio is comma-truncated (a quote's "N,NNN" thousands number must match the ratio).
+const RATIO_FIX = { LTM: 2000, NAAS: 3200, TC: 4800, XHG: 2400, SVREW: 43200, SY: 0.769231, GOTU: 0.666667, RERE: 0.666667, DDL: 1.5, JG: 13.333333, SNY: 0.5, WKEY: 0.5, ADAG: 1.25 };
+for (const [tk, want] of Object.entries(RATIO_FIX)) {
+  const r = ADR_RATIOS.companies?.[tk]?.ratio;
+  if (r != null) t(`ADR ratio ${tk} = ${want}`, Math.abs(r - want) < 1e-4);
+}
+let commaTrunc = 0;
+for (const [tk, e] of Object.entries(ADR_RATIOS.companies || {})) {
+  if (e.basis !== "ads" || e.ratio == null) continue;
+  const m = String(e.quote || "").match(/(\d{1,3}(?:,\d{3})+)\s+(?:class|ordinary|common|shares)/i);
+  if (m) { const q = Number(m[1].replace(/,/g, "")); if (Math.abs(q - e.ratio) > 1) { commaTrunc++; console.error(`  comma-truncated ratio: ${tk} stored ${e.ratio} vs quote ${q}`); } }
+}
+t("no ADS ratio is comma-truncated (quote thousands-number matches the ratio)", commaTrunc === 0);
+
+// 10. Sony's net income is the continuing-ops (positive) figure, not the discontinued-ops sign-flip.
+const sony = jp.find((c) => c.ticker === "6758");
+if (sony) t("Sony (6758) net income is positive continuing-ops, not the discontinued-ops loss", sony.lines.netIncome > 0);
 
 if (failed) { console.error(`\n❌ correctnessGatesTest: ${failed} failure(s).`); process.exit(1); }
 console.log("\n✅ correctnessGatesTest passed.");
