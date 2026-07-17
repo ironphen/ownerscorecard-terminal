@@ -2,12 +2,16 @@
 // "Weigh this against another business" — the bridge from a company page to the head-to-head compare
 // view, seeded with this company alone. We seed only the one the reader is already on; the business to
 // weigh it against is theirs to bring (the compare view is a place to think, not a list of suggestions).
+import { compareKeyOf } from "../lib/compareKey.mjs";
 const { company } = Astro.props;
 const ticker = String(company?.ticker || "").toUpperCase();
+// Seed the compare view by the compare KEY, not the bare ticker: from Airbus (AIR.EU) this must open
+// Airbus, not the AAR that also answers "AIR". The visible text stays the plain ticker.
+const key = compareKeyOf(company);
 ---
 {ticker ? (
   <p class="cmpLink">
-    <a href={`/compare?c=${encodeURIComponent(ticker)}`}>Weigh {ticker} against another business →</a>
+    <a href={`/compare?c=${encodeURIComponent(key)}`}>Weigh {ticker} against another business →</a>
     <span class="note"></span>
   </p>
 ) : null}

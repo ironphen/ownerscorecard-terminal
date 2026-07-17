@@ -287,14 +287,14 @@ const bondAsOf = rates?.asOf ? new Date(rates.asOf).toLocaleDateString("en-US", 
       // offers. null when neither is available, so the owner-earnings read honestly withholds.
       function effShares(card) {
         if (card.price.shares != null && card.price.shares > 0) return card.price.shares;
-        const u = parseFloat(userShares[card.ticker]);
+        const u = parseFloat(userShares[card.key]);
         return u > 0 ? u * 1e6 : null;
       }
 
       function priceRead(card) {
         const p = card.price, sym = p.sym, rr = rate / 100, N = 10, gT = 0.025;
         const out = { implies: "—", delivered: "—", pe3: "—", pxb: "—", impliesHot: false };
-        const price = parseFloat(prices[card.ticker]);
+        const price = parseFloat(prices[card.key]);
         // Graham's price gates on the typed price: the same arithmetic the company page runs —
         // the multiple of 3-year average earnings, and the multiple of latest filed book.
         if (price > 0 && p.eps3 > 0) out.pe3 = (price / p.eps3).toFixed(1) + "×";
@@ -326,7 +326,7 @@ const bondAsOf = rates?.asOf ? new Date(rates.asOf).toLocaleDateString("en-US", 
 
       function priceNote(card) {
         const p = card.price;
-        const href = (card.pool === "JP" ? "/jp/" : "/c/") + card.ticker;
+        const href = (card.pool === "JP" ? "/jp/" : card.pool === "EU" ? "/eu/" : "/c/") + card.ticker;
         if (p.mode === "negative") return `Owner earnings are negative; the price read flips to the margin it must reach. <a href="${href}#sec-price">See the full read →</a>`;
         if (p.mode === "off") return `Read on the balance sheet, not an owner-earnings DCF. <a href="${href}#sec-price">See the full read →</a>`;
         let n = "";
@@ -352,7 +352,7 @@ const bondAsOf = rates?.asOf ? new Date(rates.asOf).toLocaleDateString("en-US", 
 
         let h = '<table class="cmp"><thead><tr><th class="corner"></th>';
         for (const c of cs) {
-          const href = (c.pool === "JP" ? "/jp/" : "/c/") + c.ticker;
+          const href = (c.pool === "JP" ? "/jp/" : c.pool === "EU" ? "/eu/" : "/c/") + c.ticker;
           const adsTag = c.basis && c.basis.auto && c.basis.kind === "ads" ? '<span class="ccy">per ADS</span>' : "";
           h += `<th class="colh"><div class="colTk"><a href="${href}">${esc(c.ticker)}</a></div><div class="colNm">${esc(c.name)}</div><div class="colTags"><span>${esc(c.archetype.adj)}</span><span class="ccy">${esc(c.currency)}</span>${adsTag}<span>${c.recordYears ? c.recordYears + "-yr record" : "—"}</span></div></th>`;
         }
@@ -390,7 +390,7 @@ const bondAsOf = rates?.asOf ? new Date(rates.asOf).toLocaleDateString("en-US", 
             h += `<tr><th class="rl">${esc(r.label)}${r.rsub ? `<span class="rsub">${esc(r.rsub)}</span>` : ""}</th>`;
             for (const c of cs) {
               const v = r.get(c);
-              h += v ? `<td class="val" data-co="${esc(c.ticker)}">${esc(v.main)}${v.sub ? `<span class="vsub">${esc(v.sub)}</span>` : ""}</td>` : `<td class="val dash" data-co="${esc(c.ticker)}">—</td>`;
+              h += v ? `<td class="val" data-co="${esc(c.key)}">${esc(v.main)}${v.sub ? `<span class="vsub">${esc(v.sub)}</span>` : ""}</td>` : `<td class="val dash" data-co="${esc(c.key)}">—</td>`;
             }
             h += "</tr>";
           }
@@ -404,10 +404,10 @@ const bondAsOf = rates?.asOf ? new Date(rates.asOf).toLocaleDateString("en-US", 
           if (priceable(c)) {
             const note = priceNote(c);
             const needShares = c.price.mode === "owner-earnings" && c.price.shares == null;
-            const shInput = needShares ? `<div class="pxWrap shWrap"><input class="pxInput shInput" id="sh-${i}" type="number" inputmode="decimal" step="0.1" min="0" placeholder="shares" value="${esc(userShares[c.ticker] || "")}" aria-label="Shares outstanding for ${esc(c.ticker)}, in millions" /><span class="pxUnit">M shares</span></div>` : "";
-            h += `<td class="val pxInputCell" data-co="${esc(c.ticker)}"><div class="pxWrap"><span class="pxSym">${esc(c.sym)}</span><input class="pxInput" id="px-${i}" type="number" inputmode="decimal" step="0.01" min="0" value="${esc(prices[c.ticker] || "")}" aria-label="Price for ${esc(c.ticker)}" /></div>${shInput}${note ? `<span class="pxNote">${note}</span>` : ""}</td>`;
+            const shInput = needShares ? `<div class="pxWrap shWrap"><input class="pxInput shInput" id="sh-${i}" type="number" inputmode="decimal" step="0.1" min="0" placeholder="shares" value="${esc(userShares[c.key] || "")}" aria-label="Shares outstanding for ${esc(c.ticker)}, in millions" /><span class="pxUnit">M shares</span></div>` : "";
+            h += `<td class="val pxInputCell" data-co="${esc(c.key)}"><div class="pxWrap"><span class="pxSym">${esc(c.sym)}</span><input class="pxInput" id="px-${i}" type="number" inputmode="decimal" step="0.01" min="0" value="${esc(prices[c.key] || "")}" aria-label="Price for ${esc(c.ticker)}" /></div>${shInput}${note ? `<span class="pxNote">${note}</span>` : ""}</td>`;
           } else {
-            h += `<td class="val dash pxInputCell" data-co="${esc(c.ticker)}">—<span class="pxNote">${priceNote(c)}</span></td>`;
+            h += `<td class="val dash pxInputCell" data-co="${esc(c.key)}">—<span class="pxNote">${priceNote(c)}</span></td>`;
           }
         }
         h += "</tr>";
@@ -419,7 +419,7 @@ const bondAsOf = rates?.asOf ? new Date(rates.asOf).toLocaleDateString("en-US", 
         ];
         for (const pr of pxRows) {
           h += `<tr><th class="rl">${esc(pr.label)}<span class="rsub">${esc(pr.rsub)}</span></th>`;
-          for (let i = 0; i < cs.length; i++) h += `<td class="val" data-co="${esc(cs[i].ticker)}" id="pc-${i}-${pr.key}">—</td>`;
+          for (let i = 0; i < cs.length; i++) h += `<td class="val" data-co="${esc(cs[i].key)}" id="pc-${i}-${pr.key}">—</td>`;
           h += "</tr>";
         }
         h += "</tbody></table>";
@@ -440,9 +440,9 @@ const bondAsOf = rates?.asOf ? new Date(rates.asOf).toLocaleDateString("en-US", 
         // wire the price (and, where needed, share-count) inputs
         for (let i = 0; i < cs.length; i++) {
           const el = document.getElementById("px-" + i);
-          if (el) el.addEventListener("input", () => { prices[cs[i].ticker] = el.value; syncURL(); updatePrices(); });
+          if (el) el.addEventListener("input", () => { prices[cs[i].key] = el.value; syncURL(); updatePrices(); });
           const sh = document.getElementById("sh-" + i);
-          if (sh) sh.addEventListener("input", () => { userShares[cs[i].ticker] = sh.value; syncURL(); updatePrices(); });
+          if (sh) sh.addEventListener("input", () => { userShares[cs[i].key] = sh.value; syncURL(); updatePrices(); });
         }
         updatePrices();
       }
@@ -465,11 +465,13 @@ const bondAsOf = rates?.asOf ? new Date(rates.asOf).toLocaleDateString("en-US", 
         chipsEl.innerHTML = "";
         cols.forEach((t) => {
           const c = cards[t];
+          // `t` is the compare key (AIR.EU for the dozen homonyms); the chip shows the bare ticker.
+          const label = c ? c.ticker : t.replace(/\.[A-Z]+$/, "");
           const chip = document.createElement("span");
           chip.className = "chip";
-          chip.innerHTML = `<b>${esc(t)}</b>${c ? " · " + esc(c.name) : ""}`;
+          chip.innerHTML = `<b>${esc(label)}</b>${c ? " · " + esc(c.name) : ""}`;
           const x = document.createElement("button");
-          x.className = "x"; x.type = "button"; x.setAttribute("aria-label", "Remove " + t); x.textContent = "×";
+          x.className = "x"; x.type = "button"; x.setAttribute("aria-label", "Remove " + label); x.textContent = "×";
           x.addEventListener("click", () => removeCol(t));
           chip.appendChild(x);
           chipsEl.appendChild(chip);
@@ -555,8 +557,11 @@ const bondAsOf = rates?.asOf ? new Date(rates.asOf).toLocaleDateString("en-US", 
           const data = await res.json();
           INDEX = (data.rows || []).map((r) => {
             const ticker = String(r[0] || ""), name = String(r[1] || ticker), pool = r[2] || 0, prom = r[3] || 0, place = String(r[4] || "");
+            // r[5] is the compare key when it differs from the ticker (the cross-pool homonyms); the
+            // picker adds THIS, so choosing Airbus adds Airbus and not the AAR that also answers "AIR".
+            const key = r[5] ? String(r[5]).toUpperCase() : ticker.toUpperCase();
             const nl = name.toLowerCase();
-            return { ticker, name, place, pool, prom, tl: ticker.toLowerCase(), words: nl.split(/[^a-z0-9]+/).filter(Boolean), nlsq: sq(nl), nksq: sq(sortKey(name)), haysq: sq(nl + " " + ticker.toLowerCase() + " " + place.toLowerCase()) };
+            return { ticker, key, name, place, pool, prom, tl: ticker.toLowerCase(), words: nl.split(/[^a-z0-9]+/).filter(Boolean), nlsq: sq(nl), nksq: sq(sortKey(name)), haysq: sq(nl + " " + ticker.toLowerCase() + " " + place.toLowerCase()) };
           });
         } catch (e) { INDEX = []; }
         return INDEX;
@@ -600,7 +605,7 @@ const bondAsOf = rates?.asOf ? new Date(rates.asOf).toLocaleDateString("en-US", 
         const it = shown[i >= 0 ? i : 0];
         if (!it) return;
         input.value = ""; shown = []; renderResults();
-        addCol(it.ticker);
+        addCol(it.key);
       }
       async function onInput() {
         await ensureIndex();

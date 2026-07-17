@@ -16,6 +16,7 @@ import CompareLink from "../../components/CompareLink.astro";
 import ActHeader from "../../components/ActHeader.astro";
 import Segments from "../../components/Segments.astro";
 import { SITE_URL, ORG, companyDataset, corporationNode, breadcrumbList } from "../../lib/seo.mjs";
+import { compareKeyOf } from "../../lib/compareKey.mjs";
 
 export function getStaticPaths() {
   return (eu.companies || []).map((c) => ({ params: { ticker: String(c.ticker) } }));
@@ -30,6 +31,9 @@ const histYears = fund ? (fund.history || []).map((h) => h.fy).filter(Boolean) :
 const spanFrom = histYears.length ? Math.min(...histYears) : fund?.fy || null;
 const spanTo = histYears.length ? Math.max(...histYears) : fund?.fy || null;
 const pageUrl = `${SITE_URL}/eu/${ticker}`;
+// The compare-card twin lives at the compare KEY, not the bare ticker: a European homonym (Airbus
+// AIR) is suffixed (AIR.EU) so its Dataset points to its own card, never the US ticker-mate's (AAR).
+const compareKey = fund ? compareKeyOf(fund, "EU") : ticker;
 
 const pageDescription = fund
   ? `${name} (${ticker}): the ten-year owner's record. Revenue, margins, returns on capital, owner earnings, and debt, every figure read from the company's own ESEF annual report, in ${fund.currency}.`
@@ -51,7 +55,7 @@ const pageJsonLd = fund
         ticker,
         name,
         pageUrl,
-        jsonUrl: `${SITE_URL}/compare/${ticker}.json`,
+        jsonUrl: `${SITE_URL}/compare/${compareKey}.json`,
         spanFrom: spanFrom ? `${spanFrom}` : null,
         spanTo: spanTo ? `${spanTo}` : null,
         asOf: eu.asOf || null,

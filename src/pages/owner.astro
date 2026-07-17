@@ -417,9 +417,12 @@ const fxAsOf = rates?.fxAsOf ?? null;
 
     function add() {
       addErr.hidden = true;
-      const t = document.getElementById("addTicker").value.trim().toUpperCase();
+      const typed = document.getElementById("addTicker").value.trim().toUpperCase();
+      // A picked homonym carries its compare key; a hand-typed ticker uses itself.
+      const stashed = (addTicker.dataset.compareKey || "").toUpperCase();
+      const t = stashed || typed;
       const s = parseFloat(document.getElementById("addShares").value);
-      if (!/^[A-Z0-9.\-]{1,10}$/.test(t)) { addErr.textContent = "Enter a ticker or pick a company."; addErr.hidden = false; return; }
+      if (!/^[A-Z0-9.\-]{1,12}$/.test(t)) { addErr.textContent = "Enter a ticker or pick a company."; addErr.hidden = false; return; }
       if (!(s > 0)) { addErr.textContent = "Enter the shares you hold."; addErr.hidden = false; return; }
       addOne(t, s).then((ok) => {
         if (ok) {
@@ -463,7 +466,10 @@ const fxAsOf = rates?.fxAsOf ?? null;
     const loadIndex = () =>
       INDEX ? Promise.resolve(INDEX)
         : fetch("/company-index.json").then((r) => (r.ok ? r.json() : { rows: [] })).then((j) => {
-            INDEX = (j.rows || []).map((r) => ({ t: r[0], name: r[1], pool: r[2], prom: r[3] || 0 }));
+            // key (r[5]) is the compare identity — the ticker for all but the cross-pool homonyms,
+            // where a European name (Airbus AIR) is suffixed so it resolves to itself, not the US
+            // ticker-mate (AAR). The card fetch and the holding are keyed by it.
+            INDEX = (j.rows || []).map((r) => ({ t: r[0], key: r[5] ? String(r[5]).toUpperCase() : String(r[0] || "").toUpperCase(), name: r[1], pool: r[2], prom: r[3] || 0 }));
             return INDEX;
           }).catch(() => (INDEX = []));
     const suggest = (term) => {
@@ -499,10 +505,14 @@ const fxAsOf = rates?.fxAsOf ?? null;
     };
     const pick = (it) => {
       addTicker.value = it.t;
+      // Stash the compare key so a picked European homonym resolves to itself; typing by hand below
+      // clears it, so a bare ticker still means the US ticker-mate (the sensible default).
+      addTicker.dataset.compareKey = it.key;
       acList.hidden = true;
       document.getElementById("addShares").focus();
     };
     addTicker.addEventListener("input", () => {
+      delete addTicker.dataset.compareKey;
       loadIndex().then(() => paintAc(suggest(addTicker.value)));
     });
     addTicker.addEventListener("keydown", (e) => {

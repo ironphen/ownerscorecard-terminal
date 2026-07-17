@@ -18,6 +18,7 @@ import { grahamTests } from "./graham.mjs";
 import { capitalHistory } from "./capital.mjs";
 import { valuationModel } from "./valuationInputs.mjs";
 import { adrBasis } from "./adrBasis.mjs";
+import { poolOf, compareKeyOf } from "./compareKey.mjs";
 import adrRatios from "../data/adrRatios.json" with { type: "json" };
 import rates from "../data/rates.json" with { type: "json" };
 
@@ -211,8 +212,9 @@ function priceBlock(company, vm, currency, sym, adrWarn) {
   };
 }
 
-// Build one company's compare card.
-export function buildCompareCard(rawCompany) {
+// Build one company's compare card. `poolArg` is the source pool when the caller knows it (the card
+// endpoint loaded a specific file); otherwise it is inferred from the record.
+export function buildCompareCard(rawCompany, _lang = null, poolArg = null) {
   // ADR basis conversion, the same one the company page runs (lib/adrBasis.mjs): a column with a
   // known ADS ratio and FX rate is stated in USD per ADS — the quote a US reader actually holds —
   // so the compare price row and /c/<ticker> can never give contradictory instructions.
@@ -220,7 +222,11 @@ export function buildCompareCard(rawCompany) {
   const company = ab.co;
   const cls = classify(company);
   const vm = valuationModel(company);
-  const pool = rawCompany.market === "ADR" ? "ADR" : rawCompany.market === "JP" ? "JP" : "US";
+  // The pool drives the card's home-page link (US/ADR → /c/, JP → /jp/, Europe → /eu/) and its
+  // compare key. It was mislabeled "US" for every European filer, so an EU card linked to a
+  // nonexistent /c/<ticker>; now Europe is recognized (a filer that is not ADR/JP and carries a home
+  // exchange, poolOf) and, when the endpoint knows the source file, taken from poolArg.
+  const pool = poolArg || poolOf(rawCompany);
   const currency = company.currency || "USD";
   const sym = currencySymbol(currency);
   // The record's true depth: the span of years that carry any core figure. Revenue alone would
@@ -233,6 +239,11 @@ export function buildCompareCard(rawCompany) {
 
   return {
     ticker: String(company.ticker || "").toUpperCase(),
+    // The compare identity: the bare ticker for all but the dozen cross-pool homonyms, where the
+    // later pool is suffixed (Airbus is AIR.EU, AAR stays AIR). The client keys columns, chips and
+    // the ?c= deep-link by this, and fetches /compare/<key>.json; the bare ticker above is only ever
+    // for display. See lib/compareKey.mjs.
+    key: compareKeyOf(rawCompany, pool),
     name: company.name || company.ticker,
     pool, currency, sym, fy: company.fy ?? null, form: company.form || null,
     archetype: {
