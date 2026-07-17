@@ -1156,30 +1156,26 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
         // honest end-state to read, so the operating lines fold away and only the multiples remain.
         const solved = !res.cap && res.g != null && isFinite(res.g) && res.g > 0;
         const oeN = solved ? base * Math.pow(1 + res.g, N) : null;
-        let margDemands = false; // does the price actually demand a margin belief?
         if (solved && impOps) {
           let s = `To justify it, owner earnings would compound to about <b class="hot">${usd(oeN)}</b> by year ${N}, <b>${(oeN / base).toFixed(1)}×</b> today’s.`;
           if (REV > 0 && !isNaN(GREV) && GREV > -0.5) {
             const revN = REV * Math.pow(1 + GREV, N), margN = oeN / revN, margNow = base / REV;
-            margDemands = margN > margNow;
             s += ` On revenue grown at its delivered ${pcs(GREV)}/yr to ${usd(revN)}, that is an owner-earnings margin near <b class="hot">${pcs(margN)}</b> (about ${pcs(margNow)} today).`;
-          } else if (REV > 0) {
-            // No usable delivered revenue rate (a short record, or collapse below the −50%
-            // band): on flat revenue any solved growth demands margin expansion, so the margin
-            // dial stays available rather than silently vanishing for exactly the filers whose
-            // margin question is most open.
-            margDemands = true;
           }
           impOps.innerHTML = s; impOps.hidden = false;
         } else if (impOps) impOps.hidden = true;
 
-        // Two gates on the margin machinery (Graham 1958: precise formulas with imprecise
-        // assumptions justify any value one wishes). The DIAL appears only when the price
-        // actually demands a margin above today's — the case where a margin belief is the
-        // question; and the derived revenue requirement prints only after the reader has set
-        // the dial. The reader's belief must be the reader's; the site's 25% rest is a resting
-        // place, never an assumption that computes anything.
-        if (solved && REV > 0 && marginRow && reqRev && margDemands) {
+        // One gate on the margin machinery, not two (Graham 1958: precise formulas with
+        // imprecise assumptions justify any value one wishes): the derived revenue requirement
+        // prints only after the reader has set the dial — the reader's belief must be the
+        // reader's, and the 25% rest is a resting place that computes nothing untouched. The
+        // DIAL itself is always offered with a priced reading. It briefly shipped gated on
+        // "the price demands a margin above today's," which locked the control away on exactly
+        // the fast growers a reader most wants to test a mature margin against (the founder's
+        // Chipotle catch, 2026-07-16): high delivered revenue growth makes the implied margin
+        // fall below today's, but whether a price is defensible at the margin the READER would
+        // credit is the reader's question at any price.
+        if (solved && REV > 0 && marginRow && reqRev) {
           marginRow.hidden = false;
           const mm = mmDial ? parseFloat(mmDial.value) / 100 : 0.25;
           if (mmOut) mmOut.textContent = (mm * 100).toFixed(0) + "%";

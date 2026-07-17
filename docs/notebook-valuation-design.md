@@ -40,6 +40,8 @@ Items both partners converge on lead. Every item names its license and passes/st
 
 **Fix (both halves):** (a) render `marginRow` only when the implied terminal margin exceeds today's margin (Buffett's gate — the case where the price actually demands a margin belief); (b) `reqRev` renders only after the dial is touched (Graham's gate, copying `mmTouched`).
 
+**§1.3(a) AMENDED (founder catch, 2026-07-16, same day it shipped — "the Chipotle bug"):** the demand-gate (a) is retired; the DIAL is always offered with a priced reading. In use, the gate locked the control away on exactly the fast growers a reader most wants to test a mature margin against: high delivered revenue growth makes the implied margin fall below today's, so `margN > margNow` fails and the reader is told, in effect, that their margin question isn't askable. Whether a price is defensible at the margin the READER would credit is the reader's question at any price. Graham's touch-gate (b) remains the belief protection — the 25% rest computes nothing until the reader's hand moves it.
+
 ### 1.4 STRONG — Required-return dial: rename, decompose, rest on the dated bond *(Buffett strong; Graham's placement finding leans on the same generalization)*
 
 **The defect (verified):** the bond *field* opens on the dated Treasury (294-297, 1005-1006) while the rate *dial* opens on a house-chosen 9% (line 534) — one control defaults to a dated public fact, the other to the publication's number. The 9% is the last suggested assumption on the page.
