@@ -1,7 +1,10 @@
 // ownerStatement.mjs — the look-through arithmetic behind /owner: the reader's shares as a
 // fraction of the company, and that fraction applied to the company's own filed figures.
-// Buffett's 1991 instruction, verbatim license: "calculate the underlying earnings
-// attributable to the shares you hold in your portfolio and total these."
+// Buffett's 1991 instruction, verbatim license: "We also believe that investors can benefit
+// by focusing on their own look-through earnings. To calculate these, they should determine
+// the underlying earnings attributable to the shares they hold in their portfolio and total
+// these." (The first shipped epigraph paraphrased this inside quotation marks; the partner
+// pass caught it. Quotations are verbatim or they are not quotations.)
 //
 // Pure — no DOM, no fetch — so scripts/ownerTest.mjs proves the arithmetic. Doctrine: every
 // number here is either the reader's input (shares, an optional dated price) or an as-filed
@@ -28,7 +31,7 @@ export function money(v, sym = "$") {
 // a percentage when it is large enough to read as one.
 export function fractionLabel(frac) {
   if (frac == null || !(frac > 0)) return "—";
-  if (frac >= 1) return "the whole company (check the share count)";
+  if (frac >= 1) return "the whole company, or more than the filed share count";
   if (frac >= 0.0001) return `${(frac * 100).toFixed(frac >= 0.01 ? 1 : 3)}% of the company`;
   return `1/${Math.round(1 / frac).toLocaleString("en-US")}th of the company`;
 }
@@ -46,14 +49,32 @@ export function holdingRow(card, sharesOwned) {
   const isBank = p.mode === "bank";
   // The return each business earns, in the lens its economics call for: a bank on its
   // normalized return on tangible equity, everything else on through-cycle median ROIC
-  // (falling back to through-cycle ROE where invested capital can't be read).
+  // (falling back to through-cycle ROE where invested capital can't be read). The label
+  // carries the figure's own span (a median travels with its period; a bank's ROTCE is
+  // normalized, not a period median — never invent a span the card doesn't state).
   const ret = isBank
-    ? (num(q.rotce) != null ? { label: "ROTCE", v: q.rotce } : null)
+    ? (num(q.rotce) != null ? { label: "ROTCE", note: "normalized", v: q.rotce } : null)
     : num(q.roicThroughCycle?.median) != null
-      ? { label: "ROIC", v: q.roicThroughCycle.median }
+      ? { label: "ROIC", note: num(q.roicThroughCycle.n) ? `${q.roicThroughCycle.n}-yr median` : "median", v: q.roicThroughCycle.median }
       : num(q.roeThroughCycle?.median) != null
-        ? { label: "ROE", v: q.roeThroughCycle.median }
+        ? { label: "ROE", note: num(q.roeThroughCycle.n) ? `${q.roeThroughCycle.n}-yr median` : "median", v: q.roeThroughCycle.median }
         : null;
+  // Delivered per-share growth over the filed record — the second lever of Buffett's decade
+  // goal beside the return. Owner earnings per share where the record carries it; EPS as the
+  // labeled fallback. A compound rate of filed figures, never a projection.
+  const g = card.compounding?.perShare || {};
+  const grow = num(g.ownerEarningsPS?.full) != null
+    ? { label: "OE/sh", v: g.ownerEarningsPS.full }
+    : num(g.eps?.full) != null
+      ? { label: "EPS", v: g.eps.full }
+      : null;
+  // What the record's share count did to this same stake: the then-fraction, restated on
+  // today's basis from the split-normalized record change. An arithmetic restatement, not a
+  // filed number — the page's foot names the computation.
+  const sc = num(card.stewardship?.shareChange);
+  const thenFrac = sc != null && sc > -1 && card.stewardship?.buybackSpan
+    ? { frac: owned / (shares / (1 + sc)), span: card.stewardship.buybackSpan }
+    : null;
   return {
     ticker: card.ticker,
     name: card.name || card.ticker,
@@ -65,12 +86,17 @@ export function holdingRow(card, sharesOwned) {
     frac,
     rev: num(p.rev) != null ? p.rev * frac : null,
     oe: num(p.oe) != null ? p.oe * frac : null,
+    // The three-year average of filed owner earnings — Graham's earning-power caution
+    // beside the single year (totals only; the label carries the span).
+    oe3: num(p.oe3) != null ? p.oe3 * frac : null,
     ni: num(p.ni) != null ? p.ni * frac : null,
     netDebt: num(p.netDebt) != null ? p.netDebt * frac : null,
     // Book value per share times the reader's shares IS the reader's share of equity —
     // the denominator the look-through return on equity needs.
     bv: num(p.bvps) != null ? p.bvps * owned : null,
     ret,
+    grow,
+    thenFrac,
   };
 }
 
@@ -85,13 +111,14 @@ export function statementTotals(rows, prices = {}) {
     if (!r) continue;
     const t = byCcy.get(r.ccy) ?? {
       ccy: r.ccy, sym: r.sym, n: 0,
-      rev: 0, revN: 0, oe: 0, oeN: 0, ni: 0, niN: 0, netDebt: 0, netDebtN: 0, bv: 0, bvN: 0,
+      rev: 0, revN: 0, oe: 0, oeN: 0, oe3: 0, oe3N: 0, ni: 0, niN: 0, netDebt: 0, netDebtN: 0, bv: 0, bvN: 0,
       roeNi: 0, roeBv: 0, roeN: 0,
       outlay: 0, oeOnOutlay: 0, pricedN: 0,
     };
     t.n++;
     if (r.rev != null) { t.rev += r.rev; t.revN++; }
     if (r.oe != null) { t.oe += r.oe; t.oeN++; }
+    if (r.oe3 != null) { t.oe3 += r.oe3; t.oe3N++; }
     if (r.ni != null) { t.ni += r.ni; t.niN++; }
     if (r.netDebt != null) { t.netDebt += r.netDebt; t.netDebtN++; }
     if (r.bv != null) { t.bv += r.bv; t.bvN++; }
@@ -119,7 +146,7 @@ export function statementTotals(rows, prices = {}) {
 export function combineUsd(groups, fx = {}) {
   const c = {
     sym: "$", n: 0,
-    rev: 0, revN: 0, oe: 0, oeN: 0, ni: 0, niN: 0, netDebt: 0, netDebtN: 0, bv: 0, bvN: 0,
+    rev: 0, revN: 0, oe: 0, oeN: 0, oe3: 0, oe3N: 0, ni: 0, niN: 0, netDebt: 0, netDebtN: 0, bv: 0, bvN: 0,
     roeNi: 0, roeBv: 0, roeN: 0,
     outlay: 0, oeOnOutlay: 0, pricedN: 0,
     rates: [], skipped: [],
@@ -131,6 +158,7 @@ export function combineUsd(groups, fx = {}) {
     c.n += g.n;
     c.rev += g.rev * f; c.revN += g.revN;
     c.oe += g.oe * f; c.oeN += g.oeN;
+    c.oe3 += g.oe3 * f; c.oe3N += g.oe3N;
     c.ni += g.ni * f; c.niN += g.niN;
     c.netDebt += g.netDebt * f; c.netDebtN += g.netDebtN;
     c.bv += g.bv * f; c.bvN += g.bvN;
