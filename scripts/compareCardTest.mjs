@@ -28,11 +28,15 @@ const ok = (msg) => console.log(`  ✓ ${msg}`);
 // Share counts (and everything divided by them) re-pinned 2026-07-09, when sharesForValue — the
 // dated filing-cover count — replaced the weighted-average diluted count as the price-to-value
 // share basis on both the company page and the compare card (they moved together, by design).
+// netDebt re-pinned 2026-07-17: the headline figure now nets against cash + short-term only
+// (netDebtOf), the one shared definition — no longer liquidAssets (which folded in long-term
+// marketable and sign-flipped a cash-rich name against the grouping table). AAPL: net cash → net
+// debt, matching every surface.
 const GOLDEN = {
-  AAPL: { mode: "owner-earnings", oe: 129174000000, oeNormalized: 104494472092.51096, oeMaint: 127507000000, sbc: 13473000000, gDeliv: 0.00386460187350135, netDebt: -63881000000, shares: 14687356000, eps3: 6.870785093427753, bvps: 7.250522149800141, rev: 451442000000, gRev: 0.06645550690783386, ni: 122575000000 },
+  AAPL: { mode: "owner-earnings", oe: 129174000000, oeNormalized: 104494472092.51096, oeMaint: 127507000000, sbc: 13473000000, gDeliv: 0.00386460187350135, netDebt: 14207000000, shares: 14687356000, eps3: 6.870785093427753, bvps: 7.250522149800141, rev: 451442000000, gRev: 0.06645550690783386, ni: 122575000000 },
   KO: { mode: "owner-earnings", oe: 12562000000, oeNormalized: 9885434569.217644, oeMaint: 13581000000, sbc: 272000000, gDeliv: -0.12679835295624164, netDebt: 32475000000, shares: 4302482418, eps3: 2.669156752844632, bvps: 7.817115035564568, rev: 49284000000, gRev: 0.07457823127133056, ni: 13701000000 },
   BX: { mode: "owner-earnings", oe: 4425155000, oeNormalized: 3774810363.4847608, oeMaint: 4429286000, sbc: 1535125000, gDeliv: -0.05961989346439878, netDebt: 10960020000, shares: 742879807, eps3: 3.2246589252088795, bvps: 11.268000450576253, rev: 14778402000, gRev: 0.07857203004397029, ni: 3054091000 },
-  SD: { mode: "owner-earnings", oe: 26504000, oeNormalized: 59420333.333333336, oeMaint: 40957000, sbc: 2796000, gDeliv: -0.20170296212102345, netDebt: -111798000, shares: 36918259, eps3: 1.7520327813941605, bvps: 14.246879843385898, rev: 163530000, gRev: 0.0029921570764133154, ni: 75824000 },
+  SD: { mode: "owner-earnings", oe: 26504000, oeNormalized: 59420333.333333336, oeMaint: 40957000, sbc: 2796000, gDeliv: -0.20170296212102345, netDebt: -102749000, shares: 36918259, eps3: 1.7520327813941605, bvps: 14.246879843385898, rev: 163530000, gRev: 0.0029921570764133154, ni: 75824000 },
   7203: { mode: "owner-earnings", oe: 3324728000000, oeNormalized: 2652442044348.3223, oeMaint: 3324728000000, sbc: 0, gDeliv: 0.06139201436355113, netDebt: -15929150000000, shares: 15794987000, eps3: 286.127005570396, bvps: 2527.3116084236094, gRev: 0.13982150393681048, ni: 3848098000000 },
   6758: { mode: "owner-earnings", oe: 1487936000000, oeNormalized: 1177925022483.8274, oeMaint: 1487936000000, sbc: 0, gDeliv: 0.31119300233641045, netDebt: -1581196000000, shares: 6149811000, eps3: 96.76763508125154, bvps: 1320.2049623964053, gRev: 0.10166254418780785, ni: -326865000000 },
   JPM: { mode: "bank", tbvps: 115.70467582907683, bvpsBank: 135.85984278869753, rotce: 0.16381947326587082, epsBank: 21.981246134775756 },

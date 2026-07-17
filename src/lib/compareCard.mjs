@@ -11,7 +11,7 @@
 import { classify, financialKind } from "./archetype.mjs";
 import {
   throughCycle, roicValue, operatingMargin, grossMargin, ownerEarningsMargin,
-  ownerEarningsAbs, topLineRevenue, debtReliable, currencySymbol,
+  ownerEarningsAbs, topLineRevenue, debtReliable, currencySymbol, oiReliable,
 } from "./fundamentals.mjs";
 import { returnOnEquity } from "./financials.mjs";
 import { grahamTests } from "./graham.mjs";
@@ -139,13 +139,19 @@ function quality(company, vm) {
   const fk = financialKind(company);
   const fin = !!fk;
   const L = company.ttm?.lines || company.lines || {};
+  // The operating line drives ROIC and operating margin; where it does not represent earning
+  // power (a JP trading house / holding company whose affiliates dwarf the operating line —
+  // oiReliable false), both are withheld, exactly as the grouping table (n/a) and the company
+  // page ("read it on equity instead") withhold them. Emitting them here shipped a compare card
+  // showing a −1% ROIC where every other surface refused it. (2026-07-17 correctness sweep.)
+  const oiOk = oiReliable(company);
   return {
-    roicThroughCycle: fin ? null : tc(throughCycle(company, roicValue)),
+    roicThroughCycle: fin || !oiOk ? null : tc(throughCycle(company, roicValue)),
     roeThroughCycle: tc(throughCycle(company, returnOnEquity)),
     // Return on tangible equity is the bank/insurer return read; for a non-financial it is an artifact
     // of a near-zero tangible book (Apple's 100%+), so it's carried only where it means something.
     rotce: vm.isBank && vm.rotce != null ? rate(vm.rotce) : null,
-    operatingMarginThroughCycle: tc(throughCycle(company, operatingMargin)),
+    operatingMarginThroughCycle: oiOk ? tc(throughCycle(company, operatingMargin)) : null,
     ownerEarningsMarginThroughCycle: tc(throughCycle(company, (l) => ownerEarningsMargin(l, company))),
     grossMarginLatest: rate(grossMargin(L)),
     ffoPerShare: fk === "reit" && vm.ffops != null ? rate(vm.ffops) : null,
@@ -169,10 +175,18 @@ function priceBlock(company, vm, currency, sym, adrWarn) {
   // stays zero — a non-payer's zero is a fact, an absent tag is not.
   const priceL = company.ttm?.lines || company.lines || {};
   const dL = priceL.dividendsPaid ?? null;
+  // The vintage of THIS block: the price figures (rev/oe/ni/div) come from the trailing-twelve-
+  // month lines when a ttm block exists, and only from the annual otherwise — so any surface
+  // must label them for what they are. /owner stamped every row "FY · 10-K" while showing TTM
+  // figures ($35B off on Apple's revenue vs the annual it claimed). (2026-07-17 correctness sweep.)
+  const vintage = company.ttm?.lines
+    ? { ttm: true, asOf: company.ttm.asOf ?? null }
+    : { ttm: false, fy: company.fy ?? null, form: company.form || null };
   return {
     mode: vm.mode, currency, sym, adrBasis: adrWarn,
     shares: money(vm.shares), netDebt: money(vm.netDebt),
     div: dL != null ? money(Math.abs(dL)) : null,
+    vintage,
     // owner-earnings lens
     oe: money(vm.oe), oeNormalized: money(vm.oeNormalized), oeMaint: money(vm.oeMaint),
     oe3: money(vm.oe3), oe3Maint: money(vm.oe3Maint), sbc: money(vm.sbc),

@@ -54,9 +54,13 @@ t("row: the then-fraction restates the buyback record", (() => {
   return Math.abs(r.thenFrac.frac - 500 / first) < 1e-18 && r.thenFrac.span === "2016–2025" && r.thenFrac.frac < r.frac;
 })());
 t("row: no share-change record → no then-fraction", bank.thenFrac === null);
-t("row: the filed starting count wins over the approximation", (() => {
-  const exact = holdingRow({ ...aapl, stewardship: { ...aapl.stewardship, firstShares: 21000000000 } }, 500);
-  return Math.abs(exact.thenFrac.frac - 500 / 21000000000) < 1e-18;
+// The then/now fractions must share one basis, so their ratio is exactly (1 + shareChange) —
+// never divide by the diluted-average firstShares against a cover-count now-count (the basis
+// mix the 2026-07-17 sweep caught). firstShares on the card must NOT change the result.
+t("row: then/now ratio equals exactly (1 + shareChange), on one basis", (() => {
+  const withFs = holdingRow({ ...aapl, stewardship: { ...aapl.stewardship, firstShares: 21000000000 } }, 500);
+  const ratio = withFs.thenFrac.frac / withFs.frac;
+  return Math.abs(ratio - (1 + -0.328756)) < 1e-12 && Math.abs(withFs.thenFrac.frac - r.thenFrac.frac) < 1e-18;
 })());
 t("row: dividends scale by the fraction", Math.abs(r.div - 15234000000 * r.frac) < 1);
 t("row: a filed zero dividend is a fact, not a hole",

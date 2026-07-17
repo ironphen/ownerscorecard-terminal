@@ -348,6 +348,20 @@ export function liquidAssets(L) {
 // figure: gross debt ignores the cash already sitting against it. Negative means
 // net cash. Longer-dated marketable securities are surfaced in the note, not the
 // headline, to keep the definition conventional.
+//
+// ONE definition for every surface. The headline net-debt figure a reader compares
+// across the company page, the compare card, the grouping table and the almanac must be
+// identical, so all of them net against cash + short-term investments only — never the
+// broader liquidAssets (which folds in long-term marketable and would flip the sign for a
+// cash-rich name like Apple: net cash on one surface, net debt on another). liquidAssets
+// stays the right measure for the valuation's enterprise-value toggle, which is a distinct,
+// separately-labeled adjustment, not the headline. (2026-07-17 correctness sweep.)
+export function netDebtOf(L) {
+  if (!L) return null;
+  if (L.cashAndEquivalents == null && L.totalDebt == null) return null;
+  return (L.totalDebt || 0) - ((L.cashAndEquivalents || 0) + (L.shortTermInvestments || 0));
+}
+
 export function cashPosition(c) {
   const $ = (v) => fmtMoney(v, c?.currency || "USD");
   const L = c?.lines || {};

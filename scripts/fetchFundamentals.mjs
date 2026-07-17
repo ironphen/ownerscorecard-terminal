@@ -618,7 +618,15 @@ function durations(facts, tags, unit = "USD") {
 // (REIT/insurer/lessor/broker): on a same-end, same-duration tie across tags, the larger value
 // wins — otherwise a stray partial "Revenues" sharing the FY end date (BlackRock's pattern)
 // could win the TTM on array order while the annual record, pick-max-correct, disagrees.
-function ttmFlow(facts, tags, unit = "USD", pickMax = false) {
+// guardStable: for a LUMPY cash line (dividends, buybacks) whose payment date can straddle a
+// fiscal-quarter cutoff differently across the two comparison years, the priorFY+cur−priorYTD
+// stitch can double-count a quarter (priorYTD lands anomalously small — e.g. KO's ~April-1
+// dividend fell after the FY25 Q1 cutoff but before the FY26 Q1 cutoff, inflating TTM by ~25%).
+// When set, a stitch running materially above the filed annual (a real dividend rises gradually;
+// a spurious extra quarter is +25-33%) falls back to the filed annual — a slightly stale FILED
+// figure beats an overstated stitch (a wrong number is worse than a missing one). MUST NOT be
+// set for revenue/earnings, where a >20% year-over-year change is legitimate growth.
+function ttmFlow(facts, tags, unit = "USD", pickMax = false, guardStable = false) {
   const all = durations(facts, tags, unit);
   if (!all.length) return null;
   const byVal = (a, b) => (pickMax ? b.val - a.val : 0);
@@ -635,7 +643,13 @@ function ttmFlow(facts, tags, unit = "USD", pickMax = false) {
   const priorFY = all
     .filter((e) => e.dur >= 350 && e.dur <= 380 && Math.abs(days(e.end, cur.start)) <= 45)
     .sort((a, b) => byVal(a, b) || b.filed.localeCompare(a.filed))[0];
-  if (priorYTD && priorFY) return { val: priorFY.val + cur.val - priorYTD.val, asOf: cur.end, isFY: false };
+  if (priorYTD && priorFY) {
+    const stitched = priorFY.val + cur.val - priorYTD.val;
+    if (guardStable && priorFY.val != null && Math.abs(stitched) > Math.abs(priorFY.val) * 1.2 + 1) {
+      return { val: priorFY.val, asOf: priorFY.end, isFY: true };
+    }
+    return { val: stitched, asOf: cur.end, isFY: false };
+  }
   const fy = all.filter((e) => e.dur >= 350 && e.dur <= 380).sort((a, b) => new Date(b.end) - new Date(a.end) || byVal(a, b))[0];
   return fy ? { val: fy.val, asOf: fy.end, isFY: true } : null;
 }
@@ -1197,7 +1211,7 @@ async function main() {
             // profit into paid-out and retained never mixes a TTM numerator with an FY
             // dividend (the mixed-vintage class the comment above warns about). Also what
             // lets stewardship's retainedToEquity resolve on TTM-based records.
-            dividendsPaid: tf(CONCEPTS.dividendsPaid),
+            dividendsPaid: ttmFlow(facts, CONCEPTS.dividendsPaid, "USD", false, true)?.val ?? null, // guardStable: dividend payment-date straddle can double-count a quarter
             sgaExpense: tf(CONCEPTS.sgaExpense),
             researchDevelopment: tf(CONCEPTS.researchDevelopment),
             acquisitionSpend: tf(CONCEPTS.acquisitionSpend),

@@ -8,7 +8,7 @@
 // page uses, so the two surfaces can never disagree on the figures behind the answer.
 
 import { classify, financialKind, financialSubtype } from "./archetype.mjs";
-import { liquidAssets, maintenanceCapex, ownerEarningsAbs } from "./fundamentals.mjs";
+import { liquidAssets, netDebtOf, maintenanceCapex, ownerEarningsAbs } from "./fundamentals.mjs";
 import { tangibleEquity } from "./financials.mjs";
 import { ffoPerShare } from "./reits.mjs";
 import { earningsPower } from "./normalize.mjs";
@@ -62,15 +62,22 @@ export function valuationModel(company) {
     ?? L.sharesDiluted ?? company.lines?.sharesDiluted ?? null;
   const cfo = L.cashFromOps, capex = L.capex;
   const ownerEarnings = cfo != null && capex != null ? cfo - Math.abs(capex) : null;
-  const netDebt = (L.totalDebt || 0) - (liquidAssets(L) || 0);
+  // The headline net-debt figure: cash + short-term only (netDebtOf), the one definition
+  // every surface shares — never liquidAssets, which folds in long-term marketable and would
+  // sign-flip a cash-rich name against the grouping table and the company page.
+  const netDebt = netDebtOf(L);
 
   const niH = (company.history || []).filter((h) => h?.lines?.netIncome != null).slice(-3).map((h) => h.lines.netIncome);
   const eps3 = niH.length >= 2 && shares ? niH.reduce((a, b) => a + b, 0) / niH.length / shares : null;
   const bvps = L.stockholdersEquity != null && shares ? L.stockholdersEquity / shares : null;
 
   const oeHist = (company.history || []).map((h) => (h.lines.cashFromOps != null && h.lines.capex != null ? h.lines.cashFromOps - Math.abs(h.lines.capex) : null));
+  // The card's oe3 feeds ONLY /owner's "averaged owner earnings, last three filed years", so
+  // it must be a genuine three-year average or absent — a 2-year or single-year figure labeled
+  // "three years" is a wrong basis (2026-07-17 correctness sweep). The valuation's own
+  // through-cycle base is computed separately in Valuation.astro and is unaffected.
   const oe3vals = [...oeHist].reverse().filter((v) => v != null).slice(0, 3);
-  const oe3 = oe3vals.length >= 2 ? oe3vals.reduce((a, b) => a + b, 0) / oe3vals.length : ownerEarnings;
+  const oe3 = oe3vals.length >= 3 ? oe3vals.reduce((a, b) => a + b, 0) / oe3vals.length : null;
   const oeNormalized = earningsPower(company)?.normOE ?? oe3;
   const sbc = L.stockBasedComp ?? company.lines?.stockBasedComp ?? 0;
 

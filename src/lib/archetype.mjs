@@ -207,6 +207,14 @@ export function financialSubtype(company) { return financialProfile(company).sub
 export function industryOf(company) {
   const sic = String(company?.sic || "");
   const s4 = sic.slice(0, 4), s3 = sic.slice(0, 3);
+  // Japanese filers carry no SIC (EDINET), so they resolve through the taxonomy's per-company
+  // JP map — the SAME source shelves.industryLabelOf uses, so the compare card's industry
+  // matches the shelf/chapter label instead of falling through to "Diversified" for all 204
+  // (2026-07-17 correctness sweep: the standardization wired shelves.mjs but not this path).
+  if (company?.market === "JP") {
+    const jp = TAXONOMY.overrides[company?.ticker] || TAXONOMY.jp[company?.ticker];
+    if (jp) return { sic, key: s3 || s4 || "jp", label: jp.industry, sector: jp.sector, short: SHORT_IND[jp.industry] || jp.industry, desc: company?.sicDescription || null };
+  }
   // The conventional sector/industry taxonomy (2026-07-17 standardization): per-ticker
   // override → the member-verified SIC map — assigned where the MEMBERS belong, not where a
   // 1987 SIC description puts them. The legacy SIC_LABEL chain remains as the fallback for

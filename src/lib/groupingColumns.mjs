@@ -22,6 +22,7 @@ import {
   roicValue,
   ownerEarningsAbs,
   debtReliable,
+  netDebtOf,
   oiReliable,
   throughCycle,
   fmtMoney,
@@ -238,8 +239,8 @@ export function groupingCells(company, familyKey, terms) {
         // float are not debt, so the figure would be a category error there.
         if (familyKey !== "property" && fk) return NA;
         if (!debtReliable(L)) return DASH;
-        if (L.cashAndEquivalents == null && L.totalDebt == null) return DASH;
-        const net = (L.totalDebt || 0) - ((L.cashAndEquivalents || 0) + (L.shortTermInvestments || 0));
+        const net = netDebtOf(L); // the one shared definition (cash + short-term), every surface identical
+        if (net == null) return DASH;
         const m = money(net);
         // Net cash reads as what it is, not as a negative debt in parentheses.
         if (m.sort != null && net < 0) return { text: `+${fmtMoney(-net * terms.factor, "USD")} cash`, sort: m.sort };

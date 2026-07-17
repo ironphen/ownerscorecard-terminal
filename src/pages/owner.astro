@@ -76,7 +76,8 @@ const fxAsOf = rates?.fxAsOf ?? null;
     <div id="totals"></div>
 
     <p class="foot">
-      Figures are each company&rsquo;s latest annual filing — dated on every row — as filed,
+      Figures are each company&rsquo;s freshest reported figures — the trailing twelve months
+      where the filer stitches them, the latest annual filing otherwise, dated on every row —
       times your fraction (your shares over the filed share count); your equity is the filed
       book value per share times your shares. A figure the filing doesn&rsquo;t carry stays a
       dash, and totals say how many holdings they cover. The return column is each
@@ -216,6 +217,10 @@ const fxAsOf = rates?.fxAsOf ?? null;
             })
             .catch(() => { if (cards[t] === undefined) cards[t] = "error"; return "error"; });
 
+    const fmtWhen = (iso) => {
+      try { return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }); }
+      catch { return String(iso || ""); }
+    };
     const priceOf = (t) => {
       const s = readSaved(t);
       return s && s.p > 0 ? s.p : null;
@@ -244,7 +249,14 @@ const fxAsOf = rates?.fxAsOf ?? null;
       // dividends paid times the reader's fraction, and the remainder the businesses
       // retained — the half that compounds invisibly.
       if (g.splitN > 0) {
-        const split = el("span", "tSplit", `of which ${money(g.splitDiv, g.sym)} paid out · ${money(g.splitNi - g.splitDiv, g.sym)} retained`);
+        // "of which" partitions the profit shown directly above it, so it may only say that
+        // when the split covers every profit-bearing holding. Where it covers a subset (a
+        // holding whose filing carries profit but no dividend line), scope the phrase to its
+        // own base so the two halves sum to what they claim (2026-07-17 correctness sweep).
+        const full = g.splitN === g.niN;
+        const split = el("span", "tSplit", full
+          ? `of which ${money(g.splitDiv, g.sym)} paid out · ${money(g.splitNi - g.splitDiv, g.sym)} retained`
+          : `of the ${money(g.splitNi, g.sym)} with a dividend line, ${money(g.splitDiv, g.sym)} paid out · ${money(g.splitNi - g.splitDiv, g.sym)} retained`);
         profitCell.append(split);
       }
       grid.append(profitCell);
@@ -284,7 +296,16 @@ const fxAsOf = rates?.fxAsOf ?? null;
         co.append(link);
         if (isCard) {
           if (card.name) co.append(el("span", "co", card.name));
-          if (card.fy != null || card.form) co.append(el("span", "vint", ["FY" + (card.fy ?? "?"), card.form].filter(Boolean).join(" · ")));
+          // The money columns are the price block's actual basis — trailing twelve months
+          // (with its as-of date) where the filer has a TTM stitch, the annual filing where it
+          // does not. Never stamp a TTM figure "FY · 10-K" (2026-07-17 correctness sweep).
+          const v = card.price?.vintage;
+          const label = v && v.ttm
+            ? "TTM" + (v.asOf ? " · as of " + fmtWhen(v.asOf) : "")
+            : v && (v.fy != null || v.form)
+              ? ["FY" + (v.fy ?? "?"), v.form].filter(Boolean).join(" · ")
+              : (card.fy != null || card.form) ? ["FY" + (card.fy ?? "?"), card.form].filter(Boolean).join(" · ") : null;
+          if (label) co.append(el("span", "vint", label));
         }
         tr.append(co);
 

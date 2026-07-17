@@ -301,7 +301,10 @@ function durations(facts, tags, unit) {
   return units.filter((u) => u.form && u.start && u.end && isAnyForm(u.form)).map((u) => ({ val: u.val, start: u.start, end: u.end, dur: days(u.start, u.end), filed: u.filed || "" }));
 }
 // TTM(flow) = latest full-year if the freshest period is a year; else prior FY + YTD − prior-year YTD.
-function ttmFlow(facts, tags, unit) {
+// guardStable: mirror of the US fetcher's dividend-straddle guard — a lumpy cash line whose
+// stitch runs >20% above the filed annual falls back to the annual (a quarter double-count is
+// worse than a slightly stale filed figure). Never set for revenue/earnings. (2026-07-17.)
+function ttmFlow(facts, tags, unit, guardStable = false) {
   const all = durations(facts, tags, unit);
   if (!all.length) return null;
   const maxEnd = all.reduce((m, e) => (new Date(e.end) > new Date(m) ? e.end : m), all[0].end);
@@ -312,7 +315,11 @@ function ttmFlow(facts, tags, unit) {
   const prevStr = prevEnd.toISOString().slice(0, 10);
   const priorYTD = all.filter((e) => Math.abs(days(e.end, prevStr)) <= 25 && Math.abs(e.dur - cur.dur) <= 30).sort((a, b) => b.filed.localeCompare(a.filed))[0];
   const priorFY = all.filter((e) => e.dur >= 350 && e.dur <= 380 && Math.abs(days(e.end, cur.start)) <= 50).sort((a, b) => b.filed.localeCompare(a.filed))[0];
-  if (priorYTD && priorFY) return { val: priorFY.val + cur.val - priorYTD.val, asOf: cur.end, isFY: false };
+  if (priorYTD && priorFY) {
+    const stitched = priorFY.val + cur.val - priorYTD.val;
+    if (guardStable && priorFY.val != null && Math.abs(stitched) > Math.abs(priorFY.val) * 1.2 + 1) return { val: priorFY.val, asOf: priorFY.end, isFY: true };
+    return { val: stitched, asOf: cur.end, isFY: false };
+  }
   const fy = all.filter((e) => e.dur >= 350 && e.dur <= 380).sort((a, b) => new Date(b.end) - new Date(a.end))[0];
   return fy ? { val: fy.val, asOf: fy.end, isFY: true } : null;
 }
@@ -580,7 +587,7 @@ async function main() {
         interestExpense: tf(CONCEPTS.interestExpense), netIncome: tf(CONCEPTS.netIncome), incomeTaxExpense: tf(CONCEPTS.incomeTaxExpense),
         cashFromOps: tf(CONCEPTS.cashFromOps), capex: tf(CONCEPTS.capex), costOfRevenue: tf(CONCEPTS.costOfRevenue), depreciation: tf(CONCEPTS.depreciation),
         // Same trailing basis as netIncome, so paid-out/retained splits never mix vintages.
-        dividendsPaid: tf(CONCEPTS.dividendsPaid),
+        dividendsPaid: ttmFlow(facts, CONCEPTS.dividendsPaid, ccy, true)?.val ?? null, // guardStable: dividend straddle guard
         totalDebt: maxOf((inst(CONCEPTS.longTermDebt) != null || inst(CONCEPTS.currentDebt) != null) ? (inst(CONCEPTS.longTermDebt) || 0) + (inst(CONCEPTS.currentDebt) || 0) : null),
         currentAssets: inst(CONCEPTS.currentAssets), currentLiabilities: inst(CONCEPTS.currentLiabilities), currentDebt: inst(CONCEPTS.currentDebt),
         stockholdersEquity: inst(CONCEPTS.equity), cashAndEquivalents: inst(CONCEPTS.cashAndEquivalents), shortTermInvestments: inst(CONCEPTS.shortTermInvestments),

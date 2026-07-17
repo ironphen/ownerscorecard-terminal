@@ -469,7 +469,7 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
         <p class="foot">FFO about ${ffops.toFixed(2)} per share on {(shares / 1e6).toFixed(0)}M shares. The dials set the multiple they justify; your price sets the multiple you are paying. FFO here adds back depreciation and removes property-sale gains, the NAREIT method; it does not net out maintenance capex (AFFO), occupancy or lease terms, which the 10-K does.</p>
       </div>
     ) : bankRunnable ? (
-      <div id="valBoxBank" data-tbvps={tbvps} data-bvps={bvpsB} data-rotce={rotceMed} data-eps={epsB ?? ""} data-name={name} data-ticker={co.ticker} data-cycle={isInsurer ? "underwriting cycle" : "credit cycle"} data-sym={sym}>
+      <div id="valBoxBank" data-tbvps={tbvps} data-bvps={bvpsB} data-rotce={rotceMed} data-eps={epsB ?? ""} data-name={name} data-ticker={co.ticker} data-cycle={isInsurer ? "underwriting cycle" : isMReit ? "rate and spread cycle" : "credit cycle"} data-sym={sym}>
         <p class="intro">{isInsurer ? "An" : "A"} {finKind} is worth a multiple of its <b>tangible book value</b>, and the multiple it deserves is set by the return it earns on that book. Type today&rsquo;s price; we show what you would be paying against what {name}&rsquo;s record justifies.</p>
         <div class="priceRow">
           <label for="pxb">Today&rsquo;s price</label>
@@ -505,7 +505,15 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
   ) : !runnable ? (
     negMode ? (
       <div id="valBoxNeg" data-rev={rev} data-shares={shares} data-netdebt={netDebt} data-name={name} data-ticker={co.ticker} data-oem={oeMarginNow ?? ""} data-profitable={profitableNeg ? "1" : "0"} data-sym={sym}>
-        {profitableNeg ? (
+        {/* negMode fires whenever the owner-earnings base can't anchor a reverse-DCF — which
+            is TWO different states the intro must not conflate (2026-07-17 correctness sweep):
+            owner earnings genuinely NEGATIVE (ownerEarnings < 0), or UNCOMPUTABLE because the
+            filing left CFO or capex untagged (ownerEarnings == null). And "a build-out, capex
+            outruns cash" may only be asserted when a build-out signal is actually present —
+            not for a food company whose owner earnings are merely untagged. */}
+        {ownerEarnings == null ? (
+          <p class="intro">{profitableNeg ? <>{name} is <b>profitable</b>, but its</> : <>The</>} owner-earnings base <b>could not be formed</b> from this filing&rsquo;s tagged data (operating cash flow or capital spending is missing), so the owner-earnings reverse-DCF has no base to grow. We read the price from both ends instead: type a price to see the profitability it <b>demands</b>, then set the mature margin you would <b>believe</b> and weigh the two against each other. Nothing leaves your browser unless you enter it in your notebook.</p>
+        ) : offerMaint || (cfo != null && capex != null && Math.abs(capex) > cfo) ? (
           <p class="intro">{name} is <b>profitable</b>, but owner earnings are <b>negative</b> this year because capital spending currently outruns operating cash, a build-out, so the owner-earnings reverse-DCF has no positive base to grow. We read the price from both ends instead: type a price to see the steady-state profitability it <b>demands</b>, then set the mature margin you would <b>believe</b> and weigh the two against each other. Nothing leaves your browser unless you enter it in your notebook.</p>
         ) : (
           <p class="intro">Owner earnings are <b>negative</b> today, so the usual reverse-DCF has nothing to grow. That is exactly when a price makes its boldest promise, so we read it from both ends: type a price to see the future profitability it <b>demands</b>, then set the mature margin you would <b>believe</b> and weigh the two against each other. Nothing leaves your browser unless you enter it in your notebook.</p>
@@ -553,7 +561,7 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
           {defaultMaint ? (
             <>{name}&rsquo;s latest year shows <b>negative owner earnings</b>, the mark of a build-out: total capital spending outruns the cash the business throws off today. So the tool opens on the steady-state base (maintenance capex in place of the build-out spend), the cash it would earn at rest; clear the toggle below to read the latest year exactly as reported.</>
           ) : ownerEarnings != null && ownerEarnings < 0 ? (
-            <>{name}&rsquo;s latest year shows <b>negative owner earnings</b>, a cyclical trough. So the tool opens on the through-cycle base, the cash it would earn at rest; clear the toggle below to read the latest year exactly as reported.</>
+            <>{name}&rsquo;s latest year shows <b>negative owner earnings</b>, {cyclical ? "a cyclical trough" : "below the record’s own through-cycle owner earnings"}. So the tool opens on the through-cycle base, the cash it would earn at rest; clear the toggle below to read the latest year exactly as reported.</>
           ) : (
             <>{name}&rsquo;s latest year runs <b>above its own through-cycle margin</b> — the reported figure may flatter a peak. So the tool opens on the through-cycle base, Graham&rsquo;s averaging cutting both ways; clear the toggle below to read the latest year exactly as reported.</>
           )}

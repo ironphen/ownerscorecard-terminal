@@ -68,18 +68,15 @@ export function holdingRow(card, sharesOwned) {
     : num(g.eps?.full) != null
       ? { label: "EPS", v: g.eps.full }
       : null;
-  // What the record's share count did to this same stake: the then-fraction on today's
-  // split-adjusted basis. The filed starting count (stewardship.firstShares) when the card
-  // carries it; the split-normalized record change as the approximate fallback for older
-  // cards. The page's foot names the computation either way.
-  const fs = num(card.stewardship?.firstShares);
+  // What the record's share count did to this same stake: the then-fraction, restated on
+  // today's basis by scaling THIS same now-denominator (the cover count) by the record's
+  // share-change ratio. Both fractions therefore sit on one basis, so their ratio is exactly
+  // (1 + shareChange). Dividing directly by the filed firstShares would mix bases — that count
+  // is a diluted weighted average while the now-count is the dei cover count — relocating the
+  // very mix the firstShares field was meant to remove (2026-07-17 correctness sweep).
   const sc = num(card.stewardship?.shareChange);
-  const thenFrac = card.stewardship?.buybackSpan
-    ? fs != null && fs > 0
-      ? { frac: owned / fs, span: card.stewardship.buybackSpan }
-      : sc != null && sc > -1
-        ? { frac: owned / (shares / (1 + sc)), span: card.stewardship.buybackSpan }
-        : null
+  const thenFrac = card.stewardship?.buybackSpan && sc != null && sc > -1
+    ? { frac: owned / (shares / (1 + sc)), span: card.stewardship.buybackSpan }
     : null;
   return {
     ticker: card.ticker,
