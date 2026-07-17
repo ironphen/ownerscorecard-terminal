@@ -50,7 +50,11 @@ const CONCEPTS = {
   // (the IFRS total) wins.
   revenue: ["NetSales", "RevenueLessExciseTaxExpense", "Revenue", "RevenueFromContractsWithCustomers", "Revenues", "RevenueFromContractWithCustomerExcludingAssessedTax", "RevenueFromRenderingOfTransportServices"],
   costOfRevenue: ["CostOfSales", "CostOfGoodsAndServicesSold", "CostOfRevenue"],
-  operatingIncome: ["ProfitLossFromOperatingActivities", "OperatingIncomeLoss"],
+  // Operating profit. Beyond the plain IFRS concept, filers that carry equity-method results inside the
+  // operating result tag a longer variant — LVMH books its €18,907M operating profit only under
+  // "…AfterShareOfProfitLossOfAssociatesAndJointVentures…", so without these the derivation fell back to
+  // a wrong €17,707M. Listed after the plain concept, so a filer that tags both keeps the standard one.
+  operatingIncome: ["ProfitLossFromOperatingActivities", "OperatingIncomeLoss", "ProfitLossFromOperatingActivitiesAfterShareOfProfitLossOfAssociatesAndJointVenturesInOperatingActivity", "ProfitLossFromOperatingActivitiesAfterShareOfProfitLossOfAssociatesAndJointVentures"],
   // Attributable-to-owners first, then the total (which includes noncontrolling interest) only as a last
   // resort. Diageo tags its attributable line under the ...OrdinaryEquityHolders... variant rather than the
   // standard ...OwnersOfParent, so without it the read falls through to total ProfitLoss and overstates
@@ -240,6 +244,26 @@ async function fetchEntity(u) {
   return { merged, units, currency, anchorFy, anchorEnd, sourceUrl };
 }
 
+// The share-count that turns a price into a market cap must not be a fragile inference. Where a filer
+// tags no weighted-average share number, the count is DERIVED from attributable net income ÷ basic
+// EPS — an identity that holds only when EPS is struck on net income itself, and breaks silently for
+// an issuer whose EPS first deducts hybrid-bond coupons or preferred dividends (Telefónica: a −€49M
+// loss but a −0.06 EPS after hybrid coupons derives 817M shares against a real ~5.7bn). A real share
+// count barely moves year to year, so a DERIVED value swinging outside [0.6, 1.67]× the series median
+// is that break showing — return its fiscal years so the caller withholds them (a wrong number is
+// worse than a missing one). Directly-tagged counts (derived === false) are never flagged. Pure and
+// exported for the test. (2026-07-17 EU pass.)
+export function unstableDerivedShareYears(entries) {
+  const series = entries.map((e) => e.shares).filter((v) => v != null && v > 0).sort((a, b) => a - b);
+  const out = new Set();
+  if (series.length < 2) return out;
+  const median = series[Math.floor(series.length / 2)];
+  for (const e of entries) {
+    if (e.shares != null && e.shares > 0 && e.derived && (e.shares < median * 0.6 || e.shares > median * 1.67)) out.add(e.fy);
+  }
+  return out;
+}
+
 // Assemble the standard record from the merged fy→line map. Shares come out as whole numbers; money in
 // the reporting currency's base unit. deriveOpInc fills a missing operating line; totalDebt sums the
 // current and non-current borrowing lines.
@@ -291,11 +315,27 @@ function buildRecord(u, e) {
     };
   };
   const history = fys.map((fy) => ({ fy, lines: lineOf(fy) }));
+  const byFyLine = new Map(history.map((h) => [h.fy, h.lines]));
+
+  // Share-count sanity for the DERIVED count (net income ÷ basic EPS, used where a filer tags no
+  // weighted-average share number). The identity holds only when EPS is struck on net income itself;
+  // it silently breaks for an issuer whose EPS deducts hybrid-bond coupons or preferred dividends
+  // first. Telefónica books a −€49M attributable loss but a −0.06 EPS (after hybrid coupons), so the
+  // derivation returns 817M against a real ~5.7bn — a 7× understatement that would price the business
+  // at a seventh of its value. A real share count barely moves year to year, so a derived value that
+  // swings hard against the median of the series is the tell: withhold it (a wrong number is worse
+  // than a missing one), keeping the years where the identity holds. Directly-tagged counts are never
+  // touched. (2026-07-17 EU pass.)
+  const shareDerived = (fy) => { const m = e.merged[fy] || {}; return m.sharesDiluted == null && m.netIncome != null && !!m.epsBasic; };
+  const unstable = unstableDerivedShareYears(history.map((h) => ({ fy: h.fy, shares: h.lines.sharesDiluted, derived: shareDerived(h.fy) })));
+  for (const h of history) if (unstable.has(h.fy)) h.lines.sharesDiluted = null;
+
   const hasTop = (l) => l.revenue != null || ((l.netInterestIncome || 0) + (l.noninterestIncome || 0)) > 0 || ((l.premiumsEarned || 0) + (l.investmentIncome || 0)) > 0;
   // Headline year: the latest with a real top line, so a malformed or not-yet-tagged latest year falls
-  // back to the last complete one rather than heading a blank page.
-  const headFy = [...fys].reverse().find((fy) => hasTop(lineOf(fy))) ?? (fys.length ? fys[fys.length - 1] : null);
-  const latest = headFy != null ? lineOf(headFy) : {};
+  // back to the last complete one rather than heading a blank page. Drawn from `history` (not a fresh
+  // lineOf) so the share-sanity nulling above carries into the headline record.
+  const headFy = [...fys].reverse().find((fy) => hasTop(byFyLine.get(fy) || {})) ?? (fys.length ? fys[fys.length - 1] : null);
+  const latest = headFy != null ? (byFyLine.get(headFy) || {}) : {};
   const periodEnd = headFy == null ? (e.anchorEnd || null) : (headFy === e.anchorFy && e.anchorEnd ? e.anchorEnd : `${headFy}-12-31`);
   return {
     ticker: u.ticker, name: u.name, market: u.market || "ESEF", currency: e.currency, country: u.country || null,
