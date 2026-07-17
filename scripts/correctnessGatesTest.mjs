@@ -9,6 +9,7 @@ import { valuationModel } from "../src/lib/valuationInputs.mjs";
 import { industryOf } from "../src/lib/archetype.mjs";
 import { netDebtOf, oiReliable } from "../src/lib/fundamentals.mjs";
 import { floatYield, FLOAT_YIELD_CAP } from "../src/lib/peers.mjs";
+import { acquisitionRecord } from "../src/lib/acquisitions.mjs";
 import TAXONOMY from "../src/data/taxonomy.json" with { type: "json" };
 import ADR_RATIOS from "../src/data/adrRatios.json" with { type: "json" };
 
@@ -114,6 +115,56 @@ t("no ADS ratio is comma-truncated (quote thousands-number matches the ratio)", 
 // 10. Sony's net income is the continuing-ops (positive) figure, not the discontinued-ops sign-flip.
 const sony = jp.find((c) => c.ticker === "6758");
 if (sony) t("Sony (6758) net income is positive continuing-ops, not the discontinued-ops loss", sony.lines.netIncome > 0);
+
+// ---- sweep #3 gates ----
+
+// 11. "Goodwill exceeds all book equity" is a warning that only makes sense when equity is POSITIVE.
+//     goodwill > (a negative equity) is trivially true and would fire the flag on a deficit balance
+//     sheet where it means nothing (sweep #3). The gate: negative equity never fires exceedsEquity,
+//     and gwVsEquity is withheld; positive equity below goodwill still fires it.
+const acqSynth = (equity) => ({
+  lines: { goodwill: 500, totalAssets: 1000, stockholdersEquity: equity, intangibleAssets: 0 },
+  history: [],
+});
+{
+  const neg = acquisitionRecord(acqSynth(-200));
+  t("acquisitions: negative equity never fires 'goodwill exceeds equity'",
+    neg && neg.exceedsEquity === false && neg.equityPositive === false && neg.gwVsEquity == null);
+  const pos = acquisitionRecord(acqSynth(300));
+  t("acquisitions: goodwill above positive equity still fires exceedsEquity",
+    pos && pos.exceedsEquity === true && pos.equityPositive === true);
+}
+
+// 12. The share-count staleness guard (sharesForValueOf recency window). The figure that turns a
+//     price into a per-share value is company.sharesForValue — a dei cover / instant / weighted-
+//     average count with its own asOf date. When that date drifts far from the financials it prices,
+//     the count is a different era's share base (Visa's 2010 cover of ~469M standing in for ~1.9B
+//     today — a 4× per-share error). The fetcher's recency window rejects a stale count and falls to
+//     the current weighted-average diluted figure (or withholds → null, which is fine). The gate:
+//     no US filer's sharesForValue.asOf is more than 460 days from the period it values.
+//     DUAL_CLASS_DEFERRED carries the names whose share basis is a separate dual-class pass.
+const DUAL_CLASS_DEFERRED = new Set(["BRK-A", "BRK-B"]);
+{
+  // SIGNED, not absolute: the bug is a share count OLDER than the financials it prices (asOf earlier
+  // than periodEnd by >460d — Visa's 2010 base against 2025 earnings). The inverse (a share cover
+  // fresher than the financials — a filer whose XBRL financials lag behind its latest 10-Q cover) is
+  // a separate FY-lag matter, not a stale share base, and must not trip this gate.
+  const staleShareDays = (asOf, pe) => (new Date(pe) - new Date(asOf)) / 864e5;
+  const stale = [];
+  for (const c of us) {
+    if (DUAL_CLASS_DEFERRED.has(c.ticker)) continue;
+    const sfv = c.sharesForValue;
+    if (!sfv || sfv.val == null || !sfv.asOf) continue;
+    const pe = c.ttm?.periodEnd || c.periodEnd;
+    if (!pe) continue;
+    if (staleShareDays(sfv.asOf, pe) > 460) stale.push(`${c.ticker}(${sfv.asOf} vs ${pe})`);
+  }
+  if (stale.length) console.error(`  stale sharesForValue: ${stale.slice(0, 20).join(", ")}${stale.length > 20 ? ` +${stale.length - 20} more` : ""}`);
+  t("no US filer prices on a share count >460 days older than its own financials", stale.length === 0);
+  const visa = us.find((c) => c.ticker === "V");
+  if (visa && visa.sharesForValue?.val != null)
+    t("Visa (V) prices on the current ~1.9B share base, not the 2010 cover ~469M", visa.sharesForValue.val > 1.2e9);
+}
 
 if (failed) { console.error(`\n❌ correctnessGatesTest: ${failed} failure(s).`); process.exit(1); }
 console.log("\n✅ correctnessGatesTest passed.");

@@ -341,16 +341,24 @@ function latestObservation(facts, tags, unit, instant = false) {
 // the cover count must sit within 4× either way of the weighted average, so a thousands-
 // mistagged cover can't pass. The weighted-average series stays the record tables' per-share
 // denominator; this count exists only to price the whole business.
-function sharesForValueOf(facts) {
+function sharesForValueOf(facts, periodEnd = null) {
   const avg = latestObservation(facts, CONCEPTS.sharesDiluted, "shares", false);
   const inst = latestObservation(facts, CONCEPTS.sharesOutstanding, "shares", true);
   const pick = (o, basis) => ({ val: o.val, asOf: o.end, form: o.form || null, basis });
+  // Absolute recency guard, signed to the bug direction — mirrors the US fetcher. A foreign filer
+  // that stopped tagging its dei cover / weighted-average years ago (Baidu's last un-dimensioned
+  // cover is 2010) must not price today's cap on a decade-old share base. A count OLDER than the
+  // financials by >460 days is rejected; a cover fresher than lagging financials is kept. Foreign
+  // 20-F/40-F filers have no plain-text cover fallback here, so a stale reject withholds honestly —
+  // a wrong number is worse than a missing one (2026-07-17 correctness sweep #3).
+  const fresh = (end) => !periodEnd || !end || (new Date(periodEnd) - new Date(end)) / 86400000 <= 460;
   let dei = null;
   const units = facts?.facts?.dei?.EntityCommonStockSharesOutstanding?.units?.shares;
   if (units) {
     for (const u of units) {
       if (!u.form || !u.end || u.start) continue;
       if (!(u.form.startsWith("20-F") || u.form.startsWith("40-F"))) continue;
+      if (!fresh(u.end)) continue;
       if (!dei || new Date(u.end) > new Date(dei.end) || (u.end === dei.end && (u.filed || "") > dei.filed))
         dei = { val: u.val, end: u.end, filed: u.filed || "", form: u.form };
     }
@@ -362,9 +370,9 @@ function sharesForValueOf(facts) {
   const ref = avg?.val > 0 ? avg.val : inst?.val > 0 ? inst.val : null;
   const scaleOk = dei && (ref == null || (dei.val >= ref / 4 && dei.val <= ref * 4));
   if (dei && dei.val > 0 && scaleOk && (!avg?.end || Math.abs(days(dei.end, avg.end)) <= 400)) return pick(dei, "cover");
-  if (inst && inst.val > 0 && avg?.val > 0 && inst.val >= avg.val * 0.75 && inst.val <= avg.val * 1.25)
+  if (inst && inst.val > 0 && fresh(inst.end) && avg?.val > 0 && inst.val >= avg.val * 0.75 && inst.val <= avg.val * 1.25)
     return pick(inst, "instant");
-  if (avg && avg.val > 0) return pick(avg, "average");
+  if (avg && avg.val > 0 && fresh(avg.end)) return pick(avg, "average");
   return null;
 }
 function instantMap(facts, tags, unit) {
@@ -635,7 +643,7 @@ async function main() {
       // The dated instantaneous count for price-to-value arithmetic; the record tables keep
       // the weighted-average series. See sharesForValueOf above. Stated on the ordinary-share
       // basis as filed; lib/adrBasis.mjs divides it by the ADS ratio with everything else.
-      sharesForValue: sharesForValueOf(facts),
+      sharesForValue: sharesForValueOf(facts, anchor?.end ?? null),
       lines: latestLines,
       history, ttm, quarterly,
     };

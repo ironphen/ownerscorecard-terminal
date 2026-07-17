@@ -70,6 +70,14 @@ t("boilerplate-dual",
 t("preferred-only-refuses",
   "Number of shares outstanding of each of the issuer classes: 8% Cumulative Preferred Stock, 12,000,000 shares.",
   null);
+// ARES (verbatim Q1-2026 10-Q cover): four common classes then a mandatory-convertible PREFERRED
+// class last. The preferred's own count (30,000,000) must NOT join the common sum — the previous
+// class's "Class C common stock" sits closer BEHIND it than its own "preferred" label sits ahead,
+// which a wide backward context misread as common (360M bug). Class B (1,000) is below the plausible
+// floor. True common total = 222,028,421 + 3,489,911 + 104,328,294 = 329,846,626. (2026-07-17 sweep #3)
+t("ares-preferred-last-not-summed (10-Q)",
+  "As of May 5, 2026, there were 222,028,421 shares of the registrant's Class A common stock outstanding, 3,489,911 shares of the registrant's non-voting common stock outstanding, 1,000 shares of the registrant's Class B common stock outstanding, 104,328,294 shares of the registrant's Class C common stock outstanding and 30,000,000 shares of the registrant's Series B mandatory convertible preferred stock outstanding.",
+  329846626);
 t("debt-prose-refuses",
   "Total debt outstanding as of February 28, 2026, amounted to $10,568.5 million, a decrease from the prior year.",
   null);

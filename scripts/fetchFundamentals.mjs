@@ -477,24 +477,41 @@ const collectInstant = (facts, tags, unit = "USD") => valuesByYear(instantByYear
 //      period average, not an instant, so the basis is carried for the page to disclose.
 // Returns { val, asOf, form, basis } or null; sharesDiluted stays untouched everywhere else
 // (record tables, per-share history, dilution trend), where it is the right denominator.
-function sharesForValueOf(facts, shareRef) {
+function sharesForValueOf(facts, shareRef, periodEnd = null) {
   const avg = latestObservation(facts, ["WeightedAverageNumberOfSharesOutstandingBasic", ...CONCEPTS.sharesDiluted], "shares", false);
   const pick = (o, basis) => ({ val: fixShareScale(o.val, shareRef), asOf: o.end, form: o.form || null, basis });
+  // Absolute recency guard: a share count must belong to roughly the record's period. A
+  // dual-class dimensional filer (Visa, Berkshire...) can carry an un-dimensioned dei cover
+  // observation stranded a decade back — Visa shipped a 2010 count (469M vs ~1.9B) that the old
+  // relative-to-avg guard let through. ~460 days spans a filer whose latest cover trails the
+  // fiscal year-end by up to a full year (2026-07-17 correctness sweep #3).
+  // Signed: a share count is too stale only when it is OLDER than the financials it prices (a
+  // decade-back base against this year's earnings — the Visa error). A cover FRESHER than a lagging
+  // XBRL financial set (Greif's pattern: a 2026 cover against 2024 companyfacts) is the current count
+  // and must be kept, not withheld. days() is absolute, so measure the signed gap directly.
+  const fresh = (end) => !periodEnd || !end || (new Date(periodEnd) - new Date(end)) / 86400000 <= 460;
   let dei = null;
   const units = facts?.facts?.dei?.EntityCommonStockSharesOutstanding?.units?.shares;
   if (units) {
     for (const u of units) {
       if (!u.form || !u.end || u.start) continue;
       if (!(u.form.startsWith("10-K") || u.form.startsWith("10-Q"))) continue;
+      if (!fresh(u.end)) continue;
       if (!dei || new Date(u.end) > new Date(dei.end) || (u.end === dei.end && (u.filed || "") > dei.filed))
         dei = { val: u.val, end: u.end, filed: u.filed || "", form: u.form };
     }
   }
   if (dei && dei.val > 0 && (!avg?.end || Math.abs(days(dei.end, avg.end)) <= 400)) return pick(dei, "cover");
   const inst = latestObservation(facts, CONCEPTS.sharesOutstanding, "shares", true);
-  if (inst && inst.val > 0 && avg?.val > 0 && inst.val >= avg.val * 0.75 && inst.val <= avg.val * 1.25)
+  if (inst && inst.val > 0 && fresh(inst.end) && avg?.val > 0 && inst.val >= avg.val * 0.75 && inst.val <= avg.val * 1.25)
     return pick(inst, "instant");
-  if (avg && avg.val > 0) {
+  // The weighted-average fallback is subject to the SAME recency guard. A dual-class filer that
+  // stopped tagging the un-dimensioned weighted-average years ago (Formula One's last is 2016,
+  // KKR's units end 2018, Haverty's 2012) leaves `avg` frozen a decade back — pricing today's cap
+  // on a decade-old share base is the Visa error wearing a different basis. When avg is itself
+  // stale, return null so the cover-text fallback reads the filing covers for the real current
+  // count, or the page stays honestly blank (2026-07-17 correctness sweep #3).
+  if (avg && avg.val > 0 && fresh(avg.end)) {
     const hasBasic = !!facts?.facts?.["us-gaap"]?.WeightedAverageNumberOfSharesOutstandingBasic;
     return pick(avg, hasBasic ? "basic average" : "diluted average");
   }
@@ -551,8 +568,17 @@ export function parseCoverShares(html) {
     if (/[$€£]\s*$/.test(before) || /^\s*(%|percent|dollars)/i.test(after)) continue;
     // A four-digit year alone is never a count; the digit floor (≥5 digits grouped or ≥7 plain)
     // already excludes it, but a "2,026"-style artifact is caught by the plausibility band below.
-    const context = region.slice(Math.max(0, m.index - 160), m.index + 80);
-    if (/preferred/i.test(context) && !/common/i.test(context)) continue;
+    // Exclude preferred: a count belongs to a preferred class only when ITS OWN adjacent class label
+    // says so. The label sits next to the number — covers overwhelmingly write "N shares of [Class]
+    // stock" (descriptor FORWARD of the count), with a table/label-first minority ("[Class] Stock, N
+    // shares"). So read the forward window first and fall back to the backward window only when the
+    // forward one carries no descriptor. The old wide 160-char BACKWARD context bled the PREVIOUS
+    // common class's name onto Ares's "Series B mandatory convertible preferred" line and summed its
+    // 30,000,000 preferred shares into the common count (360M vs the true 330M, 2026-07-17 sweep #3).
+    const fwd = region.slice(m.index + m[0].length, m.index + m[0].length + 90);
+    const back = region.slice(Math.max(0, m.index - 90), m.index);
+    const label = /common|preferred/i.test(fwd) ? fwd : back;
+    if (/preferred/i.test(label) && !/common/i.test(label)) continue;
     counts.push(Number(m[1].replace(/,/g, "")));
   }
   const plausible = counts.filter((v) => v >= 1e5 && v <= 5e10);
@@ -1297,12 +1323,15 @@ async function main() {
       form: anchor?.form ?? "10-K",
       sourceUrl,
       // The dated instantaneous share count the valuation multiplies a price by; the record
-      // tables keep the weighted-average diluted series. See sharesForValueOf above. When the
-      // whole XBRL chain is empty AND the history carries no count either (the dual-class
-      // dimension-stripped hole: STZ, BAM, PLNT...), the cover-text fallback reads the filing
-      // covers themselves, corroborated across the 10-K and 10-Q, or stays honestly null.
-      sharesForValue: sharesForValueOf(facts, shareRef)
-        ?? (Object.values(ha.sharesDiluted).every((v) => v == null) ? await coverShareCount(cik) : null),
+      // tables keep the weighted-average diluted series. See sharesForValueOf above. The chain
+      // returns null in two cases — no share fact at all (the dual-class dimension-stripped hole:
+      // STZ, BAM, PLNT...) and a share fact that is real but decade-stale (Formula One, KKR,
+      // Haverty's, whose recency guard now rejects the frozen weighted-average). In BOTH the
+      // cover-text fallback reads the filing covers, corroborated across the 10-K and 10-Q, for
+      // the real current count, or stays honestly null. Bounded: only ~30 filers reach this branch
+      // (a fresh tagged count short-circuits it), so the extra cover fetches are trivial.
+      sharesForValue: sharesForValueOf(facts, shareRef, anchor?.end ?? null)
+        ?? await coverShareCount(cik),
       lines: {
         operatingIncome: deriveOpInc(oi?.val ?? null, revLatest, pick(CONCEPTS.costsAndExpenses), pick(CONCEPTS.netIncome), pick(CONCEPTS.incomeTaxExpense), pick(CONCEPTS.interestExpense)),
         interestExpense: pick(CONCEPTS.interestExpense),

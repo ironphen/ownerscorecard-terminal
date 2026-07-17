@@ -105,7 +105,7 @@ export function inversionChecks(company) {
                 : "The repurchases were outrun by issuance — to staff, in a raise, or in a deal — and the filing says which; owners' slice still shrank."
               : "Owners were diluted on net; each share owns less of the business than it did."
           } Read the buyback line beside this one, not on its own.`
-        : `Diluted shares ${cap.shareChange < -0.01 ? `fell ${pct(cap.shareChange, 1)}` : "barely moved"} over ${cap.span}${boughtBack ? ", so the buybacks more than covered the shares issued along the way" : ""}, and owners were not diluted away.`,
+        : `Diluted shares ${cap.shareChange < -0.01 ? `fell ${pct(cap.shareChange, 1)}` : cap.shareChange > 0.01 ? `rose ${pct(cap.shareChange, 1)}` : "barely moved"} over ${cap.span}${boughtBack && cap.shareChange < 0 ? ", so the buybacks more than covered the shares issued along the way" : ""}, and owners were not materially diluted.`,
     });
   }
 

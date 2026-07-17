@@ -34,7 +34,7 @@ export function acquisitionRecord(company) {
   const gwIntPctAssets = gwPlusInt / assets;
   const equityPositive = equity != null && equity > 0;
   const gwVsEquity = equityPositive ? goodwill / equity : null; // goodwill as a multiple of book equity
-  const exceedsEquity = equity != null && goodwill > equity;    // the premium is larger than all book equity
+  const exceedsEquity = equityPositive && goodwill > equity;    // the premium is larger than all book equity (only meaningful when equity is positive — goodwill > a negative equity is trivially true, 2026-07-17 sweep #3)
 
   // Materiality (editorial, not a verdict): the acquisition lens earns its place when goodwill and
   // acquired intangibles are a real part of the balance sheet, when cash deployed on deals is a real part

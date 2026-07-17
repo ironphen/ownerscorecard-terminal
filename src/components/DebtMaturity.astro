@@ -113,7 +113,7 @@ const bsDebt = L.totalDebt ?? null;
           <div class="c tot"><span>Together, against {$(dm.dueNextYear)} due next year</span><b>{coverMult >= 1 ? `${coverMult.toFixed(1)}×` : `${coverMult.toFixed(2)}×`}</b></div>
         </div>
         <p class="cnote">
-          Cash on hand{cashAsOf ? ` as of ${fmtDate(cashAsOf)}` : ""}{oePos > 0 ? " plus a year’s owner earnings" : ""} comes to {$(coverNum)} against
+          {hasCash ? <>Cash on hand{cashAsOf ? ` as of ${fmtDate(cashAsOf)}` : ""}{oePos > 0 ? " plus a year’s owner earnings" : ""}</> : "A year’s owner earnings"} comes to {$(coverNum)} against
           the {$(dm.dueNextYear)} due in the twelve months after {dm.asOf ? `the ${fmtDate(dm.asOf)} schedule` : "the schedule’s date"}: {coverMult >= 1
             ? `${coverMult.toFixed(coverMult >= 10 ? 0 : 1)} times it`
             : `about ${Math.round(coverMult * 100)}% of it, so the near maturities lean on refinancing or the rest of the year’s cash`}.
