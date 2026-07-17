@@ -17,6 +17,7 @@ const { ticker } = Astro.props;
       <span class="nsDraft" hidden>draft kept on this device</span>
     </div>
     <p class="nsMsg" hidden></p>
+    <p class="nsCommit"><a href="/notebook-commitment">The Notebook Commitment</a>: what is stored, and what we will never do.</p>
     <ul class="nsList"></ul>
   </div>
 </div>
@@ -43,6 +44,8 @@ const { ticker } = Astro.props;
   .nsSave:disabled { opacity: 0.5; cursor: default; }
   .nsDraft { font-size: 11.5px; color: var(--muted); font-style: italic; }
   .nsMsg { font-size: 12.5px; color: var(--muted); margin: 8px 0 0; }
+  .nsCommit { font-size: 11.5px; color: var(--muted); margin: 8px 0 0; }
+  .nsCommit a { color: var(--accent); }
   .nsList { list-style: none; margin: 12px 0 0; padding: 0; }
   .nsList li { padding: 8px 0; border-top: 1px solid var(--rule); }
   .nsWhen { font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; }

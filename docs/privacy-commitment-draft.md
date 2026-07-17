@@ -1,9 +1,10 @@
-# The Notebook Commitment — DRAFT for the founder's read-and-approve
+# The Notebook Commitment — the approved record copy
 
-**Status: DRAFT (2026-07-16). Not published.** Per design doc D5, this is the publication
-putting its own promise on the record, in house voice, dated and amended in writing like
-EDITORIAL.md. It ships on /account (and linked beside the notebook strip) only on the
-founder's approval; he may rewrite it in his own hand first.
+**Status: APPROVED by the founder 2026-07-16 ("privacy commitment looks good on my end")
+and PUBLISHED same day at /notebook-commitment** (src/pages/notebook-commitment.astro),
+linked from the account page's notebook section, the notes strip, and the capture strip.
+The published page is the canonical text (em-dashes converted to the page-prose register);
+this file remains as the decision record. Per design doc D5.
 
 The doctrine it must satisfy (§3.3): state the promise at its true strength — name what is
 stored, who can technically reach it, what we commit never to do, and the standing proof.

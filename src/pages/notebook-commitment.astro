@@ -1,0 +1,79 @@
+---
+// The Notebook Commitment: the publication's own promise, on the record, dated. Published as
+// a public page on purpose. A reader can weigh the promise before they ever create an
+// account, and the promise is stated at its true strength: what is stored, who can
+// technically reach it, what we commit never to do, and the standing proof. Overclaiming
+// ("we cannot read it") would be the one lie that poisons a trust-first publication, so the
+// page does not overclaim. Approved by the founder 2026-07-16 (docs/privacy-commitment-draft.md).
+// Amended only in writing, here, with the date of the change. Plain register, no em-dashes.
+import BaseLayout from "../layouts/BaseLayout.astro";
+---
+
+<BaseLayout
+  title="The Notebook Commitment, Owner Scorecard"
+  description="What is stored in a reader's notebook, who can technically reach it, what the publication commits never to do, and the standing proof."
+>
+  <section class="commit">
+    <h1>The Notebook Commitment</h1>
+    <p class="dateline">First published July 16, 2026. Amended only in writing, here, with the date of the change.</p>
+
+    <p>
+      Your notebook is your own record: dated notes and dated appraisal snapshots, written by
+      you, on the companies you study. This page states plainly what happens to it.
+    </p>
+
+    <h2>What is stored</h2>
+    <p>
+      The text of your notes; and for each snapshot, the price you typed, the dial settings
+      you chose, the sentences the page showed you for them, the day's bond yield, and the
+      filing vintage the record ran through. Nothing else. Nothing is captured automatically;
+      every entry is your own act.
+    </p>
+
+    <h2>Who can technically reach it</h2>
+    <p>
+      Your rows are locked to your account at the database itself, not merely in the
+      application. But we will not pretend to more than that: the database administrator role
+      can reach any row, as it can at every hosted service you have ever used, and the
+      platform's backups retain data for their retention window. A promise of absolute
+      technical impossibility would be false, so we do not make it.
+    </p>
+
+    <h2>What we commit never to do</h2>
+    <p>
+      We will never read a notebook. We will never query, aggregate, count, rank, or mine
+      notebooks, not even anonymized ("most-noted companies" will never exist here). We will
+      never use a notebook to train anything, sell anything, or decide anything. There is no
+      analytics code on the notebook, and no code path in the product that reads notebooks
+      across users.
+    </p>
+
+    <h2>The standing proof</h2>
+    <p>
+      This publication's code is public. Anyone may verify that the notebook's tables deny
+      access at the database except to their owner, that snapshots cannot be edited even by
+      their owner, and that no aggregation path exists. The commitment is not a policy we ask
+      you to trust; it is an architecture you can read.
+    </p>
+
+    <h2>Your record leaves with you</h2>
+    <p>
+      The export is free, complete, and will never sit behind a payment: every note and
+      snapshot, dated, in a plain file you can read in any editor decades from now. Delete
+      means delete.
+    </p>
+
+    <p>
+      If this commitment ever changes, the change will be written here, dated, before it
+      takes effect.
+    </p>
+  </section>
+
+  <style>
+    .commit { max-width: 640px; margin: 32px auto 0; }
+    h1 { margin: 0 0 6px; }
+    .dateline { font-family: var(--sans); font-size: 12.5px; color: var(--muted); margin: 0 0 22px; }
+    h2 { font-size: 17px; border-bottom: 1px solid var(--rule-strong); padding-bottom: 5px; margin: 26px 0 10px; }
+    p { font-size: 15px; line-height: 1.6; color: var(--ink); max-width: 62ch; }
+  </style>
+</BaseLayout>
