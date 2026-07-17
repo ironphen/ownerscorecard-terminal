@@ -1,0 +1,57 @@
+#!/usr/bin/env node
+// ownerTest.mjs — case law for the owner's statement arithmetic (/owner). The rule under
+// test: every figure is the reader's fraction times an as-filed number; a missing filed
+// figure stays missing; totals report their coverage; the yield exists only over priced
+// rows whose owner earnings exist.
+import { holdingRow, statementTotals, money, fractionLabel } from "../src/lib/ownerStatement.mjs";
+
+let failed = 0;
+const t = (name, ok) => {
+  if (!ok) { failed++; console.error(`✗ ${name}`); }
+  else console.log(`ok ${name}`);
+};
+
+const aapl = {
+  ticker: "AAPL", name: "Apple Inc.", fy: 2025, form: "10-K",
+  price: { currency: "USD", sym: "$", shares: 14687356000, oe: 129174000000, rev: 451442000000, ni: 122575000000, netDebt: -63881000000 },
+};
+const jpm = {
+  ticker: "JPM", name: "JPMorgan", fy: 2025, form: "10-K",
+  price: { currency: "USD", sym: "$", shares: 2679511418, oe: null, rev: 186973000000, ni: 58899000000, netDebt: 136622000000 },
+};
+const toyota = {
+  ticker: "7203", name: "Toyota", fy: 2025, form: "有報",
+  price: { currency: "JPY", sym: "¥", shares: 13000000000, oe: 3000000000000, rev: 48000000000000, ni: 4900000000000, netDebt: 20000000000000 },
+};
+
+const r = holdingRow(aapl, 500);
+t("row: the fraction is the reader's shares over the filed count", Math.abs(r.frac - 500 / 14687356000) < 1e-18);
+t("row: owner earnings scale by the fraction", Math.abs(r.oe - 129174000000 * r.frac) < 1);
+t("row: net cash stays negative (a fact, not a flourish)", r.netDebt < 0);
+t("row: refuses without a filed share count", holdingRow({ ticker: "X", price: { shares: null } }, 100) === null);
+t("row: refuses zero or garbage shares owned", holdingRow(aapl, 0) === null && holdingRow(aapl, "many") === null);
+
+const bank = holdingRow(jpm, 100);
+t("row: a bank's missing owner earnings stays missing", bank.oe === null && bank.ni != null);
+
+const rows = [r, bank, holdingRow(toyota, 200)];
+const totals = statementTotals(rows, { AAPL: 210.55, "7203": 2800 });
+const usd = totals.find((x) => x.ccy === "USD");
+const jpy = totals.find((x) => x.ccy === "JPY");
+t("totals: currencies never mix", totals.length === 2 && usd.n === 2 && jpy.n === 1);
+t("totals: each figure reports its coverage", usd.oeN === 1 && usd.revN === 2 && usd.niN === 2);
+t("totals: revenue sums across the covered rows", Math.abs(usd.rev - (r.rev + bank.rev)) < 1);
+t("totals: the yield covers only priced rows with owner earnings",
+  usd.pricedN === 1 && Math.abs(usd.oeYield - r.oe / (210.55 * 500)) < 1e-12);
+t("totals: an unpriced group has no yield", statementTotals([bank], {}).find((x) => x.ccy === "USD").oeYield === null);
+
+t("money: billions in the register", money(129174000000) === "$129.17B");
+t("money: negative sign precedes the symbol", money(-63881000000) === "−$63.88B");
+t("money: yen symbol carries", money(48000000000000, "¥") === "¥48.00T");
+t("money: null is a dash", money(null) === "—");
+t("fraction: small stakes read as the reciprocal", fractionLabel(500 / 14687356000) === "1/29,374,712th of the company");
+t("fraction: readable stakes read as percent", fractionLabel(0.021) === "2.1% of the company");
+t("fraction: garbage is a dash", fractionLabel(null) === "—" && fractionLabel(-1) === "—");
+
+if (failed) { console.error(`\n❌ ownerTest: ${failed} failure(s).`); process.exit(1); }
+console.log("\n✅ ownerTest passed.");
