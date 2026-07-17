@@ -16,6 +16,7 @@ import {
   NOTE_KINDS, NOTE_MAX_CHARS, BECAUSE_MAX_CHARS, PAYLOAD_MAX_BYTES, PAYLOAD_MAX_KEYS,
 } from "../src/lib/notebook.mjs";
 import { buildSnapshotPayload, snapshotSummary } from "../src/lib/notebookCapture.mjs";
+import { exportMarkdown, exportJson } from "../src/lib/notebookExport.mjs";
 
 let failed = 0;
 const t = (name, ok) => {
@@ -26,8 +27,8 @@ const t = (name, ok) => {
 // --- 1+2: the route tripwires ---
 const ROUTE_DIR = "src/pages/api/notebook";
 const routeFiles = readdirSync(ROUTE_DIR).filter((f) => f.endsWith(".js"));
-t("notebook routes exist (index, update, delete, snapshot)",
-  ["index.js", "update.js", "delete.js", "snapshot.js"].every((f) => routeFiles.includes(f)));
+t("notebook routes exist (index, update, delete, snapshot, export)",
+  ["index.js", "update.js", "delete.js", "snapshot.js", "export.js"].every((f) => routeFiles.includes(f)));
 
 // Code forms only (env keys, identifiers, client construction) — prose may state the
 // promise ("never uses the service role") without tripping the wire that enforces it.
@@ -126,6 +127,25 @@ t("capture: rich payload still clears the API gate", validPayload(rich) !== null
 t("capture: summary reads like the design's one-liner",
   (() => { const s = snapshotSummary(rich); return s.startsWith("$210.55") && s.includes("4.5% / 10yr / 2.5%") && s.includes("implied +8.2%/yr"); })());
 t("capture: summary of garbage is empty", snapshotSummary(null) === "" && snapshotSummary("x") === "");
+
+// --- 6: the export — the ownership proof round-trips whole ---
+const exNotes = [
+  { ticker: "AAPL", body: "Margin held through the record.\n\n- second line", created_at: "2026-07-01T10:00:00Z", updated_at: "2026-07-02T10:00:00Z" },
+  { ticker: "CMG", body: "Unit growth is the question.", created_at: "2026-07-16T10:00:00Z", updated_at: "2026-07-16T10:00:00Z" },
+];
+const exSnaps = [
+  { ticker: "AAPL", taken_at: "2026-07-16T21:00:00Z", because: "the margin looked durable", payload: rich },
+];
+const md = exportMarkdown({ exported: "2026-07-16", notes: exNotes, snapshots: exSnaps });
+t("export md: self-describing header", md.startsWith("# Owner's Notebook") && md.includes("2 notes and 1 snapshot across 2 companies"));
+t("export md: companies as sections", md.includes("## AAPL") && md.includes("## CMG"));
+t("export md: snapshot dated by the reader's calendar day", md.includes("### Snapshot — 2026-07-16"));
+t("export md: because and dials survive, in plain names", md.includes("Because: the margin looked durable") && md.includes("required return 4.5%"));
+t("export md: the lede rides as a quote", md.includes("> At $210.55"));
+t("export md: note bodies verbatim with edit mark", md.includes("Margin held through the record.") && md.includes("edited Jul 2, 2026"));
+const ej = JSON.parse(exportJson({ exported: "2026-07-16", notes: exNotes, snapshots: exSnaps }));
+t("export json: lossless and versioned", ej.format === "owner-notebook/1" && ej.notes.length === 2 && ej.snapshots[0].payload.price === 210.55);
+t("export handles an empty notebook", exportMarkdown({ exported: "2026-07-16" }).includes("0 notes and 0 snapshots"));
 
 if (failed) { console.error(`\n❌ notebookTest: ${failed} failure(s).`); process.exit(1); }
 console.log("\n✅ notebookTest passed.");

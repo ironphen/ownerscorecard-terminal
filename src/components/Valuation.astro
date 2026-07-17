@@ -13,6 +13,7 @@ import { tangibleEquity } from "../lib/financials.mjs";
 import { ffoPerShare } from "../lib/reits.mjs";
 import { earningsPower } from "../lib/normalize.mjs";
 import NotebookCapture from "./NotebookCapture.astro";
+import NotebookStrip from "./NotebookStrip.astro";
 import { trendGrowth } from "../lib/valuationInputs.mjs";
 import rates from "../data/rates.json";
 import adrRatios from "../data/adrRatios.json";
@@ -686,6 +687,7 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
       </p>
     </div>
   )}
+  <NotebookStrip ticker={co.ticker} />
 </section>
 
 <style>

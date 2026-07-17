@@ -29,13 +29,32 @@ if (!user) {
 
 Astro.response.headers.set("Cache-Control", "private, no-store");
 
-const [{ data: follows }, { data: wirePref }] = await Promise.all([
+const [{ data: follows }, { data: wirePref }, { data: nbNotes }, { data: nbSnaps }] = await Promise.all([
   supabase.from("follows").select("ticker, created_at").order("ticker"),
   supabase.from("wire_subscriptions").select("enabled, frequency").maybeSingle(),
+  supabase.from("notebook_notes").select("ticker, updated_at").order("updated_at", { ascending: false }).limit(2000),
+  supabase.from("notebook_snapshots").select("ticker, taken_at").order("taken_at", { ascending: false }).limit(5000),
 ]);
 const list = follows ?? [];
 const wireOn = wirePref?.enabled === true;
 const wireFreq = wirePref?.frequency === "daily" ? "daily" : "weekly";
+
+// The notebook summary: per company, how many notes and snapshots, and the latest entry's
+// date — a table of contents for the reader's own record, joined here from the two RLS-scoped
+// selects above (rows are the caller's own by construction).
+const nb = new Map();
+for (const n of nbNotes ?? []) {
+  const e = nb.get(n.ticker) ?? { notes: 0, snaps: 0, latest: null };
+  e.notes++; if (!e.latest || n.updated_at > e.latest) e.latest = n.updated_at;
+  nb.set(n.ticker, e);
+}
+for (const s of nbSnaps ?? []) {
+  const e = nb.get(s.ticker) ?? { notes: 0, snaps: 0, latest: null };
+  e.snaps++; if (!e.latest || s.taken_at > e.latest) e.latest = s.taken_at;
+  nb.set(s.ticker, e);
+}
+const nbRows = [...nb.entries()].sort((a, b) => (a[0] < b[0] ? -1 : 1));
+const nbDay = (iso) => new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
 ---
 
 <BaseLayout title="Your account, Owner Scorecard" noindex={true}>
@@ -69,6 +88,33 @@ const wireFreq = wirePref?.frequency === "daily" ? "daily" : "weekly";
     ) : (
       <p class="empty" id="noFollows">None yet. Open any company and press <em>Follow</em>; its filings then reach you on the wire below.</p>
     )}
+
+    <h2 class="secTitle">Your notebook</h2>
+    <p class="nbNote">
+      Dated notes and appraisal snapshots, kept on the company pages. Yours alone — the
+      publication never reads, aggregates, or mines a notebook, and your whole record leaves
+      with you in one file, free, always.
+    </p>
+    {nbRows.length ? (
+      <ul class="nbSummary">
+        {nbRows.map(([t, e]) => (
+          <li>
+            <a class="tkr" href={`/c/${t}`}>{t}</a>
+            <span class="nbCounts">
+              {e.notes ? `${e.notes} note${e.notes === 1 ? "" : "s"}` : null}
+              {e.notes && e.snaps ? " · " : null}
+              {e.snaps ? `${e.snaps} snapshot${e.snaps === 1 ? "" : "s"}` : null}
+            </span>
+            <span class="nbLatest">latest {nbDay(e.latest)}</span>
+          </li>
+        ))}
+      </ul>
+    ) : (
+      <p class="empty">Nothing yet. On any company page: type a price and enter the appraisal in your notebook, or open <em>Your notes</em> below the valuation.</p>
+    )}
+    <p class="nbExport">
+      Download my notebook: <a href="/api/notebook/export">Markdown</a> · <a href="/api/notebook/export?format=json">JSON</a>
+    </p>
 
     <h2 class="secTitle">The wire, by email</h2>
     <p class="wireNote">
@@ -130,6 +176,14 @@ const wireFreq = wirePref?.frequency === "daily" ? "daily" : "weekly";
     .chip:hover { border-color: var(--accent); color: var(--accent); }
     .chipCaution { color: var(--warn, #b4690e); border-color: var(--warn, #b4690e); }
     .empty { color: var(--ink-dim); font-size: 14.5px; }
+
+    .nbNote { color: var(--ink-dim); font-size: 14px; line-height: 1.5; margin: 0 0 12px; max-width: 60ch; }
+    .nbSummary { list-style: none; padding: 0; margin: 0; }
+    .nbSummary li { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; padding: 8px 0; border-bottom: 1px solid var(--rule); font-family: var(--sans); font-size: 13px; }
+    .nbCounts { color: var(--ink-dim); }
+    .nbLatest { color: var(--muted); font-size: 12px; margin-left: auto; font-variant-numeric: tabular-nums; }
+    .nbExport { font-family: var(--sans); font-size: 13px; color: var(--ink-dim); margin: 12px 0 0; }
+    .nbExport a { color: var(--accent); }
 
     .wireNote { color: var(--ink-dim); font-size: 14px; line-height: 1.5; margin: 0 0 12px; max-width: 60ch; }
     .wireRow { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }

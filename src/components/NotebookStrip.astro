@@ -1,0 +1,208 @@
+---
+// The notebook strip — the reader's ink, directly below the valuation section. Free-text
+// notes on this company: written here, edited here, deleted here, and never read by the
+// publication. The page stays fully static: the strip is inert until opened; the first open
+// lazily fetches the reader's notes (401 → one quiet sign-in line). A draft persists to this
+// device on every keystroke (the priceMemory pattern) and is cleared only on a confirmed
+// save — a typed word is never lost to a failed request.
+const { ticker } = Astro.props;
+---
+
+<div class="nbStrip" data-ticker={ticker}>
+  <button class="nsToggle" type="button">Your notes on this company — private, we never read them.</button>
+  <div class="nsBody" hidden>
+    <textarea class="nsEditor" rows="4" maxlength="20000" placeholder="A note is dated when saved; until then it stays as a draft on this device."></textarea>
+    <div class="nsRow">
+      <button class="nsSave" type="button">Save the note</button>
+      <span class="nsDraft" hidden>draft kept on this device</span>
+    </div>
+    <p class="nsMsg" hidden></p>
+    <ul class="nsList"></ul>
+  </div>
+</div>
+
+<style>
+  .nbStrip { margin: 26px 0 8px; font-family: var(--sans); border-top: 1px solid var(--rule); padding-top: 10px; }
+  .nsToggle {
+    font-size: 12px; font-weight: 600; letter-spacing: 0.05em; color: var(--accent);
+    background: none; border: none; padding: 0; cursor: pointer;
+  }
+  .nsToggle:hover { text-decoration: underline; }
+  .nsBody { margin-top: 10px; }
+  .nsEditor {
+    width: 100%; box-sizing: border-box; font-family: var(--serif); font-size: 14px; line-height: 1.55;
+    color: var(--ink); background: var(--paper); border: 1px solid var(--rule); border-radius: 4px;
+    padding: 8px 10px; resize: vertical;
+  }
+  .nsRow { display: flex; align-items: center; gap: 12px; margin-top: 8px; }
+  .nsSave {
+    font-size: 12px; font-weight: 600; letter-spacing: 0.05em; color: var(--accent);
+    background: none; border: 1px solid var(--accent); border-radius: 999px; padding: 4px 14px; cursor: pointer;
+  }
+  .nsSave:hover { background: var(--accent-tint); }
+  .nsSave:disabled { opacity: 0.5; cursor: default; }
+  .nsDraft { font-size: 11.5px; color: var(--muted); font-style: italic; }
+  .nsMsg { font-size: 12.5px; color: var(--muted); margin: 8px 0 0; }
+  .nsList { list-style: none; margin: 12px 0 0; padding: 0; }
+  .nsList li { padding: 8px 0; border-top: 1px solid var(--rule); }
+  .nsWhen { font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .nsText { font-family: var(--serif); font-size: 14px; line-height: 1.55; color: var(--ink); margin: 4px 0 0; white-space: pre-wrap; overflow-wrap: break-word; }
+  .nsActs { display: flex; gap: 12px; margin-top: 4px; }
+  .nsActs button { font-size: 11px; color: var(--muted); background: none; border: none; cursor: pointer; padding: 0; }
+  .nsActs button:hover { color: var(--accent); text-decoration: underline; }
+  .nsActs .nsDel:hover { color: var(--bad); }
+  .nsEditWrap textarea {
+    width: 100%; box-sizing: border-box; font-family: var(--serif); font-size: 14px; line-height: 1.55;
+    color: var(--ink); background: var(--paper); border: 1px solid var(--rule); border-radius: 4px; padding: 8px 10px;
+  }
+</style>
+
+<script>
+  const root = document.querySelector(".nbStrip");
+  if (root) {
+    const ticker = root.dataset.ticker;
+    const DRAFT_KEY = "osc-nb-draft-" + ticker;
+    const toggle = root.querySelector(".nsToggle");
+    const body = root.querySelector(".nsBody");
+    const editor = root.querySelector(".nsEditor");
+    const save = root.querySelector(".nsSave");
+    const draftTag = root.querySelector(".nsDraft");
+    const msg = root.querySelector(".nsMsg");
+    const list = root.querySelector(".nsList");
+
+    const say = (t) => { msg.textContent = t; msg.hidden = !t; };
+    const fmtWhen = (iso) => {
+      try { return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }); }
+      catch { return iso; }
+    };
+
+    // The draft: every keystroke persists to this device, cleared only on confirmed save.
+    try {
+      const d = localStorage.getItem(DRAFT_KEY);
+      if (d) { editor.value = d; draftTag.hidden = false; }
+    } catch {}
+    editor.addEventListener("input", () => {
+      try {
+        if (editor.value.trim()) { localStorage.setItem(DRAFT_KEY, editor.value); draftTag.hidden = false; }
+        else { localStorage.removeItem(DRAFT_KEY); draftTag.hidden = true; }
+      } catch {}
+    });
+
+    const row = (n) => {
+      const li = document.createElement("li");
+      const when = document.createElement("div");
+      when.className = "nsWhen";
+      when.textContent = fmtWhen(n.updated_at) + (n.updated_at !== n.created_at ? " (edited)" : "");
+      li.appendChild(when);
+      const text = document.createElement("p");
+      text.className = "nsText";
+      text.textContent = n.body;
+      li.appendChild(text);
+      const acts = document.createElement("div");
+      acts.className = "nsActs";
+      const edit = document.createElement("button");
+      edit.type = "button"; edit.textContent = "edit";
+      edit.addEventListener("click", () => {
+        const wrap = document.createElement("div");
+        wrap.className = "nsEditWrap";
+        const ta = document.createElement("textarea");
+        ta.rows = 4; ta.maxLength = 20000; ta.value = n.body;
+        const done = document.createElement("button");
+        done.type = "button"; done.textContent = "save";
+        const cancel = document.createElement("button");
+        cancel.type = "button"; cancel.textContent = "cancel";
+        const acts2 = document.createElement("div");
+        acts2.className = "nsActs";
+        acts2.append(done, cancel);
+        wrap.append(ta, acts2);
+        text.replaceWith(wrap);
+        acts.hidden = true;
+        cancel.addEventListener("click", () => { wrap.replaceWith(text); acts.hidden = false; });
+        done.addEventListener("click", () => {
+          done.disabled = true;
+          fetch("/api/notebook/update", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id: n.id, body: ta.value }),
+          })
+            .then((r) => (r.ok ? r.json() : r.json().then((e) => Promise.reject(e?.error))))
+            .then((j) => {
+              n.body = j.note.body; n.updated_at = j.note.updated_at;
+              text.textContent = n.body;
+              when.textContent = fmtWhen(n.updated_at) + " (edited)";
+              wrap.replaceWith(text);
+              acts.hidden = false;
+            })
+            .catch((e) => { done.disabled = false; say(typeof e === "string" ? e : "Couldn’t save the edit — your text is still here."); });
+        });
+      });
+      const del = document.createElement("button");
+      del.type = "button"; del.className = "nsDel"; del.textContent = "delete";
+      del.addEventListener("click", () => {
+        del.disabled = true;
+        fetch("/api/notebook/delete", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: n.id, kind: "note" }),
+        })
+          .then((r) => (r.ok ? li.remove() : Promise.reject()))
+          .catch(() => { del.disabled = false; say("Couldn’t delete — try again."); });
+      });
+      acts.append(edit, del);
+      li.appendChild(acts);
+      return li;
+    };
+
+    let loaded = false, signedOut = false;
+    const load = () => {
+      if (loaded) return;
+      loaded = true;
+      fetch("/api/notebook?ticker=" + encodeURIComponent(ticker))
+        .then((r) => {
+          if (r.status === 401) {
+            signedOut = true;
+            say("Sign in to keep notes — your draft stays on this device meanwhile.");
+            return null;
+          }
+          return r.ok ? r.json() : Promise.reject();
+        })
+        .then((j) => {
+          if (!j) return;
+          list.textContent = "";
+          (j.notes || []).forEach((n) => list.appendChild(row(n)));
+        })
+        .catch(() => { loaded = false; say("Notebook unavailable right now — your draft is safe on this device."); });
+    };
+
+    toggle.addEventListener("click", () => {
+      body.hidden = !body.hidden;
+      if (!body.hidden) load();
+    });
+
+    save.addEventListener("click", () => {
+      const text = editor.value;
+      if (!text.trim()) { say("Write something first."); return; }
+      if (signedOut) { location.href = "/auth/login?next=" + encodeURIComponent(location.pathname); return; }
+      save.disabled = true;
+      fetch("/api/notebook", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ticker, body: text }),
+      })
+        .then((r) => {
+          if (r.status === 401) { location.href = "/auth/login?next=" + encodeURIComponent(location.pathname); return null; }
+          return r.ok ? r.json() : r.json().then((e) => Promise.reject(e?.error));
+        })
+        .then((j) => {
+          if (!j) return;
+          list.prepend(row(j.note));
+          editor.value = "";
+          try { localStorage.removeItem(DRAFT_KEY); } catch {}
+          draftTag.hidden = true;
+          say("Saved.");
+        })
+        .catch((e) => say(typeof e === "string" ? e : "Couldn’t save — kept on this device; retry when you like."))
+        .finally(() => { save.disabled = false; });
+    });
+  }
+</script>
