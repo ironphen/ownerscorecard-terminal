@@ -579,6 +579,8 @@ async function main() {
         operatingIncome: deriveOpInc(tf(CONCEPTS.operatingIncome), ttmRev.val, tf(CONCEPTS.netIncome), tf(CONCEPTS.incomeTaxExpense), tf(CONCEPTS.interestExpense)),
         interestExpense: tf(CONCEPTS.interestExpense), netIncome: tf(CONCEPTS.netIncome), incomeTaxExpense: tf(CONCEPTS.incomeTaxExpense),
         cashFromOps: tf(CONCEPTS.cashFromOps), capex: tf(CONCEPTS.capex), costOfRevenue: tf(CONCEPTS.costOfRevenue), depreciation: tf(CONCEPTS.depreciation),
+        // Same trailing basis as netIncome, so paid-out/retained splits never mix vintages.
+        dividendsPaid: tf(CONCEPTS.dividendsPaid),
         totalDebt: maxOf((inst(CONCEPTS.longTermDebt) != null || inst(CONCEPTS.currentDebt) != null) ? (inst(CONCEPTS.longTermDebt) || 0) + (inst(CONCEPTS.currentDebt) || 0) : null),
         currentAssets: inst(CONCEPTS.currentAssets), currentLiabilities: inst(CONCEPTS.currentLiabilities), currentDebt: inst(CONCEPTS.currentDebt),
         stockholdersEquity: inst(CONCEPTS.equity), cashAndEquivalents: inst(CONCEPTS.cashAndEquivalents), shortTermInvestments: inst(CONCEPTS.shortTermInvestments),

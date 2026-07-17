@@ -1193,6 +1193,11 @@ async function main() {
             costOfRevenue: tf(CONCEPTS.costOfRevenue),
             depreciation: tf(CONCEPTS.depreciation),
             stockBasedComp: tf(CONCEPTS.stockBasedComp),
+            // Dividends ride the same trailing basis as netIncome, so any surface splitting
+            // profit into paid-out and retained never mixes a TTM numerator with an FY
+            // dividend (the mixed-vintage class the comment above warns about). Also what
+            // lets stewardship's retainedToEquity resolve on TTM-based records.
+            dividendsPaid: tf(CONCEPTS.dividendsPaid),
             sgaExpense: tf(CONCEPTS.sgaExpense),
             researchDevelopment: tf(CONCEPTS.researchDevelopment),
             acquisitionSpend: tf(CONCEPTS.acquisitionSpend),

@@ -117,6 +117,10 @@ function stewardship(company) {
   const retainedToEquity = ni != null && div != null && eq && eq > 0 ? rate((ni - Math.abs(div)) / eq) : null;
   return {
     shareChange: cap ? rate(cap.shareChange) : null,
+    // The record's starting share count on today's split-adjusted basis — the filed number
+    // /owner's then-fraction line divides by, replacing an approximation that mixed the
+    // diluted-average series with the cover count.
+    firstShares: cap ? money(cap.firstShares) : null,
     returnOnRetained: cap ? rate(cap.returnOnRetained) : null,
     payoutOfOwnerEarnings: cap ? rate(cap.returnedOfOE) : null,
     dpsGrowth: cap ? rate(cap.dpsGrowth) : null,
@@ -158,9 +162,17 @@ function quality(company, vm) {
 function priceBlock(company, vm, currency, sym, adrWarn) {
   const isBank = vm.mode === "bank";
   const isReit = vm.mode === "reit";
+  // Dividends paid, from the SAME line basis as netIncome and every flow here — never a
+  // fallback across bases (a TTM profit beside an FY dividend is the mixed-vintage split
+  // the design forbids). The TTM stitch carries the line since 2026-07; a pre-refresh TTM
+  // record reads null (a dash) until refetched, which is the honest state. A filed zero
+  // stays zero — a non-payer's zero is a fact, an absent tag is not.
+  const priceL = company.ttm?.lines || company.lines || {};
+  const dL = priceL.dividendsPaid ?? null;
   return {
     mode: vm.mode, currency, sym, adrBasis: adrWarn,
     shares: money(vm.shares), netDebt: money(vm.netDebt),
+    div: dL != null ? money(Math.abs(dL)) : null,
     // owner-earnings lens
     oe: money(vm.oe), oeNormalized: money(vm.oeNormalized), oeMaint: money(vm.oeMaint),
     oe3: money(vm.oe3), oe3Maint: money(vm.oe3Maint), sbc: money(vm.sbc),

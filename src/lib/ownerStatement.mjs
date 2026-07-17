@@ -68,12 +68,18 @@ export function holdingRow(card, sharesOwned) {
     : num(g.eps?.full) != null
       ? { label: "EPS", v: g.eps.full }
       : null;
-  // What the record's share count did to this same stake: the then-fraction, restated on
-  // today's basis from the split-normalized record change. An arithmetic restatement, not a
-  // filed number — the page's foot names the computation.
+  // What the record's share count did to this same stake: the then-fraction on today's
+  // split-adjusted basis. The filed starting count (stewardship.firstShares) when the card
+  // carries it; the split-normalized record change as the approximate fallback for older
+  // cards. The page's foot names the computation either way.
+  const fs = num(card.stewardship?.firstShares);
   const sc = num(card.stewardship?.shareChange);
-  const thenFrac = sc != null && sc > -1 && card.stewardship?.buybackSpan
-    ? { frac: owned / (shares / (1 + sc)), span: card.stewardship.buybackSpan }
+  const thenFrac = card.stewardship?.buybackSpan
+    ? fs != null && fs > 0
+      ? { frac: owned / fs, span: card.stewardship.buybackSpan }
+      : sc != null && sc > -1
+        ? { frac: owned / (shares / (1 + sc)), span: card.stewardship.buybackSpan }
+        : null
     : null;
   return {
     ticker: card.ticker,
@@ -90,6 +96,11 @@ export function holdingRow(card, sharesOwned) {
     // beside the single year (totals only; the label carries the span).
     oe3: num(p.oe3) != null ? p.oe3 * frac : null,
     ni: num(p.ni) != null ? p.ni * frac : null,
+    // The 1991 split's paid-out half: the year's dividends paid times the reader's fraction.
+    // An attribution on the filed year, never "cash you received" (a mid-year buyer did not
+    // receive it). A filed zero is a fact (the retained half is then the whole profit); an
+    // absent tag stays null and no split renders.
+    div: num(p.div) != null ? p.div * frac : null,
     netDebt: num(p.netDebt) != null ? p.netDebt * frac : null,
     // Book value per share times the reader's shares IS the reader's share of equity —
     // the denominator the look-through return on equity needs.
@@ -112,6 +123,7 @@ export function statementTotals(rows, prices = {}) {
     const t = byCcy.get(r.ccy) ?? {
       ccy: r.ccy, sym: r.sym, n: 0,
       rev: 0, revN: 0, oe: 0, oeN: 0, oe3: 0, oe3N: 0, ni: 0, niN: 0, netDebt: 0, netDebtN: 0, bv: 0, bvN: 0,
+      splitNi: 0, splitDiv: 0, splitN: 0,
       roeNi: 0, roeBv: 0, roeN: 0,
       outlay: 0, oeOnOutlay: 0, pricedN: 0,
     };
@@ -120,6 +132,9 @@ export function statementTotals(rows, prices = {}) {
     if (r.oe != null) { t.oe += r.oe; t.oeN++; }
     if (r.oe3 != null) { t.oe3 += r.oe3; t.oe3N++; }
     if (r.ni != null) { t.ni += r.ni; t.niN++; }
+    // The paid-out/retained split sums only rows carrying BOTH the profit and the dividend
+    // line — a split whose halves cover different rows would not add back to its whole.
+    if (r.ni != null && r.div != null) { t.splitNi += r.ni; t.splitDiv += r.div; t.splitN++; }
     if (r.netDebt != null) { t.netDebt += r.netDebt; t.netDebtN++; }
     if (r.bv != null) { t.bv += r.bv; t.bvN++; }
     if (r.ni != null && r.bv != null && r.bv > 0) { t.roeNi += r.ni; t.roeBv += r.bv; t.roeN++; }
@@ -147,6 +162,7 @@ export function combineUsd(groups, fx = {}) {
   const c = {
     sym: "$", n: 0,
     rev: 0, revN: 0, oe: 0, oeN: 0, oe3: 0, oe3N: 0, ni: 0, niN: 0, netDebt: 0, netDebtN: 0, bv: 0, bvN: 0,
+    splitNi: 0, splitDiv: 0, splitN: 0,
     roeNi: 0, roeBv: 0, roeN: 0,
     outlay: 0, oeOnOutlay: 0, pricedN: 0,
     rates: [], skipped: [],
@@ -160,6 +176,7 @@ export function combineUsd(groups, fx = {}) {
     c.oe += g.oe * f; c.oeN += g.oeN;
     c.oe3 += g.oe3 * f; c.oe3N += g.oe3N;
     c.ni += g.ni * f; c.niN += g.niN;
+    c.splitNi += g.splitNi * f; c.splitDiv += g.splitDiv * f; c.splitN += g.splitN;
     c.netDebt += g.netDebt * f; c.netDebtN += g.netDebtN;
     c.bv += g.bv * f; c.bvN += g.bvN;
     c.roeNi += g.roeNi * f; c.roeBv += g.roeBv * f; c.roeN += g.roeN;

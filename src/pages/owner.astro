@@ -84,7 +84,10 @@ const fxAsOf = rates?.fxAsOf ?? null;
       normalized return on tangible equity, the lens a bank is read on), with the compound
       annual per-share growth over the filed record beneath it. The earlier-count line under
       a fraction restates the record&rsquo;s starting share count on today&rsquo;s
-      split-adjusted basis — an arithmetic restatement, not a filed number. The averaged
+      split-adjusted basis. Where the profit shows a paid-out and retained split, the
+      paid-out half is the year&rsquo;s dividends paid times your fraction — an attribution
+      on the filed year, not cash you received — and the retained half is the remainder the
+      businesses kept working on your behalf. The averaged
       owner earnings are the last three filed years. The look-through return on equity is
       your profit over your equity, summed only across holdings carrying both; the
       owner-earnings yield names the sum of your own prices it is computed on. Each
@@ -149,6 +152,7 @@ const fxAsOf = rates?.fxAsOf ?? null;
     .owner .tGrid { display: flex; gap: 30px; row-gap: 14px; flex-wrap: wrap; font-family: var(--sans); font-variant-numeric: tabular-nums; }
     .owner .tCell .tv { display: block; font-size: 18px; font-weight: 700; color: var(--ink); }
     .owner .tCell .tl { display: block; font-size: 11px; color: var(--muted); letter-spacing: 0.04em; margin-top: 2px; max-width: 24ch; }
+    .owner .tCell .tSplit { display: block; font-size: 11px; color: var(--ink-dim); margin-top: 3px; font-variant-numeric: tabular-nums; }
     .owner .tCov { font-family: var(--sans); font-size: 11.5px; color: var(--muted); margin: 10px 0 0; }
     .owner .foot { font-size: 12.5px; line-height: 1.6; color: var(--muted); max-width: 74ch; margin: 22px 0 0; font-family: var(--sans); }
     .owner .lic { font-family: var(--serif); font-style: italic; }
@@ -235,13 +239,22 @@ const fxAsOf = rates?.fxAsOf ?? null;
       grid.append(cell("your revenue", money(g.revN ? g.rev : null, g.sym)));
       grid.append(cell("your owner earnings", money(g.oeN ? g.oe : null, g.sym)));
       if (g.oe3N) grid.append(cell("averaged owner earnings, last three filed years", money(g.oe3, g.sym)));
-      grid.append(cell("your profit", money(g.niN ? g.ni : null, g.sym)));
+      const profitCell = cell("your profit", money(g.niN ? g.ni : null, g.sym));
+      // The 1991 split, where the dividend line exists beside the profit: the year's
+      // dividends paid times the reader's fraction, and the remainder the businesses
+      // retained — the half that compounds invisibly.
+      if (g.splitN > 0) {
+        const split = el("span", "tSplit", `of which ${money(g.splitDiv, g.sym)} paid out · ${money(g.splitNi - g.splitDiv, g.sym)} retained`);
+        profitCell.append(split);
+      }
+      grid.append(profitCell);
       grid.append(cell("your equity", money(g.bvN ? g.bv : null, g.sym)));
       grid.append(cell(g.netDebtN && g.netDebt < 0 ? "your net cash" : "your net debt", money(g.netDebtN ? Math.abs(g.netDebt) : null, g.sym)));
       if (g.lookRoe != null) grid.append(cell("look-through return on equity", (g.lookRoe * 100).toFixed(1) + "%"));
       if (g.oeYield != null) grid.append(cell(`owner-earnings yield on ${money(g.outlay, g.sym)} at your prices`, (g.oeYield * 100).toFixed(1) + "%"));
       block.append(grid);
       const cov = [];
+      if (g.splitN > 0 && g.splitN < g.niN) cov.push(`the paid-out/retained split covers ${g.splitN} of ${g.niN} with profit`);
       if (g.oeN < g.n) cov.push(`owner earnings cover ${g.oeN} of ${g.n}`);
       if (g.oe3N && g.oe3N < g.n) cov.push(`the average covers ${g.oe3N} of ${g.n}`);
       if (g.revN < g.n) cov.push(`revenue covers ${g.revN} of ${g.n}`);

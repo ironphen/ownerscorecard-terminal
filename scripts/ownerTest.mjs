@@ -13,7 +13,7 @@ const t = (name, ok) => {
 
 const aapl = {
   ticker: "AAPL", name: "Apple Inc.", fy: 2025, form: "10-K",
-  price: { currency: "USD", sym: "$", shares: 14687356000, oe: 129174000000, oe3: 102386000000, rev: 451442000000, ni: 122575000000, netDebt: -63881000000, bvps: 7.250522, mode: "owner-earnings" },
+  price: { currency: "USD", sym: "$", shares: 14687356000, oe: 129174000000, oe3: 102386000000, rev: 451442000000, ni: 122575000000, div: 15234000000, netDebt: -63881000000, bvps: 7.250522, mode: "owner-earnings" },
   quality: { roicThroughCycle: { median: 0.420916, n: 10 }, roeThroughCycle: { median: 0.878664, n: 10 }, rotce: null },
   compounding: { perShare: { ownerEarningsPS: { full: 0.11093 }, eps: { full: 0.146499 } } },
   stewardship: { shareChange: -0.328756, buybackSpan: "2016–2025" },
@@ -54,6 +54,14 @@ t("row: the then-fraction restates the buyback record", (() => {
   return Math.abs(r.thenFrac.frac - 500 / first) < 1e-18 && r.thenFrac.span === "2016–2025" && r.thenFrac.frac < r.frac;
 })());
 t("row: no share-change record → no then-fraction", bank.thenFrac === null);
+t("row: the filed starting count wins over the approximation", (() => {
+  const exact = holdingRow({ ...aapl, stewardship: { ...aapl.stewardship, firstShares: 21000000000 } }, 500);
+  return Math.abs(exact.thenFrac.frac - 500 / 21000000000) < 1e-18;
+})());
+t("row: dividends scale by the fraction", Math.abs(r.div - 15234000000 * r.frac) < 1);
+t("row: a filed zero dividend is a fact, not a hole",
+  holdingRow({ ...aapl, price: { ...aapl.price, div: 0 } }, 10).div === 0);
+t("row: an absent dividend tag stays null", bank.div === null);
 t("fraction: the whole-company guard is declarative", fractionLabel(1.2) === "the whole company, or more than the filed share count");
 
 const rows = [r, bank, holdingRow(toyota, 200)];
@@ -70,6 +78,10 @@ t("totals: look-through ROE covers only rows with both profit and equity",
   usd.roeN === 2 && Math.abs(usd.lookRoe - (r.ni + bank.ni) / (r.bv + bank.bv)) < 1e-12);
 t("totals: the averaged owner earnings carry their own coverage",
   usd.oe3N === 1 && Math.abs(usd.oe3 - r.oe3) < 1 && jpy.oe3N === 1);
+t("totals: the split sums only rows carrying both profit and dividend",
+  usd.splitN === 1 && Math.abs(usd.splitDiv - r.div) < 1 && Math.abs(usd.splitNi - r.ni) < 1);
+t("totals: split halves add back to their whole",
+  Math.abs((usd.splitDiv + (usd.splitNi - usd.splitDiv)) - usd.splitNi) < 1e-6);
 
 const FX = { JPY: 0.006167, EUR: 1.144915 };
 const comb = combineUsd(totals, FX);
@@ -81,6 +93,7 @@ t("combined: a missing rate is named, never silently dropped",
   (() => { const c2 = combineUsd(totals, {}); return c2.skipped.includes("JPY") && c2.n === usd.n; })());
 t("combined: look-through ROE spans currencies",
   Math.abs(comb.lookRoe - (usd.roeNi + jpy.roeNi * 0.006167) / (usd.roeBv + jpy.roeBv * 0.006167)) < 1e-12);
+t("combined: the split converts with its group", Math.abs(comb.splitDiv - usd.splitDiv) < 1 && comb.splitN === 1);
 
 t("money: billions in the register", money(129174000000) === "$129.17B");
 t("money: negative sign precedes the symbol", money(-63881000000) === "−$63.88B");
