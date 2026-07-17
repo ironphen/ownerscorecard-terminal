@@ -1,8 +1,13 @@
 ---
 // The 404 IS the front door: the search box, offered again. A mistyped ticker or a stale
 // external link is how a serious reader arrives; hand them the catalog, not a dead end.
-// Astro emits this as 404.html and the Workers static-asset layer serves it for any
-// unmatched route.
+//
+// Server-rendered ON PURPOSE (2026-07-17): a prerendered 404.html is served by the static
+// asset layer without ever invoking the worker — which meant src/middleware.js (the
+// taxonomy migration's 301 map) never saw a request for an old URL. With the 404 dynamic,
+// a miss is exactly the path that runs the worker: the middleware redirects the 235 moved
+// URLs first, and everything else renders this page. Misses only — real pages stay static.
+export const prerender = false;
 import BaseLayout from "../layouts/BaseLayout.astro";
 ---
 
