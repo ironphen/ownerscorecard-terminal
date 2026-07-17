@@ -543,11 +543,20 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
         owner-earnings growth you'd have to believe to justify it, beside what {name} has delivered.
       </p>
 
+      {/* The banner states WHY the base opens normalized, and the reason must match the record:
+          a build-out (negative latest on total capex), a trough (negative latest), or a PEAK
+          (latest margin above the through-cycle median — §1.2's symmetric default). The peak
+          branch was missing when §1.2 shipped, so peak-defaulted pages (Netflix) falsely
+          claimed negative owner earnings — the founder's catch, 2026-07-17. */}
       {(defaultMaint || defaultNorm) ? (
         <p class="basenote">
-          {name}&rsquo;s latest year shows <b>negative owner earnings</b>{defaultMaint
-            ? ", the mark of a build-out: total capital spending outruns the cash the business throws off today"
-            : ", a cyclical trough"}. So the tool opens on the {defaultMaint ? "steady-state base (maintenance capex in place of the build-out spend)" : "through-cycle base"}, the cash it would earn at rest; clear the toggle below to read the latest year exactly as reported.
+          {defaultMaint ? (
+            <>{name}&rsquo;s latest year shows <b>negative owner earnings</b>, the mark of a build-out: total capital spending outruns the cash the business throws off today. So the tool opens on the steady-state base (maintenance capex in place of the build-out spend), the cash it would earn at rest; clear the toggle below to read the latest year exactly as reported.</>
+          ) : ownerEarnings != null && ownerEarnings < 0 ? (
+            <>{name}&rsquo;s latest year shows <b>negative owner earnings</b>, a cyclical trough. So the tool opens on the through-cycle base, the cash it would earn at rest; clear the toggle below to read the latest year exactly as reported.</>
+          ) : (
+            <>{name}&rsquo;s latest year runs <b>above its own through-cycle margin</b> — the reported figure may flatter a peak. So the tool opens on the through-cycle base, Graham&rsquo;s averaging cutting both ways; clear the toggle below to read the latest year exactly as reported.</>
+          )}
         </p>
       ) : null}
 

@@ -100,41 +100,14 @@ export const FAMILIES = {
 };
 
 // ---------------------------------------------------------------------------------------------
-// The 29 groupings: one per shelf, in shelves.json file order (a fixed reading order, never a
-// ranking). Slugs are hand-written and stored, like the industry slugs in shelves.json, so a
-// later change to any slug rule can never silently move a URL.
+// The groupings: one per industry, in shelves.json file order — the taxonomy's fixed sector
+// then industry order (a reading order, never a ranking). Since the 2026-07-17
+// standardization, shelves.json is generated from src/data/taxonomy.json (shelf = one
+// conventional industry, carrying its sector and its column family), so the defs derive
+// rather than repeat: slugs are stored in shelves.json, and the guard below still fails the
+// build loudly on any drift.
 // ---------------------------------------------------------------------------------------------
-const GROUPING_DEFS = [
-  { noun: "They build aircraft, ships and weapons.", slug: "build-aircraft-ships-and-weapons", family: "general" },
-  { noun: "They build buildings.", slug: "build-buildings", family: "general" },
-  { noun: "They care for the sick.", slug: "care-for-the-sick", family: "general" },
-  { noun: "They carry calls and data.", slug: "carry-calls-and-data", family: "general" },
-  { noun: "They deliver power and water and haul away waste.", slug: "deliver-power-and-water-and-haul-away-waste", family: "heavy" },
-  { noun: "They do work for others.", slug: "do-work-for-others", family: "general" },
-  { noun: "They handle money for a fee.", slug: "handle-money-for-a-fee", family: "fee" },
-  { noun: "They insure things.", slug: "insure-things", family: "insurer" },
-  { noun: "They lend money.", slug: "lend-money", family: "lender" },
-  { noun: "They make building materials.", slug: "make-building-materials", family: "general" },
-  { noun: "They make chemicals.", slug: "make-chemicals", family: "general" },
-  { noun: "They make chips and electronics.", slug: "make-chips-and-electronics", family: "general" },
-  { noun: "They make food, drink and tobacco.", slug: "make-food-drink-and-tobacco", family: "general" },
-  { noun: "They make household goods.", slug: "make-household-goods", family: "general" },
-  { noun: "They make machines.", slug: "make-machines", family: "general" },
-  { noun: "They make medical tools.", slug: "make-medical-tools", family: "general" },
-  { noun: "They make medicines.", slug: "make-medicines", family: "general" },
-  { noun: "They make metal, packaging and parts.", slug: "make-metal-packaging-and-parts", family: "general" },
-  { noun: "They make vehicles and their parts.", slug: "make-vehicles-and-their-parts", family: "general" },
-  { noun: "They make what people wear.", slug: "make-what-people-wear", family: "general" },
-  { noun: "They move people and goods.", slug: "move-people-and-goods", family: "heavy" },
-  { noun: "They own and rent out property.", slug: "own-and-rent-out-property", family: "property" },
-  { noun: "They publish and entertain.", slug: "publish-and-entertain", family: "general" },
-  { noun: "They run restaurants, hotels and casinos.", slug: "run-restaurants-hotels-and-casinos", family: "heavy" },
-  { noun: "They run stores.", slug: "run-stores", family: "general" },
-  { noun: "They span several businesses.", slug: "span-several-businesses", family: "general" },
-  { noun: "They supply and rent out goods.", slug: "supply-and-rent-out-goods", family: "general" },
-  { noun: "They take oil, gas and ore from the ground.", slug: "take-oil-gas-and-ore-from-the-ground", family: "general" },
-  { noun: "They write software.", slug: "write-software", family: "general" },
-];
+const GROUPING_DEFS = SHELVES.map((s) => ({ noun: s.noun, slug: s.industries[0].slug, family: s.family, sector: s.sector }));
 
 // Guard, both ways, at import time: a shelf added to (or renamed in) shelves.json without a
 // grouping here — or a grouping whose shelf no longer exists, a duplicate slug, or an unknown

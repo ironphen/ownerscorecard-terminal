@@ -17,6 +17,7 @@ import fundamentals from "../src/data/fundamentals.json" with { type: "json" };
 import adr from "../src/data/fundamentals.adr.json" with { type: "json" };
 import jp from "../src/data/fundamentals.jp.json" with { type: "json" };
 import { SHELVES, industryLabelOf, shelfOfIndustry, industrySlug } from "../src/lib/shelves.mjs";
+import TAXONOMY from "../src/data/taxonomy.json" with { type: "json" };
 
 let pass = 0, fail = 0;
 const ok = (name, cond) => { if (cond) pass++; else { fail++; console.log("FAIL " + name); } };
@@ -28,7 +29,10 @@ for (const c of [...fundamentals.companies, ...adr.companies, ...jp.companies]) 
   occurring.set(label, (occurring.get(label) || 0) + 1);
 }
 ok("pools non-trivial (>= 3000 companies)", [...occurring.values()].reduce((a, b) => a + b, 0) >= 3000);
-ok("industry variety sane (>= 100 labels)", occurring.size >= 100);
+// The 2026-07-17 standardization consolidated the SIC-description sprawl into ~93
+// conventional industries under 11 sectors (src/data/taxonomy.json) — variety is now bounded
+// by the menu, and drift in either direction is the signal.
+ok("industry variety sane (60-120 labels)", occurring.size >= 60 && occurring.size <= 120);
 
 // ---- 1 + 2: every occurring industry on exactly one shelf ----
 const shelfCountByLabel = new Map();
@@ -46,11 +50,18 @@ for (const l of doubled) console.log(`  doubled: "${l}"`);
 ok("shelfOfIndustry resolves every occurring label", [...occurring.keys()].every((l) => unshelved.includes(l) || shelfOfIndustry(l) !== null));
 
 // ---- 3: shelf shape ----
-ok("a sane number of shelves (20-35)", SHELVES.length >= 20 && SHELVES.length <= 35);
+ok("a sane number of shelves (60-120 — one per occurring industry)", SHELVES.length >= 60 && SHELVES.length <= 120);
 ok("every shelf has at least one industry", SHELVES.every((s) => s.industries.length >= 1));
-ok("every shelf noun is a plain sentence (ends in a period)", SHELVES.every((s) => typeof s.noun === "string" && /^They .+\.$/.test(s.noun)));
-ok("shelves are alphabetical by sentence (the stated fixed order)", SHELVES.every((s, i) => i === 0 || SHELVES[i - 1].noun.localeCompare(s.noun) < 0));
-ok("industries alphabetical within each shelf", SHELVES.every((s) => s.industries.every((ind, i) => i === 0 || s.industries[i - 1].label.localeCompare(ind.label) < 0)));
+// Since the standardization, a shelf IS one conventional industry (noun = the industry
+// label, sector carried beside it) and the fixed order is the taxonomy's sector-then-industry
+// order — a reading order stated in one place (taxonomy.json), never a ranking.
+ok("every shelf is one industry carrying its sector and family", SHELVES.every((s) => typeof s.noun === "string" && s.noun.length > 0 && typeof s.sector === "string" && typeof s.family === "string" && s.industries.length === 1 && s.industries[0].label === s.noun));
+ok("shelf order follows the taxonomy's fixed order", (() => {
+  const order = new Map();
+  let n = 0;
+  for (const sec of TAXONOMY.sectors) for (const i of sec.industries) order.set(i.label, n++);
+  return SHELVES.every((s, i) => i === 0 || (order.get(SHELVES[i - 1].noun) ?? -1) < (order.get(s.noun) ?? -1));
+})());
 
 // ---- 4: slugs ----
 const allInds = SHELVES.flatMap((s) => s.industries);

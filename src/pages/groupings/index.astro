@@ -39,6 +39,14 @@ const groupings = GROUPINGS.map((g) => {
 
 const total = groupings.reduce((a, g) => a + g.count, 0);
 const refreshed = fmtAsOf(dataAsOf);
+
+// Since the 2026-07-17 standardization each grouping IS one conventional industry; the index
+// reads sector by sector in the taxonomy's fixed order — the organizing layer, never a rank.
+const sectorOrder = [...new Set(groupings.map((g) => g.sector))];
+const bySector = sectorOrder.map((name) => ({
+  name,
+  groupings: groupings.filter((g) => g.sector === name),
+})).map((s) => ({ ...s, count: s.groupings.reduce((a, g) => a + g.count, 0) }));
 ---
 
 <BaseLayout title="Groupings, Owner Scorecard" description="The catalog arranged by what the businesses do: each grouping is one comparative table, every member's filed figures in sortable columns.">
@@ -60,25 +68,22 @@ const refreshed = fmtAsOf(dataAsOf);
     {refreshed ? <p class="dateline">From the latest filings · data as of {refreshed}.</p> : null}
   </header>
 
-  <ul class="glist">
-    {groupings.map((g) => (
-      <li class="g">
-        <div class="gTop">
-          <a class="gNoun" href={`/groupings/${g.slug}`}>{g.noun}</a>
-          <span class="gN">{g.count.toLocaleString()} companies · <a class="gTbl" href={`/groupings/${g.slug}`}>the table →</a></span>
-        </div>
-        <p class="gCols">{g.columns.join(" · ")}</p>
-        <p class="gInds">
-          {g.industries.map((ind, i) => (
-            <>
-              {i > 0 ? <span class="gDot"> · </span> : null}
-              <a href={`/industries/${ind.slug}`}>{ind.label}</a> <span class="gIndN">{ind.count}</span>
-            </>
-          ))}
-        </p>
-      </li>
-    ))}
-  </ul>
+  {bySector.map((sec) => (
+    <section class="sector">
+      <h2 class="secHead">{sec.name} <span class="secN">{sec.count.toLocaleString()} companies</span></h2>
+      <ul class="glist">
+        {sec.groupings.map((g) => (
+          <li class="g">
+            <div class="gTop">
+              <a class="gNoun" href={`/groupings/${g.slug}`}>{g.noun}</a>
+              <span class="gN">{g.count.toLocaleString()} companies · <a class="gTbl" href={`/groupings/${g.slug}`}>the table →</a> · <a href={`/industries/${g.industries[0].slug}`}>the chapter →</a></span>
+            </div>
+            <p class="gCols">{g.columns.join(" · ")}</p>
+          </li>
+        ))}
+      </ul>
+    </section>
+  ))}
 
   <p class="foot">
     Every figure comes from the company&rsquo;s own SEC or EDINET filings, computed the same way as on

@@ -21,10 +21,21 @@ import { industryOf } from "./archetype.mjs";
 // never a ranking. Industries within a shelf are alphabetical by label for the same reason.
 export const SHELVES = shelvesData.shelves;
 
-// The one industry label a company carries, for shelving, chapters and counts.
+// The one industry label a company carries, for shelving, chapters and counts. JP filers
+// (no SIC exists) resolve through the taxonomy's per-company map; a ticker override wins
+// everywhere (member-verified corrections — the Barrick-under-a-Jewelry-SIC class).
+import TAXONOMY from "../data/taxonomy.json" with { type: "json" };
 export function industryLabelOf(company) {
-  if (company?.market === "JP") return company.industry || "Diversified";
+  const ov = TAXONOMY.overrides[company?.ticker];
+  if (ov) return ov.industry;
+  if (company?.market === "JP") return TAXONOMY.jp[company?.ticker]?.industry || company.industry || "Diversified";
   return industryOf(company).label;
+}
+
+// The sector a shelf (industry) sits under — shelves.json carries it since the 2026-07-17
+// standardization; the fixed sector order is the taxonomy's, never a ranking.
+export function sectorOfIndustry(label) {
+  return byLabel.get(label)?.shelf?.sector || null;
 }
 
 const byLabel = new Map();

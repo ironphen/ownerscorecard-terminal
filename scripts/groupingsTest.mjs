@@ -101,11 +101,11 @@ ok("an unreadable column is simply skipped",
 
 // ---- 2b: the real pool, the page's own assembly — the line exists and names no member ----
 {
-  const grouping = groupingBySlug.get("make-vehicles-and-their-parts");
+  const grouping = groupingBySlug.get("automobiles") || groupingBySlug.get("auto-components");
   const shelf = SHELVES.find((s) => s.noun === grouping.noun);
   const labels = new Set(shelf.industries.map((ind) => ind.label));
   const members = (fundamentals.companies || []).filter((c) => labels.has(industryLabelOf(c)));
-  ok("the vehicles shelf has members in the US pool", members.length >= 10);
+  ok("the automobiles grouping has members in the US pool", members.length >= 5);
   const cellRows = members.map((c) => groupingCells(c, grouping.family, usdTerms(c, adrRatios, rates)));
   const real = groupLine(FAMILIES[grouping.family].columns, cellRows);
   ok("real-pool group line renders", typeof real === "string" && real.startsWith("As a group: "));

@@ -7,6 +7,7 @@
 // less maintenance capex) the scorecard and tables do. Call-time use only, so the fundamentals ↔
 // archetype cycle resolves lazily.
 import { ownerEarningsMargin, oiReliable } from "./fundamentals.mjs";
+import TAXONOMY from "../data/taxonomy.json" with { type: "json" };
 
 const ratio = (n, d) => (n != null && d ? n / d : null);
 const pct = (v, dp = 0) => (v == null ? "—" : `${(v * 100).toFixed(dp)}%`);
@@ -206,8 +207,17 @@ export function financialSubtype(company) { return financialProfile(company).sub
 export function industryOf(company) {
   const sic = String(company?.sic || "");
   const s4 = sic.slice(0, 4), s3 = sic.slice(0, 3);
+  // The conventional sector/industry taxonomy (2026-07-17 standardization): per-ticker
+  // override → the member-verified SIC map — assigned where the MEMBERS belong, not where a
+  // 1987 SIC description puts them. The legacy SIC_LABEL chain remains as the fallback for
+  // anything the taxonomy has never seen (a brand-new SIC enters as its cleaned description
+  // until the map catches up; buildTaxonomy.mjs regenerates the map).
+  const tx = TAXONOMY.overrides[company?.ticker] || TAXONOMY.sic[s4] || null;
+  if (tx) {
+    return { sic, key: s3 || s4 || "gen", label: tx.industry, sector: tx.sector, short: SHORT_IND[tx.industry] || tx.industry, desc: company?.sicDescription || null };
+  }
   const label = SIC_LABEL[s4] || SIC3_LABEL[s3] || cleanSicDescription(company?.sicDescription) || "Diversified";
-  return { sic, key: s3 || s4 || "gen", label, short: SHORT_IND[label] || label, desc: company?.sicDescription || null };
+  return { sic, key: s3 || s4 || "gen", label, sector: null, short: SHORT_IND[label] || label, desc: company?.sicDescription || null };
 }
 
 

@@ -86,7 +86,7 @@ console.log("\ncomputeAlmanac — against the live universe (structure + doctrin
   ok(Array.isArray(a.groups) && a.groups.length >= 3, `census sliced by shelf-grouping (${a.groups.length} groups)`);
   ok(a.groups.every((g) => g.readable >= 30), "every group clears the sample floor");
   ok(a.groups.every((g) => g.distributions && g.baseRates && g.defensiveHistogram), "every group carries a full census");
-  ok(a.groups.every((g) => typeof g.noun === "string" && /^They .+\.$/.test(g.noun)), "every group is labelled by its shelf sentence");
+  ok(a.groups.every((g) => typeof g.noun === "string" && g.noun.length > 0), "every group carries its industry label (conventional taxonomy since 2026-07-17)");
 }
 
 if (fails) { console.error(`\n❌ almanacTest: ${fails} failure(s)`); process.exit(1); }
