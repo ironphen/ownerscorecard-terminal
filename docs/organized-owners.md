@@ -224,7 +224,58 @@ permanent.
   role in the phase-2 model), not a standalone revenue line. The Motley Fool lesson: if the
   community isn't load-bearing for the business model, it gets starved. Here it is load-bearing.
 
-## 11. Open questions (Ryan's to answer)
+## 11. The accountability thesis (added same day, Ryan's escalation)
+
+Ryan's furthest articulation: OSC as a *contributor to management accountability itself* — the
+activist-investor function, decentralized to every company, through smarter individual owners
+acting on their own volition. End state: a world of smarter owners, and therefore managements that
+act in shareholders' interests more often.
+
+**The mechanism, stated precisely: deterrence through legibility, not intervention.** The activist
+investor's economics force concentration — one company, a big stake, campaigns that cost tens of
+millions (Exxon/Engine No. 1 reportedly $35–50M). What CAN be decentralized is not the campaign
+but the *watching*. OSC's pipeline already reads every filing of ~3,900 companies mechanically; the
+record pages already render capital allocation, dilution, acquisitions, and pay beside delivered
+results. The accountability contribution is not that OSC prosecutes anyone — it is that a
+permanent, legible, owner-oriented record, visibly watched by an organized readership, changes
+managerial behavior *before the fact*. The evidence that being watched works: pay-for-luck
+concentrates in firms WITHOUT a monitoring blockholder (Bertrand-Mullainathan); concentrated
+ownership raises pay-for-performance and lowers pay levels (Hartzell-Starks); and USA's
+"Shareholder 1000" got 25 of 43 targeted companies to negotiate governance changes with no proxy
+fight — the *ranking* was the weapon.
+
+**The keystone refinement — why OSC's form of disclosure disciplines instead of ratcheting.**
+Disclosure alone has a documented failure mode: the 1992 executive-pay disclosure reforms fed the
+ratchet, because peer-relative visibility lets every board pay "above median" (Ratchet, Ratchet
+and Bingo; Bizjak/Faulkender-Yang peer-group bias). Legibility of pay LEVELS inflates pay.
+**Legibility of pay BESIDE THE DELIVERED RECORD is the anti-ratchet form**: the comparison object
+is not what other CEOs make but what this management produced for owners. That is exactly the
+juxtaposition OSC already builds, and it is the specific civic technology this thesis rests on.
+Peer-relative disclosure ratchets; record-relative disclosure disciplines.
+
+**The role separation that keeps it doctrine-true (and legally clean):** OSC is the record room
+and the courthouse — never the prosecutor, never the judge. The publication renders; members
+conclude; the register aggregates *their* conclusions ("owners of record here intend N% against"),
+scrupulously accurately (14a-9 always applies). "United against bad management practices" is the
+members' own volition, visible in aggregate; OSC itself never names a management good or bad.
+Arrangement-is-a-pronouncement gets MORE binding here, not less.
+
+**Honest limits.** (a) Deterrence is unmeasurable — the comp package never proposed appears in no
+dashboard; this is a mission, not a metric, and must not be sold as a near-term product promise.
+(b) It emerges patchily: per-company, where a dense engaged owner base exists (the BellTel proof),
+not uniformly across 3,900 names. (c) Retail currently votes WITH management on pay more than
+institutions do — "smarter" must precede "united," which is exactly the product's teaching function
+(literacy by use). (d) If it works, issuers respond: IR courtship of rooms, astroturf retail-voice
+orgs (Main Street Investors Coalition precedent), and management-aligned auto-vote rails (Exxon
+SVI, live now). (e) **The capture trap is the deepest risk**: ASA now takes ~47% of its
+membership-type revenue from the companies it monitors. OSC's reader-only revenue doctrine is the
+constitutional armor against exactly this, and becomes non-negotiable the moment the accountability
+function exists.
+
+Mission sentence candidate: *a world with smarter owners — and, because of them, managements more
+often worth owning.*
+
+## 12. Open questions (Ryan's to answer)
 
 1. Does he want to publish his own votes with reasons as dated ledger entries? Legal ((l)(2)(iv))
    and doctrine-compatible (dated, argued, his own) — but it sits near the positions-never-announced
