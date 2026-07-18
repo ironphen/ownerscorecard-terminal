@@ -38,7 +38,13 @@ const GOLDEN = {
   BX: { mode: "owner-earnings", oe: 4425155000, oeNormalized: 3774810363.4847608, oeMaint: 4429286000, sbc: 1535125000, gDeliv: -0.05961989346439878, netDebt: 10960020000, shares: 742879807, eps3: 3.2246589252088795, bvps: 11.268000450576253, rev: 14778402000, gRev: 0.07857203004397029, ni: 3054091000 },
   SD: { mode: "owner-earnings", oe: 26504000, oeNormalized: 59420333.333333336, oeMaint: 40957000, sbc: 2796000, gDeliv: -0.20170296212102345, netDebt: -102749000, shares: 36918259, eps3: 1.7520327813941605, bvps: 14.246879843385898, rev: 163530000, gRev: 0.0029921570764133154, ni: 75824000 },
   7203: { mode: "owner-earnings", oe: 3324728000000, oeNormalized: 2652442044348.3223, oeMaint: 3324728000000, sbc: 0, gDeliv: 0.06139201436355113, netDebt: -15929150000000, shares: 15794987000, eps3: 286.127005570396, bvps: 2527.3116084236094, gRev: 0.13982150393681048, ni: 3848098000000 },
-  6758: { mode: "owner-earnings", oe: 1487936000000, oeNormalized: 1177925022483.8274, oeMaint: 1487936000000, sbc: 0, gDeliv: 0.31119300233641045, netDebt: -1581196000000, shares: 6149811000, eps3: 96.76763508125154, bvps: 1320.2049623964053, gRev: 0.10166254418780785, ni: 1030893000000 },
+  // Sony eps3 re-pinned 2026-07-18: the old 96.77 was computed on a history whose FY2025 netIncome
+  // was the −¥326.9bn total INCLUDING the SFGI spin-off distribution loss — the exact figure the
+  // continuing-ops concept fix removes. The refetched history (continuing-ops attributable, with
+  // the restated prior year) averages to 166.34. Until the JP data workflow commits the refetched
+  // pool this golden runs ahead of the local file by design — the workflow tests against the FRESH
+  // data it fetches, so pinning the corrected value here is what lets it go green and commit.
+  6758: { mode: "owner-earnings", oe: 1487936000000, oeNormalized: 1177925022483.8274, oeMaint: 1487936000000, sbc: 0, gDeliv: 0.31119300233641045, netDebt: -1581196000000, shares: 6149811000, eps3: 166.34099270151012, bvps: 1320.2049623964053, gRev: 0.10166254418780785, ni: 1030893000000 },
   JPM: { mode: "bank", tbvps: 115.70467582907683, bvpsBank: 135.85984278869753, rotce: 0.16381947326587082, epsBank: 21.981246134775756 },
   PGR: { mode: "bank", tbvps: 54.31134621097341, bvpsBank: 54.82971194486333, rotce: 0.22713453037625933, epsBank: 19.78141141641984 },
   O: { mode: "reit", ffops: 3.7191405388861423 },
