@@ -75,7 +75,10 @@ const ROW = {
   // share, so the share-count effect is legible: revenue can climb while revenue/share stalls (dilution)
   // or outruns it (buybacks). Owner earnings and free cash flow per share are the GBM upgrade to Value
   // Line's cruder cash-flow/share; the share count itself leads the band as the divisor behind them all. ---
-  eps: { label: "EPS (diluted)", short: "EPS", g: 4, get: (L) => perShare(L.netIncome, L.sharesDiluted) },
+  // The share basis is diluted for nearly every filer; the exceptions (Exxon's pattern) tag only a
+  // basic weighted average, and the fetcher marks them — calling a basic count "diluted" is a wrong
+  // word even when the two are numerically identical (2026-07-18).
+  eps: { label: company?.sharesBasis === "basic" ? "EPS (basic)" : "EPS (diluted)", short: "EPS", g: 4, get: (L) => perShare(L.netIncome, L.sharesDiluted) },
   revenuePS: { label: "Revenue / share", short: "Rev/sh", g: 4, get: (L) => perShare(topLineRevenue(L, company), L.sharesDiluted) },
   ownerEarningsPS: { label: "Owner earnings / share", short: "OE/sh", g: 4, get: (L) => perShare(ownerEarningsAbs(L, company), L.sharesDiluted) },
   fcfPS: { label: "Free cash flow / share", short: "FCF/sh", g: 4, get: (L) => perShare(freeCashFlowAbs(L), L.sharesDiluted) },
@@ -122,7 +125,7 @@ const ROW = {
   capexToDep: { label: "Capex vs depreciation", short: "Capex/dep", g: 2, get: (L) => (L.capex != null && L.depreciation ? `${(Math.abs(L.capex) / L.depreciation).toFixed(2)}×` : "—") },
   // --- group 3: what it owns and owes, and what owners get ---
   sbcToRev: { label: "Stock comp / revenue", short: "SBC/rev", g: 3, get: (L) => marginStr(L.stockBasedComp, L.revenue) },
-  shares: { label: "Shares out (diluted)", short: "Shares", g: 4, get: (L) => fmtCount(L.sharesDiluted) },
+  shares: { label: company?.sharesBasis === "basic" ? "Shares out (basic avg)" : "Shares out (diluted)", short: "Shares", g: 4, get: (L) => fmtCount(L.sharesDiluted) },
   totalDebt: { label: "Total debt", short: "Debt", g: 3, get: (L) => (debtOk ? money(L.totalDebt) : "—") },
   deposits: { label: "Deposits", short: "Deposits", g: 3, get: (L) => money(L.deposits) },
   cash: { label: "Cash & investments", short: "Cash+inv", g: 3, get: (L) => { const v = liquidAssets(L); return v == null ? "—" : money(v); } },

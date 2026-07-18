@@ -99,7 +99,7 @@ for (const tk of ["JPM", "ACGL", "O"]) { // bank, insurer, REIT
 
 // 9. The ADR ratios the sweep corrected stay corrected (parser-error regression guard), and no
 //    "ads" ratio is comma-truncated (a quote's "N,NNN" thousands number must match the ratio).
-const RATIO_FIX = { LTM: 2000, NAAS: 3200, TC: 4800, XHG: 2400, SVREW: 43200, SY: 0.769231, GOTU: 0.666667, RERE: 0.666667, DDL: 1.5, JG: 13.333333, SNY: 0.5, WKEY: 0.5, ADAG: 1.25 };
+const RATIO_FIX = { LTM: 2000, NAAS: 3200, TC: 4800, XHG: 2400, SVREW: 43200, SY: 0.769231, GOTU: 0.666667, RERE: 0.666667, DDL: 1.5, JG: 13.333333, SNY: 0.5, WKEY: 0.5, ADAG: 1.25, DDI: 0.05, TAL: 0.333333 };
 for (const [tk, want] of Object.entries(RATIO_FIX)) {
   const r = ADR_RATIOS.companies?.[tk]?.ratio;
   if (r != null) t(`ADR ratio ${tk} = ${want}`, Math.abs(r - want) < 1e-4);
@@ -164,6 +164,46 @@ const DUAL_CLASS_DEFERRED = new Set(["BRK-A", "BRK-B"]);
   const visa = us.find((c) => c.ticker === "V");
   if (visa && visa.sharesForValue?.val != null)
     t("Visa (V) prices on the current ~1.9B share base, not the 2010 cover ~469M", visa.sharesForValue.val > 1.2e9);
+}
+
+// 13. Berkshire dual-class equivalence: BRK-A prices on A-equivalents (~1.4M) and BRK-B on
+//     B-equivalents (~2.1B) — never each other's basis, never the naive A+B sum, never the 2015
+//     average both records carried for a decade (a B price × an A count valued Berkshire at
+//     ~1/1300th of itself). The two must agree through the 1,500:1 conversion.
+{
+  const a = us.find((c) => c.ticker === "BRK-A")?.sharesForValue;
+  const b = us.find((c) => c.ticker === "BRK-B")?.sharesForValue;
+  if (a?.val != null) t("BRK-A prices on A-equivalents (1.3–1.6M)", a.val > 1.3e6 && a.val < 1.6e6 && /A-equivalent/.test(a.basis || ""));
+  if (b?.val != null) t("BRK-B prices on B-equivalents (1.9–2.4B)", b.val > 1.9e9 && b.val < 2.4e9 && /B-equivalent/.test(b.basis || ""));
+  if (a?.val != null && b?.val != null)
+    t("the two Berkshire records agree through the 1,500:1 conversion", Math.abs(b.val - a.val * 1500) / b.val < 0.01);
+}
+
+// 14. PAGP prices on its cover count: the filing's own cover states ONLY the Class A count (the
+//     B and C classes live in the capital note, and Class C is held by the consolidated
+//     subsidiary). The convention is the company's own presentation — we print the cover.
+{
+  const p = us.find((c) => c.ticker === "PAGP")?.sharesForValue;
+  if (p?.val != null) t("PAGP prices on the Class A cover count (~198M)", p.val > 1.85e8 && p.val < 2.15e8);
+}
+
+// 15. A filer whose diluted share tagging lapsed while the basic series continues carries
+//     sharesBasis "basic", so no page labels its basic average "diluted" (Exxon's diluted
+//     concept stops in 2013; basic runs to the present).
+{
+  const x = us.find((c) => c.ticker === "XOM");
+  if (x) t("XOM carries sharesBasis 'basic' (diluted tagging lapsed 2013)", x.sharesBasis === "basic");
+}
+
+// 16. The three 20-F cover-text traps the adversarial verify caught stay dead: a stated total is
+//     never summed with its own components (iQIYI printed 2×), a treasury tranche never joins the
+//     outstanding count (ReNew +10.7%), a prior-year restatement never doubles the current year
+//     (Bilibili 2×). Each pinned to the band around its independently verified count; a withheld
+//     null is acceptable (missing beats wrong), a value outside the band is the trap reopening.
+for (const [tk, lo, hi] of [["BILI", 3.8e8, 4.6e8], ["IQ", 6.2e9, 7.3e9], ["RNW", 3.3e8, 4.0e8]]) {
+  const c = adr.find((x) => x.ticker === tk);
+  const v = c?.sharesForValue?.val ?? null;
+  if (c) t(`${tk} cover-text count is in the verified band (or honestly withheld)`, v == null || (v >= lo && v <= hi));
 }
 
 if (failed) { console.error(`\n❌ correctnessGatesTest: ${failed} failure(s).`); process.exit(1); }

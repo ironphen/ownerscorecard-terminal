@@ -98,14 +98,14 @@ export function inversionChecks(company) {
       value: pct(cap.shareChange, 1),
       flagged,
       note: flagged
-        ? `Diluted shares grew ${pct(cap.shareChange, 1)} over ${cap.span}${boughtBack ? `, even as the company spent ${$(cap.bb)} on buybacks` : ""}. ${
+        ? `${company.sharesBasis === "basic" ? "Shares (basic average)" : "Diluted shares"} grew ${pct(cap.shareChange, 1)} over ${cap.span}${boughtBack ? `, even as the company spent ${$(cap.bb)} on buybacks` : ""}. ${
             boughtBack
               ? staffCovered
                 ? "The repurchases were a treadmill: stock issued to staff outran them, so owners' slice still shrank."
                 : "The repurchases were outrun by issuance — to staff, in a raise, or in a deal — and the filing says which; owners' slice still shrank."
               : "Owners were diluted on net; each share owns less of the business than it did."
           } Read the buyback line beside this one, not on its own.`
-        : `Diluted shares ${cap.shareChange < -0.01 ? `fell ${pct(cap.shareChange, 1)}` : cap.shareChange > 0.01 ? `rose ${pct(cap.shareChange, 1)}` : "barely moved"} over ${cap.span}${boughtBack && cap.shareChange < 0 ? ", so the buybacks more than covered the shares issued along the way" : ""}, and owners were not materially diluted.`,
+        : `${company.sharesBasis === "basic" ? "Shares (basic average)" : "Diluted shares"} ${cap.shareChange < -0.01 ? `fell ${pct(cap.shareChange, 1)}` : cap.shareChange > 0.01 ? `rose ${pct(cap.shareChange, 1)}` : "barely moved"} over ${cap.span}${boughtBack && cap.shareChange < 0 ? ", so the buybacks more than covered the shares issued along the way" : ""}, and owners were not materially diluted.`,
     });
   }
 

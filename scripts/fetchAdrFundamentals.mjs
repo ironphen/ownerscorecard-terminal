@@ -30,6 +30,7 @@ import { buildCikMap, CIK_OVERRIDE, resolveCikLive } from "./cikResolve.mjs";
 // From the shared lib, NOT from fetchFundamentals.mjs — importing another fetcher executes its
 // top-level startup (a universe.json read), coupling this pipeline's launch to that file.
 import { normalizeShareScale } from "../src/lib/shareScale.mjs";
+import { parseCoverShares } from "./fetchFundamentals.mjs";
 
 const UA = process.env.SEC_USER_AGENT || "Owner Scorecard research (ryanreinsant@gmail.com)";
 const HEADERS = { "User-Agent": UA, "Accept-Encoding": "gzip, deflate" };
@@ -192,6 +193,61 @@ async function getJSON(url) {
 }
 
 const days = (a, b) => Math.abs((new Date(b) - new Date(a)) / 86400000);
+
+async function getText(url) {
+  for (let a = 1; a <= 4; a++) {
+    try {
+      const res = await fetch(url, { headers: HEADERS, signal: AbortSignal.timeout(60_000) });
+      if (res.status === 429) { if (a === 4) throw new Error("HTTP 429"); await sleep(1000 * a); continue; }
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return await res.text();
+    } catch (err) {
+      if (a === 4) throw err;
+      await sleep(500 * a);
+    }
+  }
+}
+
+// ---- the 20-F/40-F cover-text fallback (2026-07-18) ----
+// Thirty foreign filers reach the end of the XBRL share chain with nothing fresh — Baidu's last
+// un-dimensioned cover fact is 2010 — and, unlike the US side, had no cover-text recovery, so the
+// staleness guard left them honestly blank. A 20-F cover states the ordinary-share count in plain
+// text just as a 10-K does ("As of December 31, 2025, there were N Class A ordinary shares..."),
+// so the same L1 discipline applies, adapted to the annual cadence:
+//   - corroborates across the latest TWO annual filings (there is no quarterly to pair with); a
+//     real count drifts slowly, so the two covers must agree within 25% year over year;
+//   - counts whose nearby context names the ADS/ADR program are EXCLUDED — a cover that states
+//     the depositary-share count beside the ordinary count would otherwise double-count;
+//   - fires only when the whole XBRL chain yielded no fresh count; any ambiguity returns null.
+async function adrCoverShareCount(cik) {
+  try {
+    const padded = String(cik).padStart(10, "0");
+    const sub = await getJSON(`https://data.sec.gov/submissions/CIK${padded}.json`);
+    const r = sub?.filings?.recent;
+    if (!r) return null;
+    const annuals = [];
+    for (let i = 0; i < r.form.length && annuals.length < 2; i++) {
+      if (r.form[i] === "20-F" || r.form[i] === "40-F")
+        annuals.push({ acc: r.accessionNumber[i].replace(/-/g, ""), doc: r.primaryDocument[i], filed: r.filingDate[i], form: r.form[i] });
+    }
+    if (annuals.length < 2) return null; // corroboration needs two successive annual covers
+    const reads = [];
+    for (const f of annuals) {
+      await sleep(THROTTLE_MS);
+      const html = await getText(`https://www.sec.gov/Archives/edgar/data/${Number(cik)}/${f.acc}/${f.doc}`);
+      const val = parseCoverShares(html, { excludeNear: /american\s+depositary|\bADSs?\b|\bADRs?\b/i });
+      if (val != null) reads.push({ val, form: f.form, filed: f.filed });
+    }
+    if (reads.length < 2) return null;
+    const [a, b] = reads;
+    const ratio = a.val > b.val ? a.val / b.val : b.val / a.val;
+    if (ratio > 1.25) return null; // the two annual covers disagree; refuse
+    const fresher = new Date(a.filed) >= new Date(b.filed) ? a : b;
+    return { val: fresher.val, asOf: fresher.filed, form: fresher.form, basis: "cover-text" };
+  } catch {
+    return null; // a fetch failure is a missing count, never an error that breaks the run
+  }
+}
 
 // All observation rows for a tag, searched across both namespaces; the first namespace that has the
 // tag wins (IFRS before US-GAAP), so a single concept list spans both standards.
@@ -643,7 +699,9 @@ async function main() {
       // The dated instantaneous count for price-to-value arithmetic; the record tables keep
       // the weighted-average series. See sharesForValueOf above. Stated on the ordinary-share
       // basis as filed; lib/adrBasis.mjs divides it by the ADS ratio with everything else.
-      sharesForValue: sharesForValueOf(facts, anchor?.end ?? null),
+      // When the XBRL chain yields no FRESH count (Baidu's 2010 stranding), the cover-text
+      // fallback reads the last two annual covers, or the record stays honestly blank.
+      sharesForValue: sharesForValueOf(facts, anchor?.end ?? null) ?? await adrCoverShareCount(cik),
       lines: latestLines,
       history, ttm, quarterly,
     };

@@ -169,7 +169,15 @@ const DUR = {
   goodwillImpairment: ["ImpairmentLossesOfGoodwillIFRS", "ImpairmentLossOfGoodwill", "ImpairmentLossesIFRS", "ImpairmentLossIFRS", "ImpairmentLoss", "LossOnImpairmentOfFixedAssets"],
   operatingIncome: ["OperatingProfitLossIFRS", "OperatingIncomeIFRS", "OperatingProfitIFRS", "OperatingIncome", "OperatingIncomeLoss"],
   ordinaryIncome: ["ProfitLossBeforeTaxIFRS", "ProfitLossBeforeTaxIFRSSummaryOfBusinessResults", "OrdinaryIncome", "OrdinaryIncomeLossSummaryOfBusinessResults", "OrdinaryIncomeLoss"],
-  netIncome: ["ProfitLossAttributableToOwnersOfParentIFRS", "ProfitLossAttributableToOwnersOfParentIFRSSummaryOfBusinessResults", "ProfitLossAttributableToOwnersOfParent", "ProfitLossAttributableToOwnersOfParentSummaryOfBusinessResults", "NetIncomeLossSummaryOfBusinessResults", "ProfitLossIFRS", "ProfitLoss"],
+  // Continuing-operations attributable FIRST: a filer that reports discontinued operations (Sony's
+  // FY2025 spin-off of Sony Financial Group) books the one-time distribution loss in its total
+  // attributable line (−¥326.9bn) while the business the owner continues to hold earned ¥1,030.9bn —
+  // the record's earnings line is the continuing-ops attributable figure per the 2026-07 sweep-#2
+  // adjudication (correctnessGatesTest pins Sony positive). Self-scoping: the concept only exists
+  // when discontinued operations are reported, so every other filer resolves exactly as before.
+  // Never the incl-NCI continuing concept (ProfitLossFromContinuingOperationsIFRS) — it overstates
+  // by the minority slice.
+  netIncome: ["ProfitLossFromContinuingOperationsProfitLossAttributableToOwnersOfParentIFRS", "ProfitLossAttributableToOwnersOfParentIFRS", "ProfitLossAttributableToOwnersOfParentIFRSSummaryOfBusinessResults", "ProfitLossAttributableToOwnersOfParent", "ProfitLossAttributableToOwnersOfParentSummaryOfBusinessResults", "NetIncomeLossSummaryOfBusinessResults", "ProfitLossIFRS", "ProfitLoss"],
   costOfRevenue: ["CostOfSalesIFRS", "CostOfSales"],
   grossProfit: ["GrossProfitIFRS", "GrossProfit"],
   interestExpense: ["InterestExpenseOnFinancialDebtInterestExpenseIFRS", "InterestExpensesIFRS", "FinanceCostsIFRS", "InterestExpensesAndInterestOnBondsNOE", "InterestExpensesNOE", "InterestExpenses"],

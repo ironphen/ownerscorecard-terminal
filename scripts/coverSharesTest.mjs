@@ -8,11 +8,11 @@
 // The rules under test: sum the common classes; preferred never counts; a cover that states no
 // common exists returns null (CHS is a member cooperative — its blank is the truth, not a hole);
 // prose that merely mentions "outstanding" (debt, market value) never parses to a number.
-import { parseCoverShares } from "./fetchFundamentals.mjs";
+import { parseCoverShares, parseCoverClassCounts } from "./fetchFundamentals.mjs";
 
 let failed = 0;
-const t = (name, html, want) => {
-  const got = parseCoverShares(html);
+const t = (name, html, want, opts) => {
+  const got = parseCoverShares(html, opts);
   if (got !== want) { failed++; console.error(`✗ ${name}: got ${got}, want ${want}`); }
   else console.log(`ok ${name}`);
 };
@@ -84,6 +84,46 @@ t("debt-prose-refuses",
 t("market-value-not-a-count",
   "The number of outstanding shares of the registrant's common stock as of June 30, 2025 was 55,123,400. The aggregate market value of shares held by non-affiliates was $9,100,000,000.",
   55123400);
+
+// --- the class-count face (dual-class equivalence; Berkshire, verbatim Q1-2026 10-Q cover) ---
+// The classes must come back SEPARATELY: A and B differ 1,500× in economic weight, so their naive
+// sum (~1.4bn) is the right count for neither listing. dualClassCoverShares turns these into
+// A-equivalents (505,697 + 1,398,308,677/1,500 = 1,437,903 — the figure Berkshire itself states in
+// its common-stock note) and B-equivalents (2,156,854,177). (2026-07-18)
+{
+  const brk = parseCoverClassCounts(
+    "Number of shares of common stock outstanding as of April 14, 2026: Class A — 505,697 shares Class B — 1,398,308,677 shares");
+  const ok = brk.length === 2 && brk.includes(505697) && brk.includes(1398308677);
+  if (!ok) { failed++; console.error(`✗ brk-class-counts: got ${JSON.stringify(brk)}`); } else console.log("ok brk-class-counts (10-Q)");
+  const A = Math.min(...brk), B = Math.max(...brk);
+  const aEq = Math.round(A + B / 1500), bEq = Math.round(A * 1500 + B);
+  if (aEq !== 1437903 || bEq !== 2156854177) { failed++; console.error(`✗ brk-equivalents: A-eq ${aEq}, B-eq ${bEq}`); }
+  else console.log("ok brk-equivalents (A-eq matches Berkshire's own stated 1,437,903)");
+}
+
+// --- the three 20-F traps the 2026-07-18 adversarial verify caught (each shipped a wrong count) ---
+// iQIYI: the cover states the TOTAL and its components; summing all three doubled the count.
+t("iq-stated-total-not-doubled",
+  "As of December 31, 2025, there were 6,754,381,564 ordinary shares outstanding, being the sum of 3,713,284,286 Class A ordinary shares and 3,041,097,278 Class B ordinary shares.",
+  6754381564);
+// ReNew: a treasury tranche stated beside the outstanding count must not join the sum.
+t("rnw-treasury-not-summed",
+  "As of the date of this report, there were 244,405,376 Class A ordinary shares outstanding, with a further 38,698,288 Class A ordinary shares held as treasury shares, and 118,363,766 Class C ordinary shares outstanding.",
+  362769142);
+// Bilibili: the cover restates the PRIOR year's counts beside the current ones; only the
+// latest-dated group counts, and the plan-reserved tranche is excluded.
+t("bili-prior-year-not-summed",
+  "As of December 31, 2025, there were 79,700,010 Class Y ordinary shares and 335,018,102 Class Z ordinary shares outstanding, excluding 6,115,998 Class Z ordinary shares issued and reserved for our share incentive plans. As of December 31, 2024, there were 79,700,010 Class Y ordinary shares and 336,853,775 Class Z ordinary shares outstanding.",
+  414718112);
+
+// --- the 20-F ordinary-share cover (the ADR fallback), with the ADS-context exclusion ---
+t("20f-ordinary-shares",
+  "As of December 31, 2025, there were 352,551,600 ordinary shares outstanding, par value US$0.0001 per share.",
+  352551600);
+t("20f-ads-count-excluded",
+  "As of December 31, 2025, there were 352,551,600 ordinary shares issued and outstanding, including 128,004,000 ordinary shares represented by American Depositary Shares.",
+  352551600,
+  { excludeNear: /american\s+depositary|\bADSs?\b|\bADRs?\b/i });
 
 if (failed) { console.error(`\n❌ coverSharesTest: ${failed} failure(s).`); process.exit(1); }
 console.log("\n✅ coverSharesTest passed.");

@@ -545,17 +545,20 @@ async function getText(url) {
   }
 }
 
-// Parse a filing's cover for the outstanding-common count. Pure function; unit-tested against the
-// verbatim covers of all thirteen filers in scripts/coverSharesTest.mjs. Returns a share count or
-// null — never a guess.
-export function parseCoverShares(html) {
+// Parse a filing's cover for the outstanding-common CLASS counts. Pure function; unit-tested against
+// the verbatim covers in scripts/coverSharesTest.mjs. Returns the distinct per-class counts (a
+// single-class cover states one number; a dual-class cover one per class), or an empty array — never
+// a guess. opts.excludeNear: a regex that disqualifies a count whose nearby context matches — the
+// ADR 20-F path uses it to reject ADS-denominated numbers stated beside the ordinary-share count
+// (folding an ADS count into the sum would double-count the program, 2026-07-18).
+export function parseCoverClassCounts(html, opts = {}) {
   // The cover is the first VISIBLE text, but inline-XBRL documents carry an enormous hidden
   // <ix:header> metadata block (contexts, units — tens of thousands of characters) before any
   // rendered content, so it is stripped first; the window is then generous for the true cover.
   const visible = html.replace(/<ix:header[^]*?<\/ix:header>/gi, " ").replace(/<(script|style)[^]*?<\/\1>/gi, " ");
   const text = visible.replace(/<[^>]+>/g, " ").replace(/&#160;|&nbsp;/g, " ").replace(/&#8217;|&rsquo;/g, "'").replace(/\s+/g, " ").slice(0, 120000);
-  const anchor = text.search(/number of shares outstanding (?:of|with respect to) each|shares outstanding of each of the (?:issuer|registrant)|number of shares of (?:the registrant'?s? )?(?:[\w$.\s]{0,40})?common (?:stock|shares)[^.]{0,80}outstanding|number of outstanding shares of|(?:registrant had|there were) (?:issued and outstanding )?[\d,]+ (?:[\w$.,]+ ){0,6}?shares|as of [a-z]+ \d{1,2}, \d{4},? [\d,]+ (?:class [a-z] )?common shares|shares of common stock outstanding/i);
-  if (anchor < 0) return null;
+  const anchor = text.search(/number of shares outstanding (?:of|with respect to) each|shares outstanding of each of the (?:issuer|registrant)|number of shares of (?:the registrant'?s? )?(?:[\w$.\s]{0,40})?common (?:stock|shares)[^.]{0,80}outstanding|number of outstanding shares of|(?:registrant had|there were) (?:issued and outstanding )?[\d,]+ (?:[\w$.,]+ ){0,6}?(?:shares|ordinary)|as of [a-z]+ \d{1,2}, \d{4},? [\d,]+ (?:class [a-z] )?(?:common|ordinary) shares|shares of common stock outstanding|ordinary shares[^.]{0,60}(?:issued and )?outstanding/i);
+  if (anchor < 0) return [];
   const region = text.slice(anchor, anchor + 1200);
   // Collect count candidates: large comma-grouped integers (or 7+ digit plain integers) that are
   // not dollars, not percentages, and not dates. Class names nearby are how covers present them.
@@ -577,16 +580,120 @@ export function parseCoverShares(html) {
     // 30,000,000 preferred shares into the common count (360M vs the true 330M, 2026-07-17 sweep #3).
     const fwd = region.slice(m.index + m[0].length, m.index + m[0].length + 90);
     const back = region.slice(Math.max(0, m.index - 90), m.index);
-    const label = /common|preferred/i.test(fwd) ? fwd : back;
+    const label = /common|ordinary|preferred/i.test(fwd) ? fwd : back;
     if (/preferred/i.test(label) && !/common/i.test(label)) continue;
-    counts.push(Number(m[1].replace(/,/g, "")));
+    // A treasury or plan-reserved count is NOT outstanding: ReNew's cover states "244,405,376 Class A
+    // outstanding" and, in the next breath, "38,698,288 held as treasury" — summing both overstated
+    // the count 10.7% (caught by the 2026-07-18 adversarial verify). Same for Bilibili's "reserved
+    // for share-incentive plans" tranche. Judged on the count's OWN label (forward-first, exactly as
+    // the preferred test above) — a backward window would bleed the PREVIOUS clause's "treasury" onto
+    // the next legitimate class and kill it.
+    if (/treasur|reserved for|incentive plan/i.test(label)) continue;
+    if (opts.excludeNear && (opts.excludeNear.test(back) || opts.excludeNear.test(fwd))) continue;
+    counts.push({ val: Number(m[1].replace(/,/g, "")), idx: m.index });
   }
-  const plausible = counts.filter((v) => v >= 1e5 && v <= 5e10);
-  if (!plausible.length) return null;
-  // A single-class cover states one number; a dual-class cover states one per class. Sum the
-  // distinct values (a repeated value is the same figure restated, not a second class).
-  const distinct = [...new Set(plausible)];
+  let plausible = counts.filter((c) => c.val >= 1e5 && c.val <= 5e10);
+  if (!plausible.length) return [];
+  // As-of-date scoping: a cover that restates the PRIOR year's counts beside the current ones
+  // ("...as of December 31, 2025 ... As of December 31, 2024, there were...") must not have both
+  // years summed — Bilibili's did, doubling the count (2026-07-18 verify). Group each candidate by
+  // the nearest preceding "as of <date>" and keep only the latest-dated group; candidates before
+  // any date stay with the latest group (the anchor sentence's own counts).
+  // The anchor often lands just AFTER the sentence's own "as of <date>" ("As of December 31, 2025,
+  // there were..." anchors at "there were"), so the scan reaches a short window back before the
+  // anchor; that date's index goes negative and precedes every candidate, exactly as it reads.
+  const pre = text.slice(Math.max(0, anchor - 80), anchor);
+  const dates = [];
+  const dateRe = /as of [a-z]+ \d{1,2},? (\d{4})/gi;
+  let dm;
+  while ((dm = dateRe.exec(pre + region))) dates.push({ idx: dm.index - pre.length, t: Date.parse(dm[0].replace(/^as of /i, "")) || Number(dm[1]) });
+  if (dates.length > 1) {
+    const groupOf = (c) => { let g = null; for (const d of dates) if (d.idx < c.idx) g = d.t; return g; };
+    const groups = plausible.map((c) => ({ ...c, g: groupOf(c) }));
+    const dated = groups.filter((c) => c.g != null);
+    if (dated.length) {
+      const latest = Math.max(...dated.map((c) => c.g));
+      plausible = groups.filter((c) => c.g == null || c.g === latest);
+    }
+  }
+  // Distinct values only (a repeated value is the same figure restated, not a second class).
+  const distinct = [...new Set(plausible.map((c) => c.val))];
+  // Stated-total detection: iQIYI's cover writes "6,754,381,564 ordinary shares outstanding, being
+  // the sum of 3,713,284,286 Class A ... and 3,041,097,278 Class B" — summing all three doubled the
+  // count (2026-07-18 verify). When one value equals the sum of two or more of the others (to the
+  // share), it IS the total: return it alone.
+  if (distinct.length >= 3) {
+    for (const total of distinct) {
+      const rest = distinct.filter((v) => v !== total);
+      const sum = rest.reduce((a, b) => a + b, 0);
+      if (rest.length >= 2 && Math.abs(sum - total) <= 2) return [total];
+    }
+  }
+  return distinct;
+}
+
+// The single-number face of the cover parser: the class counts summed to the total common count,
+// or null. This is what the whole recovery chain consumes; the class-level form above exists for
+// the dual-class filers whose classes must NOT be naively summed (Berkshire's A and B differ 1,500×
+// in economic weight — see DUAL_CLASS_EQUIV below).
+export function parseCoverShares(html, opts = {}) {
+  const distinct = parseCoverClassCounts(html, opts);
+  if (!distinct.length) return null;
   return distinct.reduce((a, b) => a + b, 0);
+}
+
+// ---- dual-class equivalence (the Berkshire hole; 2026-07-18) ----
+// For almost every multi-class filer the classes carry EQUAL economic weight per share, so the cover
+// classes sum to the true count. Berkshire is the exception that breaks the sum: 1 Class A carries
+// the economics of 1,500 Class B, so "A + B" (≈1.4bn) is the right count for NEITHER listing. Each
+// ticker instead needs the count expressed in ITS OWN class's units:
+//   BRK-A → A-equivalents = A + B/1500   (≈1.44M; Berkshire itself states this in its common-stock note)
+//   BRK-B → B-equivalents = A×1500 + B   (≈2.16bn — what a typed B price must multiply)
+// Both records had priced on a 2015 weighted-average A-equivalent (1,643,118): a decade stale for
+// BRK-A and the wrong CLASS BASIS for BRK-B (a B price × an A count values Berkshire at ~1/1300th).
+// The counts come from the filing covers (both classes are stated there), corroborated across the
+// latest 10-K and 10-Q per class; the conversion ratio is curated, from the filing's own note —
+// never inferred.
+const DUAL_CLASS_EQUIV = {
+  "BRK-A": { conv: 1500, express: "A" },
+  "BRK-B": { conv: 1500, express: "B" },
+};
+async function dualClassCoverShares(cik, spec) {
+  try {
+    const padded = String(cik).padStart(10, "0");
+    const sub = await getJSON(`https://data.sec.gov/submissions/CIK${padded}.json`);
+    const r = sub?.filings?.recent;
+    if (!r) return null;
+    const pick = (form) => {
+      for (let i = 0; i < r.form.length; i++) {
+        if (r.form[i] === form) return { acc: r.accessionNumber[i].replace(/-/g, ""), doc: r.primaryDocument[i], filed: r.filingDate[i], form };
+      }
+      return null;
+    };
+    const tenK = pick("10-K"), tenQ = pick("10-Q");
+    if (!tenK || !tenQ) return null; // corroboration needs both
+    const reads = [];
+    for (const f of [tenK, tenQ]) {
+      await sleep(THROTTLE_MS);
+      const html = await getText(`https://www.sec.gov/Archives/edgar/data/${Number(cik)}/${f.acc}/${f.doc}`);
+      const counts = parseCoverClassCounts(html);
+      if (counts.length !== 2) continue; // exactly two common classes, or this cover doesn't decide
+      const small = Math.min(...counts), large = Math.max(...counts);
+      if (large < small * 100) continue; // a 1,500:1 economic split shows as a lopsided count; near-equal counts mean a different (or misparsed) structure
+      reads.push({ small, large, form: f.form, filed: f.filed });
+    }
+    if (reads.length < 2) return null;
+    const [a, b] = reads;
+    const drift = (x, y) => (x > y ? x / y : y / x);
+    if (drift(a.small, b.small) > 1.2 || drift(a.large, b.large) > 1.2) return null; // the two covers disagree; refuse
+    const fresher = new Date(a.filed) >= new Date(b.filed) ? a : b;
+    const val = spec.express === "A"
+      ? Math.round(fresher.small + fresher.large / spec.conv)
+      : Math.round(fresher.small * spec.conv + fresher.large);
+    return { val, asOf: fresher.filed, form: fresher.form, basis: `cover-text ${spec.express}-equivalent` };
+  } catch {
+    return null; // a fetch failure is a missing count, never an error that breaks the run
+  }
 }
 
 async function coverShareCount(cik) {
@@ -1330,8 +1437,28 @@ async function main() {
       // cover-text fallback reads the filing covers, corroborated across the 10-K and 10-Q, for
       // the real current count, or stays honestly null. Bounded: only ~30 filers reach this branch
       // (a fresh tagged count short-circuits it), so the extra cover fetches are trivial.
-      sharesForValue: sharesForValueOf(facts, shareRef, anchor?.end ?? null)
-        ?? await coverShareCount(cik),
+      // A ticker in DUAL_CLASS_EQUIV bypasses BOTH paths: its classes differ in per-share economics,
+      // so neither the tagged average nor the summed cover is its count — see the table above.
+      sharesForValue: DUAL_CLASS_EQUIV[ticker]
+        ? await dualClassCoverShares(cik, DUAL_CLASS_EQUIV[ticker])
+        : (sharesForValueOf(facts, shareRef, anchor?.end ?? null) ?? await coverShareCount(cik)),
+      // Which weighted-average concept the share series ACTUALLY runs on: a filer whose diluted
+      // tagging lapsed years back while the basic series continues (Exxon's diluted stops in 2013;
+      // basic runs to the present) fills its recent record from the BASIC average, and the
+      // per-share labels downstream must not call that "diluted" (2026-07-18; numerically nil for
+      // XOM but a wrong word is still wrong). The test is recency, not existence — a diluted
+      // relic a decade behind the living basic series doesn't earn the label.
+      ...((() => {
+        const lastEnd = (tag) => {
+          const us = facts?.facts?.["us-gaap"]?.[tag]?.units?.shares;
+          let max = null;
+          if (us) for (const u of us) if (u.end && (!max || u.end > max)) max = u.end;
+          return max;
+        };
+        const dil = [lastEnd("WeightedAverageNumberOfDilutedSharesOutstanding"), lastEnd("WeightedAverageNumberOfShareOutstandingBasicAndDiluted"), lastEnd("WeightedAverageLimitedPartnershipUnitsOutstandingDiluted")].filter(Boolean).sort().pop() || null;
+        const bas = lastEnd("WeightedAverageNumberOfSharesOutstandingBasic");
+        return bas && (dil == null || days(dil, bas) > 730 && bas > dil) ? { sharesBasis: "basic" } : {};
+      })()),
       lines: {
         operatingIncome: deriveOpInc(oi?.val ?? null, revLatest, pick(CONCEPTS.costsAndExpenses), pick(CONCEPTS.netIncome), pick(CONCEPTS.incomeTaxExpense), pick(CONCEPTS.interestExpense)),
         interestExpense: pick(CONCEPTS.interestExpense),

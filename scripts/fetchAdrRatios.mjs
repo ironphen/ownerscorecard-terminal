@@ -34,23 +34,63 @@ async function fetchText(url) {
   }
 }
 
-const WORDS = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, twenty: 20, "one-half": 0.5, half: 0.5, "one-tenth": 0.1, "one-quarter": 0.25 };
-const NUM = "(one-half|one-tenth|one-quarter|one|two|three|four|five|six|seven|eight|nine|ten|twenty|\\d+(?:\\.\\d+)?|\\d+\\s*/\\s*\\d+)";
+// Number vocabulary, hardened against the three real corruption classes the 2026-07-17 sweep found
+// in shipped ratios (13 filers corrected by hand, each now frozen in scripts/adrRatiosTest.mjs):
+//   1. comma-grouped counts — "each representing 2,000 shares" parsed as 2 (LTM/NAAS/TC/XHG/SVREW,
+//      ratios to 43,200), because the number pattern had no comma alternative and the cap was 100;
+//   2. M-for-N programs — "every 13 ADSs representing 10 Class A" is 10/13 ≈ 0.77, not 10 (SY,
+//      GOTU, RERE, DDL, JG), because no pattern captured the leading count;
+//   3. multiword fractions — "one half of one" (SNY), "half a Class B" (WKEY), "one and one
+//      quarter (1.25)" (ADAG), where matching the bare "one" printed 1.
+// Multiword forms are listed before their prefixes so the longest match wins.
+const WORDS = {
+  "one and one half": 1.5, "one and one-half": 1.5, "one and a half": 1.5,
+  "one and one quarter": 1.25, "one and one-quarter": 1.25, "one and a quarter": 1.25,
+  "one half": 0.5, "one-half": 0.5, half: 0.5,
+  "one quarter": 0.25, "one-quarter": 0.25,
+  "one tenth": 0.1, "one-tenth": 0.1,
+  "three quarters": 0.75, "three-quarters": 0.75,
+  one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, twenty: 20,
+};
+const WORD_ALT = Object.keys(WORDS).sort((a, b) => b.length - a.length).map((w) => w.replace(/[- ]/g, "[- ]")).join("|");
+const NUM = `(${WORD_ALT}|\\d{1,3}(?:,\\d{3})+(?:\\.\\d+)?|\\d+(?:\\.\\d+)?|\\d+\\s*/\\s*\\d+)`;
+const numVal = (raw) => {
+  const w = raw.toLowerCase().replace(/[-\s]+/g, " ").trim();
+  if (w in WORDS) return WORDS[w];
+  if (w.includes("/")) { const [a, b] = w.split("/").map((x) => Number(x.trim())); return b ? a / b : NaN; }
+  return parseFloat(w.replace(/,/g, ""));
+};
+// The M-for-N form runs FIRST: it is the more specific shape, and the each-represents patterns below
+// would otherwise read "every 13 ADSs representing 10 Class A" as a ratio of 10. "of which" covers
+// "each two of which represent three"; the ADS token is optional because some covers elide it
+// ("every three representing two Class A").
+const PAIR_PATTERNS = [
+  new RegExp(`(?:each|every)\\s+${NUM}\\s*(?:ADSs?|American\\s+Depositary\\s+Shares?|of\\s+which|of\\s+them)?[\\s\\S]{0,20}?represent(?:s|ing)?\\s+${NUM}[\\s\\S]{0,30}?(?:ordinary|common|Class)`, "i"),
+];
 const PATTERNS = [
   new RegExp(`American\\s+Depositary\\s+Shares?[\\s\\S]{0,60}?(?:each|every)[\\s\\S]{0,40}?represent(?:s|ing)?[\\s\\S]{0,40}?${NUM}[\\s\\S]{0,30}?(?:ordinary|common|Class)`, "i"),
   new RegExp(`each\\s+(?:ADS|American\\s+Depositary\\s+Share)[\\s\\S]{0,60}?represent(?:s|ing)?[\\s\\S]{0,40}?${NUM}[\\s\\S]{0,30}?(?:ordinary|common|Class)`, "i"),
   new RegExp(`(?:ADSs?|American\\s+Depositary\\s+Shares?)[\\s\\S]{0,40}?\\(each[\\s\\S]{0,30}?representing[\\s\\S]{0,30}?${NUM}`, "i"),
 ];
 
+// Real programs run from fractions (Sanofi's half-share) to tens of thousands (SVREW's 43,200
+// post-reverse-split); the old ≤100 cap silently endorsed every comma-truncated read.
+const SANE = (r) => Number.isFinite(r) && r > 0 && r <= 100000;
+
 function parseRatio(text) {
+  for (const pat of PAIR_PATTERNS) {
+    const m = pat.exec(text);
+    if (m) {
+      const mCount = numVal(m[1]), nCount = numVal(m[2]);
+      const ratio = mCount > 0 ? nCount / mCount : NaN;
+      if (SANE(ratio)) return { ratio: Math.round(ratio * 1e6) / 1e6, quote: m[0].replace(/\s+/g, " ").slice(0, 160) };
+    }
+  }
   for (const pat of PATTERNS) {
     const m = pat.exec(text);
     if (m) {
-      const w = m[1].toLowerCase().replace(/\s+/g, "");
-      let ratio;
-      if (w.includes("/")) { const [a, b] = w.split("/").map(Number); ratio = a / b; }
-      else ratio = WORDS[w] ?? parseFloat(w);
-      if (ratio > 0 && ratio <= 100) return { ratio, quote: m[0].replace(/\s+/g, " ").slice(0, 160) };
+      const ratio = numVal(m[1]);
+      if (SANE(ratio)) return { ratio, quote: m[0].replace(/\s+/g, " ").slice(0, 160) };
     }
   }
   return null;
