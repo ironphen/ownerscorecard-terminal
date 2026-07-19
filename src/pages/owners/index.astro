@@ -1,0 +1,96 @@
+---
+// The owners' area, front page: every covered company's annual meeting, most recent first — the
+// running record of what owners were asked and how they answered, one row per meeting, each row
+// opening the company's own owners' page. Verdict-free throughout: the support percentage is
+// arithmetic on the filed counts, its basis stated in the column head, and a failed vote reads in
+// the same type as a landslide.
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import voteResults from "../../data/voteResults.json";
+import fundamentals from "../../data/fundamentals.json";
+import { SITE_URL, ORG } from "../../lib/seo.mjs";
+
+const nameBy = new Map((fundamentals.companies || []).map((c) => [String(c.ticker).toUpperCase(), c.name]));
+const rows = Object.entries(voteResults.companies || {})
+  .map(([ticker, c]) => {
+    const s = c.sayOnPay;
+    const support = s && s.for + s.against > 0 ? (s.for / (s.for + s.against)) * 100 : null;
+    return { ticker, name: nameBy.get(ticker) || ticker, date: c.meetingDate, support };
+  })
+  .sort((a, b) => String(b.date).localeCompare(String(a.date)) || a.ticker.localeCompare(b.ticker));
+
+// Grouped by meeting month, newest first — proxy season reads as a season.
+const monthOf = (iso) => { try { return new Date(iso + "T00:00:00Z").toLocaleDateString("en-US", { year: "numeric", month: "long", timeZone: "UTC" }); } catch { return "Undated"; } };
+const groups = [];
+for (const r of rows) {
+  const m = monthOf(r.date);
+  if (!groups.length || groups[groups.length - 1].month !== m) groups.push({ month: m, rows: [] });
+  groups[groups.length - 1].rows.push(r);
+}
+const dayOf = (iso) => { try { return new Date(iso + "T00:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" }); } catch { return iso; } };
+
+const pageDescription = `The owners' pages: ${rows.length} US companies' annual meetings and say-on-pay votes, as filed with the SEC — most recent meetings first.`;
+const pageJsonLd = [{
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  name: "The owners — annual meetings and votes, as filed",
+  description: pageDescription,
+  publisher: ORG,
+  url: `${SITE_URL}/owners`,
+}];
+---
+
+<BaseLayout title="The owners — OwnerScorecard" description={pageDescription} jsonLd={pageJsonLd}>
+  <main class="ownersIdx">
+    <header class="head">
+      <p class="kicker">The owners</p>
+      <h1>The meetings, and how the owners voted</h1>
+      <p class="lede">
+        Each year every public company asks its owners to elect the board, and — at most companies —
+        to say, in an advisory vote, whether the executives&rsquo; pay has their support. This page
+        keeps the running record: {rows.length} companies&rsquo; latest annual meetings, from each
+        company&rsquo;s own filings, most recent first. Every row opens that company&rsquo;s owners&rsquo;
+        page; the businesses themselves are read in the <a href="/catalog">catalog</a>.
+      </p>
+    </header>
+
+    {groups.map((g) => (
+      <section class="month">
+        <h2>{g.month}</h2>
+        <table>
+          <thead>
+            <tr><th class="d">Meeting</th><th>Company</th><th class="num">Pay vote, % in favor<span class="sub">of votes cast for and against</span></th></tr>
+          </thead>
+          <tbody>
+            {g.rows.map((r) => (
+              <tr>
+                <td class="d">{dayOf(r.date)}</td>
+                <td><a href={`/owners/${r.ticker}`}><b>{r.ticker}</b> · {r.name}</a></td>
+                <td class="num">{r.support != null ? `${r.support.toFixed(1)}%` : "—"}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </section>
+    ))}
+  </main>
+</BaseLayout>
+
+<style>
+  .ownersIdx { max-width: 820px; margin: 0 auto; padding: 24px 16px 64px; }
+  .head { border-bottom: 1px solid var(--rule-strong); padding-bottom: 14px; }
+  .kicker { font-family: var(--sans); font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 0 0 6px; }
+  h1 { margin: 0; font-size: 26px; }
+  .lede { font-family: var(--serif); font-style: italic; font-size: 14.5px; color: var(--muted); line-height: 1.6; margin: 10px 0 0; max-width: 68ch; }
+
+  .month { margin: 26px 0 0; }
+  h2 { font-size: 16px; margin: 0 0 6px; color: var(--ink); border-bottom: 1px solid var(--rule); padding-bottom: 4px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  th { font-family: var(--sans); font-size: 10.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); text-align: left; padding: 4px 10px 4px 0; }
+  th .sub { display: block; font-weight: 400; text-transform: none; letter-spacing: 0; font-size: 10.5px; color: var(--ink-dim); }
+  td { padding: 4px 10px 4px 0; border-top: 1px solid var(--rule); }
+  .d { width: 74px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .num { text-align: right; width: 150px; font-variant-numeric: tabular-nums; }
+  td a { color: var(--ink); }
+  td a:hover { color: var(--accent); text-decoration: none; }
+  td b { font-weight: 600; }
+</style>
