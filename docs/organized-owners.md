@@ -437,6 +437,15 @@ per-company, wherever a dense watched record exists. The floor alone justifies t
   now a shipped surface. This also seeds DEF 14A ingestion for everything proxy-season later
   (the Owner's Ballot reads the same documents).
 
+- **2026-07-18 — the owners' area opens (852be47): 1,526 companies' meetings and say-on-pay votes,
+  as filed.** /owners/{ticker} (working route) carries the annual meeting and the say-on-pay tally
+  verbatim from the 8-K, support percentage with its basis in words, one door each way to the
+  record page. The extractor survived three adversarial rounds (pilots exact to the filings' own
+  printed percentages; Fox/BlackBerry shareholder-proposal misreads caught and fixed; a full-pool
+  re-run correcting 33 misreads; every mover and failed vote adjudicated — WBD 15.7% and TMO 31.8%
+  genuine). Failed votes ship as filed: the accountability record working. The future community's
+  home now exists, born with presentation-only content.
+
 ## 17. The owners' area (Ryan's architecture direction, same day)
 
 Ryan's call, recorded: the ownership-layer information (meeting vote results, and everything
