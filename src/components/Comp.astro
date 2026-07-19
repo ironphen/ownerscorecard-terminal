@@ -1,16 +1,44 @@
 ---
 // "Management & pay", Buffett's two questions about compensation, sourced. Stock
 // comp (a real expense an owner bears) comes from the financials; the CEO-to-median
-// pay ratio is pulled from the proxy when cleanly disclosed.
+// pay ratio is pulled from the proxy when cleanly disclosed; the chief executive's
+// five-year pay record comes from the proxy's own tagged pay-versus-performance
+// table (fetchProxyComp.mjs), set beside what the business earned for owners in the
+// same years. Record-relative, never peer-relative: the comparison object is not
+// what other executives make but what this management produced — the one form of
+// pay disclosure that disciplines rather than ratchets (docs/organized-owners.md §11).
 import language from "../data/language.json";
-import { fmtMoney, resolveInsiderOwnership } from "../lib/fundamentals.mjs";
+import { fmtMoney, resolveInsiderOwnership, ownerEarningsAbs } from "../lib/fundamentals.mjs";
 
-const { company } = Astro.props;
+const { company, pay = null } = Astro.props;
 const $ = (v) => fmtMoney(v, company?.currency || "USD");
 const L = company.lines || {};
 const sbc = L.stockBasedComp;
 const rev = L.revenue, oi = L.operatingIncome;
 const comp = language?.companies?.[company.ticker]?.comp || null;
+
+// The pay record: the proxy's last five fiscal years, each row exactly as the filing tags it
+// (a CEO-transition year carries one row per chief). Beside each, the owner earnings the whole
+// business produced that fiscal year, from the record above; where owner earnings aren't formed
+// (financials), filed net income stands in and the column says so.
+const payYears = (pay?.years || []).slice(-8);
+const histByFy = new Map((company.history || []).filter((h) => h?.lines).map((h) => [h.fy, h.lines]));
+const earnFor = (fy) => { const l = histByFy.get(fy); return l ? (ownerEarningsAbs(l, company) ?? null) : null; };
+const oeCount = payYears.filter((y) => earnFor(y.fy) != null).length;
+const useNI = oeCount < Math.min(3, payYears.length);
+const earnRow = (fy) => useNI ? (histByFy.get(fy)?.netIncome ?? null) : earnFor(fy);
+const earnLabel = useNI ? "Net income" : "Owner earnings";
+const anyName = payYears.some((y) => y.peoName);
+// Sub-million figures render exactly: a $1-a-year chief (Asana's Moskovitz, Cannae's Massey)
+// must read "$1", never "$0.0M"; small-cap pay in the hundreds of thousands reads "$349k".
+const $m = (v) => {
+  if (v == null) return "—";
+  const s = v < 0 ? "−" : "", a = Math.abs(v);
+  if (a >= 1e6) return `${s}$${(a / 1e6).toFixed(1)}M`;
+  if (a >= 1e4) return `${s}$${Math.round(a / 1e3)}k`;
+  return `${s}$${a.toLocaleString("en-US")}`;
+};
+const showPay = payYears.length >= 3;
 
 // Against revenue (scale) and operating profit (materiality). Not owner earnings:
 // CFO adds SBC back, so it's baked into that denominator, a muddled comparison.
@@ -28,18 +56,53 @@ const sbcOI = sbc != null ? pctOf(sbc, oi) : null;
 const totalShares = L.sharesDiluted ?? company.ttm?.lines?.sharesDiluted ?? null;
 const insider = resolveInsiderOwnership(comp, totalShares);
 const insiderStr = insider == null ? null : (typeof insider === "number" ? `${insider}%` : insider);
-const show = (sbc != null && rev) || comp?.payRatio != null || insider != null;
+const show = (sbc != null && rev) || comp?.payRatio != null || insider != null || showPay;
+const srcUrl = pay?.sourceUrl || comp?.sourceUrl || null;
 ---
 
 {show ? (
   <section class="comp">
     <div class="head">
       <h3 class="secTitle">Management, ownership &amp; pay</h3>
-      {comp?.sourceUrl ? <a class="src" href={comp.sourceUrl} target="_blank" rel="noopener">read the proxy →</a> : null}
+      {srcUrl ? <a class="src" href={srcUrl} target="_blank" rel="noopener">read the proxy →</a> : null}
     </div>
     <p class="intro">
-      Two things from the proxy: how much of the business the people running it own, and how they are paid.
+      From the proxy: how much of the business the people running it own, and how they are paid{showPay ? ", beside what the business earned for its owners in the same years" : ""}.
     </p>
+
+    {showPay ? (
+      <div class="payrec">
+        <table>
+          <thead>
+            <tr>
+              <th>Fiscal year</th>
+              {anyName ? <th>Chief executive</th> : null}
+              <th class="num">Pay, as filed</th>
+              <th class="num">&ldquo;Actually paid&rdquo;</th>
+              <th class="num">{earnLabel}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {payYears.map((y) => (
+              <tr>
+                <td>{y.fy}</td>
+                {anyName ? <td class="nm">{y.peoName || "—"}</td> : null}
+                <td class="num">{$m(y.sct)}</td>
+                <td class="num">{$m(y.cap)}</td>
+                <td class="num">{earnRow(y.fy) != null ? $(earnRow(y.fy)) : "—"}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <p class="n">
+          Both pay figures are the company&rsquo;s own, from the pay-versus-performance table its proxy statement files.
+          &ldquo;As filed&rdquo; is the Summary Compensation Table total: salary, bonus, and equity awards at their value on the day of grant.
+          &ldquo;Actually paid&rdquo; is the SEC&rsquo;s prescribed recalculation, which re-marks those equity awards to what they became as they vested; it can swing far above or below the filed figure in either direction, and negative years occur.
+          {earnLabel === "Owner earnings" ? "Owner earnings are the whole business's, from the record above, for the same fiscal years." : "Net income is the whole business's, as filed, for the same fiscal years."}
+          {payYears.some((y) => !y.peoName) && anyName ? " A dash under the name means the filing tags the figure without naming the officer." : ""}
+        </p>
+      </div>
+    ) : null}
 
     <ul class="rows">
       {insiderStr != null ? (
@@ -70,6 +133,14 @@ const show = (sbc != null && rev) || comp?.payRatio != null || insider != null;
   .head h2 { margin: 0; }
   .src { font-size: 12px; color: var(--accent); flex: 0 0 auto; }
   .intro { font-family: var(--serif); font-style: italic; font-size: 13.5px; color: var(--muted); margin: 10px 0 0; line-height: 1.55; max-width: 70ch; }
+
+  .payrec { margin: 16px 0 4px; }
+  .payrec table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  .payrec th { font-family: var(--sans); font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); text-align: left; padding: 0 8px 6px 0; border-bottom: 1px solid var(--rule-strong); }
+  .payrec td { padding: 6px 8px 6px 0; border-bottom: 1px solid var(--rule); font-variant-numeric: tabular-nums; }
+  .payrec .num { text-align: right; }
+  .payrec .nm { color: var(--ink-soft); }
+  .payrec .n { margin-top: 8px; }
 
   .rows { list-style: none; padding: 0; margin: 14px 0 0; }
   .rows li { padding: 12px 0; border-bottom: 1px solid var(--rule); }

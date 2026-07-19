@@ -65,6 +65,18 @@ if (p) {
   t("TSR kept from the undimensioned context", p.tsr.length === 1 && p.tsr[0].value === 154.3);
 }
 
+// ---- dimensioned + undimensioned twin rows: the unnamed duplicate is dropped (Amtech's pattern) ----
+const TWIN = FIX.replace(
+  `<tr><td><ix:nonFraction name="ecd:TotalShareholderRtnAmt" contextRef="y25" scale="0">154.30</ix:nonFraction></td></tr>`,
+  `<tr><td><ix:nonFraction name="ecd:PeoTotalCompAmt" contextRef="y24dup" scale="0">4,000,000</ix:nonFraction></td></tr>`
+).replace(
+  `</ix:header>`,
+  `<xbrli:context id="y24dup"><xbrli:period><xbrli:startDate>2024-01-01</xbrli:startDate><xbrli:endDate>2024-12-31</xbrli:endDate></xbrli:period></xbrli:context>\n</ix:header>`
+);
+const tw = parsePayVersusPerformance(TWIN);
+t("undimensioned twin of a member row is dropped, real rows survive",
+  !!tw && tw.years.filter((y) => y.fy === 2024).length === 2 && tw.years.filter((y) => y.fy === 2024).every((y) => y.peoName != null), tw?.years);
+
 // ---- no-PeoName filer: figures survive, names stay null (Microsoft's pattern) ----
 const NONAME = FIX.replace(/<ix:nonNumeric contextRef="y2[45][ab]?" name="ecd:PeoName">[^<]+<\/ix:nonNumeric>/g, "")
   .replace(/<ix:nonNumeric contextRef="y25" name="ecd:PeoName">[^<]+<\/ix:nonNumeric>/g, "");
@@ -82,6 +94,31 @@ try {
   }
   const ge = live.GE;
   if (ge) t("GE series is a single named PEO across five years", ge.years.length >= 5 && ge.years.every((y) => /Culp/.test(y.peoName || "")));
+
+  // 2026-07-18 adjudication verdicts, pinned. Filer-tagging-error companies are withheld (their
+  // tags contradict their own rendered tables): ASYS (scale=3 on whole dollars, 1000x), SOUN
+  // (reconciliation rows tagged as headline pay), OPEN (three-CEO year cross-tagged), PHUN (CAP
+  // columns tagged as SCT). Real-as-filed extremes SHIP: the mega-grants, the genuinely negative
+  // SCT totals, the $1 chiefs.
+  for (const tk of ["ASYS", "SOUN", "SOUNW", "OPEN", "OPENW", "PHUN"])
+    t(`${tk} withheld (filer tagging contradicts its rendered table)`, !(tk in live));
+  if (live.TTD) t("TTD FY2021 mega-grant ships as filed (~$835.0M)", Math.abs((live.TTD.years.find((y) => y.fy === 2021)?.sct ?? 0) - 834968762) < 2);
+  if (live.CCBG) t("CCBG FY2022 negative SCT ships as filed (−$774,965, pension reversal)", live.CCBG.years.find((y) => y.fy === 2022)?.sct === -774965);
+  if (live.PNTG) {
+    const r22 = live.PNTG.years.filter((y) => y.fy === 2022);
+    t("PNTG FY2022 transition ships both named rows (Walker −$3.30M, Guerisoli $1.56M)",
+      r22.length === 2 && r22.some((y) => /Walker/.test(y.peoName || "") && y.sct === -3296796) && r22.some((y) => /Guerisoli/.test(y.peoName || "")), r22);
+  }
+  if (live.ASAN) {
+    const fy26 = live.ASAN.years.filter((y) => y.fy === 2026);
+    t("ASAN FY2026 carries both the $1 chief and the incoming CEO's $39.5M", fy26.length === 2 && fy26.some((y) => y.sct === 1) && fy26.some((y) => y.sct === 39480980), fy26);
+  }
+  if (live.CNNE) t("CNNE $1 chief ships as filed", live.CNNE.years.some((y) => y.sct === 1 && /Massey/.test(y.peoName || "")));
+  // Structural invariant pool-wide: no company carries more than two PEO rows in one fiscal year.
+  let over2 = 0;
+  for (const c of Object.values(live)) { const by = {}; for (const y of c.years) by[y.fy] = (by[y.fy] || 0) + 1; if (Object.values(by).some((n) => n > 2)) over2++; }
+  t("no shipped company has >2 PEO rows in a single fiscal year", over2 === 0);
+  t("coverage holds above 80% of the US pool", Object.keys(live).length > 2300);
 } catch { /* data file absent: synthetic coverage stands alone */ }
 
 if (failed) { console.error(`\n❌ proxyCompTest: ${failed} failure(s).`); process.exit(1); }

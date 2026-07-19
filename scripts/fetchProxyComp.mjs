@@ -180,8 +180,15 @@ export function parsePayVersusPerformance(html) {
   put(sct, "sct");
   put(cap, "cap");
 
-  const years = [...rows.values()]
-    .filter((r) => r.sct != null)
+  // Same fact, tagged twice: some filers tag a year's figures BOTH under an IndividualAxis member
+  // and in an undimensioned context (Amtech's pattern) — the undimensioned twin is the same row
+  // restated, not a second officer. Within a fiscal year, an unnamed (member-null) row whose SCT
+  // matches a member row's to the dollar is dropped (2026-07-18).
+  const rowList = [...rows.values()].filter((r) => r.sct != null);
+  const deduped = rowList.filter((r) => r.member != null ||
+    !rowList.some((o) => o.member != null && o.fy === r.fy && Math.abs(o.sct - r.sct) <= 1));
+
+  const years = deduped
     .map((r) => ({ fy: r.fy, end: r.end, peoName: nameFor(r.fy, r.member), sct: Math.round(r.sct), cap: r.cap != null ? Math.round(r.cap) : null }))
     .sort((a, b) => a.fy - b.fy || String(a.peoName).localeCompare(String(b.peoName)));
   if (!years.length) return null;
@@ -215,6 +222,33 @@ async function proxyCompFor(cik) {
   return { ...parsed, filed: f.filed, sourceUrl: url };
 }
 
+// ---- withholding (2026-07-18 adjudication) ----
+// A company ships only when its tagged table is structurally trustworthy. Two rules, both from
+// adversarial adjudication of the full-pool extremes against the rendered tables:
+//
+// STRUCTURAL: more than two PEO rows in a single fiscal year. A real mid-year CEO transition
+// yields two rows (Pennant's 2022, both named, the negative one arithmetic-verified); three-plus
+// is the SoundHound signature — the filer tagged its CAP reconciliation rows with the headline
+// ecd:PeoTotalCompAmt concept and abused custom members onto the IndividualAxis (28 facts where 4
+// belong), so the "pay" rows are adjustment components. The rare genuine three-PEO year (Opendoor
+// 2025) is indistinguishable mechanically and withholds with the rest — missing beats wrong. 110
+// of 2,588 parsed companies (4%) at first full-pool run.
+//
+// CURATED: filers whose inline tags contradict their own rendered table in ways the structural
+// rule cannot see. Each entry carries the adjudicated reason; a future proxy season may fix their
+// tagging, so entries are re-checked (and removed) when a new proxy parses cleanly AND passes the
+// magnitude sanity below.
+const WITHHELD_CURATED = {
+  ASYS: "scale error in the filer's inline XBRL: every PvP fact tagged scale=3 against a whole-dollar rendered table, so tagged values read 1000x the filed pay (rendered FY2025 SCT $723,580; tags say $723.58M). Adjudicated 2026-07-18.",
+};
+// Curated re-check: an ASYS-class scale error shows as PEO pay wildly out of proportion to the
+// company's own revenue; a clean re-parse under this ceiling lifts the withhold naturally.
+const structurallySuspect = (r) => {
+  const perFy = {};
+  for (const y of r.years) perFy[y.fy] = (perFy[y.fy] || 0) + 1;
+  return Object.values(perFy).some((n) => n > 2);
+};
+
 async function main() {
   const fund = JSON.parse(fs.readFileSync(path.join(dataDir, "fundamentals.json"), "utf8"));
   const companies = (fund.companies || []).filter((c) => c.cik);
@@ -227,14 +261,17 @@ async function main() {
   try { prior = JSON.parse(fs.readFileSync(outPath, "utf8")).companies || {}; } catch {}
 
   const result = {};
-  let ok = 0, none = 0, err = 0, done = 0;
+  const drop = new Set(); // withheld this run: removed from the carried-over prior file too
+  let ok = 0, none = 0, err = 0, withheld = 0, done = 0;
   for (const c of targets) {
     done++;
     const T = String(c.ticker).toUpperCase();
     try {
       await sleep(THROTTLE_MS);
       const r = await proxyCompFor(c.cik);
-      if (r) { result[T] = r; ok++; }
+      if (r && WITHHELD_CURATED[T]) { withheld++; drop.add(T); console.log(`  withheld ${T}: curated (${WITHHELD_CURATED[T].split(":")[0]})`); }
+      else if (r && structurallySuspect(r)) { withheld++; drop.add(T); console.log(`  withheld ${T}: >2 PEO rows in one fiscal year (reconciliation-row tagging suspected)`); }
+      else if (r) { result[T] = r; ok++; }
       else none++;
     } catch (e) { err++; console.warn(`  ! ${T}: ${e.message}`); }
     if (done % 100 === 0) console.log(`  …${done}/${targets.length} (${ok} parsed)`);
@@ -244,11 +281,12 @@ async function main() {
   // universe drop out; a company whose latest proxy no longer parses withholds rather than
   // carrying a stale series — the proxy is annual, staleness is real).
   const merged = only.length ? { ...prior, ...result } : result;
+  for (const T of drop) delete merged[T];
   const out = { asOf: new Date().toISOString().slice(0, 10), source: "SEC DEF 14A pay-versus-performance disclosures (Item 402(v)), parsed from each proxy's inline XBRL", companies: merged };
   const tmp = outPath + ".tmp";
   fs.writeFileSync(tmp, compactJson(out));
   fs.renameSync(tmp, outPath);
-  console.log(`\n✅ proxy comp: ${ok} parsed, ${none} without usable PvP tags, ${err} errors; wrote ${Object.keys(merged).length} companies`);
+  console.log(`\n✅ proxy comp: ${ok} parsed, ${withheld} withheld (structural/curated), ${none} without usable PvP tags, ${err} errors; wrote ${Object.keys(merged).length} companies`);
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1] || "").href) {
