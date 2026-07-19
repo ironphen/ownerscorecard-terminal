@@ -288,7 +288,113 @@ accomplished through intelligent action by the great body of shareholders"). The
 citation-grade quote pack for all of it: **`docs/graham-owner-factbase.md`**. Munger supplied the
 warning; Graham supplied the mission; the design lens was always pointing here.
 
-## 12. Open questions (Ryan's to answer)
+## 12. Tech stack: buildable within the established confines
+
+Short answer: **yes — the commons is one new primitive on top of the stack phase-2 already
+commits to, not a new architecture.**
+
+The current system is two layers: an immutable static layer (Astro build → Cloudflare, 4,249
+pages, data as JSON in the repo, refreshed by CI workflows, ~$0) and a device-local private layer
+(the Notebook — holdings never leave the device). Phase-2 already adds the third layer: accounts
+and payments (Supabase + Stripe). The community needs exactly one more: **user-generated content
+in Supabase (Postgres + row-level security), read and written client-side from the existing
+pages** — the same pattern the compare page already uses to fetch JSON cards, pointed at a
+database instead of static files.
+
+The architectural split maps onto the doctrine perfectly and should be kept hard:
+
+- **The record stays static and immutable.** Community content never touches the build; rooms are
+  a client-hydrated overlay on the record pages. The community annotates around the record; it can
+  never edit it.
+- **Publishing is an explicit act.** A public notebook page is an opt-in copy pushed to Supabase;
+  the private notebook remains device-local. The privacy tripwire survives intact.
+- **The Machine Readers gate the door.** The no-price rule is enforced first by architecture
+  (no price surfaces to feed) and second by a machine reader screening posts for price/pump talk
+  before a human moderator ever needs to exist. The same policy layer that gates OSC's own
+  AI output gates the commons.
+- **Archives are static.** Each room's history is periodically compiled into static archive pages
+  (the TMF lesson: the community's memory must survive its host — and this also keeps database
+  read load flat).
+
+Scale check at millions of users: the expensive part of every social product — the algorithmic
+feed — deliberately does not exist here. Static pages on a CDN scale indefinitely at near-zero
+cost; room content is read-heavy Postgres, naturally sharded per company, cacheable at the edge,
+with the heaviest read paths (archives, aggregate tallies) precompiled to static. Supabase carries
+this to a very large scale and is plain Postgres underneath — portable if ever outgrown. The
+clerk (per-reader AI) is the only component whose marginal cost is real; it prices itself (see
+§13). Known ceilings to watch, none architectural: the Workers static-asset count (12,182/20,000
+today; R2 offload is the escape hatch), and Postgres connection limits at high concurrency
+(pooling, read replicas — standard moves). Nothing in the vision requires abandoning the one-repo,
+static-first, reader-private posture. The confines hold.
+
+## 13. The finished product (the millions-of-users picture)
+
+Eight organs; four exist today.
+
+1. **The Record** (exists) — every company's verdict-free decade record, machine-readable twins.
+2. **The Terminal** (exists) — wire, almanac, groupings, compare: the daily habit layer.
+3. **The Notebook** (exists, private) — the owner's journal; the community atom, single-player.
+4. **The Ledger & Notes** (exists / phase-2) — Ryan's publication: the editorial spine and the
+   revenue spine.
+5. **The Commons** (new) — per-company owners' rooms: public notebook pages and owner memos
+   anchored to rows of the record; tenure-attested identity ("holder since 2019," never sizes);
+   stewardship status that compounds and never decays; no price anywhere.
+6. **The Seasons** (new) — the ritual calendar. Proxy season: the Owner's Ballot, every item
+   presented beside the record. Report season: the room reads the annual together. Meeting day:
+   members log the questions they submitted and whether each was answered — producing, company by
+   company, year by year, **the meeting-accountability record** (asked / answered / dodged) that
+   currently exists only as one academic study. Nobody keeps this; at scale OSC would produce it
+   continuously and mechanically.
+7. **The Register** (new) — opt-in declared voting intentions, aggregated per item, published with
+   14a-9-grade accuracy: "owners of record here intend N% against item 3." At millions of users
+   this is a signal boards, journalists, and proxy solicitors check — the retail owners' poll that
+   has never existed.
+8. **The Clerk** (new) — each reader's AI: reads any filing or proxy against that reader's saved
+   principles; drafts their ballot reasoning, their meeting questions, their annual-review note.
+   OSC's judgment appears nowhere in it.
+
+What only exists at scale: the Register becomes materially informative; the meeting-accountability
+dataset becomes a governance instrument; the BellTel effect (managements adjusting because a dense
+owner base visibly watches) emerges company by company; and the room archives become the
+institutional memory of individual ownership — what the owners of this business have observed,
+across decades, in one permanent place.
+
+Business model, unchanged in kind: reader-only revenue, never issuer money, never ads (ads are
+velocity economics — the enemy's metabolism). The Notes subscription stays the revenue spine; the
+commons is the retention moat doing its ratified phase-2 job; the Clerk is the one component with
+real marginal cost and is therefore honestly priceable as its own tier. Reading is free forever;
+standing is earned, never bought.
+
+## 14. Reaching the market
+
+The audience is not "retail investors." It is the **enterprising minority** — the readers of
+records — plus the merely-curious owners each contested season temporarily awakens. GTM follows
+from that:
+
+- **The flywheel that already runs**: record pages as pull discovery (SEO/AEO, answer-engine
+  citation, the Dataset/JSON-LD infrastructure already shipped). Terminal reader → notebook keeper
+  → published memo → room member. No step requires persuasion, only invitation.
+- **Seasonal acquisition events, earned not bought**: every contested proxy fight and every
+  scandalous pay package is a moment when millions of owners briefly care and search. The Owner's
+  Ballot page for that company — the items beside the record, verdict-free — is the best possible
+  landing page for that moment, and each season produces dozens of them mechanically.
+- **Artifacts only OSC can produce = the press channel**: "at [company]'s meeting, N of M
+  shareholder questions went unanswered" is inherently newsworthy, generated mechanically, and
+  cite-able by every governance journalist. The meeting-accountability record is a story engine.
+- **Seed one room where owner culture already lives** (the Berkshire room around meeting season is
+  the obvious candidate — the one surviving physical ownership ritual, and the pool's most
+  owner-cultured base) rather than launching a thousand empty rooms. The culture-carriers recruit
+  the culture.
+- **The pre-organized cohorts**: communities that already perform ownership acts (the DRS cohort,
+  dividend-growth writers, the Berkshire diaspora, the old TMF/Shrewd'm remnant) — invitations,
+  not ads.
+- **Refusals**: no paid acquisition, no ads, no issuer partnerships (the ASA capture trap), no
+  engagement mechanics, no influencer verdict-sellers. Growth rides ownership's own calendar.
+
+The one-line GTM: **ride the seasonal news cycle of ownership with artifacts only the record can
+produce, and let pull discovery convert readers into owners.**
+
+## 15. Open questions (Ryan's to answer)
 
 1. Does he want to publish his own votes with reasons as dated ledger entries? Legal ((l)(2)(iv))
    and doctrine-compatible (dated, argued, his own) — but it sits near the positions-never-announced
