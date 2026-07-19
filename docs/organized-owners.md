@@ -275,6 +275,19 @@ function exists.
 Mission sentence candidate: *a world with smarter owners — and, because of them, managements more
 often worth owning.*
 
+**Mission ratified (same day).** Ryan's words: *"re-align managements with shareholders through
+literacy and organization of the individual enterprising investor re-establishing themselves as
+owners of the business as was intended in our capitalistic system / stock ownership in general."*
+"Enterprising investor" is Graham's own category, and the mission turns out to be Graham's own
+project — stated in Forbes 1932 ("ownership conscious"), in Security Analysis 1934 (the "docile
+and apathetic animal," tied by Graham himself to Berle-Means in the same paragraph), practiced in
+the Northern Pipe Line campaign of 1926-28, preached in the 1946 lectures ("The trouble with
+stockholders... is that not enough of them are disgruntled"), and pronounced unfinished in the
+1973 Intelligent Investor ("In the last 36 years practically nothing has actually been
+accomplished through intelligent action by the great body of shareholders"). The verified,
+citation-grade quote pack for all of it: **`docs/graham-owner-factbase.md`**. Munger supplied the
+warning; Graham supplied the mission; the design lens was always pointing here.
+
 ## 12. Open questions (Ryan's to answer)
 
 1. Does he want to publish his own votes with reasons as dated ledger entries? Legal ((l)(2)(iv))
