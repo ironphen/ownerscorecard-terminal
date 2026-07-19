@@ -423,7 +423,21 @@ getting worse at the very least — or try.** That sober floor (hold the line; t
 restoration) is the honest scope, and it matches the evidence: deterrence emerges patchily,
 per-company, wherever a dense watched record exists. The floor alone justifies the build.
 
-## 16. Open questions (Ryan's to answer)
+## 16. Execution log
+
+- **2026-07-18 — the first brick shipped (5e0b992, 13616e7): what management is paid, beside the
+  record.** The Management, ownership & pay section on every US company page now carries the chief
+  executive's five-year pay series from the company's own proxy (the pay-versus-performance
+  disclosure's tagged Summary-Compensation-Table total and "compensation actually paid"), set
+  beside the owner earnings the business produced in the same fiscal years. 2,477 of 2,882 US
+  filers (86%); every extreme adjudicated against the rendered filings before shipping (the
+  mega-grants real, the negative pension-reversal SCTs real, the $1 chiefs real; four filers whose
+  tags contradict their own tables withheld by name, plus a structural rule for
+  reconciliation-rows-tagged-as-pay). Record-relative, never peer-relative — the §11 keystone,
+  now a shipped surface. This also seeds DEF 14A ingestion for everything proxy-season later
+  (the Owner's Ballot reads the same documents).
+
+## 17. Open questions (Ryan's to answer)
 
 1. Does he want to publish his own votes with reasons as dated ledger entries? Legal ((l)(2)(iv))
    and doctrine-compatible (dated, argued, his own) — but it sits near the positions-never-announced
