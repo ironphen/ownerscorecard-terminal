@@ -2,6 +2,7 @@
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import fundamentals from "../../data/fundamentals.json";
 import proxyComp from "../../data/proxyComp.json";
+import voteResults from "../../data/voteResults.json";
 import Scorecard from "../../components/Scorecard.astro";
 import Portrait from "../../components/Portrait.astro";
 import TenYear from "../../components/TenYear.astro";
@@ -323,7 +324,11 @@ const ogImageAlt = ogImage ? `${name} (${ticker}): the owner's record at a glanc
   {fund ? (
     <section id="act-price" class="actGroup">
       <ActHeader n="IV" title="The price" lede="What a price has to assume." />
-      <div id="sec-price" class="sec"><Valuation company={fund} /><CompareLink company={fund} /></div>
+      <div id="sec-price" class="sec"><Valuation company={fund} /><CompareLink company={fund} />
+        {voteResults.companies?.[ticker] ? (
+          <p class="ownersLink"><a href={`/owners/${ticker}`}>The owners of {ticker}: the meeting and the votes →</a></p>
+        ) : null}
+      </div>
     </section>
   ) : null}
 
@@ -368,6 +373,8 @@ const ogImageAlt = ogImage ? `${name} (${ticker}): the owner's record at a glanc
   ) : null}
 
   <style>
+    .ownersLink { margin: 14px 0 0; padding-top: 10px; border-top: 1px solid var(--rule); }
+    .ownersLink a { font-family: var(--sans); font-weight: 600; font-size: 14px; }
     .back { margin: 0 0 10px; display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
     .manNav { display: inline-flex; gap: 12px; align-items: baseline; font-size: 12.5px; }
     .manNav a { font-family: var(--sans); font-weight: 600; }

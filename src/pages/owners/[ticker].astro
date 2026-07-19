@@ -1,0 +1,111 @@
+---
+// The owners' page — the ownership layer of one company, kept apart from the business record by
+// design (docs/organized-owners.md §17): the record page says what the business did; this page
+// says what its owners were asked and how they answered, from the company's own filings. Today
+// that is the annual meeting and the say-on-pay vote as filed in the 8-K under Item 5.07. This
+// area grows (proxy season, the rooms) without ever crowding the record.
+//
+// Present-never-pronounce holds with full force: counts as filed, the support percentage computed
+// with its basis stated in words, no adjective anywhere.
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import voteResults from "../../data/voteResults.json";
+import fundamentals from "../../data/fundamentals.json";
+import { SITE_URL, ORG } from "../../lib/seo.mjs";
+
+export function getStaticPaths() {
+  const companies = voteResults.companies || {};
+  return Object.keys(companies).map((ticker) => ({ params: { ticker } }));
+}
+
+const ticker = String(Astro.params.ticker || "").toUpperCase();
+const vote = voteResults.companies?.[ticker] || null;
+const fund = (fundamentals.companies || []).find((c) => String(c.ticker).toUpperCase() === ticker) || null;
+const name = fund?.name || ticker;
+
+const s = vote?.sayOnPay || null;
+const castFA = s ? s.for + s.against : 0;
+const support = s && castFA > 0 ? (s.for / castFA) * 100 : null;
+const fmtDate = (iso) => { try { return new Date(iso + "T00:00:00Z").toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric", timeZone: "UTC" }); } catch { return String(iso || ""); } };
+const N = (v) => v == null ? "—" : v.toLocaleString("en-US");
+
+const pageTitle = `The owners of ${name}`;
+const pageDescription = `${name} (${ticker}): the annual meeting and the shareholder votes, as filed with the SEC. The say-on-pay tally and its source, verbatim from the company's own 8-K.`;
+const pageJsonLd = [{
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  name: pageTitle,
+  description: pageDescription,
+  publisher: ORG,
+  url: `${SITE_URL}/owners/${ticker}`,
+}];
+---
+
+<BaseLayout title={`${pageTitle} — OwnerScorecard`} description={pageDescription} jsonLd={pageJsonLd}>
+  <main class="owners">
+    <header class="head">
+      <p class="kicker">The owners</p>
+      <h1>{name} <span class="tk">{ticker}</span></h1>
+      <p class="lede">
+        What the owners of this business were asked, and how they answered — from the company&rsquo;s
+        own filings. The business itself is read on <a href={`/c/${ticker}`}>the record</a>.
+      </p>
+    </header>
+
+    {vote ? (
+      <section class="meeting">
+        <h2>The annual meeting</h2>
+        <p class="mdate">
+          Held {fmtDate(vote.meetingDate)}.
+          {vote.sourceUrl ? <a class="src" href={vote.sourceUrl} target="_blank" rel="noopener"> The results, as filed (8-K, Item 5.07) →</a> : null}
+        </p>
+
+        {s ? (
+          <div class="sop">
+            <h3>The vote on executive pay</h3>
+            <table>
+              <tbody>
+                <tr><th>Votes for</th><td>{N(s.for)}</td></tr>
+                <tr><th>Votes against</th><td>{N(s.against)}</td></tr>
+                <tr><th>Abstentions</th><td>{N(s.abstain)}</td></tr>
+                {s.brokerNonVotes != null ? <tr><th>Broker non-votes</th><td>{N(s.brokerNonVotes)}</td></tr> : null}
+              </tbody>
+            </table>
+            {support != null ? (
+              <p class="support"><b>{support.toFixed(1)}%</b> of the votes cast for and against were cast in favor.</p>
+            ) : null}
+            <p class="n">
+              The advisory vote on executive compensation (&ldquo;say-on-pay&rdquo;), required at most US
+              public companies since 2011; the tally is the company&rsquo;s own, from the 8-K it filed
+              after the meeting. The vote is advisory: it binds nothing, and what a board does with it
+              is part of its record. What management is paid sits beside the business record,
+              <a href={`/c/${ticker}#sec-pay`}> on the company page</a>.
+            </p>
+          </div>
+        ) : null}
+      </section>
+    ) : null}
+  </main>
+</BaseLayout>
+
+<style>
+  .owners { max-width: 760px; margin: 0 auto; padding: 24px 16px 64px; }
+  .head { border-bottom: 1px solid var(--rule-strong); padding-bottom: 14px; }
+  .kicker { font-family: var(--sans); font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 0 0 6px; }
+  h1 { margin: 0; font-size: 28px; }
+  .tk { color: var(--muted); font-size: 18px; font-weight: 600; margin-left: 6px; }
+  .lede { font-family: var(--serif); font-style: italic; font-size: 14.5px; color: var(--muted); line-height: 1.6; margin: 10px 0 0; max-width: 62ch; }
+
+  .meeting { margin: 26px 0 0; }
+  h2 { font-size: 19px; margin: 0 0 4px; }
+  .mdate { font-size: 14px; color: var(--ink-soft); margin: 2px 0 0; }
+  .src { font-size: 12.5px; color: var(--accent); }
+
+  .sop { margin: 20px 0 0; }
+  h3 { font-size: 15.5px; margin: 0 0 8px; }
+  .sop table { border-collapse: collapse; min-width: 340px; }
+  .sop th { font-family: var(--sans); font-size: 12px; font-weight: 600; color: var(--muted); text-align: left; padding: 5px 18px 5px 0; border-bottom: 1px solid var(--rule); }
+  .sop td { font-variant-numeric: tabular-nums; font-size: 14.5px; text-align: right; padding: 5px 0; border-bottom: 1px solid var(--rule); }
+  .support { font-size: 15px; margin: 12px 0 0; }
+  .support b { font-size: 18px; }
+  .n { font-family: var(--serif); font-size: 13px; color: var(--ink-dim); line-height: 1.6; margin: 12px 0 0; max-width: 70ch; }
+</style>

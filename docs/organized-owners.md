@@ -437,7 +437,21 @@ per-company, wherever a dense watched record exists. The floor alone justifies t
   now a shipped surface. This also seeds DEF 14A ingestion for everything proxy-season later
   (the Owner's Ballot reads the same documents).
 
-## 17. Open questions (Ryan's to answer)
+## 17. The owners' area (Ryan's architecture direction, same day)
+
+Ryan's call, recorded: the ownership-layer information (meeting vote results, and everything
+proxy-season to come) lives in a **separate new area — the same area the future community will
+inhabit** — not on the existing scorecards. The split: the company page stays the pure business
+record (what the business did, including what management was paid); the new area carries the
+ownership layer per company (the meeting, the votes as filed, the proxy, and later the rooms and
+declared votes). Rationale: keeps the business record uncrowded (arrangement-is-a-pronouncement),
+and the community area is born with presentation-only content — pages worth visiting before a
+single member exists, which answers the cold-start problem structurally. Route and naming are
+Ryan's final call (working candidate: /owners/{ticker}, "the owners of this business"; the
+alternative is a /c/{ticker}/owners subpath). Vote results therefore do NOT join the scorecard's
+pay section; they open the new area.
+
+## 18. Open questions (Ryan's to answer)
 
 1. Does he want to publish his own votes with reasons as dated ledger entries? Legal ((l)(2)(iv))
    and doctrine-compatible (dated, argued, his own) — but it sits near the positions-never-announced
