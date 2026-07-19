@@ -394,7 +394,36 @@ from that:
 The one-line GTM: **ride the seasonal news cycle of ownership with artifacts only the record can
 produce, and let pull discovery convert readers into owners.**
 
-## 15. Open questions (Ryan's to answer)
+## 15. Design ethos and naming (Ryan, same day)
+
+Ryan's direction, recorded: the organ names used in this memo — "commons," "clerk," "register,"
+"seasons" — are **working labels only and will not ship**. Graham, Buffett, and Ryan would not use
+them. The house register (plain businesslike nouns; arrangement-is-a-pronouncement extends to
+naming) applies with full force, and the most tasteful move is usually not to name a thing at all:
+Berkshire says "the annual meeting," not a coinage. Working plain-noun candidates, final words
+Ryan's:
+
+- the commons → the **Owners** section of a company page (where the owners of this business
+  gather); no site-wide brand name needed.
+- the register → **declared votes** (the aggregate is just "what owners here have declared").
+- the clerk → no persona, no name; reading functions ("read this proxy against my principles").
+- the seasons → **proxy season** and **report season**, already plain English.
+- the Owner's Ballot → plain and descriptive; likely survives as-is.
+
+Ethos, in Ryan's words: do not over-engineer; be incredibly thoughtful; design with taste, with
+their principles in mind. **Lens note, scoped by Ryan explicitly for this build**: Graham and
+Buffett remain the design lens, and *for this stream specifically* Munger is in the room too — his
+warning (the emperors, the fading meetings) is the founding provocation, and his dispositions
+inform the taste. This is a deliberate, scoped inclusion for the organized-owners work, not a
+reopening of the general Munger-encoding question (the ratified general lens stands).
+
+Mission calibration, also Ryan's, worth preserving verbatim in spirit: we are uniquely positioned
+to tackle the drowning-out of the modern corporate shareholder, and **we can prevent it from
+getting worse at the very least — or try.** That sober floor (hold the line; the upside is
+restoration) is the honest scope, and it matches the evidence: deterrence emerges patchily,
+per-company, wherever a dense watched record exists. The floor alone justifies the build.
+
+## 16. Open questions (Ryan's to answer)
 
 1. Does he want to publish his own votes with reasons as dated ledger entries? Legal ((l)(2)(iv))
    and doctrine-compatible (dated, argued, his own) — but it sits near the positions-never-announced
