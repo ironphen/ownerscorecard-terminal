@@ -2,6 +2,7 @@
 import BaseLayout from "../layouts/BaseLayout.astro";
 import wire from "../data/wire.json";
 import fundamentals from "../data/fundamentals.json";
+import upcoming from "../data/upcoming.json";
 import { perfLine } from "../lib/wirePerf.mjs";
 
 const known = new Set((fundamentals.companies || []).map((c) => String(c.ticker).toUpperCase()));
@@ -19,6 +20,26 @@ for (const it of items) {
 
 // The performance line (up/down and a percentage per proven line) is shared from lib/wirePerf.mjs,
 // so /wire, the per-day page, the Atom feed, the account band and the company page all read alike.
+
+// ---- the week ahead: who comes due, from the statutory clock and each filer's own rhythm ----
+// EDGAR announces no future dates, and neither do we: the SELECTION below uses each company's
+// computed expectation (its median filing lag applied to its next period end), but every printed
+// field is a filed fact or the statute — the period the report will cover (month-level, since
+// 52/53-week calendars drift by days), the N-day rule for its filer class, and how many days
+// after period end it has historically filed. The page rebuilds daily, so the window rolls.
+const nameOf = new Map((fundamentals.companies || []).map((c) => [String(c.ticker).toUpperCase(), c.name]));
+const today = new Date().toISOString().slice(0, 10);
+const weekOut = new Date(Date.now() + 7 * 864e5).toISOString().slice(0, 10);
+const monthPhrase = (iso) => {
+  const d = new Date(iso + "T00:00:00Z");
+  const part = d.getUTCDate() <= 10 ? "early" : d.getUTCDate() <= 20 ? "mid" : "late";
+  return `${part} ${d.toLocaleDateString("en-US", { month: "long", timeZone: "UTC" })}`;
+};
+const ahead = Object.entries(upcoming.companies || {})
+  .map(([t, c]) => ({ t, ...c }))
+  .filter((c) => c.expected >= today && c.expected <= weekOut)
+  .sort((a, b) => a.expected.localeCompare(b.expected) || a.t.localeCompare(b.t));
+const AHEAD_CAP = 80;
 ---
 
 <BaseLayout title="The Filing Wire, Owner Scorecard">
@@ -31,6 +52,27 @@ for (const it of items) {
     catalog, straight from EDGAR, newest first, with the 8-K codes translated into plain English. The grave
     ones (an auditor change, a restatement, a default) announce themselves.
   </p>
+
+  {ahead.length ? (
+    <section class="ahead">
+      <h2>The week ahead</h2>
+      <p class="aheadLede">
+        Reports that come due in the coming days, by the statutory clock and each company&rsquo;s own
+        filing rhythm. Nothing here is announced by the companies; the periods and day-counts are
+        from their filings and the rules for their filer class.
+      </p>
+      <ul>
+        {ahead.slice(0, AHEAD_CAP).map((c) => (
+          <li>
+            <a class="tk" href={`/c/${c.t}`}><b>{c.t}</b>{nameOf.get(c.t) ? ` · ${nameOf.get(c.t)}` : ""}</a>
+            <span class="what">{c.nextForm === "10-K" ? `annual report (10-K) for the fiscal year ending ${monthPhrase(c.nextPeriodEnd)}` : `10-Q for the quarter ending ${monthPhrase(c.nextPeriodEnd)}`}</span>
+            <span class="clock">due within {c.statutoryDays} days of period end · has filed ~{c.typicalLagDays} days after</span>
+          </li>
+        ))}
+      </ul>
+      {ahead.length > AHEAD_CAP ? <p class="aheadMore">…and {ahead.length - AHEAD_CAP} more come due this week.</p> : null}
+    </section>
+  ) : null}
 
   {items.length ? (
     groups.map((g) => (
@@ -62,6 +104,16 @@ for (const it of items) {
   )}
 
   <style>
+    .ahead { margin: 20px 0 6px; padding: 14px 16px; background: var(--accent-tint); border-left: 2px solid var(--accent); }
+    .ahead h2 { margin: 0; font-size: 15px; font-family: var(--sans); letter-spacing: 0.04em; text-transform: uppercase; color: var(--accent); }
+    .aheadLede { font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--muted); margin: 7px 0 0; line-height: 1.55; max-width: 78ch; }
+    .ahead ul { list-style: none; margin: 10px 0 0; padding: 0; }
+    .ahead li { display: flex; gap: 10px; flex-wrap: wrap; align-items: baseline; padding: 5px 0; border-top: 1px solid var(--rule); font-size: 13px; }
+    .ahead .tk { flex: 0 0 auto; color: var(--ink); }
+    .ahead .tk b { font-weight: 600; }
+    .ahead .what { color: var(--ink-soft); }
+    .ahead .clock { color: var(--ink-dim); font-size: 12px; margin-left: auto; font-variant-numeric: tabular-nums; }
+    .aheadMore { font-size: 12.5px; color: var(--muted); margin: 8px 0 0; font-style: italic; }
     .hd { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
     .hd h1 { margin: 0; }
     .asof { font-size: 12px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); }

@@ -111,6 +111,15 @@ jobs:
       # every company parsed before it. The fetch is idempotent (it rebuilds from scratch and carries
       # over the prior file), so a fresh attempt is safe; up to three before giving up. Still
       # continue-on-error, so even three failures leave the prior good data and never block the refresh.
+      # The filing rhythms behind the wire's "week ahead" band: each filer's class, statutory
+      # deadline, and its own median filing lag, from the submissions index. Rhythms drift at
+      # quarter speed, so the weekly cadence is plenty; the wire's daily build rolls the window.
+      - name: Refresh filing rhythms (upcoming.json)
+        if: ${{ github.event.inputs.segments_only != 'true' && github.event.inputs.filings_only != 'true' && github.event.inputs.drivers_only != 'true' }}
+        continue-on-error: true # a stale rhythm file is a slightly stale week-ahead band, never a broken refresh
+        run: npm run fetch:upcoming
+        env:
+          SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT }}
       - name: Run fetch:filings
         if: ${{ github.event.inputs.segments_only != 'true' && github.event.inputs.fundamentals_only != 'true' && github.event.inputs.drivers_only != 'true' && github.event.schedule != '0 7 * * 1' }}
         continue-on-error: true # qualitative layer; never fail the fundamentals refresh
