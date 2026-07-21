@@ -54,12 +54,28 @@ already ratified, now executed.*
   queue from this stream: the ownership essay — Graham's forty-year through-line
   (`docs/graham-owner-factbase.md` is citation-grade and waiting) — Ryan's call on whether and
   when; it would be the mission's founding prose in the publication's own voice.
-- **Phase-2 rails: accounts and the paid tier.** Supabase + Stripe per the phase-2 spec,
-  annual-first; the legal review of the paid-Notes stance precedes the first paid Note (standing
-  requirement). This is the highest-leverage build in the plan because it serves both masters:
-  it is the subscription rail, and it is the precondition for every member surface the ownership
-  stream will ever want. *Inversion gate: churn is the killer — retention economics decide
-  pricing and cadence; nothing ships that we can't sustain solo.*
+- **Phase-2 rails: the audience machine runs; the paid wing waits at the gate.** (Amended
+  2026-07-19 after re-reading `docs/phase-2-plan.md`, now on main, against this file.) The
+  accounts layer the earlier draft called for is ALREADY LIVE — Supabase magic-link auth,
+  /account, follows, and the wire email sending from CI — which means every member surface the
+  ownership stream wants (notebook-public first) is unblocked today. What waits is checkout
+  code, and it waits DELIBERATELY: the phase-2 plan's willingness-to-pay kill-gate, locked
+  2026-07-01, requires ~six months of audience-building from the wire email's launch (July 2026
+  → the gate falls due around January 2027), an engaged list on the order of 1,000, and the only
+  evidence that counts — 25–50 founding members prepaying a real annual price through a plain
+  Stripe payment link, zero custom code. If the number isn't there, the honest reading is
+  honored: stop or pivot, never build the billing machine anyway. Between now and the gate the
+  rails work is: the preconditions (Ryan's Consolidated Analytics employment-agreement check,
+  which precedes Stripe; the legal review of the paid-Notes stance, which precedes the first
+  paid Note; the entity/securities-counsel confirmation from the plan's §6), the audience
+  engine itself (the free product, the Notes cadence, the owners' area, the seasonal
+  artifacts — every hour on the free instrument IS the customer acquisition), and gate-week
+  preparation (price posture from §10, the founding-member offer, the payment link). If the
+  gate passes, the paid wing per the plan's §5/§9 is a two-to-three-week build — checkout,
+  webhook, RLS-gated Notes reader, the pushNotes pipeline, reconciliation — landing squarely
+  before proxy season 2027, so the paid launch rides the season's traffic. The calendar and the
+  discipline agree. *Inversion gate: churn is the killer, and hope is the other one — the
+  kill-gate exists to stop the partners from overruling the evidence.*
 - **The correctness campaign remains the standing discipline.** Recovery passes on the withheld
   filers (the ~110 structural withholds in the pay data; the say-on-pay format misses) continue
   opportunistically; every new surface inherits the full verification-and-gates treatment the
