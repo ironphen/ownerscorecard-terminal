@@ -7,7 +7,7 @@ import { readFileSync } from "node:fs";
 import { buildCompareCard } from "../src/lib/compareCard.mjs";
 import { valuationModel } from "../src/lib/valuationInputs.mjs";
 import { industryOf } from "../src/lib/archetype.mjs";
-import { netDebtOf, oiReliable } from "../src/lib/fundamentals.mjs";
+import { netDebtOf, oiReliable, ownerEarningsAbs } from "../src/lib/fundamentals.mjs";
 import { floatYield, FLOAT_YIELD_CAP } from "../src/lib/peers.mjs";
 import { acquisitionRecord } from "../src/lib/acquisitions.mjs";
 import TAXONOMY from "../src/data/taxonomy.json" with { type: "json" };
@@ -195,7 +195,37 @@ const DUAL_CLASS_DEFERRED = new Set(["BRK-A", "BRK-B"]);
   if (x) t("XOM carries sharesBasis 'basic' (diluted tagging lapsed 2013)", x.sharesBasis === "basic");
 }
 
-// 16. The three 20-F cover-text traps the adversarial verify caught stay dead: a stated total is
+// 16. The valuation page quotes the ONE net-debt definition (sweep #1, extended 2026-07-19): its
+//     local computation once netted against liquidAssets (long-term marketable folded in), so the
+//     company-page DCF and the compare-card DCF disagreed on cash-rich names. Source-level guard:
+//     the component must consume netDebtOf and must not net liquidAssets.
+{
+  const src = readFileSync("src/components/Valuation.astro", "utf8");
+  t("Valuation.astro nets debt with netDebtOf", /netDebtOf\(L\)/.test(src));
+  t("Valuation.astro no longer nets against liquidAssets", !/liquidAssets\(L\)\s*\)?\s*\|\|\s*0/.test(src));
+}
+
+// 17. The owner-earnings / free-cash-flow split is DESIGN, pinned (the CMCL finding, 2026-07-19):
+//     the valuation family's default base is operating cash less ALL capex (the conservative,
+//     filed-fact figure — the library's freeCashFlowAbs), with the maintenance basis offered as
+//     the reader's Steady-state election; the record table's "Owner earnings" row is Buffett's
+//     maintenance-based figure. For a build-out filer the two MUST diverge (that divergence is
+//     what the labels now disclose); a future change that silently equates them — or renames
+//     either — must come through this gate deliberately.
+{
+  const buildOut = {
+    ticker: "BOUT", name: "Buildout Co", market: "US", sic: "1040", fy: 2025,
+    lines: { cashFromOps: 42000000, capex: -27500000, depreciation: 12000000, revenue: 120000000, netIncome: 9000000, stockholdersEquity: 80000000, sharesDiluted: 20000000, totalDebt: 5000000, cashAndEquivalents: 10000000 },
+    history: [2021, 2022, 2023, 2024, 2025].map((fy, i) => ({ fy, lines: { revenue: 80000000 + i * 10000000, cashFromOps: 30000000 + i * 3000000, capex: -(20000000 + i * 2000000), depreciation: 10000000 + i * 500000, netIncome: 7000000 + i * 500000 } })),
+  };
+  const vm = valuationModel(buildOut);
+  const oeRecord = ownerEarningsAbs(buildOut.lines, buildOut);
+  t("build-out filer: valuation base is CFO − total capex (free cash flow)", vm.oe === 42000000 - 27500000);
+  t("build-out filer: the record's owner earnings uses maintenance capex and diverges", oeRecord === 42000000 - 12000000 && oeRecord !== vm.oe);
+  t("build-out filer: the Steady-state basis is offered so the reader can elect it", vm.offerMaint === true && vm.oeMaint === oeRecord);
+}
+
+// 18. The three 20-F cover-text traps the adversarial verify caught stay dead: a stated total is
 //     never summed with its own components (iQIYI printed 2×), a treasury tranche never joins the
 //     outstanding count (ReNew +10.7%), a prior-year restatement never doubles the current year
 //     (Bilibili 2×). Each pinned to the band around its independently verified count; a withheld

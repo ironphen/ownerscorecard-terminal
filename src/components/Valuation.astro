@@ -8,7 +8,7 @@
 // target: it shows the owner-earnings growth a price implies, set against the record.
 import { classify, financialKind, financialSubtype } from "../lib/archetype.mjs";
 import { moatReport } from "../lib/durability.mjs";
-import { fmtMoney, currencySymbol, liquidAssets, maintenanceCapex, maintenanceCapexFor, ownerEarningsAbs, debtReliable } from "../lib/fundamentals.mjs";
+import { fmtMoney, currencySymbol, netDebtOf, maintenanceCapex, maintenanceCapexFor, ownerEarningsAbs, debtReliable } from "../lib/fundamentals.mjs";
 import { tangibleEquity } from "../lib/financials.mjs";
 import { ffoPerShare } from "../lib/reits.mjs";
 import { earningsPower } from "../lib/normalize.mjs";
@@ -88,7 +88,11 @@ const overhangPct = sfv && dilutedCount && dilutedCount / sfv.val > 1.03
   ? Math.round((dilutedCount / sfv.val - 1) * 100) : null;
 const cfo = L.cashFromOps, capex = L.capex;
 const ownerEarnings = cfo != null && capex != null ? cfo - Math.abs(capex) : null;
-const netDebt = (L.totalDebt || 0) - (liquidAssets(L) || 0);
+// ONE net-debt definition on every surface (sweep #1, extended here 2026-07-19): the compare
+// card, the grouping table and the company entry all net against cash + short-term investments
+// only (netDebtOf) — this page's solver and prose must quote the same figure, or the two DCFs a
+// reader can open side-by-side disagree on a cash-rich name.
+const netDebt = netDebtOf(L);
 // Whether the balance-sheet toggle may show at all: an under-captured debt line (a filer whose
 // interest bill proves debt the tags don't carry) would make "net cash" a fiction, so the
 // toggle requires the same reliability read the record table applies.
@@ -988,10 +992,12 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
       const accEl = document.getElementById("accSpread");
       if (accEl) accEl.textContent = `Held ten years, that spread accumulates to about ${(spread >= 0 ? "" : "−") + Math.abs(spread * 1000).toFixed(0)}% of ${evAdj !== 0 ? "the outlay" : "the price paid"}, before any change in the business — Graham’s margin, expressed as arithmetic.`;
       const ratio = EY / BOND;
+      // Same honest-name rule as the reverse-DCF prose: the yield is computed on the base in use.
+      const yNoun = (oeMaint && !(oeMaint.checked && !isNaN(OEM))) ? "free-cash-flow" : "owner-earnings";
       let s;
-      if (EY >= 2 * BOND) s = `The owner-earnings yield is about ${ratio.toFixed(1)}× the bond, comfortably above it: the wide cushion Graham looked for. You are paid far more to own the business than to hold the bond.`;
-      else if (EY >= BOND) s = `The owner-earnings yield sits above the bond, but short of the roughly 2× cushion Graham’s defensive rule asked for. The margin over the bond is your pay for the equity’s risk; weigh whether it is enough.`;
-      else s = `The owner-earnings yield is below the bond: today, the riskless bond pays more. The equity has to grow into that gap to earn its risk, which is exactly the growth the reverse-DCF above asks you to believe.`;
+      if (EY >= 2 * BOND) s = `The ${yNoun} yield is about ${ratio.toFixed(1)}× the bond, comfortably above it: the wide cushion Graham looked for. You are paid far more to own the business than to hold the bond.`;
+      else if (EY >= BOND) s = `The ${yNoun} yield sits above the bond, but short of the roughly 2× cushion Graham’s defensive rule asked for. The margin over the bond is your pay for the equity’s risk; weigh whether it is enough.`;
+      else s = `The ${yNoun} yield is below the bond: today, the riskless bond pays more. The equity has to grow into that gap to earn its risk, which is exactly the growth the reverse-DCF above asks you to believe.`;
       const prem = rr - BOND;
       if (prem > 0.001) s += ` Your ${(rr * 100).toFixed(1)}% required return is this ${(BOND * 100).toFixed(2)}% bond plus a ${(prem * 100).toFixed(2)}-point premium for the risk.`;
       bondLede.textContent = s;
@@ -1010,7 +1016,18 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
         const maint = oeMaint && oeMaint.checked && !isNaN(OEM);
         const norm = oeNorm && oeNorm.checked;
         const sbc = oeSbc && oeSbc.checked && SBC > 0;
-        const kind = maint ? (norm ? "steady-state owner earnings, 3-year average" : "steady-state owner earnings (maintenance capex)") : (norm ? "through-cycle (normalized) owner earnings" : "latest-year owner earnings");
+        // The base's honest name. Where maintenance capex diverges from total (the Steady-state
+        // toggle exists exactly then), the unchecked base is operating cash less ALL capex — the
+        // library's free cash flow, not Buffett's owner earnings; the record table above shows the
+        // maintenance-based owner earnings, so calling this base by the same name printed a
+        // different number under one label (the CMCL finding, 2026-07-19). Where the two coincide
+        // (no toggle), "owner earnings" is exact.
+        const diverges = !!oeMaint;
+        const kind = maint
+          ? (norm ? "steady-state owner earnings, 3-year average" : "steady-state owner earnings (maintenance capex)")
+          : (norm
+            ? (diverges ? "through-cycle (normalized) free cash flow, after all capital spending" : "through-cycle (normalized) owner earnings")
+            : (diverges ? "latest-year free cash flow, after all capital spending" : "latest-year owner earnings"));
         // Material stock comp is named even with the toggle OFF: operating cash adds it back, so
         // the unchecked box is the flattering default, and the flattering default does not get
         // to be silent (Buffett, 1998: if options aren't compensation, what are they?). The
@@ -1092,10 +1109,13 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
       if (!res) { impG.textContent = "—"; lede.textContent = "Set the required return above the terminal rate to run it."; if (ops) ops.hidden = true; if (cushionLine) cushionLine.hidden = true; if (sensLoc) sensLoc.hidden = true; if (ladder) ladder.hidden = true; if (baseRates) baseRates.hidden = true; bondView(); return; }
       impG.textContent = res.cap ? "100%+/yr" : res.floor ? "−50%+/yr" : pcs(res.g) + "/yr";
       const P = SYM + price.toFixed(2);
-      if (res.cap) lede.innerHTML = `At <b>${P}</b>, even <b class="hot">100%+/yr</b> growth for a decade can't justify the price on owner earnings alone.`;
-      else if (res.floor) lede.innerHTML = `At <b>${P}</b>, the market is pricing owner earnings to <b>shrink 50%+/yr</b> for ${N} years — a collapse steeper than the model resolves, priced for decline.`;
-      else if (res.g < 0) lede.innerHTML = `At <b>${P}</b>, the market is pricing owner earnings to <b>shrink ${pcs(res.g)}/yr</b> for ${N} years, priced for decline.`;
-      else lede.innerHTML = `At <b>${P}</b>, the market is pricing <b>${esc(NAME)}</b> to grow owner earnings about <b class="hot">${pcs(res.g)}</b>/yr for ${N} years, then ${(gT * 100).toFixed(1)}% forever, discounted at ${(rr * 100).toFixed(1)}%.`;
+      // The prose names the base it actually runs on: free cash flow when the toggle exists and
+      // sits unchecked (maintenance and total capex diverge), owner earnings otherwise.
+      const baseNoun = (oeMaint && !(oeMaint.checked && !isNaN(OEM))) ? "free cash flow" : "owner earnings";
+      if (res.cap) lede.innerHTML = `At <b>${P}</b>, even <b class="hot">100%+/yr</b> growth for a decade can't justify the price on ${baseNoun} alone.`;
+      else if (res.floor) lede.innerHTML = `At <b>${P}</b>, the market is pricing ${baseNoun} to <b>shrink 50%+/yr</b> for ${N} years — a collapse steeper than the model resolves, priced for decline.`;
+      else if (res.g < 0) lede.innerHTML = `At <b>${P}</b>, the market is pricing ${baseNoun} to <b>shrink ${pcs(res.g)}/yr</b> for ${N} years, priced for decline.`;
+      else lede.innerHTML = `At <b>${P}</b>, the market is pricing <b>${esc(NAME)}</b> to grow ${baseNoun} about <b class="hot">${pcs(res.g)}</b>/yr for ${N} years, then ${(gT * 100).toFixed(1)}% forever, discounted at ${(rr * 100).toFixed(1)}%.`;
       // The base rate against the requirement: how often the record's own rolling five-year
       // windows delivered what the price implies. A count, symmetric whether flattering or
       // damning; no adjective attached.
