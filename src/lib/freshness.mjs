@@ -14,6 +14,8 @@ const stamp = (v) => (typeof v === "string" && /^\d{4}-\d{2}-\d{2}/.test(v) ? v.
 /* eslint-disable no-undef */
 export const dataAsOf = stamp(typeof __OSC_DATA_AS_OF__ === "undefined" ? null : __OSC_DATA_AS_OF__);
 export const dataAsOfLatest = stamp(typeof __OSC_DATA_AS_OF_LATEST__ === "undefined" ? null : __OSC_DATA_AS_OF_LATEST__);
+// Per-dataset stamps for the /docs/data vintage table: { "fundamentals.json": "2026-07-21", ... }.
+export const vintages = typeof __OSC_VINTAGES__ === "undefined" ? {} : __OSC_VINTAGES__;
 /* eslint-enable no-undef */
 
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];

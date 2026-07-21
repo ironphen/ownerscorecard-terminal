@@ -137,6 +137,11 @@ const contentFails = [];
 walk(DIST, (p) => {
   if (!p.endsWith(".html")) return;
   const html = readFileSync(p, "utf8");
+  // The hollow-page tripwire: a per-page render error under the Cloudflare adapter can emit a
+  // ZERO-BYTE html file while the build still exits green (it did, 2026-07-21 — /docs/data went
+  // empty on a "No such module node:fs" render error and nothing failed). A page of negligible
+  // size is a silent outage, not a page.
+  if (html.length < 500) { contentFails.push(`${p}: built page is ${html.length} bytes — a hollow render (a per-page error the build swallowed)`); return; }
   for (const m of MOJIBAKE) {
     if (html.includes(m)) { contentFails.push(`${p}: mojibake ${JSON.stringify(m)} — a double-encoded paste or template mis-encoding`); break; }
   }

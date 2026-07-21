@@ -37,11 +37,20 @@ try {
 // accident that actually fired when the archetypes demolition reshaped the import graph. Each
 // pool file carries its own top-level `asOf` within the first bytes, so 2KB of each is plenty;
 // best-effort like the sitemap stamps above (a missing stamp reads as absent, never a dead build).
+// The masthead's stamp is scoped to the RECORD pools — the financial records that carry the
+// site's headline claim. The enrichment layers deliberately run on slower clocks (filing
+// language refreshes monthly by design, since narrative only changes with a new annual; market
+// rates on their own cadence) and each is dated where it renders, with the full per-dataset
+// vintage table on /docs/data. Before 2026-07-21 the floor included language.json, so its
+// designed twelve-day lag read as "data as of July 9" on every page while the records were
+// current — an honest floor measuring the wrong thing. The floor's stale-shows-as-stale
+// property still holds for the records themselves: any record pool's cron dying freezes this
+// date at its last success.
 const asOfStamps = [
   './src/data/fundamentals.json',
   './src/data/fundamentals.adr.json',
-  './src/data/language.json',
-  './src/data/rates.json',
+  './src/data/fundamentals.jp.json',
+  './src/data/fundamentals.eu.json',
 ].map((p) => {
   try {
     const m = readFileSync(here(p), 'utf8').slice(0, 2048).match(/"asOf"\s*:\s*"(\d{4}-\d{2}-\d{2})/);
@@ -83,6 +92,20 @@ export default defineConfig({
       // lib/freshness.mjs documents.
       __OSC_DATA_AS_OF__: JSON.stringify(asOfStamps[0] ?? null),
       __OSC_DATA_AS_OF_LATEST__: JSON.stringify(asOfStamps[asOfStamps.length - 1] ?? null),
+      // Every dataset's own stamp, for the /docs/data vintage table — injected here because page
+      // code cannot touch node:fs once the Cloudflare adapter is in play (the first attempt
+      // emitted a ZERO-BYTE /docs/data page on a "No such module node:fs" render error while the
+      // build still exited green; verifyStatic now trips on that page going hollow).
+      __OSC_VINTAGES__: JSON.stringify(Object.fromEntries([
+        'fundamentals.json', 'fundamentals.adr.json', 'fundamentals.jp.json', 'fundamentals.eu.json',
+        'language.json', 'segments.json', 'rates.json', 'proxyComp.json', 'voteResults.json',
+        'adrRatios.json', 'wire.json', 'upcoming.json',
+      ].map((p) => {
+        try {
+          const m = readFileSync(here(`./src/data/${p}`), 'utf8').slice(0, 2048).match(/"asOf"\s*:\s*"(\d{4}-\d{2}-\d{2})/);
+          return [p, m ? m[1] : null];
+        } catch { return [p, null]; }
+      }))),
     },
   },
   integrations: [mdx(), react(), sitemap({
