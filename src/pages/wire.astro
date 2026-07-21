@@ -4,6 +4,7 @@ import wire from "../data/wire.json";
 import fundamentals from "../data/fundamentals.json";
 import upcoming from "../data/upcoming.json";
 import { perfLine } from "../lib/wirePerf.mjs";
+import { isSteadyRhythm, rollToBusinessDay, nextBusinessDays } from "../lib/filingRhythm.mjs";
 
 const known = new Set((fundamentals.companies || []).map((c) => String(c.ticker).toUpperCase()));
 const items = wire?.items || [];
@@ -21,25 +22,55 @@ for (const it of items) {
 // The performance line (up/down and a percentage per proven line) is shared from lib/wirePerf.mjs,
 // so /wire, the per-day page, the Atom feed, the account band and the company page all read alike.
 
-// ---- the week ahead: who comes due, from the statutory clock and each filer's own rhythm ----
+// ---- coming due: whose next report the record places in the next two filing days ----
 // EDGAR announces no future dates, and neither do we: the SELECTION below uses each company's
 // computed expectation (its median filing lag applied to its next period end), but every printed
-// field is a filed fact or the statute — the period the report will cover (month-level, since
-// 52/53-week calendars drift by days), the N-day rule for its filer class, and how many days
-// after period end it has historically filed. The page rebuilds daily, so the window rolls.
+// field is a filed fact or the statute — the period the report covers (month-level, since 52/53-
+// week calendars drift by days), the N-day rule for its filer class, and how many days after
+// period end it has historically filed. The page rebuilds daily, so the window rolls.
+//
+// The window is TWO FILING DAYS (weekend expectations roll to Monday), and only companies whose
+// own rhythm supports day-level placement are listed (lib/filingRhythm.mjs: recent same-form
+// lags held within ~2 days of the median). A full week at peak earnings season ran to hundreds
+// of names and buried the wire itself. Companies in the window on looser or unmeasured rhythms
+// are not characterized at all — the lede states the selection rule, and their filings enter
+// the wire as they arrive; counting them would claim day-level placement exactly where the
+// record refuses it. A report that has already arrived leaves the band: the wire's own items
+// (same ticker + form) veto a chip, so a company is never "coming due" beside its own filing.
 const nameOf = new Map((fundamentals.companies || []).map((c) => [String(c.ticker).toUpperCase(), c.name]));
 const today = new Date().toISOString().slice(0, 10);
-const weekOut = new Date(Date.now() + 7 * 864e5).toISOString().slice(0, 10);
+const windowDays = new Set(nextBusinessDays(rollToBusinessDay(today), 2));
+const alreadyFiled = new Set(items.map((it) => `${String(it.ticker).toUpperCase()}|${it.form}`));
 const monthPhrase = (iso) => {
   const d = new Date(iso + "T00:00:00Z");
   const part = d.getUTCDate() <= 10 ? "early" : d.getUTCDate() <= 20 ? "mid" : "late";
   return `${part} ${d.toLocaleDateString("en-US", { month: "long", timeZone: "UTC" })}`;
 };
-const ahead = Object.entries(upcoming.companies || {})
+const dueSoon = Object.entries(upcoming.companies || {})
   .map(([t, c]) => ({ t, ...c }))
-  .filter((c) => c.expected >= today && c.expected <= weekOut)
-  .sort((a, b) => a.expected.localeCompare(b.expected) || a.t.localeCompare(b.t));
-const AHEAD_CAP = 80;
+  .filter((c) => c.expected && windowDays.has(rollToBusinessDay(c.expected)) && !alreadyFiled.has(`${c.t}|${c.nextForm}`))
+  .filter((c) => isSteadyRhythm(c.lagsSameForm))
+  // Deterministic before the cap: earliest filing day first, then ticker — so the cap can never
+  // drop a today name while keeping a tomorrow one, and the shown set is stable across builds.
+  .sort((a, b) => rollToBusinessDay(a.expected).localeCompare(rollToBusinessDay(b.expected)) || a.t.localeCompare(b.t));
+// Grouped by what the report is (form + the period it covers), tickers alphabetical within.
+const AHEAD_CAP = 200;
+const aheadGroups = [];
+for (const c of dueSoon.slice(0, AHEAD_CAP)) {
+  const label = c.nextForm === "10-K"
+    ? `annual reports (10-K) for fiscal years ended ${monthPhrase(c.nextPeriodEnd)}`
+    : `10-Qs for quarters ended ${monthPhrase(c.nextPeriodEnd)}`;
+  const g = aheadGroups.find((x) => x.label === label);
+  if (g) g.rows.push(c);
+  else aheadGroups.push({ label, form: c.nextForm, end: c.nextPeriodEnd, rows: [c] });
+}
+aheadGroups.sort((a, b) => a.form.localeCompare(b.form) || a.end.localeCompare(b.end));
+for (const g of aheadGroups) g.rows.sort((a, b) => a.t.localeCompare(b.t));
+const chipTitle = (c) => {
+  const name = nameOf.get(c.t);
+  const what = c.nextForm === "10-K" ? `annual report (10-K) for the fiscal year ended ${monthPhrase(c.nextPeriodEnd)}` : `10-Q for the quarter ended ${monthPhrase(c.nextPeriodEnd)}`;
+  return `${name ? name + " — " : ""}${what}; due within ${c.statutoryDays} days of period end; has filed ~${c.typicalLagDays} days after`;
+};
 ---
 
 <BaseLayout title="The Filing Wire, Owner Scorecard">
@@ -53,24 +84,26 @@ const AHEAD_CAP = 80;
     ones (an auditor change, a restatement, a default) announce themselves.
   </p>
 
-  {ahead.length ? (
+  {dueSoon.length ? (
     <section class="ahead">
-      <h2>The week ahead</h2>
+      <h2>Coming due</h2>
       <p class="aheadLede">
-        Reports that come due in the coming days, by the statutory clock and each company&rsquo;s own
-        filing rhythm. Nothing here is announced by the companies; the periods and day-counts are
-        from their filings and the rules for their filer class.
+        Companies whose own filing pace places their next report within the next two filing days.
+        Each has held within a couple of days of its usual lag, filing after filing; the periods
+        and day-counts are from its filings, and the deadline is the rule for its filer class.
+        Nothing here is announced by the companies.
       </p>
-      <ul>
-        {ahead.slice(0, AHEAD_CAP).map((c) => (
-          <li>
-            <a class="tk" href={`/c/${c.t}`}><b>{c.t}</b>{nameOf.get(c.t) ? ` · ${nameOf.get(c.t)}` : ""}</a>
-            <span class="what">{c.nextForm === "10-K" ? `annual report (10-K) for the fiscal year ending ${monthPhrase(c.nextPeriodEnd)}` : `10-Q for the quarter ending ${monthPhrase(c.nextPeriodEnd)}`}</span>
-            <span class="clock">due within {c.statutoryDays} days of period end · has filed ~{c.typicalLagDays} days after</span>
-          </li>
-        ))}
-      </ul>
-      {ahead.length > AHEAD_CAP ? <p class="aheadMore">…and {ahead.length - AHEAD_CAP} more come due this week.</p> : null}
+      {aheadGroups.map((g) => (
+        <div class="aheadGroup">
+          <span class="gLabel">{g.label}</span>
+          <span class="chips">
+            {g.rows.map((c) => (
+              <a class="chip" href={`/c/${c.t}`} title={chipTitle(c)} aria-label={chipTitle(c)}>{c.t}</a>
+            ))}
+          </span>
+        </div>
+      ))}
+      {dueSoon.length > AHEAD_CAP ? <p class="aheadMore">…and {dueSoon.length - AHEAD_CAP} more match these two filing days; the list stops at {AHEAD_CAP}.</p> : null}
     </section>
   ) : null}
 
@@ -107,12 +140,11 @@ const AHEAD_CAP = 80;
     .ahead { margin: 20px 0 6px; padding: 14px 16px; background: var(--accent-tint); border-left: 2px solid var(--accent); }
     .ahead h2 { margin: 0; font-size: 15px; font-family: var(--sans); letter-spacing: 0.04em; text-transform: uppercase; color: var(--accent); }
     .aheadLede { font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--muted); margin: 7px 0 0; line-height: 1.55; max-width: 78ch; }
-    .ahead ul { list-style: none; margin: 10px 0 0; padding: 0; }
-    .ahead li { display: flex; gap: 10px; flex-wrap: wrap; align-items: baseline; padding: 5px 0; border-top: 1px solid var(--rule); font-size: 13px; }
-    .ahead .tk { flex: 0 0 auto; color: var(--ink); }
-    .ahead .tk b { font-weight: 600; }
-    .ahead .what { color: var(--ink-soft); }
-    .ahead .clock { color: var(--ink-dim); font-size: 12px; margin-left: auto; font-variant-numeric: tabular-nums; }
+    .aheadGroup { margin: 10px 0 0; padding: 8px 0 0; border-top: 1px solid var(--rule); font-size: 13px; }
+    .gLabel { display: block; color: var(--ink-soft); margin: 0 0 6px; }
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .chip { display: inline-block; padding: 2px 8px; border: 1px solid var(--rule-strong); border-radius: 3px; color: var(--accent); text-decoration: none; font-weight: 600; font-size: 12.5px; font-variant-numeric: tabular-nums; }
+    .chip:hover { border-color: var(--accent); text-decoration: underline; }
     .aheadMore { font-size: 12.5px; color: var(--muted); margin: 8px 0 0; font-style: italic; }
     .hd { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
     .hd h1 { margin: 0; }

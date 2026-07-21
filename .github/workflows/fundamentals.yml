@@ -247,6 +247,7 @@ jobs:
           git add src/data/fundamentals.json src/data/language.json src/data/segments.json src/data/universe.json
           git add src/data/drivers.json src/data/adrRatios.json 2>/dev/null || true
           git add src/data/universe.adr.json src/data/fundamentals.adr.json 2>/dev/null || true
+          git add src/data/upcoming.json 2>/dev/null || true
           if ! git diff --cached --quiet; then
             git config user.name "github-actions[bot]"
             git config user.email "github-actions[bot]@users.noreply.github.com"

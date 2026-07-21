@@ -69,8 +69,18 @@ export function rhythmOf(sub) {
   const dl = deadlines(sub.category);
   // The next period end: one quarter (~91 days) past the latest filed period. Fiscal calendars
   // (4-4-5 retailers included) keep this within a few days — close enough to SELECT a week, and
-  // no computed date is ever printed.
+  // no computed date is ever printed as one. But the band DOES print the period's month, so a
+  // month-boundary error is a wrong printed fact: a calendar filer's Q1 computed from its 10-K
+  // (Dec 31 + 91 = Apr 1) would read "April" for a quarter that truly ends March 31. When the
+  // arithmetic flips a month-end period (day ≥ 25) to a month-start result (day ≤ 5), snap back
+  // to the prior month's last day. A filer whose periods genuinely end early in the month (the
+  // 4-5-4 retail calendar — Home Depot's quarters end Feb 2, May 4…) starts start-ish and never
+  // trips the flip, so its months stay its own.
   let nextEnd = addDays(latest.end, 91);
+  const dayOf = (iso) => Number(iso.slice(8, 10));
+  if (dayOf(latest.end) >= 25 && dayOf(nextEnd) <= 5) {
+    nextEnd = addDays(nextEnd, -dayOf(nextEnd));
+  }
   // Whether that period closes the fiscal year: within ~40 days of the anniversary of the last
   // 10-K's period end.
   const kEnd = ks[0].end;
@@ -80,10 +90,11 @@ export function rhythmOf(sub) {
   // quarter arithmetic: a 52/53-week filer's fourth quarter can run 16 weeks (Costco's does), so
   // +91 days from the third quarter lands weeks short of the true year end.
   if (isAnnual) nextEnd = anniversary;
-  const lagK = median(ks.map((x) => days(x.end, x.filed)));
-  const lagQ = median(qs.map((x) => days(x.end, x.filed)));
+  const lagKs = ks.map((x) => days(x.end, x.filed));
+  const lagQs = qs.map((x) => days(x.end, x.filed));
   const nextForm = isAnnual ? "10-K" : "10-Q";
-  const lag = isAnnual ? lagK : lagQ;
+  const lags = isAnnual ? lagKs : lagQs;
+  const lag = median(lags);
   const due = isAnnual ? dl.k : dl.q;
   if (lag == null || lag < 10 || lag > 120) return null;
   return {
@@ -93,6 +104,9 @@ export function rhythmOf(sub) {
     dueBy: addDays(nextEnd, due),     // internal selection anchor
     statutoryDays: due,
     typicalLagDays: lag,
+    // The lag list behind the median, newest first: the display gates day-level placement on the
+    // rhythm's own steadiness (lib/filingRhythm.mjs), so a metronome and a smear read differently.
+    lagsSameForm: lags,
     expected: addDays(nextEnd, lag),  // internal selection anchor — never printed as a date
     lastSameForm: (isAnnual ? ks : qs)[0] || null,
   };

@@ -8,6 +8,7 @@
 // guess; and the printed surface never carries a computed date (the wire renders month-level
 // phrases and day-count facts — asserted here by the shape of what's stored).
 import { rhythmOf } from "./fetchUpcoming.mjs";
+import { isSteadyRhythm, rollToBusinessDay, nextBusinessDays } from "../src/lib/filingRhythm.mjs";
 
 let failed = 0;
 const t = (name, ok, got) => { if (!ok) { failed++; console.error(`✗ ${name}${got !== undefined ? ` -> ${JSON.stringify(got)}` : ""}`); } else console.log(`ok ${name}`); };
@@ -33,6 +34,7 @@ const laf = sub("Large accelerated filer", [
   t("large accelerated: next is a 10-Q on the 40-day rule", r?.nextForm === "10-Q" && r.statutoryDays === 40, r);
   t("typical lag is the median of its own 10-Q lags", r?.typicalLagDays === 35, r?.typicalLagDays);
   t("expected = period end + its own lag (selection anchor only)", r?.expected === "2026-08-04", r?.expected);
+  t("the lag list behind the median is stored for the steadiness gate", JSON.stringify(r?.lagsSameForm) === "[35,35,36]", r?.lagsSameForm);
 }
 
 // A non-accelerated filer: 45-day 10-Q, 90-day 10-K.
@@ -60,6 +62,31 @@ const laf = sub("Large accelerated filer", [
   t("annual due-by runs 60 days from the anniversary", r?.dueBy === "2026-10-29", r?.dueBy);
 }
 
+// The month-boundary snap: a calendar filer's Q1 computed from its 10-K (Dec 31 + 91 = Apr 1)
+// must read as the quarter ended March 31 — the band prints the period's month, so the flip
+// from a month-end period to a month-start result is a wrong printed fact, not a drift.
+{
+  const r = rhythmOf(sub("Large accelerated filer", [
+    ["10-K", "2025-12-31", "2026-02-20"],
+    ["10-Q", "2025-09-30", "2025-11-04"],
+    ["10-Q", "2025-06-30", "2025-08-05"],
+    ["10-Q", "2025-03-31", "2025-05-06"],
+  ]));
+  t("calendar filer's Q1 snaps Apr 1 back to Mar 31", r?.nextForm === "10-Q" && r.nextPeriodEnd === "2026-03-31", r?.nextPeriodEnd);
+}
+
+// The 4-5-4 retail calendar (Home Depot's quarters end Feb 2, May 4, Aug 3…) genuinely ends
+// early in the month: month-start periods must NOT snap — their months are their own.
+{
+  const r = rhythmOf(sub("Large accelerated filer", [
+    ["10-Q", "2026-05-04", "2026-06-03"],
+    ["10-K", "2026-02-01", "2026-03-20"],
+    ["10-Q", "2025-11-02", "2025-12-02"],
+    ["10-Q", "2025-08-03", "2025-09-02"],
+  ]));
+  t("a 4-5-4 retailer's month-start period end stays its own (Aug 3, no snap)", r?.nextPeriodEnd === "2026-08-03", r?.nextPeriodEnd);
+}
+
 // Unreadable cadences withhold: one 10-Q is not a rhythm; no 10-K is not a year.
 t("a single 10-Q is not a rhythm → null", rhythmOf(sub("Large accelerated filer", [["10-Q", "2026-03-31", "2026-05-05"], ["10-K", "2025-12-31", "2026-02-20"]])) === null);
 t("no 10-K on file → null", rhythmOf(sub("Non-accelerated filer", [["10-Q", "2026-03-31", "2026-05-05"], ["10-Q", "2025-12-31", "2026-02-10"], ["10-Q", "2025-09-30", "2025-11-05"]])) === null);
@@ -76,6 +103,23 @@ t("no 10-K on file → null", rhythmOf(sub("Non-accelerated filer", [["10-Q", "2
   ]));
   t("an implausible lag on the next form withholds", r === null, r);
 }
+
+// ---- the steadiness gate (lib/filingRhythm.mjs): day-level placement only where the record
+// earns it. Six lags may carry ONE outlier past ±2 of the median (a hiccup quarter doesn't
+// erase a metronome); fewer than five must all hold; under three lags is not a rhythm.
+t("a metronome is steady (SNA: 19 six straight quarters)", isSteadyRhythm([19, 19, 19, 19, 19, 19]) === true);
+t("one outlier in six is forgiven (the ADC shape)", isSteadyRhythm([21, 21, 31, 22, 22, 23]) === true);
+t("two outliers in six are a smear, not a rhythm (the CSX shape)", isSteadyRhythm([22, 16, 23, 16, 17, 36]) === false);
+t("three 10-K lags must all hold within ±2 (52,52,52 passes)", isSteadyRhythm([52, 52, 52]) === true);
+t("three 10-K lags with one outlier fail (52,59,52)", isSteadyRhythm([52, 59, 52]) === false);
+t("fewer than three lags is not a rhythm", isSteadyRhythm([22, 23]) === false && isSteadyRhythm(undefined) === false);
+
+// ---- filing days: nothing files on a weekend. An expectation landing Saturday reads as Monday,
+// and the band's two-day window is counted in business days (Friday's window is Fri + Mon).
+t("a Saturday expectation rolls to Monday", rollToBusinessDay("2026-07-25") === "2026-07-27");
+t("a business day stands", rollToBusinessDay("2026-07-21") === "2026-07-21");
+t("Friday's two filing days are Friday and Monday", JSON.stringify(nextBusinessDays("2026-07-24", 2)) === JSON.stringify(["2026-07-24", "2026-07-27"]));
+t("Tuesday's two filing days are Tuesday and Wednesday", JSON.stringify(nextBusinessDays("2026-07-21", 2)) === JSON.stringify(["2026-07-21", "2026-07-22"]));
 
 if (failed) { console.error(`\n❌ upcomingTest: ${failed} failure(s).`); process.exit(1); }
 console.log("\n✅ upcomingTest passed.");
