@@ -53,6 +53,13 @@ const pageJsonLd = [{
       </p>
     </header>
 
+    <div class="finder">
+      <input id="ownersFilter" type="search" placeholder="Find a company or ticker…"
+        autocomplete="off" autocapitalize="off" spellcheck="false"
+        aria-label="Filter the meetings by company name or ticker" />
+      <span class="count" id="ownersCount">{rows.length} companies</span>
+    </div>
+
     {groups.map((g) => (
       <section class="month">
         <h2>{g.month}</h2>
@@ -62,7 +69,7 @@ const pageJsonLd = [{
           </thead>
           <tbody>
             {g.rows.map((r) => (
-              <tr>
+              <tr data-q={`${r.ticker} ${r.name}`.toLowerCase()}>
                 <td class="d">{dayOf(r.date)}</td>
                 <td><a href={`/owners/${r.ticker}`}><b>{r.ticker}</b> · {r.name}</a></td>
                 <td class="num">{r.support != null ? `${r.support.toFixed(1)}%` : "—"}</td>
@@ -72,7 +79,33 @@ const pageJsonLd = [{
         </table>
       </section>
     ))}
+    <p class="noMatch" id="ownersNoMatch" hidden>No covered meeting matches. The company may not have filed vote results in the last year, or may not be in the United States pool — try the site search (<kbd>/</kbd>) for its record page.</p>
   </main>
+
+  <script>
+    // The ledger's own finder: typing filters the rows in place; a month whose meetings all
+    // filter out disappears with them. Plain text match on ticker + company name, nothing more.
+    const input = document.getElementById("ownersFilter");
+    const count = document.getElementById("ownersCount");
+    const noMatch = document.getElementById("ownersNoMatch");
+    const total = document.querySelectorAll("tr[data-q]").length;
+    input?.addEventListener("input", () => {
+      const q = input.value.trim().toLowerCase();
+      let shown = 0;
+      document.querySelectorAll("section.month").forEach((sec) => {
+        let live = 0;
+        sec.querySelectorAll("tr[data-q]").forEach((tr) => {
+          const hit = !q || (tr.getAttribute("data-q") || "").includes(q);
+          tr.hidden = !hit;
+          if (hit) live++;
+        });
+        sec.hidden = live === 0;
+        shown += live;
+      });
+      count.textContent = q ? `${shown} of ${total} companies` : `${total} companies`;
+      noMatch.hidden = shown !== 0;
+    });
+  </script>
 </BaseLayout>
 
 <style>
@@ -81,6 +114,18 @@ const pageJsonLd = [{
   .kicker { font-family: var(--sans); font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 0 0 6px; }
   h1 { margin: 0; font-size: 26px; }
   .lede { font-family: var(--serif); font-style: italic; font-size: 14.5px; color: var(--muted); line-height: 1.6; margin: 10px 0 0; max-width: 68ch; }
+
+  .finder { display: flex; align-items: baseline; gap: 14px; margin: 18px 0 0; }
+  #ownersFilter {
+    flex: 1; max-width: 340px; font-family: var(--sans); font-size: 13.5px;
+    color: var(--ink); background: var(--surface);
+    border: 1px solid var(--rule-strong); border-radius: 999px; padding: 7px 14px;
+  }
+  #ownersFilter:focus { outline: none; border-color: var(--accent); }
+  #ownersFilter::placeholder { color: var(--muted); }
+  .count { font-family: var(--sans); font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .noMatch { font-family: var(--serif); font-style: italic; font-size: 13.5px; color: var(--muted); margin: 22px 0 0; }
+  .noMatch kbd { font-family: var(--sans); font-size: 11px; border: 1px solid var(--rule); border-radius: 3px; padding: 1px 5px; background: var(--paper); }
 
   .month { margin: 26px 0 0; }
   h2 { font-size: 16px; margin: 0 0 6px; color: var(--ink); border-bottom: 1px solid var(--rule); padding-bottom: 4px; }
