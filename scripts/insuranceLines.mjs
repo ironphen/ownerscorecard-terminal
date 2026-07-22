@@ -43,13 +43,14 @@ function flowByYear(facts, tag) {
 // verify caught MetLife's FY2021 FPB reading the 2021-01-01 transition balance, $224.4B, over
 // the real 2021-12-31 balance, $199.7B — and Lincoln's 10-K/A doing the same twice). The
 // fiscal-year balance is the year's last instant; a restated year-end still wins via filed date.
-function instantTagByYear(facts, tag) {
+function instantTagByYear(facts, tag, fyEnds = null) {
   const units = facts?.facts?.["us-gaap"]?.[tag]?.units?.USD;
   if (!units) return null;
   const out = {};
   for (const u of units) {
     if (!u.form || !u.form.startsWith("10-K") || !u.end || u.start) continue;
     const fy = new Date(u.end).getUTCFullYear();
+    if (fyEnds?.[fy] && Math.abs(days(fyEnds[fy], u.end)) > 14) continue;
     const cur = out[fy];
     if (!cur || u.end > cur.end || (u.end === cur.end && (u.filed || "") > (cur.filed || "")))
       out[fy] = { val: u.val, end: u.end, filed: u.filed || "" };
@@ -87,7 +88,7 @@ export function hasInsuranceData(facts) {
 // The Wave A extraction. Returns { flows, instants, flags } where flows/instants map
 // line -> { fy -> value } (absent lines omitted entirely), and flags carries warnings plus the
 // DAC impurity marker. All gates from the ratified spec are applied here, at the source.
-export function insuranceLines(facts) {
+export function insuranceLines(facts, fyEnds = null) {
   const warns = [];
   const flags = {};
   const flows = {};
@@ -114,8 +115,8 @@ export function insuranceLines(facts) {
   // --- float components (balance) ---
   {
     const { series, warns: w } = stitchGenerations([
-      instantTagByYear(facts, "UnearnedPremiums"),
-      instantTagByYear(facts, "SupplementaryInsuranceInformationUnearnedPremiums"),
+      instantTagByYear(facts, "UnearnedPremiums", fyEnds),
+      instantTagByYear(facts, "SupplementaryInsuranceInformationUnearnedPremiums", fyEnds),
     ], { label: "unearnedPremiums" });
     w.forEach(W);
     if (series) {
@@ -124,10 +125,10 @@ export function insuranceLines(facts) {
     }
   }
   {
-    const net = instantTagByYear(facts, "LiabilityForUnpaidClaimsAndClaimsAdjustmentExpenseNet");
+    const net = instantTagByYear(facts, "LiabilityForUnpaidClaimsAndClaimsAdjustmentExpenseNet", fyEnds);
     if (net) {
       // Net may not exceed gross where the gross line exists (2% tolerance for rounding).
-      const gross = instantTagByYear(facts, "LiabilityForClaimsAndClaimsAdjustmentExpense");
+      const gross = instantTagByYear(facts, "LiabilityForClaimsAndClaimsAdjustmentExpense", fyEnds);
       for (const fy of Object.keys(net)) {
         if (gross?.[fy] != null && net[fy] > gross[fy] * 1.02) { net[fy] = null; W(`lossReservesNet ${fy}: exceeds gross — nulled`); }
       }
@@ -135,8 +136,8 @@ export function insuranceLines(facts) {
     }
   }
   {
-    const fpb = instantTagByYear(facts, "LiabilityForFuturePolicyBenefits");
-    const combined = instantTagByYear(facts, "LiabilityForFuturePolicyBenefitsAndUnpaidClaimsAndClaimsAdjustmentExpense");
+    const fpb = instantTagByYear(facts, "LiabilityForFuturePolicyBenefits", fyEnds);
+    const combined = instantTagByYear(facts, "LiabilityForFuturePolicyBenefitsAndUnpaidClaimsAndClaimsAdjustmentExpense", fyEnds);
     if (fpb && combined) {
       for (const fy of Object.keys(fpb)) {
         if (combined[fy] != null && fpb[fy] > combined[fy] * 1.02) { fpb[fy] = null; W(`futurePolicyBenefits ${fy}: exceeds combined liability — nulled`); }
@@ -151,9 +152,9 @@ export function insuranceLines(facts) {
     // fill years the primary lacks ONLY when any overlapping years agree; the survey's CB case
     // (two disjoint eras, a 2012-2020 gap where neither is tagged) keeps its gap honestly null.
     const els = [
-      instantTagByYear(facts, "PolicyholderContractDeposits"),
-      instantTagByYear(facts, "PolicyholderFunds"),
-      instantTagByYear(facts, "OtherPolicyholderFunds"),
+      instantTagByYear(facts, "PolicyholderContractDeposits", fyEnds),
+      instantTagByYear(facts, "PolicyholderFunds", fyEnds),
+      instantTagByYear(facts, "OtherPolicyholderFunds", fyEnds),
     ].filter(Boolean).sort((a, b) => Object.keys(b).length - Object.keys(a).length);
     if (els.length) {
       const { series, warns: w } = stitchGenerations(els, { label: "policyholderDeposits" });
@@ -162,8 +163,8 @@ export function insuranceLines(facts) {
     }
   }
   {
-    const liab = instantTagByYear(facts, "SeparateAccountsLiability");
-    const assets = instantTagByYear(facts, "SeparateAccountAssets");
+    const liab = instantTagByYear(facts, "SeparateAccountsLiability", fyEnds);
+    const assets = instantTagByYear(facts, "SeparateAccountAssets", fyEnds);
     if (liab) {
       for (const fy of Object.keys(liab)) {
         if (assets?.[fy] != null && Math.abs(assets[fy] - liab[fy]) > Math.abs(liab[fy]) * 0.02)
@@ -177,35 +178,35 @@ export function insuranceLines(facts) {
 
   // --- float deductions ---
   {
-    const pr = instantTagByYear(facts, "PremiumsReceivableAtCarryingValue");
+    const pr = instantTagByYear(facts, "PremiumsReceivableAtCarryingValue", fyEnds);
     if (pr) {
       for (const fy of Object.keys(pr)) if (pr[fy] < 0) { pr[fy] = null; W(`premiumsReceivable ${fy}: negative — nulled`); }
       instants.premiumsReceivable = pr;
     }
   }
   {
-    const pure = instantTagByYear(facts, "DeferredPolicyAcquisitionCosts");
-    const withVoba = instantTagByYear(facts, "DeferredPolicyAcquisitionCostsAndValueOfBusinessAcquired");
+    const pure = instantTagByYear(facts, "DeferredPolicyAcquisitionCosts", fyEnds);
+    const withVoba = instantTagByYear(facts, "DeferredPolicyAcquisitionCostsAndValueOfBusinessAcquired", fyEnds);
     // The combined DAC+VOBA tag is a different (impure) definition, not a predecessor: it stands in
     // only when the pure tag is absent altogether, and the impurity is flagged for the display layer.
     if (pure) instants.dacBalance = pure;
     else if (withVoba) { instants.dacBalance = withVoba; flags.dacIncludesVoba = true; }
   }
   {
-    const ppd = instantTagByYear(facts, "PrepaidReinsurancePremiums");
+    const ppd = instantTagByYear(facts, "PrepaidReinsurancePremiums", fyEnds);
     if (ppd) instants.prepaidReinsurance = ppd;
   }
 
   // --- reinsurance (counterparty risk on the float) ---
   {
     const { series, warns: w } = stitchGenerations([
-      instantTagByYear(facts, "ReinsuranceRecoverablesOnPaidAndUnpaidLosses"),
-      instantTagByYear(facts, "ReinsuranceRecoverableForUnpaidClaimsAndClaimsAdjustments"),
-      instantTagByYear(facts, "ReinsuranceRecoverables"),
+      instantTagByYear(facts, "ReinsuranceRecoverablesOnPaidAndUnpaidLosses", fyEnds),
+      instantTagByYear(facts, "ReinsuranceRecoverableForUnpaidClaimsAndClaimsAdjustments", fyEnds),
+      instantTagByYear(facts, "ReinsuranceRecoverables", fyEnds),
     ], { tol: 0.02, label: "reinsuranceRecoverables" });
     w.forEach(W);
     if (series) instants.reinsuranceRecoverables = series;
-    const allow = instantTagByYear(facts, "ReinsuranceRecoverablesAllowance");
+    const allow = instantTagByYear(facts, "ReinsuranceRecoverablesAllowance", fyEnds);
     if (allow) instants.reinsuranceRecoverablesAllowance = allow;
   }
 
@@ -260,7 +261,7 @@ export function insuranceLines(facts) {
     // Market risk benefits (LDTI, 2021+): the variable-annuity guarantee liability, part of life
     // float under the spec's arithmetic. Short series by construction; VOYA's is dimensioned-only
     // and therefore honestly absent.
-    const mrb = instantTagByYear(facts, "MarketRiskBenefitLiabilityAmount");
+    const mrb = instantTagByYear(facts, "MarketRiskBenefitLiabilityAmount", fyEnds);
     if (mrb) instants.marketRiskBenefits = mrb;
   }
 

@@ -145,6 +145,24 @@ const facts = (tags) => ({ facts: { "us-gaap": tags } });
   t("a seam year off by >1% blocks the fill even when an older year agrees", r.usedRollforward === false, r);
 }
 
+// --- the fiscal-calendar pin (banks desk F2, applied here too): when the company's calendar is
+// known, a dead tag's mid-year balance is not that year's value — it is dropped, and the year
+// reads honestly null rather than carrying a June balance as December's.
+{
+  const f = facts({
+    PremiumsEarnedNet: flowFact({ 2019: 1000, 2020: 1000 }),
+    UnearnedPremiums: { units: { USD: [
+      { end: "2019-12-31", val: 9e9, form: "10-K", filed: "2020-02-20" },
+      { end: "2020-06-30", val: 9.4e9, form: "10-K", filed: "2021-02-20" },
+    ] } },
+  });
+  const fyEnds = { 2019: "2019-12-31", 2020: "2020-12-31" };
+  const { instants } = insuranceLines(f, fyEnds);
+  t("a dead tag's mid-year balance is dropped under the calendar pin", instants.unearnedPremiums[2019] === 9e9 && instants.unearnedPremiums[2020] == null, instants.unearnedPremiums);
+  const unpinned = insuranceLines(f);
+  t("without a known calendar the old latest-end rule still reads the tag", unpinned.instants.unearnedPremiums[2020] === 9.4e9, unpinned.instants.unearnedPremiums);
+}
+
 // --- the entry ticket: no premiums, no insurance lines ---
 t("a non-insurer is untouched", hasInsuranceData(facts({ Revenues: flowFact({ 2024: 5e9 }) })) === false);
 

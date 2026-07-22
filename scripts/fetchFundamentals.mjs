@@ -408,7 +408,16 @@ function annualByYear(facts, tags, unit = "USD", pickMax = false) {
   return out;
 }
 
-function instantByYear(facts, tags, unit = "USD") {
+// Balance-sheet instants, pinned to the fiscal calendar (the banks desk's F2, 2026-07-21): a
+// 10-K's XBRL carries interim balances too (quarterly comparatives, transition-date openings),
+// and binning instants by end-date YEAR alone lets a dead tag's mid-year balance survive as the
+// fiscal year's value (BAC's loan tag died mid-2020 and its 2020-06-30 balance would read as
+// FY2020; the LDTI opening-balance trap the insurance verify caught is the same failure). Where
+// the company's fiscal calendar is known (fyEnds: fy → the year's period-end date, from the
+// revenue record), an instant must sit within 14 days of the year's actual end (52/53-week
+// tolerance) or it is not that year's balance. Years outside the known calendar keep the old
+// latest-end-then-latest-filed rule, so an instant-only tag never goes dark wholesale.
+function instantByYear(facts, tags, unit = "USD", fyEnds = null) {
   const out = {};
   for (const tag of tags) {
     const units = facts?.facts?.["us-gaap"]?.[tag]?.units?.[unit];
@@ -417,7 +426,10 @@ function instantByYear(facts, tags, unit = "USD") {
     for (const u of units) {
       if (!u.form || !u.form.startsWith("10-K") || !u.end || u.start) continue;
       const fy = new Date(u.end).getUTCFullYear();
-      if (!perTag[fy] || (u.filed || "") > (perTag[fy].filed || ""))
+      const anchorEnd = fyEnds?.[fy];
+      if (anchorEnd && Math.abs(days(anchorEnd, u.end)) > 14) continue;
+      const cur = perTag[fy];
+      if (!cur || u.end > cur.end || (u.end === cur.end && (u.filed || "") > (cur.filed || "")))
         perTag[fy] = { val: u.val, end: u.end, filed: u.filed || "" };
     }
     for (const fy in perTag) if (!(fy in out)) out[fy] = perTag[fy];
@@ -465,9 +477,9 @@ const freshestShare = (a, b) => {
 };
 
 const pickAnnual = (facts, tags, unit = "USD") => latestEntry(annualByYear(facts, tags, unit));
-const pickInstant = (facts, tags, unit = "USD") => latestEntry(instantByYear(facts, tags, unit));
+const pickInstant = (facts, tags, unit = "USD", fyEnds = null) => latestEntry(instantByYear(facts, tags, unit, fyEnds));
 const collectAnnual = (facts, tags, unit = "USD") => valuesByYear(annualByYear(facts, tags, unit));
-const collectInstant = (facts, tags, unit = "USD") => valuesByYear(instantByYear(facts, tags, unit));
+const collectInstant = (facts, tags, unit = "USD", fyEnds = null) => valuesByYear(instantByYear(facts, tags, unit, fyEnds));
 
 // ---- the share count for turning a price into a value (NOT the per-share denominator) ----
 // The weighted-average diluted count answers "earnings per share over the period"; converting a
@@ -983,6 +995,10 @@ async function main() {
     }
     const latestRev = latestEntry(revAnnualBy);
     const revLatest = latestRev?.val ?? null;
+    // The fiscal calendar (banks desk F2): each year's true period-end date from the revenue
+    // record — the pin every balance-sheet instant below is checked against, so a dead tag's
+    // mid-year or transition-date balance can never masquerade as a fiscal year's value.
+    const fyEnds = Object.fromEntries(Object.entries(revAnnualBy).map(([fy, e]) => [fy, e.end]).filter(([, end]) => end));
 
     const oi = pickAnnual(facts, CONCEPTS.operatingIncome);
     // Anchor the fiscal year, period and filing link on whichever of operating income or revenue is
@@ -998,11 +1014,11 @@ async function main() {
     // merge) because a filer can tag its debt under different concepts in different
     // years; the max keeps the year-to-year series consistent and complete, and can
     // only correct an under-capture, never reduce a figure the components already got.
-    const ltd = pickInstant(facts, CONCEPTS.longTermDebt);
-    const cur = pickInstant(facts, CONCEPTS.currentDebt);
+    const ltd = pickInstant(facts, CONCEPTS.longTermDebt, "USD", fyEnds);
+    const cur = pickInstant(facts, CONCEPTS.currentDebt, "USD", fyEnds);
     const componentDebt = ltd || cur ? (ltd?.val || 0) + (cur?.val || 0) : null;
-    const aggInstantVals = CONCEPTS.debtTotal.map((t) => pickInstant(facts, [t])?.val ?? null);
-    const aggSeriesByTag = CONCEPTS.debtTotal.map((t) => collectInstant(facts, [t]));
+    const aggInstantVals = CONCEPTS.debtTotal.map((t) => pickInstant(facts, [t], "USD", fyEnds)?.val ?? null);
+    const aggSeriesByTag = CONCEPTS.debtTotal.map((t) => collectInstant(facts, [t], "USD", fyEnds));
     const aggTTMVals = CONCEPTS.debtTotal.map((t) => latestObservation(facts, [t], "USD", true)?.val ?? null);
     const aggYear = (fy) => maxOf(...aggSeriesByTag.map((s) => s[fy] ?? null));
     // Secured + unsecured: many REITs split borrowings into these two buckets and tag no
@@ -1011,8 +1027,8 @@ async function main() {
     // variant). Offered to the overall max alongside the component pair and the aggregates,
     // so it lifts a split-tagged filer without ever inflating one already captured whole.
     const SECURED = ["SecuredDebt", "SecuredLongTermDebt"], UNSECURED = ["UnsecuredDebt", "UnsecuredLongTermDebt"];
-    const famInstant = (tags) => maxOf(...tags.map((t) => pickInstant(facts, [t])?.val ?? null));
-    const famSeries = (tags) => { const o = {}; for (const t of tags) { const s = collectInstant(facts, [t]); for (const fy in s) o[fy] = Math.max(o[fy] ?? -Infinity, s[fy]); } return o; };
+    const famInstant = (tags) => maxOf(...tags.map((t) => pickInstant(facts, [t], "USD", fyEnds)?.val ?? null));
+    const famSeries = (tags) => { const o = {}; for (const t of tags) { const s = collectInstant(facts, [t], "USD", fyEnds); for (const fy in s) o[fy] = Math.max(o[fy] ?? -Infinity, s[fy]); } return o; };
     const splitInstant = (() => { const s = famInstant(SECURED), u = famInstant(UNSECURED); return s != null || u != null ? (s || 0) + (u || 0) : null; })();
     const secSeries = famSeries(SECURED), unsecSeries = famSeries(UNSECURED);
     const splitYear = (fy) => { const s = secSeries[fy], u = unsecSeries[fy]; return s != null || u != null ? (s || 0) + (u || 0) : null; };
@@ -1065,7 +1081,7 @@ async function main() {
     }
 
     const pick = (tags) => pickAnnual(facts, tags)?.val ?? null;
-    const inst = (tags) => pickInstant(facts, tags)?.val ?? null;
+    const inst = (tags) => pickInstant(facts, tags, "USD", fyEnds)?.val ?? null;
 
     // Diagnostic: REVENUE_DEBUG=APA dumps every revenue-like us-gaap tag and its latest
     // annual value, to find the concept a filer that reads no top line actually uses
@@ -1218,7 +1234,7 @@ async function main() {
     // any year a filer tagged its counts in millions rather than units, so per-share figures
     // stay honest across the whole record (see normalizeShareScale). shareRef is the record's
     // correct scale, applied to the latest-annual and TTM counts captured separately below.
-    const sharesInstant = collectInstant(facts, CONCEPTS.sharesOutstanding, "shares");
+    const sharesInstant = collectInstant(facts, CONCEPTS.sharesOutstanding, "shares", fyEnds);
     for (const fy in sharesInstant) if (ha.sharesDiluted[fy] == null) ha.sharesDiluted[fy] = sharesInstant[fy];
     // The cover-page count (dei namespace, always raw units) arbitrates scale per year — the
     // filing's own testimony, needing no majority vote (ConocoPhillips tagged TEN consecutive
@@ -1237,25 +1253,25 @@ async function main() {
     // become the scale the current count gets "corrected" toward (src/lib/shareScale.mjs).
     const shareRef = majorityShareRef(ha.sharesDiluted) ?? Math.max(0, ...Object.values(ha.sharesDiluted).filter((v) => v != null));
     const hi = {
-      equity: collectInstant(facts, CONCEPTS.stockholdersEquity),
-      cash: collectInstant(facts, CONCEPTS.cashAndEquivalents),
-      stInv: collectInstant(facts, CONCEPTS.shortTermInvestments),
-      ltMkt: collectInstant(facts, CONCEPTS.longTermMarketable),
-      ltd: collectInstant(facts, CONCEPTS.longTermDebt),
-      cur: collectInstant(facts, CONCEPTS.currentDebt),
-      ca: collectInstant(facts, CONCEPTS.currentAssets),
-      cl: collectInstant(facts, CONCEPTS.currentLiabilities),
-      receivables: collectInstant(facts, CONCEPTS.receivables),
-      inventory: collectInstant(facts, CONCEPTS.inventory),
-      accountsPayable: collectInstant(facts, CONCEPTS.accountsPayable),
-      assets: collectInstant(facts, CONCEPTS.totalAssets),
-      deposits: collectInstant(facts, CONCEPTS.deposits),
-      goodwill: collectInstant(facts, CONCEPTS.goodwill),
-      intangibles: collectInstant(facts, CONCEPTS.intangibleAssets),
-      realEstateGross: collectInstant(facts, CONCEPTS.realEstateGross),
-      lossReserves: collectInstant(facts, CONCEPTS.lossReserves),
-      netPPE: collectInstant(facts, CONCEPTS.netPPE),
-      operatingLeaseAsset: collectInstant(facts, CONCEPTS.operatingLeaseAsset),
+      equity: collectInstant(facts, CONCEPTS.stockholdersEquity, "USD", fyEnds),
+      cash: collectInstant(facts, CONCEPTS.cashAndEquivalents, "USD", fyEnds),
+      stInv: collectInstant(facts, CONCEPTS.shortTermInvestments, "USD", fyEnds),
+      ltMkt: collectInstant(facts, CONCEPTS.longTermMarketable, "USD", fyEnds),
+      ltd: collectInstant(facts, CONCEPTS.longTermDebt, "USD", fyEnds),
+      cur: collectInstant(facts, CONCEPTS.currentDebt, "USD", fyEnds),
+      ca: collectInstant(facts, CONCEPTS.currentAssets, "USD", fyEnds),
+      cl: collectInstant(facts, CONCEPTS.currentLiabilities, "USD", fyEnds),
+      receivables: collectInstant(facts, CONCEPTS.receivables, "USD", fyEnds),
+      inventory: collectInstant(facts, CONCEPTS.inventory, "USD", fyEnds),
+      accountsPayable: collectInstant(facts, CONCEPTS.accountsPayable, "USD", fyEnds),
+      assets: collectInstant(facts, CONCEPTS.totalAssets, "USD", fyEnds),
+      deposits: collectInstant(facts, CONCEPTS.deposits, "USD", fyEnds),
+      goodwill: collectInstant(facts, CONCEPTS.goodwill, "USD", fyEnds),
+      intangibles: collectInstant(facts, CONCEPTS.intangibleAssets, "USD", fyEnds),
+      realEstateGross: collectInstant(facts, CONCEPTS.realEstateGross, "USD", fyEnds),
+      lossReserves: collectInstant(facts, CONCEPTS.lossReserves, "USD", fyEnds),
+      netPPE: collectInstant(facts, CONCEPTS.netPPE, "USD", fyEnds),
+      operatingLeaseAsset: collectInstant(facts, CONCEPTS.operatingLeaseAsset, "USD", fyEnds),
     };
     // The insurance desk's Wave A lines (scripts/insuranceLines.mjs): float components, the
     // discipline lines, and the reserve-development honesty meter, each behind its own gate.
@@ -1263,7 +1279,7 @@ async function main() {
     // claimsIncurred years fill from the reserve rollforward only where the two series proved
     // identical in overlap (Markel's dark FY2024-25).
     const isInsuranceFiler = hasInsuranceData(facts);
-    const ins = isInsuranceFiler ? insuranceLines(facts) : null;
+    const ins = isInsuranceFiler ? insuranceLines(facts, fyEnds) : null;
     let claimsFillUsed = false;
     if (ins) {
       const { filled, usedRollforward } = fillClaimsFromRollforward(ha.claimsIncurred, facts);
@@ -1403,7 +1419,7 @@ async function main() {
             currentLiabilities: latestObservation(facts, CONCEPTS.currentLiabilities, "USD", true)?.val ?? null,
             currentDebt: ttmCurDebt ?? null,
             totalDebt: maxOf(ttmLtd != null || ttmCurDebt != null ? (ttmLtd || 0) + (ttmCurDebt || 0) : null, ...aggTTMVals),
-            sharesDiluted: fixShareScale(freshestShare(latestObservation(facts, CONCEPTS.sharesDiluted, "shares", false), pickInstant(facts, CONCEPTS.sharesOutstanding, "shares")), shareRef),
+            sharesDiluted: fixShareScale(freshestShare(latestObservation(facts, CONCEPTS.sharesDiluted, "shares", false), pickInstant(facts, CONCEPTS.sharesOutstanding, "shares", fyEnds)), shareRef),
             netInterestIncome: tf(CONCEPTS.netInterestIncome),
             noninterestIncome: tf(CONCEPTS.noninterestIncome),
             noninterestExpense: tf(CONCEPTS.noninterestExpense),
@@ -1455,7 +1471,7 @@ async function main() {
             stockholdersEquity: instq(CONCEPTS.stockholdersEquity),
             goodwill: instq(CONCEPTS.goodwill),
             intangibleAssets: instq(CONCEPTS.intangibleAssets),
-            sharesOutstanding: fixShareScale(pickInstant(facts, CONCEPTS.sharesOutstanding, "shares")?.val ?? null, shareRef),
+            sharesOutstanding: fixShareScale(pickInstant(facts, CONCEPTS.sharesOutstanding, "shares", fyEnds)?.val ?? null, shareRef),
           },
           series: quarterSeries(facts, revTags),
         }
@@ -1532,7 +1548,7 @@ async function main() {
         accountsPayable: inst(CONCEPTS.accountsPayable),
         currentAssets: inst(CONCEPTS.currentAssets),
         currentLiabilities: inst(CONCEPTS.currentLiabilities),
-        sharesDiluted: fixShareScale(freshestShare(pickAnnual(facts, CONCEPTS.sharesDiluted, "shares"), pickInstant(facts, CONCEPTS.sharesOutstanding, "shares")), shareRef),
+        sharesDiluted: fixShareScale(freshestShare(pickAnnual(facts, CONCEPTS.sharesDiluted, "shares"), pickInstant(facts, CONCEPTS.sharesOutstanding, "shares", fyEnds)), shareRef),
         netInterestIncome: pick(CONCEPTS.netInterestIncome),
         noninterestIncome: pick(CONCEPTS.noninterestIncome),
         noninterestExpense: pick(CONCEPTS.noninterestExpense),
