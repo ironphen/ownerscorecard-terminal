@@ -27,6 +27,13 @@ import { hasBankData, banksLines, BANK_LINE_NAMES } from "./banksLines.mjs";
 // must never resurrect one from a prior file (Wells Fargo's withheld charge-offs came back from
 // the dead exactly this way, 2026-07-21).
 const DESK_LINES = new Set([...INSURANCE_LINE_NAMES, ...BANK_LINE_NAMES]);
+// Tier-2: the named dimensional targets (scripts/fetchDimensional.mjs), read from the filings'
+// own inline XBRL where companyfacts is blind — Travelers' development, Cigna's insurance book,
+// Centene's premium line, Wells Fargo's modern charge-offs. Merged as the LAST source: it fills
+// what Tier-1 and the desks left null and never overrides them (the registry is designed to
+// avoid core overlap; income lines that exist undimensioned are excluded from it).
+let DIMENSIONAL = {};
+try { DIMENSIONAL = JSON.parse(fs.readFileSync(path.join(process.cwd(), "src", "data", "dimensional.json"), "utf8")).companies || {}; } catch {}
 
 const UA =
   process.env.SEC_USER_AGENT ||
@@ -1328,6 +1335,7 @@ async function main() {
       Math.abs(latestOfMap(ha.netInterestIncome) ?? 0) > Math.abs(latestOfMap(ha.premiumsEarned) ?? 0);
     const bank = bankDominant && hasBankData(facts, fyEnds) ? banksLines(facts, fyEnds) : null;
     if (bank) for (const w of bank.flags?.warns || []) console.warn(`  ! ${ticker} bank: ${w}`);
+    const dims = DIMENSIONAL[String(ticker).toUpperCase()] || null;
     const insYear = (fy) => {
       const o = {};
       for (const src of [ins, bank]) {
@@ -1335,6 +1343,7 @@ async function main() {
         for (const [line, series] of Object.entries(src.flows)) if (series[fy] != null) o[line] = series[fy];
         for (const [line, series] of Object.entries(src.instants)) if (series[fy] != null) o[line] = series[fy];
       }
+      if (dims) for (const [line, series] of Object.entries(dims)) if (series[fy] != null && o[line] == null) o[line] = series[fy];
       return o;
     };
     const insLatest = () => {
@@ -1355,6 +1364,7 @@ async function main() {
         for (const [line, series] of Object.entries(src.flows)) { const v = latestOf(series); if (v != null) o[line] = v; }
         for (const [line, series] of Object.entries(src.instants)) { const v = latestOf(series); if (v != null) o[line] = v; }
       }
+      if (dims) for (const [line, series] of Object.entries(dims)) { if (o[line] != null) continue; const v = latestOf(series); if (v != null) o[line] = v; }
       // The F2 fill extends the current-lines claims figure too (the spread lands after the core
       // pick, so an overlap-verified rollforward value replaces a dark or stale one).
       if (ins && claimsFillUsed) { const v = latestOf(ha.claimsIncurred); if (v != null) o.claimsIncurred = v; }

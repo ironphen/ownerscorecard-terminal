@@ -187,7 +187,20 @@ export function buildFinancialScorecard(company, subtype = "bank") {
   }).filter((v) => v != null && Number.isFinite(v));
   const worstNco = ncoSeries.length >= 3 ? Math.max(...ncoSeries) : null;
   const allowShare = L.allowanceForCreditLosses != null && L.loansHeldForInvestment ? L.allowanceForCreditLosses / L.loansHeldForInvestment : null;
-  const creditCheck = ncoRate == null
+  const creditCheck = ncoRate == null && L.netChargeOffs != null
+    // The dollars are verified but the loan denominator is withheld (Wells Fargo's loan book
+    // went dimension-dark after 2022): show the charge-offs as dollars, never a rate on a
+    // guessed base.
+    ? {
+      title: "Net charge-offs",
+      concept: "combined-ratio",
+      value: $(Math.abs(L.netChargeOffs)),
+      formula: `Charge-offs net of recoveries ${$(Math.abs(L.netChargeOffs))} · the loan-base rate is withheld (the loan book is not cleanly tagged in structured data)`,
+      tone: "info",
+      label: "Dollars only — loan base withheld",
+      note: "Loans actually written off, net of recoveries. The rate against the loan book is the comparable figure, and it is withheld here because the loan base itself is not cleanly tagged — a rate on a guessed denominator would be a wrong number. Read the dollar trend against the bank's own history.",
+    }
+    : ncoRate == null
     ? none("Net charge-offs", "Not derivable from the filings' structured data — some filers carry recoveries only on segment axes, and a gross figure dressed as net would be a wrong number.", "combined-ratio")
     : {
       title: "Net charge-offs",

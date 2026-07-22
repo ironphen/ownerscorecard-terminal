@@ -120,6 +120,15 @@ jobs:
         run: npm run fetch:upcoming
         env:
           SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT }}
+      # Tier-2: the named dimensional targets, read from the filings' own inline XBRL before the
+      # fundamentals refresh so the merge picks up fresh values. A failed run leaves last week's
+      # file — the walls it lowered stay lowered on slightly stale data, never a broken refresh.
+      - name: Refresh dimensional targets (dimensional.json)
+        if: ${{ github.event.inputs.segments_only != 'true' && github.event.inputs.filings_only != 'true' && github.event.inputs.drivers_only != 'true' }}
+        continue-on-error: true
+        run: npm run fetch:dimensional
+        env:
+          SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT }}
       - name: Run fetch:filings
         if: ${{ github.event.inputs.segments_only != 'true' && github.event.inputs.fundamentals_only != 'true' && github.event.inputs.drivers_only != 'true' && github.event.schedule != '0 7 * * 1' }}
         continue-on-error: true # qualitative layer; never fail the fundamentals refresh
@@ -248,6 +257,7 @@ jobs:
           git add src/data/drivers.json src/data/adrRatios.json 2>/dev/null || true
           git add src/data/universe.adr.json src/data/fundamentals.adr.json 2>/dev/null || true
           git add src/data/upcoming.json 2>/dev/null || true
+          git add src/data/dimensional.json 2>/dev/null || true
           if ! git diff --cached --quiet; then
             git config user.name "github-actions[bot]"
             git config user.email "github-actions[bot]@users.noreply.github.com"
