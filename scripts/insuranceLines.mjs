@@ -315,3 +315,15 @@ export function fillClaimsFromRollforward(claimsByYear, facts) {
   for (const fy of Object.keys(roll)) if (filled[fy] == null) { filled[fy] = roll[fy]; used = true; }
   return { filled, usedRollforward: used };
 }
+
+// Every line this module can emit — the field-level carry-over in fetchFundamentals must never
+// resurrect one of these from a prior file: desk extraction is deterministic (the same facts
+// give the same lines every run), so an absence is always a deliberate gate, never a transient
+// tag miss.
+export const INSURANCE_LINE_NAMES = [
+  "reserveDevelopmentPriorYear", "unearnedPremiums", "lossReservesNet", "futurePolicyBenefits",
+  "fpbCombined", "policyholderDeposits", "separateAccountsLiability", "premiumsReceivable",
+  "dacBalance", "prepaidReinsurance", "reinsuranceRecoverables", "reinsuranceRecoverablesAllowance",
+  "premiumsWrittenNet", "cededPremiumsWritten", "cededPremiumsEarned", "interestCredited",
+  "fpbRemeasurement", "otherUnderwritingExpense", "marketRiskBenefits",
+];

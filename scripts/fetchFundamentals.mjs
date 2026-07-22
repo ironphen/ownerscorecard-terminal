@@ -20,8 +20,13 @@ import { normalizeShareScale, majorityShareRef } from "../src/lib/shareScale.mjs
 import { reconcileLeaseLadder } from "../src/lib/leases.mjs";
 import { compactJson } from "../src/lib/dataFile.mjs";
 import { buildCikMap, CIK_OVERRIDE, resolveCikLive } from "./cikResolve.mjs";
-import { hasInsuranceData, insuranceLines, fillClaimsFromRollforward } from "./insuranceLines.mjs";
-import { hasBankData, banksLines } from "./banksLines.mjs";
+import { hasInsuranceData, insuranceLines, fillClaimsFromRollforward, INSURANCE_LINE_NAMES } from "./insuranceLines.mjs";
+import { hasBankData, banksLines, BANK_LINE_NAMES } from "./banksLines.mjs";
+// Desk lines are deterministic extractions: the same facts give the same lines every run, so an
+// absence is always a deliberate gate, never a transient tag miss — the field carry-over below
+// must never resurrect one from a prior file (Wells Fargo's withheld charge-offs came back from
+// the dead exactly this way, 2026-07-21).
+const DESK_LINES = new Set([...INSURANCE_LINE_NAMES, ...BANK_LINE_NAMES]);
 
 const UA =
   process.env.SEC_USER_AGENT ||
@@ -1326,7 +1331,17 @@ async function main() {
     };
     const insLatest = () => {
       const o = {};
-      const latestOf = (series) => { const fys = Object.keys(series).map(Number).filter((fy) => series[fy] != null); return fys.length ? series[Math.max(...fys)] : null; };
+      // The stale-current tripwire governs the desk lines too: a series whose latest year sits
+      // behind the record's anchor (Wells Fargo's charge-offs end in 2021) never populates the
+      // current figures — the scorecard then shows the honest withheld-with-reason line instead
+      // of a four-year-old number dressed as this year's.
+      const latestOf = (series) => {
+        const fys = Object.keys(series).map(Number).filter((fy) => series[fy] != null);
+        if (!fys.length) return null;
+        const maxFy = Math.max(...fys);
+        if (anchor?.fy != null && maxFy < anchor.fy) return null;
+        return series[maxFy];
+      };
       for (const src of [ins, bank]) {
         if (!src) continue;
         for (const [line, series] of Object.entries(src.flows)) { const v = latestOf(series); if (v != null) o[line] = v; }
@@ -1668,6 +1683,7 @@ async function main() {
   const carryFields = (f, p) => {
     if (!p?.lines || !f?.lines || f.fy == null || f.fy !== p.fy) return f;
     for (const k of Object.keys(p.lines)) {
+      if (DESK_LINES.has(k)) continue; // deliberate desk withholds stay withheld
       if (f.lines[k] == null && p.lines[k] != null) { f.lines[k] = p.lines[k]; fieldsCarried++; }
     }
     return f;

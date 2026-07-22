@@ -52,6 +52,7 @@ const COL = {
   netDebt: { key: "netDebt", label: "Net debt", basis: "debt − cash & ST investments · latest FY, USD", type: "money" },
   netInterestIncome: { key: "netInterestIncome", label: "Net interest income", basis: "latest fiscal year, USD", type: "money" },
   deposits: { key: "deposits", label: "Deposits", basis: "latest fiscal year, USD", type: "money" },
+  nibShare: { key: "nibShare", label: "Noninterest-bearing share", basis: "of total deposits · latest FY", type: "pct" },
   netIncome: { key: "netIncome", label: "Net income", basis: "latest fiscal year, USD", type: "money" },
   rote: { key: "rote", label: "Return on tangible equity", basis: "median over the record", type: "pct" },
   tangibleEquity: { key: "tangibleEquity", label: "Tangible equity", basis: "equity − goodwill − intangibles · latest FY, USD", type: "money" },
@@ -80,9 +81,11 @@ export const FAMILIES = {
   },
   // Lenders: read on the balance sheet, not the operating line — the reconstructed top line, the
   // lending spread in dollars, the funding base, the profit, and the return on hard capital.
+  // The noninterest-bearing share is the banks desk's Wave A franchise read (2026-07-21): the
+  // deposits the bank pays nothing for, as a share of the total — the moat, one column wide.
   lender: {
     name: "Lenders",
-    columns: [COL.revenue, COL.netInterestIncome, COL.deposits, COL.netIncome, COL.rote, COL.tangibleEquity],
+    columns: [COL.revenue, COL.netInterestIncome, COL.deposits, COL.nibShare, COL.netIncome, COL.rote, COL.tangibleEquity],
   },
   // Insurers: premiums, the float and its development honesty line, the float's investment
   // income, then the same hard-capital read. Float and development are the insurance desk's
@@ -268,6 +271,8 @@ export function groupingCells(company, familyKey, terms) {
         const f = floatOf(L);
         return f ? money(f.value) : DASH;
       }
+      case "nibShare":
+        return pct(L.noninterestBearingDeposits != null && L.deposits ? L.noninterestBearingDeposits / L.deposits : null);
       case "reserveDev":
         return money(L.reserveDevelopmentPriorYear);
       case "investmentIncome":

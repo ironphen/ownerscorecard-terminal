@@ -345,3 +345,11 @@ export function banksLines(facts, fyEnds = null) {
   if (warns.length) flags.warns = [...new Set(warns)];
   return { flows, instants, flags };
 }
+
+// Same contract as INSURANCE_LINE_NAMES: deterministic desk lines, exempt from field carry-over.
+export const BANK_LINE_NAMES = [
+  "noninterestBearingDeposits", "interestBearingDeposits", "demandDeposits", "interestExpenseDeposits",
+  "timeDeposits", "brokeredDeposits", "loansHeldForInvestment", "allowanceForCreditLosses",
+  "netChargeOffs", "nonaccrualLoans", "offBalanceSheetCreditReserve", "htmAmortizedCost",
+  "htmFairValue", "totalInterestIncome", "totalInterestExpense", "preferredEquity", "cet1Ratio",
+];
