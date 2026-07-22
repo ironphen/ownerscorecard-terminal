@@ -173,6 +173,50 @@ const facts = (tags) => ({ facts: { "us-gaap": tags } });
   t("without a known calendar the old latest-end rule still reads the tag", unpinned.instants.unearnedPremiums[2020] === 9.4e9, unpinned.instants.unearnedPremiums);
 }
 
+// --- the sign-integrity gate (managed-care desk F1, ratified 2026-07-21): the filer's own
+// identity (current-year incurred + prior-year development = total incurred) arbitrates every
+// sign. Elevance shipped six favorable years as adverse; the identity flips them; a year the
+// identity rejects both ways is withheld; an identity-less cross-filing sign conflict resolves
+// only to a proven regime.
+{
+  const f = facts({
+    PremiumsEarnedNet: flowFact({ 2020: 1000, 2021: 1050, 2022: 1100 }),
+    // Filed development: 2020-21 wrong-sign-positive (favorable filed as +), 2022 correct-negative.
+    SupplementalInformationForPropertyCasualtyInsuranceUnderwritersPriorYearClaimsAndClaimsAdjustmentExpense: flowFact({ 2020: 40e6, 2021: 35e6, 2022: -30e6 }),
+    LiabilityForUnpaidClaimsAndClaimsAdjustmentExpenseIncurredClaims1: flowFact({ 2020: 960e6, 2021: 1015e6, 2022: 1070e6 }),
+    LiabilityForUnpaidClaimsAndClaimsAdjustmentExpenseIncurredClaimsCurrentYear: flowFact({ 2020: 1000e6, 2021: 1050e6, 2022: 1100e6 }),
+  });
+  const { flows, flags } = insuranceLines(f);
+  const dev = flows.reserveDevelopmentPriorYear;
+  t("the identity flips a wrong-sign year (the ELV shape)", dev[2020] === -40e6 && dev[2021] === -35e6, dev);
+  t("a correctly signed year stands", dev[2022] === -30e6, dev);
+  t("the repair is stated", (flags.warns || []).some((w) => w.includes("sign repaired")), flags.warns);
+}
+{
+  // A year failing the identity both ways is withheld.
+  const f = facts({
+    PremiumsEarnedNet: flowFact({ 2022: 1000 }),
+    SupplementalInformationForPropertyCasualtyInsuranceUnderwritersPriorYearClaimsAndClaimsAdjustmentExpense: flowFact({ 2022: -30e6 }),
+    LiabilityForUnpaidClaimsAndClaimsAdjustmentExpenseIncurredClaims1: flowFact({ 2022: 1070e6 }),
+    LiabilityForUnpaidClaimsAndClaimsAdjustmentExpenseIncurredClaimsCurrentYear: flowFact({ 2022: 900e6 }),
+  });
+  const { flows, flags } = insuranceLines(f);
+  t("a year the identity rejects both ways is withheld", flows.reserveDevelopmentPriorYear[2022] == null, flows.reserveDevelopmentPriorYear);
+  t("the withhold is stated", (flags.warns || []).some((w) => w.includes("fails the incurred identity")), flags.warns);
+}
+{
+  // The PDR wrinkle: an identity missing by a fraction of a percent (UNH's 672M inside ~314B)
+  // stays as-filed under the tolerance.
+  const f = facts({
+    PremiumsEarnedNet: flowFact({ 2025: 352e9 }),
+    SupplementalInformationForPropertyCasualtyInsuranceUnderwritersPriorYearClaimsAndClaimsAdjustmentExpense: flowFact({ 2025: -1.4e9 }),
+    LiabilityForUnpaidClaimsAndClaimsAdjustmentExpenseIncurredClaims1: flowFact({ 2025: 314e9 }),
+    LiabilityForUnpaidClaimsAndClaimsAdjustmentExpenseIncurredClaimsCurrentYear: flowFact({ 2025: 314.728e9 }),
+  });
+  const { flows } = insuranceLines(f);
+  t("a PDR-sized identity residual stays within tolerance (as filed)", flows.reserveDevelopmentPriorYear[2025] === -1.4e9, flows.reserveDevelopmentPriorYear);
+}
+
 // --- the entry ticket: no premiums, no insurance lines ---
 t("a non-insurer is untouched", hasInsuranceData(facts({ Revenues: flowFact({ 2024: 5e9 }) })) === false);
 

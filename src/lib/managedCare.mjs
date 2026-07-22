@@ -28,7 +28,16 @@ export function buildManagedCareScorecard(company) {
   const none = (title, note, concept = null) => ({ title, concept, value: "—", formula: "", tone: "none", label: "Not enough data", note });
 
   const mlr = medicalLossRatio(L);
-  const mlrCheck = mlr == null ? none("Medical loss ratio", "Premiums or medical claims weren't cleanly tagged in the filing data.", "medical-loss-ratio") : {
+  // The withhold walls (managed-care desk, ratified 2026-07-21), each naming its reason: a filer
+  // whose premiums are filed only on segment axes (Centene) fails the accuracy test any blended
+  // proxy would flunk; a filer whose medical costs live only in extension tags (Alignment) has no
+  // honestly computable ratio. The absence is information the reader can price.
+  const mlrWallNote = L.premiumsEarned == null && L.claimsIncurred != null
+    ? "This filer's premium revenue is filed only on segment axes the SEC's structured data omits, and a blended proxy misses its own reported ratio by more than a point — withheld rather than approximated."
+    : L.claimsIncurred == null && L.premiumsEarned != null
+    ? "This filer's medical costs live only in its own extension tags, outside the standard taxonomy — the ratio is not honestly computable from structured data, and the absence is itself worth knowing."
+    : "Premiums or medical claims weren't cleanly tagged in the filing data.";
+  const mlrCheck = mlr == null ? none("Medical loss ratio", mlrWallNote, "medical-loss-ratio") : {
     title: "Medical loss ratio",
     concept: "medical-loss-ratio",
     value: pc(mlr, 1), formula: `Medical costs ${$(Math.abs(L.claimsIncurred))} ÷ premiums earned ${$(L.premiumsEarned)}`,
@@ -57,9 +66,63 @@ export function buildManagedCareScorecard(company) {
     note: "The thin margin turns over fast on a modest capital base, so a plan earning its keep still shows a good return on equity. Durably above the ~10% cost of equity is what compounds value; a year below it usually means medical costs outran premiums.",
   };
 
+  // The claims and the reserves (the desk's second section, ratified 2026-07-21): a health
+  // plan's float is small and fast, so the reserve reads are velocity reads.
+  const H = company?.history || [];
+
+  // Days claims payable: the claims liability against average daily medical costs (annual
+  // average, basis labeled — the ratified convention; it lands within ~1.5 days of the filers'
+  // own printed figures). The trend is the tell: a shrinking cushion while margins hold is
+  // tomorrow's earnings borrowed from the reserve.
+  const dcpOf = (l) => (l?.lossReserves != null && l?.claimsIncurred ? l.lossReserves / (Math.abs(l.claimsIncurred) / 365) : null);
+  const dcp = dcpOf(L);
+  const dcpSeries = H.map((h) => dcpOf(h.lines)).filter((v) => v != null && Number.isFinite(v));
+  const dcpMed = median(dcpSeries.length >= 3 ? dcpSeries : []);
+  const thinning = dcp != null && dcpMed != null && dcp < dcpMed - 5;
+  const dcpCheck = dcp == null ? none("Days claims payable", "The claims liability or medical costs weren't cleanly tagged.", "medical-loss-ratio") : {
+    title: "Days claims payable",
+    concept: "medical-loss-ratio",
+    value: `${dcp.toFixed(0)} days`,
+    formula: `Claims payable ${$(L.lossReserves)} ÷ daily medical costs (annual average)${dcpMed != null ? ` · record median ${dcpMed.toFixed(0)} days` : ""}`,
+    tone: thinning ? "warn" : dcp >= 35 && dcp <= 60 ? "ok" : "info",
+    label: thinning ? "Cushion thinning against its own record" : "The reserve cushion, in days",
+    note: "How many days of medical costs the plan holds in reserve against claims already incurred. The level varies by book; the TREND is the honesty read — a cushion shrinking against the company's own history while margins hold means earnings are being helped by the reserve, the fast-float version of under-reserving.",
+  };
+
+  // Prior-year development: the same honesty meter the insurers carry, here on a fast book —
+  // and for a pure health insurer the short-duration book IS the enterprise.
+  const devSeries = H.map((h) => ({ fy: h.fy, v: h?.lines?.reserveDevelopmentPriorYear })).filter((x) => x.v != null);
+  const devLatest = devSeries.length ? devSeries[devSeries.length - 1] : null;
+  const favYears = devSeries.filter((x) => x.v < 0).length;
+  const unfavYears = devSeries.filter((x) => x.v > 0).length;
+  const devCheck = !devSeries.length
+    ? none("Reserve development", "Not disclosed in the filings' structured data.", "medical-loss-ratio")
+    : {
+      title: "Reserve development",
+      concept: "medical-loss-ratio",
+      value: `${devLatest.v < 0 ? "−" : "+"}${$(Math.abs(devLatest.v))}`,
+      formula: `Prior-year development, FY${devLatest.fy}: ${devLatest.v < 0 ? "favorable" : "unfavorable"} · record: ${favYears} favorable, ${unfavYears} unfavorable of ${devSeries.length}`,
+      tone: devLatest.v < 0 ? "good" : "warn",
+      label: devLatest.v < 0 ? "Past estimates held" : "Past reserves fell short",
+      note: "Each year the plan restates what last year's claims actually cost once the bills finished arriving. Persistent favorable development means honest reserving; unfavorable means past profits were flattered. Signed as filed: negative favorable. On a book this fast the estimates resolve within a year, so the meter reads management's candor almost in real time.",
+    };
+
+  // IBNR share: how much of the claims liability is estimate rather than bill.
+  const ibnrShare = L.ibnrAmount != null && L.lossReserves ? L.ibnrAmount / L.lossReserves : null;
+  const ibnrCheck = ibnrShare == null ? null : {
+    title: "Incurred but not reported",
+    concept: "medical-loss-ratio",
+    value: pc(ibnrShare),
+    formula: `IBNR ${$(L.ibnrAmount)} ÷ claims payable ${$(L.lossReserves)}`,
+    tone: ibnrShare >= 0.5 && ibnrShare <= 0.8 ? "info" : "warn",
+    label: ibnrShare >= 0.5 && ibnrShare <= 0.8 ? "The estimated share, in the normal band" : "Outside the usual band",
+    note: "The share of the claims liability that is an actuarial estimate of care already delivered but not yet billed. Health plans typically run 50-80%; the figure frames how much of the reserve is judgment rather than arithmetic — which is exactly where the development line above keeps score.",
+  };
+
   return {
     sections: [
       { heading: "Is it a good business?", checks: [mlrCheck, omCheck, roeCheck] },
+      { heading: "The claims and the reserves", checks: [dcpCheck, devCheck, ...(ibnrCheck ? [ibnrCheck] : [])] },
     ],
   };
 }

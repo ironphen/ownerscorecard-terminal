@@ -29,6 +29,7 @@ import {
 } from "./fundamentals.mjs";
 import { tangibleEquity, returnOnTangibleEquity } from "./financials.mjs";
 import { floatOf } from "./insurers.mjs";
+import { medicalLossRatio } from "./managedCare.mjs";
 import { ffo } from "./reits.mjs";
 import { financialKind, financialProfile } from "./archetype.mjs";
 import { adrBasis } from "./adrBasis.mjs";
@@ -60,6 +61,7 @@ const COL = {
   investmentIncome: { key: "investmentIncome", label: "Investment income", basis: "latest fiscal year, USD", type: "money" },
   insFloat: { key: "insFloat", label: "Float", basis: "reserves + unearned premiums − receivables − DAC · latest FY, USD", type: "money" },
   reserveDev: { key: "reserveDev", label: "Reserve development", basis: "prior-year · negative = favorable · latest FY, USD", type: "money" },
+  mlr: { key: "mlr", label: "Medical loss ratio", basis: "medical costs ÷ premiums · median over the record", type: "pct" },
   ffo: { key: "ffo", label: "Funds from operations", basis: "net income + depreciation − property gains · latest FY, USD", type: "money" },
   dividendsPaid: { key: "dividendsPaid", label: "Dividends paid", basis: "latest fiscal year, USD", type: "money" },
   totalAssets: { key: "totalAssets", label: "Total assets", basis: "latest fiscal year, USD", type: "money" },
@@ -94,6 +96,14 @@ export const FAMILIES = {
   insurer: {
     name: "Insurers",
     columns: [COL.premiums, COL.insFloat, COL.reserveDev, COL.investmentIncome, COL.netIncome, COL.rote, COL.tangibleEquity],
+  },
+  // Managed care (the desk's Q12, ratified 2026-07-21): health plans are insurers in a
+  // health-services costume — the general family's operating lens marked every column "n/a."
+  // Read them on premiums, the medical loss ratio against its statutory floor, and the same
+  // development honesty line the insurers carry.
+  managedCare: {
+    name: "Managed care",
+    columns: [COL.revenue, COL.premiums, COL.mlr, COL.reserveDev, COL.netIncome, COL.rote, COL.tangibleEquity],
   },
   // Property: rent, the REIT earnings measure, the distribution, and the leverage every REIT runs.
   property: {
@@ -273,6 +283,8 @@ export function groupingCells(company, familyKey, terms) {
       }
       case "nibShare":
         return pct(L.noninterestBearingDeposits != null && L.deposits ? L.noninterestBearingDeposits / L.deposits : null);
+      case "mlr":
+        return pct(medianOverRecord(company, (yl) => medicalLossRatio(yl)));
       case "reserveDev":
         return money(L.reserveDevelopmentPriorYear);
       case "investmentIncome":

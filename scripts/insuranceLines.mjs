@@ -21,6 +21,24 @@
 
 const days = (a, b) => Math.round((new Date(b) - new Date(a)) / 86400000);
 
+// All candidate values per year for one tag (every filing's version, deduped) — the input the
+// development sign-repair needs, since a sign-regime change lives in the DISAGREEMENT between
+// filings (Elevance's FY2024 10-K re-tagged its 2016-2021 development with identical magnitudes
+// and opposite signs).
+function flowCandidatesByYear(facts, tag) {
+  const units = facts?.facts?.["us-gaap"]?.[tag]?.units?.USD;
+  if (!units) return null;
+  const out = {};
+  for (const u of units) {
+    if (!u.form || !u.form.startsWith("10-K") || !u.start || !u.end) continue;
+    const dur = days(u.start, u.end);
+    if (dur < 350 || dur > 380) continue;
+    const fy = new Date(u.end).getUTCFullYear();
+    (out[fy] ||= new Set()).add(u.val);
+  }
+  return Object.keys(out).length ? Object.fromEntries(Object.entries(out).map(([fy, s]) => [fy, [...s]])) : null;
+}
+
 // Per-tag annual flows (10-K, 350-380d duration, latest filing wins the year).
 function flowByYear(facts, tag) {
   const units = facts?.facts?.["us-gaap"]?.[tag]?.units?.USD;
@@ -125,7 +143,59 @@ export function insuranceLines(facts, fyEnds = null) {
       flowByYear(facts, "LiabilityForUnpaidClaimsAndClaimsAdjustmentExpenseIncurredClaimsPriorYears"),
     ], { tol: 0.02, label: "reserveDevelopmentPriorYear" });
     w.forEach(W);
-    if (series) flows.reserveDevelopmentPriorYear = series;
+    if (series) {
+      // The sign-integrity gate (managed-care desk F1, ratified 2026-07-21): a filer's sign
+      // convention can change regimes mid-record — Elevance shipped six favorable years as
+      // adverse — and the wrong sign can sit in the LATER filing, so latest-filed-wins ships it.
+      // The arbiter is the filer's own arithmetic: current-year incurred + prior-year
+      // development = total incurred. Where the identity holds as filed, the year stands; where
+      // it holds only with the sign flipped, the filer's own identity has corrected it (warned);
+      // where identity inputs are absent, a cross-filing sign conflict resolves to the
+      // convention the identity-verified years prove — and failing all of that, the conflicted
+      // year is withheld. Tolerance absorbs the premium-deficiency-reserve wrinkle (UNH's $672M
+      // inside a ~$314B total).
+      const total = stitchGenerations([
+        flowByYear(facts, "LiabilityForUnpaidClaimsAndClaimsAdjustmentExpenseIncurredClaims1"),
+        flowByYear(facts, "LiabilityForUnpaidClaimsAndClaimsAdjustmentExpenseIncurredClaims"),
+      ], { label: "incurredTotal" }).series;
+      const cy = stitchGenerations([
+        flowByYear(facts, "LiabilityForUnpaidClaimsAndClaimsAdjustmentExpenseIncurredClaimsCurrentYear"),
+        flowByYear(facts, "SupplementalInformationForPropertyCasualtyInsuranceUnderwritersCurrentYearClaimsAndClaimsAdjustmentExpense"),
+      ], { label: "incurredCY" }).series;
+      const verified = {};
+      for (const fy of Object.keys(series)) {
+        if (series[fy] == null || total?.[fy] == null || cy?.[fy] == null) continue;
+        const tol = Math.max(Math.abs(total[fy]) * 0.015, 5e6);
+        if (Math.abs(cy[fy] + series[fy] - total[fy]) <= tol) verified[fy] = "as-filed";
+        else if (Math.abs(cy[fy] - series[fy] - total[fy]) <= tol) {
+          series[fy] = -series[fy];
+          verified[fy] = "flipped";
+          W(`reserveDevelopmentPriorYear ${fy}: sign repaired by the filer's own identity (CY + PY = total)`);
+        } else {
+          series[fy] = null;
+          W(`reserveDevelopmentPriorYear ${fy}: fails the incurred identity either way — withheld`);
+        }
+      }
+      // Cross-filing sign conflicts on identity-less years resolve only where the filer's
+      // verified years prove its convention held under re-tagging; otherwise withhold.
+      const provenAsFiled = Object.values(verified).filter((v) => v === "as-filed").length;
+      const provenFlipped = Object.values(verified).filter((v) => v === "flipped").length;
+      const candidates = flowCandidatesByYear(facts, "SupplementalInformationForPropertyCasualtyInsuranceUnderwritersPriorYearClaimsAndClaimsAdjustmentExpense") || {};
+      for (const fy of Object.keys(series)) {
+        if (series[fy] == null || verified[fy]) continue;
+        const cands = candidates[fy];
+        const conflicted = Array.isArray(cands) && cands.some((a) => cands.some((b) => a !== b && Math.abs(a + b) <= Math.abs(a) * 0.02));
+        if (!conflicted) continue;
+        if (provenFlipped >= 2 && provenAsFiled === 0) {
+          series[fy] = -series[fy];
+          W(`reserveDevelopmentPriorYear ${fy}: cross-filing sign conflict resolved to the filer's proven regime`);
+        } else {
+          series[fy] = null;
+          W(`reserveDevelopmentPriorYear ${fy}: cross-filing sign conflict with no identity proof — withheld`);
+        }
+      }
+      flows.reserveDevelopmentPriorYear = series;
+    }
   }
 
   // --- float components (balance) ---
@@ -224,6 +294,23 @@ export function insuranceLines(facts, fyEnds = null) {
     if (series) instants.reinsuranceRecoverables = series;
     const allow = instantTagByYear(facts, "ReinsuranceRecoverablesAllowance", fyEnds);
     if (allow) instants.reinsuranceRecoverablesAllowance = allow;
+  }
+
+  // IBNR (managed-care desk, ratified Q10): the share of the claims liability that is estimated
+  // rather than billed — the fast-float honesty companion to the development line. Gated: IBNR
+  // may not exceed the claims liability it sits inside.
+  {
+    const { series: ibnr } = stitchGenerations([
+      instantTagByYear(facts, "LiabilityForUnpaidClaimsAndClaimsAdjustmentExpenseIncurredButNotReportedIBNRClaimsAmount", fyEnds),
+      instantTagByYear(facts, "ShortdurationInsuranceContractsIncurredButNotReportedIbnrClaimsLiabilityNet", fyEnds),
+    ], { label: "ibnrAmount" });
+    if (ibnr) {
+      const payable = instantTagByYear(facts, "LiabilityForClaimsAndClaimsAdjustmentExpense", fyEnds);
+      for (const fy of Object.keys(ibnr)) {
+        if (ibnr[fy] != null && payable?.[fy] != null && ibnr[fy] > payable[fy] * 1.02) { ibnr[fy] = null; W(`ibnrAmount ${fy}: exceeds the claims liability — nulled`); }
+      }
+      if (Object.values(ibnr).some((v) => v != null)) instants.ibnrAmount = ibnr;
+    }
   }
 
   // --- the discipline lines: premiums written, and the direct/assumed/ceded bridge ---
@@ -325,5 +412,5 @@ export const INSURANCE_LINE_NAMES = [
   "fpbCombined", "policyholderDeposits", "separateAccountsLiability", "premiumsReceivable",
   "dacBalance", "prepaidReinsurance", "reinsuranceRecoverables", "reinsuranceRecoverablesAllowance",
   "premiumsWrittenNet", "cededPremiumsWritten", "cededPremiumsEarned", "interestCredited",
-  "fpbRemeasurement", "otherUnderwritingExpense", "marketRiskBenefits",
+  "fpbRemeasurement", "otherUnderwritingExpense", "marketRiskBenefits", "ibnrAmount",
 ];

@@ -288,7 +288,12 @@ const CONCEPTS = {
   realEstateGross: ["RealEstateInvestmentPropertyAtCost", "RealEstateGrossAtCarryingValue"],
   // --- insurers (financials, the underwriting + float lens) ---
   premiumsEarned: ["PremiumsEarnedNet", "PremiumsEarnedNetPropertyAndCasualty"],
-  claimsIncurred: ["PolicyholderBenefitsAndClaimsIncurredNet", "IncurredClaimsPropertyCasualtyAndLiability", "PolicyholderBenefitsAndClaimsIncurredHomeAndAutomobile"],
+  // The health variants (managed-care desk, ratified 2026-07-21): PolicyholderBenefits...HealthCare
+  // makes UNH/CNC/HUM's series direct (overlaps agree to the dollar) instead of leaning on the
+  // rollforward fill; the deprecated HealthCareOrganization element carries Molina's 2009-2018,
+  // and the rollforward fill bridges its no-overlap butt joint into the modern years (the seam
+  // identity is exact both sides, 2012-2025).
+  claimsIncurred: ["PolicyholderBenefitsAndClaimsIncurredNet", "PolicyholderBenefitsAndClaimsIncurredHealthCare", "IncurredClaimsPropertyCasualtyAndLiability", "PolicyholderBenefitsAndClaimsIncurredHomeAndAutomobile", "HealthCareOrganizationHealthCareCostsGross"],
   underwritingExpense: ["OtherUnderwritingExpense", "DeferredPolicyAcquisitionCostAmortizationExpense"],
   // The full combined-ratio numerator in one tag (losses + loss-adjustment + all
   // underwriting expenses), which our component pick of a single expense line misses.
@@ -296,8 +301,11 @@ const CONCEPTS = {
   // InvestmentIncomeNet fills years the primary tag lacks (insurance desk F1: Arch Capital tags
   // only the variant, and read as null for all ten displayed years). Per-year fallback: a filer
   // with the primary tag is untouched.
-  investmentIncome: ["NetInvestmentIncome", "InvestmentIncomeNet"],
-  lossReserves: ["LiabilityForClaimsAndClaimsAdjustmentExpense", "LiabilityForFuturePolicyBenefits"],
+  investmentIncome: ["NetInvestmentIncome", "InvestmentIncomeNet", "InvestmentIncomeInterestAndDividend"],
+  // FPB removed from this chain (managed-care desk F8, ratified 2026-07-21): it made Cigna's
+  // legacy life book read as medical float. Future policy benefits is its own desk line now;
+  // this chain is the claims liability only.
+  lossReserves: ["LiabilityForClaimsAndClaimsAdjustmentExpense"],
 };
 
 // A REIT's top line is rental income, which many tag under a lease or real-estate concept
@@ -1682,9 +1690,15 @@ async function main() {
   let fieldsCarried = 0;
   const carryFields = (f, p) => {
     if (!p?.lines || !f?.lines || f.fy == null || f.fy !== p.fy) return f;
+    // A prior value is carriable only when the fresh record's own anchor-year history carries the
+    // line — proof the figure genuinely exists this year and the current-lines null was a blip.
+    // Without this, the carry resurrects values the stale-current tripwire deliberately nulled
+    // (Centene's dead premium line came back for three refetches running, 2026-07-21), and the
+    // resurrection chains back to the pre-tripwire file forever.
+    const anchorRow = (f.history || []).find((h) => h.fy === f.fy)?.lines;
     for (const k of Object.keys(p.lines)) {
       if (DESK_LINES.has(k)) continue; // deliberate desk withholds stay withheld
-      if (f.lines[k] == null && p.lines[k] != null) { f.lines[k] = p.lines[k]; fieldsCarried++; }
+      if (f.lines[k] == null && p.lines[k] != null && anchorRow?.[k] != null) { f.lines[k] = p.lines[k]; fieldsCarried++; }
     }
     return f;
   };
