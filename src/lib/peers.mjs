@@ -22,6 +22,7 @@
 import { classify, financialKind } from "./archetype.mjs";
 import { topLineRevenue } from "./fundamentals.mjs";
 import { industryLabelOf, shelfOfIndustry, sectorOfIndustry } from "./shelves.mjs";
+import { floatOf } from "./insurers.mjs";
 import reitSubsectors from "../data/reit-subsectors.json" with { type: "json" };
 
 // REITs almost all carry the same SIC (~6798), so the 2-digit-SIC industry tier below can't tell a
@@ -191,17 +192,18 @@ export function peerMedian(peers, fn) {
   return vals.length >= 3 ? med(vals) : null;
 }
 
-// "Yield on float": investment income against the float that funds it. The only float line the
-// pipeline carries is lossReserves — the P&C loss-reserve tag. A LIFE insurer's float lives in
-// future policy benefits and policyholder account balances, tags the pipeline doesn't yet pull, so
-// read against the P&C tag alone the figure prints an impossible "yield" (MetLife 110%, RGA 82% —
-// no float on earth earns that; the denominator is a sliver of the real float). A reading past the
-// plausibility cap is therefore withheld — null, never shown wrong — until a life-float denominator
-// exists in the data. ~15%: comfortably above any real portfolio yield, low enough to catch a
-// wrong-denominator artifact.
+// "Yield on float": investment income against the float that funds it. Since 2026-07-21 the
+// denominator is the insurance desk's full float arithmetic (lib/insurers.mjs floatOf) wherever
+// the Wave A components extract — which is what finally lets a LIFE insurer's yield publish:
+// against the old P&C loss-reserve sliver, MetLife printed an impossible 110% and was withheld;
+// against its real ~$443B float the same income reads ~5%, a number an owner can use. The
+// loss-reserves fallback (with the same plausibility cap) remains for filers whose components
+// don't extract; the cap stays as the wrong-denominator tripwire either way.
 export const FLOAT_YIELD_CAP = 0.15;
 export function floatYield(L) {
-  const v = L && L.investmentIncome != null && L.lossReserves ? L.investmentIncome / L.lossReserves : null;
+  const f = floatOf(L);
+  const denom = f?.value ?? (L?.lossReserves || null);
+  const v = L && L.investmentIncome != null && denom ? L.investmentIncome / denom : null;
   return v != null && v > 0 && v <= FLOAT_YIELD_CAP ? v : null;
 }
 

@@ -257,6 +257,11 @@ export function insuranceLines(facts) {
     if (ic) flows.interestCredited = ic;
     const rm = flowByYear(facts, "LiabilityForFuturePolicyBenefitRemeasurementGainLoss");
     if (rm) flows.fpbRemeasurement = rm;
+    // Market risk benefits (LDTI, 2021+): the variable-annuity guarantee liability, part of life
+    // float under the spec's arithmetic. Short series by construction; VOYA's is dimensioned-only
+    // and therefore honestly absent.
+    const mrb = instantTagByYear(facts, "MarketRiskBenefitLiabilityAmount");
+    if (mrb) instants.marketRiskBenefits = mrb;
   }
 
   // --- the expense-ratio honesty flag (spec F3): the component build is whole only where the

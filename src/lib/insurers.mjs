@@ -39,6 +39,90 @@ export function combinedRatio(L) {
 }
 export function insuranceFloat(L) { return L && L.lossReserves != null ? L.lossReserves : null; }
 export function floatToEquity(L) { return L && L.lossReserves != null && L.stockholdersEquity ? L.lossReserves / L.stockholdersEquity : null; }
+
+// The desk's float arithmetic (insurance Wave A, ratified 2026-07-21): Buffett's definition,
+// computed from the extracted components, with the basis stated and the withholds explicit.
+//
+//   P&C-shaped book: net loss reserves + (unearned premiums − prepaid reinsurance)
+//                    − premiums receivable − DAC
+//   Life-shaped book: future policy benefits (or the combined liability where only that is
+//                    filed) + policyholder deposits + market risk benefits + unearned premiums
+//                    − reinsurance recoverables − DAC − premiums receivable
+//
+// Withholds, per the ratified spec: a P&C computation without its deduction side (the AIG case)
+// returns null rather than an overstated float; a heavy cedent without prepaid reinsurance (the
+// NODK case) returns null rather than a gross-of-reinsurance float. A life computation missing a
+// deduction is returned WITH the missing pieces named — the ratified labeled-basis treatment —
+// because the direction of the error is known and stated. `basis` and `notes` are for display:
+// a float figure never prints without its basis.
+export function floatOf(L) {
+  if (!L) return null;
+  const fpb = L.futurePolicyBenefits ?? null;
+  const combined = L.fpbCombined ?? null;
+  const notes = [];
+  const net = L.lossReservesNet ?? (L.lossReserves != null && L.reinsuranceRecoverables != null ? L.lossReserves - L.reinsuranceRecoverables : null);
+
+  // Formula A — the underwriting (P&C-first) book, whenever the claims stack leads: net loss
+  // reserves + (unearned premiums − prepaid reinsurance) + any life-benefit reserves and deposits
+  // the filer also carries (Chubb's Huatai book) − premiums receivable − DAC. The deduction side
+  // is REQUIRED (the AIG withhold), and a heavy cedent without prepaid reinsurance is withheld
+  // rather than shown gross of the reinsurers' money (the NODK withhold).
+  const pcLeads = net != null && L.unearnedPremiums != null && (fpb == null || net >= fpb);
+  if (pcLeads) {
+    if (L.premiumsReceivable == null || L.dacBalance == null) return null;
+    const ceded = L.cededPremiumsWritten ?? L.cededPremiumsEarned ?? null;
+    const cededShare = ceded != null && L.premiumsEarned ? Math.abs(ceded) / L.premiumsEarned : null;
+    if (L.prepaidReinsurance == null && cededShare != null && cededShare > 0.15) return null;
+    const value = net
+      + (L.unearnedPremiums - (L.prepaidReinsurance || 0))
+      + (fpb || 0) + (L.policyholderDeposits || 0) + (L.marketRiskBenefits || 0)
+      - L.premiumsReceivable - L.dacBalance;
+    if (L.lossReservesNet == null) notes.push("net reserves derived as gross less recoverables");
+    if (fpb) notes.push("life-benefit reserves gross of their reinsurance");
+    return value > 0 ? { value, basis: "pc", notes } : null;
+  }
+
+  // Formula B — the life book: future policy benefits (or the combined liability where only that
+  // is filed — it already contains the unpaid claims, so the two are never summed) + deposits +
+  // market risk benefits + any unearned premiums, less recoverables, DAC and receivables. A
+  // missing deduction is named, per the ratified labeled-basis treatment; where net claims
+  // reserves ride alongside pure FPB, the full recoverables deduction leans conservative (the
+  // claims slice nets twice), which is the direction doctrine tolerates.
+  const base = fpb != null ? fpb + (L.lossReservesNet ?? 0) : combined;
+  if (base == null) return null;
+  let value = base + (L.policyholderDeposits || 0) + (L.marketRiskBenefits || 0) + (L.unearnedPremiums || 0);
+  if (L.reinsuranceRecoverables != null) value -= L.reinsuranceRecoverables; else notes.push("recoverables deduction unavailable");
+  if (L.dacBalance != null) value -= L.dacBalance; else notes.push("DAC deduction unavailable");
+  if (L.premiumsReceivable != null) value -= L.premiumsReceivable; else notes.push("receivables deduction unavailable");
+  return value > 0 ? { value, basis: "life", notes } : null;
+}
+
+// The underwriting result, from the filer's own all-in total (the same band discipline as
+// combinedRatio): what it cost, or paid, to hold the float this year.
+export function underwritingResult(L) {
+  const cr = combinedRatio(L);
+  return cr != null && L.premiumsEarned ? L.premiumsEarned * (1 - cr) : null;
+}
+
+// Cost of float, Buffett's arithmetic: the underwriting loss over the float (negative = an
+// underwriting PROFIT — the insurer was paid to hold other people's money). P&C books only;
+// a life insurer's cost is a crediting spread, not an underwriting result.
+export function costOfFloat(L) {
+  const f = floatOf(L);
+  const uw = underwritingResult(L);
+  return f?.basis === "pc" && uw != null && f.value > 0 ? -uw / f.value : null;
+}
+
+// The life insurer's published cost side, per the ratified spec: spread over crediting — what
+// the portfolio earned less what was credited to policyholders, over the float. (The LDTI
+// remeasurement line is extracted but not yet folded in: its sign polarity is not verified
+// filer-by-filer, and an unverified sign is a wrong number waiting to print.)
+export function spreadOverCrediting(L) {
+  const f = floatOf(L);
+  if (f?.basis !== "life" || !(f.value > 0)) return null;
+  if (L.investmentIncome == null || L.interestCredited == null) return null;
+  return (L.investmentIncome - Math.abs(L.interestCredited)) / f.value;
+}
 export function bookValuePerShare(L) { return L && L.stockholdersEquity != null && L.sharesDiluted ? L.stockholdersEquity / L.sharesDiluted : null; }
 
 export function buildInsurerScorecard(company, subtype = "insurer") {
@@ -57,19 +141,30 @@ export function buildInsurerScorecard(company, subtype = "insurer") {
     note: "What it earns on shareholders' capital, the underwriting result plus what the float earns invested. Durably above the ~10% cost of equity is what compounds book value.",
   };
 
-  const fl = insuranceFloat(L), fe = floatToEquity(L);
-  const floatCheck = fl == null ? none("Float", "Loss reserves weren't found.", "insurance-float") : {
-    title: "Float (reserves)",
+  // The float, on the desk's full arithmetic where the Wave A components extract (basis stated),
+  // falling back to the old reserves-only reading with its honest caveat where they don't.
+  const full = floatOf(L);
+  const fl = full?.value ?? insuranceFloat(L);
+  const fe = fl != null && L.stockholdersEquity ? fl / L.stockholdersEquity : null;
+  const basisNote = full
+    ? (full.notes.length ? ` Basis note: ${full.notes.join("; ")}.` : "")
+    : " Measured here from loss and claim reserves only; it excludes unearned premiums and funds held, so the true float is somewhat larger than shown.";
+  const floatCheck = fl == null ? none("Float", "The float components weren't cleanly tagged, and a partial figure would mislead — withheld rather than approximated.", "insurance-float") : {
+    title: full ? "Float" : "Float (reserves)",
     concept: "insurance-float",
-    value: $(fl), formula: `Loss and claim reserves ${$(fl)}${fe != null ? `, ${fe.toFixed(1)}× equity` : ""}`,
+    value: $(fl),
+    formula: full
+      ? (full.basis === "pc"
+        ? `Net reserves + unearned premiums − prepaid reinsurance − receivables − DAC = ${$(fl)}`
+        : `Policy benefits + deposits + guarantees − recoverables − DAC − receivables = ${$(fl)}`)
+      : `Loss and claim reserves ${$(fl)}${fe != null ? `, ${fe.toFixed(1)}× equity` : ""}`,
     tone: "info", label: fe != null ? `${fe.toFixed(1)}× equity` : "policyholder money held",
-    note: "Money held against future claims and invested in the meantime. Buffett's insight was that good underwriting makes this float cost less than nothing, a pool of other people's money the owners earn on. Measured here from loss and claim reserves only; it excludes unearned premiums and funds held, so the true float is somewhat larger than shown. The larger it is against equity, the more that leverage works, for better or worse.",
+    note: `Money held against future claims and invested in the meantime. Buffett's insight was that good underwriting makes this float cost less than nothing, a pool of other people's money the owners earn on.${basisNote} The larger it is against equity, the more that leverage works, for better or worse.`,
   };
   const inv = L.investmentIncome;
-  // The "% on the float" ratio is withheld above 15%: for a life insurer the tagged lossReserves
-  // is a P&C sliver of the real float, so the raw ratio prints impossibles (MET 130%, RGA 205%) —
-  // the same cap the Peers table applies (2026-07-17 correctness sweep #2). The dollar income stays.
-  const yld = fl && inv != null && inv / fl > 0 && inv / fl <= 0.15 ? inv / fl : null;
+  // Yield on the float: the full-arithmetic denominator where it exists (the 2026-07-21 float
+  // correction), else the old reserves-only ratio behind its plausibility cap.
+  const yld = fl && inv != null && inv / fl > 0 && (full || inv / fl <= 0.15) ? inv / fl : null;
   const invCheck = inv == null ? none("Investment income", "Net investment income wasn't found.", "insurance-float") : {
     title: "Investment income",
     concept: "insurance-float",
@@ -77,6 +172,30 @@ export function buildInsurerScorecard(company, subtype = "insurer") {
     tone: "info", label: yld != null ? `${pc(yld, 1)} on the float` : "earned on investments",
     note: "What the float and capital earned this year. This is the second engine: an insurer that breaks even on underwriting still wins if the float is large and invested well.",
   };
+
+  // The reserve-development honesty check: the company's own restatement of its past promises,
+  // read across the record. Negative = favorable (the past was over-reserved and released);
+  // positive = the past under-reserved, the industry's chronic sin by Buffett's telling. Where a
+  // filer never tags the line (Lincoln), the absence is shown as the fact it is. Some filers
+  // scope the tagged line to their short-duration (P&C-style) book rather than the whole
+  // enterprise; the count reads the line as filed.
+  const devSeries = (company?.history || [])
+    .map((h) => ({ fy: h.fy, v: h?.lines?.reserveDevelopmentPriorYear }))
+    .filter((x) => x.v != null);
+  const devLatest = devSeries.length ? devSeries[devSeries.length - 1] : null;
+  const favYears = devSeries.filter((x) => x.v < 0).length;
+  const unfavYears = devSeries.filter((x) => x.v > 0).length;
+  const developmentCheck = !devSeries.length
+    ? none("Reserve development", "Not disclosed in the filings' structured data — the absence is itself worth knowing on a business whose product is a promise.", "combined-ratio")
+    : {
+      title: "Reserve development",
+      concept: "combined-ratio",
+      value: `${devLatest.v < 0 ? "−" : "+"}${$(Math.abs(devLatest.v))}`,
+      formula: `Prior-year development, FY${devLatest.fy}: ${devLatest.v < 0 ? "favorable (reserves released)" : "unfavorable (past years strengthened)"} · record: ${favYears} favorable, ${unfavYears} unfavorable of ${devSeries.length}`,
+      tone: devLatest.v < 0 ? "good" : "warn",
+      label: devLatest.v < 0 ? "Past promises held" : "Past reserves fell short",
+      note: "Each year an insurer restates what its old accident years actually cost. Persistent favorable development means management reserved honestly and released the cushion; persistent unfavorable development means past profits were overstated by under-reserving — the industry's chronic sin, and the single most tell-tale line an owner can read. Signed as the company files it: negative favorable, positive unfavorable.",
+    };
 
   // Life insurers are a spread-and-book-value business, not a combined-ratio one. Their
   // benefits exceed premiums by design, because claims fall due decades after the premium
@@ -93,10 +212,24 @@ export function buildInsurerScorecard(company, subtype = "insurer") {
       tone: "info", label: "the compounding scoreboard",
       note: "A life insurer is judged the way Berkshire is, by the growth in book value per share over the years as the spread on the float and the mortality and fee margins compound into equity. This is the level today; the record below shows whether it has grown. Note that reported book value swings with interest rates, which mark the bond portfolio up and down through other comprehensive income.",
     };
+    // The published cost side for a life book (ratified 2026-07-21): the spread the portfolio
+    // earns over what is credited to policyholders — never a combined ratio, which reads a
+    // life insurer's designed benefit excess as a permanent "underwriting loss."
+    const spread = spreadOverCrediting(L);
+    const spreadCheck = spread == null ? invCheck : {
+      title: "Spread over crediting",
+      concept: "insurance-float",
+      value: pc(spread, 1),
+      formula: `(Investment income ${$(inv)} − interest credited ${$(Math.abs(L.interestCredited))}) ÷ float ${$(fl)}`,
+      tone: spread > 0.01 ? "good" : spread > 0 ? "ok" : "bad",
+      label: spread > 0 ? "Earning more than it credits" : "Crediting more than it earns",
+      note: "The life insurer's engine in one figure: what the float earns invested, less what is credited to policyholders, as a share of the float. A durable positive spread is the business; a negative one means the promises cost more than the portfolio produces.",
+    };
     return {
       sections: [
-        { heading: "Is it a good business?", checks: [roeCheck, invCheck] },
+        { heading: "Is it a good business?", checks: [roeCheck, spreadCheck] },
         { heading: "The float and book value", checks: [floatCheck, bvpsCheck] },
+        { heading: "The reserves", checks: [developmentCheck] },
       ],
     };
   }
@@ -118,10 +251,26 @@ export function buildInsurerScorecard(company, subtype = "insurer") {
     note: "Claims as a share of premiums (the expense side was not cleanly tagged, so we show the loss ratio alone rather than a full combined ratio). Lower is better; the rest of underwriting cost sits on top of this.",
   } : none("Combined ratio", "Premiums or claims weren't found in the filing data.", "combined-ratio");
 
+  // Cost of float, the Buffett line itself: negative cost means the insurer was PAID to hold
+  // other people's money. Computable only on the full float arithmetic with a banded
+  // underwriting total; withheld otherwise.
+  const cof = costOfFloat(L);
+  const costCheck = cof == null
+    ? none("Cost of float", "Needs the full float arithmetic and a cleanly tagged underwriting total; a partial figure would mislead.", "insurance-float")
+    : {
+      title: "Cost of float",
+      concept: "insurance-float",
+      value: pc(cof, 1),
+      formula: `Underwriting ${cof <= 0 ? "profit" : "loss"} ${$(Math.abs(underwritingResult(L)))} ÷ float ${$(fl)}`,
+      tone: cof <= 0 ? "good" : cof < 0.03 ? "ok" : "warn",
+      label: cof <= 0 ? "Paid to hold the money" : "Pays for its float",
+      note: "Buffett's own yardstick: the underwriting result as the price of holding the float. At or below zero, policyholders are paying the company to invest their money — the gold standard. A modest positive cost can still beat borrowing; a chronic high cost means the float is expensive leverage.",
+    };
   return {
     sections: [
       { heading: "Is it a good business?", checks: [combCheck, roeCheck] },
       { heading: "The float", checks: [floatCheck, invCheck] },
+      { heading: "The cost and the reserves", checks: [costCheck, developmentCheck] },
     ],
   };
 }

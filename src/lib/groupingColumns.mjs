@@ -28,6 +28,7 @@ import {
   fmtMoney,
 } from "./fundamentals.mjs";
 import { tangibleEquity, returnOnTangibleEquity } from "./financials.mjs";
+import { floatOf } from "./insurers.mjs";
 import { ffo } from "./reits.mjs";
 import { financialKind, financialProfile } from "./archetype.mjs";
 import { adrBasis } from "./adrBasis.mjs";
@@ -56,6 +57,8 @@ const COL = {
   tangibleEquity: { key: "tangibleEquity", label: "Tangible equity", basis: "equity − goodwill − intangibles · latest FY, USD", type: "money" },
   premiums: { key: "premiums", label: "Premiums earned", basis: "latest fiscal year, USD", type: "money" },
   investmentIncome: { key: "investmentIncome", label: "Investment income", basis: "latest fiscal year, USD", type: "money" },
+  insFloat: { key: "insFloat", label: "Float", basis: "reserves + unearned premiums − receivables − DAC · latest FY, USD", type: "money" },
+  reserveDev: { key: "reserveDev", label: "Reserve development", basis: "prior-year · negative = favorable · latest FY, USD", type: "money" },
   ffo: { key: "ffo", label: "Funds from operations", basis: "net income + depreciation − property gains · latest FY, USD", type: "money" },
   dividendsPaid: { key: "dividendsPaid", label: "Dividends paid", basis: "latest fiscal year, USD", type: "money" },
   totalAssets: { key: "totalAssets", label: "Total assets", basis: "latest fiscal year, USD", type: "money" },
@@ -81,10 +84,13 @@ export const FAMILIES = {
     name: "Lenders",
     columns: [COL.revenue, COL.netInterestIncome, COL.deposits, COL.netIncome, COL.rote, COL.tangibleEquity],
   },
-  // Insurers: premiums and the float's investment income, then the same hard-capital read.
+  // Insurers: premiums, the float and its development honesty line, the float's investment
+  // income, then the same hard-capital read. Float and development are the insurance desk's
+  // Wave A lines (2026-07-21); a member whose components don't extract shows "—", never a
+  // partial figure.
   insurer: {
     name: "Insurers",
-    columns: [COL.premiums, COL.investmentIncome, COL.netIncome, COL.rote, COL.tangibleEquity],
+    columns: [COL.premiums, COL.insFloat, COL.reserveDev, COL.investmentIncome, COL.netIncome, COL.rote, COL.tangibleEquity],
   },
   // Property: rent, the REIT earnings measure, the distribution, and the leverage every REIT runs.
   property: {
@@ -258,6 +264,12 @@ export function groupingCells(company, familyKey, terms) {
         return money(tangibleEquity(L));
       case "premiums":
         return money(L.premiumsEarned);
+      case "insFloat": {
+        const f = floatOf(L);
+        return f ? money(f.value) : DASH;
+      }
+      case "reserveDev":
+        return money(L.reserveDevelopmentPriorYear);
       case "investmentIncome":
         return money(L.investmentIncome);
       case "ffo":
