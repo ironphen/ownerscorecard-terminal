@@ -1,0 +1,152 @@
+// insuranceLinesTest.mjs — case law for the insurance desk's Wave A extraction
+// (scripts/insuranceLines.mjs; spec at docs/insurance-desk-survey.md, ratified 2026-07-21).
+//
+// The rules under test: tag-succession seams stitch ONLY through the overlap-equality gate (a
+// disagreeing predecessor is dropped whole, never spliced); signed facts keep their filed sign;
+// a partial-scope premiums-written series (the Assurant case) is withheld by the written/earned
+// band; negative receivables are nulled; the DAC+VOBA fallback carries its impurity flag; the
+// policyholder-deposit element map picks the filer's longest-lived element; net reserves may not
+// exceed gross; and the claims rollforward fills only a series it has proven identical to.
+import { insuranceLines, fillClaimsFromRollforward, stitchGenerations, hasInsuranceData } from "./insuranceLines.mjs";
+
+let failed = 0;
+const t = (name, ok, got) => { if (!ok) { failed++; console.error(`✗ ${name}${got !== undefined ? ` -> ${JSON.stringify(got)}` : ""}`); } else console.log(`ok ${name}`); };
+
+// Build a minimal companyfacts object. flows: durations ~1y; instants: end only.
+const FY = (y) => ({ start: `${y}-01-01`, end: `${y}-12-31` });
+const flowFact = (vals) => ({ units: { USD: Object.entries(vals).map(([y, val]) => ({ ...FY(+y), val, form: "10-K", filed: `${+y + 1}-02-15` })) } });
+const instFact = (vals) => ({ units: { USD: Object.entries(vals).map(([y, val]) => ({ end: `${y}-12-31`, val, form: "10-K", filed: `${+y + 1}-02-15` })) } });
+const facts = (tags) => ({ facts: { "us-gaap": tags } });
+
+// --- the seam gate itself ---
+{
+  const agree = stitchGenerations([{ 2022: 100, 2023: 110 }, { 2019: 80, 2020: 90, 2022: 100 }], { label: "x", absFloor: 0 });
+  t("agreeing generations stitch (older fills the early years)", agree.series[2019] === 80 && agree.series[2023] === 110 && agree.warns.length === 0, agree);
+  const clash = stitchGenerations([{ 2022: 100, 2023: 110 }, { 2019: 80, 2022: 250 }], { label: "x", absFloor: 0 });
+  t("a disagreeing predecessor is dropped whole, with a warning", clash.series[2019] === undefined && clash.warns.length === 1, clash);
+}
+
+// --- development: sign preserved, predecessor stitched through the deprecation seam ---
+{
+  const f = facts({
+    PremiumsEarnedNet: flowFact({ 2013: 900, 2023: 1000, 2024: 1100 }),
+    SupplementalInformationForPropertyCasualtyInsuranceUnderwritersPriorYearClaimsAndClaimsAdjustmentExpense: flowFact({ 2016: -40e6, 2023: -55e6, 2024: 30e6 }),
+    LiabilityForUnpaidClaimsAndClaimsAdjustmentExpenseIncurredClaimsPriorYears: flowFact({ 2013: -20e6, 2016: -40e6 }),
+  });
+  const { flows } = insuranceLines(f);
+  const dev = flows.reserveDevelopmentPriorYear;
+  t("development keeps the filed sign (negative favorable, positive unfavorable)", dev[2023] === -55e6 && dev[2024] === 30e6, dev);
+  t("the predecessor extends the series through the deprecation seam (overlap agreed)", dev[2013] === -20e6, dev);
+}
+
+// --- premiums written: the partial-scope withhold (the Assurant case) ---
+{
+  const f = facts({
+    PremiumsEarnedNet: flowFact({ 2021: 10000, 2022: 10200, 2023: 10400, 2024: 10500 }),
+    SupplementalInformationForPropertyCasualtyInsuranceUnderwritersPremiumsWritten: flowFact({ 2021: 3500, 2022: 3600, 2023: 3600, 2024: 3600 }),
+  });
+  const { flows, flags } = insuranceLines(f);
+  t("a P&C-sliver written series against enterprise earned is withheld", flows.premiumsWrittenNet === undefined, flows.premiumsWrittenNet);
+  t("the withhold is stated in the warnings", (flags.warns || []).some((w) => w.includes("partial-scope")), flags.warns);
+}
+{
+  const f = facts({
+    PremiumsEarnedNet: flowFact({ 2022: 10000, 2023: 10500, 2024: 11000 }),
+    PremiumsWrittenNet: flowFact({ 2022: 10400, 2023: 10900, 2024: 11500 }),
+  });
+  const { flows } = insuranceLines(f);
+  t("a whole-enterprise written series passes the band", flows.premiumsWrittenNet?.[2024] === 11500, flows.premiumsWrittenNet);
+}
+
+// --- receivable sign gate, net-vs-gross gate, DAC impurity flag ---
+{
+  const f = facts({
+    PremiumsEarnedNet: flowFact({ 2023: 1000, 2024: 1100 }),
+    PremiumsReceivableAtCarryingValue: instFact({ 2023: 500e6, 2024: -30e6 }),
+    LiabilityForClaimsAndClaimsAdjustmentExpense: instFact({ 2023: 900e6, 2024: 950e6 }),
+    LiabilityForUnpaidClaimsAndClaimsAdjustmentExpenseNet: instFact({ 2023: 700e6, 2024: 1200e6 }),
+    DeferredPolicyAcquisitionCostsAndValueOfBusinessAcquired: instFact({ 2023: 80e6, 2024: 85e6 }),
+  });
+  const { instants, flags } = insuranceLines(f);
+  t("a negative premiums receivable is nulled, the clean year kept", instants.premiumsReceivable[2023] === 500e6 && instants.premiumsReceivable[2024] == null, instants.premiumsReceivable);
+  t("net reserves exceeding gross are nulled for that year", instants.lossReservesNet[2023] === 700e6 && instants.lossReservesNet[2024] == null, instants.lossReservesNet);
+  t("the DAC+VOBA fallback carries its impurity flag", instants.dacBalance[2024] === 85e6 && flags.dacIncludesVoba === true, flags);
+}
+
+// --- policyholder deposits: the filer's element is the longest series; eras merge only when overlap agrees ---
+{
+  const f = facts({
+    PremiumsEarnedNet: flowFact({ 2023: 1000, 2024: 1100 }),
+    PolicyholderContractDeposits: instFact({ 2019: 100e9, 2020: 105e9, 2021: 108e9, 2022: 110e9 }),
+    PolicyholderFunds: instFact({ 2021: 108e9, 2022: 110e9, 2023: 112e9 }),
+  });
+  const { instants } = insuranceLines(f);
+  const d = instants.policyholderDeposits;
+  t("the longest-lived element is primary and the agreeing sibling extends it", d[2019] === 100e9 && d[2023] === 112e9, d);
+}
+
+// --- separate accounts: the pass-through identity is checked, the liability is the line ---
+{
+  const f = facts({
+    PremiumsEarnedNet: flowFact({ 2024: 1000 }),
+    SeparateAccountsLiability: instFact({ 2024: 180e9 }),
+    SeparateAccountAssets: instFact({ 2024: 180.5e9 }),
+  });
+  const { instants, flags } = insuranceLines(f);
+  t("separate accounts extract as the liability, identity within tolerance", instants.separateAccountsLiability[2024] === 180e9 && !(flags.warns || []).length, flags.warns);
+}
+
+// --- F2: the rollforward fills only a proven-identical claims series ---
+{
+  const f = facts({
+    LiabilityForUnpaidClaimsAndClaimsAdjustmentExpenseIncurredClaims1: flowFact({ 2022: 400e6, 2023: 420e6, 2024: 450e6 }),
+  });
+  const { filled, usedRollforward } = fillClaimsFromRollforward({ 2022: 400e6, 2023: 420e6 }, f);
+  t("an overlap-verified rollforward fills the dark year", usedRollforward === true && filled[2024] === 450e6, filled);
+  const noAgree = fillClaimsFromRollforward({ 2022: 900e6, 2023: 950e6 }, f);
+  t("a rollforward that never matched the series fills nothing", noAgree.usedRollforward === false && noAgree.filled[2024] == null, noAgree.filled);
+}
+
+// --- the LDTI-transition trap (hostile verify, 2026-07-21): a restatement filing tags an
+// OPENING-balance instant (Jan-1 transition date, or a Q1 balance in a 10-K/A) with a later
+// filed date. The year's balance is its LAST instant; MetLife's FY2021 FPB must read the
+// 2021-12-31 balance, never the later-filed 2021-01-01 transition figure.
+{
+  const f = facts({
+    PremiumsEarnedNet: flowFact({ 2021: 1000, 2022: 1100 }),
+    LiabilityForFuturePolicyBenefits: { units: { USD: [
+      { end: "2021-12-31", val: 199.7e9, form: "10-K", filed: "2022-02-18" },
+      { end: "2021-01-01", val: 224.4e9, form: "10-K", filed: "2024-02-16" },
+      { end: "2021-03-31", val: 210e9, form: "10-K/A", filed: "2023-03-30" },
+      { end: "2022-12-31", val: 187.2e9, form: "10-K", filed: "2023-02-23" },
+    ] } },
+  });
+  const { instants } = insuranceLines(f);
+  t("an opening-balance or Q1 instant never beats the year-end balance", instants.futurePolicyBenefits[2021] === 199.7e9 && instants.futurePolicyBenefits[2022] === 187.2e9, instants.futurePolicyBenefits);
+}
+{
+  const f = facts({
+    PremiumsEarnedNet: flowFact({ 2021: 1000 }),
+    UnearnedPremiums: { units: { USD: [
+      { end: "2021-12-31", val: 10e9, form: "10-K", filed: "2022-02-18" },
+      { end: "2021-12-31", val: 10.2e9, form: "10-K", filed: "2023-02-20" },
+    ] } },
+  });
+  const { instants } = insuranceLines(f);
+  t("a restated YEAR-END balance still wins on filed date", instants.unearnedPremiums[2021] === 10.2e9, instants.unearnedPremiums);
+}
+
+// --- the fill gate anchors on the seam-adjacent year: older overlap drift does not qualify ---
+{
+  const f = facts({
+    LiabilityForUnpaidClaimsAndClaimsAdjustmentExpenseIncurredClaims1: flowFact({ 2016: 411e6, 2022: 400e6, 2023: 425e6, 2024: 450e6 }),
+  });
+  const r = fillClaimsFromRollforward({ 2016: 410e6, 2022: 400e6, 2023: 420e6 }, f);
+  t("a seam year off by >1% blocks the fill even when an older year agrees", r.usedRollforward === false, r);
+}
+
+// --- the entry ticket: no premiums, no insurance lines ---
+t("a non-insurer is untouched", hasInsuranceData(facts({ Revenues: flowFact({ 2024: 5e9 }) })) === false);
+
+if (failed) { console.error(`\n❌ insuranceLinesTest: ${failed} failure(s).`); process.exit(1); }
+console.log("\n✅ insuranceLinesTest passed.");

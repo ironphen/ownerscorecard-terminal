@@ -20,6 +20,7 @@ import { normalizeShareScale, majorityShareRef } from "../src/lib/shareScale.mjs
 import { reconcileLeaseLadder } from "../src/lib/leases.mjs";
 import { compactJson } from "../src/lib/dataFile.mjs";
 import { buildCikMap, CIK_OVERRIDE, resolveCikLive } from "./cikResolve.mjs";
+import { hasInsuranceData, insuranceLines, fillClaimsFromRollforward } from "./insuranceLines.mjs";
 
 const UA =
   process.env.SEC_USER_AGENT ||
@@ -276,7 +277,10 @@ const CONCEPTS = {
   // The full combined-ratio numerator in one tag (losses + loss-adjustment + all
   // underwriting expenses), which our component pick of a single expense line misses.
   lossesAndExpenses: ["BenefitsLossesAndExpenses", "PolicyholderBenefitsAndClaimsIncurredNetAndOtherUnderwritingExpense"],
-  investmentIncome: ["NetInvestmentIncome"],
+  // InvestmentIncomeNet fills years the primary tag lacks (insurance desk F1: Arch Capital tags
+  // only the variant, and read as null for all ten displayed years). Per-year fallback: a filer
+  // with the primary tag is untouched.
+  investmentIncome: ["NetInvestmentIncome", "InvestmentIncomeNet"],
   lossReserves: ["LiabilityForClaimsAndClaimsAdjustmentExpense", "LiabilityForFuturePolicyBenefits"],
 };
 
@@ -1247,6 +1251,37 @@ async function main() {
       netPPE: collectInstant(facts, CONCEPTS.netPPE),
       operatingLeaseAsset: collectInstant(facts, CONCEPTS.operatingLeaseAsset),
     };
+    // The insurance desk's Wave A lines (scripts/insuranceLines.mjs): float components, the
+    // discipline lines, and the reserve-development honesty meter, each behind its own gate.
+    // Only filers carrying premiums data are touched; everyone else pays nothing here. F2: missing
+    // claimsIncurred years fill from the reserve rollforward only where the two series proved
+    // identical in overlap (Markel's dark FY2024-25).
+    const isInsuranceFiler = hasInsuranceData(facts);
+    const ins = isInsuranceFiler ? insuranceLines(facts) : null;
+    let claimsFillUsed = false;
+    if (ins) {
+      const { filled, usedRollforward } = fillClaimsFromRollforward(ha.claimsIncurred, facts);
+      if (usedRollforward) { ha.claimsIncurred = filled; claimsFillUsed = true; console.log(`  ${ticker}: claimsIncurred filled from reserve rollforward (overlap-verified)`); }
+      for (const w of ins.flags?.warns || []) console.warn(`  ! ${ticker} insurance: ${w}`);
+    }
+    const insYear = (fy) => {
+      if (!ins) return {};
+      const o = {};
+      for (const [line, series] of Object.entries(ins.flows)) if (series[fy] != null) o[line] = series[fy];
+      for (const [line, series] of Object.entries(ins.instants)) if (series[fy] != null) o[line] = series[fy];
+      return o;
+    };
+    const insLatest = () => {
+      if (!ins) return {};
+      const o = {};
+      const latestOf = (series) => { const fys = Object.keys(series).map(Number).filter((fy) => series[fy] != null); return fys.length ? series[Math.max(...fys)] : null; };
+      for (const [line, series] of Object.entries(ins.flows)) { const v = latestOf(series); if (v != null) o[line] = v; }
+      for (const [line, series] of Object.entries(ins.instants)) { const v = latestOf(series); if (v != null) o[line] = v; }
+      // The F2 fill extends the current-lines claims figure too (the spread lands after the core
+      // pick, so an overlap-verified rollforward value replaces a dark or stale one).
+      if (claimsFillUsed) { const v = latestOf(ha.claimsIncurred); if (v != null) o.claimsIncurred = v; }
+      return o;
+    };
     const history = Object.keys(ha.revenue)
       .map(Number)
       .sort((a, b) => a - b)
@@ -1301,6 +1336,7 @@ async function main() {
           lossesAndExpenses: ha.lossesAndExpenses[fy] ?? null,
           investmentIncome: ha.investmentIncome[fy] ?? null,
           lossReserves: hi.lossReserves[fy] ?? null,
+          ...insYear(fy),
         },
       }));
 
@@ -1507,7 +1543,11 @@ async function main() {
         lossesAndExpenses: pick(CONCEPTS.lossesAndExpenses),
         investmentIncome: pick(CONCEPTS.investmentIncome),
         lossReserves: inst(CONCEPTS.lossReserves),
+        ...insLatest(),
       },
+      // The insurance desk's per-filer flags (DAC-includes-VOBA impurity, gate warnings) travel with
+      // the record so the display layer can label what the extraction had to decide.
+      ...(ins && (ins.flags.dacIncludesVoba || ins.flags.warns?.length) ? { insuranceFlags: ins.flags } : {}),
       // The lease-maturity ladder (operating + finance), from the clean ASC 842 XBRL buckets. Each ladder
       // is reconciled (buckets sum to the undiscounted total; total less imputed interest = the discounted
       // liability) and stored only if it ties out — a self-validating wall, the companion to the debt one.
