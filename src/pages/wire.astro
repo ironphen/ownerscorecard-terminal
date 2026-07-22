@@ -4,7 +4,7 @@ import wire from "../data/wire.json";
 import fundamentals from "../data/fundamentals.json";
 import upcoming from "../data/upcoming.json";
 import { perfLine } from "../lib/wirePerf.mjs";
-import { isSteadyRhythm, rollToBusinessDay, nextBusinessDays } from "../lib/filingRhythm.mjs";
+import { isSteadyRhythm, rollToBusinessDay, nextBusinessDays, monthPhrase } from "../lib/filingRhythm.mjs";
 
 const known = new Set((fundamentals.companies || []).map((c) => String(c.ticker).toUpperCase()));
 const items = wire?.items || [];
@@ -41,11 +41,6 @@ const nameOf = new Map((fundamentals.companies || []).map((c) => [String(c.ticke
 const today = new Date().toISOString().slice(0, 10);
 const windowDays = new Set(nextBusinessDays(rollToBusinessDay(today), 2));
 const alreadyFiled = new Set(items.map((it) => `${String(it.ticker).toUpperCase()}|${it.form}`));
-const monthPhrase = (iso) => {
-  const d = new Date(iso + "T00:00:00Z");
-  const part = d.getUTCDate() <= 10 ? "early" : d.getUTCDate() <= 20 ? "mid" : "late";
-  return `${part} ${d.toLocaleDateString("en-US", { month: "long", timeZone: "UTC" })}`;
-};
 const dueSoon = Object.entries(upcoming.companies || {})
   .map(([t, c]) => ({ t, ...c }))
   .filter((c) => c.expected && windowDays.has(rollToBusinessDay(c.expected)) && !alreadyFiled.has(`${c.t}|${c.nextForm}`))

@@ -18,6 +18,15 @@
 //   Federal holidays are not modeled: a company whose window crosses one appears a day early,
 //   still within "coming days" — a modest overstatement of urgency, never a missed name.
 
+// Month-level phrase for a COMPUTED period end ("late June"): the precision the arithmetic honestly
+// supports (52/53-week calendars drift by days), shared by the wire's coming-due band and the company
+// page's next-report line so the two surfaces speak identically.
+export const monthPhrase = (iso) => {
+  const d = new Date(iso + "T00:00:00Z");
+  const part = d.getUTCDate() <= 10 ? "early" : d.getUTCDate() <= 20 ? "mid" : "late";
+  return `${part} ${d.toLocaleDateString("en-US", { month: "long", timeZone: "UTC" })}`;
+};
+
 export const median = (xs) => {
   const s = [...xs].sort((a, b) => a - b);
   return s.length ? s[Math.floor(s.length / 2)] : null;

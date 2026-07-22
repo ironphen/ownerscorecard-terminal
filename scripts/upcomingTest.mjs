@@ -8,7 +8,7 @@
 // guess; and the printed surface never carries a computed date (the wire renders month-level
 // phrases and day-count facts — asserted here by the shape of what's stored).
 import { rhythmOf } from "./fetchUpcoming.mjs";
-import { isSteadyRhythm, rollToBusinessDay, nextBusinessDays } from "../src/lib/filingRhythm.mjs";
+import { isSteadyRhythm, rollToBusinessDay, nextBusinessDays, monthPhrase } from "../src/lib/filingRhythm.mjs";
 
 let failed = 0;
 const t = (name, ok, got) => { if (!ok) { failed++; console.error(`✗ ${name}${got !== undefined ? ` -> ${JSON.stringify(got)}` : ""}`); } else console.log(`ok ${name}`); };
@@ -120,6 +120,12 @@ t("a Saturday expectation rolls to Monday", rollToBusinessDay("2026-07-25") === 
 t("a business day stands", rollToBusinessDay("2026-07-21") === "2026-07-21");
 t("Friday's two filing days are Friday and Monday", JSON.stringify(nextBusinessDays("2026-07-24", 2)) === JSON.stringify(["2026-07-24", "2026-07-27"]));
 t("Tuesday's two filing days are Tuesday and Wednesday", JSON.stringify(nextBusinessDays("2026-07-21", 2)) === JSON.stringify(["2026-07-21", "2026-07-22"]));
+
+// The shared month-level phrase for computed period ends — the precision the arithmetic honestly
+// supports, spoken identically by the wire band and the company page's next-report line.
+t("monthPhrase: day 10 is early, day 11 is mid", monthPhrase("2026-06-10") === "early June" && monthPhrase("2026-06-11") === "mid June");
+t("monthPhrase: day 20 is mid, day 21 is late", monthPhrase("2026-06-20") === "mid June" && monthPhrase("2026-06-21") === "late June");
+t("monthPhrase: month boundaries hold in UTC", monthPhrase("2026-07-01") === "early July" && monthPhrase("2026-06-30") === "late June");
 
 if (failed) { console.error(`\n❌ upcomingTest: ${failed} failure(s).`); process.exit(1); }
 console.log("\n✅ upcomingTest passed.");
