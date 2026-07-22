@@ -1,8 +1,13 @@
 // Offline regression for the peer engine. No network: a small synthetic universe asserts that peers are
-// drawn from the same economic ENGINE (a bank with banks, never a grocer or an automaker), ranked by
-// structural likeness (scale, sub-industry, capital intensity), and that the distribution helper places a
-// value with a median and a percentile rather than crowning a winner. Run with `npm test`.
+// drawn TAXONOMY-FIRST (the same industry label the heading and the /groupings tables use — the
+// 2026-07-21 alignment; before it, SIC-digit distance seated Airbnb beside Shopify under a Hotels
+// heading), that a financial subject keeps its kind, that thin labels widen honestly (shelf → sector →
+// model, the basis naming the rung), ranked by structural likeness, and that the distribution helper
+// places a value with a median and a percentile rather than crowning a winner. A sampled sweep of the
+// real pool then holds the alignment floor. Run with `npm test`.
 import { selectPeers, peerStat, throughCycleMetric, peerMedian, floatYield, FLOAT_YIELD_CAP } from "../src/lib/peers.mjs";
+import { industryLabelOf, shelfOfIndustry } from "../src/lib/shelves.mjs";
+import { readFileSync } from "node:fs";
 
 let pass = 0, fail = 0;
 const check = (name, cond) => { console.log((cond ? "ok   " : "FAIL ") + name); cond ? pass++ : fail++; };
@@ -66,6 +71,65 @@ const rt = reitResult.peers.map((p) => p.ticker);
 check("a REIT peers within its NAREIT subsector (net-lease with net-lease)", rt.includes("NNN") && rt.includes("ADC") && rt.includes("WPC"));
 check("a REIT is not peered across subsectors (no mall or tower beside a net-lease trust)", !rt.includes("SPG") && !rt.includes("KIM") && !rt.includes("AMT") && !rt.includes("CCI"));
 check("selectPeers reports the REIT subsector", reitResult.subsector === "net-lease");
+
+// ---- the taxonomy alignment (2026-07-21) ----
+// The bench under a heading that names an industry label is drawn from that label, even when a company
+// in a NEIGHBORING label sits closer by SIC digits and scale. Gold miners bench with gold miners; the
+// identically-sized base-metal miners next door stay off the bench.
+const gold = (ticker, rev) => co(ticker, "1040", rev, rev * 0.15);
+const metal = (ticker, rev) => co(ticker, "1000", rev, rev * 0.15);
+const GOLD1 = gold("GOLD1", 10e9);
+const mineUniv = [GOLD1, gold("GOLD2", 1e9), gold("GOLD3", 40e9), gold("GOLD4", 0.5e9), metal("METAL1", 10e9), metal("METAL2", 11e9)];
+const mineResult = selectPeers(GOLD1, mineUniv);
+const mt = mineResult.peers.map((p) => p.ticker);
+check("same-label peers win over closer-SIC-and-scale neighbors (gold with gold)", mt.includes("GOLD2") && mt.includes("GOLD3") && mt.includes("GOLD4"));
+check("a neighboring label's companies stay off the bench even at identical scale", !mt.includes("METAL1") && !mt.includes("METAL2"));
+check("the basis names the industry rung", mineResult.basis === "industry");
+
+// A thin label widens honestly: with one same-label peer, the bench widens to the shelf's sibling
+// industries (or the sector where the shelf has no siblings), and the basis says so — it never claims
+// "industry" for a bench it could not draw from the label. The expected rung is computed from the live
+// shelf curation, so a re-shelving cannot silently break the test.
+const thinUniv = [GOLD1, gold("GOLD2", 1e9), metal("METAL1", 10e9), metal("METAL2", 11e9), metal("METAL3", 9e9)];
+const thinResult = selectPeers(GOLD1, thinUniv);
+{
+  const goldShelf = shelfOfIndustry(industryLabelOf(GOLD1));
+  const metalLabel = industryLabelOf(thinUniv[2]);
+  const sameShelf = !!goldShelf && goldShelf.industries.some((i) => i.label === metalLabel);
+  const expected = sameShelf ? "shelf" : "sector";
+  check(`a thin label widens with an honest basis (${expected}, never a false "industry")`, thinResult.basis === expected && thinResult.peers.length >= 3);
+}
+
+// The real pool, sampled: the alignment holds in production data, not just fixtures. Every sampled
+// subject whose label holds enough entities must bench entirely within its own label (REIT subsector
+// benches are the deliberate finer-than-label exception). Floor at 99% with a sample step of 10 so the
+// sweep stays fast; a regression to SIC-distance benching craters this immediately.
+{
+  const fund = JSON.parse(readFileSync(new URL("../src/data/fundamentals.json", import.meta.url), "utf8"));
+  const all = fund.companies || [];
+  const labelCount = new Map();
+  for (const c of all) { const l = industryLabelOf(c); if (l) labelCount.set(l, (labelCount.get(l) || 0) + 1); }
+  let checked = 0, clean = 0;
+  for (let i = 0; i < all.length; i += 10) {
+    const c = all[i];
+    const label = industryLabelOf(c);
+    if (!label || (labelCount.get(label) || 0) < 5) continue;
+    const r = selectPeers(c, all);
+    if (!r.peers.length || r.subsector) continue;
+    checked++;
+    if (r.peers.every((p) => industryLabelOf(p) === label)) clean++;
+  }
+  check(`real-pool alignment floor: ${clean}/${checked} sampled benches fully same-label (≥99%)`, checked > 50 && clean / checked >= 0.99);
+
+  // The taxonomy corrections that the alignment surfaced, pinned: the 4700 travel-services bucket no
+  // longer carries the logistics spinouts into Hotels & Resorts, the cruise lines sail together, and
+  // Texas Pacific Land (a C-corp, never a REIT) is out of the REIT benches.
+  const labelOfTicker = (t) => { const c = all.find((x) => x.ticker === t); return c ? industryLabelOf(c) : null; };
+  check("GXO/XPO/RXO carry Trucking & Logistics, not Hotels & Resorts", ["GXO", "XPO", "RXO"].every((t) => labelOfTicker(t) === null || labelOfTicker(t) === "Trucking & Logistics"));
+  check("RCL/NCLH/LIND carry Cruise Lines, not Marine Shipping", ["RCL", "NCLH", "LIND"].every((t) => labelOfTicker(t) === null || labelOfTicker(t) === "Cruise Lines"));
+  const epr = all.find((x) => x.ticker === "EPR");
+  check("TPL sits in no REIT bench", !epr || !selectPeers(epr, all).peers.some((p) => p.ticker === "TPL"));
+}
 
 // The distribution helper: median, the subject's percentile, the band — context, no winner.
 const s = peerStat([0.10, 0.12, 0.14, 0.16, 0.18], 0.16);

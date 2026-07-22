@@ -1,11 +1,18 @@
 // The peer engine. A number means nothing alone — 18% ROIC is wonderful for a grocer and mediocre for
 // software — so the job here is to assemble a set of TRUE economic peers and place the company's figures
-// in their distribution. Two rules keep it honest:
+// in their distribution. Three rules keep it honest:
 //
-//   1. Peer by the economic ENGINE first, not the SIC bucket. SIC is coarse — it seats a software firm
-//      beside a contract manufacturer — so we start from companies that share the same model (a bank with
-//      banks, an asset-light platform with platforms) and use SIC only to refine within that pool.
-//   2. Rank candidates by STRUCTURAL likeness only — sub-industry, scale, capital intensity — never by
+//   1. Peer by the site's own taxonomy first. The company page's heading names the industry label the
+//      taxonomy assigns ("Peers, Hotels & Resorts"), and the /groupings tables seat every company by
+//      that same label — so the bench under the heading must be drawn from it, or the heading lies.
+//      (Before 2026-07-21 the bench was drawn by raw SIC-digit distance inside an economic-model pool,
+//      and only 49% of benches were fully same-label: Airbnb sat beside Shopify under a Hotels heading.)
+//      The widening ladder when a label is thin is explicit and the heading names each rung: the
+//      industry label, then its shelf, then its sector, then the economic model — never silently.
+//   2. Within a pool, a financial subject keeps its financial kind: a bank benches with banks, a life
+//      insurer with life insurers, even inside a mixed label — the comparison columns are kind-specific,
+//      and a figure printed on the wrong kind's lens is a wrong figure.
+//   3. Rank candidates by STRUCTURAL likeness only — sub-industry, scale, capital intensity — never by
 //      the performance metrics the comparison then reads. Selecting on the very numbers you compare would
 //      rig the distribution; structure is chosen blind to performance, so the comparison stays meaningful.
 //
@@ -14,6 +21,7 @@
 
 import { classify, financialKind } from "./archetype.mjs";
 import { topLineRevenue } from "./fundamentals.mjs";
+import { industryLabelOf, shelfOfIndustry, sectorOfIndustry } from "./shelves.mjs";
 import reitSubsectors from "../data/reit-subsectors.json" with { type: "json" };
 
 // REITs almost all carry the same SIC (~6798), so the 2-digit-SIC industry tier below can't tell a
@@ -48,26 +56,40 @@ const intensityOf = (c) => {
   return r && r > 0 && L.capex != null ? Math.abs(L.capex) / r : null;
 };
 
-// Find the closest peers by economic likeness. Returns the chosen peers and the basis used, so the heading
-// can stay honest (an industry group named by its industry, or an economic-model match that says so).
+// Find the closest peers, taxonomy-first. Returns the chosen peers and the basis used, so the heading
+// can stay honest: "industry" (the label pool), "shelf" (the label was thin; siblings on the same shelf,
+// named), "sector" (the shelf was thin too), or "model" (the last resort, the economic-model pool).
 export function selectPeers(company, all, n = 7) {
   const myEngine = engineOf(company);
   const mySic = String(company.sic || "");
   const myRev = topLineRevenue(company.lines || {}, company) || 0;
   const myInt = intensityOf(company);
+  const myLabel = industryLabelOf(company);
+  const myShelf = myLabel ? shelfOfIndustry(myLabel) : null;
+  const mySector = myLabel ? sectorOfIndustry(myLabel) : null;
+  const myKind = financialKind(company);
 
-  // The candidate pool: same economic engine, the company excluded — and one entry per ENTITY, so a
-  // multi-share-class company (Alphabet's GOOG/GOOGL, Berkshire's A/B) counts once and doesn't crowd out
-  // real peers with four copies of itself. Dedupe by CIK; the company's own sibling classes are excluded
-  // too, since they are the same business, not a peer.
+  // The candidate universe: everyone but the company, one entry per ENTITY — a multi-share-class company
+  // (Alphabet's GOOG/GOOGL, Berkshire's A/B) counts once and doesn't crowd out real peers with copies of
+  // itself. Dedupe by CIK; the company's own sibling classes are excluded too — same business, not a peer.
   const seen = new Set(company.cik != null ? [company.cik] : []);
-  const pool = [];
+  const universe = [];
   for (const c of all || []) {
-    if (!c || c.ticker === company.ticker || engineOf(c) !== myEngine) continue;
+    if (!c || c.ticker === company.ticker) continue;
     if (c.cik != null) { if (seen.has(c.cik)) continue; seen.add(c.cik); }
-    pool.push(c);
+    universe.push(c);
   }
-  if (!pool.length) return { peers: [], basis: "model" };
+  if (!universe.length) return { peers: [], basis: "model" };
+
+  // Rule 2: inside any pool, a financial subject benches only its own kind — the comparison columns are
+  // kind-specific, and ROE printed for a REIT on a bank's lens is a wrong figure, not a loose one. The
+  // filter applies wherever it leaves a usable bench and is skipped where it would empty one.
+  const kindGuard = (pool) => {
+    if (!myKind) return pool;
+    const sameKind = pool.filter((c) => financialKind(c) === myKind);
+    return sameKind.length >= 3 ? sameKind : pool;
+  };
+  const pool = universe;
 
   // Sub-industry closeness: a shared 4-digit SIC is a tight match, 3-digit close, 2-digit loose, none far.
   const sicDist = (c) => {
@@ -115,24 +137,37 @@ export function selectPeers(company, all, n = 7) {
     }
   }
 
-  // Prefer the same broad industry over mere size. If the engine pool holds enough peers sharing the
-  // 2-digit SIC — the same industry, not just the same model — draw only from those, so a computer maker
-  // isn't padded with drug distributors and an industrial isn't padded with airlines to fill a fixed count.
-  // Only when that industry bench is thin (under three) do we widen to the whole economic-model pool, and
-  // the heading then says "nearest by model" honestly. (A near-unique mega-cap, or a small sub-industry,
-  // takes the wider net; a deep industry like banking keeps a clean, same-industry bench.)
-  const sic2 = mySic.slice(0, 2);
-  const sameIndustry = sic2 ? pool.filter((c) => String(c.sic || "").slice(0, 2) === sic2) : [];
-  const drewFromIndustry = sameIndustry.length >= 3;
-  const peers = (drewFromIndustry ? sameIndustry : pool)
+  // Rule 1: the widening ladder, each rung the taxonomy's own. The bench under a heading that names an
+  // industry label is drawn from that label; a thin label widens to its shelf's sibling industries, then
+  // to its sector, and only then to the economic-model pool — and the basis names the rung, so the
+  // heading never claims a tighter group than the bench actually holds. Three is the floor everywhere:
+  // fewer is not a distribution worth reading (peerStat holds the same line).
+  const rank = (cands) => cands
     .map((c) => ({ c, s: score(c) }))
     .sort((a, b) => a.s - b.s)
     .slice(0, n)
     .map((x) => x.c);
 
-  // The heading is honest about the basis: an industry group where we drew from the same industry, the
-  // nearest by economic model where the industry bench was too thin and we widened the net.
-  return { peers, basis: drewFromIndustry ? "industry" : "model" };
+  if (myLabel) {
+    const sameLabel = kindGuard(pool.filter((c) => industryLabelOf(c) === myLabel));
+    if (sameLabel.length >= 3) return { peers: rank(sameLabel), basis: "industry" };
+
+    if (myShelf && myShelf.industries.length > 1) {
+      const shelfLabels = new Set(myShelf.industries.map((i) => i.label));
+      const sameShelf = kindGuard(pool.filter((c) => shelfLabels.has(industryLabelOf(c))));
+      if (sameShelf.length >= 3) return { peers: rank(sameShelf), basis: "shelf", shelfNoun: myShelf.noun };
+    }
+
+    if (mySector) {
+      const sameSector = kindGuard(pool.filter((c) => sectorOfIndustry(industryLabelOf(c)) === mySector));
+      if (sameSector.length >= 3) return { peers: rank(sameSector), basis: "sector", sector: mySector };
+    }
+  }
+
+  // The last resort keeps the old economic-model pool, honestly labelled: same engine (a bank with banks,
+  // an asset-light platform with platforms), nearest by structure.
+  const sameModel = kindGuard(pool.filter((c) => engineOf(c) === myEngine));
+  return { peers: rank(sameModel.length ? sameModel : pool), basis: "model" };
 }
 
 const med = (xs) => { const s = [...xs].sort((a, b) => a - b); const m = Math.floor(s.length / 2); return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
