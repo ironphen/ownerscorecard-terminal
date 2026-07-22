@@ -8,7 +8,7 @@
 // guess; and the printed surface never carries a computed date (the wire renders month-level
 // phrases and day-count facts — asserted here by the shape of what's stored).
 import { rhythmOf } from "./fetchUpcoming.mjs";
-import { isSteadyRhythm, rollToBusinessDay, nextBusinessDays, monthPhrase } from "../src/lib/filingRhythm.mjs";
+import { isSteadyRhythm, rollToBusinessDay, nextBusinessDays, monthPhrase, estimateRange, fmtMD } from "../src/lib/filingRhythm.mjs";
 
 let failed = 0;
 const t = (name, ok, got) => { if (!ok) { failed++; console.error(`✗ ${name}${got !== undefined ? ` -> ${JSON.stringify(got)}` : ""}`); } else console.log(`ok ${name}`); };
@@ -126,6 +126,38 @@ t("Tuesday's two filing days are Tuesday and Wednesday", JSON.stringify(nextBusi
 t("monthPhrase: day 10 is early, day 11 is mid", monthPhrase("2026-06-10") === "early June" && monthPhrase("2026-06-11") === "mid June");
 t("monthPhrase: day 20 is mid, day 21 is late", monthPhrase("2026-06-20") === "mid June" && monthPhrase("2026-06-21") === "late June");
 t("monthPhrase: month boundaries hold in UTC", monthPhrase("2026-07-01") === "early July" && monthPhrase("2026-06-30") === "late June");
+
+// The estimate range (owner directive, 2026-07-21): a steady rhythm estimates from its trimmed
+// lag core; a hiccup quarter doesn't widen the window; too-wide spreads fall back to the
+// statutory deadline, a filed fact; endpoints roll off weekends and clamp to today.
+{
+  const jnj = { nextPeriodEnd: "2026-06-28", dueBy: "2026-08-07", lagsSameForm: [24, 24, 25, 24, 24, 25] };
+  const r = estimateRange(jnj, "2026-07-21");
+  t("a metronome gets a tight estimate range", r.kind === "estimate" && r.lo === "2026-07-22" && r.hi === "2026-07-23", r);
+  t("the lead formats month/day", fmtMD(r.lo) === "7/22", fmtMD(r.lo));
+}
+{
+  const adc = { nextPeriodEnd: "2026-06-30", dueBy: "2026-08-09", lagsSameForm: [21, 21, 31, 22, 22, 23] };
+  const r = estimateRange(adc, "2026-07-01");
+  t("a hiccup quarter doesn't widen a steady window (trimmed core)", r.kind === "estimate" && r.lo === "2026-07-21" && r.hi === "2026-07-23", r);
+}
+{
+  const csx = { nextPeriodEnd: "2026-06-30", dueBy: "2026-08-09", lagsSameForm: [22, 16, 23, 16, 17, 36] };
+  const r = estimateRange(csx, "2026-07-01");
+  t("a smeared rhythm falls back to the statutory deadline", r.kind === "deadline" && r.lo === "2026-08-09", r);
+}
+{
+  const wk = { nextPeriodEnd: "2026-06-30", dueBy: "2026-08-09", lagsSameForm: [25, 25, 25, 25, 25, 25] };
+  const r = estimateRange(wk, "2026-07-01");
+  t("a weekend estimate rolls to Monday", r.lo === "2026-07-27" && r.hi === "2026-07-27", r);
+}
+{
+  const mid = { nextPeriodEnd: "2026-06-30", dueBy: "2026-08-09", lagsSameForm: [20, 20, 21, 20, 21, 22] };
+  const r = estimateRange(mid, "2026-07-21");
+  t("a window already underway clamps its start to today", r.kind === "estimate" && r.lo === "2026-07-21" && r.hi === "2026-07-22", r);
+  const missed = estimateRange({ ...mid, lagsSameForm: [20, 20, 21, 20, 21, 20] }, "2026-07-23");
+  t("a pace already missed falls back to the deadline — the estimate would be stale", missed.kind === "deadline", missed);
+}
 
 if (failed) { console.error(`\n❌ upcomingTest: ${failed} failure(s).`); process.exit(1); }
 console.log("\n✅ upcomingTest passed.");

@@ -39,10 +39,40 @@ export function isSteadyRhythm(lags) {
   return misses <= (lags.length >= 5 ? 1 : 0);
 }
 
-const addDays = (iso, n) => {
+export const addDays = (iso, n) => {
   const d = new Date(iso + "T00:00:00Z");
   d.setUTCDate(d.getUTCDate() + n);
   return d.toISOString().slice(0, 10);
+};
+
+// The estimate range for a company's next report (owner directive, 2026-07-21: lead the line
+// with a plain date estimate; a range absorbs the honest uncertainty). Built from the filer's
+// own recent lags: a steady rhythm estimates from its trimmed core (the lags within two days of
+// the median — one hiccup quarter doesn't widen the window); a looser rhythm estimates from its
+// full spread when that stays reasonably tight; and where the spread is too wide to estimate
+// honestly, the statutory deadline leads instead — a filed fact, not a guess. Weekend endpoints
+// roll to Monday; a window already underway clamps to today.
+export function estimateRange(up, todayISO) {
+  if (!up?.nextPeriodEnd || !up?.dueBy) return null;
+  const lags = Array.isArray(up.lagsSameForm) ? up.lagsSameForm : [];
+  const deadline = { kind: "deadline", lo: up.dueBy, hi: up.dueBy };
+  if (!lags.length) return deadline;
+  const m = median(lags);
+  const core = isSteadyRhythm(lags) ? lags.filter((l) => Math.abs(l - m) <= 2) : lags;
+  let lo = rollToBusinessDay(addDays(up.nextPeriodEnd, Math.min(...core)));
+  let hi = rollToBusinessDay(addDays(up.nextPeriodEnd, Math.max(...core)));
+  if (hi > up.dueBy) hi = up.dueBy;
+  if (todayISO && lo < todayISO) lo = rollToBusinessDay(todayISO);
+  if (lo > hi || days(lo, hi) > 14) return deadline;
+  return { kind: "estimate", lo, hi };
+}
+
+const days = (a, b) => Math.round((new Date(b) - new Date(a)) / 86400000);
+
+// Month/day form for the estimate lead ("7/24"), per the owner's example.
+export const fmtMD = (iso) => {
+  const d = new Date(iso + "T00:00:00Z");
+  return `${d.getUTCMonth() + 1}/${d.getUTCDate()}`;
 };
 
 export const isBusinessDay = (iso) => {

@@ -7,7 +7,7 @@ import { netMargin, feeReturnOnEquity } from "../lib/feeFinancials.mjs";
 import { medicalLossRatio } from "../lib/managedCare.mjs";
 import { floatYield } from "../lib/peers.mjs";
 import { financialKind, financialSubtype, classify } from "../lib/archetype.mjs";
-import { isSteadyRhythm, rollToBusinessDay, nextBusinessDays, monthPhrase } from "../lib/filingRhythm.mjs";
+import { monthPhrase, estimateRange, fmtMD } from "../lib/filingRhythm.mjs";
 import upcoming from "../data/upcoming.json";
 import Term from "./Term.astro";
 
@@ -208,13 +208,13 @@ function spark(values, w = 132, h = 28) {
 }
 const sp = spark(revSeries);
 
-// The next report, from the statutory clock and the company's own rhythm (the wire's coming-due
-// doctrine, applied to one company): every printed field is a filed fact or the statute — the period
-// the report covers at month precision, the N-day rule for the filer class, and how many days after
-// period end it has historically filed. The computed expectation is never printed as a date; when the
-// rhythm is steady (lib/filingRhythm.mjs) and the arithmetic lands within the next two filing days,
-// the line says that much and no more. Suppressed once the report has already arrived in the record,
-// and once the statutory deadline has passed unfiled — a wrong or accusatory "next" is worse than none.
+// The next report, led by a plain estimate (owner directive, 2026-07-21): a date or a tight
+// range built from the filer's own recent lags where the rhythm supports one ("Est. 7/22–7/23"
+// for JNJ's 24–25-day metronome), the statutory deadline where it doesn't ("By 8/9" — a filed
+// fact). The rest of the line keeps the filed facts: the period the report covers at month
+// precision, the N-day rule for the filer class, and the historical pace. Suppressed once the
+// report has already arrived in the record, and once the statutory deadline has passed unfiled —
+// a wrong or accusatory "next" is worse than none.
 const up = upcoming.companies?.[String(company.ticker || "").toUpperCase()] || null;
 const todayISO = new Date().toISOString().slice(0, 10);
 const nextReport = (() => {
@@ -225,9 +225,12 @@ const nextReport = (() => {
   const what = up.nextForm === "10-K"
     ? `annual report (10-K) for the fiscal year ended ${monthPhrase(up.nextPeriodEnd)}`
     : `10-Q for the quarter ended ${monthPhrase(up.nextPeriodEnd)}`;
-  const imminent = isSteadyRhythm(up.lagsSameForm) &&
-    new Set(nextBusinessDays(rollToBusinessDay(todayISO), 2)).has(rollToBusinessDay(up.expected));
-  return { what, statutoryDays: up.statutoryDays, typicalLagDays: up.typicalLagDays, imminent };
+  const r = estimateRange(up, todayISO);
+  if (!r) return null;
+  const lead = r.kind === "deadline"
+    ? `By ${fmtMD(r.lo)}`
+    : r.lo === r.hi ? `Est. ${fmtMD(r.lo)}` : `Est. ${fmtMD(r.lo)}–${fmtMD(r.hi)}`;
+  return { lead, what, statutoryDays: up.statutoryDays, typicalLagDays: up.typicalLagDays };
 })();
 ---
 
@@ -317,8 +320,8 @@ const nextReport = (() => {
   {nextReport ? (
     <p class="nextReport">
       <span class="nrLbl">Next report</span>
-      the {nextReport.what} · due within {nextReport.statutoryDays} days of period end · has filed
-      ~{nextReport.typicalLagDays} days after{nextReport.imminent ? " · its own pace places it within the next two filing days" : ""}
+      <b class="nrDate">{nextReport.lead}</b> · the {nextReport.what} · due within {nextReport.statutoryDays} days
+      of period end · has filed ~{nextReport.typicalLagDays} days after
       · <a href="/wire">the wire</a> records it on arrival
     </p>
   ) : null}
@@ -329,6 +332,7 @@ const nextReport = (() => {
   .portrait { margin: 14px 0 18px; }
   .nextReport { margin: 10px 0 0; font-size: 12.5px; color: var(--muted); line-height: 1.5; font-variant-numeric: tabular-nums; }
   .nrLbl { font-size: 10.5px; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); margin-right: 8px; }
+  .nrDate { color: var(--ink); font-weight: 600; }
   .nextReport a { color: inherit; text-decoration: underline; }
   .nextReport a:hover { color: var(--accent); }
 
