@@ -255,7 +255,13 @@ const CONCEPTS = {
   netInterestIncome: ["InterestIncomeExpenseNet"],
   noninterestIncome: ["NoninterestIncome"],
   noninterestExpense: ["NoninterestExpense"],
-  provisionForCreditLosses: ["ProvisionForLoanLeaseAndOtherLosses", "ProvisionForLoanAndLeaseLosses", "ProvisionForCreditLossExpenseReversal"],
+  // The banks desk's F1 (docs/banks-desk-survey.md, 2026-07-21): the legacy chain died at BAC
+  // after FY2019 and C after FY2018, leaving YEARS-STALE values in the current lines (BAC showed
+  // FY2019's 3.59B as FY2025). The two recovery tags agree exactly in every overlap year tested
+  // and carry the series through FY2025; the never-present ProvisionForCreditLossExpenseReversal
+  // is dropped. Post-death years read loans-only scope where the filed total is dead — the
+  // narrower filed fact, never a rebuilt total (Wave A adds the scope label and off-BS line).
+  provisionForCreditLosses: ["ProvisionForLoanLeaseAndOtherLosses", "ProvisionForLoanAndLeaseLosses", "ProvisionForLoanLossesExpensed", "FinancingReceivableExcludingAccruedInterestCreditLossExpenseReversal"],
   totalAssets: ["Assets"],
   deposits: ["Deposits"],
   goodwill: ["Goodwill"],
