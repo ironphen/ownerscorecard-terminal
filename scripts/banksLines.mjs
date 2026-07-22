@@ -121,30 +121,37 @@ export function banksLines(facts, fyEnds = null) {
   // --- the deposit franchise: the moat made visible ---
   {
     const agg = instantByYear(facts, "NoninterestBearingDepositLiabilities", fyEnds);
-    const pair = sumPair(
-      instantByYear(facts, "NoninterestBearingDepositLiabilitiesDomestic", fyEnds),
-      instantByYear(facts, "NoninterestBearingDepositLiabilitiesForeign", fyEnds));
+    const nibDom = instantByYear(facts, "NoninterestBearingDepositLiabilitiesDomestic", fyEnds);
+    const nibFor = instantByYear(facts, "NoninterestBearingDepositLiabilitiesForeign", fyEnds);
+    // A purely domestic bank (M&T) files only the Domestic element, and that IS its complete
+    // balance-sheet line; the deposits identity below validates it. Where a Foreign element
+    // exists at all, both legs are required for a year.
+    const pair = nibFor ? sumPair(nibDom, nibFor) : nibDom;
     const demandPredecessor = instantByYear(facts, "NoninterestBearingDomesticDepositDemand", fyEnds);
     const { series: nib, warns: w } = stitchGenerations([agg, pair, demandPredecessor], { label: "noninterestBearingDeposits" });
     w.forEach(W);
     const ibAgg = instantByYear(facts, "InterestBearingDepositLiabilities", fyEnds);
-    const ibPair = sumPair(
-      instantByYear(facts, "InterestBearingDepositLiabilitiesDomestic", fyEnds),
-      instantByYear(facts, "InterestBearingDepositLiabilitiesForeign", fyEnds));
+    const ibDom = instantByYear(facts, "InterestBearingDepositLiabilitiesDomestic", fyEnds);
+    const ibFor = instantByYear(facts, "InterestBearingDepositLiabilitiesForeign", fyEnds);
+    const ibPair = ibFor ? sumPair(ibDom, ibFor) : ibDom;
     const { series: ib } = stitchGenerations([ibAgg, ibPair], { label: "interestBearingDeposits" });
     if (nib) {
-      // The exact-sum identity: NIB + IB = total deposits (the census verified it to the dollar
-      // at every money-center bank). A year failing it by more than 2% is mixed scope — nulled.
+      // The exact-sum identity: NIB + IB = total deposits (verified to the dollar at every
+      // money-center bank). On failure the PARTIAL leg is the offender: where NIB alone still
+      // fits under total deposits, the interest-bearing leg is the partial-scope series (the
+      // Flagstar case: IB $30.7B against $81.5B of deposits beside an honest NIB) — the IB year
+      // is nulled and NIB stands; only a NIB exceeding deposits nulls NIB itself.
       if (ib && deposits) {
         for (const fy of Object.keys(nib)) {
           if (nib[fy] == null || ib[fy] == null || deposits[fy] == null) continue;
           if (Math.abs(nib[fy] + ib[fy] - deposits[fy]) > deposits[fy] * 0.02) {
-            nib[fy] = null; W(`noninterestBearingDeposits ${fy}: NIB + IB misses total deposits by >2% — nulled`);
+            if (nib[fy] > deposits[fy]) { nib[fy] = null; W(`noninterestBearingDeposits ${fy}: exceeds total deposits — nulled`); }
+            else { ib[fy] = null; W(`interestBearingDeposits ${fy}: partial-scope leg fails the deposits identity — nulled; NIB stands`); }
           }
         }
       }
       instants.noninterestBearingDeposits = nib;
-      if (ib) instants.interestBearingDeposits = ib;
+      if (ib && Object.values(ib).some((v) => v != null)) instants.interestBearingDeposits = ib;
     } else {
       // The de-novo alias: a bank that files only DemandDepositAccounts (ESQ). Labeled demand,
       // never presented as the NIB line.
@@ -199,33 +206,53 @@ export function banksLines(facts, fyEnds = null) {
     }
   }
   {
-    const woChain = [
+    // Net charge-offs, net-first (the hostile verify's correction, 2026-07-21: the first build
+    // shipped GROSS write-offs as net wherever the guessed recovery tag names missed — WFC read
+    // $5.2B for a $3.5B year. Every tag below is now empirically confirmed at the surveyed
+    // filers). Route per year: the DIRECT net tags first; else gross − recoveries only where
+    // BOTH exist for the year; a gross figure alone is NEVER shipped as net — the year is
+    // withheld (the TFC rule: its recoveries live only on a segment axis).
+    const { series: netDirect, warns: nw } = stitchGenerations([
+      flowByYear(facts, "FinancingReceivableExcludingAccruedInterestAllowanceForCreditLossWriteoffAfterRecovery"),
+      flowByYear(facts, "FinancingReceivableAllowanceForCreditLossWriteoffAfterRecovery"),
+      flowByYear(facts, "AllowanceForLoanAndLeaseLossesWriteoffsNet"),
+    ], { label: "netChargeOffs(direct)", absFloor: 5e5 });
+    nw.forEach(W);
+    const { series: wo } = stitchGenerations([
       flowByYear(facts, "FinancingReceivableExcludingAccruedInterestAllowanceForCreditLossWriteoff"),
       flowByYear(facts, "FinancingReceivableAllowanceForCreditLossesWriteOffs"),
       flowByYear(facts, "AllowanceForLoanAndLeaseLossesWriteOffs"),
-    ];
-    const recChain = [
+    ], { label: "grossWriteoffs", absFloor: 5e5 });
+    const { series: rec } = stitchGenerations([
       flowByYear(facts, "FinancingReceivableExcludingAccruedInterestAllowanceForCreditLossRecovery"),
+      flowByYear(facts, "FinancingReceivableAllowanceForCreditLossesRecovery"),
+      flowByYear(facts, "FinancingReceivableAllowanceForCreditLossesRecoveries"),
       flowByYear(facts, "FinancingReceivableAllowanceForCreditLossesRecoveriesOfBadDebts"),
+      flowByYear(facts, "AllowanceForLoanAndLeaseLossRecoveryOfBadDebts"),
       flowByYear(facts, "AllowanceForLoanAndLeaseLossesRecoveriesOfBadDebts"),
-    ];
-    const { series: wo, warns: ww } = stitchGenerations(woChain, { label: "grossWriteoffs", absFloor: 5e5 });
-    const { series: rec } = stitchGenerations(recChain, { label: "recoveries", absFloor: 5e5 });
-    ww.forEach(W);
-    if (wo) {
-      // Net charge-offs = write-offs − recoveries where both exist; the magnitude gate (0.05–5%
-      // of loans) withholds the JPM PCI-subset years and any decoy series outright, and
-      // recoveries may never exceed write-offs.
-      const nco = {};
-      for (const fy of Object.keys(wo)) {
-        if (wo[fy] == null) continue;
-        const r = rec?.[fy] ?? null;
-        if (r != null && r > Math.abs(wo[fy])) { W(`netChargeOffs ${fy}: recoveries exceed write-offs — nulled`); continue; }
-        nco[fy] = Math.abs(wo[fy]) - (r != null ? Math.abs(r) : 0);
-      }
-      magnitudeGate(nco, loans, 0.0005, 0.05, "netChargeOffs", W);
-      if (Object.values(nco).some((v) => v != null)) flows.netChargeOffs = nco;
+    ], { label: "recoveries", absFloor: 5e5 });
+    const nco = {};
+    const years = new Set([...Object.keys(netDirect || {}), ...Object.keys(wo || {})]);
+    for (const fy of years) {
+      const direct = netDirect?.[fy] ?? null;
+      const derived = wo?.[fy] != null && rec?.[fy] != null ? Math.abs(wo[fy]) - Math.abs(rec[fy]) : null;
+      if (direct != null && derived != null && Math.abs(Math.abs(direct) - derived) > Math.max(derived * 0.02, 2e6))
+        W(`netChargeOffs ${fy}: direct net and gross−recoveries disagree — kept the direct tag`);
+      const v = direct != null ? direct : derived;
+      if (v == null) continue;
+      if (wo?.[fy] != null && rec?.[fy] != null && Math.abs(rec[fy]) > Math.abs(wo[fy])) { W(`netChargeOffs ${fy}: recoveries exceed write-offs — nulled`); continue; }
+      nco[fy] = v;
     }
+    // The FULT sign-flip trap: a filer re-tagging comparatives with flipped signs. A large
+    // negative year (beyond a fifth of the series' typical size) inside a positive series is a
+    // flip, not a genuine net-recovery year — nulled. Small negatives are real and kept.
+    const mags = Object.values(nco).filter((v) => v != null).map((v) => Math.abs(v)).sort((a, b) => a - b);
+    const medMag = mags.length ? mags[Math.floor(mags.length / 2)] : 0;
+    for (const fy of Object.keys(nco)) {
+      if (nco[fy] < 0 && Math.abs(nco[fy]) > medMag * 0.2) { nco[fy] = null; W(`netChargeOffs ${fy}: large negative in a positive series — a sign-flipped comparative, nulled`); }
+    }
+    magnitudeGate(nco, loans, 0.0005, 0.05, "netChargeOffs", W);
+    if (Object.values(nco).some((v) => v != null)) flows.netChargeOffs = nco;
   }
   {
     const na = stitchGenerations([

@@ -85,7 +85,11 @@ async function getJSON(url) {
 const CONCEPTS = {
   operatingIncome: ["OperatingIncomeLoss"],
   costsAndExpenses: ["CostsAndExpenses"], // total operating costs incl COGS; revenue − this = operating income
-  interestExpense: ["InterestExpense", "InterestExpenseNonoperating", "InterestAndDebtExpense"],
+  // InterestExpenseOperating is the FASB successor after InterestExpense's 2023 deprecation
+  // (banks desk, 2026-07-21): banks that migrated (PNC, M&T) went dark on the legacy tag and
+  // their current lines silently served the FY2023 value as current. Overlap years verified
+  // equal to the dollar at every filer tested.
+  interestExpense: ["InterestExpense", "InterestExpenseOperating", "InterestExpenseNonoperating", "InterestAndDebtExpense"],
   revenue: ["RevenueFromContractWithCustomerExcludingAssessedTax", "Revenues", "RevenueFromContractWithCustomerIncludingAssessedTax", "OilAndGasRevenue", "RevenueMineralSales"],
   netIncome: ["NetIncomeLoss", "NetIncomeLossAvailableToCommonStockholdersBasic", "ProfitLoss"],
   cashFromOps: ["NetCashProvidedByUsedInOperatingActivities", "NetCashProvidedByUsedInOperatingActivitiesContinuingOperations"],
@@ -1081,8 +1085,22 @@ async function main() {
       console.log("=== end CASH_DEBUG ===\n");
     }
 
-    const pick = (tags) => pickAnnual(facts, tags)?.val ?? null;
-    const inst = (tags) => pickInstant(facts, tags, "USD", fyEnds)?.val ?? null;
+    // The stale-current tripwire (banks desk F1's generic form, 2026-07-21): a chain tag whose
+    // latest fiscal year sits behind the record's anchor year must never populate the current
+    // lines — that is how BAC's FY2019 provision and PNC's FY2023 interest expense shipped as
+    // "current" for years. A line the filer stopped reporting reads honestly null instead.
+    const pick = (tags) => {
+      const e = pickAnnual(facts, tags);
+      if (!e) return null;
+      if (anchor?.fy != null && e.fy != null && e.fy < anchor.fy) return null;
+      return e.val ?? null;
+    };
+    const inst = (tags) => {
+      const e = pickInstant(facts, tags, "USD", fyEnds);
+      if (!e) return null;
+      if (anchor?.fy != null && e.fy != null && e.fy < anchor.fy) return null;
+      return e.val ?? null;
+    };
 
     // Diagnostic: REVENUE_DEBUG=APA dumps every revenue-like us-gaap tag and its latest
     // annual value, to find the concept a filer that reads no top line actually uses

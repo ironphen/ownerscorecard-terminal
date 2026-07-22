@@ -42,19 +42,42 @@ t("a non-bank does not", hasBankData(facts({ Revenues: flowFact({ 2024: 5e9 }) }
   t("the NIB + IB = Deposits identity holds and both lines ship", instants.interestBearingDeposits?.[2024] === 1781e9, instants.interestBearingDeposits);
 }
 {
+  // The Flagstar case: an honest NIB beside a partial-scope IB leg. The identity failure nulls
+  // the partial leg; NIB stands. Only a NIB exceeding total deposits nulls NIB itself.
   const f = facts({
     ...CORE,
     NoninterestBearingDepositLiabilities: instFact({ 2023: 500e9, 2024: 900e9 }),
-    InterestBearingDepositLiabilities: instFact({ 2023: 1800e9, 2024: 1800e9 }),
+    InterestBearingDepositLiabilities: instFact({ 2023: 1800e9, 2024: 700e9 }),
   });
   const { instants, flags } = banksLines(f, CAL);
-  t("a year failing the deposits identity by >2% is nulled", instants.noninterestBearingDeposits?.[2023] === 500e9 && instants.noninterestBearingDeposits?.[2024] == null, instants.noninterestBearingDeposits);
-  t("the identity failure is stated", (flags.warns || []).some((w) => w.includes("misses total deposits")), flags.warns);
+  t("an identity failure nulls the partial interest-bearing leg, NIB stands", instants.noninterestBearingDeposits?.[2024] === 900e9 && instants.interestBearingDeposits?.[2024] == null, instants);
+  t("the clean year keeps both legs", instants.noninterestBearingDeposits?.[2023] === 500e9 && instants.interestBearingDeposits?.[2023] === 1800e9, instants);
+  t("the partial leg is stated", (flags.warns || []).some((w) => w.includes("partial-scope leg")), flags.warns);
+}
+{
+  const f = facts({
+    ...CORE,
+    NoninterestBearingDepositLiabilities: instFact({ 2024: 2500e9 }),
+    InterestBearingDepositLiabilities: instFact({ 2024: 1800e9 }),
+  });
+  const { instants } = banksLines(f, CAL);
+  t("a NIB exceeding total deposits nulls NIB itself", instants.noninterestBearingDeposits === undefined || instants.noninterestBearingDeposits?.[2024] == null, instants.noninterestBearingDeposits);
 }
 {
   const f = facts({ ...CORE, DemandDepositAccounts: instFact({ 2024: 1.2e9 }) });
   const { instants, flags } = banksLines(f, CAL);
   t("a demand-only de novo is labeled demand, never NIB", instants.demandDeposits?.[2024] === 1.2e9 && instants.noninterestBearingDeposits === undefined && flags.nibIsDemand === true, flags);
+}
+{
+  // The M&T case: a purely domestic bank files only the Domestic element — it is the complete
+  // line, validated by the deposits identity, with no Foreign leg to demand.
+  const f = facts({
+    ...CORE,
+    NoninterestBearingDepositLiabilitiesDomestic: instFact({ 2024: 700e9 }),
+    InterestBearingDepositLiabilitiesDomestic: instFact({ 2024: 1700e9 }),
+  });
+  const { instants } = banksLines(f, CAL);
+  t("a domestic-only bank's domestic element is the line", instants.noninterestBearingDeposits?.[2024] === 700e9 && instants.interestBearingDeposits?.[2024] === 1700e9, instants);
 }
 
 // --- the credit cycle ---
@@ -70,6 +93,33 @@ t("a non-bank does not", hasBankData(facts({ Revenues: flowFact({ 2024: 5e9 }) }
   t("honest NCO years compute as write-offs less recoveries", flows.netChargeOffs?.[2018] === 4e9 && flows.netChargeOffs?.[2020] === 4.9e9, flows.netChargeOffs);
   t("a PCI-subset year fails the magnitude gate and is withheld", flows.netChargeOffs?.[2019] == null && (flags.warns || []).some((w) => w.includes("netChargeOffs 2019")), flows.netChargeOffs);
 }
+{
+  // The hostile verify's correction, frozen: gross write-offs ALONE never ship as net (the TFC
+  // rule — its recoveries live only on a segment axis), and the direct net tag wins where filed.
+  const f = facts({
+    ...CORE,
+    LoansAndLeasesReceivableNetOfDeferredIncome: instFact({ 2016: 900e9, 2023: 1200e9, 2024: 1250e9 }),
+    FinancingReceivableAllowanceForCreditLossesWriteOffs: flowFact({ 2023: 1.92e9, 2024: 2.216e9 }),
+    AllowanceForLoanAndLeaseLossesWriteoffsNet: flowFact({ 2016: 3.52e9 }),
+    AllowanceForLoanAndLeaseLossesWriteOffs: flowFact({ 2016: 5.247e9 }),
+  });
+  const { flows } = banksLines(f, CAL2016(CAL));
+  t("gross alone is withheld, never shipped as net", flows.netChargeOffs?.[2023] == null && flows.netChargeOffs?.[2024] == null, flows.netChargeOffs);
+  t("the direct net tag wins over gross where both are filed (the WFC shape)", flows.netChargeOffs?.[2016] === 3.52e9, flows.netChargeOffs);
+}
+{
+  // The FULT sign-flip: a large negative comparative inside a positive series is a flip, nulled;
+  // the honest years survive.
+  const f = facts({
+    ...CORE,
+    LoansAndLeasesReceivableNetOfDeferredIncome: instFact({ 2022: 20e9, 2023: 21e9, 2024: 22e9, 2025: 23e9 }),
+    FinancingReceivableAllowanceForCreditLossWriteoffAfterRecovery: flowFact({ 2022: 30e6, 2023: -29e6, 2024: 45e6, 2025: 49e6 }),
+  });
+  const { flows, flags } = banksLines(f, { ...CAL, 2025: "2025-12-31" });
+  t("a sign-flipped comparative is nulled, the honest years survive", flows.netChargeOffs?.[2023] == null && flows.netChargeOffs?.[2022] === 30e6 && flows.netChargeOffs?.[2025] === 49e6, flows.netChargeOffs);
+  t("the flip is stated", (flags.warns || []).some((w) => w.includes("sign-flipped")), flags.warns);
+}
+function CAL2016(cal) { return { ...cal, 2016: "2016-12-31" }; }
 {
   // The CECL adoption seam: 2019-12-31 carries the year's own 9.416B and a later filing's
   // re-tagged 12.358B day-one balance. The year's own filing wins.
