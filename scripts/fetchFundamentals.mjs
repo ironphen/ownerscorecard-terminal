@@ -21,6 +21,7 @@ import { reconcileLeaseLadder } from "../src/lib/leases.mjs";
 import { compactJson } from "../src/lib/dataFile.mjs";
 import { buildCikMap, CIK_OVERRIDE, resolveCikLive } from "./cikResolve.mjs";
 import { hasInsuranceData, insuranceLines, fillClaimsFromRollforward } from "./insuranceLines.mjs";
+import { hasBankData, banksLines } from "./banksLines.mjs";
 
 const UA =
   process.env.SEC_USER_AGENT ||
@@ -1286,22 +1287,36 @@ async function main() {
       if (usedRollforward) { ha.claimsIncurred = filled; claimsFillUsed = true; console.log(`  ${ticker}: claimsIncurred filled from reserve rollforward (overlap-verified)`); }
       for (const w of ins.flags?.warns || []) console.warn(`  ! ${ticker} insurance: ${w}`);
     }
+    // The banks desk's Wave A lines (scripts/banksLines.mjs): the deposit franchise, the credit
+    // cycle, the securities marks, the spread legs — deposit-funded lenders only. A filer
+    // carrying BOTH premiums and a lending book routes by dominance (Citi files vestigial
+    // PremiumsEarnedNet from its insurance-ops era; its $50B+ of net interest income says what
+    // it is), so a money-center bank is never misfiled as an insurer by a legacy tag.
+    const latestOfMap = (m) => { const fys = Object.keys(m || {}).map(Number); return fys.length ? m[Math.max(...fys)] : null; };
+    const bankDominant = !isInsuranceFiler ||
+      Math.abs(latestOfMap(ha.netInterestIncome) ?? 0) > Math.abs(latestOfMap(ha.premiumsEarned) ?? 0);
+    const bank = bankDominant && hasBankData(facts, fyEnds) ? banksLines(facts, fyEnds) : null;
+    if (bank) for (const w of bank.flags?.warns || []) console.warn(`  ! ${ticker} bank: ${w}`);
     const insYear = (fy) => {
-      if (!ins) return {};
       const o = {};
-      for (const [line, series] of Object.entries(ins.flows)) if (series[fy] != null) o[line] = series[fy];
-      for (const [line, series] of Object.entries(ins.instants)) if (series[fy] != null) o[line] = series[fy];
+      for (const src of [ins, bank]) {
+        if (!src) continue;
+        for (const [line, series] of Object.entries(src.flows)) if (series[fy] != null) o[line] = series[fy];
+        for (const [line, series] of Object.entries(src.instants)) if (series[fy] != null) o[line] = series[fy];
+      }
       return o;
     };
     const insLatest = () => {
-      if (!ins) return {};
       const o = {};
       const latestOf = (series) => { const fys = Object.keys(series).map(Number).filter((fy) => series[fy] != null); return fys.length ? series[Math.max(...fys)] : null; };
-      for (const [line, series] of Object.entries(ins.flows)) { const v = latestOf(series); if (v != null) o[line] = v; }
-      for (const [line, series] of Object.entries(ins.instants)) { const v = latestOf(series); if (v != null) o[line] = v; }
+      for (const src of [ins, bank]) {
+        if (!src) continue;
+        for (const [line, series] of Object.entries(src.flows)) { const v = latestOf(series); if (v != null) o[line] = v; }
+        for (const [line, series] of Object.entries(src.instants)) { const v = latestOf(series); if (v != null) o[line] = v; }
+      }
       // The F2 fill extends the current-lines claims figure too (the spread lands after the core
       // pick, so an overlap-verified rollforward value replaces a dark or stale one).
-      if (claimsFillUsed) { const v = latestOf(ha.claimsIncurred); if (v != null) o.claimsIncurred = v; }
+      if (ins && claimsFillUsed) { const v = latestOf(ha.claimsIncurred); if (v != null) o.claimsIncurred = v; }
       return o;
     };
     const history = Object.keys(ha.revenue)
@@ -1567,9 +1582,10 @@ async function main() {
         lossReserves: inst(CONCEPTS.lossReserves),
         ...insLatest(),
       },
-      // The insurance desk's per-filer flags (DAC-includes-VOBA impurity, gate warnings) travel with
-      // the record so the display layer can label what the extraction had to decide.
+      // The desks' per-filer flags (DAC-includes-VOBA impurity, demand-vs-NIB labeling, gate
+      // warnings) travel with the record so the display layer can label what extraction decided.
       ...(ins && (ins.flags.dacIncludesVoba || ins.flags.warns?.length) ? { insuranceFlags: ins.flags } : {}),
+      ...(bank && Object.keys(bank.flags).length ? { bankFlags: bank.flags } : {}),
       // The lease-maturity ladder (operating + finance), from the clean ASC 842 XBRL buckets. Each ladder
       // is reconciled (buckets sum to the undiscounted total; total less imputed interest = the discounted
       // liability) and stored only if it ties out — a self-validating wall, the companion to the debt one.

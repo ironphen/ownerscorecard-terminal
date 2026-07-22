@@ -58,23 +58,39 @@ function instantTagByYear(facts, tag, fyEnds = null) {
   return Object.keys(out).length ? Object.fromEntries(Object.entries(out).map(([fy, e]) => [fy, e.val])) : null;
 }
 
-// The seam gate: merge tag generations newest-first. Where adjacent generations overlap, every
-// shared year must agree within tolerance (relative, with an absolute floor so small signed values
-// like a $40M development don't fail on rounding); disagreement drops the OLDER generation whole.
+// The seam gate: merge tag generations newest-first. Where adjacent generations overlap, shared
+// years must agree within tolerance (relative, with an absolute floor so small signed values
+// like a $40M development don't fail on rounding). Two failure shapes, two treatments:
+//   - MOST overlap years disagree: the tags measure different things (the three reinsurance-
+//     recoverable definitions) — the OLDER generation is dropped whole; splicing definitions is
+//     the confident-nonsense class the gate exists to prevent.
+//   - A MINORITY of overlap years disagree: those are re-tagged comparatives — a newer filing
+//     restating an old year under the new tag (the CECL day-one backfill: BAC's 2019 allowance
+//     re-tagged at 12.358B over the year's own 9.416B). The tag that was CURRENT at a year is
+//     authoritative for that year, so the older generation's value stands there, with a warning.
 export function stitchGenerations(gens, { tol = 0.01, absFloor = 2e6, label = "" } = {}) {
-  const kept = [];
   const warns = [];
   let merged = null;
   for (const g of gens) {
     if (!g) continue;
-    if (!merged) { merged = { ...g }; kept.push(g); continue; }
+    if (!merged) { merged = { ...g }; continue; }
     const overlap = Object.keys(g).filter((fy) => merged[fy] != null);
-    const disagree = overlap.some((fy) => {
+    const disagreeing = overlap.filter((fy) => {
       const a = merged[fy], b = g[fy];
       return Math.abs(a - b) > Math.max(Math.abs(a) * tol, absFloor);
     });
-    if (disagree) { warns.push(`${label}: predecessor tag disagrees in overlap — older generation dropped`); continue; }
-    for (const fy of Object.keys(g)) if (merged[fy] == null) merged[fy] = g[fy];
+    if (overlap.length && disagreeing.length / overlap.length > 0.5) {
+      warns.push(`${label}: predecessor tag disagrees in overlap — older generation dropped`);
+      continue;
+    }
+    // An isolated cross-era disagreement is a contested year (a re-tagged comparative, a scope
+    // shift, an adoption backfill — BAC's 2019 allowance carries THREE values across tags).
+    // Withhold the year rather than crown any scope: never average, never adjudicate blind.
+    for (const fy of disagreeing) {
+      merged[fy] = null;
+      warns.push(`${label} ${fy}: cross-era values conflict — year withheld`);
+    }
+    for (const fy of Object.keys(g)) if (merged[fy] == null && !disagreeing.includes(fy)) merged[fy] = g[fy];
   }
   return { series: merged, warns };
 }

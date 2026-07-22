@@ -23,7 +23,17 @@ const facts = (tags) => ({ facts: { "us-gaap": tags } });
   const agree = stitchGenerations([{ 2022: 100, 2023: 110 }, { 2019: 80, 2020: 90, 2022: 100 }], { label: "x", absFloor: 0 });
   t("agreeing generations stitch (older fills the early years)", agree.series[2019] === 80 && agree.series[2023] === 110 && agree.warns.length === 0, agree);
   const clash = stitchGenerations([{ 2022: 100, 2023: 110 }, { 2019: 80, 2022: 250 }], { label: "x", absFloor: 0 });
-  t("a disagreeing predecessor is dropped whole, with a warning", clash.series[2019] === undefined && clash.warns.length === 1, clash);
+  t("a majority-disagreeing predecessor is dropped whole, with a warning", clash.series[2019] === undefined && clash.warns.length === 1, clash);
+  // The contested-year shape (the cross-tag CECL backfill): the generations agree except at one
+  // old year the newer tag restated. Three scopes can contest such a year (BAC's 2019 allowance:
+  // 9.416B loans-only, 10.229B with the off-BS reserve, 12.358B day-one backfill) — the year is
+  // withheld, never adjudicated blind, and the agreeing years still splice.
+  const backfill = stitchGenerations([
+    { 2019: 12.358e9, 2020: 18.8e9, 2021: 12.1e9 },
+    { 2017: 10.4e9, 2019: 9.416e9, 2020: 18.8e9, 2021: 12.1e9 },
+  ], { label: "x" });
+  t("a contested cross-era year is withheld while the agreeing years splice", backfill.series[2019] == null && backfill.series[2017] === 10.4e9 && backfill.series[2020] === 18.8e9, backfill.series);
+  t("the contested year is stated", backfill.warns.some((w) => w.includes("cross-era values conflict")), backfill.warns);
 }
 
 // --- development: sign preserved, predecessor stitched through the deprecation seam ---
