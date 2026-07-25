@@ -2,6 +2,9 @@
 // Imported by both Astro pages (server) and React islands (client), so keep it
 // pure ESM with no Node or browser built-ins.
 import { financialKind } from "./archetype.mjs";
+// Circular by construction (software.mjs formats money with fmtMoney below), which ESM resolves
+// because every use sits inside a function body rather than at module load.
+import { softwareSection } from "./software.mjs";
 
 // The headline top line. For most companies this is reported revenue, but banks and
 // insurers tag "Revenues" erratically (often a sliver, or not at all: Regions reports
@@ -1039,6 +1042,12 @@ export function buildScorecard(company) {
         heading: "How is the cash used?",
         checks: cashUseChecks,
       },
+      // The software desk's section, appended rather than substituted: a subscription business is
+      // still an ordinary business, so the general reads above all apply. This adds only what the
+      // general scorecard cannot ask — how much of next year is already contracted, what winning
+      // a customer costs, and whether the buyback is buying ownership or cancelling the pay
+      // packet. Absent for every company that carries none of those figures.
+      ...(softwareSection(company) ? [softwareSection(company)] : []),
     ],
   };
 }

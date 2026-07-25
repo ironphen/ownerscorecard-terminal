@@ -50,7 +50,53 @@ async function getText(url) {
 async function getJSON(url) { return JSON.parse(await getText(url)); }
 
 // ---- the registry: every target named, mapped, and value-verified before it entered ----
+const RPO_AXIS = "us-gaap:RevenueRemainingPerformanceObligationExpectedTimingOfSatisfactionStartDateAxis";
+const RPO_PERIOD = "us-gaap:RevenueRemainingPerformanceObligationExpectedTimingOfSatisfactionPeriod1";
+// The twelve-month band, filed as a share, behind a typed member. Same shape at both filers and
+// stable a year back at each. Microsoft additionally tags the total under a commercial-customer
+// member; the exact-set-empty rule already refuses that, and the narrative confirms the share
+// applies to the whole company's obligations rather than the commercial slice.
+const rpoShareBand = { line: "rpoTwelveMonthShare", tag: "us-gaap:RevenueRemainingPerformanceObligationPercentage", axis: RPO_AXIS, periodTag: RPO_PERIOD };
+
+// THE ONE PLACE THIS FILE SWEEPS RATHER THAN AIMS, and the reason it is still a keyhole.
+//
+// Everywhere else a target names its filer AND its exact axis-member coordinates, because a
+// dimensioned fact read blind might be a segment wearing a total's name. The twelve-month band
+// has no such ambiguity to resolve: the tag is standard, the axis is standard, and the three
+// gates are structural rather than per-filer — the context must carry NO explicit members (which
+// is what a segment or product slice would add), exactly one typed member on the named axis, a
+// start date exactly one day after the balance-sheet date, and a twelve-month duration filed
+// against that same context. A filer whose disclosure differs in any respect yields nothing.
+//
+// So the per-filer map that the other targets need has no work left to do here, and withholding
+// the band from a hundred companies to preserve a ceremony that protects against nothing would
+// cost readers the single most useful number on a software page. The sweep covers the shelf's
+// filers of size; everyone else keeps the honest blank they already had.
+export function softwareBandTargets(companies, minRevenue = 5e8) {
+  return companies
+    .filter((c) => c.cik && c.lines?.revenue > minRevenue)
+    .map((c) => ({ ticker: c.ticker, cik: String(c.cik).padStart(10, "0"), filings: 2, bands: [rpoShareBand], quiet: true }));
+}
+
 export const TARGETS = [
+  { ticker: "MSFT", cik: "0000789019", filings: 4, bands: [rpoShareBand] },
+  { ticker: "NOW", cik: "0001373715", filings: 4, bands: [rpoShareBand] },
+  {
+    // Salesforce files no typed band at all: its current and noncurrent obligations are its own
+    // extension tags, in dollars, in the default context. That is the Wells Fargo precedent — an
+    // extension tag read only because it is the sole carrier — and it takes the same treatment: a
+    // self-check that must hold or the year is withheld. Current plus noncurrent must equal the
+    // undimensioned us-gaap total, which held to the exact filed dollar at three year ends.
+    ticker: "CRM", cik: "0001108524", filings: 4,
+    lines: [
+      { line: "rpoCurrent", kind: "instant", tag: "crm:RevenueRemainingPerformanceObligationCurrent", dims: {} },
+    ],
+    gateInputs: [
+      { name: "noncurrent", kind: "instant", tag: "crm:RevenueRemainingPerformanceObligationNoncurrent", dims: {} },
+      { name: "total", kind: "instant", tag: "us-gaap:RevenueRemainingPerformanceObligation", dims: {} },
+    ],
+    gate: "rpoSplitIdentity",
+  },
   {
     ticker: "TRV", cik: "0000086312", filings: 6,
     lines: [
@@ -130,7 +176,7 @@ export function parseContexts(doc) {
   let m;
   while ((m = re.exec(doc))) {
     const [, id, body] = m;
-    const ctx = { dims: {}, typed: /typedMember/.test(body) };
+    const ctx = { dims: {}, typed: /typedMember/.test(body), typedDims: [] };
     const inst = body.match(/<(?:xbrli:)?instant>([^<]+)<\/(?:xbrli:)?instant>/);
     const start = body.match(/<(?:xbrli:)?startDate>([^<]+)<\/(?:xbrli:)?startDate>/);
     const end = body.match(/<(?:xbrli:)?endDate>([^<]+)<\/(?:xbrli:)?endDate>/);
@@ -140,6 +186,12 @@ export function parseContexts(doc) {
     const dimRe = /<xbrldi:explicitMember\s+dimension="([^"]+)"\s*>([^<]+)<\/xbrldi:explicitMember>/g;
     let d;
     while ((d = dimRe.exec(body))) ctx.dims[d[1].trim()] = d[2].trim();
+    // Typed members carry their value in a nested element rather than as a member QName. The
+    // twelve-month RPO band is filed this way: one typed member on the timing axis whose inner
+    // element is the axis name plus ".domain" and whose content is the date the band starts.
+    const typedRe = /<xbrldi:typedMember\s+dimension="([^"]+)"\s*>\s*<([^\s>/]+)[^>]*>([\s\S]*?)<\/\2>\s*<\/xbrldi:typedMember>/g;
+    let ty;
+    while ((ty = typedRe.exec(body))) ctx.typedDims.push({ dimension: ty[1].trim(), inner: ty[2].trim(), content: ty[3].replace(/<[^>]+>/g, "").trim() });
     out[id] = ctx;
   }
   return out;
@@ -167,6 +219,25 @@ export function parseFacts(doc, tag) {
 
 // A context matches a target when its explicit-member set EQUALS the spec exactly (no extra
 // axes, no typed members) and its period shape fits the kind.
+// The twelve-month band's context, matched by all three of its identifying marks at once. NOW files
+// 13-36-month DECOY contexts on the SAME axis, and CRM's decoy shares the very same start date, so
+// no single test separates the band from its neighbours: the explicit-member set must be empty (the
+// decoys carry srt:RangeAxis min/max), the typed date must be the balance-sheet date plus one day
+// (a later band starts a year out), and the caller must additionally confirm the same context
+// carries a twelve-month duration. Any one failing withholds the band rather than guessing.
+export function typedContextMatches(ctx, spec) {
+  if (!ctx || !spec) return false;
+  if (Object.keys(ctx.dims).length) return false;
+  if ((ctx.typedDims || []).length !== 1) return false;
+  const [tm] = ctx.typedDims;
+  if (tm.dimension !== spec.axis) return false;
+  if (!tm.inner.endsWith(".domain")) return false;
+  if (!ctx.instant) return false;
+  const start = Date.parse(tm.content);
+  if (!Number.isFinite(start)) return false;
+  return Math.round((start - Date.parse(ctx.instant)) / 86400000) === 1;
+}
+
 export function contextMatches(ctx, dims, kind) {
   if (!ctx || ctx.typed) return false;
   const want = Object.entries(dims);
@@ -179,6 +250,41 @@ export function contextMatches(ctx, dims, kind) {
     return dur >= 350 && dur <= 380;
   }
   return !!ctx.instant;
+}
+
+// Duration facts are ix:nonNumeric, not ix:nonFraction, and carry their months as text under an
+// ixt-sec:durmonth format. Read narrowly, and only to confirm a band is the twelve-month one.
+export function parseDurationMonths(doc, tag) {
+  const out = [];
+  const re = new RegExp(`<ix:nonNumeric([^>]*name="${tag.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}"[^>]*)>([\\s\\S]*?)<\\/ix:nonNumeric>`, "g");
+  let m;
+  while ((m = re.exec(doc))) {
+    const ctxRef = (m[1].match(/contextRef="([^"]+)"/) || [])[1];
+    if (!ctxRef) continue;
+    const text = m[2].replace(/<[^>]+>/g, "").trim();
+    const n = parseInt(text, 10);
+    if (Number.isFinite(n)) out.push({ contextRef: ctxRef, months: n });
+  }
+  return out;
+}
+
+// The twelve-month share of remaining performance obligations, as a filed FRACTION. The value is
+// never multiplied by the total: Microsoft calls its own figure "approximately", and deriving
+// dollars from it would manufacture a precision the filer declined to give.
+export function extractBandShare(doc, spec) {
+  const contexts = parseContexts(doc);
+  const twelveMonth = new Set(
+    parseDurationMonths(doc, spec.periodTag).filter((d) => d.months === 12).map((d) => d.contextRef),
+  );
+  const series = {};
+  for (const f of parseFacts(doc, spec.tag)) {
+    if (!twelveMonth.has(f.contextRef)) continue; // the same-context twelve-month gate
+    const ctx = contexts[f.contextRef];
+    if (!typedContextMatches(ctx, spec)) continue;
+    if (!(f.value > 0 && f.value <= 1)) continue; // a share, never a count
+    series[new Date(ctx.instant).getUTCFullYear()] = f.value;
+  }
+  return series;
 }
 
 export function extractSeries(doc, spec) {
@@ -195,6 +301,21 @@ export function extractSeries(doc, spec) {
 
 // Gates ----------------------------------------------------------------------------------
 const GATES = {
+  // Salesforce's extension pair must reconstruct the standard total exactly, or the year is
+  // withheld. This is what makes reading a filer's own tag defensible: a silent rename or a
+  // change of meaning breaks the identity and produces a blank rather than a wrong number.
+  rpoSplitIdentity(lines, gates, W, who) {
+    const cur = lines.rpoCurrent;
+    if (!cur) return;
+    for (const fy of Object.keys(cur)) {
+      const nc = gates.noncurrent?.[fy], total = gates.total?.[fy];
+      if (nc == null || total == null) { cur[fy] = null; W(`${who} RPO ${fy}: identity inputs missing — withheld`); continue; }
+      if (Math.abs(cur[fy] + nc - total) > Math.max(Math.abs(total) * 0.005, 1e6)) {
+        cur[fy] = null; W(`${who} RPO ${fy}: current + noncurrent ≠ total — withheld`);
+      }
+    }
+  },
+
   // CY + PY = total incurred, exact within tolerance — the ratified sign-identity, which at
   // these coordinates has held to the dollar in every mapped year.
   incurredIdentity(lines, gates, W, who) {
@@ -229,7 +350,19 @@ async function main() {
   const warns = [];
   const W = (s) => { warns.push(s); console.warn(`  ! ${s}`); };
 
-  for (const t of TARGETS) {
+  // The curated registry, then the band sweep over the software shelf. The sweep is skipped when
+  // the shelf cannot be resolved, so a missing data file degrades to the registry rather than
+  // failing the run.
+  let sweep = [];
+  try {
+    const { industryLabelOf } = await import(pathToFileURL(path.join(process.cwd(), "src", "lib", "shelves.mjs")).href);
+    const pool = JSON.parse(fs.readFileSync(path.join(dataDir, "fundamentals.json"), "utf8")).companies || [];
+    const named = new Set(TARGETS.map((t) => t.ticker));
+    sweep = softwareBandTargets(pool.filter((c) => industryLabelOf(c) === "Software" && !named.has(c.ticker)));
+    console.log(`Band sweep: ${sweep.length} software filers beyond the registry.`);
+  } catch (e) { console.warn(`  ! band sweep skipped (${e.message})`); }
+
+  for (const t of [...TARGETS, ...sweep]) {
     console.log(`\n${t.ticker}:`);
     const sub = await getJSON(`https://data.sec.gov/submissions/CIK${t.cik}.json`);
     // A heavy filer's 10-Ks fall out of the `recent` window fast (Wells Fargo files prospectus
@@ -268,8 +401,12 @@ async function main() {
         for (const name of names) { await sleep(THROTTLE_MS); texts.push(await getText(`${base}/${name}`)); }
         doc = texts.join("\n");
       } catch (e) { W(`${t.ticker} ${f.accn}: fetch failed (${e.message}) — filing skipped`); continue; }
-      for (const spec of t.lines) {
+      for (const spec of t.lines || []) {
         const s = extractSeries(doc, spec);
+        lines[spec.line] = { ...(lines[spec.line] || {}), ...s };
+      }
+      for (const spec of t.bands || []) {
+        const s = extractBandShare(doc, spec);
         lines[spec.line] = { ...(lines[spec.line] || {}), ...s };
       }
       for (const spec of t.gateInputs || []) {

@@ -23,11 +23,12 @@ import { industryLabelOf, sectorOfIndustry } from "../src/lib/shelves.mjs";
 import { buildCikMap, CIK_OVERRIDE, resolveCikLive } from "./cikResolve.mjs";
 import { hasInsuranceData, insuranceLines, fillClaimsFromRollforward, INSURANCE_LINE_NAMES } from "./insuranceLines.mjs";
 import { hasBankData, banksLines, BANK_LINE_NAMES } from "./banksLines.mjs";
+import { hasSoftwareData, softwareLines, SOFTWARE_LINE_NAMES } from "./softwareLines.mjs";
 // Desk lines are deterministic extractions: the same facts give the same lines every run, so an
 // absence is always a deliberate gate, never a transient tag miss — the field carry-over below
 // must never resurrect one from a prior file (Wells Fargo's withheld charge-offs came back from
 // the dead exactly this way, 2026-07-21).
-const DESK_LINES = new Set([...INSURANCE_LINE_NAMES, ...BANK_LINE_NAMES]);
+const DESK_LINES = new Set([...INSURANCE_LINE_NAMES, ...BANK_LINE_NAMES, ...SOFTWARE_LINE_NAMES]);
 // Tier-2: the named dimensional targets (scripts/fetchDimensional.mjs), read from the filings'
 // own inline XBRL where companyfacts is blind — Travelers' development, Cigna's insurance book,
 // Centene's premium line, Wells Fargo's modern charge-offs. Merged as the LAST source: it fills
@@ -573,6 +574,27 @@ const thinCor = (cor, rev) => (cor != null && rev > 0 && cor / rev < 0.01 ? null
 // for a business with no selling line and is also the pre-existing behaviour, so no filer loses a
 // value it already had. A selling leg alone is never shown: half a bucket under a whole bucket's
 // name is the same error in smaller print.
+// Overhead that exceeds a mature company's entire revenue several times over is not overhead, it
+// is a decimal point. National HealthCare put scale="6" on an administrative figure already
+// written in full dollars and shipped $27.5 TRILLION against $1.5B of revenue — eighteen thousand
+// times its own sales, on a nursing-home operator with no G&A line on the face of its statements
+// to contradict the tag. The revenue floor is what keeps this from touching honest data: a
+// clinical-stage business with almost no sales can and does spend many multiples of revenue on
+// overhead, and that is a true fact about it, not an error.
+const sgaSane = (series, revenue, label, W) => {
+  if (!series) return series;
+  const out = { ...series };
+  for (const fy of Object.keys(out)) {
+    const rev = revenue?.[fy], v = out[fy];
+    if (v == null || !(rev > 1e8)) continue;
+    if (Math.abs(v) > rev * 10) {
+      out[fy] = null;
+      W?.(`${label} ${fy}: ${(Math.abs(v) / rev).toFixed(0)}x the year's revenue — not an overhead figure, withheld`);
+    }
+  }
+  return out;
+};
+
 const sgaSeries = (combined, sm, ga) => {
   const out = { ...combined };
   for (const fy of new Set([...Object.keys(sm), ...Object.keys(ga)])) {
@@ -1393,10 +1415,15 @@ async function main() {
       lossesAndExpenses: collectAnnual(facts, CONCEPTS.lossesAndExpenses),
       investmentIncome: collectAnnual(facts, CONCEPTS.investmentIncome),
       stockBasedComp: collectAnnual(facts, CONCEPTS.stockBasedComp),
-      sgaExpense: sgaSeries(
-        collectAnnual(facts, CONCEPTS.sgaExpense),
-        collectAnnual(facts, CONCEPTS.sellingMarketing),
-        collectAnnual(facts, CONCEPTS.generalAdministrative),
+      sgaExpense: sgaSane(
+        sgaSeries(
+          collectAnnual(facts, CONCEPTS.sgaExpense),
+          collectAnnual(facts, CONCEPTS.sellingMarketing),
+          collectAnnual(facts, CONCEPTS.generalAdministrative),
+        ),
+        valuesByYear(revAnnualBy),
+        ticker + ' sgaExpense',
+        (m) => console.warn('  ! ' + m),
       ),
       researchDevelopment: collectAnnual(facts, CONCEPTS.researchDevelopment),
       acquisitionSpend: collectAnnual(facts, CONCEPTS.acquisitionSpend),
@@ -1419,6 +1446,14 @@ async function main() {
       const fy = new Date(o.end).getUTCFullYear();
       if (!coverByYear[fy] || (o.filed || "") > coverByYear[fy].filed) coverByYear[fy] = { val: o.val, filed: o.filed || "" };
     }
+    // A units gate was tried here across every dollar series and DELIBERATELY REMOVED, because
+    // testing showed it destroyed more truth than it saved. A value orders of magnitude from its
+    // own series median is often perfectly real: Arrowhead, a clinical-stage business, genuinely
+    // paid $2,400 of tax in its loss years and $21.4M once it earned, and genuinely spent $9,674
+    // of capital in 2011 against $176M in 2023. Any line that can legitimately approach zero — tax,
+    // capex, impairments, interest — spans orders of magnitude honestly, and a median test cannot
+    // tell that from a decimal-point error. The gate that does work is anchored to the same year's
+    // revenue instead, and is applied where a ratio is genuinely impossible (see sgaSane below).
     for (const fy in coverByYear) coverByYear[fy] = coverByYear[fy].val;
     ha.sharesDiluted = normalizeShareScale(ha.sharesDiluted, coverByYear);
     // Repurchased shares are a fraction of outstanding — the cover count does not arbitrate them.
@@ -1471,9 +1506,15 @@ async function main() {
     const bank = bankDominant && hasBankData(facts, fyEnds) ? banksLines(facts, fyEnds) : null;
     if (bank) for (const w of bank.flags?.warns || []) console.warn(`  ! ${ticker} bank: ${w}`);
     const dims = DIMENSIONAL[String(ticker).toUpperCase()] || null;
+    // The software desk (scripts/softwareLines.mjs): the contracted backlog and what lands within
+    // a year, the deferred revenue behind it, the commissions paid to win it, and the filed inputs
+    // to the dilution ledger. Runs for any filer carrying the concepts — the shelf decides what is
+    // SURFACED, but a subscription book is a subscription book wherever it is shelved.
+    const soft = !ins && !bank && hasSoftwareData(facts, fyEnds) ? softwareLines(facts, fyEnds, dims) : null;
+    if (soft) for (const w of soft.flags?.warns || []) console.warn(`  ! ${ticker} software: ${w}`);
     const insYear = (fy) => {
       const o = {};
-      for (const src of [ins, bank]) {
+      for (const src of [ins, bank, soft]) {
         if (!src) continue;
         for (const [line, series] of Object.entries(src.flows)) if (series[fy] != null) o[line] = series[fy];
         for (const [line, series] of Object.entries(src.instants)) if (series[fy] != null) o[line] = series[fy];
@@ -1494,7 +1535,7 @@ async function main() {
         if (anchor?.fy != null && maxFy < anchor.fy) return null;
         return series[maxFy];
       };
-      for (const src of [ins, bank]) {
+      for (const src of [ins, bank, soft]) {
         if (!src) continue;
         for (const [line, series] of Object.entries(src.flows)) { const v = latestOf(series); if (v != null) o[line] = v; }
         for (const [line, series] of Object.entries(src.instants)) { const v = latestOf(series); if (v != null) o[line] = v; }
@@ -1747,15 +1788,9 @@ async function main() {
         stockBasedComp: pick(CONCEPTS.stockBasedComp),
         // Both legs must come from the same fiscal year before they are added; a current-year
         // selling line summed onto a prior-year administrative one would be a new wrong number.
-        sgaExpense: (() => {
-          const c = pick(CONCEPTS.sgaExpense);
-          if (c != null) return c;
-          const s = pickAnnual(facts, CONCEPTS.sellingMarketing);
-          const g = pickAnnual(facts, CONCEPTS.generalAdministrative);
-          const fresh = (e) => e && (anchor?.fy == null || e.fy == null || e.fy >= anchor.fy);
-          if (fresh(s) && fresh(g) && s.fy === g.fy) return s.val + g.val;
-          return fresh(g) ? g.val : null;
-        })(),
+        // Read from the record's own cleaned series at the anchor year, so the current figure
+        // inherits the scale gate and the same-year leg rule rather than re-deriving them.
+        sgaExpense: anchor?.fy != null ? (ha.sgaExpense?.[anchor.fy] ?? null) : null,
         researchDevelopment: pick(CONCEPTS.researchDevelopment),
         acquisitionSpend: pick(CONCEPTS.acquisitionSpend),
         goodwillImpairment: pick(CONCEPTS.goodwillImpairment),

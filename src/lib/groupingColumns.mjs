@@ -65,11 +65,20 @@ const COL = {
   ffo: { key: "ffo", label: "Funds from operations", basis: "net income + depreciation − property gains · latest FY, USD", type: "money" },
   dividendsPaid: { key: "dividendsPaid", label: "Dividends paid", basis: "latest fiscal year, USD", type: "money" },
   totalAssets: { key: "totalAssets", label: "Total assets", basis: "latest fiscal year, USD", type: "money" },
+  // The software desk's three: what is already contracted and lands within a year, what the
+  // selling costs, and the pay packet charged in the owner's own currency.
+  bookedYear: { key: "bookedYear", label: "Next year contracted", basis: "obligations landing within 12 months ÷ revenue · withheld where the band is untagged", type: "pct" },
+  salesMarketing: { key: "salesMarketing", label: "Sales & marketing", basis: "selling and marketing ÷ revenue · latest FY", type: "pct" },
+  stockComp: { key: "stockComp", label: "Stock pay", basis: "stock compensation ÷ revenue · latest FY", type: "pct" },
 };
 
 export const FAMILIES = {
   // Most shelves: the industrial read — the top line, the two margins, the cash an owner could
   // take out, the return on the capital tied up, and the debt net of the cash against it.
+  software: {
+    name: "Software",
+    columns: [COL.revenue, COL.bookedYear, COL.salesMarketing, COL.stockComp, COL.operatingMargin, COL.ownerEarnings, COL.roic],
+  },
   general: {
     name: "General operating",
     columns: [COL.revenue, COL.grossMargin, COL.operatingMargin, COL.ownerEarnings, COL.roic, COL.netDebt],
@@ -283,6 +292,14 @@ export function groupingCells(company, familyKey, terms) {
       }
       case "nibShare":
         return pct(L.noninterestBearingDeposits != null && L.deposits ? L.noninterestBearingDeposits / L.deposits : null);
+      case "bookedYear": {
+        const t = L.rpoTotal, sh = L.rpoTwelveMonthShare;
+        return pct(t != null && sh != null && L.revenue > 0 ? (t * sh) / L.revenue : null);
+      }
+      case "salesMarketing":
+        return pct(L.sellingMarketing != null && L.revenue > 0 ? L.sellingMarketing / L.revenue : null);
+      case "stockComp":
+        return pct(L.stockComp != null && L.revenue > 0 ? L.stockComp / L.revenue : null);
       case "mlr":
         return pct(medianOverRecord(company, (yl) => medicalLossRatio(yl)));
       case "reserveDev":

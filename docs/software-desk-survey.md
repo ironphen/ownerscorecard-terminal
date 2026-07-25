@@ -229,6 +229,75 @@ Ten lines, each with its gate. None ships without the gate passing.
 
 ---
 
+## 8b. THE RULINGS (2026-07-25, decided under delegated authority)
+
+The owner delegated these, asking that they be settled the way Graham and Buffett would settle
+them. One principle decided nearly all of them: classify and report a business by where its
+earnings actually come from, and refuse to publish a number whose basis a reader cannot trust.
+
+**Q1 — SG&A reconstruction: YES, plus sales and marketing as its own line.** The reconstruction
+makes the row mean what its label says. Carrying the selling line separately matters more: it is
+the number that answers whether growth was bought or earned, and no other line on the page asks
+that question. It is now a desk line and a grouping column.
+
+**Q2 — merged-record staleness test: NO, and the survey's own recommendation was wrong.** See §1
+F2. The tripwire was already correct; one full re-extraction healed the record; the weekly full
+fetch keeps it healed. What was missing was visibility, now supplied by the `fetchedAt` stamp.
+
+**Q3 — January-fortnight fiscal-year rule: YES.** Provably correct, provably narrow.
+
+**Q4 — the depreciation-excluding cost-of-revenue successor: NO.** Adopting it would un-dark
+GoDaddy and a handful of others at the price of a gross margin computed on a different basis from
+every peer, with nothing on the page to say so. A margin a reader cannot compare is not a margin;
+those companies keep an honest blank. The scope-conflict and thin-cost rules shipped instead,
+which fix wrong numbers rather than filling blanks with doubtful ones.
+
+**Q5 — the RPO hard gate: CONFIRMED.** No backlog total ships without the twelve-month band for
+the same year end. Oracle is the case that decides it: $638B against $67B of revenue, up 4.6x in
+a year, while the share landing within twelve months fell from 62% to 12%. The total alone would
+tell a reader the opposite of the truth, and Oracle's band is disclosed in prose only, so Oracle
+shows nothing. A backlog we cannot qualify is a backlog we do not publish.
+
+**Q6 — the typed-member parser extension: APPROVED and built.** Three changes, three gates, all
+load-bearing, with blanket typed-refusal still the default everywhere else.
+
+**Q7 — the dilution ledger: APPROVED, with a correction found in testing.** Measured over the
+whole record, the drift reverses the sign for exactly the companies it matters most for: Oracle's
+count fell hard to 2023 and has risen every year since as the buyback stopped, while Salesforce's
+did the reverse. The window is three years, which describes the regime an owner is buying into.
+The un-mopped case reads as its own state rather than as a small buyback number.
+
+**Q8 — the split tripwire: WITHHOLD, not rebase.** ServiceNow's five-for-one reads as +536% and
+Snowflake's listing as +784% if taken literally. Both announce themselves as a single year moving
+more than 40%, which no ordinary issuance or repurchase does. Where that appears the drift is
+withheld with its reason and the rest of the check still reports. A wrongly rebased series is a
+wrong number; a withheld one is not.
+
+**Q9 — cohort hygiene: RATIFIED, 115 relocations.** Every destination verified to exist first.
+The contestable ones were decided on the same earnings test that already puts Alphabet in
+Interactive Media rather than Software: Unity and AppLovin to Advertising, Duolingo and Coursera
+to Education, Tempus and Waystar to Health Care Technology. One departure from the audit's
+recommendation: **Shopify goes to E-Commerce, not Payments.** It is store infrastructure whose
+merchant-solutions revenue happens to be processed payments, not a processor like Adyen. The
+Software shelf falls from 250 rows to 135, and the previously near-empty Video Games and
+Interactive Media shelves are populated for the first time.
+
+**Q10 — universe hygiene: DEFERRED, deliberately.** Warrants and duplicate share classes should
+not carry company pages, and same-CIK rows inflate every cohort statistic. But collapsing them
+touches routing for tickers people legitimately search, and it is a terminal-wide change rather
+than a software one. Filed as its own piece of work rather than smuggled in here.
+
+**Q11 — the capitalisation companion: NOT YET.** Available at only some filers, and an absence
+that reads as "missing data" when it is actually disclosed policy would mislead more than the
+column informs. Microsoft does not capitalise commissions by policy; Salesforce carries $5.06B.
+Until the page can say which is which, the column stays off.
+
+**Q12 — the non-GAAP candor line: APPROVED in principle, NOT BUILT.** It belongs with the Notes
+pipeline rather than the extractor, because the company's own headline lives in an 8-K exhibit
+that this pipeline does not read.
+
+---
+
 ## 9. WHAT WAS BUILT BEFORE RATIFICATION, AND WHY
 
 Five items in §1 were wrong numbers on live pages rather than gaps, so they were repaired under the standing correctness mandate and are reported here rather than asked. Q1 through Q4 remain open on the JUDGMENT each involves; the arithmetic is no longer in doubt. Every tag was verified against filed data before any code was written.
