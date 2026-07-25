@@ -19,6 +19,7 @@ import { passesQualityFloor } from "../src/lib/fundamentals.mjs";
 import { normalizeShareScale, majorityShareRef } from "../src/lib/shareScale.mjs";
 import { reconcileLeaseLadder } from "../src/lib/leases.mjs";
 import { compactJson } from "../src/lib/dataFile.mjs";
+import { industryLabelOf, sectorOfIndustry } from "../src/lib/shelves.mjs";
 import { buildCikMap, CIK_OVERRIDE, resolveCikLive } from "./cikResolve.mjs";
 import { hasInsuranceData, insuranceLines, fillClaimsFromRollforward, INSURANCE_LINE_NAMES } from "./insuranceLines.mjs";
 import { hasBankData, banksLines, BANK_LINE_NAMES } from "./banksLines.mjs";
@@ -170,8 +171,24 @@ const CONCEPTS = {
   // operating income, surfaced so a reader can see where each revenue dollar goes. Overhead (SG&A)
   // and the research a business plows back in; R&D intensity is itself a moat tell, a durable
   // investment for some, a treadmill others must run just to stand still.
-  sgaExpense: ["SellingGeneralAndAdministrativeExpense", "GeneralAndAdministrativeExpense"],
-  researchDevelopment: ["ResearchAndDevelopmentExpense", "ResearchAndDevelopmentExpenseExcludingAcquiredInProcessCost"],
+  // Overhead, and the reconstruction that makes it honest. Software and much of modern services
+  // never file the combined element at all: they file selling-and-marketing and general-and-
+  // administrative separately. Reading the second alone and labelling it SG&A drops the entire
+  // customer-acquisition outlay — Salesforce printed 7% of revenue where the truth is 42%, Adobe
+  // 7% against 34%, Oracle 2% against 15%. The two legs are kept as their own chains so the sum
+  // can be rebuilt where both exist; G&A alone still stands where a filer genuinely runs no
+  // selling line (a REIT, a closed-end manager), which is the honest reading for those.
+  sgaExpense: ["SellingGeneralAndAdministrativeExpense"],
+  sellingMarketing: ["SellingAndMarketingExpense"],
+  generalAdministrative: ["GeneralAndAdministrativeExpense"],
+  // Adobe files no plain R&D element at all; the software-specific successor carries the whole
+  // series ($4,294M FY2025), and it is also the live tag behind Take-Two's and ACI Worldwide's
+  // decade-stale figures.
+  researchDevelopment: [
+    "ResearchAndDevelopmentExpense",
+    "ResearchAndDevelopmentExpenseExcludingAcquiredInProcessCost",
+    "ResearchAndDevelopmentExpenseSoftwareExcludingAcquiredInProcessCost",
+  ],
   stockBasedComp: ["ShareBasedCompensation"],
   dividendsPaid: ["PaymentsOfDividendsCommonStock", "PaymentsOfDividends"],
   buybacks: ["PaymentsForRepurchaseOfCommonStock"],
@@ -251,7 +268,15 @@ const CONCEPTS = {
   // Together these measure how asset-heavy the operation truly is: the signal that separates a
   // capital-intensive operator from an asset-light platform when SIC and margins alone mislead
   // (a data-center operator that owns its servers; a theater chain that leases its screens).
-  netPPE: ["PropertyPlantAndEquipmentNet"],
+  // The plain net-plant element dies at filers who moved to the combined property-and-finance-
+  // lease presentation their own balance sheet now shows: Meta's stops at 2018 and Alphabet's at
+  // FY2024, which is why Meta's asset intensity read its 2018 balance of $24.7B against a true
+  // $176.4B. The successor carries finance-lease right-of-use assets alongside owned property,
+  // which is the line as the filer presents it, so the basis is the filer's own.
+  netPPE: [
+    "PropertyPlantAndEquipmentNet",
+    "PropertyPlantAndEquipmentAndFinanceLeaseRightOfUseAssetAfterAccumulatedDepreciationAndAmortization",
+  ],
   operatingLeaseAsset: ["OperatingLeaseRightOfUseAsset"],
   sharesDiluted: [
     "WeightedAverageNumberOfDilutedSharesOutstanding",
@@ -414,7 +439,21 @@ const days = (a, b) => Math.abs((new Date(b) - new Date(a)) / 86400000);
 // total under "Revenues"; the largest is the real top line in both. Rent carries no
 // excise tax, so the size comparison is safe here in a way it would not be for a
 // product company whose gross "Revenues" includes excise.
-function annualByYear(facts, tags, unit = "USD", pickMax = false) {
+// A 52/53-week filer whose year ends in the first days of January is reporting the year that
+// just closed, not the one that opened a day or two earlier. Leidos's period ended 2026-01-02 is
+// its fiscal 2025 by its own accession; the calendar year of the period end labels it 2026, and
+// then collides it with the real 2026 so one whole year vanishes from the record — Leidos lost
+// FY2020 and Cadence lost FY2021 that way. Late-January enders (Salesforce, Autodesk, and twenty
+// more on the software shelf) are NOT affected and must not shift, hence the first-fortnight test.
+// EDGAR's own fy field is not a substitute: it is filing-scoped, so every comparative column in a
+// 10-K inherits the filing's year, and it is outright wrong for Salesforce.
+const fyOfEnd = (end) => {
+  const d = new Date(end);
+  const y = d.getUTCFullYear();
+  return d.getUTCMonth() === 0 && d.getUTCDate() <= 14 ? y - 1 : y;
+};
+
+function annualByYear(facts, tags, unit = "USD", pickMax = false, conflictTakesLarger = false) {
   const out = {};
   for (const tag of tags) {
     const units = facts?.facts?.["us-gaap"]?.[tag]?.units?.[unit];
@@ -424,11 +463,25 @@ function annualByYear(facts, tags, unit = "USD", pickMax = false) {
       if (!u.form || !u.form.startsWith("10-K") || !u.start || !u.end) continue;
       const dur = days(u.start, u.end);
       if (dur < 350 || dur > 380) continue;
-      const fy = new Date(u.end).getUTCFullYear();
+      const fy = fyOfEnd(u.end);
       if (!perTag[fy] || (u.filed || "") > (perTag[fy].filed || ""))
         perTag[fy] = { val: u.val, end: u.end, filed: u.filed || "", accn: u.accn, form: u.form };
     }
-    for (const fy in perTag) if (!(fy in out) || (pickMax && perTag[fy].val > out[fy].val)) out[fy] = perTag[fy];
+    for (const fy in perTag) {
+      if (!(fy in out)) { out[fy] = perTag[fy]; continue; }
+      if (pickMax && perTag[fy].val > out[fy].val) { out[fy] = perTag[fy]; continue; }
+      // A near-synonym further down the chain can carry an order-of-magnitude larger figure for
+      // the same year, which means the two elements are not the same scope: the smaller is a
+      // component wearing the total's name. Caterpillar tags $49M under cost of goods and services
+      // sold beside $44,752M under cost of revenue, and taking the first-listed tag printed a
+      // 99.9% gross margin for a manufacturer. Where the gap is that wide the larger is the total;
+      // where it is narrow (one element including depreciation and the other not) chain order
+      // still decides, because that is a presentation choice and not a scope error.
+      if (conflictTakesLarger && perTag[fy].val > out[fy].val * 10) {
+        console.warn(`  ! ${tags[0]} ${fy}: a later chain tag reports ${(perTag[fy].val / out[fy].val).toFixed(0)}x more — taking the larger as the total`);
+        out[fy] = perTag[fy];
+      }
+    }
   }
   return out;
 }
@@ -450,7 +503,7 @@ function instantByYear(facts, tags, unit = "USD", fyEnds = null) {
     const perTag = {};
     for (const u of units) {
       if (!u.form || !u.form.startsWith("10-K") || !u.end || u.start) continue;
-      const fy = new Date(u.end).getUTCFullYear();
+      const fy = fyOfEnd(u.end);
       const anchorEnd = fyEnds?.[fy];
       if (anchorEnd && Math.abs(days(anchorEnd, u.end)) > 14) continue;
       const cur = perTag[fy];
@@ -504,6 +557,31 @@ const freshestShare = (a, b) => {
 const pickAnnual = (facts, tags, unit = "USD") => latestEntry(annualByYear(facts, tags, unit));
 const pickInstant = (facts, tags, unit = "USD", fyEnds = null) => latestEntry(instantByYear(facts, tags, unit, fyEnds));
 const collectAnnual = (facts, tags, unit = "USD") => valuesByYear(annualByYear(facts, tags, unit));
+
+// Cost of revenue resolves with the scope-conflict rule above, since this is the chain whose
+// near-synonyms most often carry different scopes at the same filer.
+const corByYear = (facts) => annualByYear(facts, CONCEPTS.costOfRevenue, "USD", false, true);
+
+// A cost of revenue under a hundredth of the year's revenue is not a total, it is a fragment that
+// happened to be tagged. Withholding it costs a gross-margin reading; publishing it asserts the
+// business has no cost of sales, which for a utility buying fuel is simply false.
+const thinCor = (cor, rev) => (cor != null && rev > 0 && cor / rev < 0.01 ? null : cor);
+
+// Rebuild SG&A year by year from whichever legs the filer actually files. The combined element
+// wins where it exists. Where it does not but BOTH legs do, their sum is the concept the row
+// claims to show. Where only general-and-administrative exists, it stands alone, which is right
+// for a business with no selling line and is also the pre-existing behaviour, so no filer loses a
+// value it already had. A selling leg alone is never shown: half a bucket under a whole bucket's
+// name is the same error in smaller print.
+const sgaSeries = (combined, sm, ga) => {
+  const out = { ...combined };
+  for (const fy of new Set([...Object.keys(sm), ...Object.keys(ga)])) {
+    if (out[fy] != null) continue;
+    if (sm[fy] != null && ga[fy] != null) out[fy] = sm[fy] + ga[fy];
+    else if (ga[fy] != null) out[fy] = ga[fy];
+  }
+  return out;
+};
 const collectInstant = (facts, tags, unit = "USD", fyEnds = null) => valuesByYear(instantByYear(facts, tags, unit, fyEnds));
 
 // ---- the share count for turning a price into a value (NOT the per-share denominator) ----
@@ -928,9 +1006,62 @@ async function main() {
   // (the full universe is several hundred names). Safe on a real refresh too: the merge
   // below carries every other company over from the last good file, so the catalog is
   // never truncated, only the named tickers are re-fetched. Blank = the whole universe.
+  // The last good file, read once: it is both the carry-over source further down and the only
+  // place a company's SIC is known before it is fetched, which is what makes cohort selection
+  // possible without a network round trip.
+  let priorByTicker = {};
+  try {
+    const priorCos = JSON.parse(fs.readFileSync(path.join(dataDir, "fundamentals.json"), "utf8")).companies || [];
+    priorByTicker = Object.fromEntries(priorCos.map((c) => [String(c.ticker).toUpperCase(), c]));
+  } catch {}
+
+  // ---- cohort selection -------------------------------------------------------------------
+  // The desks work one shelf at a time, so the fetch should too: a chain repair aimed at the
+  // software shelf ought to be provable against software in minutes rather than against the whole
+  // pool in an hour. Membership resolves from the PRIOR file's SIC through the same taxonomy the
+  // shelves themselves use, so no company has to be fetched to learn whether it belongs.
+  //
+  //   ONLY_FUND=MSFT,ORCL                 explicit tickers
+  //   FUND_INDUSTRY="Software"            one shelf, by its label
+  //   FUND_SECTOR="Information Technology"  every shelf in a sector
+  //   FUND_STALEST=400                    the 400 records refreshed longest ago
+  //
+  // That last one is the safety valve, and it is the whole reason sharding does not industrialize
+  // the very bug it exists to avoid. Partial runs are what let Oracle carry a 2011 cost of revenue
+  // into a 2026 record: every partial run preserves thousands of untouched records, and nothing on
+  // the record said how old its extraction was. Sweeping by age means no company sits un-refreshed
+  // merely because nobody thought to name it, and the fetchedAt stamp below makes the age a fact
+  // rather than an assumption.
   const onlyFund = (process.env.ONLY_FUND || "").toUpperCase().split(",").map((s) => s.trim()).filter(Boolean);
+  const wantIndustry = (process.env.FUND_INDUSTRY || "").trim().toLowerCase();
+  const wantSector = (process.env.FUND_SECTOR || "").trim().toLowerCase();
+  const wantStalest = Number(process.env.FUND_STALEST || 0) || 0;
+  let cohort = null; // null = the whole universe
+  if (wantIndustry || wantSector || wantStalest) {
+    let rows = Object.values(priorByTicker);
+    if (wantIndustry || wantSector) {
+      rows = rows.filter((c) => {
+        const label = industryLabelOf(c);
+        if (wantIndustry && String(label || "").toLowerCase() === wantIndustry) return true;
+        if (wantSector && String(sectorOfIndustry(label) || "").toLowerCase() === wantSector) return true;
+        return false;
+      });
+    }
+    if (wantStalest) {
+      // Oldest extraction first; a record that has never carried a stamp is the oldest of all.
+      rows = rows.sort((a, b) => String(a.fetchedAt || "").localeCompare(String(b.fetchedAt || ""))).slice(0, wantStalest);
+    }
+    cohort = new Set(rows.map((c) => String(c.ticker).toUpperCase()));
+    const what = [wantIndustry && `industry "${process.env.FUND_INDUSTRY}"`, wantSector && `sector "${process.env.FUND_SECTOR}"`, wantStalest && `${wantStalest} stalest`].filter(Boolean).join(" + ");
+    console.log(`Cohort: ${what} → ${cohort.size} companies (of ${Object.keys(priorByTicker).length} on file).`);
+    if (!cohort.size) {
+      console.warn("  ! that cohort resolved to nobody — check the label against src/data/shelves.json; refusing to run a no-op that would rewrite the file.");
+      return;
+    }
+  }
   for (const { ticker, name } of universe.tickers) {
     if (onlyFund.length && !onlyFund.includes(ticker.toUpperCase())) continue;
+    if (cohort && !cohort.has(ticker.toUpperCase())) continue;
     // CIK_OVERRIDE wins over the SEC map: it exists precisely to correct tickers the map points at
     // the wrong entity (XOM → an empty reorg shell), so it must take precedence, not fill a gap.
     let cik = CIK_OVERRIDE[ticker.toUpperCase()] || cikByTicker[ticker.toUpperCase()];
@@ -1011,7 +1142,7 @@ async function main() {
       // and clears the cost, prefer it. Excise filers (tobacco) are untouched — their net contract
       // revenue already clears cost, so the trigger never fires and their gross "Revenues" never wins.
       const totalRevBy = annualByYear(facts, ["Revenues"], "USD");
-      const cogsBy = annualByYear(facts, CONCEPTS.costOfRevenue, "USD");
+      const cogsBy = corByYear(facts);
       for (const fy of Object.keys(revAnnualBy)) {
         const rev = revAnnualBy[fy]?.val, cogs = cogsBy[fy]?.val, tot = totalRevBy[fy]?.val;
         if (rev != null && cogs != null && tot != null && rev < cogs && tot > rev && tot >= cogs)
@@ -1245,7 +1376,7 @@ async function main() {
       netIncome: collectAnnual(facts, CONCEPTS.netIncome),
       cashFromOps: collectAnnual(facts, CONCEPTS.cashFromOps),
       capex: collectAnnual(facts, CONCEPTS.capex),
-      costOfRevenue: collectAnnual(facts, CONCEPTS.costOfRevenue),
+      costOfRevenue: valuesByYear(corByYear(facts)),
       depreciation: collectAnnual(facts, CONCEPTS.depreciation),
       dividendsPaid: collectAnnual(facts, CONCEPTS.dividendsPaid),
       buybacks: collectAnnual(facts, CONCEPTS.buybacks),
@@ -1262,7 +1393,11 @@ async function main() {
       lossesAndExpenses: collectAnnual(facts, CONCEPTS.lossesAndExpenses),
       investmentIncome: collectAnnual(facts, CONCEPTS.investmentIncome),
       stockBasedComp: collectAnnual(facts, CONCEPTS.stockBasedComp),
-      sgaExpense: collectAnnual(facts, CONCEPTS.sgaExpense),
+      sgaExpense: sgaSeries(
+        collectAnnual(facts, CONCEPTS.sgaExpense),
+        collectAnnual(facts, CONCEPTS.sellingMarketing),
+        collectAnnual(facts, CONCEPTS.generalAdministrative),
+      ),
       researchDevelopment: collectAnnual(facts, CONCEPTS.researchDevelopment),
       acquisitionSpend: collectAnnual(facts, CONCEPTS.acquisitionSpend),
       goodwillImpairment: collectAnnual(facts, CONCEPTS.goodwillImpairment),
@@ -1469,7 +1604,12 @@ async function main() {
             // dividend (the mixed-vintage class the comment above warns about). Also what
             // lets stewardship's retainedToEquity resolve on TTM-based records.
             dividendsPaid: ttmFlow(facts, CONCEPTS.dividendsPaid, "USD", false, true)?.val ?? null, // guardStable: dividend payment-date straddle can double-count a quarter
-            sgaExpense: tf(CONCEPTS.sgaExpense),
+            sgaExpense: (() => {
+              const c = tf(CONCEPTS.sgaExpense);
+              if (c != null) return c;
+              const s = tf(CONCEPTS.sellingMarketing), g = tf(CONCEPTS.generalAdministrative);
+              return s != null && g != null ? s + g : g;
+            })(),
             researchDevelopment: tf(CONCEPTS.researchDevelopment),
             acquisitionSpend: tf(CONCEPTS.acquisitionSpend),
             goodwillImpairment: tf(CONCEPTS.goodwillImpairment),
@@ -1549,6 +1689,11 @@ async function main() {
       cik,
       sic,
       sicDescription,
+      // When this record was last EXTRACTED, which is not the same as the file's asOf: a partial
+      // run rewrites the whole file while touching only its cohort, and without a per-record stamp
+      // a decade-old extraction is indistinguishable from this morning's. The stamp is what turns
+      // "probably fresh" into a fact, and it is what the stalest-first sweep sorts on.
+      fetchedAt: new Date().toISOString().slice(0, 10),
       fy: anchor?.fy ?? null,
       periodEnd: anchor?.end ?? null,
       form: anchor?.form ?? "10-K",
@@ -1593,9 +1738,24 @@ async function main() {
         depreciation: pick(CONCEPTS.depreciation),
         capex: pick(CONCEPTS.capex),
         incomeTaxExpense: pick(CONCEPTS.incomeTaxExpense),
-        costOfRevenue: pick(CONCEPTS.costOfRevenue),
+        costOfRevenue: (() => {
+          const e = latestEntry(corByYear(facts));
+          if (!e) return null;
+          if (anchor?.fy != null && e.fy != null && e.fy < anchor.fy) return null;
+          return e.val ?? null;
+        })(),
         stockBasedComp: pick(CONCEPTS.stockBasedComp),
-        sgaExpense: pick(CONCEPTS.sgaExpense),
+        // Both legs must come from the same fiscal year before they are added; a current-year
+        // selling line summed onto a prior-year administrative one would be a new wrong number.
+        sgaExpense: (() => {
+          const c = pick(CONCEPTS.sgaExpense);
+          if (c != null) return c;
+          const s = pickAnnual(facts, CONCEPTS.sellingMarketing);
+          const g = pickAnnual(facts, CONCEPTS.generalAdministrative);
+          const fresh = (e) => e && (anchor?.fy == null || e.fy == null || e.fy >= anchor.fy);
+          if (fresh(s) && fresh(g) && s.fy === g.fy) return s.val + g.val;
+          return fresh(g) ? g.val : null;
+        })(),
         researchDevelopment: pick(CONCEPTS.researchDevelopment),
         acquisitionSpend: pick(CONCEPTS.acquisitionSpend),
         goodwillImpairment: pick(CONCEPTS.goodwillImpairment),
@@ -1667,6 +1827,15 @@ async function main() {
     // present. The number is sacred; a stale one mislabels today, so it is better shown as nothing.
     const tooStale = rec.periodEnd ? (Date.now() - new Date(rec.periodEnd).getTime()) > 24 * 30.44 * 86400000 : false;
     if (passesQualityFloor(rec) && !tooStale) {
+      // A cost of revenue under a hundredth of the year's revenue is not a total. CenterPoint, a
+      // utility that buys fuel, tags $4M against $9,337M and would print a 100% gross margin;
+      // Murphy Oil tags nothing at all against $2,690M. Where no larger element exists to promote,
+      // the honest reading is silence: the gross-margin row shows a dash rather than a figure that
+      // says this business has no cost of sales. Applied to the record's own years, so a genuinely
+      // costless year is judged against that year's revenue and not against the latest.
+      if (rec.lines) rec.lines.costOfRevenue = thinCor(rec.lines.costOfRevenue, rec.lines.revenue);
+      for (const h of rec.history || []) if (h.lines) h.lines.costOfRevenue = thinCor(h.lines.costOfRevenue, h.lines.revenue);
+      if (rec.ttm) rec.ttm.costOfRevenue = thinCor(rec.ttm.costOfRevenue, rec.ttm.revenue);
       companies.push(rec);
       console.log(`  ✓ ${ticker} (CIK ${cik}, FY${anchor?.fy ?? "?"})`);
     } else {
@@ -1685,11 +1854,7 @@ async function main() {
   // and as the universe grows those blips become routine. We key on the current universe,
   // so a ticker genuinely removed from the list is dropped, while a transient failure is
   // carried over from the last good file.
-  let prior = {};
-  try {
-    const priorCos = JSON.parse(fs.readFileSync(path.join(dataDir, "fundamentals.json"), "utf8")).companies || [];
-    prior = Object.fromEntries(priorCos.map((c) => [String(c.ticker).toUpperCase(), c]));
-  } catch {}
+  const prior = priorByTicker;
   const fresh = Object.fromEntries(companies.map((c) => [String(c.ticker).toUpperCase(), c]));
   // Field-level carry-over: a company can clear the quality floor (revenue + an earnings figure) yet
   // still have a SECONDARY field come back null on a transient XBRL tag miss — capex, depreciation,
@@ -1738,11 +1903,25 @@ async function main() {
   fs.writeFileSync(tmp, compactJson(out));
   fs.renameSync(tmp, dest);
   console.log(`\n✅ Wrote ${merged.length} companies (${companies.length} passed, ${withheld.size} withheld below the quality floor, ${carried} carried over from the last good file)`);
+
+  // What this run did NOT refresh. A partial run rewrites the whole file, so silence here would
+  // read as coverage; the pipeline should say plainly how much of what it just published is old
+  // and how old the oldest of it is. Anything past a quarter is called out by name-count, because
+  // a company that has not been re-extracted in three months has had a 10-K land in the meantime.
+  const today = new Date().toISOString().slice(0, 10);
+  const ages = merged.map((c) => c.fetchedAt || null);
+  const unstamped = ages.filter((d) => !d).length;
+  const stale = ages.filter((d) => d && days(d, today) > 92).length;
+  const oldest = ages.filter(Boolean).sort()[0] || null;
+  if (unstamped || stale) {
+    console.log(`   Freshness: ${merged.length - unstamped - stale} extracted within the quarter, ${stale} older than 92 days, ${unstamped} never stamped${oldest ? ` (oldest stamp ${oldest})` : ""}.`);
+    console.log(`   Sweep them with FUND_STALEST=<n>, or a shelf at a time with FUND_INDUSTRY / FUND_SECTOR.`);
+  }
   if (withheld.size) console.log(`   withheld: ${[...withheld].sort().join(", ")}`);
 }
 
 // Exported for the offline extraction test and the wire's performance line; only hit EDGAR when run directly.
-export { instantMap, quarterFlowMap, quarterSeries, latestObservation, annualByYear, deriveOpInc, revenueTagsFor, CONCEPTS };
+export { instantMap, quarterFlowMap, quarterSeries, latestObservation, annualByYear, deriveOpInc, revenueTagsFor, CONCEPTS, fyOfEnd, sgaSeries, thinCor };
 
 if (import.meta.url === pathToFileURL(process.argv[1] || "").href) {
   main().catch((err) => {

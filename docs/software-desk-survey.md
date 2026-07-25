@@ -40,7 +40,11 @@ The live consequences, each an impossible or misleading number now on a page: OR
 
 This is the same family as the two carry-over resurrection bugs already killed this month, and it is the general case of both. Confidence HIGH.
 
-Recommended fix: apply the anchor-year test to the MERGED output, not only to the fresh fetch. A carried field must be vouched for by the fresh anchor-year history row, which is the rule already written for desk lines — generalize it to every line.
+CORRECTED ON VERIFICATION (2026-07-22, and this correction matters because the first answer would have done harm). The survey originally recommended applying the anchor-year test to the merged output. That is wrong, and testing it proved so: the anchor-year history row legitimately lacks lines the current record legitimately carries, and a blanket vouching rule flagged 2,346 of 2,825 companies — it would have blanked thousands of good values to fix a few dozen bad ones.
+
+The tripwire itself is correct. Re-fetching Oracle alone nulls its 2011 cost of revenue exactly as designed. The stale records are simply older than the rule, and the whole-record carry preserved them. So the repair is operational rather than structural: one full-pool re-fetch heals every one of them, and the weekly CI already re-fetches the whole pool, so they stay healed.
+
+What DOES need building is the thing that let this hide for so long: nothing on a record said when it was last extracted, so a decade-old figure was indistinguishable from this morning's. Each record now carries a `fetchedAt` stamp, every run reports how much of what it published is old and how old the oldest is, and `FUND_STALEST=n` sweeps the pool by age. See §9.
 
 ### F3. Fiscal-year labels are wrong for 52/53-week filers ending January 1-14 (POOL-WIDE)
 `fetchFundamentals.mjs:427` and `:453` assign `fy` from the calendar year of the period end. For a 52/53-week filer whose year ends in the first fortnight of January, that is a year too high, and worse, it collides two real years into one bucket and silently erases one.
@@ -222,3 +226,25 @@ Ten lines, each with its gate. None ships without the gate passing.
 **Q11 (capitalisation companion).** Ship the capitalised-software and capitalised-commission companions to R&D, given they are available at only some filers? A column that is present for SSNC and absent for PTC invites exactly the wrong inference unless the absence is labelled as policy rather than as missing data.
 
 **Q12 (non-GAAP candor line).** Approve a candor line that names the company's own excluded items in dollars and points, without ever printing the non-GAAP figure itself?
+
+---
+
+## 9. WHAT WAS BUILT BEFORE RATIFICATION, AND WHY
+
+Five items in §1 were wrong numbers on live pages rather than gaps, so they were repaired under the standing correctness mandate and are reported here rather than asked. Q1 through Q4 remain open on the JUDGMENT each involves; the arithmetic is no longer in doubt. Every tag was verified against filed data before any code was written.
+
+Shipped: the SG&A reconstruction (F1), which moved 392 companies, 313 of them by more than ten points of revenue — this was never a software-only defect; the January-fortnight fiscal-year rule (F3), restoring Leidos's 2020 and Cadence's 2021; the R&D and net-plant successor tags (F4/F5), un-darkening Adobe and correcting Meta from $24.7B to $176.4B; and a full-pool re-fetch, which took companies carrying a stale non-zero current line from thousands to one.
+
+Two further defects surfaced during verification and were repaired with them, neither software:
+- **The cost-of-revenue scope conflict.** A near-synonym further down the chain can carry an order of magnitude more for the same year, which means the two elements are not the same scope. Caterpillar tags $49M under cost of goods and services sold beside $44,752M under cost of revenue, and first-tag-wins printed a 99.9% gross margin for a manufacturer. Where the gap exceeds tenfold the larger is now taken as the total and the promotion is logged; where it is narrow, chain order still decides, because that is a presentation choice and not a scope error.
+- **The thin-cost floor.** Where no larger element exists to promote, a cost of revenue under a hundredth of revenue is withheld. CenterPoint, a utility that buys fuel, was printing a 100% gross margin from a $4M tag. Implausible gross margins across the pool fell from 91 to a residue that is structural (REITs and insurers, for which the concept does not apply).
+
+Not shipped, and still Q4: the cost-of-revenue successor tag that would un-dark GoDaddy and others. It excludes depreciation and amortisation, so adopting it would quietly flatter gross margin at exactly the companies it fixes. It needs a labelled basis or it needs to stay withheld, and that is a presentation ruling.
+
+Also filed, from the same verification: Expro Group is absent from the SEC's static ticker map, falls through to the live-resolution path, and returns no facts at all — it is now honestly withheld rather than sitting on a stale carried record. The live-resolution fallback deserves an audit of its own; it is not known how many others it silently fails.
+
+## 10. THE COHORT-SCOPED FETCH (built 2026-07-22)
+
+The desks work one shelf at a time and the fetch now can too: `FUND_INDUSTRY="Software"` covers 186 companies against the pool's 2,881, and `FUND_SECTOR="Information Technology"` covers 421. Membership resolves from the prior file's SIC through the same taxonomy the shelves use, so nothing is fetched to learn whether it belongs.
+
+The discipline that had to come with it: partial runs are what produced F2 in the first place. Every partial run rewrites the whole file while touching only its cohort, and before the `fetchedAt` stamp nothing on a record said how old its extraction was. Making partial runs easier without that stamp would have industrialised the bug rather than the fix. `FUND_STALEST=n` is the safety valve — routine partial runs sweep the pool by age, so no company sits un-refreshed merely because nobody thought to name it.
