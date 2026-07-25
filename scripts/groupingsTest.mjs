@@ -56,10 +56,13 @@ const cellsFor = (co) => {
 };
 
 // ---- 1b: the operating margin cell is the record's median, not the latest year ----
-// Margins by year: 10%, 12%, 20%, 16% — latest is 16%, the through-cycle median is 12%.
+// Margins by year: 10%, 12%, 20%, 16% — latest is 16%; sorted the middles are 12 and 16, so the
+// median is 14%. This expectation moved on 2026-07-25: throughCycle() used to take the LOWER of
+// two middle values while peers.mjs averaged them, so one concept printed two different numbers
+// depending on which table a reader was looking at. The standard definition won.
 const co4 = opCo([yr(2022, 1000, 700, 100), yr(2023, 1000, 700, 120), yr(2024, 1000, 700, 200), yr(2025, 1000, 700, 160)]);
 const c4 = cellsFor(co4);
-ok(`operating margin is the median over the record (got ${c4.operatingMargin.text})`, c4.operatingMargin.text === "12.0%");
+ok(`operating margin is the median over the record (got ${c4.operatingMargin.text})`, c4.operatingMargin.text === "14.0%");
 ok("roic reads as a percent on a 4-year record", /%$/.test(c4.roic.text));
 ok(`revenue stays latest-FY (got ${c4.revenue.text})`, c4.revenue.text === "$1K" || c4.revenue.text === "$1,000" || c4.revenue.sort === 1000);
 
@@ -72,10 +75,11 @@ ok("roic withholds below 3 readable years", c2.roic.text === "—");
 ok("revenue (a size column) still prints on a 2-year record", c2.revenue.sort != null);
 
 // ---- 1d: a corrupt gross-margin year (mis-tagged near-zero cost line) never enters the median ----
-// Real years at 29–32%; one impossible 95% year. Median of the readable four is 30%.
+// Real years at 29-32%; one impossible 95% year, which never enters. Sorted, the readable four
+// are 29, 30, 31, 32 and the median is their two middles averaged: 30.5%.
 const coG = opCo([yr(2021, 1000, 700, 100), yr(2022, 1000, 710, 100), yr(2023, 1000, 690, 100), yr(2024, 1000, 50, 100), yr(2025, 1000, 680, 100)]);
 const cg = cellsFor(coG);
-ok(`corrupt gross-margin year excluded from the median (got ${cg.grossMargin.text})`, cg.grossMargin.text === "30.0%");
+ok(`corrupt gross-margin year excluded from the median (got ${cg.grossMargin.text})`, cg.grossMargin.text === "30.5%");
 
 // ---- 1e: the category-error withholding still stands — a bank in an operating family reads n/a ----
 const bank = { ...opCo([yr(2023, 1000, 700, 100), yr(2024, 1000, 700, 120), yr(2025, 1000, 700, 160)]), sic: "6022" };

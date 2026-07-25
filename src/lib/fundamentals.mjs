@@ -924,7 +924,14 @@ export function throughCycle(company, metricFn, n = 12) {
   if (vals.length < 3) return null;
   const recent = vals.slice(-n);
   const sorted = [...recent].sort((a, b) => a - b);
-  return { median: sorted[Math.floor((sorted.length - 1) / 2)], n: recent.length, lo: sorted[0], hi: sorted[sorted.length - 1] };
+  // The true median, averaging the two middle years on an even-length record. This used to take the
+  // lower of the two, which is a defensible convention on its own and indefensible alongside
+  // peers.mjs, which averages them: the grouping table and the peer table both printed "median over
+  // the record" and, for any company with an even number of readable years, printed different
+  // numbers for it. One concept must have one definition, and the standard one wins.
+  const m = Math.floor(sorted.length / 2);
+  const median = sorted.length % 2 ? sorted[m] : (sorted[m - 1] + sorted[m]) / 2;
+  return { median, n: recent.length, lo: sorted[0], hi: sorted[sorted.length - 1] };
 }
 
 // Read a yearly series the way an owner does — through the cycle, not on the endpoints. The single-year

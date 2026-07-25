@@ -8,7 +8,7 @@ import { combinedRatio, lossRatio } from "../lib/insurers.mjs";
 import { medicalLossRatio } from "../lib/managedCare.mjs";
 import { financialKind, financialSubtype } from "../lib/archetype.mjs";
 import { selectPeers, peerStat, floatYield, REIT_SUBSECTOR_LABELS } from "../lib/peers.mjs";
-import { industryLabelOf } from "../lib/shelves.mjs";
+import { industryLabelOf, industrySlug } from "../lib/shelves.mjs";
 import Term from "./Term.astro";
 
 // The peer set is computed once on the page and passed in, so the universe scan runs a single time per
@@ -148,6 +148,10 @@ const heading =
   : basis === "sector" ? `Peers, ${sector || cls.sector.label} sector`
   : basis === "shelf" ? `Peers, ${shelfNoun || myLabel}`
   : `Peers, ${subLabel || myLabel}`;
+// Only link the heading where the bench really is one industry. On a widened bench (a sector or an
+// economic model) the heading names something no single table holds, and a link would promise a
+// page that does not answer the words above it.
+const tableSlug = ["model", "sector", "shelf"].includes(basis) || subsector ? null : industrySlug(myLabel);
 const intro =
   basis === "model" ? `No close industry peers in the catalog yet, so these are the nearest by economic model (${cls.sector.label.toLowerCase()}), compared on ${lens}.`
   : basis === "sector" ? `Too few catalog companies share this one's industry, so the bench widens to its sector, side by side on ${lens}.`
@@ -157,7 +161,13 @@ const intro =
 
 {group.length >= 2 ? (
   <section class="peers">
-    <h3 class="secTitle pHead">{heading}</h3>
+    {/* The bench and the full comparative table are the same group read at two depths, and until
+        now nothing on a company page said so: across 3,872 built pages, not one linked to its own
+        grouping. A reader who wants the whole industry rather than the nearest six had no way
+        down except the site search. The heading is that link where the group IS an industry. */}
+    <h3 class="secTitle pHead">
+      {tableSlug ? <>Peers, <a href={`/groupings/${tableSlug}`} class="pHeadLink">{heading.replace(/^Peers, /, "")}</a></> : heading}
+    </h3>
     <p class="pNote">{intro} Each figure is a <b>through-cycle median</b>, so a peak or trough year can&rsquo;t distort it; the <b>group median</b> at the foot is the line to read each against.</p>
     <div class="wrap">
       <table>
