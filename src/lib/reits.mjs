@@ -48,6 +48,22 @@ export function cashPayout(L) {
   if (!L || L.dividendsPaid == null || !(L.cashFromOps > 0)) return null;
   return Math.abs(L.dividendsPaid) / L.cashFromOps;
 }
+
+// The cash return on what the buildings cost. Gross carrying value, never net: accumulated
+// depreciation is the charge this whole industry disputes, and letting it shrink the denominator
+// would flatter the return by exactly the amount under argument.
+export function cashYieldOnCost(L) {
+  if (!L || L.cashFromOps == null || !(L.realEstateGross > 0)) return null;
+  return L.cashFromOps / L.realEstateGross;
+}
+
+// What these figures do NOT contain. A trust's share of an unconsolidated joint venture — and the
+// debt inside it — sits outside every consolidated line on this page, and the pipeline cannot read
+// the venture's balance sheet. Leverage you cannot see is what ends compounders, so the gap is
+// named rather than left to be discovered. A stated hole is information; a silent one is a claim
+// of completeness that has not been earned.
+export const JV_LIMITATION_NOTE =
+  "These figures are the trust's consolidated accounts. Where a REIT owns buildings through joint ventures it does not control, its share of those properties — and of the debt against them — sits outside every line here, and the filings do not tag it in a form this pipeline can read. Read the equity-method and off-balance-sheet notes in the 10-K before concluding anything about total leverage.";
 // Operating cash per share — what funds-from-operations per share was standing in for, built from
 // two filed figures instead of a reconstruction. Kept under the old export name so every valuation
 // and compare surface that priced a trust on "per share" keeps working on an honest denominator.
@@ -109,16 +125,47 @@ export function buildReitScorecard(company) {
     label: "Withheld — not in the filings' structured data",
     note: FFO_WITHHELD_NOTE,
   };
+  // OWNER EARNINGS AS A BOUND, NOT A GUESS (ratified 2026-07-25).
+  //
+  // Buffett's owner earnings deducts the capital a business needs to hold its competitive position,
+  // and he said plainly in 1986 that this term is a guess and sometimes a very difficult one. He
+  // made that guess as an investor studying a handful of businesses. Making it here, for two
+  // hundred trusts, on filings that deliberately do not separate a new building from a new roof,
+  // would be inventing the number rather than estimating it — and management defines the split,
+  // which is precisely the incentive Munger warns about.
+  //
+  // So the two ends are shown and the middle is left to the reader. Operating cash is the CEILING:
+  // no owner could have taken out more. Cash less ALL capital spending is the FLOOR, and it is too
+  // harsh on purpose, because it charges the owner for buildings being ADDED as though they were
+  // being maintained. The truth lies between, and saying so is approximately right where a single
+  // modelled figure would be precisely wrong.
   const capex = L.capex != null ? Math.abs(L.capex) : null;
-  const afterCapex = cash != null && capex != null ? cash - capex : null;
-  const cashCheck = cash == null ? none("Cash from the properties", "Operating cash flow wasn't found in the filing data.", "free-cash-flow") : {
-    title: "What the properties produced in cash",
-    concept: "free-cash-flow",
-    value: $(cash),
-    formula: `Cash from operations ${$(cash)}${capex != null ? ` · less capital spending ${$(capex)} = ${$(afterCapex)}` : ""}`,
+  const floor = cash != null && capex != null ? cash - capex : null;
+  const cashCheck = cash == null ? none("What an owner could take out", "Operating cash flow wasn't found in the filing data.", "owner-earnings") : {
+    title: "What an owner could take out",
+    concept: "owner-earnings",
+    value: floor != null ? `${$(floor)} to ${$(cash)}` : $(cash),
+    formula: floor != null
+      ? `Between cash from operations less all capital spending ${$(cash)} − ${$(capex)} = ${$(floor)}, and cash from operations ${$(cash)}`
+      : `Cash from operations ${$(cash)} · capital spending not separately filed`,
     tone: "info",
-    label: afterCapex != null && afterCapex > 0 ? "Cash left after the year's capital spending" : "Before capital spending",
-    note: "Operating cash flow is filed, audited and unambiguous, which the industry's own earnings measure is not. Read it against the distribution below. The capital spending shown beside it mixes the money that keeps existing buildings competitive with the money that buys or builds new ones — the filings rarely separate them, so treat the difference as an upper bound on what an owner could have taken out.",
+    label: floor != null ? "A range, because the filings do not split maintenance from expansion" : "Before capital spending",
+    note: "Owner earnings is what a business produces in cash after the spending needed to keep it competitive. For a property trust that spending cannot be read: the filings mix the money that replaces a roof with the money that buys a building, and management decides which is which. Rather than model the split and publish a single figure, the two ends are shown. The upper end is operating cash, which no owner could exceed. The lower end deducts every dollar of capital spending, which is too harsh, since a trust that is growing is charged for buildings it is adding. A trust whose distribution sits near the lower end is paying it out of the properties; one whose distribution exceeds the upper end is paying it from somewhere else.",
+  };
+
+  // Yield on what the buildings cost, which is how Buffett described measuring the two properties he
+  // bought himself in the 2013 letter: the normalised cash return on the price paid, and whether it
+  // grows. Gross carrying value rather than net, so accumulated depreciation — the very charge the
+  // industry disputes — cannot flatter the denominator.
+  const yieldOnCost = cashYieldOnCost(L);
+  const yieldCheck = yieldOnCost == null ? none("Cash yield on the properties", "Operating cash flow or the property cost wasn't found in the filing data.", "roic") : {
+    title: "What the properties yield on their cost",
+    concept: "roic",
+    value: pc(yieldOnCost, 1),
+    formula: `Cash from operations ${$(cash)} ÷ real estate at cost ${$(L.realEstateGross)}`,
+    tone: yieldOnCost < 0.04 ? "warn" : yieldOnCost < 0.07 ? "ok" : "good",
+    label: yieldOnCost < 0.04 ? "Thin against what the buildings cost" : yieldOnCost < 0.07 ? "Ordinary for property" : "Strong against cost",
+    note: "The cash the properties throw off, measured against what they cost to acquire and build rather than against a market value nobody filed. Read it across the record: a portfolio whose yield on cost is rising is either raising rents faster than it is adding buildings, or buying well. Gross cost is used deliberately, so accumulated depreciation cannot shrink the denominator and flatter the return.",
   };
 
   const payout = cashPayout(L);
@@ -151,10 +198,23 @@ export function buildReitScorecard(company) {
     note: "How many times the property cash earnings cover the interest bill. Comfortable coverage is what lets a REIT refinance through a tight credit market instead of being forced to sell into one.",
   };
 
+  // The joint-venture gap is attached to the leverage section, because that is where it would
+  // change a reader's conclusion: a trust can look conservatively financed on its consolidated
+  // balance sheet and carry its real leverage in ventures that never appear on it.
+  const jvCheck = {
+    title: "What these figures leave out",
+    concept: "net-debt",
+    value: "—",
+    formula: "",
+    tone: "none",
+    label: "Consolidated accounts only",
+    note: JV_LIMITATION_NOTE,
+  };
+
   return {
     sections: [
-      { heading: "Is it a good business?", checks: [cashCheck, payoutCheck, ffoCheck] },
-      { heading: "Is it sound?", checks: [levCheck, covCheck] },
+      { heading: "Is it a good business?", checks: [cashCheck, yieldCheck, payoutCheck, ffoCheck] },
+      { heading: "Is it sound?", checks: [levCheck, covCheck, jvCheck] },
     ],
   };
 }
@@ -167,14 +227,17 @@ export function reitQuality(company) {
   const s = H.map((h) => ffoPerShare(h.lines));
   const first = s[0], last = s[s.length - 1], span = s.length - 1;
   const g = first > 0 && last > 0 ? Math.pow(last / first, 1 / span) - 1 : null;
-  const payout = ffoPayout(company.lines || {});
+  const payout = cashPayout(company.lines || {});
   const lev = debtToAssets(company.lines || {});
 
+  // The prose follows the measure. It used to say "funds from operations per share"; the figure
+  // underneath is now operating cash per share, and a sentence that named the wrong measure would
+  // be its own small wrong number.
   let s1;
-  if (g == null) s1 = "Funds from operations per share do not form a clean trend in the record";
-  else if (g >= 0.04) s1 = `Funds from operations per share have compounded about ${pc(g)} a year across the record`;
-  else if (g >= 0) s1 = `Funds from operations per share have been roughly flat (${pc(g)} a year)`;
-  else s1 = `Funds from operations per share have shrunk (${pc(g)} a year)`;
+  if (g == null) s1 = "Operating cash per share does not form a clean trend in the record";
+  else if (g >= 0.04) s1 = `Operating cash per share has compounded about ${pc(g)} a year across the record`;
+  else if (g >= 0) s1 = `Operating cash per share has been roughly flat (${pc(g)} a year)`;
+  else s1 = `Operating cash per share has shrunk (${pc(g)} a year)`;
   s1 += ".";
 
   let s2 = "";
