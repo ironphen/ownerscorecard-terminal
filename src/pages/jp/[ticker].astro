@@ -5,7 +5,6 @@ import TenYear from "../../components/TenYear.astro";
 import OwnerEarningsBridge from "../../components/OwnerEarningsBridge.astro";
 import Scorecard from "../../components/Scorecard.astro";
 import Capital from "../../components/Capital.astro";
-import Inversion from "../../components/Inversion.astro";
 import Valuation from "../../components/Valuation.astro";
 import CompareLink from "../../components/CompareLink.astro";
 import ActHeader from "../../components/ActHeader.astro";
@@ -205,7 +204,9 @@ const pageJsonLd = fund
         <ActHeader n="II" title="Quality &amp; stewardship" lede="Returns, the balance sheet, and stewardship. The same checks the US pages run, in yen." />
         <div id="sec-scorecard" class="sec"><Scorecard company={fund} /></div>
         <div id="sec-capital" class="sec"><Capital company={fund} /></div>
-        <div id="sec-inversion" class="sec"><Inversion company={fund} /></div>
+      {/* CUT 2026-07-25 (UX audit): Inversion rendered on 2,139 pages and on 98.7 percent of them
+          its entire output was that nothing had been found. Removed with the US pages so a reader
+          who moves between pools meets the same page. */}
       </section>
 
       <section class="actGroup">
