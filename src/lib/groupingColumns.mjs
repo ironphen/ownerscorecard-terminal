@@ -70,6 +70,12 @@ const COL = {
   bookedYear: { key: "bookedYear", label: "Next year contracted", basis: "obligations landing within 12 months ÷ revenue · withheld where the band is untagged", type: "pct" },
   salesMarketing: { key: "salesMarketing", label: "Sales & marketing", basis: "selling and marketing ÷ revenue · latest FY", type: "pct" },
   stockComp: { key: "stockComp", label: "Stock pay", basis: "stock compensation ÷ revenue · latest FY", type: "pct" },
+  // Semiconductors are the opposite business to software wearing the same sector label: the moat is
+  // bought with fabs and research rather than sold as a subscription, and the cycle shows up first
+  // in inventory. These three say what a chipmaker must spend to stay where it is.
+  rdIntensity: { key: "rdIntensity", label: "R&D / revenue", basis: "latest fiscal year", type: "pct" },
+  capexIntensity: { key: "capexIntensity", label: "Capex / revenue", basis: "latest fiscal year", type: "pct" },
+  inventoryDays: { key: "inventoryDays", label: "Inventory days", basis: "inventory ÷ daily cost of revenue · latest FY", type: "num" },
 };
 
 export const FAMILIES = {
@@ -78,6 +84,12 @@ export const FAMILIES = {
   software: {
     name: "Software",
     columns: [COL.revenue, COL.bookedYear, COL.salesMarketing, COL.stockComp, COL.operatingMargin, COL.ownerEarnings, COL.roic],
+  },
+  // Semiconductors and semiconductor equipment: capital intensity, research intensity, and the
+  // inventory cycle that turns a good year into a bad one.
+  semiconductor: {
+    name: "Semiconductors",
+    columns: [COL.revenue, COL.grossMargin, COL.rdIntensity, COL.capexIntensity, COL.inventoryDays, COL.ownerEarnings, COL.roic],
   },
   general: {
     name: "General operating",
@@ -300,6 +312,15 @@ export function groupingCells(company, familyKey, terms) {
         return pct(L.sellingMarketing != null && L.revenue > 0 ? L.sellingMarketing / L.revenue : null);
       case "stockComp":
         return pct(L.stockComp != null && L.revenue > 0 ? L.stockComp / L.revenue : null);
+      case "rdIntensity":
+        return pct(L.researchDevelopment != null && L.revenue > 0 ? L.researchDevelopment / L.revenue : null);
+      case "capexIntensity":
+        return pct(L.capex != null && L.revenue > 0 ? Math.abs(L.capex) / L.revenue : null);
+      case "inventoryDays": {
+        const daily = L.costOfRevenue > 0 ? L.costOfRevenue / 365 : null;
+        const d = L.inventory != null && daily ? L.inventory / daily : null;
+        return d == null ? DASH : String(Math.round(d));
+      }
       case "mlr":
         return pct(medianOverRecord(company, (yl) => medicalLossRatio(yl)));
       case "reserveDev":

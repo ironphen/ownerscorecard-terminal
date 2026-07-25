@@ -24,7 +24,10 @@ const ok = (name, cond) => { if (cond) pass++; else { fail++; console.log("FAIL 
 ok("one grouping per shelf", GROUPINGS.length === SHELVES.length);
 ok("every grouping resolves by slug", GROUPINGS.every((g) => groupingBySlug.get(g.slug) === g));
 const allCols = Object.values(FAMILIES).flatMap((f) => f.columns);
-ok("every family column is well-formed", allCols.every((c) => c.key && c.label && c.basis && (c.type === "money" || c.type === "pct")));
+// "num" joined money and pct when the semiconductor family added inventory days, which is a count
+// of days and neither a sum nor a share. The group-line summary still speaks only for money
+// columns, so a count is carried and rendered without being described in that sentence.
+ok("every family column is well-formed", allCols.every((c) => c.key && c.label && c.basis && ["money", "pct", "num"].includes(c.type)));
 
 // ---- 1a: the headers name the basis — quality ratios read as medians, size stays latest-FY ----
 const basisOf = (key) => allCols.find((c) => c.key === key)?.basis || "";

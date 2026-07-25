@@ -69,12 +69,18 @@ const rpoShareBand = { line: "rpoTwelveMonthShare", tag: "us-gaap:RevenueRemaini
 // against that same context. A filer whose disclosure differs in any respect yields nothing.
 //
 // So the per-filer map that the other targets need has no work left to do here, and withholding
-// the band from a hundred companies to preserve a ceremony that protects against nothing would
-// cost readers the single most useful number on a software page. The sweep covers the shelf's
-// filers of size; everyone else keeps the honest blank they already had.
-export function softwareBandTargets(companies, minRevenue = 5e8) {
+// the band from hundreds of companies to preserve a ceremony that protects against nothing would
+// cost readers the single most useful number a contracted-revenue business has.
+//
+// The sweep is deliberately NOT filtered by shelf. A backlog reading belongs to any business that
+// sells service it has not yet delivered, and that is not a property of where a company is filed:
+// Accenture, Cisco, Workday, Verisk and ADP carry contracted revenue exactly as Salesforce does,
+// and an earlier version of this that keyed on the Software shelf left every one of them dark. The
+// entry ticket is the economics — a deferred-revenue balance and enough size for the reading to
+// matter — and the gates decide the rest.
+export function bandSweepTargets(companies, minRevenue = 5e8) {
   return companies
-    .filter((c) => c.cik && c.lines?.revenue > minRevenue)
+    .filter((c) => c.cik && c.lines?.revenue > minRevenue && c.lines?.contractLiability != null)
     .map((c) => ({ ticker: c.ticker, cik: String(c.cik).padStart(10, "0"), filings: 2, bands: [rpoShareBand], quiet: true }));
 }
 
@@ -355,11 +361,10 @@ async function main() {
   // failing the run.
   let sweep = [];
   try {
-    const { industryLabelOf } = await import(pathToFileURL(path.join(process.cwd(), "src", "lib", "shelves.mjs")).href);
     const pool = JSON.parse(fs.readFileSync(path.join(dataDir, "fundamentals.json"), "utf8")).companies || [];
     const named = new Set(TARGETS.map((t) => t.ticker));
-    sweep = softwareBandTargets(pool.filter((c) => industryLabelOf(c) === "Software" && !named.has(c.ticker)));
-    console.log(`Band sweep: ${sweep.length} software filers beyond the registry.`);
+    sweep = bandSweepTargets(pool.filter((c) => !named.has(c.ticker)));
+    console.log(`Band sweep: ${sweep.length} contracted-revenue filers beyond the registry.`);
   } catch (e) { console.warn(`  ! band sweep skipped (${e.message})`); }
 
   for (const t of [...TARGETS, ...sweep]) {

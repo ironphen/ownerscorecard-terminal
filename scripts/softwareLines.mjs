@@ -94,9 +94,15 @@ export function softwareLines(facts, fyEnds = null, dims = null) {
     // ServiceNow) arrives through Tier-2; a filer that splits the dollars instead (Salesforce)
     // yields the share by division of two filed figures, which derives nothing that was not
     // reported. What is never done is the reverse: turning a share into dollars.
+    // A plausibility band on the share itself. NCR Voyix files 0.75%, identical two years running,
+    // which reads as a scale applied twice to a 75% figure — and three quarters of one percent of a
+    // contract book landing inside a year is not a fact about any business that has one. The floor
+    // is deliberately low rather than comfortable: Oracle's genuine figure is 12%, so a bound tight
+    // enough to feel safe would throw away the very reading that makes the gate worth having.
     const share = {};
     for (const [fy, v] of Object.entries(dims?.rpoTwelveMonthShare || {})) {
-      if (v > 0 && v <= 1) share[fy] = v;
+      if (v >= 0.05 && v <= 0.99) share[fy] = v;
+      else if (v > 0) W(`rpoTwelveMonthShare ${fy}: ${(v * 100).toFixed(2)}% is outside the plausible band — withheld`);
     }
     for (const [fy, cur] of Object.entries(dims?.rpoCurrent || {})) {
       if (share[fy] != null || rpoTotal[fy] == null || !(rpoTotal[fy] > 0)) continue;

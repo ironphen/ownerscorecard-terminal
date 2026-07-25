@@ -127,6 +127,17 @@ const inst = (end, val) => ({ form: "10-K", end, val, filed: `${Number(end.slice
   t("selling cost reads against revenue", acquisitionCheck(co).value === "33%", acquisitionCheck(co).value);
 }
 
+// --- 6b. the plausibility band on the share ---
+{
+  const facts = mkFacts([["RevenueRemainingPerformanceObligation", [inst("2025-12-31", 3e9)]]]);
+  const daft = softwareLines(facts, { 2025: "2025-12-31" }, { rpoTwelveMonthShare: { 2025: 0.0075 } });
+  t("a 0.75% band is refused, and the total withheld with it", daft.instants.rpoTotal === undefined, daft.instants);
+  t("and it says why", (daft.flags.warns || []).some((w) => /plausible band/.test(w)));
+  // Oracle's real figure is 12%: the floor must not throw away a genuinely low but honest band.
+  const low = softwareLines(facts, { 2025: "2025-12-31" }, { rpoTwelveMonthShare: { 2025: 0.12 } });
+  t("a genuinely low band still ships", low.instants.rpoTwelveMonthShare?.[2025] === 0.12);
+}
+
 // --- 7. what the hostile verification caught (2026-07-25) ---
 {
   // Fastly files DeferredRevenueCurrent for the balance-sheet line and ContractWithCustomer-
