@@ -1,7 +1,7 @@
 ---
 import { fmtMoney, roicValue, operatingMargin, ownerEarningsMargin, freeCashFlowMargin, topLineRevenue, debtReliable, grossMargin, gmCorrupt } from "../lib/fundamentals.mjs";
 import { returnOnEquity, returnOnTangibleEquity, efficiencyRatio, equityToAssets, returnOnAssets } from "../lib/financials.mjs";
-import { ffoMargin, ffoPayout, debtToAssets } from "../lib/reits.mjs";
+import { cashPayout, debtToAssets } from "../lib/reits.mjs";
 import { combinedRatio, lossRatio } from "../lib/insurers.mjs";
 import { netMargin, feeReturnOnEquity } from "../lib/feeFinancials.mjs";
 import { medicalLossRatio } from "../lib/managedCare.mjs";
@@ -21,6 +21,7 @@ const fk = financialKind(company);
 const isLife = fk === "insurer" && financialSubtype(company) === "life-insurer";
 const isReit = fk === "reit", isBank = fk === "bank", isInsurer = fk === "insurer" && !isLife;
 const isFee = fk === "fee", isManagedCare = fk === "managedCare";
+const cashMarginOf = (L) => (L && L.cashFromOps != null && L.revenue ? L.cashFromOps / L.revenue : null);
 // Net investment yield: what the float earns, the life insurer's engine — through the SAME
 // plausibility cap the Peers table uses (floatYield), so the two surfaces cannot diverge. A
 // life insurer's real float lives in policy reserves the pipeline doesn't tag; the P&C
@@ -91,8 +92,10 @@ const burnVitals = [
 // on equity and the efficiency of the operation, not in margins or ROIC.
 const vitals = isBurnStage ? burnVitals : (isReit
   ? [
-      { label: "FFO margin", concept: "ffo", value: ffoMargin(cur), avg: avgOf(ffoMargin), dp: 0 },
-      { label: "Dividend payout (FFO)", concept: "ffo", value: ffoPayout(cur), avg: avgOf(ffoPayout), dp: 0 },
+      // Cash rather than funds from operations — see reits.mjs: no REIT tags FFO and rebuilding it
+      // missed the reported figure by up to half.
+      { label: "Cash margin", concept: "free-cash-flow", value: cashMarginOf(cur), avg: avgOf(cashMarginOf), dp: 0 },
+      { label: "Dividend / operating cash", concept: "free-cash-flow", value: cashPayout(cur), avg: avgOf(cashPayout), dp: 0 },
       { label: "Debt / assets", concept: "net-debt", value: debtToAssets(cur), avg: avgOf(debtToAssets), dp: 0 },
     ]
   : isLife

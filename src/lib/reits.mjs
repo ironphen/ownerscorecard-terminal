@@ -1,21 +1,60 @@
-// REITs: a property trust is read on funds from operations (FFO), not GAAP earnings.
-// The depreciation a REIT charges against buildings that usually hold or grow their
-// value buries the real cash earnings, so FFO adds it back: net income + real-estate
-// depreciation − gains on property sales. What to read for: is FFO per
-// share growing, is the dividend covered by it, and is the leverage every REIT
-// carries kept sound. Pure arithmetic on the filings. Net asset value and occupancy
-// need cap rates and operating detail we do not force.
+// REITs: a property trust charges depreciation against buildings that usually hold or grow their
+// value, so GAAP earnings bury what the properties actually produce. The industry answers that with
+// funds from operations — and as of 2026-07-25 this file no longer computes it, because the REIT
+// desk established that no filer tags it and that rebuilding it from the standard tags misses the
+// reported figure by up to half. See the note on ffo() below.
+//
+// What is read instead is cash: operating cash flow, what remains after the year's capital
+// spending, and whether the distribution is covered by it. That is a harder test than the
+// industry's own and it uses only filed, audited figures. Leverage matters as much — every REIT
+// carries it — and is read with an under-capture guard. Net asset value and occupancy need cap
+// rates and operating detail we do not force.
 
 import { fmtMoney, currencySymbol } from "./fundamentals.mjs";
 
 const median = (xs) => { if (!xs.length) return null; const s = [...xs].sort((a, b) => a - b); const m = Math.floor(s.length / 2); return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
 const pc = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${(Math.abs(v) * 100).toFixed(dp)}%`);
 
-export function ffo(L) {
-  if (!L || L.netIncome == null || L.depreciation == null) return null;
-  return L.netIncome + L.depreciation - (L.gainOnSaleRealEstate || 0);
+// WITHDRAWN 2026-07-25, and the reason is worth keeping in front of whoever reads this next.
+//
+// Funds from operations is defined by a trade association rather than by accounting standards, and
+// the REIT desk's survey established that it is not tagged in XBRL AT ALL: across five FY2025
+// filings read in full — Prologis, Simon, Realty Income, AvalonBay, Boston Properties — no
+// extension schema declares an element named for it and no inline fact carries one. So it cannot
+// be read, only rebuilt, and rebuilding it from the stock tags does not work:
+//
+//   Simon Property, FY2025: our formula gives +50.2% more than the figure a shareholder is
+//   entitled to, because a $2.9bn gain on sale sits behind a custom tag we cannot see.
+//   Prologis: within 4.8%, but only because an $686m error and a $551m error point opposite ways.
+//   Correct the gain alone and the miss WIDENS to −7.2%. Boston Properties reads 0.82% against one
+//   of its two reported figures and −9.2% against the other, again by cancellation.
+//
+// Two of the five were close for the wrong reason, and there is no way to know ex ante which case
+// a given REIT is. A number that is right by coincidence is a wrong number nobody has caught yet,
+// so this returns nothing and the surfaces say why. What replaces it is cash: operating cash flow
+// is filed, audited and unambiguous, and dividend coverage measured against it answers the
+// question FFO was being asked to answer — whether the distribution is earned.
+export function ffo() { return null; }
+
+// The reason, in one sentence, for any surface that needs to explain the blank.
+export const FFO_WITHHELD_NOTE =
+  "Funds from operations is defined by the industry's trade association rather than by accounting rules, and no REIT tags it in the structured data behind this site. Rebuilding it from the standard tags misses the figure these companies report by as much as half, because the gains on property sales it must exclude sit behind each filer's own custom tags. Rather than publish an invented number under the industry's name, the record shows the cash the properties actually produced.";
+
+// Dividend coverage, measured against cash the business actually generated rather than against a
+// figure we would have had to invent. This is the harder test and the honest one: FFO adds back
+// depreciation without deducting the capital that genuinely keeps buildings competitive, so a
+// distribution can look covered on FFO and still be funded by borrowing.
+export function cashPayout(L) {
+  if (!L || L.dividendsPaid == null || !(L.cashFromOps > 0)) return null;
+  return Math.abs(L.dividendsPaid) / L.cashFromOps;
 }
-export function ffoPerShare(L) { const f = ffo(L); return f != null && L.sharesDiluted ? f / L.sharesDiluted : null; }
+// Operating cash per share — what funds-from-operations per share was standing in for, built from
+// two filed figures instead of a reconstruction. Kept under the old export name so every valuation
+// and compare surface that priced a trust on "per share" keeps working on an honest denominator.
+export function ffoPerShare(L) {
+  return L && L.cashFromOps != null && L.sharesDiluted ? L.cashFromOps / L.sharesDiluted : null;
+}
+export const PER_SHARE_LABEL = "Operating cash / share";
 export function ffoMargin(L) {
   const f = ffo(L);
   if (f == null || !L.revenue) return null;
@@ -58,23 +97,38 @@ export function buildReitScorecard(company) {
   const sym = currencySymbol(company?.currency || "USD");
   const none = (title, note, concept = null) => ({ title, concept, value: "—", formula: "", tone: "none", label: "Not enough data", note });
 
-  const f = ffo(L), fps = ffoPerShare(L);
-  const ffoCheck = f == null ? none("Funds from operations", "Net income or depreciation wasn't found in the filing data.", "ffo") : {
-    title: "Funds from operations (FFO)",
+  // The FFO block, replaced by the cash it was standing in for. See FFO_WITHHELD_NOTE above:
+  // the measure is not tagged by any REIT, and rebuilding it missed Simon Property by half.
+  const cash = L.cashFromOps;
+  const ffoCheck = {
+    title: "Funds from operations",
     concept: "ffo",
-    value: $(f),
-    formula: `Net income ${$(L.netIncome)} + depreciation ${$(L.depreciation)}${L.gainOnSaleRealEstate ? ` − gains on sale ${$(L.gainOnSaleRealEstate)}` : ""}`,
-    tone: "info", label: fps != null ? `about ${sym}${fps.toFixed(2)} per share` : "the REIT earnings measure",
-    note: "GAAP net income with property depreciation added back, because the buildings a REIT charges against earnings usually hold or grow their value. This, not net income, is what a REIT is actually priced on. It is an approximation here: where a filing reports gains on property sales, we remove them, the way the NAREIT definition does.",
+    value: "—",
+    formula: "",
+    tone: "none",
+    label: "Withheld — not in the filings' structured data",
+    note: FFO_WITHHELD_NOTE,
   };
-  const payout = ffoPayout(L);
-  const payoutCheck = payout == null ? none("Dividend coverage", "FFO or dividends missing.", "ffo") : {
-    title: "Dividend / FFO (payout)",
-    concept: "ffo",
-    value: pc(payout), formula: `Dividends ${$(Math.abs(L.dividendsPaid))} ÷ FFO ${$(f)}`,
-    tone: payout > 1 ? "bad" : payout > 0.95 ? "warn" : payout > 0.6 ? "good" : "ok",
-    label: payout > 1 ? "Not covered by FFO" : payout > 0.95 ? "Tight" : payout > 0.6 ? "Covered" : "Lightly covered",
-    note: "A REIT must distribute most of its taxable income, so a high payout is normal and the question is whether FFO covers it. Above 100%, the trust is funding the dividend with debt or asset sales, and a cut usually follows.",
+  const capex = L.capex != null ? Math.abs(L.capex) : null;
+  const afterCapex = cash != null && capex != null ? cash - capex : null;
+  const cashCheck = cash == null ? none("Cash from the properties", "Operating cash flow wasn't found in the filing data.", "free-cash-flow") : {
+    title: "What the properties produced in cash",
+    concept: "free-cash-flow",
+    value: $(cash),
+    formula: `Cash from operations ${$(cash)}${capex != null ? ` · less capital spending ${$(capex)} = ${$(afterCapex)}` : ""}`,
+    tone: "info",
+    label: afterCapex != null && afterCapex > 0 ? "Cash left after the year's capital spending" : "Before capital spending",
+    note: "Operating cash flow is filed, audited and unambiguous, which the industry's own earnings measure is not. Read it against the distribution below. The capital spending shown beside it mixes the money that keeps existing buildings competitive with the money that buys or builds new ones — the filings rarely separate them, so treat the difference as an upper bound on what an owner could have taken out.",
+  };
+
+  const payout = cashPayout(L);
+  const payoutCheck = payout == null ? none("Dividend coverage", "Dividends or operating cash flow missing.", "free-cash-flow") : {
+    title: "Is the distribution covered by cash?",
+    concept: "free-cash-flow",
+    value: pc(payout), formula: `Dividends ${$(Math.abs(L.dividendsPaid))} ÷ cash from operations ${$(cash)}`,
+    tone: payout > 1 ? "bad" : payout > 0.9 ? "warn" : payout > 0.5 ? "good" : "ok",
+    label: payout > 1 ? "Not covered by operating cash" : payout > 0.9 ? "Tight" : payout > 0.5 ? "Covered" : "Lightly covered",
+    note: "A REIT must distribute most of its taxable income, so a high payout is normal and the question is whether the cash covers it. This is a harder test than the industry's usual one: funds from operations adds depreciation back without deducting the capital that genuinely keeps buildings competitive, so a distribution can look covered on that measure and still be funded by borrowing or by selling buildings. Above 100% of operating cash, it is being funded by something other than the properties.",
   };
   const lev = debtToAssets(L);
   const levCheck = lev == null ? (debtUnderCaptured(L)
@@ -99,7 +153,7 @@ export function buildReitScorecard(company) {
 
   return {
     sections: [
-      { heading: "Is it a good business?", checks: [ffoCheck, payoutCheck] },
+      { heading: "Is it a good business?", checks: [cashCheck, payoutCheck, ffoCheck] },
       { heading: "Is it sound?", checks: [levCheck, covCheck] },
     ],
   };

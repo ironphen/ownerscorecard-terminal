@@ -30,7 +30,7 @@ import {
 import { tangibleEquity, returnOnTangibleEquity } from "./financials.mjs";
 import { floatOf } from "./insurers.mjs";
 import { medicalLossRatio } from "./managedCare.mjs";
-import { ffo } from "./reits.mjs";
+import { cashPayout } from "./reits.mjs";
 import { financialKind, financialProfile } from "./archetype.mjs";
 import { adrBasis } from "./adrBasis.mjs";
 
@@ -62,7 +62,11 @@ const COL = {
   insFloat: { key: "insFloat", label: "Float", basis: "reserves + unearned premiums − receivables − DAC · latest FY, USD", type: "money" },
   reserveDev: { key: "reserveDev", label: "Reserve development", basis: "prior-year · negative = favorable · latest FY, USD", type: "money" },
   mlr: { key: "mlr", label: "Medical loss ratio", basis: "medical costs ÷ premiums · median over the record", type: "pct" },
-  ffo: { key: "ffo", label: "Funds from operations", basis: "net income + depreciation − property gains · latest FY, USD", type: "money" },
+  // Funds from operations was withdrawn 2026-07-25: no REIT tags it, and rebuilding it from the
+  // standard tags missed Simon Property by half. Cash from operations is filed and unambiguous, and
+  // the payout against it answers what FFO was being asked — whether the distribution is earned.
+  cashFromOps: { key: "cashFromOps", label: "Cash from operations", basis: "latest fiscal year, USD", type: "money" },
+  cashPayout: { key: "cashPayout", label: "Dividend / operating cash", basis: "dividends paid ÷ cash from operations · latest FY", type: "pct" },
   dividendsPaid: { key: "dividendsPaid", label: "Dividends paid", basis: "latest fiscal year, USD", type: "money" },
   totalAssets: { key: "totalAssets", label: "Total assets", basis: "latest fiscal year, USD", type: "money" },
   // The software desk's three: what is already contracted and lands within a year, what the
@@ -129,7 +133,7 @@ export const FAMILIES = {
   // Property: rent, the REIT earnings measure, the distribution, and the leverage every REIT runs.
   property: {
     name: "Property",
-    columns: [COL.revenue, COL.ffo, COL.dividendsPaid, COL.netDebt, COL.totalAssets],
+    columns: [COL.revenue, COL.cashFromOps, COL.cashPayout, COL.dividendsPaid, COL.netDebt, COL.totalAssets],
   },
   // Fee handlers (asset managers, exchanges, data firms): financials read on equity, so the
   // GENERAL family's ROIC / gross-margin / owner-earnings cells would be "n/a" for most members;
@@ -327,12 +331,10 @@ export function groupingCells(company, familyKey, terms) {
         return money(L.reserveDevelopmentPriorYear);
       case "investmentIncome":
         return money(L.investmentIncome);
-      case "ffo":
-        // FFO is a property-trust measure: adding depreciation back is meaningless for a mortgage
-        // REIT (a loan pool, not buildings) and for the operating services firms shelved beside
-        // the trusts — the same routing financialProfile gives the scorecards.
-        if (financialProfile(company).kind !== "reit") return NA;
-        return money(ffo(L));
+      case "cashFromOps":
+        return money(L.cashFromOps);
+      case "cashPayout":
+        return pct(cashPayout(L));
       case "dividendsPaid":
         return L.dividendsPaid == null ? DASH : money(Math.abs(L.dividendsPaid));
       case "totalAssets":

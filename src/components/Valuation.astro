@@ -10,7 +10,7 @@ import { classify, financialKind, financialSubtype } from "../lib/archetype.mjs"
 import { moatReport } from "../lib/durability.mjs";
 import { fmtMoney, currencySymbol, netDebtOf, maintenanceCapex, maintenanceCapexFor, ownerEarningsAbs, debtReliable } from "../lib/fundamentals.mjs";
 import { tangibleEquity } from "../lib/financials.mjs";
-import { ffoPerShare } from "../lib/reits.mjs";
+
 import { earningsPower } from "../lib/normalize.mjs";
 import NotebookCapture from "./NotebookCapture.astro";
 import NotebookStrip from "./NotebookStrip.astro";
@@ -218,9 +218,9 @@ const tbvRange = winRangeYrs(tbvpsPairs);
 // REIT valuation: a property trust is priced on a multiple of funds from operations,
 // its cash earnings once property depreciation is added back.
 const isReit = fk === "reit";
-const ffops = ffoPerShare(L);
+const ffops = null; // funds from operations withdrawn — see reits.mjs
 const dpsReit = L.dividendsPaid != null && shares ? Math.abs(L.dividendsPaid) / shares : null;
-const ffopsPairs = (co.history || []).map((h) => ({ fy: h.fy, v: ffoPerShare(h.lines) })).filter((p) => p.v != null);
+const ffopsPairs = [];
 const ffopsH = ffopsPairs.map((p) => p.v);
 const ffoGrowthRaw = trendGrowth(ffopsH.slice(-6));
 const ffoWin = sparkWin(ffopsH, 5, ffops);

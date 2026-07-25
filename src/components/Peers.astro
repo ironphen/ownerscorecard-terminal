@@ -3,7 +3,7 @@ import fundamentals from "../data/fundamentals.json";
 import { classify } from "../lib/archetype.mjs";
 import { fmtMoney, roicValue, topLineRevenue, ownerEarningsMargin, grossMargin, gmCorrupt } from "../lib/fundamentals.mjs";
 import { returnOnEquity, returnOnTangibleEquity, efficiencyRatio, netInterestMargin } from "../lib/financials.mjs";
-import { ffoMargin, ffoPayout, ffoOnAssets, debtToAssets } from "../lib/reits.mjs";
+import { cashPayout, debtToAssets } from "../lib/reits.mjs";
 import { combinedRatio, lossRatio } from "../lib/insurers.mjs";
 import { medicalLossRatio } from "../lib/managedCare.mjs";
 import { financialKind, financialSubtype } from "../lib/archetype.mjs";
@@ -55,9 +55,9 @@ const metricsOf = (c) => ({
   rotce: norm(c, (L) => returnOnTangibleEquity(L)),
   efficiency: norm(c, (L) => efficiencyRatio(L)),
   nim: norm(c, (L) => netInterestMargin(L)),
-  ffoMargin: norm(c, (L) => ffoMargin(L)),
-  ffoOnAssets: norm(c, (L) => ffoOnAssets(L)),
-  payout: norm(c, (L) => ffoPayout(L)),
+  cashMargin: norm(c, (L) => (L.cashFromOps != null && L.revenue ? L.cashFromOps / L.revenue : null)),
+  cashOnAssets: norm(c, (L) => (L.cashFromOps != null && L.totalAssets ? L.cashFromOps / L.totalAssets : null)),
+  payout: norm(c, (L) => cashPayout(L)),
   debtToAssets: norm(c, (L) => debtToAssets(L)),
   combined: norm(c, (L) => combinedRatio(L)),
   lossR: norm(c, (L) => lossRatio(L)),
@@ -73,9 +73,11 @@ const metricsOf = (c) => ({
 // FFO. "Best" respects each column's direction; "neutral" gets no best mark.
 const RAW_COLS = isReit
   ? [
-      { key: "ffoMargin", label: "FFO margin", concept: "ffo", dp: 0, better: "high" },
-      { key: "ffoOnAssets", label: "FFO / assets", concept: "ffo", dp: 1, better: "high" },
-      { key: "payout", label: "Payout (FFO)", concept: "ffo", dp: 0, better: "neutral" },
+      // Cash, not funds from operations: no REIT tags FFO and our rebuild missed Simon by half
+      // (see reits.mjs). Operating cash flow is filed and comparable across every trust here.
+      { key: "cashMargin", label: "Cash margin", concept: "free-cash-flow", dp: 0, better: "high" },
+      { key: "cashOnAssets", label: "Cash / assets", concept: "free-cash-flow", dp: 1, better: "high" },
+      { key: "payout", label: "Dividend / cash", concept: "free-cash-flow", dp: 0, better: "neutral" },
       { key: "debtToAssets", label: "Debt / assets", concept: "net-debt", dp: 0, better: "low" },
     ]
   : isLife

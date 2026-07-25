@@ -3,7 +3,7 @@ import fundamentals from "../data/fundamentals.json";
 import { buildScorecard, TONE_COLOR, roicValue, ownerEarningsMargin, operatingMargin, earningsQuality, earningsQualityReconciliation, forensicScreen } from "../lib/fundamentals.mjs";
 import { selectPeers, peerMedian } from "../lib/peers.mjs";
 import { buildFinancialScorecard, returnOnEquity, returnOnTangibleEquity, efficiencyRatio } from "../lib/financials.mjs";
-import { buildReitScorecard, ffoPayout, debtToAssets, ebitdaCoverage } from "../lib/reits.mjs";
+import { buildReitScorecard, cashPayout, debtToAssets, ebitdaCoverage } from "../lib/reits.mjs";
 import { buildInsurerScorecard, combinedRatio } from "../lib/insurers.mjs";
 import { buildFeeScorecard } from "../lib/feeFinancials.mjs";
 import { buildManagedCareScorecard, medicalLossRatio } from "../lib/managedCare.mjs";
@@ -75,7 +75,7 @@ const peerCtx = (() => {
     // A REIT's peers are now its property subsector (net-lease beside net-lease), so the payout,
     // leverage and coverage read against a like property model — not a grab-bag of "real estate".
     // FFO-per-share stays off the peer line (it's a per-share figure, not a comparable ratio).
-    add("Dividend / FFO (payout)", (L) => ffoPayout(L));
+    add("Dividend / operating cash", (L) => cashPayout(L));
     add("Debt / assets", (L) => debtToAssets(L));
     add("Interest coverage (EBITDA)", (L) => ebitdaCoverage(L), (m) => `${m.toFixed(1)}×`);
   } else if (fk === "bank") {

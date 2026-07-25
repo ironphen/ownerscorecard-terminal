@@ -3,7 +3,7 @@ import { classify, financialKind, financialSubtype } from "../lib/archetype.mjs"
 import { fmtMoney, currencySymbol, roicValue, liquidAssets, topLineRevenue, debtReliable, oiReliable, effectiveTaxRate, ownerEarningsAbs, freeCashFlowAbs, grossMargin, corruptGrossMarginYears, gmCorrupt } from "../lib/fundamentals.mjs";
 import { returnOnEquity, returnOnTangibleEquity, returnOnAssets, efficiencyRatio, tangibleEquity } from "../lib/financials.mjs";
 import { splitFactorsByFy } from "../lib/capital.mjs";
-import { ffo, ffoPerShare, ffoPayout, debtToAssets } from "../lib/reits.mjs";
+import { cashPayout, debtToAssets } from "../lib/reits.mjs";
 import { combinedRatio, lossRatio } from "../lib/insurers.mjs";
 import { medicalLossRatio } from "../lib/managedCare.mjs";
 import Term from "./Term.astro";
@@ -116,8 +116,7 @@ const ROW = {
   combined: { label: "Combined ratio", short: "Combined", g: 2, get: (L) => { const c = combinedRatio(L); return c == null ? "—" : `≈ ${(c * 100).toFixed(0)}%`; } },
   lossRatio: { label: "Loss ratio", short: "Loss", g: 2, get: (L) => { const r = lossRatio(L); return r == null ? "—" : `${(r * 100).toFixed(0)}%`; } },
   mlr: { label: "Medical loss ratio", short: "MLR", g: 1, get: (L) => { const r = medicalLossRatio(L); return r == null ? "—" : `${(r * 100).toFixed(0)}%`; } },
-  ffo: { label: "Funds from operations", short: "FFO", g: 2, get: (L) => money(ffo(L)) },
-  ffoPS: { label: "FFO / share", short: "FFO/sh", g: 4, get: (L) => { const f = ffoPerShare(L); return f == null ? "—" : `${sym}${f.toFixed(2)}`; } },
+  cashOps: { label: "Cash from operations", short: "Op. cash", g: 2, get: (L) => money(L.cashFromOps) },
   // Capex sits in group 2, inside the owner-earnings bridge above, because it is a direct
   // subtraction from the cash an owner can take, not a balance-sheet afterthought.
   capex: { label: "Capex", short: "Capex", g: 2, get: (L) => (L.capex != null ? money(Math.abs(L.capex)) : "—") },
@@ -153,7 +152,7 @@ const ROW = {
   float: { label: "Float (reserves)", short: "Float", g: 3, get: (L) => money(L.lossReserves) },
   dps: { label: "Dividends / share", short: "Div/sh", g: 4, get: (L) => perShare(L.dividendsPaid != null ? Math.abs(L.dividendsPaid) : null, L.sharesDiluted) },
   payoutNI: { label: "Dividend payout", short: "Payout", g: 3, get: (L) => marginStr(L.dividendsPaid != null ? Math.abs(L.dividendsPaid) : null, L.netIncome > 0 ? L.netIncome : null, 0) },
-  payout: { label: "Dividend payout (FFO)", short: "Payout", g: 3, get: (L) => { const p = ffoPayout(L); return p == null ? "—" : `${(p * 100).toFixed(0)}%`; } },
+  payout: { label: "Dividend / operating cash", short: "Payout", g: 3, get: (L) => { const p = cashPayout(L); return p == null ? "—" : `${(p * 100).toFixed(0)}%`; } },
   bvps: { label: "Book value / share", short: "BVPS", g: 4, get: (L) => perShare(L.stockholdersEquity, L.sharesDiluted) },
   tbvps: { label: "Tangible book / share", short: "TBVPS", g: 4, get: (L) => perShare(tangibleEquity(L), L.sharesDiluted) },
   // --- fuller income-statement, cash-flow and balance-sheet detail, so the record reads as the
@@ -219,7 +218,7 @@ const SETS = {
   lifeInsurer: [ROW.revenue, ROW.premiums, ROW.invInc, ROW.netIncome, ROW.taxRate, ROW.cashFromOps, ROW.ownerEarnings, ROW.roe, ROW.retainedToEquity, ROW.float, ROW.totalAssets, ROW.cash, ROW.equity, ROW.shares, ROW.eps, ROW.ownerEarningsPS, ROW.dps, ROW.bvps],
   fee: [ROW.revenue, ROW.opMargin, ROW.netMargin, ROW.netIncome, ROW.taxRate, ROW.ownerEarnings, ROW.roe, ROW.retainedToEquity, ROW.totalAssets, ROW.cash, ROW.equity, ROW.shares, ROW.revenuePS, ROW.eps, ROW.ownerEarningsPS, ROW.dps, ROW.bvps],
   managedCare: [ROW.revenue, ROW.premiums, ROW.mlr, ROW.opMargin, ROW.netIncome, ROW.taxRate, ROW.roe, ROW.retainedToEquity, ROW.totalAssets, ROW.equity, ROW.shares, ROW.revenuePS, ROW.eps, ROW.dps, ROW.bvps],
-  reit: [ROW.revenue, ROW.netIncome, ROW.ffo, ROW.payout, ROW.realEstate, ROW.totalAssets, ROW.debtAssets, ROW.totalDebt, ROW.netDebt, ROW.intCov, ROW.equity, ROW.shares, ROW.ffoPS, ROW.dps, ROW.bvps],
+  reit: [ROW.revenue, ROW.netIncome, ROW.cashOps, ROW.payout, ROW.realEstate, ROW.totalAssets, ROW.debtAssets, ROW.totalDebt, ROW.netDebt, ROW.intCov, ROW.equity, ROW.shares,  ROW.dps, ROW.bvps],
   general: FULL,
 };
 

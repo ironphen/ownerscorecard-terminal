@@ -47,7 +47,12 @@ const GOLDEN = {
   6758: { mode: "owner-earnings", oe: 1487936000000, oeNormalized: 1177925022483.8274, oeMaint: 1487936000000, sbc: 0, gDeliv: 0.31119300233641045, netDebt: -1581196000000, shares: 6149811000, eps3: 166.34099270151012, bvps: 1320.2049623964053, gRev: 0.10166254418780785, ni: 1030893000000 },
   JPM: { mode: "bank", tbvps: 115.70467582907683, bvpsBank: 135.85984278869753, rotce: 0.16381947326587082, epsBank: 21.981246134775756 },
   PGR: { mode: "bank", tbvps: 54.31134621097341, bvpsBank: 54.82971194486333, rotce: 0.22713453037625933, epsBank: 19.78141141641984 },
-  O: { mode: "reit", ffops: 3.7191405388861423 },
+  // Realty Income's per-share anchor moved on 2026-07-25 from a reconstructed funds-from-operations
+  // (3.7191) to operating cash per share (4.3681). The REIT desk established that no filer tags FFO
+  // and that rebuilding it from the standard tags missed Simon Property by 50%; the compare card now
+  // prices a trust on a figure taken straight from the cash-flow statement. The key is unchanged so
+  // every surface that reads it keeps working.
+  O: { mode: "reit", ffops: 4.368085475244156 },
 };
 
 const approx = (a, b) => {

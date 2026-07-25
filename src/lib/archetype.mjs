@@ -134,6 +134,10 @@ const SHORT_IND = {
 // of 62 are depositories and credit; 6280 is investment advice; 6300-64 insurance, with
 // 6324 the medical-plan (managed-care) carve-out and 6411 fee-earning brokers; 65-67
 // real estate.
+// SIC 6500-6799 filers the REIT desk verified are NOT property trusts, by reading their filings for
+// the REIT election and their effective tax rates (docs/reits-desk-survey.md, 2026-07-25).
+const NOT_REITS = new Set(["CXW", "HHH", "TCI"]);
+
 export function financialProfile(company) {
   const sic = Number(company?.sic) || 0;
   const L = company?.lines || {};
@@ -162,6 +166,20 @@ export function financialProfile(company) {
     // scorecard is meaningless for it, so read it as the operating business it is.
     const assetTurn = L.revenue != null && L.totalAssets ? L.revenue / L.totalAssets : null;
     if (assetTurn != null && assetTurn > 0.5) return { kind: null, subtype: null };
+    // Filers whose SIC says property trust and whose filings say otherwise. A REIT election requires
+    // distributing most of taxable income, so the parent pays almost no tax — across the sector the
+    // effective rate runs from Simon's 0.4% to Realty Income's 7.5%. These three pay a full corporate
+    // rate and state no REIT election anywhere in their recent 10-Ks: CoreCivic 25.9% (a prison
+    // operator whose SIC dates to its former name, Prison Realty Trust), Howard Hughes 23.3% (a
+    // master-planned-community developer), Transcontinental Realty 33.9% (a C-corp holding company).
+    // Each was verified by the REIT desk against the filing text, not inferred.
+    //
+    // A NAMED LIST RATHER THAN A TAX THRESHOLD, deliberately, and this was tested: a median-rate rule
+    // set tight enough to catch CoreCivic at 25.9% also caught Equinix and Iron Mountain, which are
+    // genuine REITs carrying large taxable subsidiaries. There is no rate that separates a fake from
+    // an operating REIT, so the rule would have traded three wrong classifications for two others.
+    // Where evidence has to come from the filing text, the honest instrument is a verified list.
+    if (NOT_REITS.has(String(company?.ticker || "").toUpperCase())) return { kind: null, subtype: null };
     return { kind: "reit", subtype: "reit" };
   }
   if (sic >= 6300 && sic <= 6499) {
