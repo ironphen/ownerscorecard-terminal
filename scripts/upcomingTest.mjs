@@ -8,7 +8,7 @@
 // guess; and the printed surface never carries a computed date (the wire renders month-level
 // phrases and day-count facts — asserted here by the shape of what's stored).
 import { rhythmOf } from "./fetchUpcoming.mjs";
-import { isSteadyRhythm, rollToBusinessDay, nextBusinessDays, monthPhrase, estimateRange, fmtMD } from "../src/lib/filingRhythm.mjs";
+import { isSteadyRhythm, rollToBusinessDay, nextBusinessDays, monthPhrase, estimateRange, fmtMD, isBusinessDay } from "../src/lib/filingRhythm.mjs";
 
 let failed = 0;
 const t = (name, ok, got) => { if (!ok) { failed++; console.error(`✗ ${name}${got !== undefined ? ` -> ${JSON.stringify(got)}` : ""}`); } else console.log(`ok ${name}`); };
@@ -130,33 +130,56 @@ t("monthPhrase: month boundaries hold in UTC", monthPhrase("2026-07-01") === "ea
 // The estimate range (owner directive, 2026-07-21): a steady rhythm estimates from its trimmed
 // lag core; a hiccup quarter doesn't widen the window; too-wide spreads fall back to the
 // statutory deadline, a filed fact; endpoints roll off weekends and clamp to today.
+// REBUILT 2026-07-25 after a backtest held every filer's most recent filing out and predicted it
+// from the earlier ones. The old trimmed-core rule produced a one-to-two day window that was right
+// about half the time. These cases encode what replaced it: a window drawn from the last four
+// filings padded two days, shown ONLY where it closes at least five days before the statutory
+// deadline — because a band honest enough to be right nine times in ten otherwise ends on the
+// deadline itself and tells a reader nothing the due date already tells them.
 {
-  const jnj = { nextPeriodEnd: "2026-06-28", dueBy: "2026-08-07", lagsSameForm: [24, 24, 25, 24, 24, 25] };
+  const jnj = { nextPeriodEnd: "2026-06-28", dueBy: "2026-08-07", statutoryDays: 40, lagsSameForm: [24, 24, 25, 24, 24, 25] };
   const r = estimateRange(jnj, "2026-07-21");
-  t("a metronome gets a tight estimate range", r.kind === "estimate" && r.lo === "2026-07-22" && r.hi === "2026-07-23", r);
-  t("the lead formats month/day", fmtMD(r.lo) === "7/22", fmtMD(r.lo));
+  t("a metronome earns an estimate, padded rather than hair-thin", r.kind === "estimate" && r.lo === "2026-07-21" && r.hi === "2026-07-27", r);
+  t("the lead formats month/day", fmtMD(r.lo) === "7/21", fmtMD(r.lo));
 }
 {
-  const adc = { nextPeriodEnd: "2026-06-30", dueBy: "2026-08-09", lagsSameForm: [21, 21, 31, 22, 22, 23] };
+  // The hiccup now WIDENS the window, and that is the point of the rebuild: trimming the outlier
+  // away asserted a steadiness the filer had not earned, and the backtest charged us for it.
+  const adc = { nextPeriodEnd: "2026-06-30", dueBy: "2026-08-09", statutoryDays: 40, lagsSameForm: [21, 21, 31, 22, 22, 23] };
   const r = estimateRange(adc, "2026-07-01");
-  t("a hiccup quarter doesn't widen a steady window (trimmed core)", r.kind === "estimate" && r.lo === "2026-07-21" && r.hi === "2026-07-23", r);
+  t("a hiccup quarter widens the window instead of being trimmed away", r.kind === "estimate" && r.lo === "2026-07-20" && r.hi === "2026-08-03", r);
 }
 {
-  const csx = { nextPeriodEnd: "2026-06-30", dueBy: "2026-08-09", lagsSameForm: [22, 16, 23, 16, 17, 36] };
+  const csx = { nextPeriodEnd: "2026-06-30", dueBy: "2026-08-09", statutoryDays: 40, lagsSameForm: [22, 16, 23, 16, 17, 36] };
   const r = estimateRange(csx, "2026-07-01");
   t("a smeared rhythm falls back to the statutory deadline", r.kind === "deadline" && r.lo === "2026-08-09", r);
 }
 {
-  const wk = { nextPeriodEnd: "2026-06-30", dueBy: "2026-08-09", lagsSameForm: [25, 25, 25, 25, 25, 25] };
-  const r = estimateRange(wk, "2026-07-01");
-  t("a weekend estimate rolls to Monday", r.lo === "2026-07-27" && r.hi === "2026-07-27", r);
+  // THE GATE THAT DECIDES WHETHER AN ESTIMATE SAYS ANYTHING. A filer that reliably uses nearly all
+  // of its statutory time gets the deadline, because a window ending on the due date is the due
+  // date wearing a costume.
+  const lateFiler = { nextPeriodEnd: "2026-06-30", dueBy: "2026-08-09", statutoryDays: 40, lagsSameForm: [37, 37, 38, 37, 37, 38] };
+  t("a filer that uses its whole statutory window gets the deadline, not an estimate",
+    estimateRange(lateFiler, "2026-07-01").kind === "deadline", estimateRange(lateFiler, "2026-07-01"));
+  const earlyFiler = { nextPeriodEnd: "2026-06-30", dueBy: "2026-08-09", statutoryDays: 40, lagsSameForm: [25, 25, 26, 25, 25, 26] };
+  t("a reliably early filer keeps its estimate", estimateRange(earlyFiler, "2026-07-01").kind === "estimate");
 }
 {
-  const mid = { nextPeriodEnd: "2026-06-30", dueBy: "2026-08-09", lagsSameForm: [20, 20, 21, 20, 21, 22] };
+  const wk = { nextPeriodEnd: "2026-06-30", dueBy: "2026-08-09", statutoryDays: 40, lagsSameForm: [25, 25, 25, 25, 25, 25] };
+  const r = estimateRange(wk, "2026-07-01");
+  t("endpoints roll off weekends", r.lo === "2026-07-23" && r.hi === "2026-07-27" && isBusinessDay(r.lo) && isBusinessDay(r.hi), r);
+}
+{
+  const mid = { nextPeriodEnd: "2026-06-30", dueBy: "2026-08-09", statutoryDays: 40, lagsSameForm: [20, 20, 21, 20, 21, 22] };
   const r = estimateRange(mid, "2026-07-21");
-  t("a window already underway clamps its start to today", r.kind === "estimate" && r.lo === "2026-07-21" && r.hi === "2026-07-22", r);
-  const missed = estimateRange({ ...mid, lagsSameForm: [20, 20, 21, 20, 21, 20] }, "2026-07-23");
-  t("a pace already missed falls back to the deadline — the estimate would be stale", missed.kind === "deadline", missed);
+  t("a window already underway clamps its start to today", r.kind === "estimate" && r.lo === "2026-07-21" && r.hi === "2026-07-24", r);
+  const missed = estimateRange({ ...mid, lagsSameForm: [20, 20, 21, 20, 21, 20] }, "2026-07-27");
+  t("a window entirely in the past falls back to the deadline", missed.kind === "deadline", missed);
+}
+{
+  // Under four filings is not a rhythm; the record has not earned a day-level claim.
+  const thin = { nextPeriodEnd: "2026-06-30", dueBy: "2026-08-09", statutoryDays: 40, lagsSameForm: [25, 25, 25] };
+  t("three filings are not enough to estimate from", estimateRange(thin, "2026-07-01").kind === "deadline");
 }
 
 if (failed) { console.error(`\n❌ upcomingTest: ${failed} failure(s).`); process.exit(1); }
