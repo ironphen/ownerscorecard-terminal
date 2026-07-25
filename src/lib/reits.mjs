@@ -95,16 +95,26 @@ export function debtToAssets(L) {
 export function debtUnderCaptured(L) {
   return !!(L && L.totalDebt != null && L.totalAssets && debtToAssets(L) == null);
 }
+// The whole interest bill, not just the part charged against this year's earnings. A developer may
+// capitalise interest into the cost of what it is building — Boston Properties charged $51m that
+// way in FY2025 — and that money is paid to lenders all the same. Leaving it out flatters coverage
+// at precisely the trusts doing the most building, which are the ones whose coverage matters most.
+export function interestIncurred(L) {
+  if (!L || !(L.interestExpense > 0)) return null;
+  return L.interestExpense + (L.interestCapitalized > 0 ? L.interestCapitalized : 0);
+}
+
 export function ebitdaCoverage(L) {
   if (!L || !L.interestExpense || L.interestExpense <= 0) return null;
   const ebitda = L.operatingIncome != null && L.depreciation != null ? L.operatingIncome + Math.abs(L.depreciation) : null;
   if (ebitda == null) return null;
+  const charge = interestIncurred(L) ?? L.interestExpense;
   // When net income dwarfs operating income, the operating line is undercaptured — a triple-net
   // REIT earns most of its return through sales-type/direct-financing leases whose income bypasses
   // the operating line — so an EBITDA proxy collapses and a coverage built on it reads falsely thin.
   // Decline rather than print a misleading "bad" (VICI: a 0.4× print against 3.3× on net income).
   if (L.netIncome != null && L.operatingIncome != null && L.netIncome > L.operatingIncome * 2 && L.netIncome > L.interestExpense) return null;
-  return ebitda / L.interestExpense;
+  return ebitda / charge;
 }
 
 export function buildReitScorecard(company) {
@@ -192,10 +202,10 @@ export function buildReitScorecard(company) {
   const covCheck = cov == null ? none("Interest coverage", "Operating income or interest is missing, or operating income sits far below net income (a triple-net REIT's lease income bypasses the operating line), so an EBITDA coverage would mislead — read it on net income against the interest bill, and on debt / assets, instead.", "interest-coverage") : {
     title: "Interest coverage (EBITDA)",
     concept: "interest-coverage",
-    value: `${cov.toFixed(1)}×`, formula: `(operating income + depreciation) ÷ interest ${$(L.interestExpense)}`,
+    value: `${cov.toFixed(1)}×`, formula: `(operating income + depreciation) ÷ interest ${$(interestIncurred(L) ?? L.interestExpense)}${L.interestCapitalized > 0 ? ` (including ${$(L.interestCapitalized)} charged into development)` : ""}`,
     tone: cov < 2 ? "bad" : cov < 3 ? "warn" : cov < 4 ? "ok" : "good",
     label: cov < 2 ? "Thin" : cov < 3 ? "Adequate" : cov < 4 ? "Comfortable" : "Strong",
-    note: "How many times the property cash earnings cover the interest bill. Comfortable coverage is what lets a REIT refinance through a tight credit market instead of being forced to sell into one.",
+    note: "How many times the property cash earnings cover the interest bill. The bill counted here is every dollar of interest the trust incurred, including the part it charged into the cost of buildings under construction rather than against this year's earnings — that money is paid to lenders all the same, and leaving it out flatters exactly the trusts doing the most building. Comfortable coverage is what lets a REIT refinance through a tight credit market instead of being forced to sell into one.",
   };
 
   // The joint-venture gap is attached to the leverage section, because that is where it would

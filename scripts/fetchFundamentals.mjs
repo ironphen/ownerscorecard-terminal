@@ -319,6 +319,11 @@ const CONCEPTS = {
   // --- REITs (the reit archetype): FFO = net income + real-estate D&A − gains on sale ---
   gainOnSaleRealEstate: ["GainLossOnSaleOfPropertiesNetOfApplicableIncomeTaxes", "GainLossOnDispositionOfRealEstate", "GainsLossesOnSalesOfInvestmentRealEstate", "GainLossOnSaleOfProperties", "GainLossOnDispositionOfAssets1"],
   realEstateGross: ["RealEstateInvestmentPropertyAtCost", "RealEstateGrossAtCarryingValue"],
+  // Interest a developer charges into the cost of what it is building rather than against the
+  // year's earnings. It is money genuinely paid to lenders, and leaving it out of a coverage ratio
+  // flatters exactly the trusts doing the most building — Boston Properties capitalised $51m in
+  // FY2025, Simon $31m, AvalonBay $50m.
+  interestCapitalized: ["InterestCostsCapitalized", "InterestCostsCapitalizedAdjustment"],
   // --- insurers (financials, the underwriting + float lens) ---
   premiumsEarned: ["PremiumsEarnedNet", "PremiumsEarnedNetPropertyAndCasualty"],
   // The health variants (managed-care desk, ratified 2026-07-21): PolicyholderBenefits...HealthCare
@@ -1409,6 +1414,7 @@ async function main() {
       noninterestExpense: collectAnnual(facts, CONCEPTS.noninterestExpense),
       provisionForCreditLosses: collectAnnual(facts, CONCEPTS.provisionForCreditLosses),
       gainOnSaleRealEstate: collectAnnual(facts, CONCEPTS.gainOnSaleRealEstate),
+      interestCapitalized: collectAnnual(facts, CONCEPTS.interestCapitalized),
       premiumsEarned: collectAnnual(facts, CONCEPTS.premiumsEarned),
       claimsIncurred: collectAnnual(facts, CONCEPTS.claimsIncurred),
       underwritingExpense: collectAnnual(facts, CONCEPTS.underwritingExpense),
@@ -1593,6 +1599,7 @@ async function main() {
           goodwill: hi.goodwill[fy] ?? null,
           intangibleAssets: hi.intangibles[fy] ?? null,
           gainOnSaleRealEstate: ha.gainOnSaleRealEstate[fy] ?? null,
+          interestCapitalized: ha.interestCapitalized[fy] ?? null,
           realEstateGross: hi.realEstateGross[fy] ?? null,
           premiumsEarned: ha.premiumsEarned[fy] ?? null,
           claimsIncurred: ha.claimsIncurred[fy] ?? null,
@@ -1819,6 +1826,7 @@ async function main() {
         goodwill: inst(CONCEPTS.goodwill),
         intangibleAssets: inst(CONCEPTS.intangibleAssets),
         gainOnSaleRealEstate: pick(CONCEPTS.gainOnSaleRealEstate),
+        interestCapitalized: pick(CONCEPTS.interestCapitalized),
         realEstateGross: inst(CONCEPTS.realEstateGross),
         premiumsEarned: pick(CONCEPTS.premiumsEarned),
         claimsIncurred: pick(CONCEPTS.claimsIncurred),
