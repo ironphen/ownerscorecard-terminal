@@ -155,17 +155,29 @@ export function financialProfile(company) {
     // interest in a given year (a mortgage REIT can run a negative spread when rates invert), and
     // including a null depreciation line, which is the most loan-pool-like of all. An equity REIT
     // carries real building depreciation, so it never trips the negligible-depreciation test.
-    const hasNII = L.netInterestIncome != null;
-    const negligibleDep = L.depreciation == null || (L.totalAssets ? Math.abs(L.depreciation) / L.totalAssets < 0.015 : false);
-    if (hasNII && negligibleDep) return { kind: "bank", subtype: "mortgage-reit" };
     // A real-estate SERVICES firm — brokerage, property and facilities management (CBRE, JLL) — sits
     // in the same SIC range but earns fees, not rent: it turns its asset base over many times a year,
     // so revenue is a large fraction of assets. A rent-collecting REIT turns its property slowly —
     // even a high-yield or operating REIT keeps revenue well under half of a heavy, depreciating asset
-    // base — so an asset turn above ~0.5 marks a services operator, not a property trust. The FFO
-    // scorecard is meaningless for it, so read it as the operating business it is.
+    // base — so an asset turn above ~0.5 marks a services operator, not a property trust.
+    //
+    // THIS TEST RUNS FIRST, and the order is the whole point (fixed 2026-07-26). It used to sit
+    // BELOW the mortgage-REIT signature, which meant Jones Lang LaSalle — a property brokerage
+    // turning its assets over several times a year — was caught by that signature first and shown a
+    // BANK scorecard, with deposits and charge-offs, on its live page. The comment here already
+    // named JLL as the case this test existed for; execution simply never reached it. A firm that
+    // turns its balance sheet over many times a year is an operator, not a bond portfolio, and that
+    // is the more certain fact, so it is asked first.
     const assetTurn = L.revenue != null && L.totalAssets ? L.revenue / L.totalAssets : null;
     if (assetTurn != null && assetTurn > 0.5) return { kind: null, subtype: null };
+    // Detect a mortgage REIT by the net-interest signature plus negligible depreciation — whatever the
+    // SIGN of net interest in a given year (a mortgage REIT can run a negative spread when rates
+    // invert), and including a null depreciation line, which is the most loan-pool-like of all. An
+    // equity REIT carries real building depreciation, so it never trips the negligible-depreciation
+    // test.
+    const hasNII = L.netInterestIncome != null;
+    const negligibleDep = L.depreciation == null || (L.totalAssets ? Math.abs(L.depreciation) / L.totalAssets < 0.015 : false);
+    if (hasNII && negligibleDep) return { kind: "bank", subtype: "mortgage-reit" };
     // Filers whose SIC says property trust and whose filings say otherwise. A REIT election requires
     // distributing most of taxable income, so the parent pays almost no tax — across the sector the
     // effective rate runs from Simon's 0.4% to Realty Income's 7.5%. These three pay a full corporate
