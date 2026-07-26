@@ -122,11 +122,19 @@ const description = `${grouping.noun} The ${rows.length.toLocaleString()} compan
           <th class="sel" scope="col" aria-label="Pick companies to compare"></th>
           <th class="txt tk" data-t="s" data-key="ticker" scope="col"><button type="button">Ticker <span class="tri"></span></button></th>
           <th class="txt nm" data-t="s" data-key="name" scope="col"><button type="button">Name <span class="tri"></span></button></th>
-          <th class="txt" data-t="s" data-key="industry" scope="col"><button type="button">Industry <span class="tri"></span></button></th>
+          {/* The industry header carries its own class so the narrow-screen rule can reach it by
+              name rather than by ordinal position. */}
+          <th class="txt ind" data-t="s" data-key="industry" scope="col"><button type="button">Industry <span class="tri"></span></button></th>
           {family.columns.map((col, i) => (
             <th class="num" data-t="n" data-key={col.key} scope="col" aria-sort={i === revenueColIdx ? "descending" : undefined}>
               <button type="button">{col.label} <span class="tri">{i === revenueColIdx ? "▼" : ""}</span></button>
-              <span class="basis">{col.basis}</span>
+              {/* The basis line names what the figure is; where a glossary entry defines the term
+                  itself, it also links there. The groupings are the door for a reader arriving
+                  without a ticker, which is largely the reader arriving without the vocabulary, and
+                  the teaching layer was switched off on exactly that surface (UX audit, 2026-07-26).
+                  The link sits on the basis rather than on the header button, which already owns the
+                  click for sorting. */}
+              <span class="basis">{col.concept ? <a href={`/concepts#${col.concept}`}>{col.basis}</a> : col.basis}</span>
             </th>
           ))}
         </tr>
@@ -134,9 +142,13 @@ const description = `${grouping.noun} The ${rows.length.toLocaleString()} compan
       <tbody>
         {rows.map((r) => (
           <tr id={r.ticker}>
-            <td class="sel"><input type="checkbox" class="pick" data-tk={r.ticker} aria-label={`Pick ${r.ticker} to compare`} /></td>
+            {/* The pick box sits in a label that fills its cell, so the tap area is the whole cell
+                rather than the 16px box; the input keeps its own aria-label. */}
+            <td class="sel"><label><input type="checkbox" class="pick" data-tk={r.ticker} aria-label={`Pick ${r.ticker} to compare`} /></label></td>
             <td class="txt tk" data-s={r.ticker}><a href={r.href}>{r.ticker}</a></td>
-            <td class="txt nm" data-s={r.name.toLowerCase()}>{r.name}</td>
+            {/* The name rides in a span: max-width on a td is ignored under table-layout: auto, so
+                the cap and its ellipsis have to sit on a block child. */}
+            <td class="txt nm" data-s={r.name.toLowerCase()}><span class="nmIn">{r.name}</span></td>
             <td class="txt ind" data-s={r.industry.toLowerCase()}>
               {r.industryHref ? <a href={r.industryHref}>{r.industry}</a> : r.industry}
             </td>
@@ -299,8 +311,11 @@ const description = `${grouping.noun} The ${rows.length.toLocaleString()} compan
        pick box and ticker always; the name too where the screen affords it). Borders are kept per
        cell (border-collapse: separate) because collapsed borders don't travel with sticky cells;
        every sticky cell carries the page's own opaque background so no figure ever bleeds under
-       the company column, and the top-left cells take the highest z-index so they win both ways. */
-    .tableWrap { margin: 12px 0 0; overflow: auto; max-height: 82vh; }
+       the company column, and the top-left cells take the highest z-index so they win both ways.
+       overscroll-behavior-x keeps a sideways swipe that reaches the end of the pane inside the
+       pane: on a phone that gesture is otherwise claimed by the system back-navigation, and the
+       reader loses the page mid-read. */
+    .tableWrap { margin: 12px 0 0; overflow: auto; overscroll-behavior-x: contain; max-height: 82vh; }
     table.grp { border-collapse: separate; border-spacing: 0; width: 100%; font-variant-numeric: tabular-nums; }
     table.grp th, table.grp td { padding: 7px 10px; border-bottom: 1px solid var(--rule); white-space: nowrap; }
     table.grp thead th { position: sticky; top: 0; z-index: 2; background: var(--paper); border-bottom: 2px solid var(--rule-strong); vertical-align: bottom; text-align: left; }
@@ -308,6 +323,10 @@ const description = `${grouping.noun} The ${rows.length.toLocaleString()} compan
 
     table.grp .sel { width: 34px; min-width: 34px; max-width: 34px; text-align: center; padding-left: 8px; padding-right: 4px; }
     table.grp .sel input { accent-color: var(--accent); cursor: pointer; margin: 0; vertical-align: middle; }
+    /* The cell's vertical padding moves onto the label, so the hit area is the full row height
+       without the row growing a pixel. */
+    table.grp td.sel { padding-top: 0; padding-bottom: 0; }
+    table.grp td.sel label { display: block; padding: 7px 0; cursor: pointer; }
     /* The frozen HEADER cells name thead explicitly: Astro's scope attribute adds specificity to
        every compound, so the three-element `table.grp thead th` rule (z-index: 2) would otherwise
        outrank a bare `table.grp th.tk` (z-index: 3) and the scrolling column headers would paint
@@ -340,10 +359,37 @@ const description = `${grouping.noun} The ${rows.length.toLocaleString()} compan
     table.grp td.num { text-align: right; font-family: var(--sans); font-size: 12.5px; color: var(--ink); }
     table.grp td.num.off { color: var(--faint); }
     table.grp td.tk { font-family: var(--sans); font-weight: 700; font-size: 12.5px; }
-    table.grp td.nm { font-family: var(--serif); font-size: 13px; color: var(--ink-soft); max-width: 30ch; overflow: hidden; text-overflow: ellipsis; }
+    table.grp td.nm { font-family: var(--serif); font-size: 13px; color: var(--ink-soft); }
+    /* The cap lives on the span, not the cell: a 60-character legal name would otherwise set a
+       380px column and push the first figure off a phone. The ticker beside it is the anchor. */
+    table.grp td.nm .nmIn { display: block; max-width: 30ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     table.grp td.ind { font-family: var(--sans); font-size: 11.5px; }
     table.grp td.ind a { color: var(--muted); }
     table.grp td.ind a:hover { color: var(--accent); }
+
+    /* On a touch screen both controls sit under the 24px minimum. Enlarge what is already there:
+       vertical padding on the sort button (width, and so the column, is unchanged) and a bigger
+       box on the pick input. Nothing is added, nothing moves. */
+    @media (pointer: coarse) {
+      table.grp thead button { padding: 6px 0; min-height: 24px; }
+      table.grp .sel input { width: 20px; height: 20px; }
+    }
+
+    /* Narrow screens. The columns are set by the header, not the data: an uppercase label held on
+       one line and a 24ch basis line put a ~125px floor under every numeric column, so a phone
+       shows barely one and a half of them. Letting the label and its basis wrap pays that cost once
+       vertically, in a header that is already sticky, instead of on every column horizontally. No
+       figure is hidden and no cell content changes. The industry is the one thing that goes: it is
+       named by the shelf overhead and stated on the company page one tap away. */
+    @media (max-width: 700px) {
+      table.grp thead th.num { max-width: 12ch; }
+      table.grp thead th.num button { white-space: normal; display: inline-block; text-align: right; }
+      table.grp thead .basis { max-width: 12ch; }
+      table.grp th.ind, table.grp td.ind { display: none; }
+      table.grp td.nm .nmIn { max-width: 14ch; }
+      /* A pane, not the page: leave room above and below for a thumb to scroll past it. */
+      .tableWrap { max-height: 62vh; }
+    }
 
     .foot { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); margin: 20px 0 0; line-height: 1.6; max-width: 78ch; border-top: 1px solid var(--rule-strong); padding-top: 12px; }
   </style>

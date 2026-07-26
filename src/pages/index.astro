@@ -7,7 +7,7 @@ import adrData from "../data/fundamentals.adr.json";
 import euData from "../data/fundamentals.eu.json";
 import wire from "../data/wire.json";
 import { SHELVES, industryLabelOf } from "../lib/shelves.mjs";
-import { GROUPINGS } from "../lib/groupingColumns.mjs";
+import { GROUPINGS, revenueSortUsd } from "../lib/groupingColumns.mjs";
 import { ORG } from "../lib/seo.mjs";
 const jpCount = (jpData.companies || []).length;
 const adrCount = (adrData.companies || []).length;
@@ -55,6 +55,26 @@ const groupingsN = GROUPINGS.filter((g) => (countByNoun.get(g.noun) || 0) > 0).l
 // and not a market ticker — just what companies disclosed, one row per company (its most significant
 // recent filing), earnings ahead of housekeeping, capped as a teaser onto the full wire.
 const KNOWN = new Set(usTickers);
+// The tiebreak, once significance and date have tied (which in earnings season is every row): size,
+// largest first by latest-year revenue. It was alphabetical by ticker, so the front door opened on a
+// run of companies beginning with A. Size is the same objective order the grouping tables open in,
+// a filed fact rather than a rank of quality. Every row here is a US filer, so USD as filed.
+const US_TERMS = { factor: 1, converted: false, asFiled: false, ccy: "USD" };
+const revByTicker = new Map();
+for (const c of fundamentals.companies || []) {
+  const tk = String(c.ticker || "").toUpperCase();
+  if (tk) revByTicker.set(tk, revenueSortUsd(c, US_TERMS));
+}
+const revUsd = (it) => {
+  const v = revByTicker.get(String(it.ticker || "").toUpperCase());
+  return v != null && Number.isFinite(v) ? v : null;
+};
+// An unreadable top line sorts to the back, never the front: the tables' own dash-sorts-last rule.
+const byRevenueDesc = (a, b) => {
+  const ra = revUsd(a), rb = revUsd(b);
+  if (ra == null || rb == null) return ra == null && rb == null ? 0 : ra == null ? 1 : -1;
+  return rb - ra;
+};
 const isEarnings = (it) =>
   it.form === "10-K" || it.form === "10-Q" ||
   /reported results|results of operations|quarterly report|annual report/i.test(it.label || "");
@@ -71,14 +91,22 @@ const wireFeed = [...wireByTicker.values()]
   .sort((a, b) =>
     filingSig(b) - filingSig(a) ||
     (a.date < b.date ? 1 : a.date > b.date ? -1 : 0) ||
+    byRevenueDesc(a, b) ||
     String(a.ticker).localeCompare(String(b.ticker)))
   .slice(0, 8);
 const fmtWireDate = (s) => new Date(s + "T00:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
+
+// The description is the true first contact: a search result, a link unfurl, a share of the front
+// door, all of them read before the page itself. It now carries the same claim and the same refusal
+// as the page's own first line, so what a stranger reads before arriving and what they read on
+// arrival say one thing. It replaces a sentence that named neither the record nor the refusal.
+const DESCRIPTION =
+  "A decade of every company's filed record, traced to its own filings. No ratings, no price targets, no estimates.";
 ---
 
 <BaseLayout
   title="Owner Scorecard"
-  description="Learn and navigate the world's massive universe of marketable securities and the businesses that they represent in an efficient manner."
+  description={DESCRIPTION}
   jsonLd={[
     {
       "@context": "https://schema.org",
@@ -130,6 +158,15 @@ const fmtWireDate = (s) => new Date(s + "T00:00:00Z").toLocaleDateString("en-US"
         {STARTERS.map((s) => <button type="button" class="chip" data-q={s}>{s}</button>)}
       </div>
     </div>
+
+    <!-- The second door, for the reader who arrives without a company in mind. It was built already,
+         but it shipped hidden inside the results panel and only appeared once the box was focused and
+         empty, an interaction that reader has no reason to perform. It now stands on load, and steps
+         aside while the panel is open, which carries the same door in the same words. -->
+    <p class="browseDoor" id="browseDoor">
+      Or browse the catalog by what the businesses do:
+      <a href="/groupings">{groupingsN.toLocaleString()} comparative tables &rarr;</a>
+    </p>
 
     {wireFeed.length ? (
       <section class="wire">
@@ -189,8 +226,13 @@ const fmtWireDate = (s) => new Date(s + "T00:00:00Z").toLocaleDateString("en-US"
     /* ---------------------------------- search view ---------------------------------- */
     #searchView { margin-top: 8px; }
 
+    /* The claim and the refusal. Set well below the global h1 size: this is a statement of what the
+       page is, not a headline competing with the search box under it. */
+
     .omni { max-width: 640px; margin: 44px auto 0; }
-    @media (max-width: 640px) { .omni { margin-top: 28px; } }
+    @media (max-width: 640px) {
+      .omni { margin-top: 28px; }
+    }
     .omniField {
       display: flex; align-items: center; gap: 10px;
       border: 1.5px solid var(--rule-strong); border-radius: 10px;
@@ -247,6 +289,9 @@ const fmtWireDate = (s) => new Date(s + "T00:00:00Z").toLocaleDateString("en-US"
       background: var(--surface); transition: border-color 0.1s, color 0.1s;
     }
     .chip:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* The browse door: one quiet line under the chips, the same weight as the chip label. */
+    .browseDoor { max-width: 640px; margin: 14px auto 0; text-align: center; font-size: 13px; color: var(--muted); }
 
     /* ---- writing band ---- */
     .writing { margin: 46px 0 0; }
@@ -314,6 +359,9 @@ const fmtWireDate = (s) => new Date(s + "T00:00:00Z").toLocaleDateString("en-US"
       const emptyEl = document.getElementById("omniEmpty");
       const chips = document.getElementById("omniChips");
       const def = document.getElementById("omniDefault");
+      // The always-visible browse door under the chips. It steps aside whenever the panel is open,
+      // since the panel carries the same door in the same words, and comes back when the panel folds.
+      const door = document.getElementById("browseDoor");
       if (!input || !panel || !list) return;
       const MAX = 40;
       const sortKey = (s) => s.replace(/^the\s+/i, "").replace(/^[^a-z0-9]+/i, "").trim().toLowerCase();
@@ -436,6 +484,7 @@ const fmtWireDate = (s) => new Date(s + "T00:00:00Z").toLocaleDateString("en-US"
       // The empty-and-focused state: the groupings door, a second door beside naming a company.
       function showDefault() {
         if (!def) return;
+        if (door) door.hidden = true;
         list.textContent = ""; shown = []; active = -1;
         input.removeAttribute("aria-activedescendant");
         countEl.hidden = true;
@@ -448,6 +497,7 @@ const fmtWireDate = (s) => new Date(s + "T00:00:00Z").toLocaleDateString("en-US"
 
       function render(term) {
         if (def) def.hidden = true;
+        if (door) door.hidden = true;
         const matches = rank(term);
         shown = matches.slice(0, MAX).map((m) => m.it);
         list.textContent = "";
@@ -497,6 +547,7 @@ const fmtWireDate = (s) => new Date(s + "T00:00:00Z").toLocaleDateString("en-US"
         input.setAttribute("aria-expanded", "false");
         input.removeAttribute("aria-activedescendant");
         if (chips) chips.hidden = false;
+        if (door) door.hidden = false;
       }
 
       function onInput() {

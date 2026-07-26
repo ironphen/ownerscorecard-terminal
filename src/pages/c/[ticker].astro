@@ -191,7 +191,10 @@ const ogImageAlt = ogImage ? `${name} (${ticker}): the owner's record at a glanc
 
 <BaseLayout title={`${ticker}, Owner Scorecard`} description={pageDescription} jsonLd={pageJsonLd} ogImage={ogImage} ogImageAlt={ogImageAlt}>
   <p class="back">
-    <a href="/">← All companies</a>
+    {/* 2026-07-26 (UX audit, docs/ux-audit-findings.md): this pointed at "/", which is the day's
+        front page and lists no companies beyond the day's filers. The page that IS all companies
+        is /catalog, so the label now matches the destination. */}
+    <a href="/catalog">← All companies</a>
     {manEntry ? (
       <span class="manNav">
         {manEntry.prev ? <a href={`/c/${manEntry.prev}`}>← {manEntry.prev}</a> : null}

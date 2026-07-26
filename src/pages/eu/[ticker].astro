@@ -70,7 +70,9 @@ const pageJsonLd = fund
 ---
 
 <BaseLayout title={`${ticker} ${name}, Owner Scorecard (Europe)`} description={pageDescription} jsonLd={pageJsonLd}>
-  <p class="back"><a href="/catalog">← Catalog</a></p>
+  {/* 2026-07-26 (UX audit): the back link now opens the catalog on the pool the reader came from,
+      as the US and Japanese pages do. */}
+  <p class="back"><a href="/catalog#europe">← European catalog</a></p>
 
   {fund ? (
     <>

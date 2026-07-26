@@ -75,6 +75,36 @@ export const CONCEPTS = [
     formula: "Operating income ÷ revenue",
     seeAlso: ["gross-margin"],
   },
+  // The comparative tables put specialist columns in front of readers who arrive without a ticker,
+  // and the vocabulary they use was defined nowhere (UX audit, 2026-07-26). The seven entries added
+  // here, three below and four in the capital group, are the words those column heads use.
+  {
+    id: "contracted-revenue",
+    term: "Contracted revenue (remaining performance obligations)",
+    group: "business",
+    short: "Revenue a company has already signed and expects to recognize within the next twelve months, set against a year of sales.",
+    body: "Subscription and licence businesses sell under contracts that run past the year they are signed, and the part not yet billed is disclosed as remaining performance obligations. Filers who break it down name the portion they expect to recognize within twelve months. Read against a year of revenue, that portion says how much of next year is sold before next year begins. A company at 60% opens January with three fifths of the year already contracted, which is a different business from one that must sell the whole year over again, and it is the clearest evidence there is that customers are locked in rather than merely returning. Two honest limits. It is only readable where the filer tags the near-term portion separately, which most do not, so the figure is missing for the majority of companies and its absence says nothing about them. And contracted is not collected: contracts get cancelled, renegotiated and paid late, and a long tail of multi-year commitments can swell the total while the part landing next year stays thin.",
+    formula: "Obligations due within twelve months ÷ latest-year revenue",
+    seeAlso: ["moat", "owner-earnings"],
+  },
+  {
+    id: "sales-and-marketing",
+    term: "Sales and marketing intensity",
+    group: "business",
+    short: "What a business spends to win and keep its customers, measured against its sales.",
+    body: "The price of demand. A company with a real hold on its customers spends less to keep them, so a low and falling ratio beside steady growth is one of the quieter signs of a moat. A high ratio is not a condemnation: a young business buying its way into a market may be spending well, provided the customers stay once the spending stops. That is the whole question. Growth that ends the moment the marketing ends was never a franchise, it was a rented audience. Read it across years and against revenue growth rather than on its own, and note that filers draw the line between selling, general and administrative costs differently, so the level compares fairly within an industry and only roughly across industries.",
+    formula: "Selling and marketing expense ÷ revenue",
+    seeAlso: ["moat", "operating-margin"],
+  },
+  {
+    id: "rd-intensity",
+    term: "Research and development intensity",
+    group: "business",
+    short: "The share of a year's revenue a business spends developing what it will sell next.",
+    body: "Where the product is knowledge, research is not discretionary spending, it is the cost of staying where you are. Chipmakers and drug companies spend heavily every year merely to hold their ground, and a company that trims research to protect this year's margin is usually borrowing from the next decade to pay for this one. The accounting is worth knowing: the spending is expensed in the year it happens although the benefit arrives years later, which understates the current profit of a business investing well and flatters the return on capital of one that has quietly stopped. There is no general right level. Compare a company with its own history and with the competitors it actually faces, because the industry sets the figure.",
+    formula: "Research and development expense ÷ revenue",
+    seeAlso: ["moat", "roic", "owner-earnings"],
+  },
 
   // --- The cash, and the return on capital ---
   {
@@ -94,6 +124,15 @@ export const CONCEPTS = [
     seeAlso: ["free-cash-flow", "roic", "rotce", "ffo", "insurance-float", "dilution"],
   },
   {
+    id: "cash-from-operations",
+    term: "Cash from operations",
+    group: "capital",
+    short: "The cash the business itself threw off in a year, before anything is spent on assets and before lenders or owners are paid.",
+    body: "The top of the cash-flow statement, and the starting point for every other cash measure here. It takes reported profit and corrects it for the items that never moved any cash, depreciation and stock-based pay among them, and for the cash tied up in or released from receivables, inventory and payables. It is harder to dress up than accounting profit, which is why an owner reads it first. What it is not is money an owner can keep: nothing has yet gone into the assets that keep the business running, so a capital-hungry company can post strong operating cash and leave its owners with nothing. Subtract all capital spending and you have free cash flow; subtract only the spending needed to stand still and you have owner earnings. Watch it against net income across a decade, because profit that runs persistently ahead of operating cash is the oldest warning in the accounts.",
+    formula: "Net income + non-cash charges + the change in working capital",
+    seeAlso: ["free-cash-flow", "owner-earnings", "working-capital"],
+  },
+  {
     id: "free-cash-flow",
     term: "Free cash flow",
     group: "capital",
@@ -101,6 +140,24 @@ export const CONCEPTS = [
     body: "A close cousin of owner earnings, and the pool from which every capital-allocation decision is funded. A business can report rising profits while free cash flow stays flat or turns negative, usually because earnings are being consumed by working capital or heavy capital spending. Cash is harder to dress up than earnings, which is why owners watch it.",
     formula: "Operating cash flow − capital spending",
     seeAlso: ["owner-earnings"],
+  },
+  {
+    id: "capex-intensity",
+    term: "Capital spending intensity",
+    group: "capital",
+    short: "The share of a year's revenue that goes back into plant, equipment and other long-lived assets.",
+    body: "The plainest measure of how hungry a business is for capital. A company that must put twenty cents of every sales dollar into fabs or fleet leaves far less for its owners than one that puts in two, whatever the two report as profit. Read it beside depreciation: spending near depreciation is roughly maintenance, the cost of staying where you are, while spending well above it is expansion, and expansion is only worth having if the return on the new capital is high. The honest limit is that filings almost never separate the two, so one year's figure cannot tell you which you are looking at. The trend across a decade, set against revenue, usually can.",
+    formula: "Capital expenditure ÷ revenue",
+    seeAlso: ["owner-earnings", "free-cash-flow", "roic"],
+  },
+  {
+    id: "dividend-coverage",
+    term: "Dividend against operating cash",
+    group: "capital",
+    short: "The share of a year's operating cash paid out to shareholders. A rough test of whether the distribution is earned.",
+    body: "Payout measured against cash rather than against reported earnings, which matters most in businesses whose accounting profit understates the cash they actually produce, property trusts above all. A low figure says the dividend is covered several times over and the business is keeping cash for its own use. A figure near or above 100% says the distribution is consuming everything operations produced, so the difference has to come from borrowing, asset sales or new shares. None of those is fatal in a single year and all of them are unsustainable across a decade. The honest limit: operating cash sits before capital spending, so a company that must spend heavily just to keep its assets standing can look comfortable here and still be paying out more than it earns. Read it beside capital spending, never alone.",
+    formula: "Dividends paid ÷ cash from operations",
+    seeAlso: ["cash-from-operations", "free-cash-flow", "ffo"],
   },
   {
     id: "roic",
@@ -135,6 +192,15 @@ export const CONCEPTS = [
     short: "How long cash is tied up in inventory and unpaid bills before sales turn it back into cash. Negative means customers fund the business.",
     body: "A quiet structural advantage when it runs negative. If a company collects from its customers before it has to pay its suppliers, the business grows on other people's money, the same trick that makes insurance float valuable. It needs no capital from owners to expand its working capital, which is one reason some retailers and platforms compound so efficiently.",
     seeAlso: ["insurance-float", "owner-earnings"],
+  },
+  {
+    id: "inventory-days",
+    term: "Inventory days",
+    group: "capital",
+    short: "How many days of production a business is holding in stock. The first place a cycle shows itself.",
+    body: "Inventory stated in time rather than in dollars, so it can be read across years and across companies of different sizes. In a cyclical manufacturer it is the earliest honest signal available: when demand softens, stock builds before revenue falls, so the days climb a quarter or two ahead of anything the income statement admits. A rise can also be deliberate, a build before a launch or a cushion against a fragile supply chain, so set the direction against what the company says it is doing. A fall is usually good and occasionally a warning that the business cannot get supply. It means little for a company that carries no inventory at all, which is why the figure is shown only where stock is part of the model.",
+    formula: "Inventory ÷ (annual cost of revenue ÷ 365)",
+    seeAlso: ["cash-conversion-cycle", "operating-working-capital"],
   },
   {
     id: "working-capital",

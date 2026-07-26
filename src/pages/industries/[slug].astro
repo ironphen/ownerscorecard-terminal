@@ -12,6 +12,7 @@ import fundamentals from "../../data/fundamentals.json";
 import adrData from "../../data/fundamentals.adr.json";
 import jpData from "../../data/fundamentals.jp.json";
 import { industryOrder, chapterFacts, chapterMemberHref } from "../../lib/chapters.mjs";
+import { groupingByNoun } from "../../lib/groupingColumns.mjs";
 import { dataAsOf, fmtAsOf } from "../../lib/freshness.mjs";
 
 export function getStaticPaths() {
@@ -35,6 +36,13 @@ const pct = (v, d = 0) => `${(v * 100).toFixed(d)}%`;
 // withheld and flagged records included — any weighting would be an implicit ranking. The list of
 // hrefs is already on the page (every member is rendered below), so this costs nothing at build.
 const memberHrefs = members.map((m) => chapterMemberHref(m));
+
+// 2026-07-26 (UX audit, docs/ux-audit-findings.md): the chapter and its grouping table cover the
+// same shelf, and the link ran one way only — the table names the chapter in every row, the
+// chapter named the table nowhere, so a reader here reached it through the 93-row index. The
+// shelf noun the chapter already carries is the grouping's own slug key, so this costs no data.
+// Null where curation has not caught up with a shelf; the link simply does not render.
+const grouping = chapter.shelfNoun ? groupingByNoun.get(chapter.shelfNoun) : null;
 
 // Each group read states exactly what was computed, carries the count of members it was read on,
 // and renders its absence honestly — "not applied" where the read is a category error for every
@@ -66,7 +74,15 @@ const description = one
 ---
 
 <BaseLayout title={`${chapter.label}, an industry chapter — Owner Scorecard`} description={description}>
-  <p class="back"><a href="/groupings">← The groupings</a></p>
+  <p class="back">
+    <a href="/groupings">← The groupings</a>
+    {grouping ? (
+      <>
+        <span class="bSep" aria-hidden="true">·</span>
+        <a href={`/groupings/${grouping.slug}`}>the {grouping.noun} table →</a>
+      </>
+    ) : null}
+  </p>
 
   <header class="hero">
     <span class="kicker">An industry chapter{chapter.shelfNoun ? ` · ${chapter.shelfNoun}` : ""}</span>
@@ -101,6 +117,13 @@ const description = one
     ))}
   </div>
 
+  {grouping ? (
+    <p class="tableDoor">
+      The same shelf as one comparative table, every member a row and every column sortable:
+      <a href={`/groupings/${grouping.slug}`}>the {grouping.noun} table →</a>
+    </p>
+  ) : null}
+
   <p class="foot">
     The same four lines for every member, in strict ticker order; a figure that could not be read
     renders as "not read," never as a mark against the record beside it. The header describes the
@@ -127,6 +150,8 @@ const description = one
 
   <style>
     .back { margin: 0 0 10px; font-size: 13px; }
+    .bSep { margin: 0 4px; color: var(--faint); }
+    .tableDoor { font-family: var(--sans); font-size: 12.5px; color: var(--ink-dim); margin: 18px 0 0; }
     .kicker { font-family: var(--sans); font-size: 11px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--muted); }
     .hero h1 { margin: 4px 0 0; }
     .range { font-family: var(--sans); font-size: 13px; color: var(--ink-dim); margin: 8px 0 0; font-variant-numeric: tabular-nums; }

@@ -38,6 +38,17 @@ import { adrBasis } from "./adrBasis.mjs";
 // The template families. Each column: a stable key, a plain factual label, and the basis the
 // header names (period, construction, currency). 5–7 columns per family — dense enough to compare,
 // never a wall.
+//
+// A column also carries `concept`, the glossary id its label links to (the same key Peers.astro
+// puts on its comparison columns, read the same way): the groupings are the door for the reader
+// who arrives without a ticker, which is largely the reader who arrives without the vocabulary,
+// and the teaching layer was switched off on exactly that surface (UX audit, 2026-07-26).
+// A column only links where an honest entry exists. Left deliberately unlinked, because the
+// nearest entry is about a different figure: net interest income and the noninterest-bearing
+// share (net-interest-margin is a ratio, these are the dollars and the mix), investment income
+// and reserve development (insurance-float and combined-ratio do not define either), dividends
+// paid and total assets (dollar lines, not the ratios built on them), and the plain size lines.
+// A near-miss link teaches the wrong word, so those stay plain text.
 // ---------------------------------------------------------------------------------------------
 // The quality ratios (margins and returns on capital) are read THROUGH THE CYCLE — the median over
 // the record's readable years, Graham's normalization — so one peak or trough year never sets the
@@ -46,40 +57,45 @@ import { adrBasis } from "./adrBasis.mjs";
 // current fact, not a level to normalize.
 const COL = {
   revenue: { key: "revenue", label: "Revenue", basis: "latest fiscal year, USD", type: "money" },
-  grossMargin: { key: "grossMargin", label: "Gross margin", basis: "median over the record", type: "pct" },
-  operatingMargin: { key: "operatingMargin", label: "Operating margin", basis: "median over the record", type: "pct" },
-  ownerEarnings: { key: "ownerEarnings", label: "Owner earnings", basis: "op. cash − maintenance capex · latest FY, USD", type: "money" },
-  roic: { key: "roic", label: "Return on invested capital", basis: "after tax · median over the record", type: "pct" },
-  netDebt: { key: "netDebt", label: "Net debt", basis: "debt − cash & ST investments · latest FY, USD", type: "money" },
+  grossMargin: { key: "grossMargin", label: "Gross margin", basis: "median over the record", type: "pct", concept: "gross-margin" },
+  operatingMargin: { key: "operatingMargin", label: "Operating margin", basis: "median over the record", type: "pct", concept: "operating-margin" },
+  ownerEarnings: { key: "ownerEarnings", label: "Owner earnings", basis: "op. cash − maintenance capex · latest FY, USD", type: "money", concept: "owner-earnings" },
+  roic: { key: "roic", label: "Return on invested capital", basis: "after tax · median over the record", type: "pct", concept: "roic" },
+  netDebt: { key: "netDebt", label: "Net debt", basis: "debt − cash & ST investments · latest FY, USD", type: "money", concept: "net-debt" },
   netInterestIncome: { key: "netInterestIncome", label: "Net interest income", basis: "latest fiscal year, USD", type: "money" },
   deposits: { key: "deposits", label: "Deposits", basis: "latest fiscal year, USD", type: "money" },
   nibShare: { key: "nibShare", label: "Noninterest-bearing share", basis: "of total deposits · latest FY", type: "pct" },
   netIncome: { key: "netIncome", label: "Net income", basis: "latest fiscal year, USD", type: "money" },
-  rote: { key: "rote", label: "Return on tangible equity", basis: "median over the record", type: "pct" },
-  tangibleEquity: { key: "tangibleEquity", label: "Tangible equity", basis: "equity − goodwill − intangibles · latest FY, USD", type: "money" },
+  rote: { key: "rote", label: "Return on tangible equity", basis: "median over the record", type: "pct", concept: "rotce" },
+  tangibleEquity: { key: "tangibleEquity", label: "Tangible equity", basis: "equity − goodwill − intangibles · latest FY, USD", type: "money", concept: "tangible-book" },
   premiums: { key: "premiums", label: "Premiums earned", basis: "latest fiscal year, USD", type: "money" },
   investmentIncome: { key: "investmentIncome", label: "Investment income", basis: "latest fiscal year, USD", type: "money" },
-  insFloat: { key: "insFloat", label: "Float", basis: "reserves + unearned premiums − receivables − DAC · latest FY, USD", type: "money" },
+  insFloat: { key: "insFloat", label: "Float", basis: "reserves + unearned premiums − receivables − DAC · latest FY, USD", type: "money", concept: "insurance-float" },
   reserveDev: { key: "reserveDev", label: "Reserve development", basis: "prior-year · negative = favorable · latest FY, USD", type: "money" },
-  mlr: { key: "mlr", label: "Medical loss ratio", basis: "medical costs ÷ premiums · median over the record", type: "pct" },
+  mlr: { key: "mlr", label: "Medical loss ratio", basis: "medical costs ÷ premiums · median over the record", type: "pct", concept: "medical-loss-ratio" },
   // Funds from operations was withdrawn 2026-07-25: no REIT tags it, and rebuilding it from the
   // standard tags missed Simon Property by half. Cash from operations is filed and unambiguous, and
   // the payout against it answers what FFO was being asked — whether the distribution is earned.
-  cashFromOps: { key: "cashFromOps", label: "Cash from operations", basis: "latest fiscal year, USD", type: "money" },
-  cashPayout: { key: "cashPayout", label: "Dividend / operating cash", basis: "dividends paid ÷ cash from operations · latest FY", type: "pct" },
+  cashFromOps: { key: "cashFromOps", label: "Cash from operations", basis: "latest fiscal year, USD", type: "money", concept: "cash-from-operations" },
+  cashPayout: { key: "cashPayout", label: "Dividend / operating cash", basis: "dividends paid ÷ cash from operations · latest FY", type: "pct", concept: "dividend-coverage" },
   dividendsPaid: { key: "dividendsPaid", label: "Dividends paid", basis: "latest fiscal year, USD", type: "money" },
   totalAssets: { key: "totalAssets", label: "Total assets", basis: "latest fiscal year, USD", type: "money" },
   // The software desk's three: what is already contracted and lands within a year, what the
   // selling costs, and the pay packet charged in the owner's own currency.
-  bookedYear: { key: "bookedYear", label: "Next year contracted", basis: "obligations landing within 12 months ÷ revenue · withheld where the band is untagged", type: "pct" },
-  salesMarketing: { key: "salesMarketing", label: "Sales & marketing", basis: "selling and marketing ÷ revenue · latest FY", type: "pct" },
-  stockComp: { key: "stockComp", label: "Stock pay", basis: "stock compensation ÷ revenue · latest FY", type: "pct" },
+  // The basis line used to say "withheld where the band is untagged", which asked the reader to
+  // already know both words; it now names the filing line the figure is read from, and the label
+  // links to the contracted-revenue entry written for it (UX audit, 2026-07-26).
+  bookedYear: { key: "bookedYear", label: "Next year contracted", basis: "revenue signed and due within 12 months ÷ revenue · only where the filer tags it", type: "pct", concept: "contracted-revenue" },
+  salesMarketing: { key: "salesMarketing", label: "Sales & marketing", basis: "selling and marketing ÷ revenue · latest FY", type: "pct", concept: "sales-and-marketing" },
+  // Stock pay links to the existing dilution entry, which is the site's definition of stock-based
+  // pay as both an expense and a transfer of ownership. A second entry would say it twice.
+  stockComp: { key: "stockComp", label: "Stock pay", basis: "stock compensation ÷ revenue · latest FY", type: "pct", concept: "dilution" },
   // Semiconductors are the opposite business to software wearing the same sector label: the moat is
   // bought with fabs and research rather than sold as a subscription, and the cycle shows up first
   // in inventory. These three say what a chipmaker must spend to stay where it is.
-  rdIntensity: { key: "rdIntensity", label: "R&D / revenue", basis: "latest fiscal year", type: "pct" },
-  capexIntensity: { key: "capexIntensity", label: "Capex / revenue", basis: "latest fiscal year", type: "pct" },
-  inventoryDays: { key: "inventoryDays", label: "Inventory days", basis: "inventory ÷ daily cost of revenue · latest FY", type: "num" },
+  rdIntensity: { key: "rdIntensity", label: "R&D / revenue", basis: "latest fiscal year", type: "pct", concept: "rd-intensity" },
+  capexIntensity: { key: "capexIntensity", label: "Capex / revenue", basis: "latest fiscal year", type: "pct", concept: "capex-intensity" },
+  inventoryDays: { key: "inventoryDays", label: "Inventory days", basis: "inventory ÷ daily cost of revenue · latest FY", type: "num", concept: "inventory-days" },
 };
 
 export const FAMILIES = {

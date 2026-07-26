@@ -106,7 +106,8 @@ const pageJsonLd = fund
       }),
       breadcrumbList([
         { name: "Owner Scorecard", url: "/" },
-        { name: "Japan catalog", url: "/japan" },
+        // 2026-07-26: /japan has never been a route; the Japanese pool is a tab on /catalog.
+        { name: "Japan catalog", url: "/catalog#japan" },
         indEntry ? { name: indEntry.label, url: chapterHref } : null,
         { name: `${name} (${ticker})`, url: pageUrl },
       ].filter(Boolean)),
@@ -116,7 +117,10 @@ const pageJsonLd = fund
 
 <BaseLayout title={`${ticker} ${name}, Owner Scorecard (Japan)`} description={pageDescription} jsonLd={pageJsonLd} ogImage={ogImage} ogImageAlt={ogImageAlt}>
   <p class="back">
-    <a href="/japan">← Japan catalog</a>
+    {/* 2026-07-26 (UX audit, docs/ux-audit-findings.md): the sibling of the US page's
+        "All companies" link. It pointed at /japan, which is not a route; the Japanese pool
+        opens from /catalog#japan. */}
+    <a href="/catalog#japan">← Japan catalog</a>
     {manEntry ? (
       <span class="manNav">
         {manEntry.prev ? <a href={`/jp/${manEntry.prev}`}>← {manEntry.prev}</a> : null}
