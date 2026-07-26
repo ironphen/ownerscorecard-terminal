@@ -239,7 +239,10 @@ function medianOverRecord(company, metricFn) {
 const DASH = { text: "—", sort: null };
 const NA = { text: "n/a", sort: null };
 
-export function groupingCells(company, familyKey, terms) {
+// The column list and the withholding semantics are now separable. The list may come from a family
+// (every industry table) or be handed in directly (a sector table, whose members disagree about what
+// matters); the semantics always come from the ROW's own kind, inside cellFor.
+export function groupingCells(company, familyKey, terms, columns = null) {
   const family = FAMILIES[familyKey];
   const L = company?.lines || {};
   const fk = financialKind(company);
@@ -278,10 +281,15 @@ export function groupingCells(company, familyKey, terms) {
         if (!oiReliable(company)) return NA;
         return pct(medianOverRecord(company, roicValue));
       case "netDebt": {
-        // The property family keeps the read for its financial members (leverage is exactly how a
-        // REIT is judged); the operating families mark a bank or insurer "n/a" — deposits and
-        // float are not debt, so the figure would be a category error there.
-        if (familyKey !== "property" && fk) return NA;
+        // Leverage is exactly how a property trust is judged, so a REIT keeps this read; for a bank
+        // or an insurer it is a category error, because deposits and float are not debt.
+        //
+        // That test belongs to the ROW's own kind, not to the table it happens to be rendered in.
+        // It used to ask whether the TABLE was the property one, which was equivalent while every
+        // table held a single family — and would have turned every REIT's leverage into "n/a" the
+        // moment a sector table mixed families, since a sector is not a family. Same answer on every
+        // table that exists today; correct on the ones about to.
+        if (fk && fk !== "reit") return NA;
         if (!debtReliable(L)) return DASH;
         const net = netDebtOf(L); // the one shared definition (cash + short-term), every surface identical
         if (net == null) return DASH;
@@ -344,7 +352,7 @@ export function groupingCells(company, familyKey, terms) {
     }
   };
 
-  return family.columns.map((col) => cellFor(col.key));
+  return (columns || family.columns).map((col) => cellFor(col.key));
 }
 
 // ---------------------------------------------------------------------------------------------
