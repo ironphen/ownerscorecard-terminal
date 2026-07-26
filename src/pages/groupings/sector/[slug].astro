@@ -1,42 +1,72 @@
 ---
-// One grouping — one shelf as ONE comparative table (owner directive, 2026-07-10): every member
-// across the US, ADR and Japanese pools in a single dense table, its columns the line items this
-// kind of business is read on (hand-curated per shelf in lib/groupingColumns.mjs). The
-// ValueLine/Moody's industry-section form: the reader runs an eye down a column, and every column
-// sorts both ways — the re-ordering is the reader's own act on a reference surface, never the
-// page's verdict. The only default order is size (latest-year revenue, largest first), an
-// objective fact. No row or cell is ever highlighted; no composite is ever formed.
+// One sector as ONE comparative table (owner directive, 2026-07-25): the whole of Financials, or
+// the whole of Industrials, every member of every industry in it, across the US, ADR and Japanese
+// pools, on the columns that sector's members can answer as a whole.
 //
-// Currency: monetary columns are stated in USD for foreign filers — the ADR conversion terms the
-// compare view uses (the filer's own ADS cover terms and the dated reference rate), the same
-// dated rate for the Japanese pool — so a money column sorts on one basis. A foreign filer whose
-// conversion terms are missing shows its money AS FILED and sorts to the back of the column:
-// never a guessed conversion. Ratios and margins are currency-free and computed from the record
-// as filed. Each company's own page keeps its records as filed.
-import BaseLayout from "../../layouts/BaseLayout.astro";
-import GroupingPicker from "../../components/GroupingPicker.astro";
-import fundamentals from "../../data/fundamentals.json";
-import adrData from "../../data/fundamentals.adr.json";
-import jpData from "../../data/fundamentals.jp.json";
-import adrRatios from "../../data/adrRatios.json";
-import rates from "../../data/rates.json";
-import { SHELVES, industryLabelOf, industrySlug } from "../../lib/shelves.mjs";
-import { GROUPINGS, FAMILIES, groupingBySlug, sectorSlugOf, usdTerms, groupingCells, revenueSortUsd, groupLine } from "../../lib/groupingColumns.mjs";
-import { dataAsOf, fmtAsOf } from "../../lib/freshness.mjs";
+// A SECTOR TABLE IS A DIFFERENT INSTRUMENT FROM AN INDUSTRY TABLE, NOT A BIGGER ONE. At this scale
+// the reader is asking how big, how profitable, how much capital, how much debt, across many kinds
+// of business at once, and those are the only lines that can be asked of all of them honestly. The
+// specialist columns a kind of business is really read on (what is contracted for next year in
+// software, inventory days in semiconductors, deposits in banks, the medical loss ratio in a health
+// plan) appear when the reader narrows to that industry. That is why the second control is a change
+// of instrument rather than a convenience, and the prose below says so plainly.
+//
+// The column sets are frozen in lib/groupingColumns.mjs with the measurement that chose them, and a
+// drift check in `npm test` fails if a data refresh moves the answer, so a published page's columns
+// can never change without a person deciding they should.
+//
+// Everything else is the industry table verbatim: the same frozen-pane markup, the same sticky
+// header, the same sort script and its ?sort= URL contract, the same compare picker, the same
+// currency doctrine. Nothing here is a second table.
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import GroupingPicker from "../../../components/GroupingPicker.astro";
+import fundamentals from "../../../data/fundamentals.json";
+import adrData from "../../../data/fundamentals.adr.json";
+import jpData from "../../../data/fundamentals.jp.json";
+import adrRatios from "../../../data/adrRatios.json";
+import rates from "../../../data/rates.json";
+import { industryLabelOf } from "../../../lib/shelves.mjs";
+import { usdTerms, groupingCells, revenueSortUsd, groupLine } from "../../../lib/groupingColumns.mjs";
+import { SECTOR_INDEX, sectorIndexBySlug } from "../../../lib/groupingsIndex.mjs";
+import { FAMILIES, groupingBySlug } from "../../../lib/groupingColumns.mjs";
+import { dataAsOf, fmtAsOf } from "../../../lib/freshness.mjs";
 
 export function getStaticPaths() {
-  return GROUPINGS.map((g) => ({ params: { slug: g.slug } }));
+  return SECTOR_INDEX.map((s) => ({ params: { slug: s.slug } }));
 }
 
 const slug = String(Astro.params.slug || "");
-const grouping = groupingBySlug.get(slug);
-if (!grouping) throw new Error(`groupings: no grouping for slug "${slug}"`);
-const family = FAMILIES[grouping.family];
-const shelf = SHELVES.find((s) => s.noun === grouping.noun);
-const shelfLabels = new Set(shelf.industries.map((ind) => ind.label));
+const sector = sectorIndexBySlug.get(slug);
+if (!sector) throw new Error(`groupings/sector: no sector for slug "${slug}"`);
+const columns = sector.columns;
 
-// Members across the three pools; presence on the shelf is the only criterion, exactly as the
-// shelves page and the chapters count it.
+// Which industries in this sector are actually read on a DIFFERENT instrument. The page used to
+// promise that narrowing brings specialist columns, full stop, and the verifier measured that
+// false for 63 of 101 industries holding 52% of the library: most industries use the general
+// family and their table shows exactly these columns over fewer companies. Narrowing is still
+// worth doing there, but it changes the company list rather than the instrument, and the prose
+// now says which of the two a reader is getting. A page that promises an instrument it does not
+// deliver teaches a reader to stop believing the ones it does.
+const sectorKeys = new Set(columns.map((c) => c.key));
+const specialistIndustries = (sector.industries || [])
+  .map((ind) => {
+    const g = groupingBySlug.get(ind.slug);
+    const fam = g && FAMILIES[g.family];
+    if (!fam) return null;
+    const extra = fam.columns.filter((c) => !sectorKeys.has(c.key));
+    return extra.length ? { noun: g.noun, slug: ind.slug, extra: extra.length } : null;
+  })
+  .filter(Boolean)
+  .sort((a, b) => b.extra - a.extra);
+
+// The industry a row belongs to is its spine on this page, so the label carries its own table's
+// address: the natural next step down is that industry's table, not its reading chapter, and the
+// chapter stays one hop from there. This also makes the Industry column a working second select for
+// a reader with no JavaScript.
+const industryByLabel = new Map(sector.industries.map((ind) => [ind.noun, ind]));
+
+// Members across the three pools; presence on a shelf in this sector is the only criterion, exactly
+// the criterion the industry tables use.
 const pools = [
   ["us", fundamentals.companies || []],
   ["adr", adrData.companies || []],
@@ -48,7 +78,8 @@ let asFiledCount = 0;
 for (const [poolKey, pool] of pools) {
   for (const c of pool) {
     const label = industryLabelOf(c);
-    if (!shelfLabels.has(label)) continue;
+    const ind = industryByLabel.get(label);
+    if (!ind) continue;
     const ticker = String(c.ticker || "").toUpperCase();
     if (!ticker) continue;
     const terms = usdTerms(c, adrRatios, rates);
@@ -59,16 +90,20 @@ for (const [poolKey, pool] of pools) {
       name: c.name || ticker,
       href: (poolKey === "jp" ? "/jp/" : "/c/") + ticker,
       industry: label,
-      industryHref: industrySlug(label) ? `/industries/${industrySlug(label)}` : null,
-      cells: groupingCells(c, grouping.family, terms),
+      industryHref: `/groupings/${ind.slug}`,
+      // The column list comes from the TABLE; the withholding always comes from the ROW's own kind
+      // of business, which is why the row's own family is what goes in here and never a synthetic
+      // sector one. That is what keeps a property trust's net debt readable on a table it shares
+      // with companies that are not property trusts.
+      cells: groupingCells(c, ind.family, terms, columns),
       revSort: revenueSortUsd(c, terms),
     });
   }
 }
 
-// The default order: latest-year revenue in USD, largest first — size, the one objective order.
-// A member without a sortable revenue (an as-filed foreign filer, or an unreadable top line)
-// goes to the back, alphabetical by ticker there like every tie.
+// The default order: latest-year revenue in USD, largest first. Size is an objective fact, and it
+// is the only order this page arrives in. A member without a sortable revenue goes to the back,
+// alphabetical by ticker there like every tie.
 rows.sort((a, b) => {
   const ra = a.revSort == null ? -Infinity : a.revSort;
   const rb = b.revSort == null ? -Infinity : b.revSort;
@@ -76,41 +111,52 @@ rows.sort((a, b) => {
 });
 
 const hasForeign = convertedCount > 0 || asFiledCount > 0;
-const revenueColIdx = family.columns.findIndex((col) => col.key === "revenue"); // −1 on the insurer family
+const revenueColIdx = columns.findIndex((col) => col.key === "revenue"); // always 0: every sector set opens on revenue
 const refreshed = fmtAsOf(dataAsOf);
 
-// The group line — Graham's group view: one dated sentence describing the list, built from the
-// same cells the table renders, naming no member. It describes; it never grades.
-const groupSentence = groupLine(family.columns, rows.map((r) => r.cells));
-const description = `${grouping.noun} The ${rows.length.toLocaleString()} companies the library holds, in one comparative table: ${family.columns.map((c) => c.label).join(", ")} — every column sortable, largest first by revenue.`;
+// The group line, with the members each fragment was read on. A median over a mixed sector is a
+// weaker statement than one over a single industry, and the count is what keeps it honest.
+const groupSentence = groupLine(columns, rows.map((r) => r.cells), { readCounts: true });
+const colList = columns.map((c) => c.label).join(", ");
+const description = `${sector.name}: all ${rows.length.toLocaleString()} companies the library holds across ${sector.industries.length} industries, in one comparative table on ${colList}. Every column sortable, largest first by revenue.`;
 ---
 
-<BaseLayout title={`${grouping.noun} A grouping — Owner Scorecard`} description={description}>
-  {/* A two-step crumb: the door, the sector this industry sits in, then where the reader is. The
-      sector step is new and it matters, because the sector table is the view one level up from this
-      one rather than a category label. */}
-  <p class="back">
-    <a href="/groupings">The groupings</a>
-    <span class="sep">/</span>
-    <a href={`/groupings/sector/${sectorSlugOf(grouping.sector)}`}>{grouping.sector}</a>
-    <span class="sep">/</span>
-    <span class="crumbHere">{grouping.noun}</span>
-  </p>
+<BaseLayout title={`${sector.name}, a sector table, Owner Scorecard`} description={description}>
+  <p class="back"><a href="/groupings">The groupings</a> <span class="sep">/</span> <span class="crumbHere">{sector.name}</span></p>
 
-  <GroupingPicker view="industry" sector={grouping.sector} industry={grouping.slug} />
+  <GroupingPicker view="sector" sector={sector.name} />
 
   <header class="hero">
-    <span class="kicker">A grouping · a comparative table</span>
-    <h1>{grouping.noun}</h1>
+    <span class="kicker">A sector · a comparative table</span>
+    <h1>{sector.name}</h1>
     <p class="range">
-      {rows.length.toLocaleString()} companies across the library&rsquo;s three pools, one row each.
-      The columns are the line items this kind of business is read on; each header names its basis,
-      and the margins and returns are medians over each company&rsquo;s readable record — the
-      through-cycle level, never one year&rsquo;s print. Rows open largest first by latest-year revenue,
-      and every column sorts both ways — the re-ordering is the reader&rsquo;s own act, and a sorted
-      view keeps its order in the address bar. The company stays in view as the columns scroll.
-      A dash is a figure that could not be read; n/a is one that does not apply to that member;
-      both sit at the back of a sorted column.
+      Every company the library holds in this sector, {rows.length.toLocaleString()} of them across
+      {sector.industries.length} industries and the library&rsquo;s three pools, one row each.
+      The columns are the lines this sector&rsquo;s members can all answer, so a bank and an exchange,
+      or a chipmaker and a software company, can be read down the same column without either being
+      flattered.
+      {specialistIndustries.length ? (
+        <>
+          {" "}Some kinds of business are read on instruments this table cannot carry, and those appear
+          when you narrow to them: {specialistIndustries.map((n, i) => (
+            <>{i > 0 ? (i === specialistIndustries.length - 1 ? " and " : ", ") : ""}<a href={`/groupings/${n.slug}`}>{n.noun}</a></>
+          ))}. Pick one in the second control above, or follow any Industry cell in the table.
+          Elsewhere in this sector the industry table shows these same columns over fewer companies.
+        </>
+      ) : (
+        <> The industry tables in this sector show these same columns over fewer companies: narrowing
+        changes the company list rather than the instrument.</>
+      )}
+    </p>
+    <p class="range">
+      Rows open largest first by latest-year revenue, and every column sorts both ways; a sorted view
+      keeps its order in the address bar. Sorting by Industry gathers the sector into contiguous
+      blocks, one industry at a time, if that is how you want to read it. Margins and returns are
+      medians over each company&rsquo;s readable record, the through-cycle level rather than one
+      year&rsquo;s print. A dash is a figure that could not be read; n/a is one that does not apply to
+      that member, which is a refusal rather than a gap, and whole industries here will read n/a where
+      a sector column is a category error for the way they earn. Both sit at the back of a sorted
+      column.
     </p>
     {refreshed ? <p class="dateline">From the latest filings · data as of {refreshed}.</p> : null}
   </header>
@@ -134,18 +180,16 @@ const description = `${grouping.noun} The ${rows.length.toLocaleString()} compan
           <th class="sel" scope="col" aria-label="Pick companies to compare"></th>
           <th class="txt tk" data-t="s" data-key="ticker" scope="col"><button type="button">Ticker <span class="tri"></span></button></th>
           <th class="txt nm" data-t="s" data-key="name" scope="col"><button type="button">Name <span class="tri"></span></button></th>
-          {/* The industry header carries its own class so the narrow-screen rule can reach it by
-              name rather than by ordinal position. */}
-          <th class="txt ind" data-t="s" data-key="industry" scope="col"><button type="button">Industry <span class="tri"></span></button></th>
-          {family.columns.map((col, i) => (
+          {/* The spine of this table. It sorts like any text column, which is how a reader bands the
+              sector by industry without any new machinery, and each cell links down to that
+              industry's own table. */}
+          <th class="txt ind" data-t="s" data-key="industry" scope="col">
+            <button type="button">Industry <span class="tri"></span></button>
+            <span class="basis">sort to band the sector; each cell opens that industry&rsquo;s table</span>
+          </th>
+          {columns.map((col, i) => (
             <th class="num" data-t="n" data-key={col.key} scope="col" aria-sort={i === revenueColIdx ? "descending" : undefined}>
               <button type="button">{col.label} <span class="tri">{i === revenueColIdx ? "▼" : ""}</span></button>
-              {/* The basis line names what the figure is; where a glossary entry defines the term
-                  itself, it also links there. The groupings are the door for a reader arriving
-                  without a ticker, which is largely the reader arriving without the vocabulary, and
-                  the teaching layer was switched off on exactly that surface (UX audit, 2026-07-26).
-                  The link sits on the basis rather than on the header button, which already owns the
-                  click for sorting. */}
               <span class="basis">{col.concept ? <a href={`/concepts#${col.concept}`}>{col.basis}</a> : col.basis}</span>
             </th>
           ))}
@@ -154,16 +198,10 @@ const description = `${grouping.noun} The ${rows.length.toLocaleString()} compan
       <tbody>
         {rows.map((r) => (
           <tr id={r.ticker}>
-            {/* The pick box sits in a label that fills its cell, so the tap area is the whole cell
-                rather than the 16px box; the input keeps its own aria-label. */}
             <td class="sel"><label><input type="checkbox" class="pick" data-tk={r.ticker} aria-label={`Pick ${r.ticker} to compare`} /></label></td>
             <td class="txt tk" data-s={r.ticker}><a href={r.href}>{r.ticker}</a></td>
-            {/* The name rides in a span: max-width on a td is ignored under table-layout: auto, so
-                the cap and its ellipsis have to sit on a block child. */}
             <td class="txt nm" data-s={r.name.toLowerCase()}><span class="nmIn">{r.name}</span></td>
-            <td class="txt ind" data-s={r.industry.toLowerCase()}>
-              {r.industryHref ? <a href={r.industryHref}>{r.industry}</a> : r.industry}
-            </td>
+            <td class="txt ind" data-s={r.industry.toLowerCase()}><a href={r.industryHref}>{r.industry}</a></td>
             {r.cells.map((cell) => (
               <td class={`num${cell.sort == null ? " off" : ""}`} data-s={cell.sort}>{cell.text}</td>
             ))}
@@ -175,26 +213,26 @@ const description = `${grouping.noun} The ${rows.length.toLocaleString()} compan
 
   <p class="foot">
     Every figure is recomputed from the company&rsquo;s own SEC or EDINET filings, the same way as on
-    its page; the columns name facts, weigh nothing, and form no rank.
+    its page; the columns name facts, weigh nothing, and form no rank. The three pools this surface
+    reads are the US, ADR and Japanese ones, so a count here will not match the European records the
+    catalog also holds.
     {hasForeign ? (
       <span>
         {" "}Foreign filers are stated in US dollars at the dated reference rate ({rates.fxAsOf ? `as of ${rates.fxAsOf}` : "dated"})
         so each money column sorts on one basis; their own pages keep the records as filed. A
         foreign filer whose conversion terms are missing shows its money as filed and sorts to the
-        back of the column — never a guessed conversion. Ratios and margins are currency-free.
+        back of the column, never a guessed conversion. Ratios and margins are currency-free.
       </span>
     ) : null}
   </p>
 
   <script is:inline>
-    // Column sorting — the reader's own act on a reference table, per the owner directive. Plain
-    // DOM re-ordering of the rows already on the page: nothing is fetched, weighted, filtered,
-    // highlighted, or remembered. A cell without a sort key (a dash, an n/a, an as-filed foreign
-    // figure) goes to the back of the column whichever direction is chosen.
-    //
+    // Column sorting — the same script the industry tables run, unchanged in intent: plain DOM
+    // re-ordering of the rows already on the page, nothing fetched, weighted, filtered, highlighted
+    // or remembered, and a cell with no sort key goes to the back whichever direction is chosen.
     // The active sort is mirrored into the URL (?sort=<column key>&dir=asc|desc) and read back on
-    // load, so a sorted view is shareable — state in the address bar, nothing stored anywhere. The
-    // default view (largest first by revenue) keeps a clean URL.
+    // load; the default view keeps a clean URL. A sort key that does not exist in this sector's
+    // column set simply finds no header and leaves the default order standing.
     (function () {
       var table = document.getElementById("grpTable");
       if (!table || !table.tHead || !table.tBodies.length) return;
@@ -203,7 +241,7 @@ const description = `${grouping.noun} The ${rows.length.toLocaleString()} compan
       var tkCol = 1; // the ticker column, the explicit tiebreak
       var cur = -1, dir = -1;
       ths.forEach(function (th, i) {
-        if (th.getAttribute("aria-sort") === "descending") cur = i; // the server-rendered revenue order
+        if (th.getAttribute("aria-sort") === "descending") cur = i;
         var btn = th.querySelector("button");
         if (btn) btn.addEventListener("click", function () { sortBy(i); });
       });
@@ -224,8 +262,8 @@ const description = `${grouping.noun} The ${rows.length.toLocaleString()} compan
           else if (numeric) c = (parseFloat(a) - parseFloat(b)) * dir;
           else c = (a < b ? -1 : a > b ? 1 : 0) * dir;
           if (c) return c;
-          // The explicit tiebreak. Without it the tie order is whatever the previous pass left, so
-          // sorting away from revenue and back again quietly reshuffles the ties.
+          // The explicit tiebreak. Without it the tie order is whatever the previous pass left,
+          // which is visible once a reader sorts by Industry to band the sector and then sorts back.
           var ta = keyOf(ra, tkCol) || "", tb = keyOf(rb, tkCol) || "";
           return ta < tb ? -1 : ta > tb ? 1 : 0;
         });
@@ -251,8 +289,6 @@ const description = `${grouping.noun} The ${rows.length.toLocaleString()} compan
           history.replaceState(null, "", u);
         } catch (e) {}
       }
-      // Boot: apply a deep-linked sort. The default (revenue, descending) is already the
-      // server-rendered order, so it re-applies harmlessly.
       try {
         var q = new URL(location.href).searchParams;
         var sk = q.get("sort");
@@ -268,16 +304,16 @@ const description = `${grouping.noun} The ${rows.length.toLocaleString()} compan
 
   <script is:inline>
     // The compare picker — the reader picks two to four members and weighs them side by side on
-    // /compare, the same head-to-head every company page links to. Picking is the reader's own
-    // act: it never sorts, never filters, never persists — the checks live only on this page,
-    // and the link carries the tickers in the URL (/compare?c=…), compare's own state format.
-    // A fifth pick replaces nothing; the link simply waits until the picks are two to four.
+    // /compare. Picking is the reader's own act: it never sorts, never filters, never persists.
+    // On a sector table the picks can now cross archetypes, a bank against an exchange against a
+    // P&C insurer, which is exactly the comparison a sector view invites; /compare withholds a row
+    // that is a category error for one of them, the same way these cells do.
     (function () {
       var table = document.getElementById("grpTable");
       var go = document.getElementById("cmpGo");
       var hint = document.getElementById("pickHint");
       if (!table || !go || !hint) return;
-      var picked = []; // tickers, in the order the reader picked them
+      var picked = [];
       Array.prototype.forEach.call(table.querySelectorAll("input.pick"), function (box) {
         box.addEventListener("change", function () {
           var tk = box.getAttribute("data-tk");
@@ -299,7 +335,7 @@ const description = `${grouping.noun} The ${rows.length.toLocaleString()} compan
         }
         hint.textContent =
           n === 0 ? "Pick two to four to weigh side by side." :
-          n === 1 ? "One picked — pick at least one more." :
+          n === 1 ? "One picked. Pick at least one more." :
           n <= 4 ? n + " picked." :
           "Two to four is the most a head-to-head reads cleanly.";
       }
@@ -315,27 +351,18 @@ const description = `${grouping.noun} The ${rows.length.toLocaleString()} compan
     .range { font-size: 13.5px; line-height: 1.6; color: var(--ink-dim); margin: 10px 0 0; max-width: 78ch; }
     .dateline { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); margin: 8px 0 0; }
 
-    /* The group line: a description of the list, dated, naming no member. */
     .groupLine { font-family: var(--serif); font-size: 13.5px; line-height: 1.65; color: var(--ink-soft); margin: 14px 0 0; max-width: 88ch; border-top: 1px solid var(--rule); padding-top: 10px; }
     .groupLine .glNote { font-style: italic; font-size: 12px; color: var(--muted); }
 
-    /* The compare picker's one control: a hint and a plain link, live only at two to four picks. */
     .pickBar { display: flex; align-items: center; gap: 14px; margin: 12px 0 0; }
     .pickHint { font-family: var(--sans); font-size: 12px; color: var(--muted); }
     .cmpGo { font-family: var(--sans); font-size: 11.5px; font-weight: 600; letter-spacing: 0.03em; border: 1px solid var(--rule-strong); border-radius: 999px; padding: 4px 12px; color: var(--ink-dim); text-decoration: none; cursor: pointer; }
     .cmpGo[aria-disabled="true"] { opacity: 0.45; pointer-events: none; cursor: default; }
     .cmpGo:hover { border-color: var(--accent); color: var(--accent); }
 
-    /* The frozen pane. The wide table scrolls inside its own container — sideways for the columns,
-       downward for the member list — so the page never scrolls sideways, the header row stays
-       visible (sticky top), and the company stays in view as the columns scroll (sticky left: the
-       pick box and ticker always; the name too where the screen affords it). Borders are kept per
-       cell (border-collapse: separate) because collapsed borders don't travel with sticky cells;
-       every sticky cell carries the page's own opaque background so no figure ever bleeds under
-       the company column, and the top-left cells take the highest z-index so they win both ways.
-       overscroll-behavior-x keeps a sideways swipe that reaches the end of the pane inside the
-       pane: on a phone that gesture is otherwise claimed by the system back-navigation, and the
-       reader loses the page mid-read. */
+    /* The frozen pane, carried over verbatim from the industry table: the wide table scrolls inside
+       its own container so the page never scrolls sideways, the header row stays visible, and the
+       company stays in view as the columns scroll. */
     .tableWrap { margin: 12px 0 0; overflow: auto; overscroll-behavior-x: contain; max-height: 82vh; }
     table.grp { border-collapse: separate; border-spacing: 0; width: 100%; font-variant-numeric: tabular-nums; }
     table.grp th, table.grp td { padding: 7px 10px; border-bottom: 1px solid var(--rule); white-space: nowrap; }
@@ -344,25 +371,13 @@ const description = `${grouping.noun} The ${rows.length.toLocaleString()} compan
 
     table.grp .sel { width: 34px; min-width: 34px; max-width: 34px; text-align: center; padding-left: 8px; padding-right: 4px; }
     table.grp .sel input { accent-color: var(--accent); cursor: pointer; margin: 0; vertical-align: middle; }
-    /* The cell's vertical padding moves onto the label, so the hit area is the full row height
-       without the row growing a pixel. */
     table.grp td.sel { padding-top: 0; padding-bottom: 0; }
     table.grp td.sel label { display: block; padding: 7px 0; cursor: pointer; }
-    /* The frozen HEADER cells name thead explicitly: Astro's scope attribute adds specificity to
-       every compound, so the three-element `table.grp thead th` rule (z-index: 2) would otherwise
-       outrank a bare `table.grp th.tk` (z-index: 3) and the scrolling column headers would paint
-       over the frozen corner while sliding under it. */
     table.grp td.sel { position: sticky; left: 0; z-index: 1; background: var(--paper); }
     table.grp thead th.sel { left: 0; z-index: 3; }
     table.grp td.tk { position: sticky; left: 34px; z-index: 1; background: var(--paper); border-right: 1px solid var(--rule); }
     table.grp thead th.tk { left: 34px; z-index: 3; border-right: 1px solid var(--rule); }
-    /* Fixed widths on the frozen columns so the name column's left offset is exact: 34 + 88 = 122.
-       88px clears the header's own min-content ("TICKER ▼"), so the column can never silently widen. */
     table.grp th.tk, table.grp td.tk { width: 88px; min-width: 88px; max-width: 88px; }
-    /* Deep-link a single company's row: /groupings/{slug}#TICKER is a permanent address for one
-       company within a comparison, the granularity people actually argue at. The arrival visibly
-       lands — the row lifts, its frozen cells too (they carry their own opaque background, so the
-       highlight is set on them explicitly), and scroll-margin keeps it clear of the sticky header. */
     table.grp tbody tr { scroll-margin-top: 76px; }
     table.grp tbody tr:target > td { background: var(--tag-bg); }
     table.grp tbody tr:target > td.tk { box-shadow: inset 3px 0 0 var(--accent); }
@@ -381,35 +396,39 @@ const description = `${grouping.noun} The ${rows.length.toLocaleString()} compan
     table.grp td.num.off { color: var(--faint); }
     table.grp td.tk { font-family: var(--sans); font-weight: 700; font-size: 12.5px; }
     table.grp td.nm { font-family: var(--serif); font-size: 13px; color: var(--ink-soft); }
-    /* The cap lives on the span, not the cell: a 60-character legal name would otherwise set a
-       380px column and push the first figure off a phone. The ticker beside it is the anchor. */
     table.grp td.nm .nmIn { display: block; max-width: 30ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    /* The industry reads darker here than on an industry table, where it is a repeated aside. On a
+       sector table it is the spine, and it is the way down. */
     table.grp td.ind { font-family: var(--sans); font-size: 11.5px; }
-    table.grp td.ind a { color: var(--muted); }
-    table.grp td.ind a:hover { color: var(--accent); }
+    table.grp td.ind a { color: var(--ink-dim); text-decoration: none; border-bottom: 1px solid var(--rule); }
+    table.grp td.ind a:hover { color: var(--accent); border-bottom-color: var(--accent); }
 
-    /* On a touch screen both controls sit under the 24px minimum. Enlarge what is already there:
-       vertical padding on the sort button (width, and so the column, is unchanged) and a bigger
-       box on the pick input. Nothing is added, nothing moves. */
     @media (pointer: coarse) {
       table.grp thead button { padding: 6px 0; min-height: 24px; }
       table.grp .sel input { width: 20px; height: 20px; }
     }
 
-    /* Narrow screens. The columns are set by the header, not the data: an uppercase label held on
-       one line and a 24ch basis line put a ~125px floor under every numeric column, so a phone
-       shows barely one and a half of them. Letting the label and its basis wrap pays that cost once
-       vertically, in a header that is already sticky, instead of on every column horizontally. No
-       figure is hidden and no cell content changes. The industry is the one thing that goes: it is
-       named by the shelf overhead and stated on the company page one tap away. */
+    /* Narrow screens. The Industry column STAYS on a sector table: it is the spine and the way down
+       to the specialist columns, and on a phone that is the reader's escape from a long table
+       rather than an aside he can lose. It is the name column that gives up width instead. */
     @media (max-width: 700px) {
       table.grp thead th.num { max-width: 12ch; }
       table.grp thead th.num button { white-space: normal; display: inline-block; text-align: right; }
       table.grp thead .basis { max-width: 12ch; }
-      table.grp th.ind, table.grp td.ind { display: none; }
-      table.grp td.nm .nmIn { max-width: 14ch; }
-      /* A pane, not the page: leave room above and below for a thumb to scroll past it. */
-      .tableWrap { max-height: 62vh; }
+      table.grp thead th.ind .basis { display: none; }
+      table.grp td.nm .nmIn { max-width: 10ch; }
+    }
+
+    /* Under 720px the height cap comes off. overflow-x on the wrap keeps the columns in their own
+       sideways scroller, but a max-height on top of that makes a nested vertical scroller, and on a
+       phone with several hundred rows that is the two-axis trap: the reader's vertical swipe is
+       captured by the box, the page behind it will not move, and the footnote is hundreds of rows
+       away. With no height constraint the wrap never scrolls vertically on its own, the page scrolls
+       normally, and the header sticks against the viewport, which is the behaviour a phone wants.
+       CSS cannot express overflow-x: auto with overflow-y: visible; a non-visible value on one axis
+       computes the other to auto, so this is the honest way to get it. */
+    @media (max-width: 720px) {
+      .tableWrap { max-height: none; }
     }
 
     .foot { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); margin: 20px 0 0; line-height: 1.6; max-width: 78ch; border-top: 1px solid var(--rule-strong); padding-top: 12px; }

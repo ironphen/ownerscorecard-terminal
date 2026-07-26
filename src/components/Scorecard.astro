@@ -26,7 +26,7 @@ const GLABEL = { pass: "Pass", near: "Near", fail: "Miss", na: "—" };
 // Each financial kind is read on different statements, so each gets its own scorecard
 // and skips the ROIC-based durability block, which applies to none of them: a lender on
 // return on equity and credit cost, an insurer on the combined ratio and float, a REIT
-// on FFO, an asset manager or exchange on fee margins, a health plan on its medical loss
+// on the cash its properties produce, an asset manager or exchange on fee margins, a health plan on its medical loss
 // ratio.
 const fk = financialKind(company);
 const isFin = !!fk;

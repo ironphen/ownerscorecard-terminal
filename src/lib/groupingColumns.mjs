@@ -55,7 +55,11 @@ import { adrBasis } from "./adrBasis.mjs";
 // figure; a member with under three readable years shows "—" rather than a single year dressed as a
 // level. The size lines (revenue, owner earnings, net debt, deposits, ...) stay latest-FY: size is a
 // current fact, not a level to normalize.
-const COL = {
+// Exported because the sector tables (below) build their column lists out of the same objects
+// rather than copies of them: one declaration of a column's label and basis, everywhere it renders.
+// The declaration order here is also the canonical render order for a sector table, so the eleven
+// of them read the same way left to right.
+export const COL = {
   revenue: { key: "revenue", label: "Revenue", basis: "latest fiscal year, USD", type: "money" },
   grossMargin: { key: "grossMargin", label: "Gross margin", basis: "median over the record", type: "pct", concept: "gross-margin" },
   operatingMargin: { key: "operatingMargin", label: "Operating margin", basis: "median over the record", type: "pct", concept: "operating-margin" },
@@ -206,6 +210,133 @@ const GROUPING_DEFS = SHELVES.map((s) => ({ noun: s.noun, slug: s.industries[0].
 export const GROUPINGS = GROUPING_DEFS;
 export const groupingBySlug = new Map(GROUPING_DEFS.map((g) => [g.slug, g]));
 export const groupingByNoun = new Map(GROUPING_DEFS.map((g) => [g.noun, g]));
+
+// ---------------------------------------------------------------------------------------------
+// THE SECTORS — the layer above the industry tables, in the taxonomy's fixed file order (a reading
+// order, never a ranking). The slug is STORED in shelves.json beside the sector name, on the same
+// doctrine as the industry slugs: derived once by the generator, read verbatim here, so a later
+// change to the slug rule can never silently move eleven URLs.
+// ---------------------------------------------------------------------------------------------
+const SECTOR_DEFS = [];
+{
+  const seen = new Map();
+  for (const s of SHELVES) {
+    if (!s.sectorSlug) throw new Error(`groupingColumns: shelf "${s.noun}" carries no sectorSlug (regenerate shelves.json)`);
+    const prior = seen.get(s.sector);
+    if (prior && prior.slug !== s.sectorSlug) {
+      throw new Error(`groupingColumns: sector "${s.sector}" carries two slugs ("${prior.slug}" and "${s.sectorSlug}")`);
+    }
+    if (!prior) {
+      const clash = SECTOR_DEFS.find((d) => d.slug === s.sectorSlug);
+      if (clash) throw new Error(`groupingColumns: sector slug "${s.sectorSlug}" is on both "${clash.name}" and "${s.sector}"`);
+      const def = { name: s.sector, slug: s.sectorSlug, industries: [] };
+      seen.set(s.sector, def);
+      SECTOR_DEFS.push(def);
+    }
+    seen.get(s.sector).industries.push({ noun: s.noun, slug: s.industries[0].slug, family: s.family });
+    // /groupings/sector/{slug} lives in the same directory as /groupings/{industry-slug}. No
+    // industry is slugged "sector" today, and nothing in the taxonomy prevents one; the failure
+    // would be a silently shadowed route rather than a build error, so it is a build error here.
+    if (s.industries[0].slug === "sector") throw new Error(`groupingColumns: industry slug "sector" would shadow the sector route`);
+  }
+}
+
+export const SECTORS = SECTOR_DEFS;
+export const sectorBySlug = new Map(SECTOR_DEFS.map((s) => [s.slug, s]));
+export const sectorByName = new Map(SECTOR_DEFS.map((s) => [s.name, s]));
+
+// The helper the pages resolve a sector's URL through — never a re-derivation of the slug rule.
+export function sectorSlugOf(name) {
+  return sectorByName.get(name)?.slug || null;
+}
+
+// ---------------------------------------------------------------------------------------------
+// THE SECTOR COLUMN SETS — frozen 2026-07-26, measured over the live pools (3,827 rows across the
+// three pools) by scripts/sectorColumnsRule.mjs, which is the rule written out in full and is run
+// again on every `npm test` as a drift check against this literal.
+//
+// The rule, in short: a single-family sector shows that family's columns unchanged; otherwise a
+// candidate column is kept only if the families listing it cover at least 40% of the sector's rows
+// AND it returns a sortable figure for at least two thirds of them; cap 7; rendered in the COL
+// declaration order above so all eleven tables read the same way left to right.
+//
+// It is frozen rather than computed at build time for the same reason slugs are stored rather than
+// derived: a pipeline refresh must never quietly add or drop a column from a published page, which
+// would also break a reader's bookmarked ?sort= URL with no human in the loop. When the drift check
+// fails, that is a decision to make, not a test to silence.
+//
+// A SECTOR TABLE IS A DIFFERENT INSTRUMENT FROM AN INDUSTRY TABLE, NOT A BIGGER ONE. At sector
+// scale the question is how big, how profitable, how much capital, how much debt. The specialist
+// columns a kind of business is really read on — what is contracted for next year in software,
+// inventory days in semiconductors, deposits and the noninterest-bearing share in banks, the
+// medical loss ratio in managed care — are one step down, on the industry's own table, and that is
+// what makes narrowing a change of instrument rather than a convenience.
+//
+// Measured coverage and answer rates, as of the freeze (the recorded reason for each set):
+// ---------------------------------------------------------------------------------------------
+export const SECTOR_COLUMNS = {
+  // 171 rows, general + heavy + producer. Gross margin dropped at 50% answered, the same reason the
+  // heavy family already drops it; the producers' reserve lines answer 8-9% of the sector and stay
+  // on the two oil & gas tables where they are read. Kept: revenue 94%, operating margin 96%, owner
+  // earnings 85%, ROIC 74%, net debt 92%.
+  "Energy": [COL.revenue, COL.operatingMargin, COL.ownerEarnings, COL.roic, COL.netDebt],
+  // 243 rows, single family (general): its columns unchanged. Lowest answered is gross margin, 82%.
+  "Materials": [COL.revenue, COL.grossMargin, COL.operatingMargin, COL.ownerEarnings, COL.roic, COL.netDebt],
+  // 660 rows, general + heavy, which differ by two columns. Gross margin survives at 74% answered;
+  // dividends paid fails coverage at 2% (the heavy family alone lists it). Others 88-97%.
+  "Industrials": [COL.revenue, COL.grossMargin, COL.operatingMargin, COL.ownerEarnings, COL.roic, COL.netDebt],
+  // 444 rows, single family (general). Lowest answered is gross margin, 77%.
+  "Consumer Discretionary": [COL.revenue, COL.grossMargin, COL.operatingMargin, COL.ownerEarnings, COL.roic, COL.netDebt],
+  // 140 rows, single family (general). Lowest answered is ROIC, 89%.
+  "Consumer Staples": [COL.revenue, COL.grossMargin, COL.operatingMargin, COL.ownerEarnings, COL.roic, COL.netDebt],
+  // 495 rows, general + managedCare. Gross margin dropped at 61% answered (biotech cost lines are
+  // tagged unreliably); managed care's premiums, medical loss ratio and reserve development fail
+  // coverage at 2% of the sector's rows and stay on the Managed Care table where they belong, which
+  // is exactly the narrowing the page's prose points at. Kept: 81-97%.
+  "Health Care": [COL.revenue, COL.operatingMargin, COL.ownerEarnings, COL.roic, COL.netDebt],
+  // 694 rows, lender + insurer + fee — the hardest sector and the rule's proof. Four columns fall
+  // out, each answering 92-98%: what it took in, what it earned, the hard capital behind it, and
+  // the return on that capital. That is how a bank, a P&C insurer and an exchange can honestly be
+  // read in one table. Deposits (45% answered), premiums (18%) and float (12%) would each be blank
+  // for four fifths of the page and are correctly absent; operating margin is a category error for
+  // most of the sector by construction and answers 30%.
+  "Financials": [COL.revenue, COL.netIncome, COL.rote, COL.tangibleEquity],
+  // 487 rows, software + semiconductor + general. Every loud specialist column falls away: next
+  // year contracted answers 9% of the sector, sales & marketing 39%, inventory days 58% and only
+  // for the two semiconductor industries. What survives is the universal operating read.
+  // AMENDED (rule step 4): net debt added by hand. It answers 97% of IT rows and is a category
+  // error for none of them; it failed only coverage (24%), and it failed it for a purely editorial
+  // reason — the software and semiconductor families spent their budget on their own lines. Debt
+  // net of the cash against it is close to the most Graham column on the board.
+  "Information Technology": [COL.revenue, COL.grossMargin, COL.operatingMargin, COL.ownerEarnings, COL.roic, COL.netDebt, COL.stockComp],
+  // 194 rows, general + heavy. Gross margin answers 61% and is dropped; dividends paid fails
+  // coverage at 26%. Kept: 84-96%.
+  "Communication Services": [COL.revenue, COL.operatingMargin, COL.ownerEarnings, COL.roic, COL.netDebt],
+  // 115 rows, single family (heavy): its columns unchanged. Lowest answered is owner earnings, 81%.
+  "Utilities": [COL.revenue, COL.operatingMargin, COL.ownerEarnings, COL.roic, COL.netDebt, COL.dividendsPaid],
+  // 184 rows, single family (property): its columns unchanged. Funds from operations does not
+  // appear because it was withdrawn from the library on 2026-07-25 — no REIT tags it, and rebuilt
+  // from the standard tags it missed Simon Property by half; cash from operations is filed and
+  // unambiguous, and the payout against it answers what FFO was being asked. Lowest answered is
+  // that payout, 76%; roughly a quarter of the rows here are not REITs, and they read n/a on the
+  // REIT lines, which the page's prose states rather than leaving to be read as a gap.
+  "Real Estate": [COL.revenue, COL.netDebt, COL.cashFromOps, COL.cashPayout, COL.dividendsPaid, COL.totalAssets],
+};
+
+// Every sector present in the data must have a frozen set, and every frozen set a sector: a new
+// sector in the taxonomy fails the build here rather than rendering a table with no columns.
+{
+  for (const s of SECTOR_DEFS) if (!SECTOR_COLUMNS[s.name]) throw new Error(`groupingColumns: no frozen column set for sector "${s.name}"`);
+  for (const name of Object.keys(SECTOR_COLUMNS)) if (!sectorByName.has(name)) throw new Error(`groupingColumns: frozen column set for unknown sector "${name}"`);
+  for (const [name, cols] of Object.entries(SECTOR_COLUMNS)) {
+    if (!cols.length || cols.length > 7) throw new Error(`groupingColumns: sector "${name}" has ${cols.length} columns (1-7)`);
+    if (cols[0].key !== "revenue") throw new Error(`groupingColumns: sector "${name}" must open on revenue (the default order reads it)`);
+  }
+}
+
+export function sectorColumnsOf(name) {
+  return SECTOR_COLUMNS[name] || null;
+}
 
 // ---------------------------------------------------------------------------------------------
 // Currency terms for one company: how its monetary lines reach the reader's dollars. One doctrine,
@@ -370,7 +501,11 @@ export function groupingCells(company, familyKey, terms, columns = null) {
       case "inventoryDays": {
         const daily = L.costOfRevenue > 0 ? L.costOfRevenue / 365 : null;
         const d = L.inventory != null && daily ? L.inventory / daily : null;
-        return d == null ? DASH : String(Math.round(d));
+        // Returned a bare string until 2026-07-26, where every other branch returns {text, sort}:
+        // the cell rendered empty and unsortable, so the Semiconductors and Semiconductor Equipment
+        // tables had been shipping a blank column. Found by the sector-column measurement, which
+        // would otherwise have frozen inventory days into the source as a 0%-answered column.
+        return d == null ? DASH : { text: String(Math.round(d)), sort: Math.round(d) };
       }
       case "mlr":
         return pct(medianOverRecord(company, (yl) => medicalLossRatio(yl)));
@@ -391,7 +526,9 @@ export function groupingCells(company, familyKey, terms, columns = null) {
     }
   };
 
-  return (columns || family.columns).map((col) => cellFor(col.key));
+  const list = columns || family?.columns;
+  if (!list) throw new Error(`groupingCells: no columns — unknown family "${familyKey}" and no list handed in`);
+  return list.map((col) => cellFor(col.key));
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -410,8 +547,13 @@ function medianOf(vals) {
   return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
 }
 
-export function groupLine(columns, cellRows) {
+// `readCounts` appends the members each fragment was read on, e.g. "median operating margin 12.4%
+// (read on 604 of 657)". The sector tables set it and the industry tables do not: a median taken
+// across a whole sector is a weaker statement than one taken across a single industry, and the count
+// is what keeps it honest. The net-debt fragment already states its own denominator.
+export function groupLine(columns, cellRows, opts = {}) {
   const parts = [];
+  const total = cellRows.length;
   columns.forEach((col, i) => {
     const sorts = cellRows.map((r) => (r[i] ? r[i].sort : null)).filter((v) => v != null);
     if (!sorts.length) return;
@@ -421,8 +563,10 @@ export function groupLine(columns, cellRows) {
       return;
     }
     const m = medianOf(sorts);
-    if (col.type === "money") parts.push(`median ${col.label.toLowerCase()} ${fmtMoney(m, "USD")}`);
-    else parts.push(`median ${col.label.toLowerCase()} ${(m * 100).toFixed(1)}%`);
+    const read = opts.readCounts ? ` (read on ${sorts.length.toLocaleString()} of ${total.toLocaleString()})` : "";
+    if (col.type === "money") parts.push(`median ${col.label.toLowerCase()} ${fmtMoney(m, "USD")}${read}`);
+    else if (col.type === "num") parts.push(`median ${col.label.toLowerCase()} ${m.toFixed(0)}${read}`);
+    else parts.push(`median ${col.label.toLowerCase()} ${(m * 100).toFixed(1)}%${read}`);
   });
   return parts.length ? `As a group: ${parts.join("; ")}.` : null;
 }

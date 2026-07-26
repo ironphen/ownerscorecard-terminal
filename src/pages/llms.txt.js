@@ -7,7 +7,7 @@
 import { getCollection } from "astro:content";
 import { SITE_URL, DEFAULT_DESCRIPTION } from "../lib/seo.mjs";
 import { dataAsOf, dataAsOfLatest } from "../lib/freshness.mjs";
-import { GROUPINGS } from "../lib/groupingColumns.mjs";
+import { GROUPINGS, SECTORS } from "../lib/groupingColumns.mjs";
 import { SHELVES } from "../lib/shelves.mjs";
 
 export async function GET() {
@@ -47,7 +47,7 @@ export async function GET() {
     `- [Terms of Use](${SITE_URL}/terms): the terms and disclaimer — informational only, not investment advice, data provided without warranty`,
     "",
     "## Browse",
-    `- [Groupings](${SITE_URL}/groupings): ${GROUPINGS.length} comparative tables, one per kind of business — the catalog arranged by what the businesses do, each grouping listing its industry chapters — at /groupings/{slug} (for example ${SITE_URL}/groupings/lend-money); plain factual columns, never a ranking`,
+    `- [Groupings](${SITE_URL}/groupings): the catalog arranged by what the businesses do, in two depths. ${SECTORS.length} sector tables at /groupings/sector/{sector-slug} (for example ${SITE_URL}/groupings/sector/financials), each the whole sector on the columns all its members can answer; ${GROUPINGS.length} industry tables at /groupings/{industry-slug} (for example ${SITE_URL}/groupings/banks), each on the columns that kind of business is actually read on. Plain factual columns, sortable, never a ranking`,
 
     `- [Industry chapters](${SITE_URL}/industries/enterprise-software): ${chapterCount} chapters at /industries/{slug}, each industry's companies across all pools; the full list is in /llms-full.txt`,
     `- [The Manual](${SITE_URL}/manual): every company in fixed alphabetical order, three volumes at /manual/us/{A-Z}, /manual/adr/{A-Z}, and /manual/japan`,

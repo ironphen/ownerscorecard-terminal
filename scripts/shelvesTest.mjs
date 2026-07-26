@@ -71,6 +71,23 @@ ok("slugs unique site-wide", new Set(allInds.map((ind) => ind.slug)).size === al
 ok("labels unique site-wide", new Set(allInds.map((ind) => ind.label)).size === allInds.length);
 ok("industrySlug resolves a known label", industrySlug("Banks") === "banks");
 
+// The sector slug is stored beside the sector name, on the same doctrine: /groupings/sector/{slug}
+// reads it verbatim, so a drift here would move eleven URLs silently.
+ok("every shelf carries a sector slug", SHELVES.every((s) => typeof s.sectorSlug === "string" && /^[a-z0-9]+(-[a-z0-9]+)*$/.test(s.sectorSlug)));
+ok("one slug per sector, one sector per slug", (() => {
+  const byName = new Map(), bySlug = new Map();
+  for (const s of SHELVES) {
+    if ((byName.get(s.sector) ?? s.sectorSlug) !== s.sectorSlug) return false;
+    if ((bySlug.get(s.sectorSlug) ?? s.sector) !== s.sector) return false;
+    byName.set(s.sector, s.sectorSlug);
+    bySlug.set(s.sectorSlug, s.sector);
+  }
+  return byName.size === 11;
+})());
+// /groupings/sector/{sector-slug} sits in the same directory as /groupings/{industry-slug}; an
+// industry slugged "sector" would shadow the whole route rather than fail.
+ok("no industry slug is \"sector\"", allInds.every((ind) => ind.slug !== "sector"));
+
 // ---- stale curation: warn only ----
 const stale = allInds.filter((ind) => !occurring.has(ind.label));
 if (stale.length) console.log(`note: ${stale.length} shelved industr${stale.length === 1 ? "y" : "ies"} with no companies after this refresh (renders nothing, breaks nothing): ${stale.map((i) => `"${i.label}"`).join(", ")}`);

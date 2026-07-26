@@ -1,0 +1,155 @@
+---
+// The control bar (owner directive, 2026-07-25): "the page should start in the table format, with
+// each sector in a drop down list ... then once a sector is selected, if users want to filter
+// further a second drop down will show the groupings within that sector."
+//
+// It renders at the top of ALL THREE view types, always pre-set to the view being looked at, and
+// that single decision is the whole point of it. The complaint it answers is scrolling down and
+// going back and forth: a reader on the Banks table who wants Insurance Brokers re-steers in place,
+// without ever returning to an index. A bar that only lived on the index would leave the round trip
+// exactly where it was.
+//
+// Two controls, in the reader's own order: the sector, then the industries within it. Changing
+// either navigates at once. There is no Go button, because a Go button is a second act asked for a
+// decision already made, and there is no client-side filtering of table rows: that would put
+// numbers behind an interaction, break the ?sort URL contract, and ship a whole sector's rows in
+// order to hide most of them.
+//
+// WITHOUT JAVASCRIPT IT STILL WORKS. The link rail below the selects is real markup, always in the
+// DOM; the selects carry the `hidden` attribute in the HTML and only the script takes it off. So a
+// reader with no JS sees a rail of links and never a dead control, and a crawler reads every
+// destination as an ordinary href whether or not it runs scripts.
+import { SECTOR_INDEX, industryEntryBySlug, TOTAL_COMPANIES } from "../lib/groupingsIndex.mjs";
+
+const { view = "index", sector = null, industry = null } = Astro.props;
+
+const sectorName = sector || (industry ? industryEntryBySlug.get(industry)?.sector : null) || null;
+const current = sectorName ? SECTOR_INDEX.find((s) => s.name === sectorName) : null;
+const currentIndustry = industry ? current?.industries.find((i) => i.slug === industry) : null;
+
+const ALL = "/groupings";
+const n = (v) => v.toLocaleString();
+---
+
+<nav class="pick" aria-label="Browse by sector and industry">
+  {/* The selects ship hidden and are revealed by the script, so no-JS never meets a dead control.
+      On a phone these two are the best list picker the platform has: the system renders each as a
+      full-screen wheel with the current value already chosen. */}
+  <div class="sels" id="pickSels" hidden>
+    <label class="fld">
+      <span class="lab">Sector</span>
+      <select id="pickSector">
+        <option value={ALL} selected={!current}>All sectors ({n(TOTAL_COMPANIES)})</option>
+        {SECTOR_INDEX.map((s) => (
+          <option value={s.href} selected={current?.slug === s.slug}>{s.name} ({n(s.count)})</option>
+        ))}
+      </select>
+    </label>
+    <label class="fld">
+      <span class="lab">Industry</span>
+      {current ? (
+        <select id="pickIndustry">
+          <option value={current.href} selected={!currentIndustry}>All of {current.name} ({n(current.count)})</option>
+          {current.industries.map((ind) => (
+            <option value={`/groupings/${ind.slug}`} selected={currentIndustry?.slug === ind.slug}>{ind.noun} ({n(ind.count)})</option>
+          ))}
+        </select>
+      ) : (
+        <select id="pickIndustry" disabled>
+          <option>Choose a sector first</option>
+        </select>
+      )}
+    </label>
+  </div>
+
+  {/* The rail: the same destinations as real links, and the whole browse for a reader without
+      JavaScript. It is hidden by the script, not by CSS, so it is never hidden for the reader who
+      needs it. */}
+  <div class="rail" id="pickRail">
+    {view === "index" ? (
+      <p class="line">
+        <span class="railLab">Sectors</span>
+        {SECTOR_INDEX.map((s, i) => (
+          <span class="it">{i ? <span class="dot"> · </span> : null}<a href={s.href}>{s.name}</a> <span class="ct">{n(s.count)}</span></span>
+        ))}
+      </p>
+    ) : (
+      <Fragment>
+        <p class="line">
+          <span class="railLab">Sectors</span>
+          <span class="it"><a href={ALL}>All sectors</a></span>
+          {SECTOR_INDEX.filter((s) => s.slug !== current?.slug).map((s) => (
+            <span class="it"><span class="dot"> · </span><a href={s.href}>{s.name}</a></span>
+          ))}
+        </p>
+        {current ? (
+          <p class="line">
+            <span class="railLab">In {current.name}</span>
+            <span class="it"><a href={current.href} aria-current={view === "sector" ? "page" : undefined} class={view === "sector" ? "here" : undefined}>All of {current.name}</a> <span class="ct">{n(current.count)}</span></span>
+            {current.industries.map((ind) => (
+              <span class="it"><span class="dot"> · </span><a
+                href={`/groupings/${ind.slug}`}
+                aria-current={currentIndustry?.slug === ind.slug ? "page" : undefined}
+                class={currentIndustry?.slug === ind.slug ? "here" : undefined}
+              >{ind.noun}</a> <span class="ct">{n(ind.count)}</span></span>
+            ))}
+          </p>
+        ) : null}
+      </Fragment>
+    )}
+  </div>
+</nav>
+
+<script is:inline>
+  // The control bar, in full. Three things: reveal the two selects, hide the link rail they replace,
+  // and navigate on change. No state, no storage, no data, nothing fetched, nothing remembered.
+  (function () {
+    var sels = document.getElementById("pickSels");
+    var rail = document.getElementById("pickRail");
+    if (!sels) return;
+    sels.hidden = false;
+    if (rail) rail.hidden = true;
+    ["pickSector", "pickIndustry"].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (!el || el.disabled) return;
+      el.addEventListener("change", function () {
+        if (el.value) location.assign(el.value);
+      });
+    });
+  })();
+</script>
+
+<style>
+  .pick { margin: 0 0 16px; padding: 0 0 12px; border-bottom: 1px solid var(--rule); }
+
+  .sels { display: flex; flex-wrap: wrap; gap: 14px 18px; align-items: flex-end; }
+  /* The `hidden` attribute is the whole no-JS contract here, and an author `display` rule outranks
+     the browser's own `[hidden] { display: none }`. Without these two lines a reader with JavaScript
+     off would see both selects, dead, beside the rail that actually works. */
+  .sels[hidden] { display: none; }
+  .rail[hidden] { display: none; }
+  .fld { display: flex; align-items: baseline; gap: 8px; }
+  .lab { font-family: var(--sans); font-size: 11px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--muted); }
+  /* 16px is not a taste decision. Below it, iOS Safari zooms the viewport when the select takes
+     focus and does not zoom back out, which strands the reader at 1.4x on a table page. The house
+     density is 12px and it is wrong here specifically. */
+  .sels select { font-family: var(--sans); font-size: 16px; color: var(--ink); background: var(--paper); border: 1px solid var(--rule-strong); border-radius: 3px; padding: 5px 8px; max-width: 34ch; }
+  .sels select:hover { border-color: var(--accent); }
+  .sels select:disabled { color: var(--muted); opacity: 0.7; }
+
+  .rail .line { margin: 0 0 4px; font-family: var(--sans); font-size: 12px; line-height: 1.9; color: var(--ink-dim); }
+  .rail .line:last-child { margin-bottom: 0; }
+  .railLab { display: inline-block; min-width: 9ch; margin-right: 8px; font-size: 11px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--muted); }
+  .rail a { color: var(--ink-soft); text-decoration: none; border-bottom: 1px solid var(--rule-strong); }
+  .rail a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+  .rail a.here { font-weight: 700; color: var(--ink); }
+  .rail .ct { font-variant-numeric: tabular-nums; font-size: 11px; color: var(--faint); }
+  .rail .dot { color: var(--faint); }
+
+  @media (max-width: 560px) {
+    .sels { flex-direction: column; align-items: stretch; gap: 10px; }
+    .fld { flex-direction: column; align-items: stretch; gap: 3px; }
+    .sels select { max-width: none; width: 100%; }
+    .railLab { display: block; min-width: 0; margin: 0; }
+  }
+</style>

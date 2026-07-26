@@ -113,7 +113,7 @@ const ccc = cashConversionCycle(company);
 const negativeCCC = ccc && /Negative/.test(ccc.label);
 const cyclical = (cls.overlays || []).some((o) => o.key === "cyclical");
 
-// Banks read on ROE, insurers on the combined ratio and float, REITs on FFO, asset
+// Banks read on ROE, insurers on the combined ratio and float, REITs on operating cash, asset
 // managers and exchanges on fee margins, health plans on the medical loss ratio, none
 // on ROIC; route each financial kind to its own lens (fk resolved above).
 // The quality read restates single-period ratios (a bank's efficiency ratio, a REIT's payout)

@@ -67,10 +67,24 @@ for (const [pool, list] of pools) {
   }
 }
 
+// The sector slug is computed HERE, once, and stored — the same doctrine the industry slugs follow
+// ("slugs are stored, not derived at read time, so a later change to the slug rule can never
+// silently move a URL"). /groupings/sector/{sectorSlug} reads it verbatim. A collision between two
+// sector names fails the build here rather than shadowing a route later.
+const sectorSlug = (name) => name.toLowerCase().replace(/&/g, "and").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+{
+  const seen = new Map();
+  for (const s of taxonomy.sectors) {
+    const slug = sectorSlug(s.name);
+    if (seen.has(slug)) throw new Error(`sector slug collision: "${seen.get(slug)}" and "${s.name}" both slug to "${slug}"`);
+    seen.set(slug, s.name);
+  }
+}
+
 // shelves.json v2: one shelf per occurring industry, menu order; noun = the industry label.
 const shelves = orderedIndustries
   .filter((i) => (occur.get(i.label) || 0) > 0)
-  .map((i) => ({ noun: i.label, sector: i.sector, family: i.family, industries: [{ label: i.label, slug: i.slug }] }));
+  .map((i) => ({ noun: i.label, sector: i.sector, sectorSlug: sectorSlug(i.sector), family: i.family, industries: [{ label: i.label, slug: i.slug }] }));
 writeFileSync("src/data/shelves.json", JSON.stringify({ shelves }, null, 1));
 
 // Redirects: each old chapter slug and old grouping slug 301s to its members' majority new

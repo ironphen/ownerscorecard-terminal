@@ -15,7 +15,8 @@ import fundamentals from "../src/data/fundamentals.json" with { type: "json" };
 import adrRatios from "../src/data/adrRatios.json" with { type: "json" };
 import rates from "../src/data/rates.json" with { type: "json" };
 import { SHELVES, industryLabelOf } from "../src/lib/shelves.mjs";
-import { GROUPINGS, FAMILIES, groupingBySlug, usdTerms, groupingCells, groupLine } from "../src/lib/groupingColumns.mjs";
+import { GROUPINGS, FAMILIES, SECTORS, SECTOR_COLUMNS, sectorSlugOf, groupingBySlug, usdTerms, groupingCells, groupLine } from "../src/lib/groupingColumns.mjs";
+import { computeSectorColumns } from "./sectorColumnsRule.mjs";
 
 let pass = 0, fail = 0;
 const ok = (name, cond) => { if (cond) pass++; else { fail++; console.log("FAIL " + name); } };
@@ -119,6 +120,34 @@ ok("an unreadable column is simply skipped",
   // Naming no member: no ticker appears as a standalone token, and no company name appears at all.
   const tokens = new Set((real || "").split(/[^A-Za-z0-9]+/));
   ok("real-pool group line names no member", real && !members.some((m) => tokens.has(String(m.ticker).toUpperCase()) || (m.name && real.includes(m.name))));
+}
+
+// ---- 3: the sector tables — the frozen column sets, and the drift check behind them ----
+// The sector sets are chosen by what a sector's rows can ANSWER (scripts/sectorColumnsRule.mjs),
+// then frozen into the source, because a data-driven column set could otherwise rewrite a
+// published page between two builds and break a reader's bookmarked ?sort= URL with nobody in the
+// loop. This recomputes the rule over the live pools and fails when the answer has moved. That is
+// a decision to make, not a test to silence: read the measurement (`node scripts/sectorColumnsRule.mjs`),
+// then either accept the change into SECTOR_COLUMNS with its reason, or record why it is refused.
+ok("eleven sectors, each with a frozen column set", SECTORS.length === 11 && SECTORS.every((s) => Array.isArray(SECTOR_COLUMNS[s.name])));
+ok("every sector carries a stored slug", SECTORS.every((s) => /^[a-z0-9]+(-[a-z0-9]+)*$/.test(s.slug)) && new Set(SECTORS.map((s) => s.slug)).size === SECTORS.length);
+ok("no industry slug shadows the /groupings/sector route", GROUPINGS.every((g) => g.slug !== "sector"));
+ok("sectorSlugOf resolves a known sector", sectorSlugOf("Financials") === "financials");
+// Revenue first on every sector table, so the default largest-first order always has a column to
+// read; and never more than seven, the same wall the families are held to.
+ok("every sector set opens on revenue and caps at 7", Object.values(SECTOR_COLUMNS).every((cols) => cols[0].key === "revenue" && cols.length <= 7));
+{
+  const recomputed = computeSectorColumns();
+  let drifted = 0;
+  for (const s of SECTORS) {
+    const want = SECTOR_COLUMNS[s.name].map((c) => c.key).join(" ");
+    const got = (recomputed.get(s.name)?.keys || []).join(" ");
+    if (want !== got) {
+      drifted++;
+      console.log(`  DRIFT ${s.name}\n    frozen:      ${want}\n    recomputed:  ${got}`);
+    }
+  }
+  ok(`frozen sector columns still match the rule (${drifted} drifted)`, drifted === 0);
 }
 
 console.log(`groupingsTest: ${pass} passed, ${fail} failed`);

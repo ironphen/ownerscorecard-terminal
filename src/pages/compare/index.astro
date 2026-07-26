@@ -427,7 +427,7 @@ const bondAsOf = rates?.asOf ? new Date(rates.asOf).toLocaleDateString("en-US", 
         // Mixed-archetype caution: when the columns aren't the same kind of business, the rows that
         // dash out aren't gaps in the data — they're metrics that don't apply. Name it, don't hide it.
         const kinds = new Set(cs.map((c) => c.price.mode === "bank" || c.price.mode === "reit" ? c.price.mode : c.archetype.financialKind ? "financial" : "operating"));
-        if (kinds.size > 1) h += `<p class="mixWarn">These aren&rsquo;t all the same kind of business, so some rows apply to one column and not another (a bank has no owner-earnings margin; a REIT is read on FFO). A dash there means the metric doesn&rsquo;t apply, not that it&rsquo;s missing.</p>`;
+        if (kinds.size > 1) h += `<p class="mixWarn">These aren&rsquo;t all the same kind of business, so some rows apply to one column and not another (a bank has no owner-earnings margin; a property trust is read on the cash its buildings produce). A dash there means the metric doesn&rsquo;t apply, not that it&rsquo;s missing.</p>`;
 
         tableEl.innerHTML = h;
         // This component's CSS is scoped: Astro tags template elements with a data-astro-cid-* attribute

@@ -1,115 +1,172 @@
 ---
-// The groupings index — the one door to the catalog arranged by what the businesses do (owner
-// directive, 2026-07-10; the ValueLine/Moody's industry-section form). Each grouping: its
-// comparative table, its column list, and its industry chapters. Nothing here ranks, scores,
-// or recommends. Order is the fixed shelves.json file order — alphabetical by sentence —
-// never a ranking.
+// The groupings door (owner directive, 2026-07-25). It used to be every industry stacked sector by
+// sector with a count and a full column list each, four hundred lines tall, and the owner's
+// complaint about it was exact: scrolling down and going back and forth. So it is now three things
+// and nothing else.
+//
+//   1. The control bar, the same one every grouping table carries, so steering starts here and
+//      continues from wherever the reader lands rather than sending him back.
+//   2. One table, eleven rows, one per sector: how many industries, how many companies, and the
+//      columns that sector's own table is read on. It sorts like any table on the site.
+//   3. A dense alphabetical index of every industry table, bare links. This is the part that keeps
+//      every table one hop from the door for a reader who already knows the name he wants, and for
+//      a crawler. Shortening the page without it would push a hundred tables to two hops.
+//
+// What is deliberately NOT here: a sector-level table of medians. It would be arithmetic over filed
+// figures and defensible on the letter of the house style, but a sortable grid of eleven sectors by
+// median return is the closest thing to a ranking this site could print, and it would be read as
+// one within a week. The table stays inventory.
 import BaseLayout from "../../layouts/BaseLayout.astro";
-import fundamentals from "../../data/fundamentals.json";
-import adr from "../../data/fundamentals.adr.json";
-import jp from "../../data/fundamentals.jp.json";
-import { SHELVES, industryLabelOf } from "../../lib/shelves.mjs";
-import { GROUPINGS, FAMILIES, groupingByNoun } from "../../lib/groupingColumns.mjs";
+import GroupingPicker from "../../components/GroupingPicker.astro";
+import { SECTOR_INDEX, ALL_INDUSTRIES, TOTAL_COMPANIES } from "../../lib/groupingsIndex.mjs";
 import { dataAsOf, fmtAsOf } from "../../lib/freshness.mjs";
 
-// One classify pass over the three pools. This page absorbed the former shelves page
-// (/businesses — the owner's call, 2026-07-10: the shelves and the groupings were the same 28
-// nouns wearing two names on two routes), so each grouping carries both of its doors: the
-// comparative table, and the industry chapters that make it up. A curated industry with no
-// companies after a data refresh renders nothing — a zero row would link a chapter that no
-// longer builds.
-const countByLabel = new Map();
-for (const c of [...(fundamentals.companies || []), ...(adr.companies || []), ...(jp.companies || [])]) {
-  const label = industryLabelOf(c);
-  countByLabel.set(label, (countByLabel.get(label) || 0) + 1);
-}
-const shelfByNoun = new Map(SHELVES.map((s) => [s.noun, s]));
-
-const groupings = GROUPINGS.map((g) => {
-  const industries = (shelfByNoun.get(g.noun)?.industries || [])
-    .map((ind) => ({ ...ind, count: countByLabel.get(ind.label) || 0 }))
-    .filter((ind) => ind.count > 0);
-  return {
-    ...g,
-    industries,
-    count: industries.reduce((a, ind) => a + ind.count, 0),
-    columns: FAMILIES[g.family].columns.map((col) => col.label),
-  };
-}).filter((g) => g.count > 0);
-
-const total = groupings.reduce((a, g) => a + g.count, 0);
 const refreshed = fmtAsOf(dataAsOf);
-
-// Since the 2026-07-17 standardization each grouping IS one conventional industry; the index
-// reads sector by sector in the taxonomy's fixed order — the organizing layer, never a rank.
-const sectorOrder = [...new Set(groupings.map((g) => g.sector))];
-const bySector = sectorOrder.map((name) => ({
-  name,
-  groupings: groupings.filter((g) => g.sector === name),
-})).map((s) => ({ ...s, count: s.groupings.reduce((a, g) => a + g.count, 0) }));
+const industryCount = ALL_INDUSTRIES.length;
+// Alphabetical, because this index exists for the reader who arrives with a name in mind. The table
+// above it keeps the taxonomy's own order, which is a reading order and never a ranking.
+const alphabetical = [...ALL_INDUSTRIES].sort((a, b) => a.noun.localeCompare(b.noun));
 ---
 
-<BaseLayout title="Groupings, Owner Scorecard" description="The catalog arranged by what the businesses do: each grouping is one comparative table, every member's filed figures in sortable columns.">
+<BaseLayout
+  title="Groupings, Owner Scorecard"
+  description={`The catalog arranged by what the businesses do: 11 sectors and ${industryCount} industries, each one comparative table of every member's filed figures in sortable columns.`}
+>
   <header class="hero">
     <h1>The groupings</h1>
     <p class="lede">
-      The catalog arranged by what the businesses do: each grouping below is one comparative
-      table, every member a row, in columns of the line items that kind of business is read on.
+      The catalog arranged by what the businesses do. Start with a sector and read all of it in one
+      table, then narrow to an industry when you want the lines that kind of business is really read
+      on.
     </p>
     <p class="sub">
-      Tables open largest first by latest-year revenue, the one objective order; every column
-      sorts both ways, and the re-ordering is the reader&rsquo;s own act. Margins and returns are
-      medians over each company&rsquo;s readable record — the through-cycle level, never one year&rsquo;s
-      print. Under each grouping, its industries: each links to a chapter where every member is
-      read in full, entry by entry. {total.toLocaleString()} records across the three pools; which
-      businesses a reader understands is the reader&rsquo;s own question, and the one thing this page
-      does not answer.
+      A sector table shows the columns every member of the sector can answer, so companies that earn
+      in different ways can still be read down the same column. An industry table shows more: what is
+      contracted for next year in software, inventory days in semiconductors, deposits and the
+      noninterest-bearing share in banks. Narrowing changes the instrument rather than filtering the
+      list. {TOTAL_COMPANIES.toLocaleString()} records across the US, ADR and Japanese pools, in
+      {" "}{industryCount} industries under 11 sectors. Which businesses a reader understands is the
+      reader&rsquo;s own question, and the one thing this page does not answer.
     </p>
     {refreshed ? <p class="dateline">From the latest filings · data as of {refreshed}.</p> : null}
   </header>
 
-  {bySector.map((sec) => (
-    <section class="sector">
-      <h2 class="secHead">{sec.name} <span class="secN">{sec.count.toLocaleString()} companies</span></h2>
-      <ul class="glist">
-        {sec.groupings.map((g) => (
-          <li class="g">
-            <div class="gTop">
-              <a class="gNoun" href={`/groupings/${g.slug}`}>{g.noun}</a>
-              <span class="gN">{g.count.toLocaleString()} companies · <a class="gTbl" href={`/groupings/${g.slug}`}>the table →</a> · <a href={`/industries/${g.industries[0].slug}`}>the chapter →</a></span>
-            </div>
-            <p class="gCols">{g.columns.join(" · ")}</p>
-          </li>
-        ))}
-      </ul>
-    </section>
-  ))}
+  <GroupingPicker view="index" />
+
+  <table class="sec" id="secTable">
+    <thead>
+      <tr>
+        <th class="txt" data-t="s" data-key="sector" scope="col"><button type="button">Sector <span class="tri"></span></button></th>
+        <th class="num" data-t="n" data-key="industries" scope="col"><button type="button">Industries <span class="tri"></span></button></th>
+        <th class="num" data-t="n" data-key="companies" scope="col"><button type="button">Companies <span class="tri"></span></button></th>
+        <th class="txt cols" scope="col"><span class="plainHead">The columns its table shows</span></th>
+      </tr>
+    </thead>
+    <tbody>
+      {SECTOR_INDEX.map((s) => (
+        <tr>
+          <td class="txt nm" data-s={s.name.toLowerCase()}><a href={s.href}>{s.name}</a></td>
+          <td class="num" data-s={s.industries.length}>{s.industries.length}</td>
+          <td class="num" data-s={s.count}>{s.count.toLocaleString()}</td>
+          <td class="txt cols">{s.columns.map((c) => c.label).join(" · ")}</td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+  <p class="tnote">
+    Order is the taxonomy&rsquo;s own, a reading order and never a ranking. The counts are records the
+    library holds, not a claim about how large a sector is.
+  </p>
+
+  <section class="alpha">
+    <h2>Every industry table</h2>
+    <p class="alphaNote">All {industryCount}, alphabetically, for when you already know the name.</p>
+    <ul class="alphaList">
+      {alphabetical.map((ind) => (
+        <li><a href={`/groupings/${ind.slug}`}>{ind.noun}</a></li>
+      ))}
+    </ul>
+  </section>
 
   <p class="foot">
-    Every figure comes from the company&rsquo;s own SEC or EDINET filings, computed the same way as on
-    its page. A grouping&rsquo;s columns are the line items its kind of business is read on; they name
-    facts, weigh nothing, and form no rank.
+    Every figure on these tables is recomputed from the company&rsquo;s own SEC or EDINET filings, the
+    same way as on its page. The columns name facts, weigh nothing, and form no rank.
   </p>
+
+  <script is:inline>
+    // The sector table sorts, the same act on the same terms as every other table here: plain DOM
+    // re-ordering of rows already on the page, nothing fetched and nothing remembered. Eleven rows
+    // in the taxonomy's own order until the reader asks for another.
+    (function () {
+      var table = document.getElementById("secTable");
+      if (!table || !table.tHead || !table.tBodies.length) return;
+      var ths = Array.prototype.slice.call(table.tHead.rows[0].cells);
+      var tbody = table.tBodies[0];
+      var cur = -1, dir = -1;
+      ths.forEach(function (th, i) {
+        var btn = th.querySelector("button");
+        if (btn) btn.addEventListener("click", function () { sortBy(i); });
+      });
+      function sortBy(i) {
+        var numeric = ths[i].getAttribute("data-t") === "n";
+        dir = cur === i ? -dir : numeric ? -1 : 1;
+        cur = i;
+        var rows = Array.prototype.slice.call(tbody.rows);
+        rows.sort(function (ra, rb) {
+          var a = ra.cells[i].getAttribute("data-s"), b = rb.cells[i].getAttribute("data-s");
+          if (a == null || b == null) return 0;
+          if (numeric) return (parseFloat(a) - parseFloat(b)) * dir;
+          return (a < b ? -1 : a > b ? 1 : 0) * dir;
+        });
+        for (var k = 0; k < rows.length; k++) tbody.appendChild(rows[k]);
+        ths.forEach(function (th, k) {
+          var tri = th.querySelector(".tri");
+          if (tri) tri.textContent = k === i ? (dir === 1 ? "▲" : "▼") : "";
+          if (k === i) th.setAttribute("aria-sort", dir === 1 ? "ascending" : "descending");
+          else th.removeAttribute("aria-sort");
+        });
+      }
+    })();
+  </script>
 
   <style>
     .hero h1 { margin: 0 0 8px; }
     .lede { font-family: var(--serif); font-size: 18px; line-height: 1.55; color: var(--ink-soft); margin: 0 0 10px; max-width: 68ch; }
-    .sub { color: var(--ink-dim); margin: 0; max-width: 68ch; line-height: 1.6; font-size: 14.5px; }
-    .dateline { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); margin: 10px 0 0; }
+    .sub { color: var(--ink-dim); margin: 0; max-width: 72ch; line-height: 1.6; font-size: 14.5px; }
+    .dateline { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); margin: 10px 0 0 0; }
 
-    .glist { list-style: none; padding: 0; margin: 22px 0 0; }
-    .g { border-bottom: 1px solid var(--rule); padding: 14px 0; }
-    .gTop { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
-    .gNoun { font-family: var(--serif); font-weight: 600; font-size: 17px; color: var(--ink); text-decoration: none; }
-    .gNoun:hover { color: var(--accent); }
-    .gN { font-family: var(--sans); font-variant-numeric: tabular-nums; font-size: 13px; color: var(--muted); flex: 0 0 auto; }
-    .gCols { margin: 5px 0 0; font-family: var(--sans); font-size: 12px; color: var(--muted); line-height: 1.6; }
-    .gTbl { font-family: var(--sans); font-size: 12px; color: var(--accent); }
-    .gInds { margin: 7px 0 0; font-family: var(--serif); font-size: 13.5px; color: var(--ink-dim); line-height: 1.7; max-width: 90ch; }
-    .gInds a { color: var(--ink-soft); text-decoration: none; border-bottom: 1px solid var(--rule-strong); }
-    .gInds a:hover { color: var(--accent); border-bottom-color: var(--accent); }
-    .gIndN { font-family: var(--sans); font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
-    .gDot { color: var(--faint); }
+    /* The hero and the control bar want a little air between them without a rule doing the work
+       twice; the bar carries its own bottom rule. */
+    .hero { margin-bottom: 20px; }
+
+    table.sec { width: 100%; border-collapse: separate; border-spacing: 0; font-variant-numeric: tabular-nums; margin: 4px 0 0; }
+    table.sec th, table.sec td { padding: 8px 12px 8px 0; border-bottom: 1px solid var(--rule); text-align: left; vertical-align: baseline; }
+    table.sec thead th { border-bottom: 2px solid var(--rule-strong); }
+    table.sec th.num, table.sec td.num { text-align: right; padding-right: 22px; white-space: nowrap; }
+    table.sec thead button, table.sec .plainHead { background: none; border: 0; padding: 0; margin: 0; font-family: var(--sans); font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink); }
+    table.sec thead button { cursor: pointer; }
+    table.sec thead button:hover { color: var(--accent); }
+    table.sec .plainHead { color: var(--muted); font-weight: 400; }
+    table.sec thead .tri { display: inline-block; min-width: 1em; font-size: 9px; color: var(--accent); }
+    table.sec td.nm a { font-family: var(--serif); font-size: 16px; font-weight: 600; color: var(--ink); text-decoration: none; }
+    table.sec td.nm a:hover { color: var(--accent); }
+    table.sec td.num { font-family: var(--sans); font-size: 13px; color: var(--ink-dim); }
+    table.sec td.cols { font-family: var(--sans); font-size: 11.5px; color: var(--muted); line-height: 1.55; white-space: normal; }
+    .tnote { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); margin: 10px 0 0; max-width: 78ch; }
+
+    .alpha { margin: 30px 0 0; border-top: 1px solid var(--rule-strong); padding-top: 16px; }
+    .alpha h2 { font-family: var(--serif); font-size: 17px; font-weight: 600; margin: 0; }
+    .alphaNote { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); margin: 4px 0 10px; }
+    .alphaList { list-style: none; padding: 0; margin: 0; columns: 3; column-gap: 28px; }
+    .alphaList li { break-inside: avoid; font-family: var(--sans); font-size: 12px; line-height: 1.85; }
+    .alphaList a { color: var(--ink-dim); text-decoration: none; }
+    .alphaList a:hover { color: var(--accent); }
+
+    @media (max-width: 900px) { .alphaList { columns: 2; } }
+    @media (max-width: 620px) {
+      .alphaList { columns: 1; }
+      table.sec td.cols, table.sec th.cols { display: none; }
+    }
 
     .foot { font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--muted); border-top: 1px solid var(--rule-strong); margin-top: 28px; padding-top: 12px; max-width: 78ch; line-height: 1.6; }
   </style>
