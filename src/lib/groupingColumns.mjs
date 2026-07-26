@@ -318,8 +318,12 @@ export const SECTOR_COLUMNS = {
   // appear because it was withdrawn from the library on 2026-07-25 — no REIT tags it, and rebuilt
   // from the standard tags it missed Simon Property by half; cash from operations is filed and
   // unambiguous, and the payout against it answers what FFO was being asked. Lowest answered is
-  // that payout, 76%; roughly a quarter of the rows here are not REITs, and they read n/a on the
-  // REIT lines, which the page's prose states rather than leaving to be read as a gap.
+  // that payout, 76%. Corrected 2026-07-26 after the verifier measured the claim that used to sit
+  // here: the non-REIT rows are 32 of 184, about a sixth rather than a quarter, and they do NOT
+  // read n/a on these lines — they answer revenue, cash from operations and total assets at 30 of
+  // 32. The only n/a on this table is net debt, on the handful of rows the mortgage-REIT signature
+  // still catches. A recorded reason that is itself wrong is worse than no reason, because the next
+  // person to read it will trust it.
   "Real Estate": [COL.revenue, COL.netDebt, COL.cashFromOps, COL.cashPayout, COL.dividendsPaid, COL.totalAssets],
 };
 

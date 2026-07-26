@@ -148,6 +148,25 @@ ok("every sector set opens on revenue and caps at 7", Object.values(SECTOR_COLUM
     }
   }
   ok(`frozen sector columns still match the rule (${drifted} drifted)`, drifted === 0);
+
+  // The drift check above compares the CHOSEN KEYS, which is silent for the five sectors that are
+  // single-family: those take their family's columns unchanged and the selection floors are never
+  // applied to them, so a column could rot to mostly dashes without anything failing. Real Estate's
+  // dividend-against-operating-cash sits at 75% today and Utilities' owner earnings not far above
+  // the floor, so this is a live risk rather than a theoretical one. Assert the ANSWER RATE on every
+  // rendered column of every sector, single-family included: a column of holes is worse than a
+  // narrower table, whichever branch of the rule put it there.
+  let thin = 0;
+  for (const s of SECTORS) {
+    for (const m of recomputed.get(s.name)?.measured || []) {
+      if (!SECTOR_COLUMNS[s.name].some((c) => c.key === m.key)) continue;
+      if (m.answerRate < 2 / 3) {
+        thin++;
+        console.log(`  THIN ${s.name} · ${m.key} answers ${(m.answerRate * 100).toFixed(1)}% of rows`);
+      }
+    }
+  }
+  ok(`every rendered sector column answers two thirds of its rows (${thin} thin)`, thin === 0);
 }
 
 console.log(`groupingsTest: ${pass} passed, ${fail} failed`);
