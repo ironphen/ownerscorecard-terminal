@@ -96,6 +96,15 @@ const COL = {
   rdIntensity: { key: "rdIntensity", label: "R&D / revenue", basis: "latest fiscal year", type: "pct", concept: "rd-intensity" },
   capexIntensity: { key: "capexIntensity", label: "Capex / revenue", basis: "latest fiscal year", type: "pct", concept: "capex-intensity" },
   inventoryDays: { key: "inventoryDays", label: "Inventory days", basis: "inventory ÷ daily cost of revenue · latest FY", type: "num", concept: "inventory-days" },
+  // The oil & gas desk's three, all ratios. Reserve quantities are filed in units that differ by
+  // company (barrels, thousand barrels of oil equivalent, million cubic feet equivalent), and the
+  // unit does not travel into the record, so the desk publishes the figures those units cancel out
+  // of and leaves the raw quantities in the filing. Empty cells sit beside full ones here by
+  // design: reserves are tagged by only some filers, and a peer-average reserve life is exactly
+  // the thing that must never be imputed.
+  reserveLife: { key: "reserveLife", label: "Years of production left", basis: "proved reserves ÷ the year's production · only where the filer tags both", type: "num", concept: "reserve-life" },
+  reserveReplacement: { key: "reserveReplacement", label: "Replaced what it sold", basis: "discoveries and extensions plus revisions ÷ production · latest FY", type: "pct", concept: "reserve-replacement" },
+  pudShare: { key: "pudShare", label: "Undeveloped share", basis: "proved undeveloped ÷ total proved · latest FY", type: "pct", concept: "proved-undeveloped" },
 };
 
 export const FAMILIES = {
@@ -110,6 +119,12 @@ export const FAMILIES = {
   semiconductor: {
     name: "Semiconductors",
     columns: [COL.revenue, COL.grossMargin, COL.rdIntensity, COL.capexIntensity, COL.inventoryDays, COL.ownerEarnings, COL.roic],
+  },
+  // Producers and the integrated majors: the ordinary operating reads, plus what the reserve base
+  // says about how long the business can keep selling and whether it is replacing what it sells.
+  producer: {
+    name: "Oil & gas producers",
+    columns: [COL.revenue, COL.reserveLife, COL.reserveReplacement, COL.pudShare, COL.operatingMargin, COL.ownerEarnings, COL.netDebt],
   },
   general: {
     name: "General operating",
@@ -340,6 +355,14 @@ export function groupingCells(company, familyKey, terms, columns = null) {
         return pct(L.sellingMarketing != null && L.revenue > 0 ? L.sellingMarketing / L.revenue : null);
       case "stockComp":
         return pct(L.stockComp != null && L.revenue > 0 ? L.stockComp / L.revenue : null);
+      case "reserveLife": {
+        const v = L.reserveLifeYears;
+        return v == null ? DASH : { text: `${v.toFixed(1)}`, sort: Number(v.toFixed(3)) };
+      }
+      case "reserveReplacement":
+        return pct(L.reserveReplacement);
+      case "pudShare":
+        return pct(L.pudShare);
       case "rdIntensity":
         return pct(L.researchDevelopment != null && L.revenue > 0 ? L.researchDevelopment / L.revenue : null);
       case "capexIntensity":

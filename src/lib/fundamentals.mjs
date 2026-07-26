@@ -5,6 +5,7 @@ import { financialKind } from "./archetype.mjs";
 // Circular by construction (software.mjs formats money with fmtMoney below), which ESM resolves
 // because every use sits inside a function body rather than at module load.
 import { softwareSection } from "./software.mjs";
+import { oilGasSection } from "./oilgas.mjs";
 
 // The headline top line. For most companies this is reported revenue, but banks and
 // insurers tag "Revenues" erratically (often a sliver, or not at all: Regions reports
@@ -1055,6 +1056,11 @@ export function buildScorecard(company) {
       // a customer costs, and whether the buyback is buying ownership or cancelling the pay
       // packet. Absent for every company that carries none of those figures.
       ...(softwareSection(company) ? [softwareSection(company)] : []),
+      // The oil & gas desk's section, appended on the same terms: a producer is still an ordinary
+      // business, so everything above applies. This adds only what the general reads cannot ask —
+      // how many years of production remain, whether the company replaced what it sold, and how
+      // much of "proved" is still a plan. Absent for every company without the ASC 932 schedule.
+      ...(oilGasSection(company) ? [oilGasSection(company)] : []),
     ],
   };
 }
