@@ -24,11 +24,12 @@ import { buildCikMap, CIK_OVERRIDE, resolveCikLive } from "./cikResolve.mjs";
 import { hasInsuranceData, insuranceLines, fillClaimsFromRollforward, INSURANCE_LINE_NAMES } from "./insuranceLines.mjs";
 import { hasBankData, banksLines, BANK_LINE_NAMES } from "./banksLines.mjs";
 import { hasSoftwareData, softwareLines, SOFTWARE_LINE_NAMES } from "./softwareLines.mjs";
+import { hasOilGasData, oilGasLines, OILGAS_LINE_NAMES } from "./oilGasLines.mjs";
 // Desk lines are deterministic extractions: the same facts give the same lines every run, so an
 // absence is always a deliberate gate, never a transient tag miss — the field carry-over below
 // must never resurrect one from a prior file (Wells Fargo's withheld charge-offs came back from
 // the dead exactly this way, 2026-07-21).
-const DESK_LINES = new Set([...INSURANCE_LINE_NAMES, ...BANK_LINE_NAMES, ...SOFTWARE_LINE_NAMES]);
+const DESK_LINES = new Set([...INSURANCE_LINE_NAMES, ...BANK_LINE_NAMES, ...SOFTWARE_LINE_NAMES, ...OILGAS_LINE_NAMES]);
 // Tier-2: the named dimensional targets (scripts/fetchDimensional.mjs), read from the filings'
 // own inline XBRL where companyfacts is blind — Travelers' development, Cigna's insurance book,
 // Centene's premium line, Wells Fargo's modern charge-offs. Merged as the LAST source: it fills
@@ -1517,10 +1518,15 @@ async function main() {
     // to the dilution ledger. Runs for any filer carrying the concepts — the shelf decides what is
     // SURFACED, but a subscription book is a subscription book wherever it is shelved.
     const soft = !ins && !bank && hasSoftwareData(facts, fyEnds) ? softwareLines(facts, fyEnds, dims) : null;
+    // The oil & gas desk: reserves, what they cost to replace, and which of the two legal accounting
+    // methods the filer uses. Runs for any filer carrying the ASC 932 schedule, whatever shelf it
+    // sits on — an integrated major has reserves exactly as a pure producer does.
+    const og = !ins && !bank && hasOilGasData(facts) ? oilGasLines(facts, fyEnds) : null;
+    if (og) for (const w of og.flags?.warns || []) console.warn(`  ! ${ticker} oil&gas: ${w}`);
     if (soft) for (const w of soft.flags?.warns || []) console.warn(`  ! ${ticker} software: ${w}`);
     const insYear = (fy) => {
       const o = {};
-      for (const src of [ins, bank, soft]) {
+      for (const src of [ins, bank, soft, og]) {
         if (!src) continue;
         for (const [line, series] of Object.entries(src.flows)) if (series[fy] != null) o[line] = series[fy];
         for (const [line, series] of Object.entries(src.instants)) if (series[fy] != null) o[line] = series[fy];
@@ -1541,7 +1547,7 @@ async function main() {
         if (anchor?.fy != null && maxFy < anchor.fy) return null;
         return series[maxFy];
       };
-      for (const src of [ins, bank, soft]) {
+      for (const src of [ins, bank, soft, og]) {
         if (!src) continue;
         for (const [line, series] of Object.entries(src.flows)) { const v = latestOf(series); if (v != null) o[line] = v; }
         for (const [line, series] of Object.entries(src.instants)) { const v = latestOf(series); if (v != null) o[line] = v; }
