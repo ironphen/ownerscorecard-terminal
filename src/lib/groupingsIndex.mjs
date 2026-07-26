@@ -13,12 +13,20 @@ import fundamentals from "../data/fundamentals.json" with { type: "json" };
 import adr from "../data/fundamentals.adr.json" with { type: "json" };
 import jp from "../data/fundamentals.jp.json" with { type: "json" };
 import { industryLabelOf } from "./shelves.mjs";
+// The counts on the browse pages must match the rows the tables actually render, so the same
+// secondary-listing exclusion applies here. A door that promises 47 and opens on 40 is a small lie
+// that a reader catches immediately and then stops trusting the larger numbers.
+import { secondaryListings } from "./listings.mjs";
 import { SECTORS, SECTOR_COLUMNS } from "./groupingColumns.mjs";
 
 const countByLabel = new Map();
-for (const c of [...(fundamentals.companies || []), ...(adr.companies || []), ...(jp.companies || [])]) {
-  const label = industryLabelOf(c);
-  countByLabel.set(label, (countByLabel.get(label) || 0) + 1);
+for (const pool of [fundamentals.companies || [], adr.companies || [], jp.companies || []]) {
+  const secondary = secondaryListings(pool);
+  for (const c of pool) {
+    if (secondary.has(String(c?.ticker || "").toUpperCase())) continue;
+    const label = industryLabelOf(c);
+    countByLabel.set(label, (countByLabel.get(label) || 0) + 1);
+  }
 }
 
 // Sectors in the taxonomy's fixed file order, each with its industries in the same order. An

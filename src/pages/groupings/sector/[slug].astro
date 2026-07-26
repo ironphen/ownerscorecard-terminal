@@ -26,6 +26,7 @@ import jpData from "../../../data/fundamentals.jp.json";
 import adrRatios from "../../../data/adrRatios.json";
 import rates from "../../../data/rates.json";
 import { industryLabelOf } from "../../../lib/shelves.mjs";
+import { secondaryListings } from "../../../lib/listings.mjs";
 import { usdTerms, groupingCells, revenueSortUsd, groupLine } from "../../../lib/groupingColumns.mjs";
 import { SECTOR_INDEX, sectorIndexBySlug } from "../../../lib/groupingsIndex.mjs";
 import { FAMILIES, groupingBySlug } from "../../../lib/groupingColumns.mjs";
@@ -72,6 +73,12 @@ const pools = [
   ["adr", adrData.companies || []],
   ["jp", jpData.companies || []],
 ];
+// Secondary listings are excluded from every comparative surface: a preferred series, a baby bond
+// or a warrant shares its issuer's CIK and would otherwise appear as another row beside the common
+// stock, so a shelf of 40 businesses reads as 47 and the same company is compared with itself. They
+// keep their pages; they stop counting. See lib/listings.mjs for why the test is the CIK and never
+// the ticker shape.
+const secondaryByPool = new Map(pools.map(([k, pool]) => [k, secondaryListings(pool)]));
 const rows = [];
 let convertedCount = 0;
 let asFiledCount = 0;
@@ -82,6 +89,7 @@ for (const [poolKey, pool] of pools) {
     if (!ind) continue;
     const ticker = String(c.ticker || "").toUpperCase();
     if (!ticker) continue;
+    if (secondaryByPool.get(poolKey)?.has(ticker)) continue;
     const terms = usdTerms(c, adrRatios, rates);
     if (terms.converted) convertedCount++;
     if (terms.asFiled) asFiledCount++;
