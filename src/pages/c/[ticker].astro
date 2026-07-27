@@ -33,6 +33,7 @@ import { selectPeers } from "../../lib/peers.mjs";
 import notes from "../../data/notes.json";
 import adrFundamentals from "../../data/fundamentals.adr.json";
 import jpFundamentals from "../../data/fundamentals.jp.json";
+import euFundamentals from "../../data/fundamentals.eu.json";
 import { manualOrder, manualHref } from "../../lib/manual.mjs";
 import { industryOrder, chapterMemberHref } from "../../lib/chapters.mjs";
 import { getCollection } from "astro:content";
@@ -69,7 +70,21 @@ const fund =
 
 // Peers, found once and shared: both the peer table and the scorecard's peer context read the same set,
 // and the universe scan runs a single time per page rather than once per component.
-const peerResult = fund ? selectPeers(fund, fundamentals.companies || []) : { peers: [], basis: "model" };
+//
+// THE UNIVERSE IS EVERY POOL (owner ruling, 2026-07-27: "it's okay for peers groups to cross borders,
+// these companies compete in real life"). It used to be fundamentals.companies alone — the US pool —
+// while line 63 above merged US and ADR to build the PAGES. So 742 foreign filers got a bench drawn
+// from a universe their own competitors were not in, under a heading linking to a /groupings table
+// that holds all four pools: Taiwan Semiconductor's peer table could not contain ASML, and ASML's
+// could not contain Tokyo Electron. A pool is a fact about which regulator a company files with, and
+// a reader comparing chipmakers does not care.
+const PEER_UNIVERSE = [
+  ...(fundamentals.companies || []),
+  ...(adrFundamentals.companies || []),
+  ...(jpFundamentals.companies || []),
+  ...(euFundamentals.companies || []),
+];
+const peerResult = fund ? selectPeers(fund, PEER_UNIVERSE) : { peers: [], basis: "model" };
 
 const related = (
   await getCollection("articles", ({ data }) =>

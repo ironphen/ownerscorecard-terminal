@@ -364,8 +364,18 @@ export function usdTerms(company, adrRatios, rates) {
     if (ccy === "USD") return { factor: 1, converted: false, asFiled: false, ccy };
     return { factor: null, converted: false, asFiled: true, ccy };
   }
-  if (company?.market === "JP") {
-    const fx = rates?.fx?.[ccy];
+  // Any other filer that STATES a currency other than dollars converts at the dated reference rate,
+  // and prints as filed when no rate exists for it. This used to test `market === "JP"`, which was
+  // true while the Japanese pool was the only non-ADR foreign pool any surface read. The peer bench
+  // began crossing borders on 2026-07-27 and immediately printed Volvo's SEK 526.8bn revenue as
+  // "$526.8B" — because the EU pool's `market` field holds an exchange name ("Nasdaq Stockholm"),
+  // never matched, and fell through to the US branch below, which asserts dollars.
+  //
+  // Anchored on the currency the filing itself states rather than on a pool name, which is the more
+  // durable fact: the US pool carries no currency field at all on any of its 2,881 rows, so a stated
+  // non-dollar currency IS a foreign filing. All 45 EU rows and both Swedish filers resolve.
+  const fx = ccy && ccy !== "USD" ? rates?.fx?.[ccy] : null;
+  if (ccy && ccy !== "USD") {
     if (fx != null && fx > 0) return { factor: fx, converted: true, asFiled: false, ccy };
     return { factor: null, converted: false, asFiled: true, ccy };
   }

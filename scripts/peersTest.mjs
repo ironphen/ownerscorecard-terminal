@@ -144,9 +144,14 @@ const thinResult = selectPeers(GOLD1, thinUniv);
 // ---------------------------------------------------------------------------------------------
 {
   const fund = JSON.parse(readFileSync(new URL("../src/data/fundamentals.json", import.meta.url), "utf8"));
+  // The universe the SITE uses since 2026-07-27: every pool. The bench crosses borders because the
+  // companies compete across them (owner ruling) — Taiwan Semiconductor's bench could not contain
+  // ASML while selectPeers was handed the US pool alone, and ASML's could not contain Tokyo Electron.
   const adr = JSON.parse(readFileSync(new URL("../src/data/fundamentals.adr.json", import.meta.url), "utf8"));
-  const universe = fund.companies || [];
-  const pages = [...universe, ...(adr.companies || [])];
+  const jpPool = JSON.parse(readFileSync(new URL("../src/data/fundamentals.jp.json", import.meta.url), "utf8"));
+  const euPool = JSON.parse(readFileSync(new URL("../src/data/fundamentals.eu.json", import.meta.url), "utf8"));
+  const universe = [...(fund.companies || []), ...(adr.companies || []), ...(jpPool.companies || []), ...(euPool.companies || [])];
+  const pages = universe;
 
   let benches = 0, noSection = 0, offLens = 0, offLensBenches = 0;
   for (const c of pages) {
@@ -158,7 +163,23 @@ const thinResult = selectPeers(GOLD1, thinUniv);
     if (bad) { offLens += bad; offLensBenches++; }
   }
   check(`no bench carries an off-lens peer (${offLens} rows across ${offLensBenches} benches)`, offLens === 0);
-  check(`the guard empties no bench (${benches} benches, ${noSection} without a peer section)`, noSection === 0 && benches > 3500);
+  check(`the guard empties no bench (${benches} benches, ${noSection} without a peer section)`, noSection === 0 && benches > 3800);
+
+  // The bench crosses borders, and the SCALE test that ranks candidates converts to one currency
+  // before comparing. Without that second half a yen filer looks a hundred times larger than it is:
+  // Nissan files 12.0 trillion yen against Nvidia's 215.9 billion dollars, and on the raw numbers
+  // Nissan reads as fifty-five times the larger when it is roughly a third.
+  const tick = (t) => pages.find((x) => String(x.ticker).toUpperCase() === t) || null;
+  const bench = (t) => { const c = tick(t); return c ? selectPeers(c, universe).peers.map((p) => p.ticker) : []; };
+  check("Taiwan Semiconductor benches the American chipmakers", ["NVDA", "INTC", "AMD"].filter((t) => bench("TSM").includes(t)).length >= 2);
+  check("Nvidia benches Taiwan Semiconductor", bench("NVDA").includes("TSM"));
+  check("ASML benches the other semiconductor-equipment makers, across three pools",
+    ["LRCX", "KLAC"].every((t) => bench("ASML").includes(t)) && bench("ASML").some((t) => /^[0-9]{4}$/.test(t)));
+  check("Exxon benches the integrated majors rather than only US filers",
+    ["BP", "SHEL", "TTE"].filter((t) => bench("XOM").includes(t)).length >= 2);
+  // A Japanese filer gets a bench at all, which it never had: /jp/[ticker] rendered no peer section.
+  check("Tokyo Electron has a bench", bench("8035").length >= 3);
+  check("Toyota has a bench", bench("7203").length >= 3);
 
   // The named cases the guard exists for. Each was live on 2026-07-26.
   const byT = (t) => pages.find((x) => String(x.ticker).toUpperCase() === t) || null;

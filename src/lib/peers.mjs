@@ -16,6 +16,20 @@
 //      the performance metrics the comparison then reads. Selecting on the very numbers you compare would
 //      rig the distribution; structure is chosen blind to performance, so the comparison stays meaningful.
 //
+// THE BENCH CROSSES BORDERS (owner ruling, 2026-07-27: "it's okay for peers groups to cross borders,
+// these companies compete in real life"). Until then selectPeers was only ever handed the US pool, so
+// 742 foreign filers benched against companies drawn from a universe their own competitors were not
+// in — Taiwan Semiconductor's peer table could not contain ASML or Samsung, and the heading above it
+// named an industry whose /groupings table holds all of them. Nissan had no bench at all. The pools
+// are a filing-jurisdiction fact about where a company registers its shares, and a reader comparing
+// chipmakers does not care which regulator they file with.
+//
+// Two things had to be true before this could ship, and they were shipped first, in this order:
+// currency conversion on the printed figures, then the same conversion inside the SCALE TEST below.
+// Without the second, a widened universe ranks candidates on unconverted revenue, and a yen filer
+// looks a hundred times larger than it is — which would have seated Nissan beside Toyota and Walmart
+// by accident and called it structural likeness.
+//
 // We present a distribution and a position, never a rank or a verdict — where the company falls among its
 // peers is context the reader judges, not a score we assign.
 
@@ -23,7 +37,23 @@ import { classify, financialKind } from "./archetype.mjs";
 import { topLineRevenue } from "./fundamentals.mjs";
 import { industryLabelOf, shelfOfIndustry, sectorOfIndustry } from "./shelves.mjs";
 import { floatOf } from "./insurers.mjs";
+import { usdTerms } from "./groupingColumns.mjs";
+import adrRatios from "../data/adrRatios.json" with { type: "json" };
+import rates from "../data/rates.json" with { type: "json" };
 import reitSubsectors from "../data/reit-subsectors.json" with { type: "json" };
+
+// A COMPANY'S SIZE, IN ONE CURRENCY. The scale test below asks how far apart two companies are in
+// log-revenue, and until the bench crossed borders it could read the filed figure directly because
+// every candidate filed in dollars. It cannot now: Nissan files ¥12.0T and Nvidia $215.9B, and on the
+// raw numbers Nissan reads as fifty-five times the larger when it is roughly a third. Same doctrine as
+// every other surface — convert where the terms are known, and where they are not, return null so the
+// company is held at arm's length by the scale test rather than ranked on a guess.
+const revenueUsd = (c) => {
+  const r = topLineRevenue(c?.lines || {}, c);
+  if (r == null || !Number.isFinite(r)) return null;
+  const t = usdTerms(c, adrRatios, rates);
+  return t.asFiled ? null : r * t.factor;
+};
 
 // REITs almost all carry the same SIC (~6798), so the 2-digit-SIC industry tier below can't tell a
 // net-lease trust from an apartment landlord or a cell-tower operator — it would seat Realty Income
@@ -63,7 +93,7 @@ const intensityOf = (c) => {
 export function selectPeers(company, all, n = 7) {
   const myEngine = engineOf(company);
   const mySic = String(company.sic || "");
-  const myRev = topLineRevenue(company.lines || {}, company) || 0;
+  const myRev = revenueUsd(company) || 0;
   const myInt = intensityOf(company);
   const myLabel = industryLabelOf(company);
   const myShelf = myLabel ? shelfOfIndustry(myLabel) : null;
@@ -117,10 +147,11 @@ export function selectPeers(company, all, n = 7) {
     if (s.slice(0, 2) === mySic.slice(0, 2)) return 0.8;
     return 1.2;
   };
-  // Scale closeness: distance in log-revenue, so a $5B and a $50B company read an order of magnitude apart
-  // regardless of absolute size. A peer with no usable revenue is held at arm's length, not excluded.
+  // Scale closeness: distance in log-revenue IN ONE CURRENCY, so a $5B and a $50B company read an order
+  // of magnitude apart regardless of absolute size. A peer with no usable revenue — or with no known
+  // conversion terms, which is the same thing for this purpose — is held at arm's length, not excluded.
   const sizeDist = (c) => {
-    const r = topLineRevenue(c.lines || {}, c) || 0;
+    const r = revenueUsd(c) || 0;
     return myRev > 0 && r > 0 ? Math.abs(Math.log(r / myRev)) : 3;
   };
   // Capital-intensity closeness: how far apart their plant-to-sales ratios sit. Neutral when either lacks

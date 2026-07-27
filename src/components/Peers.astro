@@ -1,6 +1,8 @@
 ---
 import fundamentals from "../data/fundamentals.json";
 import adrFundamentals from "../data/fundamentals.adr.json";
+import jpFundamentals from "../data/fundamentals.jp.json";
+import euFundamentals from "../data/fundamentals.eu.json";
 import { classify } from "../lib/archetype.mjs";
 import { fmtMoney, topLineRevenue } from "../lib/fundamentals.mjs";
 import { financialKind } from "../lib/archetype.mjs";
@@ -11,7 +13,12 @@ import { secondaryListingsCached, primaryTickerFor } from "../lib/listings.mjs";
 
 // One array, built once per module load rather than once per page, so the memoized listing set in
 // listings.mjs has a stable identity to key its WeakMap on across all 3,623 company pages.
-const LISTING_POOL = [...(fundamentals.companies || []), ...(adrFundamentals.companies || [])];
+const LISTING_POOL = [
+  ...(fundamentals.companies || []),
+  ...(adrFundamentals.companies || []),
+  ...(jpFundamentals.companies || []),
+  ...(euFundamentals.companies || []),
+];
 import { industryLabelOf, industrySlug } from "../lib/shelves.mjs";
 import { usdTerms, revenueSortUsd } from "../lib/groupingColumns.mjs";
 import adrRatios from "../data/adrRatios.json";
@@ -21,10 +28,11 @@ import Term from "./Term.astro";
 // The peer set is computed once on the page and passed in, so the universe scan runs a single time per
 // page; selectPeers here is the fallback when the component is used on its own.
 const { company, peers: peersProp, basis: basisProp, subsector: subsectorProp, shelfNoun: shelfNounProp, sector: sectorProp } = Astro.props;
-const all = fundamentals.companies || [];
-// The listing check spans BOTH pools that reach a /c/ page, because four of the Brookfield Property
-// preferred series are ADR filings: a set built from the US pool alone would miss them and hand each
-// one a bench. Frozen at module scope so the memo in listings.mjs has a stable array to key on.
+// Every pool, for both jobs. The bench crosses borders (owner ruling, 2026-07-27), and the
+// claim-on-a-business check has to see all of them too, because four of the Brookfield Property
+// preferred series are ADR filings. Frozen at module scope so the memo in listings.mjs has a stable
+// array identity to key its cache on across every company page.
+const all = LISTING_POOL;
 const listingPool = LISTING_POOL;
 
 // Peers are drawn taxonomy-first (the same industry label the heading and the /groupings tables use) and

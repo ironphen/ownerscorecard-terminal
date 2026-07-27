@@ -14,6 +14,11 @@ import Valuation from "../../components/Valuation.astro";
 import CompareLink from "../../components/CompareLink.astro";
 import ActHeader from "../../components/ActHeader.astro";
 import Segments from "../../components/Segments.astro";
+import Peers from "../../components/Peers.astro";
+import { selectPeers } from "../../lib/peers.mjs";
+import fundamentals from "../../data/fundamentals.json";
+import adrData from "../../data/fundamentals.adr.json";
+import jp from "../../data/fundamentals.jp.json";
 import { SITE_URL, ORG, companyDataset, corporationNode, breadcrumbList } from "../../lib/seo.mjs";
 import { compareKeyOf } from "../../lib/compareKey.mjs";
 
@@ -67,6 +72,20 @@ const pageJsonLd = fund
       ]),
     ].filter(Boolean)
   : null;
+
+// THE PEER BENCH, which these pages have never had. selectPeers used to be handed the US pool alone,
+// so a bench here would have compared a European filer against a universe its competitors were not
+// in; the universe is now every pool (owner ruling, 2026-07-27: "it's okay for peers groups to cross
+// borders, these companies compete in real life"). These companies already sit on the /groupings
+// tables with the full column set and had no comparison anywhere on their own pages.
+const PEER_UNIVERSE = [
+  ...(fundamentals.companies || []),
+  ...(adrData.companies || []),
+  ...(jp.companies || []),
+  ...(eu.companies || []),
+];
+const peerResult = fund ? selectPeers(fund, PEER_UNIVERSE) : { peers: [], basis: "model" };
+
 ---
 
 <BaseLayout title={`${ticker} ${name}, Owner Scorecard (Europe)`} description={pageDescription} jsonLd={pageJsonLd}>
@@ -107,6 +126,7 @@ const pageJsonLd = fund
 
       <section class="actGroup">
         <ActHeader n="II" title="Quality &amp; stewardship" lede="Returns, the balance sheet, and stewardship. The same checks the US pages run, in the reporting currency." />
+        <div id="sec-peers" class="sec"><Peers company={fund} peers={peerResult.peers} basis={peerResult.basis} subsector={peerResult.subsector} shelfNoun={peerResult.shelfNoun} sector={peerResult.sector} /></div>
         <div id="sec-scorecard" class="sec"><Scorecard company={fund} /></div>
         <div id="sec-capital" class="sec"><Capital company={fund} /></div>
       {/* CUT 2026-07-25 (UX audit): Inversion rendered on 2,139 pages and on 98.7 percent of them
