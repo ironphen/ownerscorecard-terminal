@@ -24,6 +24,24 @@ export function returnOnTangibleEquity(L) {
   const tce = tangibleEquity(L);
   return L && L.netIncome != null && tce && tce > 0 ? L.netIncome / tce : null;
 }
+
+// A COMPANY WITH NO TANGIBLE EQUITY HAS NO RETURN ON IT, whatever it earned before the goodwill
+// arrived. The per-year function above already refuses a negative denominator, which is right and was
+// not enough: a record median simply skipped those years and reported the ones that survived. Cigna's
+// tangible equity went to minus $42B in 2018 with the Express Scripts purchase and has never
+// recovered, so its row printed "Return on tangible equity 27.6%" — the median of 2016 and 2017 —
+// beside a Tangible equity cell reading minus $31.8B. BlackRock printed 99% on three of four years
+// against minus $7.4B, and Arthur J. Gallagher 44% off a single year of ten against minus $10.0B.
+//
+// The gate is the LATEST year's balance sheet, which is the same-period anchor this codebase reaches
+// for every time a shape test has misfired: a stable fact about the business as it stands, rather
+// than an inference from the shape of a series. It withholds 41 of 676 cells across the four families
+// that carry the column, and every one of them is a company whose tangible book is gone today.
+export function roteOverRecord(company, recordMedianFn) {
+  const tce = tangibleEquity(company?.lines || {});
+  if (tce == null || tce <= 0) return null;
+  return recordMedianFn(company, (L) => returnOnTangibleEquity(L));
+}
 export function returnOnAssets(L) {
   return L && L.netIncome != null && L.totalAssets ? L.netIncome / L.totalAssets : null;
 }

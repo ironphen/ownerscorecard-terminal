@@ -950,6 +950,14 @@ export function throughCycle(company, metricFn, n = 12) {
 //
 // Same 12-year window as throughCycle, deliberately: the two must never disagree on a company with a
 // long record, and they are the same function above that floor.
+// `of` is how many years the record HOLDS, against the `years` that were readable. The difference
+// matters more than it looks. Cigna's return on tangible equity read 27.6% off two years out of ten,
+// because its tangible equity went negative in 2018 and never came back — so the figure described a
+// company that stopped existing when Express Scripts was bought, printed beside a Tangible equity
+// cell reading minus $31.8B. The readable years are not a sample of the record; they are a selection,
+// and the reason a year is missing is often the most important fact on the row. A caller that prints
+// a figure read on three of ten years without saying so is making a normalized claim it has not
+// earned, which is why both counts travel.
 export function recordMedian(company, metricFn, n = 12) {
   const hist = Array.isArray(company?.history) ? company.history : [];
   const vals = hist.map((h) => metricFn(h?.lines || {}, company)).filter((v) => v != null && Number.isFinite(v));
@@ -957,12 +965,23 @@ export function recordMedian(company, metricFn, n = 12) {
     // No readable history at all. The latest figures still describe a year of the business, so they
     // are read as the one-year record they are rather than discarded.
     const latest = metricFn(company?.lines || {}, company);
-    return latest != null && Number.isFinite(latest) ? { value: latest, years: 1 } : null;
+    return latest != null && Number.isFinite(latest) ? { value: latest, years: 1, of: 1 } : null;
   }
   const recent = vals.slice(-n);
   const sorted = [...recent].sort((a, b) => a - b);
   const m = Math.floor(sorted.length / 2);
-  return { value: sorted.length % 2 ? sorted[m] : (sorted[m - 1] + sorted[m]) / 2, years: recent.length };
+  return {
+    value: sorted.length % 2 ? sorted[m] : (sorted[m - 1] + sorted[m]) / 2,
+    years: recent.length,
+    of: Math.min(hist.length, n) || recent.length,
+  };
+}
+
+// Whether a reading has to say what it rests on: too short to normalize at all (under three years),
+// or read on under half a record it could have been read across. Both are the same failure to a
+// reader — a figure that looks like a level and is not one — so both carry the count.
+export function shortRecord(r) {
+  return !!r && r.years != null && (r.years < 3 || (r.of != null && r.years * 2 < r.of));
 }
 
 // Read a yearly series the way an owner does — through the cycle, not on the endpoints. The single-year

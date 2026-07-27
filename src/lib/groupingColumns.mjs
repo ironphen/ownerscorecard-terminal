@@ -26,8 +26,9 @@ import {
   oiReliable,
   fmtMoney,
   recordMedian,
+  shortRecord,
 } from "./fundamentals.mjs";
-import { tangibleEquity, returnOnTangibleEquity } from "./financials.mjs";
+import { tangibleEquity, returnOnTangibleEquity, roteOverRecord } from "./financials.mjs";
 import { floatOf } from "./insurers.mjs";
 import { medicalLossRatio } from "./managedCare.mjs";
 import { cashPayout } from "./reits.mjs";
@@ -427,7 +428,7 @@ export function groupingCells(company, familyKey, terms, columns = null) {
   const pctRec = (r) => {
     if (!r || r.value == null || !Number.isFinite(r.value)) return DASH;
     const base = `${(r.value * 100).toFixed(1)}%`;
-    return { text: r.years < 3 ? `${base} · ${r.years}y` : base, sort: Number(r.value.toFixed(6)), years: r.years };
+    return { text: shortRecord(r) ? `${base} · ${r.years}y` : base, sort: Number(r.value.toFixed(6)), years: r.years, of: r.of };
   };
 
   const cellFor = (key) => {
@@ -480,7 +481,9 @@ export function groupingCells(company, familyKey, terms, columns = null) {
       case "netIncome":
         return money(L.netIncome);
       case "rote":
-        return pctRec(rec(company, (yl) => returnOnTangibleEquity(yl)));
+        // Gated: a company whose tangible book is gone today has no return on it to report, whatever
+        // it earned before the goodwill arrived (financials.roteOverRecord).
+        return pctRec(roteOverRecord(company, rec));
       case "tangibleEquity":
         return money(tangibleEquity(L));
       case "premiums":

@@ -1,13 +1,11 @@
 ---
 import fundamentals from "../data/fundamentals.json";
 import { classify } from "../lib/archetype.mjs";
-import { fmtMoney, roicValue, topLineRevenue, ownerEarningsMargin, grossMargin, gmCorrupt, recordMedian } from "../lib/fundamentals.mjs";
-import { returnOnEquity, returnOnTangibleEquity, efficiencyRatio, netInterestMargin } from "../lib/financials.mjs";
-import { cashPayout, debtToAssets } from "../lib/reits.mjs";
-import { combinedRatio, lossRatio } from "../lib/insurers.mjs";
-import { medicalLossRatio } from "../lib/managedCare.mjs";
-import { financialKind, financialSubtype } from "../lib/archetype.mjs";
-import { selectPeers, peerStat, floatYield, REIT_SUBSECTOR_LABELS } from "../lib/peers.mjs";
+import { fmtMoney, topLineRevenue } from "../lib/fundamentals.mjs";
+import { financialKind } from "../lib/archetype.mjs";
+import { selectPeers, peerStat, REIT_SUBSECTOR_LABELS } from "../lib/peers.mjs";
+import { peerColumnsFor, lensKeyFor } from "../lib/peerLenses.mjs";
+import { shortRecord } from "../lib/fundamentals.mjs";
 import { industryLabelOf, industrySlug } from "../lib/shelves.mjs";
 import { usdTerms, revenueSortUsd } from "../lib/groupingColumns.mjs";
 import adrRatios from "../data/adrRatios.json";
@@ -51,98 +49,26 @@ const group = [company, ...peers]
   .map((x) => ({ ...x, usd: revenueSortUsd(x.c, x.t) }))
   .sort((a, b) => (a.usd == null ? 1 : b.usd == null ? -1 : b.usd - a.usd));
 
-const pr = (v, dp = 0) => (v == null ? "—" : `${(v * 100).toFixed(dp)}%`);
+// A percent unless the column says otherwise: inventory days is a count of days, and neither a share
+// nor a sum, so it prints as the number it is.
+const cell = (v, col) => (v == null ? "—" : col.type === "num" ? String(Math.round(v)) : `${(v * 100).toFixed(col.dp ?? 0)}%`);
 const fk = financialKind(company);
-const isLife = fk === "insurer" && financialSubtype(company) === "life-insurer";
-const isReit = fk === "reit", isBank = fk === "bank", isInsurer = fk === "insurer" && !isLife;
-const isFee = fk === "fee", isManagedCare = fk === "managedCare";
+const lensKey = lensKeyFor(company);
 
-// Each comparison figure is read through the cycle, not off one year: the median of the metric across the
-// company's record, so a peer caught at a peak or a trough doesn't distort the table — Graham's discipline,
-// applied to the peer comparison the same way the scorecard and the record apply it. Revenue stays the
-// latest figure: it is the scale anchor for the row, not a rate to average.
+// THE COLUMNS COME FROM THE SHARED LENS DECLARATION (lib/peerLenses.mjs) since 2026-07-27, not from
+// a hand-written list in this component. That list was the reason the owner could see a figure on an
+// industry table that his own company page never showed him: six analyst desks shipped specialist
+// columns onto /groupings and none of them reached here, because nothing connected the two. The
+// declaration now carries each column's label, glossary concept, decimals, BASIS and how to read it,
+// and a test fails the build if a new /groupings ratio column is neither present on the matching lens
+// nor named with the measurement that refused it.
 //
-// SHARED WITH THE GROUPING TABLES since 2026-07-27 (fundamentals.recordMedian), and the sharing is the
-// point. This helper used to fall back to the LATEST YEAR under three readings while the grouping
-// tables' medianOverRecord returned null, so the same concept gave two answers for the same company on
-// the same day: Avidbank's return on tangible equity read +2.2% on /groupings/banks and -7.0% on
-// /c/AVBH, both under a header calling it a through-cycle median. One was a median of two years and the
-// other was the second of them. Now both surfaces take the median of every readable year and both carry
-// the year count, so a short record is stated rather than either blanked or disguised.
-const norm = (c, fn) => recordMedian(c, fn);
-const metricsOf = (c) => ({
-  revenue: topLineRevenue(c.lines || {}, c),
-  grossMargin: norm(c, (L, co) => { const v = grossMargin(L); return gmCorrupt(v, co) ? null : v; }),
-  opMargin: norm(c, (L) => (L.operatingIncome != null && L.revenue ? L.operatingIncome / L.revenue : null)),
-  roic: norm(c, (L) => roicValue(L)),
-  oeMargin: norm(c, (L, co) => ownerEarningsMargin(L, co)),
-  netMargin: norm(c, (L) => (L.netIncome != null && L.revenue ? L.netIncome / L.revenue : null)),
-  roe: norm(c, (L) => returnOnEquity(L)),
-  rotce: norm(c, (L) => returnOnTangibleEquity(L)),
-  efficiency: norm(c, (L) => efficiencyRatio(L)),
-  nim: norm(c, (L) => netInterestMargin(L)),
-  cashMargin: norm(c, (L) => (L.cashFromOps != null && L.revenue ? L.cashFromOps / L.revenue : null)),
-  cashOnAssets: norm(c, (L) => (L.cashFromOps != null && L.totalAssets ? L.cashFromOps / L.totalAssets : null)),
-  payout: norm(c, (L) => cashPayout(L)),
-  debtToAssets: norm(c, (L) => debtToAssets(L)),
-  combined: norm(c, (L) => combinedRatio(L)),
-  lossR: norm(c, (L) => lossRatio(L)),
-  mlr: norm(c, (L) => medicalLossRatio(L)),
-  // Withheld above the plausibility cap (lib/peers.mjs): the pipeline's only float line is the P&C
-  // loss-reserve tag, which for a life insurer is a sliver of the real float and prints an
-  // impossible three-digit "yield". Capped per year, then read through the cycle like the rest.
-  invYield: norm(c, (L) => floatYield(L)),
-  roa: norm(c, (L) => (L.netIncome != null && L.totalAssets ? L.netIncome / L.totalAssets : null)),
-});
-
-// The comparison columns are archetype-aware: a bank on the bank lens, a REIT on
-// FFO. "Best" respects each column's direction; "neutral" gets no best mark.
-const RAW_COLS = isReit
-  ? [
-      // Cash, not funds from operations: no REIT tags FFO and our rebuild missed Simon by half
-      // (see reits.mjs). Operating cash flow is filed and comparable across every trust here.
-      { key: "cashMargin", label: "Cash margin", concept: "free-cash-flow", dp: 0, better: "high" },
-      { key: "cashOnAssets", label: "Cash / assets", concept: "free-cash-flow", dp: 1, better: "high" },
-      { key: "payout", label: "Dividend / cash", concept: "free-cash-flow", dp: 0, better: "neutral" },
-      { key: "debtToAssets", label: "Debt / assets", concept: "net-debt", dp: 0, better: "low" },
-    ]
-  : isLife
-  ? [
-      { key: "roe", label: "ROE", concept: "return-on-equity", dp: 0, better: "high" },
-      { key: "invYield", label: "Yield on float", concept: "insurance-float", dp: 1, better: "high" },
-      { key: "roa", label: "Return on assets", concept: "return-on-assets", dp: 1, better: "high" },
-    ]
-  : isInsurer
-  ? [
-      { key: "combined", label: "Combined ratio", concept: "combined-ratio", dp: 0, better: "low" },
-      { key: "lossR", label: "Loss ratio", concept: "combined-ratio", dp: 0, better: "low" },
-      { key: "roe", label: "ROE", concept: "return-on-equity", dp: 0, better: "high" },
-    ]
-  : isBank
-  ? [
-      { key: "roe", label: "ROE", concept: "return-on-equity", dp: 0, better: "high" },
-      { key: "rotce", label: "ROTCE", concept: "rotce", dp: 0, better: "high" },
-      { key: "efficiency", label: "Efficiency", concept: "efficiency-ratio", dp: 0, better: "low" },
-      { key: "nim", label: "NII / assets", concept: "net-interest-margin", dp: 1, better: "neutral" },
-    ]
-  : isManagedCare
-  ? [
-      { key: "mlr", label: "Medical loss ratio", concept: "medical-loss-ratio", dp: 0, better: "neutral" },
-      { key: "opMargin", label: "Op. margin", concept: "operating-margin", dp: 1, better: "high" },
-      { key: "roe", label: "ROE", concept: "return-on-equity", dp: 0, better: "high" },
-    ]
-  : isFee
-  ? [
-      { key: "opMargin", label: "Op. margin", concept: "operating-margin", dp: 1, better: "high" },
-      { key: "netMargin", label: "Net margin", concept: null, dp: 1, better: "high" },
-      { key: "roe", label: "ROE", concept: "return-on-equity", dp: 0, better: "high" },
-    ]
-  : [
-      { key: "grossMargin", label: "Gross margin", concept: "gross-margin", dp: 0, better: "high" },
-      { key: "opMargin", label: "Op. margin", concept: "operating-margin", dp: 1, better: "high" },
-      { key: "roic", label: "ROIC", concept: "roic", dp: 0, better: "high" },
-      { key: "oeMargin", label: "Owner earn. margin", concept: "owner-earnings", dp: 0, better: "high" },
-    ];
+// Each column states its own basis in the header. The quality ratios are read through the cycle — the
+// median over the readable record, so a peer caught at a peak or a trough doesn't distort the table —
+// and the specialist intensities are read at the latest fiscal year because that is what their
+// /groupings columns read, and one concept must give one figure. Revenue stays latest: it is the
+// scale anchor for the row, not a rate to average.
+const RAW_COLS = peerColumnsFor(company);
 
 // The revenue cell, in the reader's dollars where the terms are known and as filed where they are
 // not. Ratios are unitless and need no conversion, which is why only this one cell moves.
@@ -152,19 +78,38 @@ const revenueCell = ({ c, t }) => {
   if (t.asFiled) return `as filed: ${fmtMoney(r, t.ccy)}`;
   return fmtMoney(r * t.factor, "USD");
 };
-const rows = group.map(({ c, t }) => ({ c, t, m: metricsOf(c), rev: revenueCell({ c, t }) }));
-// recordMedian returns { value, years } or null; these unwrap it for the arithmetic and the mark.
+// Each column reads itself. A cell is { value, years } or null; `years` is the count the median rests
+// on, and null where the column is a latest-year figure and no count applies.
+const readRow = (c) => {
+  const out = {};
+  for (const col of RAW_COLS) out[col.key] = col.read(c);
+  return out;
+};
+const rows = group.map(({ c, t }) => ({ c, t, m: readRow(c), rev: revenueCell({ c, t }) }));
 const val = (m, k) => (m[k] ? m[k].value : null);
-const yrs = (m, k) => (m[k] ? m[k].years : null);
+// The mark fires when a median is too short to normalize (under three years) OR rests on under half
+// the record it could have been read across — a figure read on three of ten years looks like a level
+// and is not one.
+const mark = (m, k) => (shortRecord(m[k]) ? m[k].years : null);
 // No "best" mark per column. Crowning a winner on a single measure is a verdict — and the same one
 // the compare view explicitly forbids ("no highlighted 'better' cell"). The group-median row below is
 // the honest context device: it shows where each figure sits in the distribution without ranking.
 
-// A column most of whose cells are withheld is a row of dashes, not context — the life-insurer
-// "yield on float" case, where the plausibility cap withholds the wrong-denominator readings. When
-// fewer than half the group carries a reading, the column comes down entirely.
-const COLS = RAW_COLS.filter(
-  (col) => col.key !== "invYield" || rows.filter((r) => val(r.m, "invYield") != null).length >= Math.ceil(rows.length / 2)
+// A column with NO reading anywhere in the group is a header over nothing — 149 of these were shipping
+// across the site, 101 of them gross margin on benches where every member is a financial. It comes
+// down. The rule is deliberately "zero readings", not "fewer than half": a fewer-than-half rule was
+// measured too, and it removes 761 columns and destroys 1,331 real figures including 245 belonging to
+// the subject company itself, then leaves two companies in the same industry looking at different
+// columns on their own pages. A blank column teaches nothing; a sparse one still teaches whoever
+// filled it in, and Salesforce should not lose its own 84.5% because its peers do not report it.
+//
+// The invYield case keeps its stricter half-the-group rule. It is not sparse data but a plausibility
+// CAP: the pipeline's only float line is the P&C loss-reserve tag, which for a life insurer is a
+// sliver of the real float, so the withheld cells are wrong-denominator readings rather than absent
+// ones. A column that is mostly tripwire is not a column.
+const answered = (key) => rows.filter((r) => val(r.m, key) != null).length;
+const COLS = RAW_COLS.filter((col) =>
+  col.key === "invYield" ? answered(col.key) >= Math.ceil(rows.length / 2) : answered(col.key) > 0
 );
 
 // The group's distribution per column — the median the company is read against, so a figure is context
@@ -175,9 +120,23 @@ const dist = {};
 for (const col of COLS) dist[col.key] = peerStat(rows.map((r) => val(r.m, col.key)), subjectRow ? val(subjectRow.m, col.key) : null);
 const anyMed = COLS.some((col) => dist[col.key]);
 // Whether the table needs to explain its year marks at all: most benches carry none.
-const anyShort = rows.some((r) => COLS.some((col) => { const y = yrs(r.m, col.key); return y != null && y < 3; }));
+const anyShort = rows.some((r) => COLS.some((col) => mark(r.m, col.key) != null));
 
-const lens = isReit ? "the REIT lens" : isLife ? "the spread-and-book-value lens" : isInsurer ? "the underwriting lens" : isBank ? "the bank lens" : isManagedCare ? "the medical-loss-ratio lens" : isFee ? "fee margins" : "owner economics";
+// The words for the lens the bench is read on, one per declared lens — the software and semiconductor
+// lenses are new (2026-07-27) and say what the desk's columns actually measure, so the sentence over
+// the table is describing the columns under it rather than a generic "owner economics".
+const LENS_WORDS = {
+  reit: "the REIT lens",
+  lifeInsurer: "the spread-and-book-value lens",
+  insurer: "the underwriting lens",
+  bank: "the bank lens",
+  managedCare: "the medical-loss-ratio lens",
+  fee: "fee margins",
+  software: "owner economics and what the growth costs",
+  semiconductor: "owner economics, research and the inventory cycle",
+  operating: "owner economics",
+};
+const lens = LENS_WORDS[lensKey] || "owner economics";
 // The heading names exactly the group the bench was drawn from: a REIT's property subsector
 // ("Net-lease REITs"), the taxonomy's industry label (override-aware — the same label the /groupings
 // tables seat the company under), the shelf or sector where the label ran thin, or the economic model
@@ -211,19 +170,21 @@ const intro =
     </h3>
     {/* The note used to open "Each figure is a through-cycle median", which was false twice over:
         Revenue is a single latest year, and 3,720 comparison cells across 1,127 pages were built on
-        one or two years of record. A header states the basis, so it now states this one — and the
-        short cells carry their own year count rather than the whole table carrying a claim that is
-        wrong for some of them. */}
-    <p class="pNote">{intro}{" "}<b>Revenue</b> is the latest fiscal year, in US dollars. Every comparison
-      figure is the <b>median over the company&rsquo;s record</b>, so a peak or trough year can&rsquo;t
-      distort it{anyShort ? <>, and a figure read on fewer than three years carries that count beside
-      it</> : null}; the <b>group median</b> at the foot is the line to read each against.</p>
+        one or two years of record. Every column now states its OWN basis under its header, the way
+        the grouping tables do, because the columns no longer share one: the quality ratios are read
+        through the cycle and the desks' intensities at the latest year, matching their /groupings
+        columns exactly so a concept can never give two figures again. */}
+    <p class="pNote">{intro}{" "}Each column names the period it is read over{anyShort ? <>, and a
+      median resting on fewer than three years carries that count beside it</> : null}; the <b>group
+      median</b> at the foot is the line to read each figure against.</p>
     <div class="wrap">
       <table>
         <thead>
           <tr>
             <th class="tl">Company</th><th>Revenue<span class="bas">latest FY, USD</span></th>
-            {COLS.map((col) => <th>{col.concept ? <Term id={col.concept}>{col.label}</Term> : col.label}</th>)}
+            {COLS.map((col) => (
+              <th>{col.concept ? <Term id={col.concept}>{col.label}</Term> : col.label}<span class="bas">{col.basis}</span></th>
+            ))}
           </tr>
         </thead>
         <tbody>
@@ -232,10 +193,10 @@ const intro =
               <th class="tl"><a href={`/c/${c.ticker}`}>{c.ticker}</a><span class="nm">{c.name}</span></th>
               <td>{rev}</td>
               {COLS.map((col) => {
-                const v = val(m, col.key), y = yrs(m, col.key);
+                const v = val(m, col.key), y = mark(m, col.key);
                 return (
-                  <td>{pr(v, col.dp)}{v != null && y != null && y < 3 ? (
-                    <span class="shrt" title={`read on ${y} year${y === 1 ? "" : "s"} — too short to normalize`}>{y}y</span>
+                  <td>{cell(v, col)}{v != null && y != null ? (
+                    <span class="shrt" title={`read on ${y} year${y === 1 ? "" : "s"} of the record`}>{y}y</span>
                   ) : null}</td>
                 );
               })}
@@ -247,7 +208,7 @@ const intro =
             <tr class="medRow">
               <th class="tl">Group median</th>
               <td>—</td>
-              {COLS.map((col) => <td>{dist[col.key] ? pr(dist[col.key].median, col.dp) : "—"}</td>)}
+              {COLS.map((col) => <td>{dist[col.key] ? cell(dist[col.key].median, col) : "—"}</td>)}
             </tr>
           </tfoot>
         ) : null}
