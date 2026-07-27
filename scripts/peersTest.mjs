@@ -7,6 +7,7 @@
 // real pool then holds the alignment floor. Run with `npm test`.
 import { selectPeers, peerStat, throughCycleMetric, peerMedian, floatYield, FLOAT_YIELD_CAP } from "../src/lib/peers.mjs";
 import { industryLabelOf, shelfOfIndustry } from "../src/lib/shelves.mjs";
+import { financialKind, financialProfile } from "../src/lib/archetype.mjs";
 import { readFileSync } from "node:fs";
 
 let pass = 0, fail = 0;
@@ -129,6 +130,87 @@ const thinResult = selectPeers(GOLD1, thinUniv);
   check("RCL/NCLH/LIND carry Cruise Lines, not Marine Shipping", ["RCL", "NCLH", "LIND"].every((t) => labelOfTicker(t) === null || labelOfTicker(t) === "Cruise Lines"));
   const epr = all.find((x) => x.ticker === "EPR");
   check("TPL sits in no REIT bench", !epr || !selectPeers(epr, all).peers.some((p) => p.ticker === "TPL"));
+}
+
+// ---------------------------------------------------------------------------------------------
+// THE LENS GUARD, unconditional since 2026-07-27. A subject benches only its own financial kind, at
+// every rung of the widening ladder — and because the guard runs INSIDE the ladder rather than over
+// the finished bench, a rung it thins simply fails its own three-row test and the ladder widens.
+//
+// The guard used to be skipped wherever it would have thinned a bench, which is how 404 peer rows
+// came to be read on a lens that does not describe them. The two facts asserted here are the ones
+// that were measured before the change and must not silently move: NO bench carries an off-lens
+// peer, and NO bench was emptied to achieve that.
+// ---------------------------------------------------------------------------------------------
+{
+  const fund = JSON.parse(readFileSync(new URL("../src/data/fundamentals.json", import.meta.url), "utf8"));
+  const adr = JSON.parse(readFileSync(new URL("../src/data/fundamentals.adr.json", import.meta.url), "utf8"));
+  const universe = fund.companies || [];
+  const pages = [...universe, ...(adr.companies || [])];
+
+  let benches = 0, noSection = 0, offLens = 0, offLensBenches = 0;
+  for (const c of pages) {
+    const r = selectPeers(c, universe);
+    if (!r.peers.length) { noSection++; continue; }
+    benches++;
+    const mine = financialKind(c) || null;
+    const bad = r.peers.filter((p) => (financialKind(p) || null) !== mine).length;
+    if (bad) { offLens += bad; offLensBenches++; }
+  }
+  check(`no bench carries an off-lens peer (${offLens} rows across ${offLensBenches} benches)`, offLens === 0);
+  check(`the guard empties no bench (${benches} benches, ${noSection} without a peer section)`, noSection === 0 && benches > 3500);
+
+  // The named cases the guard exists for. Each was live on 2026-07-26.
+  const byT = (t) => pages.find((x) => String(x.ticker).toUpperCase() === t) || null;
+  const peersOf = (t) => { const c = byT(t); return c ? selectPeers(c, universe).peers.map((p) => p.ticker) : []; };
+  const SERVICES = ["CBRE", "JLL", "CWK"];
+  check("IRSA no longer benches the real-estate services firms on a bank's lens",
+    !peersOf("IRS").some((t) => SERVICES.includes(t)));
+  check("Landbridge benches oil & gas royalties, not mortgage lenders",
+    peersOf("LB").includes("TPL") && !peersOf("LB").some((t) => ["ARR", "CIM", "RWT", "AGNC", "NLY"].includes(t)));
+
+  // Howard Hughes and Transcontinental Realty are not REITs (the REIT desk read their filings), so
+  // they belong in no REIT's bench — they were seating on fourteen of them through the curated
+  // NAREIT subsector map, which the archetype's NOT_REITS list could not reach.
+  const inSomeReitBench = (t) => pages.some((c) => {
+    if ((financialKind(c) || null) !== "reit") return false;
+    return selectPeers(c, universe).peers.some((p) => p.ticker === t);
+  });
+  check("Howard Hughes sits in no REIT bench", !inSomeReitBench("HHH"));
+  check("Transcontinental Realty sits in no REIT bench", !inSomeReitBench("TCI"));
+}
+
+// ---------------------------------------------------------------------------------------------
+// THE ARCHETYPE'S REAL-ESTATE BRANCH, taxonomy-anchored since 2026-07-27. The lender lens is
+// reached through the industry the taxonomy seats a filer in, not through a shape test that read
+// "no depreciation line" as "owns loans" — which is true of a US mortgage REIT and equally true of
+// every IFRS landlord, because investment property carried at fair value is not depreciated.
+// ---------------------------------------------------------------------------------------------
+{
+  const fund = JSON.parse(readFileSync(new URL("../src/data/fundamentals.json", import.meta.url), "utf8"));
+  const adr = JSON.parse(readFileSync(new URL("../src/data/fundamentals.adr.json", import.meta.url), "utf8"));
+  const all = [...(fund.companies || []), ...(adr.companies || [])];
+  const kindOf = (t) => { const c = all.find((x) => String(x.ticker).toUpperCase() === t); return c ? financialProfile(c) : null; };
+
+  // The eight that were being read as banks and are not lenders of any kind.
+  for (const t of ["IRS", "VTMX", "DUO", "LB", "BPYPM"]) {
+    const p = kindOf(t);
+    check(`${t} is no longer read on the bank lens`, !p || p.subtype !== "mortgage-reit");
+  }
+  // The genuine mortgage REITs keep the lender lens — the whole point of anchoring rather than
+  // deleting. Annaly, AGNC and Claros are seated in Mortgage & Specialty Finance.
+  for (const t of ["NLY", "AGNC", "ABR", "CMTG"]) {
+    const p = kindOf(t);
+    check(`${t} still reads as a mortgage REIT`, !p || p.subtype === "mortgage-reit");
+  }
+  // SIC 6794 is "patent owners and lessors", which had been handing a REIT scorecard to technology
+  // licensors. A shelf's family says which columns its table shows, not which statement a member is
+  // read on, so these resolve to operating businesses rather than to that shelf's financial lens.
+  for (const t of ["DLB", "IDCC", "ACTG", "TPL"]) {
+    const p = kindOf(t);
+    check(`${t} is not read as a REIT`, !p || p.kind !== "reit");
+  }
+  check("Dolby is read as an operating business", (kindOf("DLB") || {}).kind == null);
 }
 
 // The distribution helper: median, the subject's percentile, the band — context, no winner.

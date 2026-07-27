@@ -68,7 +68,7 @@ export function selectPeers(company, all, n = 7) {
   const myLabel = industryLabelOf(company);
   const myShelf = myLabel ? shelfOfIndustry(myLabel) : null;
   const mySector = myLabel ? sectorOfIndustry(myLabel) : null;
-  const myKind = financialKind(company);
+  const myKind = financialKind(company) || null;
 
   // The candidate universe: everyone but the company, one entry per ENTITY — a multi-share-class company
   // (Alphabet's GOOG/GOOGL, Berkshire's A/B) counts once and doesn't crowd out real peers with copies of
@@ -82,14 +82,30 @@ export function selectPeers(company, all, n = 7) {
   }
   if (!universe.length) return { peers: [], basis: "model" };
 
-  // Rule 2: inside any pool, a financial subject benches only its own kind — the comparison columns are
-  // kind-specific, and ROE printed for a REIT on a bank's lens is a wrong figure, not a loose one. The
-  // filter applies wherever it leaves a usable bench and is skipped where it would empty one.
-  const kindGuard = (pool) => {
-    if (!myKind) return pool;
-    const sameKind = pool.filter((c) => financialKind(c) === myKind);
-    return sameKind.length >= 3 ? sameKind : pool;
-  };
+  // Rule 2: inside any pool, a subject benches only its own kind — the comparison columns are
+  // kind-specific, and ROE printed for a REIT on a bank's lens is a wrong figure, not a loose one.
+  //
+  // The guard used to be conditional: it applied where it left three rows and was SKIPPED where it
+  // would have thinned the bench, on the reasoning that a short bench is worse than a mixed one. That
+  // is exactly backwards under the house doctrine, and the cost was measurable — 404 peer rows were
+  // being read on a lens that does not describe them, and /c/IRS shipped CBRE, JLL and Cushman &
+  // Wakefield under a bank header, printing a 140% return on tangible equity for a company whose
+  // tangible equity is NEGATIVE $1.145B. That is the Jones Lang LaSalle defect (2026-07-26) arriving
+  // through the other door: fixed on the subject's own page, still live on everyone else's bench.
+  //
+  // Made unconditional 2026-07-27, applied INSIDE the widening ladder rather than over the finished
+  // bench — which is the whole reason it costs nothing. A rung that the guard thins below three simply
+  // fails its own >= 3 test and the ladder widens one more step, so the bench is re-drawn rather than
+  // emptied. Measured over all 3,623 benches: 0 lost, 0 left without a peer section, 4 fall under three
+  // rows and lose only their median line, 136 change membership, 31 change basis rung, and off-lens
+  // rows go to 0. The survey that proposed this refused it twice on a claim that it "empties 120
+  // benches" — which was the count of benches CARRYING an off-kind peer, not the count a guard would
+  // empty. Two quantities conflated; the same lesson as always, and the reason the number is measured
+  // here in writing.
+  //
+  // The test is symmetric: an operating company (kind null) benches only other operating companies,
+  // so a bank can no longer wander into a table read on gross margin either.
+  const lensGuard = (pool) => pool.filter((c) => (financialKind(c) || null) === myKind);
   const pool = universe;
 
   // Sub-industry closeness: a shared 4-digit SIC is a tight match, 3-digit close, 2-digit loose, none far.
@@ -126,7 +142,11 @@ export function selectPeers(company, all, n = 7) {
   if (myEngine === "reit") {
     const mySub = reitSubsectors[company.ticker];
     if (mySub && mySub !== "not-a-reit") {
-      const sameSub = pool.filter((c) => reitSubsectors[c.ticker] === mySub);
+      // Guarded like every other rung: a company can carry a REIT SIC and a curated subsector and
+      // still not be read on the REIT lens (Howard Hughes and Transcontinental Realty were both,
+      // until 2026-07-27 — they benched fourteen genuine trusts on an industrial lens under a
+      // "Residential REITs" heading). An emptied subsector falls through to the ladder below.
+      const sameSub = lensGuard(pool.filter((c) => reitSubsectors[c.ticker] === mySub));
       if (sameSub.length) {
         const peers = sameSub
           .map((c) => ({ c, s: score(c) }))
@@ -150,25 +170,29 @@ export function selectPeers(company, all, n = 7) {
     .map((x) => x.c);
 
   if (myLabel) {
-    const sameLabel = kindGuard(pool.filter((c) => industryLabelOf(c) === myLabel));
+    const sameLabel = lensGuard(pool.filter((c) => industryLabelOf(c) === myLabel));
     if (sameLabel.length >= 3) return { peers: rank(sameLabel), basis: "industry" };
 
     if (myShelf && myShelf.industries.length > 1) {
       const shelfLabels = new Set(myShelf.industries.map((i) => i.label));
-      const sameShelf = kindGuard(pool.filter((c) => shelfLabels.has(industryLabelOf(c))));
+      const sameShelf = lensGuard(pool.filter((c) => shelfLabels.has(industryLabelOf(c))));
       if (sameShelf.length >= 3) return { peers: rank(sameShelf), basis: "shelf", shelfNoun: myShelf.noun };
     }
 
     if (mySector) {
-      const sameSector = kindGuard(pool.filter((c) => sectorOfIndustry(industryLabelOf(c)) === mySector));
+      const sameSector = lensGuard(pool.filter((c) => sectorOfIndustry(industryLabelOf(c)) === mySector));
       if (sameSector.length >= 3) return { peers: rank(sameSector), basis: "sector", sector: mySector };
     }
   }
 
   // The last resort keeps the old economic-model pool, honestly labelled: same engine (a bank with banks,
-  // an asset-light platform with platforms), nearest by structure.
-  const sameModel = kindGuard(pool.filter((c) => engineOf(c) === myEngine));
-  return { peers: rank(sameModel.length ? sameModel : pool), basis: "model" };
+  // an asset-light platform with platforms), nearest by structure. Guarded like the rest, and where even
+  // that is empty the bench is drawn from every company of the subject's own kind rather than from the
+  // raw universe — a thin bench of the right kind beats a full one read on the wrong lens.
+  const sameModel = lensGuard(pool.filter((c) => engineOf(c) === myEngine));
+  if (sameModel.length) return { peers: rank(sameModel), basis: "model" };
+  const sameKind = lensGuard(pool);
+  return { peers: rank(sameKind.length ? sameKind : pool), basis: "model" };
 }
 
 const med = (xs) => { const s = [...xs].sort((a, b) => a - b); const m = Math.floor(s.length / 2); return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };

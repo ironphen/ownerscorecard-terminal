@@ -8,6 +8,17 @@
 // archetype cycle resolves lazily.
 import { ownerEarningsMargin, oiReliable } from "./fundamentals.mjs";
 import TAXONOMY from "../data/taxonomy.json" with { type: "json" };
+// shelves.json, not shelves.mjs: that module imports THIS one for industryOf, so reading the
+// generated data file directly is what keeps the two from importing each other in a circle.
+import shelvesData from "../data/shelves.json" with { type: "json" };
+
+// Industry label -> the column family the taxonomy seats it in. The families are the site's own
+// curated statement of what KIND of business an industry holds (lender, property, fee, insurer,
+// producer, general...), maintained by hand and regenerated into shelves.json by buildTaxonomy.mjs.
+const FAMILY_OF_INDUSTRY = new Map();
+for (const shelf of shelvesData.shelves || shelvesData) {
+  for (const ind of shelf.industries || []) FAMILY_OF_INDUSTRY.set(ind.label, shelf.family);
+}
 
 const ratio = (n, d) => (n != null && d ? n / d : null);
 const pct = (v, dp = 0) => (v == null ? "—" : `${(v * 100).toFixed(dp)}%`);
@@ -143,13 +154,44 @@ export function financialProfile(company) {
   const L = company?.lines || {};
   const deposits = L.deposits != null && L.deposits > 0;
   if (sic >= 6500 && sic <= 6799) {
-    // A mortgage REIT owns loans, not buildings: near-zero depreciation and a balance sheet that
-    // earns net interest on a financed pool of mortgages. Adding back building depreciation to get
-    // FFO, and grading an FFO payout, is meaningless for it — the market prices it on book value and
-    // the return on it, like a lender. So route it to the lender lens (return on equity and tangible
-    // book) when the data shows that signature, the same data tie-break the bank branch uses below.
-    // Equity REITs (real depreciable property) keep the FFO scorecard. SIC 6795 (mineral-royalty
-    // trusts) is not a property REIT either, so it gets no REIT scorecard.
+    // THE TAXONOMY SAYS WHAT KIND OF BUSINESS THIS IS; the shape tests below only decide how to read
+    // the ones it calls property. Added 2026-07-27, and it replaces a shape test that had been
+    // quietly wrong for every foreign property filer on the site.
+    //
+    // The old route to the lender lens was a SIGNATURE: net interest income present, depreciation
+    // negligible against assets. That describes a mortgage REIT in US GAAP, and it also describes
+    // every IFRS landlord on earth — investment property carried at fair value is NOT depreciated, so
+    // the depreciation line is absent for a reason that has nothing to do with owning loans. It fired
+    // on IRSA (Argentine shopping centres), Vesta (Mexican industrial parks), Fangdd (a Chinese
+    // property portal) and four Brookfield Property preferred series, and it fired on Landbridge, a
+    // Texas land and royalty company. Each was then shown a BANK scorecard, and each dragged a bench
+    // of real-estate operators onto a bank's lens — /c/IRS printed a 140% return on tangible equity
+    // for CBRE, whose tangible equity is NEGATIVE $1.145B. That is the Jones Lang LaSalle defect of
+    // 2026-07-26 with a different signature underneath it.
+    //
+    // Measured before it was written, as the fourth blanket rule of this kind demands: across all 222
+    // filers in this SIC range, every one of the 33 genuine mortgage REITs — Annaly, AGNC, Arbor,
+    // Claros and the rest — is seated by the taxonomy in Mortgage & Specialty Finance, and every one
+    // of the 8 false fires is seated somewhere else. The separation is exact, and it rests on a
+    // curated human judgment rather than on the shape of a filing.
+    //
+    // The trade is stated plainly: a mortgage REIT mis-seated onto a REIT shelf would now get the
+    // equity-REIT lens. That is a taxonomy error, and the taxonomy is where it should be fixed —
+    // shelves.json is regenerated with a build-time guard, whereas the signature it replaces had no
+    // guard at all and was wrong for eight companies on the day it was measured.
+    const family = FAMILY_OF_INDUSTRY.get(industryOf(company).label) || null;
+    if (family === "lender") return { kind: "bank", subtype: "mortgage-reit" };
+    // Everything else the taxonomy seats outside the property family is an operating business, and
+    // it is read as one. Deliberately NOT mapped to whatever financial family the shelf carries: the
+    // first draft of this rule routed a `fee` shelf to the asset-manager lens and an `insurer` shelf
+    // to the underwriting lens, and the fourteen-row diff caught it. SIC 6794 is "patent owners and
+    // lessors", which seats Dolby, InterDigital and Acacia in Capital Markets & Asset Management and
+    // Innventure in Financial Conglomerates — technology licensors, every one, and none of them an
+    // asset manager or an insurer. A shelf's family says which COLUMNS its table shows, which is not
+    // the same claim as which financial statement a member is read on. Only the lender family above
+    // is mapped, because there the two claims were measured to coincide on all 33 rows.
+    if (family && family !== "property") return { kind: null, subtype: null };
+    // SIC 6795 (mineral-royalty trusts) is not a property REIT either, so it gets no REIT scorecard.
     if (sic === 6795) return { kind: null, subtype: null };
     // Detect it by the net-interest signature plus negligible depreciation — whatever the SIGN of net
     // interest in a given year (a mortgage REIT can run a negative spread when rates invert), and
@@ -170,14 +212,10 @@ export function financialProfile(company) {
     // is the more certain fact, so it is asked first.
     const assetTurn = L.revenue != null && L.totalAssets ? L.revenue / L.totalAssets : null;
     if (assetTurn != null && assetTurn > 0.5) return { kind: null, subtype: null };
-    // Detect a mortgage REIT by the net-interest signature plus negligible depreciation — whatever the
-    // SIGN of net interest in a given year (a mortgage REIT can run a negative spread when rates
-    // invert), and including a null depreciation line, which is the most loan-pool-like of all. An
-    // equity REIT carries real building depreciation, so it never trips the negligible-depreciation
-    // test.
-    const hasNII = L.netInterestIncome != null;
-    const negligibleDep = L.depreciation == null || (L.totalAssets ? Math.abs(L.depreciation) / L.totalAssets < 0.015 : false);
-    if (hasNII && negligibleDep) return { kind: "bank", subtype: "mortgage-reit" };
+    // (The net-interest-plus-negligible-depreciation signature that used to sit here was removed on
+    // 2026-07-27 — see the note at the top of this branch. The lender lens is now reached through the
+    // taxonomy, which separates the 33 real mortgage REITs from the 8 IFRS landlords it misread.)
+    //
     // Filers whose SIC says property trust and whose filings say otherwise. A REIT election requires
     // distributing most of taxable income, so the parent pays almost no tax — across the sector the
     // effective rate runs from Simon's 0.4% to Realty Income's 7.5%. These three pay a full corporate
