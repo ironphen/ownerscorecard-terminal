@@ -150,9 +150,33 @@ t("monthPhrase: month boundaries hold in UTC", monthPhrase("2026-07-01") === "ea
   t("a hiccup quarter widens the window instead of being trimmed away", r.kind === "estimate" && r.lo === "2026-07-20" && r.hi === "2026-08-03", r);
 }
 {
-  const csx = { nextPeriodEnd: "2026-06-30", dueBy: "2026-08-09", statutoryDays: 40, lagsSameForm: [22, 16, 23, 16, 17, 36] };
+  // NEWEST FIRST. lagsSameForm is stored the way EDGAR serves filings.recent — most recent first —
+  // and every fixture here is written that way. It matters: this array is CSX's 16-to-36-day smear,
+  // and it only falls back to the deadline if the smear is in the filer's RECENT record. That is the
+  // rule doing its job, not an accident of array order.
+  const csx = { nextPeriodEnd: "2026-06-30", dueBy: "2026-08-09", statutoryDays: 40, lagsSameForm: [36, 17, 16, 23, 16, 22] };
   const r = estimateRange(csx, "2026-07-01");
   t("a smeared rhythm falls back to the statutory deadline", r.kind === "deadline" && r.lo === "2026-08-09", r);
+}
+{
+  // THE ORDERING ITSELF, pinned — the guard that was missing when estimateRange shipped reading
+  // `lags.slice(-4)` against a newest-first array, taking the four OLDEST quarters and discarding
+  // the two that matter most. It was worth 5.6 points of hold-out accuracy (81.7% against 87.3%),
+  // and no test could see it because every fixture happened to be symmetric enough not to care.
+  //
+  // This one is not symmetric: the four newest are a tight 20-21 and the four oldest a loose 30-31,
+  // so the two windows cannot be confused. If the estimate is ever drawn from the old end again,
+  // this fails and says so by name.
+  const drifted = { nextPeriodEnd: "2026-06-30", dueBy: "2026-08-09", statutoryDays: 40, lagsSameForm: [20, 21, 20, 21, 30, 31] };
+  const r = estimateRange(drifted, "2026-07-01");
+  t("the estimate is drawn from the NEWEST four filings, not the oldest four",
+    r.kind === "estimate" && r.lo === "2026-07-20" && r.hi === "2026-07-23", r);
+  // And the mirror: a filer whose recent quarters have LOOSENED loses the estimate its old ones
+  // would have earned. Fiserv is the live case — its last two 10-Qs took 30 and 36 days while the
+  // shipped window was drawn from quarters three to six back and had already expired unfiled.
+  const loosened = { nextPeriodEnd: "2026-06-30", dueBy: "2026-08-09", statutoryDays: 40, lagsSameForm: [36, 30, 24, 25, 23, 25] };
+  t("a filer whose recent record has loosened falls back to the deadline",
+    estimateRange(loosened, "2026-07-01").kind === "deadline", estimateRange(loosened, "2026-07-01"));
 }
 {
   // THE GATE THAT DECIDES WHETHER AN ESTIMATE SAYS ANYTHING. A filer that reliably uses nearly all
@@ -172,7 +196,9 @@ t("monthPhrase: month boundaries hold in UTC", monthPhrase("2026-07-01") === "ea
 {
   const mid = { nextPeriodEnd: "2026-06-30", dueBy: "2026-08-09", statutoryDays: 40, lagsSameForm: [20, 20, 21, 20, 21, 22] };
   const r = estimateRange(mid, "2026-07-21");
-  t("a window already underway clamps its start to today", r.kind === "estimate" && r.lo === "2026-07-21" && r.hi === "2026-07-24", r);
+  // hi is 7/23, from the four NEWEST lags [20,20,21,20] (max 21, padded to 23). It read 7/24 until
+  // 2026-07-27, off the four oldest — this expectation was encoding the bug rather than the rule.
+  t("a window already underway clamps its start to today", r.kind === "estimate" && r.lo === "2026-07-21" && r.hi === "2026-07-23", r);
   const missed = estimateRange({ ...mid, lagsSameForm: [20, 20, 21, 20, 21, 20] }, "2026-07-27");
   t("a window entirely in the past falls back to the deadline", missed.kind === "deadline", missed);
 }

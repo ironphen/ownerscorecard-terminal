@@ -80,7 +80,21 @@ export function estimateRange(up, todayISO) {
   const deadline = { kind: "deadline", lo: up.dueBy, hi: up.dueBy };
   if (lags.length < 4) return deadline;
 
-  const recent = lags.slice(-4);
+  // THE FOUR MOST RECENT, which is what the note above always said and not what this line did until
+  // 2026-07-27. lagsSameForm is built newest-first (fetchUpcoming walks EDGAR's filings.recent, which
+  // is newest-first, and slices the six newest), so `lags.slice(-4)` took the four OLDEST of the six
+  // and threw away the two quarters that matter most — the exact opposite of the rule this file
+  // documents and the backtest ratified. Verified two ways: across upcoming.json the lag implied by
+  // lastSameForm matches lags[0] for 2,471 companies and lags[last] for none; and Stryker's
+  // [41,31,32,32,30,31] against a last filing of 2026-03-31 → 2026-05-11, which is 41 days.
+  //
+  // It cost 5.6 points of accuracy. Held out, the shipped window was right 81.7% of the time and the
+  // four newest 87.3% — and 87.3% is the figure this file's own comment claims, which is how we know
+  // the 2026-07-25 backtest measured the intended rule while the code shipped a different one. The
+  // two windows disagree for 64% of six-lag filers. Fiserv is the clean example: its last two 10-Qs
+  // took 30 and 36 days, its estimate was drawn from quarters three through six back, and as of
+  // 2026-07-27 the printed window had expired with no filing.
+  const recent = lags.slice(0, 4);
   const loLag = Math.min(...recent) - PAD_DAYS;
   const hiLag = Math.max(...recent) + PAD_DAYS;
 
