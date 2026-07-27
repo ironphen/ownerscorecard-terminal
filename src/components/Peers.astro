@@ -1,7 +1,7 @@
 ---
 import fundamentals from "../data/fundamentals.json";
 import { classify } from "../lib/archetype.mjs";
-import { fmtMoney, roicValue, topLineRevenue, ownerEarningsMargin, grossMargin, gmCorrupt } from "../lib/fundamentals.mjs";
+import { fmtMoney, roicValue, topLineRevenue, ownerEarningsMargin, grossMargin, gmCorrupt, recordMedian } from "../lib/fundamentals.mjs";
 import { returnOnEquity, returnOnTangibleEquity, efficiencyRatio, netInterestMargin } from "../lib/financials.mjs";
 import { cashPayout, debtToAssets } from "../lib/reits.mjs";
 import { combinedRatio, lossRatio } from "../lib/insurers.mjs";
@@ -9,6 +9,9 @@ import { medicalLossRatio } from "../lib/managedCare.mjs";
 import { financialKind, financialSubtype } from "../lib/archetype.mjs";
 import { selectPeers, peerStat, floatYield, REIT_SUBSECTOR_LABELS } from "../lib/peers.mjs";
 import { industryLabelOf, industrySlug } from "../lib/shelves.mjs";
+import { usdTerms, revenueSortUsd } from "../lib/groupingColumns.mjs";
+import adrRatios from "../data/adrRatios.json";
+import rates from "../data/rates.json";
 import Term from "./Term.astro";
 
 // The peer set is computed once on the page and passed in, so the universe scan runs a single time per
@@ -23,11 +26,32 @@ const all = fundamentals.companies || [];
 // a REIT, names the property bench.
 const sel = peersProp ? { peers: peersProp, basis: basisProp, subsector: subsectorProp, shelfNoun: shelfNounProp, sector: sectorProp } : selectPeers(company, all);
 const { peers, basis, subsector, shelfNoun, sector } = sel;
-const group = [company, ...peers].sort((a, b) => (b.lines?.revenue || 0) - (a.lines?.revenue || 0));
 const cls = classify(company);
 
+// ONE COLUMN, ONE CURRENCY. Until 2026-07-27 the Revenue cell printed each row in the row's own
+// currency — fmtMoney(revenue, c.currency) — under a bare "Revenue" header, so a foreign filer's
+// own row sat in a column of US dollars with nothing marking the difference. Taiwan Semiconductor's
+// bench opened "NT$2.89T" above Nvidia's "$215.9B" when TSMC's revenue is $89.5B: a reader draws the
+// comparison the table invites and gets it exactly backwards. It affected 333 pages.
+//
+// The row ORDER was computed from the same unconverted figure, so 244 subjects sat in the wrong
+// position and 60 were printed at the top of a bench they do not lead. The sort also read
+// lines.revenue rather than topLineRevenue, so a bank or an insurer was ordered on a line its own
+// page does not treat as its top line; 101 US benches re-order for that reason alone, which is a
+// correction and not churn.
+//
+// Both now go through the same doctrine every other surface uses (groupingColumns.usdTerms): a US
+// filer is already dollars, an ADR with known conversion terms converts at the dated reference rate,
+// an ADR that files in dollars needs nothing, the Japanese pool converts at that same dated rate,
+// and ANYTHING ELSE prints as filed and sorts to the back. A guessed conversion is a wrong number;
+// an as-filed figure that says so is a missing one.
+const termsOf = (c) => usdTerms(c, adrRatios, rates);
+const group = [company, ...peers]
+  .map((c) => ({ c, t: termsOf(c) }))
+  .map((x) => ({ ...x, usd: revenueSortUsd(x.c, x.t) }))
+  .sort((a, b) => (a.usd == null ? 1 : b.usd == null ? -1 : b.usd - a.usd));
+
 const pr = (v, dp = 0) => (v == null ? "—" : `${(v * 100).toFixed(dp)}%`);
-const median = (xs) => { if (!xs.length) return null; const s = [...xs].sort((a, b) => a - b); const m = Math.floor(s.length / 2); return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
 const fk = financialKind(company);
 const isLife = fk === "insurer" && financialSubtype(company) === "life-insurer";
 const isReit = fk === "reit", isBank = fk === "bank", isInsurer = fk === "insurer" && !isLife;
@@ -35,15 +59,17 @@ const isFee = fk === "fee", isManagedCare = fk === "managedCare";
 
 // Each comparison figure is read through the cycle, not off one year: the median of the metric across the
 // company's record, so a peer caught at a peak or a trough doesn't distort the table — Graham's discipline,
-// applied to the peer comparison the same way the scorecard and the record apply it. Falls back to the
-// latest year only where the record is too short to normalize (under three readings). Revenue stays the
+// applied to the peer comparison the same way the scorecard and the record apply it. Revenue stays the
 // latest figure: it is the scale anchor for the row, not a rate to average.
-const norm = (c, fn) => {
-  const hist = (c.history || []).map((h) => fn(h?.lines || {}, c)).filter((v) => v != null && isFinite(v));
-  if (hist.length >= 3) return median(hist);
-  const latest = fn(c.lines || {}, c);
-  return latest != null && isFinite(latest) ? latest : null;
-};
+//
+// SHARED WITH THE GROUPING TABLES since 2026-07-27 (fundamentals.recordMedian), and the sharing is the
+// point. This helper used to fall back to the LATEST YEAR under three readings while the grouping
+// tables' medianOverRecord returned null, so the same concept gave two answers for the same company on
+// the same day: Avidbank's return on tangible equity read +2.2% on /groupings/banks and -7.0% on
+// /c/AVBH, both under a header calling it a through-cycle median. One was a median of two years and the
+// other was the second of them. Now both surfaces take the median of every readable year and both carry
+// the year count, so a short record is stated rather than either blanked or disguised.
+const norm = (c, fn) => recordMedian(c, fn);
 const metricsOf = (c) => ({
   revenue: topLineRevenue(c.lines || {}, c),
   grossMargin: norm(c, (L, co) => { const v = grossMargin(L); return gmCorrupt(v, co) ? null : v; }),
@@ -118,7 +144,18 @@ const RAW_COLS = isReit
       { key: "oeMargin", label: "Owner earn. margin", concept: "owner-earnings", dp: 0, better: "high" },
     ];
 
-const rows = group.map((c) => ({ c, m: metricsOf(c) }));
+// The revenue cell, in the reader's dollars where the terms are known and as filed where they are
+// not. Ratios are unitless and need no conversion, which is why only this one cell moves.
+const revenueCell = ({ c, t }) => {
+  const r = topLineRevenue(c.lines || {}, c);
+  if (r == null || !Number.isFinite(r)) return "—";
+  if (t.asFiled) return `as filed: ${fmtMoney(r, t.ccy)}`;
+  return fmtMoney(r * t.factor, "USD");
+};
+const rows = group.map(({ c, t }) => ({ c, t, m: metricsOf(c), rev: revenueCell({ c, t }) }));
+// recordMedian returns { value, years } or null; these unwrap it for the arithmetic and the mark.
+const val = (m, k) => (m[k] ? m[k].value : null);
+const yrs = (m, k) => (m[k] ? m[k].years : null);
 // No "best" mark per column. Crowning a winner on a single measure is a verdict — and the same one
 // the compare view explicitly forbids ("no highlighted 'better' cell"). The group-median row below is
 // the honest context device: it shows where each figure sits in the distribution without ranking.
@@ -127,7 +164,7 @@ const rows = group.map((c) => ({ c, m: metricsOf(c) }));
 // "yield on float" case, where the plausibility cap withholds the wrong-denominator readings. When
 // fewer than half the group carries a reading, the column comes down entirely.
 const COLS = RAW_COLS.filter(
-  (col) => col.key !== "invYield" || rows.filter((r) => r.m.invYield != null).length >= Math.ceil(rows.length / 2)
+  (col) => col.key !== "invYield" || rows.filter((r) => val(r.m, "invYield") != null).length >= Math.ceil(rows.length / 2)
 );
 
 // The group's distribution per column — the median the company is read against, so a figure is context
@@ -135,8 +172,10 @@ const COLS = RAW_COLS.filter(
 // simply shows no median line.
 const subjectRow = rows.find((r) => r.c.ticker === company.ticker);
 const dist = {};
-for (const col of COLS) dist[col.key] = peerStat(rows.map((r) => r.m[col.key]), subjectRow?.m[col.key]);
+for (const col of COLS) dist[col.key] = peerStat(rows.map((r) => val(r.m, col.key)), subjectRow ? val(subjectRow.m, col.key) : null);
 const anyMed = COLS.some((col) => dist[col.key]);
+// Whether the table needs to explain its year marks at all: most benches carry none.
+const anyShort = rows.some((r) => COLS.some((col) => { const y = yrs(r.m, col.key); return y != null && y < 3; }));
 
 const lens = isReit ? "the REIT lens" : isLife ? "the spread-and-book-value lens" : isInsurer ? "the underwriting lens" : isBank ? "the bank lens" : isManagedCare ? "the medical-loss-ratio lens" : isFee ? "fee margins" : "owner economics";
 // The heading names exactly the group the bench was drawn from: a REIT's property subsector
@@ -170,21 +209,36 @@ const intro =
     <h3 class="secTitle pHead">
       {tableSlug ? <>Peers, <a href={`/groupings/${tableSlug}`} class="pHeadLink">{heading.replace(/^Peers, /, "")}</a></> : heading}
     </h3>
-    <p class="pNote">{intro} Each figure is a <b>through-cycle median</b>, so a peak or trough year can&rsquo;t distort it; the <b>group median</b> at the foot is the line to read each against.</p>
+    {/* The note used to open "Each figure is a through-cycle median", which was false twice over:
+        Revenue is a single latest year, and 3,720 comparison cells across 1,127 pages were built on
+        one or two years of record. A header states the basis, so it now states this one — and the
+        short cells carry their own year count rather than the whole table carrying a claim that is
+        wrong for some of them. */}
+    <p class="pNote">{intro}{" "}<b>Revenue</b> is the latest fiscal year, in US dollars. Every comparison
+      figure is the <b>median over the company&rsquo;s record</b>, so a peak or trough year can&rsquo;t
+      distort it{anyShort ? <>, and a figure read on fewer than three years carries that count beside
+      it</> : null}; the <b>group median</b> at the foot is the line to read each against.</p>
     <div class="wrap">
       <table>
         <thead>
           <tr>
-            <th class="tl">Company</th><th>Revenue</th>
+            <th class="tl">Company</th><th>Revenue<span class="bas">latest FY, USD</span></th>
             {COLS.map((col) => <th>{col.concept ? <Term id={col.concept}>{col.label}</Term> : col.label}</th>)}
           </tr>
         </thead>
         <tbody>
-          {rows.map(({ c, m }) => (
+          {rows.map(({ c, m, rev }) => (
             <tr class={c.ticker === company.ticker ? "me" : ""}>
               <th class="tl"><a href={`/c/${c.ticker}`}>{c.ticker}</a><span class="nm">{c.name}</span></th>
-              <td>{m.revenue != null ? fmtMoney(m.revenue, c.currency || "USD") : "—"}</td>
-              {COLS.map((col) => <td>{pr(m[col.key], col.dp)}</td>)}
+              <td>{rev}</td>
+              {COLS.map((col) => {
+                const v = val(m, col.key), y = yrs(m, col.key);
+                return (
+                  <td>{pr(v, col.dp)}{v != null && y != null && y < 3 ? (
+                    <span class="shrt" title={`read on ${y} year${y === 1 ? "" : "s"} — too short to normalize`}>{y}y</span>
+                  ) : null}</td>
+                );
+              })}
             </tr>
           ))}
         </tbody>
@@ -222,4 +276,13 @@ const intro =
   tfoot .medRow th.tl, tfoot .medRow td { border-top: 2px solid var(--rule-strong); padding-top: 9px; color: var(--ink-soft); font-weight: 600; }
   tfoot .medRow th.tl { font-style: italic; color: var(--muted); }
   .pNote b { font-style: normal; color: var(--ink); }
+
+  /* The basis, under the Revenue header — the same thing the grouping tables' headers say, because a
+     column of money that does not name its currency and period is not a fact. */
+  .bas { display: block; font-weight: 400; font-size: 10px; letter-spacing: 0.02em; color: var(--muted); text-transform: none; margin-top: 2px; }
+
+  /* The short-record mark. A figure built on one or two years is still the best reading the record
+     supports and is printed; the count says so, quietly, so the figure is never mistaken for a
+     normalized level. */
+  .shrt { font-size: 10px; color: var(--muted); margin-left: 4px; vertical-align: 2px; }
 </style>

@@ -67,13 +67,23 @@ ok(`operating margin is the median over the record (got ${c4.operatingMargin.tex
 ok("roic reads as a percent on a 4-year record", /%$/.test(c4.roic.text));
 ok(`revenue stays latest-FY (got ${c4.revenue.text})`, c4.revenue.text === "$1K" || c4.revenue.text === "$1,000" || c4.revenue.sort === 1000);
 
-// ---- 1c: under three readable years, the median columns withhold ("—"); size still prints ----
+// ---- 1c: under three readable years the figure PRINTS, carrying the count of years it rests on ----
+// Reversed 2026-07-27 on the owner's ruling. These columns used to show an em-dash under three
+// readable years, on the reasoning that one year dressed as a level is a lie. That is right about the
+// LABEL and wrong about the FIGURE: a two-year-old filer has a real record, just a short one, and
+// blanking it tells the reader nothing where saying "two years" tells them everything. The mark is
+// what keeps the header ("median over the record") true, and it is not cosmetic — the same header was
+// already false on 55 return-on-tangible-equity cells that printed off one or two years with nothing
+// saying so, because that column had no floor while these three did.
 const co2 = opCo([yr(2024, 1000, 700, 100), yr(2025, 1000, 700, 160)]);
 const c2 = cellsFor(co2);
-ok("gross margin withholds below 3 readable years", c2.grossMargin.text === "—" && c2.grossMargin.sort == null);
-ok("operating margin withholds below 3 readable years", c2.operatingMargin.text === "—");
-ok("roic withholds below 3 readable years", c2.roic.text === "—");
+ok(`gross margin prints on a 2-year record, marked (got ${c2.grossMargin.text})`, c2.grossMargin.text === "30.0% · 2y" && c2.grossMargin.years === 2);
+ok(`operating margin prints on a 2-year record, marked (got ${c2.operatingMargin.text})`, c2.operatingMargin.text === "13.0% · 2y");
+ok("roic prints on a 2-year record and carries its year count", /· 2y$/.test(c2.roic.text) && c2.roic.years === 2);
+ok("a short-record cell still sorts on its figure alone", c2.grossMargin.sort === 0.3);
 ok("revenue (a size column) still prints on a 2-year record", c2.revenue.sort != null);
+// Three or more readable years is a normalized figure and carries no mark at all.
+ok("a full record carries no year mark", !/·/.test(c4.operatingMargin.text) && c4.operatingMargin.years === 4);
 
 // ---- 1d: a corrupt gross-margin year (mis-tagged near-zero cost line) never enters the median ----
 // Real years at 29-32%; one impossible 95% year, which never enters. Sorted, the readable four

@@ -935,6 +935,36 @@ export function throughCycle(company, metricFn, n = 12) {
   return { median, n: recent.length, lo: sorted[0], hi: sorted[sorted.length - 1] };
 }
 
+// The same reading, WITHOUT the three-year floor, plus the count of years it was read on.
+//
+// throughCycle above returns null under three readable years, on the reasoning that one year dressed
+// as a level is a lie. That is right about the label and wrong about the figure: a two-year-old filer
+// has a real record, just a short one, and blanking it tells the reader nothing where saying "two
+// years" tells them everything. Owner ruling, 2026-07-27: normalized figures where we can, single
+// years where we must, and the surface says which.
+//
+// The count is not decoration. It is what makes the header true — a table whose note claims every
+// figure is a through-cycle median is making a false claim on any cell built from one year, and 3,720
+// peer-table cells across 1,127 pages were exactly that. Callers print `years` wherever it is under
+// three.
+//
+// Same 12-year window as throughCycle, deliberately: the two must never disagree on a company with a
+// long record, and they are the same function above that floor.
+export function recordMedian(company, metricFn, n = 12) {
+  const hist = Array.isArray(company?.history) ? company.history : [];
+  const vals = hist.map((h) => metricFn(h?.lines || {}, company)).filter((v) => v != null && Number.isFinite(v));
+  if (!vals.length) {
+    // No readable history at all. The latest figures still describe a year of the business, so they
+    // are read as the one-year record they are rather than discarded.
+    const latest = metricFn(company?.lines || {}, company);
+    return latest != null && Number.isFinite(latest) ? { value: latest, years: 1 } : null;
+  }
+  const recent = vals.slice(-n);
+  const sorted = [...recent].sort((a, b) => a - b);
+  const m = Math.floor(sorted.length / 2);
+  return { value: sorted.length % 2 ? sorted[m] : (sorted[m - 1] + sorted[m]) / 2, years: recent.length };
+}
+
 // Read a yearly series the way an owner does — through the cycle, not on the endpoints. The single-year
 // reporting calendar is an accident of accounting that GBM look through, so "this year's margin vs the
 // one ten years ago" is a trap: a lone trough, a peak, or a one-off charge at either endpoint can make

@@ -24,8 +24,8 @@ import {
   debtReliable,
   netDebtOf,
   oiReliable,
-  throughCycle,
   fmtMoney,
+  recordMedian,
 } from "./fundamentals.mjs";
 import { tangibleEquity, returnOnTangibleEquity } from "./financials.mjs";
 import { floatOf } from "./insurers.mjs";
@@ -52,9 +52,12 @@ import { adrBasis } from "./adrBasis.mjs";
 // ---------------------------------------------------------------------------------------------
 // The quality ratios (margins and returns on capital) are read THROUGH THE CYCLE — the median over
 // the record's readable years, Graham's normalization — so one peak or trough year never sets the
-// figure; a member with under three readable years shows "—" rather than a single year dressed as a
-// level. The size lines (revenue, owner earnings, net debt, deposits, ...) stay latest-FY: size is a
-// current fact, not a level to normalize.
+// figure. A member with under three readable years still prints, with the year count beside it
+// ("14.2% · 2y"): the record is short, not absent, and saying so tells a reader more than an em-dash
+// does (owner ruling, 2026-07-27, and it is what finally made these headers true — 55 return-on-
+// tangible-equity cells were already printing off one or two years with nothing marking them). The
+// size lines (revenue, owner earnings, net debt, deposits, ...) stay latest-FY: size is a current
+// fact, not a level to normalize.
 // Exported because the sector tables (below) build their column lists out of the same objects
 // rather than copies of them: one declaration of a column's label and basis, everywhere it renders.
 // The declaration order here is also the canonical render order for a sector table, so the eleven
@@ -81,7 +84,7 @@ export const COL = {
   // standard tags missed Simon Property by half. Cash from operations is filed and unambiguous, and
   // the payout against it answers what FFO was being asked — whether the distribution is earned.
   cashFromOps: { key: "cashFromOps", label: "Cash from operations", basis: "latest fiscal year, USD", type: "money", concept: "cash-from-operations" },
-  cashPayout: { key: "cashPayout", label: "Dividend / operating cash", basis: "dividends paid ÷ cash from operations · latest FY", type: "pct", concept: "dividend-coverage" },
+  cashPayout: { key: "cashPayout", label: "Dividend / operating cash", basis: "dividends paid ÷ cash from operations · median over the record", type: "pct", concept: "dividend-coverage" },
   dividendsPaid: { key: "dividendsPaid", label: "Dividends paid", basis: "latest fiscal year, USD", type: "money" },
   totalAssets: { key: "totalAssets", label: "Total assets", basis: "latest fiscal year, USD", type: "money" },
   // The software desk's three: what is already contracted and lands within a year, what the
@@ -376,25 +379,23 @@ export function revenueSortUsd(company, terms) {
   return rev * terms.factor;
 }
 
-// Median over the readable record years — the through-cycle read the lender/insurer families use
-// for return on tangible equity, so one peak or trough year doesn't set the figure.
-function roteMedian(company) {
-  const vals = (company?.history || [])
-    .map((h) => returnOnTangibleEquity(h?.lines))
-    .filter((v) => v != null && Number.isFinite(v));
-  if (!vals.length) return null;
-  const s = [...vals].sort((a, b) => a - b);
-  const m = Math.floor(s.length / 2);
-  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
-}
-
-// The same through-cycle read for the operating quality ratios, via the shared throughCycle helper
-// (the window the durability read and the business brief already use, so the surfaces agree).
-// Null below three readable years — the caller renders "—", never one year dressed as a level.
-function medianOverRecord(company, metricFn) {
-  const tc = throughCycle(company, metricFn);
-  return tc ? tc.median : null;
-}
+// The through-cycle read for every quality ratio on these tables — the median over the readable
+// record years, so one peak or trough year never sets the figure.
+//
+// Both of these used to be their own arithmetic, and the two disagreed with each other and with the
+// peer bench. roteMedian had NO floor, so 55 of the 555 return-on-tangible-equity cells were built on
+// fewer than three years and 18 on exactly one, printed under a header reading "median over the
+// record". medianOverRecord had a floor and returned null, so a two-year record showed an em-dash for
+// a margin and a printed figure for a return in the same row. And the peer bench did a third thing,
+// falling back to the latest year, which is how Avidbank came to read +2.2% on /groupings/banks and
+// -7.0% on /c/AVBH on the same day.
+//
+// One helper now, shared with the bench (fundamentals.recordMedian): the median of every readable
+// year, with the COUNT of years travelling beside it. Owner ruling, 2026-07-27 — normalized figures
+// where the record allows, single years where it does not, and the cell says which. That adds 405
+// marked figures to these tables where an em-dash used to stand, and it makes the header true for the
+// first time on the cells that were already printing.
+const rec = (company, metricFn) => recordMedian(company, metricFn);
 
 // ---------------------------------------------------------------------------------------------
 // One row's cells. Each cell: { text, sort } — sort null means "no key on this column: to the
@@ -420,6 +421,14 @@ export function groupingCells(company, familyKey, terms, columns = null) {
     return { text: fmtMoney(usd, "USD"), sort: Math.round(usd) };
   };
   const pct = (v) => (v == null || !Number.isFinite(v) ? DASH : { text: `${(v * 100).toFixed(1)}%`, sort: Number(v.toFixed(6)) });
+  // A ratio read over the record. Under three readable years the cell carries the count, so a header
+  // that says "median over the record" is telling the truth about a two-year record too. The sort key
+  // is the figure alone: a short record still ranks on its number, it just says what it rests on.
+  const pctRec = (r) => {
+    if (!r || r.value == null || !Number.isFinite(r.value)) return DASH;
+    const base = `${(r.value * 100).toFixed(1)}%`;
+    return { text: r.years < 3 ? `${base} · ${r.years}y` : base, sort: Number(r.value.toFixed(6)), years: r.years };
+  };
 
   const cellFor = (key) => {
     switch (key) {
@@ -429,7 +438,7 @@ export function groupingCells(company, familyKey, terms, columns = null) {
         // Median over the record's readable years, with the same corrupt-cost-line withholding the
         // record table applies per year, so a mis-tagged near-100% year never enters the median.
         if (fk) return NA;
-        return pct(medianOverRecord(company, (yl) => {
+        return pctRec(rec(company, (yl) => {
           const gm = grossMargin(yl);
           return gm != null && gmCorrupt(gm, company) ? null : gm;
         }));
@@ -438,14 +447,14 @@ export function groupingCells(company, familyKey, terms, columns = null) {
         // insurer or property trust, whose operating line is not how it earns.
         if (fk != null && fk !== "fee") return NA;
         if (!oiReliable(company)) return NA;
-        return pct(medianOverRecord(company, operatingMargin));
+        return pctRec(rec(company, operatingMargin));
       case "ownerEarnings":
         if (fk) return NA;
         return money(ownerEarningsAbs(L, company));
       case "roic":
         if (fk) return NA;
         if (!oiReliable(company)) return NA;
-        return pct(medianOverRecord(company, roicValue));
+        return pctRec(rec(company, roicValue));
       case "netDebt": {
         // Leverage is exactly how a property trust is judged, so a REIT keeps this read; for a bank
         // or an insurer it is a category error, because deposits and float are not debt.
@@ -471,7 +480,7 @@ export function groupingCells(company, familyKey, terms, columns = null) {
       case "netIncome":
         return money(L.netIncome);
       case "rote":
-        return pct(roteMedian(company));
+        return pctRec(rec(company, (yl) => returnOnTangibleEquity(yl)));
       case "tangibleEquity":
         return money(tangibleEquity(L));
       case "premiums":
@@ -512,7 +521,7 @@ export function groupingCells(company, familyKey, terms, columns = null) {
         return d == null ? DASH : { text: String(Math.round(d)), sort: Math.round(d) };
       }
       case "mlr":
-        return pct(medianOverRecord(company, (yl) => medicalLossRatio(yl)));
+        return pctRec(rec(company, (yl) => medicalLossRatio(yl)));
       case "reserveDev":
         return money(L.reserveDevelopmentPriorYear);
       case "investmentIncome":
@@ -520,7 +529,14 @@ export function groupingCells(company, familyKey, terms, columns = null) {
       case "cashFromOps":
         return money(L.cashFromOps);
       case "cashPayout":
-        return pct(cashPayout(L));
+        // Through the cycle since 2026-07-27, on the owner's ruling. This was the last concept on the
+        // site giving two answers: the table read the latest year and the peer bench read the record,
+        // so SL Green printed 292.7% here and 88% on its own page, and 117 REIT pages diverged — 12 of
+        // them across the line that says whether the distribution is covered at all. Whether a payout
+        // is earned is a through-cycle question by its nature: a single year's operating cash is
+        // exactly the figure a bad year distorts, and a distribution is a multi-year promise. 120 of
+        // the 168 property rows change value, 77 of them by more than five points.
+        return pctRec(rec(company, (yl) => cashPayout(yl)));
       case "dividendsPaid":
         return L.dividendsPaid == null ? DASH : money(Math.abs(L.dividendsPaid));
       case "totalAssets":

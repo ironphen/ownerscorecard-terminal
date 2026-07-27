@@ -115,7 +115,19 @@ function measureKeys(rows, keys, families) {
     // The KEY LIST comes from the table; the WITHHOLDING SEMANTICS come from the row's own family.
     // That distinction is the whole reason a REIT's net debt survives on a mixed sector table.
     const cells = groupingCells(r.company, r.family, r.terms, cols);
-    cells.forEach((cell, i) => { if (cell && cell.sort != null) answered.set(keys[i], answered.get(keys[i]) + 1); });
+    // A NORMALIZED answer only. Since 2026-07-27 a ratio cell built on one or two years still prints,
+    // marked with its year count — the right call for a reader looking at one company, and the wrong
+    // input to THIS question, which is whether a column earns its place across a whole sector. Counting
+    // short records as answers moved gross margin from 61% to 67% of Health Care rows and pushed it
+    // over the two-thirds bar, so a column the rule had deliberately dropped would have returned on the
+    // strength of one-year figures from biotechs whose cost lines are the reason it was dropped. A
+    // column carried by short records is exactly the column that reads as a wall of qualifiers at
+    // sector scale, so the bar is measured on figures the record actually supports.
+    cells.forEach((cell, i) => {
+      if (!cell || cell.sort == null) return;
+      if (cell.years != null && cell.years < 3) return;
+      answered.set(keys[i], answered.get(keys[i]) + 1);
+    });
   }
   const rowsInFamily = new Map(families.map((f) => [f, rows.filter((r) => r.family === f).length]));
   return keys.map((k) => {
