@@ -33,6 +33,26 @@ export function secondaryListings(companies) {
   return secondary;
 }
 
+// KNOWN LIMITATION, recorded rather than guessed around. This test finds a claim on a business by
+// noticing that it shares a CIK with something shorter-tickered. Where an issuer's COMMON stock is not
+// in the pool at all, its preferred series look like the primary listing and are treated as one:
+// Brookfield Property's four series (BPYPM/N/O/P, one CIK, one name, no common — the partnership was
+// taken private) and CHS's CHSCO are the live cases. Nothing in the data separates them. The universe
+// files carry a ticker, a name and a country and no security title, so the only available signal is
+// the ticker's shape, and a suffix rule is a guess dressed as a rule — the class of blanket heuristic
+// that cost Arrowhead its tax history and Jones Lang LaSalle its archetype. Closing this needs a
+// filed fact (the security title from the SEC submissions feed), not a cleverer inference.
+//
+// Memoized per pool array, because the peer bench asks this on every one of 3,623 company pages and
+// the answer only changes when the pool does.
+const _secondaryCache = new WeakMap();
+export function secondaryListingsCached(companies) {
+  if (!companies) return new Set();
+  let s = _secondaryCache.get(companies);
+  if (!s) { s = secondaryListings(companies); _secondaryCache.set(companies, s); }
+  return s;
+}
+
 // The primary ticker for an issuer, for a page that wants to point at the business rather than the
 // claim on it.
 export function primaryTickerFor(companies, ticker) {

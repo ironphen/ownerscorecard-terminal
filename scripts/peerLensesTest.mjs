@@ -8,6 +8,7 @@
 // that question, asked at build time.
 import { COL, FAMILIES } from "../src/lib/groupingColumns.mjs";
 import { PEER_COL, PEER_LENSES, REFUSED_ON_BENCH, REFUSED_BY_LENS, lensKeyFor, peerColumnsFor } from "../src/lib/peerLenses.mjs";
+import { secondaryListings, primaryTickerFor } from "../src/lib/listings.mjs";
 import { readFileSync } from "node:fs";
 
 let pass = 0, fail = 0;
@@ -125,6 +126,23 @@ ok("return on tangible equity still renders where the denominator exists",
   // A financial kind decides which STATEMENT a company is read on, so it wins over the taxonomy's
   // column family wherever it applies; the family route is only ever reached when there is no kind.
   ok("a financial kind outranks the column family", lensKeyFor(byT("JPM")) === "bank");
+
+  // A CLAIM ON A BUSINESS GETS NO BENCH (owner ruling, 2026-07-27). Peers.astro renders a pointer to
+  // the issuer's common stock instead of a comparative table, so the assertion here is on the
+  // identification: the secondary listings must be found across BOTH pools that reach a /c/ page,
+  // since four of the Brookfield Property series are ADR filings.
+  const adr = JSON.parse(readFileSync(new URL("../src/data/fundamentals.adr.json", import.meta.url), "utf8"));
+  const pool = [...(us.companies || []), ...(adr.companies || [])];
+  const secondary = secondaryListings(pool);
+  ok(`the listing pool finds the claims on a business (${secondary.size})`, secondary.size > 200);
+  ok("AGNC's preferred series are claims, and AGNC itself is not",
+    ["AGNCP", "AGNCN", "AGNCO"].every((t) => secondary.has(t)) && !secondary.has("AGNC"));
+  ok("a claim points at the business behind it", primaryTickerFor(pool, "AGNCP") === "AGNC");
+  ok("a business points at itself", primaryTickerFor(pool, "AGNC") === "AGNC");
+  // The known limitation, asserted so it cannot regress silently into a ticker-shape guess: with no
+  // common stock in the pool, Brookfield Property's series are indistinguishable from a primary
+  // listing by any filed fact we hold.
+  ok("the no-common-stock case is a known miss, not a silent guess", !secondary.has("BPYPM"));
 
   // The four measured refusals stay off every bench.
   ok("contracted revenue stays on the software TABLE and off the bench", !keysFor("MSFT").includes("bookedYear"));

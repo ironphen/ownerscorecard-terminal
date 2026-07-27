@@ -1,11 +1,17 @@
 ---
 import fundamentals from "../data/fundamentals.json";
+import adrFundamentals from "../data/fundamentals.adr.json";
 import { classify } from "../lib/archetype.mjs";
 import { fmtMoney, topLineRevenue } from "../lib/fundamentals.mjs";
 import { financialKind } from "../lib/archetype.mjs";
 import { selectPeers, peerStat, REIT_SUBSECTOR_LABELS } from "../lib/peers.mjs";
 import { peerColumnsFor, lensKeyFor } from "../lib/peerLenses.mjs";
 import { shortRecord } from "../lib/fundamentals.mjs";
+import { secondaryListingsCached, primaryTickerFor } from "../lib/listings.mjs";
+
+// One array, built once per module load rather than once per page, so the memoized listing set in
+// listings.mjs has a stable identity to key its WeakMap on across all 3,623 company pages.
+const LISTING_POOL = [...(fundamentals.companies || []), ...(adrFundamentals.companies || [])];
 import { industryLabelOf, industrySlug } from "../lib/shelves.mjs";
 import { usdTerms, revenueSortUsd } from "../lib/groupingColumns.mjs";
 import adrRatios from "../data/adrRatios.json";
@@ -16,6 +22,10 @@ import Term from "./Term.astro";
 // page; selectPeers here is the fallback when the component is used on its own.
 const { company, peers: peersProp, basis: basisProp, subsector: subsectorProp, shelfNoun: shelfNounProp, sector: sectorProp } = Astro.props;
 const all = fundamentals.companies || [];
+// The listing check spans BOTH pools that reach a /c/ page, because four of the Brookfield Property
+// preferred series are ADR filings: a set built from the US pool alone would miss them and hand each
+// one a bench. Frozen at module scope so the memo in listings.mjs has a stable array to key on.
+const listingPool = LISTING_POOL;
 
 // Peers are drawn taxonomy-first (the same industry label the heading and the /groupings tables use) and
 // ranked by structural likeness — selectPeers lives in lib/peers.mjs so the rule is one place and
@@ -25,6 +35,21 @@ const all = fundamentals.companies || [];
 const sel = peersProp ? { peers: peersProp, basis: basisProp, subsector: subsectorProp, shelfNoun: shelfNounProp, sector: sectorProp } : selectPeers(company, all);
 const { peers, basis, subsector, shelfNoun, sector } = sel;
 const cls = classify(company);
+
+// A CLAIM ON A BUSINESS DOES NOT GET A COMPARATIVE TABLE (owner ruling, 2026-07-27). A preferred
+// series, a baby bond, a warrant and a contingent value right arrive in the universe as separate
+// tickers sharing one CIK with the common stock, and on 2026-07-27 they stopped COUNTING as
+// businesses in the /groupings tables. The bench was untouched by that, so 227 of them still opened a
+// full peer table among operating companies: six B. Riley preferred series each printed B. Riley's
+// return on tangible equity, and AGNC's six preferreds each got a bench with AGNC itself excluded by
+// the very CIK guard meant to stop a company benching against itself.
+//
+// The page stays, because a reader who types AGNCP should land somewhere truthful. What it stops
+// doing is comparing: a bench exists to line businesses up against each other, and a claim on a
+// business is not one of them. It points at the business instead.
+const secondary = secondaryListingsCached(listingPool).has(String(company?.ticker || "").toUpperCase());
+const parentTicker = secondary ? primaryTickerFor(listingPool, company.ticker) : null;
+const parent = parentTicker ? listingPool.find((c) => String(c.ticker).toUpperCase() === parentTicker) : null;
 
 // ONE COLUMN, ONE CURRENCY. Until 2026-07-27 the Revenue cell printed each row in the row's own
 // currency — fmtMoney(revenue, c.currency) — under a bare "Revenue" header, so a foreign filer's
@@ -159,7 +184,20 @@ const intro =
   : `The same industry, side by side on ${lens}.`;
 ---
 
-{group.length >= 2 ? (
+{secondary ? (
+  <section class="peers">
+    <h3 class="secTitle pHead">Peers</h3>
+    <p class="pNote">
+      {company.name} is listed here as a claim on a business rather than as the business itself &mdash;
+      a preferred series, a bond or a warrant, filed under the same registrant as the common stock.
+      A comparative table lines businesses up against one another, so there is none here.
+      {parent ? (
+        <> The business behind it is <a href={`/c/${parentTicker}`}>{parent.name} ({parentTicker})</a>,
+        where the record, the scorecard and the peer bench are.</>
+      ) : null}
+    </p>
+  </section>
+) : group.length >= 2 ? (
   <section class="peers">
     {/* The bench and the full comparative table are the same group read at two depths, and until
         now nothing on a company page said so: across 3,872 built pages, not one linked to its own
