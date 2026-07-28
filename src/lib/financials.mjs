@@ -234,7 +234,19 @@ export function buildFinancialScorecard(company, subtype = "bank") {
   // what they are worth, against the bank's tangible equity. Silicon Valley Bank died of this
   // number; it is now on every bank page that files it.
   const te = tangibleEquity(L);
-  const htmGap = L.htmAmortizedCost != null && L.htmFairValue != null ? L.htmAmortizedCost - L.htmFairValue : null;
+  // A ZERO COST BASIS MEANS THERE IS NO HELD-TO-MATURITY BOOK, so there are no marks on it to
+  // report. Bank7 tagged an amortized cost of exactly $0 against a fair value of $57.3M — which
+  // cannot both be true of the same portfolio; the $57.3M is some other securities disclosure
+  // reaching this field. The check then computed $0 − $57.3M, read the negative gap as a surplus,
+  // and printed "No loss · Marks are small" in the "Is it sound?" section of a bank's page. That is
+  // the worst shape a defect can take here: not a missing number, but a fabricated reassurance about
+  // the exact disclosure that killed Silicon Valley Bank.
+  //
+  // Requiring a positive cost basis is the whole fix. 47 banks carry an HTM fair value with a zero or
+  // absent cost; the absent ones were already withheld by the null test, and this closes the zero.
+  // A bank that genuinely holds nothing to maturity has nothing to say here, which is what silence is
+  // for.
+  const htmGap = L.htmAmortizedCost > 0 && L.htmFairValue != null ? L.htmAmortizedCost - L.htmFairValue : null;
   const htmShare = htmGap != null && te > 0 ? htmGap / te : null;
   const marksCheck = htmShare == null
     ? null
