@@ -851,6 +851,21 @@ export function operatingMargin(L) {
 // margin, as GE's does — the cost figure is wrong, so withhold rather than render an impossible number.
 export function grossMargin(L) {
   if (!L || !L.revenue || L.costOfRevenue == null) return null;
+  // A COST OF REVENUE UNDER A HUNDREDTH OF REVENUE IS A FRAGMENT, NOT A TOTAL. The fetcher has
+  // applied this floor to the record's own years since the CenterPoint case (a utility that buys
+  // fuel, tagging $4M against $9,337M and printing a 100% gross margin), but it never reached the
+  // TRAILING-TWELVE-MONTHS block: fetchFundamentals wrote the guarded value to rec.ttm.costOfRevenue
+  // while the figures live at rec.ttm.lines.costOfRevenue, so the assignment landed on a property
+  // nothing reads and the raw fragment shipped. Oracle carried $2,057M — an element it abandoned in
+  // 2011 — against $67.4B of revenue, printing a 96.9% gross margin on its compare card and into the
+  // Almanac's census median. 167 records were above 90%, one of them (GPGI) at 195.8%, which requires
+  // a negative cost of sales.
+  //
+  // The floor belongs HERE as well as in the fetcher. A function that turns a cost line into a margin
+  // is the right place to refuse a cost line that cannot be one, and putting it here fixes every
+  // surface against the data already on disk rather than waiting on the next full refetch. A negative
+  // cost line fails the same test, which is why 195.8% goes with it.
+  if (L.costOfRevenue / L.revenue < 0.01) return null;
   const gm = 1 - L.costOfRevenue / L.revenue;
   const om = L.operatingIncome != null ? L.operatingIncome / L.revenue : null;
   if (om != null && gm < om - 0.01) return null;

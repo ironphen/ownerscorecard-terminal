@@ -1884,7 +1884,13 @@ async function main() {
       // costless year is judged against that year's revenue and not against the latest.
       if (rec.lines) rec.lines.costOfRevenue = thinCor(rec.lines.costOfRevenue, rec.lines.revenue);
       for (const h of rec.history || []) if (h.lines) h.lines.costOfRevenue = thinCor(h.lines.costOfRevenue, h.lines.revenue);
-      if (rec.ttm) rec.ttm.costOfRevenue = thinCor(rec.ttm.costOfRevenue, rec.ttm.revenue);
+      // rec.ttm keeps its figures at rec.ttm.LINES, not on rec.ttm itself. This line read undefined,
+      // computed nothing, and assigned the result to a property no consumer has ever looked at, so
+      // the trailing-twelve-months block was the one place the floor never reached — and it is the
+      // block the compare card and the Almanac census read. Oracle shipped a 96.9% gross margin on a
+      // cost element it stopped filing in 2011. (The same floor now also sits inside
+      // lib/fundamentals.grossMargin, so a fragment cannot reach a margin by any route.)
+      if (rec.ttm?.lines) rec.ttm.lines.costOfRevenue = thinCor(rec.ttm.lines.costOfRevenue, rec.ttm.lines.revenue);
       companies.push(rec);
       console.log(`  ✓ ${ticker} (CIK ${cik}, FY${anchor?.fy ?? "?"})`);
     } else {
