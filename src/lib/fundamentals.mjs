@@ -842,7 +842,32 @@ export function roicValue(L) {
 }
 
 export function operatingMargin(L) {
+  if (!revenueIsScale(L)) return null; // revenue under a tenth of what the business spent
   return L && L.operatingIncome != null && L.revenue ? L.operatingIncome / L.revenue : null;
+}
+
+// IS REVENUE THIS BUSINESS'S SCALE? A per-revenue ratio divides by revenue, so it only describes a
+// business whose revenue is what the business runs on. A clinical-stage biotech with $2.1M of
+// licensing revenue and $292M of costs has an operating margin of minus 13,907%. The arithmetic is
+// correct and the figure describes nothing: it is a statement about a denominator, not about a
+// company. Owner ruling, 2026-07-27 — withhold the rate and let the dollars speak, which the record
+// table already does.
+//
+// THE THRESHOLD IS MEASURED, NOT CHOSEN, and the data separated itself. Across 32,829 company-years,
+// revenue as a share of what the business spent (revenue less operating income): the years carrying a
+// ratio beyond 1,000% top out at 0.0909, and ordinary years — an operating margin inside plus or
+// minus 100% — begin at 0.5644 at their first percentile. There is a clear gap between the two
+// populations and nothing lives in it. A cut at one tenth catches 784 of 784 absurd years and costs
+// ZERO ordinary years, so this is a rule the pool drew rather than one imposed on it.
+//
+// This is the discipline the grouping tables already applied through oiReliable() and the company
+// page never received, which is why 808 company pages carried such a figure against 35 grouping
+// pages. Gross margin was the only guarded ratio on the site and is the only one with none.
+export function revenueIsScale(L) {
+  if (!L || !(L.revenue > 0) || L.operatingIncome == null) return true; // nothing to judge on
+  const spent = L.revenue - L.operatingIncome;
+  if (!(spent > 0)) return true; // spent nothing measurable; not the case this guards
+  return L.revenue / spent >= 0.1;
 }
 
 // Gross margin, with an arithmetic sanity check: it can never sit below the operating margin
@@ -921,6 +946,7 @@ export function corruptGrossMarginYears(company) {
 
 export function ownerEarningsMargin(L, company) {
   if (!L || L.cashFromOps == null || L.capex == null || !L.revenue) return null;
+  if (!revenueIsScale(L)) return null; // a rate per dollar of revenue, where revenue is not the scale
   // Buffett's owner earnings: operating cash less maintenance capex, not total capex (which would be
   // free cash flow). `company` carries the record the growth test needs; without it we fall back to
   // total capex, so a stray call can never read higher than free cash flow.
