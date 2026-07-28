@@ -54,6 +54,7 @@ import {
   roicValue,
   ownerEarningsMargin,
   recordMedian,
+  revenueIsScale,
 } from "./fundamentals.mjs";
 import { returnOnEquity, returnOnTangibleEquity, efficiencyRatio, netInterestMargin, roteOverRecord } from "./financials.mjs";
 import { cashPayout, debtToAssets } from "./reits.mjs";
@@ -88,7 +89,7 @@ export const PEER_COL = {
   oeMargin: { key: "oeMargin", label: "Owner earn. margin", concept: "owner-earnings", dp: 0, basis: CYCLE,
     read: cyc((L, co) => ownerEarningsMargin(L, co)) },
   netMargin: { key: "netMargin", label: "Net margin", concept: null, dp: 1, basis: CYCLE,
-    read: cyc((L) => share("netIncome", "revenue")(L)) },
+    read: cyc((L) => (revenueIsScale(L) ? share("netIncome", "revenue")(L) : null)) },
 
   // ---- the software desk (2026-07-24). Contracted revenue is deliberately absent; see the header. ----
   salesMarketing: { key: "salesMarketing", label: "Sales & marketing", concept: "sales-and-marketing", dp: 1, basis: LATEST,

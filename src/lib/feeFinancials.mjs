@@ -6,13 +6,17 @@
 // durability of the fee stream. Pure arithmetic on the filing data; the verdict is the
 // reader's.
 
-import { fmtMoney, operatingMargin } from "./fundamentals.mjs";
+import { fmtMoney, operatingMargin, revenueIsScale } from "./fundamentals.mjs";
 import { returnOnEquity } from "./financials.mjs";
 
 const pc = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${(Math.abs(v) * 100).toFixed(dp)}%`);
 const median = (xs) => { if (!xs.length) return null; const s = [...xs].sort((a, b) => a - b); const m = Math.floor(s.length / 2); return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
 
 export function netMargin(L) {
+  // Per-revenue, so it carries the same materiality gate as the other margins: where revenue is under
+  // a tenth of what the business spent, a rate per dollar of revenue describes a denominator rather
+  // than a company (fundamentals.revenueIsScale; the threshold was measured, not chosen).
+  if (!revenueIsScale(L)) return null;
   return L && L.netIncome != null && L.revenue ? L.netIncome / L.revenue : null;
 }
 // ROE is meaningful here, but buybacks can shrink equity to nothing (or below), which

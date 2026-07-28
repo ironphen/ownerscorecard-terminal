@@ -3,13 +3,13 @@
 // the through-cycle margins, the owner earnings those margins imply on today's revenue, and
 // where the latest year sits against its own average, so the reader can tell a peak from a
 // trough. No forecast, no verdict.
-import { ownerEarningsMargin, ownerEarningsAbs, operatingMargin } from "./fundamentals.mjs";
+import { ownerEarningsMargin, ownerEarningsAbs, operatingMargin, revenueIsScale } from "./fundamentals.mjs";
 
 // Median, not mean: the typical-year margin a single bad year cannot skew. Some filings carry
 // a partial or mis-tagged revenue year that explodes a ratio (an owner-earnings margin of
 // several hundred percent), so the through-cycle figure has to be robust to it.
 const median = (xs) => { if (!xs.length) return null; const s = [...xs].sort((a, b) => a - b); const m = Math.floor(s.length / 2); return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
-const netMargin = (L) => (L && L.netIncome != null && L.revenue ? L.netIncome / L.revenue : null);
+const netMargin = (L) => (!revenueIsScale(L) ? null : L && L.netIncome != null && L.revenue ? L.netIncome / L.revenue : null);
 // A margin beyond ±100% of revenue is not recurring earning power (a one-off gain, or a
 // glitch year with bad revenue), so it is dropped from the normalization.
 const plausible = (v) => v != null && Math.abs(v) <= 1.0;
