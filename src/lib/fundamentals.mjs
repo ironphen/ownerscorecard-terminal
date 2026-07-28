@@ -864,10 +864,22 @@ export function operatingMargin(L) {
 // page never received, which is why 808 company pages carried such a figure against 35 grouping
 // pages. Gross margin was the only guarded ratio on the site and is the only one with none.
 export function revenueIsScale(L) {
-  if (!L || !(L.revenue > 0) || L.operatingIncome == null) return true; // nothing to judge on
-  const spent = L.revenue - L.operatingIncome;
-  if (!(spent > 0)) return true; // spent nothing measurable; not the case this guards
-  return L.revenue / spent >= 0.1;
+  if (!L || !(L.revenue > 0)) return true; // nothing to judge on
+  if (L.operatingIncome != null) {
+    const spent = L.revenue - L.operatingIncome;
+    if (!(spent > 0)) return true; // spent nothing measurable; not the case this guards
+    return L.revenue / spent >= 0.1;
+  }
+  // NO OPERATING INCOME TAGGED — the first anchor's blind spot, and how Lyell Immunopharma printed
+  // an owner-earnings margin of minus 418,900%: the gate had nothing to judge on and passed it
+  // through. The second witness is the cash the business actually ran on that year — operating cash
+  // flow plus capital spending, same period, present whenever an owner-earnings margin computes at
+  // all. Measured over the 193 null-operating-income company-years: the absurd years top out at
+  // 0.0587 and ordinary years begin at 0.6652, so the pool separates again, at the SAME tenth used
+  // above — one rule, two witnesses, both drawn by the data. 9 of 9 caught, 0 ordinary years lost.
+  const cash = Math.abs(L.cashFromOps ?? 0) + Math.abs(L.capex ?? 0);
+  if (!(cash > 0)) return true; // no second witness either; nothing to judge on
+  return L.revenue / cash >= 0.1;
 }
 
 // Gross margin, with an arithmetic sanity check: it can never sit below the operating margin
