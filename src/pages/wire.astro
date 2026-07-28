@@ -4,7 +4,9 @@ import wire from "../data/wire.json";
 import fundamentals from "../data/fundamentals.json";
 import upcoming from "../data/upcoming.json";
 import { perfLine } from "../lib/wirePerf.mjs";
-import { isSteadyRhythm, rollToBusinessDay, nextBusinessDays, monthPhrase } from "../lib/filingRhythm.mjs";
+import { rollToBusinessDay, nextBusinessDays, monthPhrase, estimateRange, fmtMD } from "../lib/filingRhythm.mjs";
+import { topLineRevenue } from "../lib/fundamentals.mjs";
+import { secondaryListingsCached } from "../lib/listings.mjs";
 
 const known = new Set((fundamentals.companies || []).map((c) => String(c.ticker).toUpperCase()));
 const items = wire?.items || [];
@@ -22,49 +24,76 @@ for (const it of items) {
 // The performance line (up/down and a percentage per proven line) is shared from lib/wirePerf.mjs,
 // so /wire, the per-day page, the Atom feed, the account band and the company page all read alike.
 
-// ---- coming due: whose next report the record places in the next two filing days ----
-// EDGAR announces no future dates, and neither do we: the SELECTION below uses each company's
-// computed expectation (its median filing lag applied to its next period end), but every printed
-// field is a filed fact or the statute — the period the report covers (month-level, since 52/53-
-// week calendars drift by days), the N-day rule for its filer class, and how many days after
-// period end it has historically filed. The page rebuilds daily, so the window rolls.
+// ---- the week ahead: who files in the next five filing days ----
+// REBUILT 2026-07-27. Three things were wrong with this band and one of them was a wrong number.
 //
-// The window is TWO FILING DAYS (weekend expectations roll to Monday), and only companies whose
-// own rhythm supports day-level placement are listed (lib/filingRhythm.mjs: recent same-form
-// lags held within ~2 days of the median). A full week at peak earnings season ran to hundreds
-// of names and buried the wire itself. Companies in the window on looser or unmeasured rhythms
-// are not characterized at all — the lede states the selection rule, and their filings enter
-// the wire as they arrive; counting them would claim day-level placement exactly where the
-// record refuses it. A report that has already arrived leaves the band: the wire's own items
-// (same ticker + form) veto a chip, so a company is never "coming due" beside its own filing.
+//  1. It ran the estimator the COMPANY PAGE RETIRED on 2026-07-25 — upcoming.json's single point
+//     `expected`, which is exactly right 21.9% of the time and systematically late. The page had
+//     moved to filingRhythm.estimateRange, a backtested window; the wire never got it.
+//  2. The window was TWO business days. On a Monday it could only ever show Monday and Tuesday, so
+//     everything reporting Wednesday to Friday was structurally invisible — of the seventeen largest
+//     US companies, ZERO appeared. It is now a full filing week, which is what a reader means.
+//  3. Selecting on a single guessed DAY meant a company whose window covered today was dropped
+//     because its retired point estimate pointed at last week. Tesla and Johnson & Johnson were both
+//     in that state on the day this was found. Selection is now by OVERLAP with the window.
+//
+// The old isSteadyRhythm() filter is gone: estimateRange carries its own, better, backtested gate,
+// and running both meant refusing names on a retired test.
+//
+// WHAT THIS BAND IS NOT. It is filing dates, not earnings dates. A company ANNOUNCES results in an
+// 8-K under Item 2.02, filed the day it happens, typically a day or two before the 10-Q — Alphabet
+// announced on 2026-07-22 and filed on the 23rd. We looked hard at predicting that announcement from
+// each filer's own 2.02 history and REFUSED to publish it: across 75,881 held-out predictions the
+// width gate that was supposed to make it honest turned out not to select for accuracy at all
+// (ungated 88.2% beat every gate but the narrowest), a filer's perfect run buys nothing (10.1% miss
+// after four straight hits against 11.8% unconditional), 2.2% of admitted rows belong to a company
+// about to go quiet for a quarter or more, and for filers like Xcel, Danaher and Berkshire the date
+// EDGAR stamps is not the date the announcement happened. Above all the asymmetry runs the wrong
+// way: when a FILING estimate misses, 87.8% of the time the filing still arrives by the statutory
+// deadline printed beside it, so the miss degrades to "earlier than the fact we also gave you". An
+// announcement has no deadline behind it, so a miss degrades to a bare falsehood. The lede says
+// "files", not "reports", because that is what this is.
 const nameOf = new Map((fundamentals.companies || []).map((c) => [String(c.ticker).toUpperCase(), c.name]));
+const revOf = new Map((fundamentals.companies || []).map((c) => [String(c.ticker).toUpperCase(), topLineRevenue(c.lines || {}, c) || 0]));
+// A preferred series is not a separate company coming due. Alphabet was appearing four times over
+// (GOOG, GOOGL, GOOGM, GOOGN) — the same defect the grouping tables shed on 2026-07-27, keyed on the
+// filed CIK rather than on the shape of a ticker.
+const secondary = secondaryListingsCached(fundamentals.companies || []);
 const today = new Date().toISOString().slice(0, 10);
-const windowDays = new Set(nextBusinessDays(rollToBusinessDay(today), 2));
+const week = nextBusinessDays(rollToBusinessDay(today), 5);
+const weekStart = week[0], weekEnd = week[week.length - 1];
+const weekSet = new Set(week);
 const alreadyFiled = new Set(items.map((it) => `${String(it.ticker).toUpperCase()}|${it.form}`));
+
 const dueSoon = Object.entries(upcoming.companies || {})
-  .map(([t, c]) => ({ t, ...c }))
-  .filter((c) => c.expected && windowDays.has(rollToBusinessDay(c.expected)) && !alreadyFiled.has(`${c.t}|${c.nextForm}`))
-  .filter((c) => isSteadyRhythm(c.lagsSameForm))
-  // Deterministic before the cap: earliest filing day first, then ticker — so the cap can never
-  // drop a today name while keeping a tomorrow one, and the shown set is stable across builds.
-  .sort((a, b) => rollToBusinessDay(a.expected).localeCompare(rollToBusinessDay(b.expected)) || a.t.localeCompare(b.t));
-// Grouped by what the report is (form + the period it covers), tickers alphabetical within.
-const AHEAD_CAP = 200;
+  .map(([t, c]) => ({ t, ...c, range: estimateRange(c, today) }))
+  .filter((c) => c.range && !secondary.has(c.t) && !alreadyFiled.has(`${c.t}|${c.nextForm}`))
+  // An ESTIMATE belongs in the week when its window overlaps it at all; a DEADLINE belongs when the
+  // due date itself lands in it. Two different claims, so they are kept apart and labelled apart.
+  .filter((c) => (c.range.kind === "estimate"
+    ? c.range.lo <= weekEnd && c.range.hi >= weekStart
+    : weekSet.has(rollToBusinessDay(c.range.lo))))
+  // LARGEST FIRST (owner ruling, 2026-07-27), the same default order the grouping tables use, on the
+  // same reasoning: size is an objective fact, not a judgment. The old order was the ALPHABET, which
+  // under a cap kept Apple and dropped Walmart for no reason a reader could defend and held under
+  // half the band's revenue. Ties break on ticker so the set is stable across builds.
+  .sort((a, b) => (revOf.get(b.t) || 0) - (revOf.get(a.t) || 0) || a.t.localeCompare(b.t));
+
+const AHEAD_CAP = 120;
+const shown = dueSoon.slice(0, AHEAD_CAP);
 const aheadGroups = [];
-for (const c of dueSoon.slice(0, AHEAD_CAP)) {
-  const label = c.nextForm === "10-K"
-    ? `annual reports (10-K) for fiscal years ended ${monthPhrase(c.nextPeriodEnd)}`
-    : `10-Qs for quarters ended ${monthPhrase(c.nextPeriodEnd)}`;
-  const g = aheadGroups.find((x) => x.label === label);
-  if (g) g.rows.push(c);
-  else aheadGroups.push({ label, form: c.nextForm, end: c.nextPeriodEnd, rows: [c] });
+for (const kind of ["estimate", "deadline"]) {
+  const rows = shown.filter((c) => c.range.kind === kind);
+  if (rows.length) aheadGroups.push({ kind, rows });
 }
-aheadGroups.sort((a, b) => a.form.localeCompare(b.form) || a.end.localeCompare(b.end));
-for (const g of aheadGroups) g.rows.sort((a, b) => a.t.localeCompare(b.t));
+const fmtRange = (r) => (r.kind === "deadline" ? `by ${fmtMD(r.lo)}` : r.lo === r.hi ? fmtMD(r.lo) : `${fmtMD(r.lo)}–${fmtMD(r.hi)}`);
 const chipTitle = (c) => {
   const name = nameOf.get(c.t);
   const what = c.nextForm === "10-K" ? `annual report (10-K) for the fiscal year ended ${monthPhrase(c.nextPeriodEnd)}` : `10-Q for the quarter ended ${monthPhrase(c.nextPeriodEnd)}`;
-  return `${name ? name + " — " : ""}${what}; due within ${c.statutoryDays} days of period end; has filed ~${c.typicalLagDays} days after`;
+  const when = c.range.kind === "deadline"
+    ? `due by ${c.range.lo}`
+    : `expected ${c.range.lo} to ${c.range.hi}, from its own last four filings; due by ${c.dueBy}`;
+  return `${name ? name + " — " : ""}${what}; ${when}; must file within ${c.statutoryDays} days of period end`;
 };
 ---
 
@@ -81,24 +110,28 @@ const chipTitle = (c) => {
 
   {dueSoon.length ? (
     <section class="ahead">
-      <h2>Coming due</h2>
+      <h2>The week ahead</h2>
       <p class="aheadLede">
-        Companies whose own filing pace places their next report within the next two filing days.
-        Each has held within a couple of days of its usual lag, filing after filing; the periods
-        and day-counts are from its filings, and the deadline is the rule for its filer class.
-        Nothing here is announced by the companies.
+        Who <b>files</b> between {fmtMD(weekStart)} and {fmtMD(weekEnd)}, largest first. An
+        <b> expected</b> date is a window drawn from that filer&rsquo;s own last four filings, shown
+        only where it closes before the report is legally due; everything else carries the
+        <b> due-by</b> date, which is the statute for its filer class and a filed fact. Companies
+        announce results separately, in an 8-K a day or two earlier, and we do not estimate that
+        date &mdash; nothing here is announced by the companies.
       </p>
       {aheadGroups.map((g) => (
         <div class="aheadGroup">
-          <span class="gLabel">{g.label}</span>
+          <span class="gLabel">{g.kind === "estimate" ? "expected, from each filer's own record" : "due by, the statutory date"}</span>
           <span class="chips">
             {g.rows.map((c) => (
-              <a class="chip" href={`/c/${c.t}`} title={chipTitle(c)} aria-label={chipTitle(c)}>{c.t}</a>
+              <a class="chip" href={`/c/${c.t}`} title={chipTitle(c)} aria-label={chipTitle(c)}>
+                {c.t}<span class="cWhen">{fmtRange(c.range)}</span>
+              </a>
             ))}
           </span>
         </div>
       ))}
-      {dueSoon.length > AHEAD_CAP ? <p class="aheadMore">…and {dueSoon.length - AHEAD_CAP} more match these two filing days; the list stops at {AHEAD_CAP}.</p> : null}
+      {dueSoon.length > AHEAD_CAP ? <p class="aheadMore">…and {dueSoon.length - AHEAD_CAP} smaller companies also file this week; the list stops at the {AHEAD_CAP} largest.</p> : null}
     </section>
   ) : null}
 
@@ -140,6 +173,7 @@ const chipTitle = (c) => {
     .chips { display: flex; flex-wrap: wrap; gap: 6px; }
     .chip { display: inline-block; padding: 2px 8px; border: 1px solid var(--rule-strong); border-radius: 3px; color: var(--accent); text-decoration: none; font-weight: 600; font-size: 12.5px; font-variant-numeric: tabular-nums; }
     .chip:hover { border-color: var(--accent); text-decoration: underline; }
+    .cWhen { display: block; font-size: 10.5px; font-weight: 400; color: var(--muted); letter-spacing: 0; margin-top: 1px; }
     .aheadMore { font-size: 12.5px; color: var(--muted); margin: 8px 0 0; font-style: italic; }
     .hd { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
     .hd h1 { margin: 0; }

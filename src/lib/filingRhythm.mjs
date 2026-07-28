@@ -71,8 +71,20 @@ export const addDays = (iso, n) => {
 // alternative tested, including a median-plus-or-minus band, because a filer's recent cadence
 // predicts its next filing better than its whole history does — companies change reporting habits,
 // and the old years dilute the signal.
+// THE GATE, rebuilt 2026-07-27 on the owner's ruling. It used to be a magic constant: refuse the
+// estimate unless the window closed at least five days before the statutory deadline. Backtested over
+// 34,818 held-out predictions, that constant turned out not to select for accuracy at all — the
+// filers it REFUSED with a tight record hit 86.8% and the ones it ADMITTED hit 86.9%, and the hit
+// rate is flat across every lead value from one day to eight. It was measuring how CLOSE an estimate
+// sits to the deadline, which is not the same thing as how UNCERTAIN it is, and the two come apart
+// on exactly the most punctual filers. Apple, with six consecutive 34-day quarters, was refused
+// because 40 − (34 + 2) = 4, one day under.
+//
+// The test is now the one the code was really trying to make: does the window close before the
+// filing is legally due? If it does, it tells the reader something the due date does not. If it does
+// not, the due date is the better number and it is a filed fact. Coverage 30% → 48%, hold-out
+// accuracy 86.9% → 87.8%, and the 1,335 predictions this admits hit 89.2%. No constant to defend.
 const PAD_DAYS = 2;
-const MIN_LEAD_OVER_DEADLINE = 5;
 
 export function estimateRange(up, todayISO) {
   if (!up?.nextPeriodEnd || !up?.dueBy) return null;
@@ -98,13 +110,15 @@ export function estimateRange(up, todayISO) {
   const loLag = Math.min(...recent) - PAD_DAYS;
   const hiLag = Math.max(...recent) + PAD_DAYS;
 
-  // The test that decides whether an estimate says anything at all: does the whole window close
-  // meaningfully before the filing is legally due? If not, the deadline is the better number.
-  if (up.statutoryDays != null && up.statutoryDays - hiLag < MIN_LEAD_OVER_DEADLINE) return deadline;
-
   let lo = rollToBusinessDay(addDays(up.nextPeriodEnd, loLag));
   let hi = rollToBusinessDay(addDays(up.nextPeriodEnd, hiLag));
-  if (hi > up.dueBy) hi = up.dueBy;
+
+  // The test that decides whether an estimate says anything at all: does the whole window close
+  // before the filing is legally due? If not, the deadline is the better number, and it is a fact.
+  // (This replaced the clamp that used to pull hi back to the due date, which manufactured a window
+  // ending exactly on the deadline — the due date wearing a costume.)
+  if (hi >= up.dueBy) return deadline;
+
   if (todayISO && lo < todayISO) lo = rollToBusinessDay(todayISO);
   if (lo > hi || days(lo, hi) > 14) return deadline;
   return { kind: "estimate", lo, hi };
