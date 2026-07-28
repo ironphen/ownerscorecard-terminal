@@ -569,6 +569,107 @@ const collectAnnual = (facts, tags, unit = "USD") => valuesByYear(annualByYear(f
 // near-synonyms most often carry different scopes at the same filer.
 const corByYear = (facts) => annualByYear(facts, CONCEPTS.costOfRevenue, "USD", false, true);
 
+// ---- the filer's own income-statement identity ----
+// A chain of tag names, however carefully ordered, cannot tell which element a filer means as its
+// top line: PennyMac tags $20.1M of contract revenue beside the $2,046.5M its statement calls Total
+// net revenues, General Motors tags automotive sales against a total that includes GM Financial, and
+// American Express's contract element is $31B short of the revenue its own expenses are measured
+// against. Size cannot arbitrate either — preferring the largest element regressed 163 held-out
+// years and grossed up 23 assessed-tax filers by their excise.
+//
+// The filer itself already settled the question, in arithmetic, on the face of its statement. Where
+// it publishes revenue, a cost total and the result of subtracting one from the other, only one
+// revenue element makes that subtraction come out TO THE DOLLAR, and that element is the top line.
+// So: compute what each identity the filer files IMPLIES the revenue must be, and take it only when
+// a revenue element the filer actually tagged equals it exactly. Nothing is ever constructed — the
+// number shipped is always an element the filer wrote down.
+//
+// Never the size of a tag and never its name.
+const IDENTITY_REV_POOL = [
+  "Revenues",
+  "RevenuesNetOfInterestExpense",
+  "RevenueFromContractWithCustomerExcludingAssessedTax",
+  "RevenueFromContractWithCustomerIncludingAssessedTax",
+  "RegulatedAndUnregulatedOperatingRevenue",
+  "RealEstateRevenueNet",
+  "OperatingLeaseLeaseIncome",
+  "OperatingLeasesIncomeStatementLeaseRevenue",
+  "OilAndGasRevenue",
+  "RevenueMineralSales",
+  "SalesRevenueNet",
+  "SalesRevenueGoodsNet",
+  "SalesRevenueServicesNet",
+  "HealthCareOrganizationRevenue",
+];
+// InterestAndDividendIncomeOperating is deliberately absent and must never be added: 164 banks tag
+// gross interest income ABOVE their presented top line (Cass files $97.6M of it against a $190.8M
+// total revenue), so admitting it would hand a lender its gross yield as its sales.
+const IDENTITY_PRETAX = "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest";
+// Each rung is the pair whose SUM the top line must equal — the algebra of the subtraction the filer
+// prints. "__cor" is the cost-of-revenue chain resolved above.
+const IDENTITY_RUNGS = [
+  ["__cor", "GrossProfit", "grossProfit"],
+  ["CostsAndExpenses", "OperatingIncomeLoss", "costsAndExpenses/operatingIncome"],
+  ["OperatingExpenses", "OperatingIncomeLoss", "operatingExpenses/operatingIncome"],
+  ["CostsAndExpenses", IDENTITY_PRETAX, "costsAndExpenses/pretax"],
+  ["OperatingExpenses", IDENTITY_PRETAX, "operatingExpenses/pretax"],
+  ["BenefitsLossesAndExpenses", IDENTITY_PRETAX, "benefitsLossesAndExpenses/pretax"],
+  // A lender's or card network's total revenue IS net interest income plus noninterest income —
+  // the banks desk's own reconstruction, here required to land on a total the filer tagged.
+  ["InterestIncomeExpenseNet", "NoninterestIncome", "netInterest+noninterest"],
+];
+// Names the owner has already ruled on, which this arbitration must leave exactly as they are.
+// DBRG/HAS/VICR/RSG/SLDP/BF-B/CRON were confirmed legitimate by hand; ConocoPhillips and MPLX
+// caption their total "Total Revenues and Other Income", and equity earnings are not sales, so
+// their larger element is not a top line however cleanly the arithmetic closes on it. Companyfacts
+// carries no captions, so this list is the only place that ruling can live.
+const IDENTITY_FROZEN = new Set(["DBRG", "HAS", "VICR", "RSG", "SLDP", "BF-B", "CRON", "COP", "MPLX"]);
+
+function applyIncomeStatementIdentity(facts, revAnnualBy, ticker, W) {
+  if (IDENTITY_FROZEN.has(String(ticker).toUpperCase())) return;
+  const cache = {};
+  const S = (tag) => (cache[tag] ||= tag === "__cor" ? corByYear(facts) : annualByYear(facts, [tag], "USD"));
+  const pool = {};
+  for (const t of IDENTITY_REV_POOL) { const s = annualByYear(facts, [t], "USD"); if (Object.keys(s).length) pool[t] = s; }
+  const excise = annualByYear(facts, ["ExciseAndSalesTaxes"], "USD");
+  for (const fy of Object.keys(revAnnualBy)) {
+    const incumbent = revAnnualBy[fy]?.val;
+    if (incumbent == null) continue;
+    const hits = [];
+    for (const [a, b, label] of IDENTITY_RUNGS) {
+      const av = S(a)[fy]?.val, bv = S(b)[fy]?.val;
+      if (av == null || bv == null) continue;
+      for (const t of Object.keys(pool)) if (pool[t][fy]?.val === av + bv) hits.push({ value: av + bv, tag: t, label });
+    }
+    if (!hits.length) continue;
+    const distinct = [...new Set(hits.map((h) => h.value))];
+    // Two identities in the same filing pointing at different revenues is the filing contradicting
+    // itself (Mastercard 2013, United Therapeutics 2009-13). A reader is better served by the
+    // figure already shown than by our choosing which of the filer's own totals to believe.
+    if (distinct.length > 1) {
+      W?.(`${ticker} revenue ${fy}: the filer's own identities disagree (${hits.map((h) => `${h.label}→${h.tag}`).join(", ")}) — left as filed`);
+      continue;
+    }
+    const to = distinct[0], tag = hits[0].tag;
+    if (to === incumbent) continue;
+    // The same figure at two precisions is not two figures: CarMax tags "Revenues" in whole dollars
+    // and its contract element rounded to the hundred thousand. Swapping one for the other churns
+    // ten history rows and tells a reader nothing.
+    if (Math.abs(to - incumbent) < 1e-5 * Math.abs(incumbent)) continue;
+    // EXCISE VETO, upward only. A candidate that exceeds the incumbent by the filer's own filed
+    // excise is the gross-of-excise line, not a truer total. One-directional on purpose: Molson
+    // Coors' correct move is DOWNWARD past its excise line (it tags gross under the "Excluding"
+    // element and net under the "Including" one), and a symmetric veto would block it.
+    const ex = excise[fy]?.val;
+    if (to > incumbent && ex > 0 && Math.abs(to - incumbent - ex) <= 0.02 * ex) {
+      W?.(`${ticker} revenue ${fy}: ${tag} exceeds the incumbent by the filer's own excise (${ex}) — not a truer total, left as filed`);
+      continue;
+    }
+    W?.(`${ticker} revenue ${fy}: ${incumbent} → ${to} — the filer's ${hits[0].label} identity closes on ${tag}`);
+    revAnnualBy[fy] = { ...pool[tag][fy] };
+  }
+}
+
 // A cost of revenue under a hundredth of the year's revenue is not a total, it is a fragment that
 // happened to be tagged. Withholding it costs a gross-margin reading; publishing it asserts the
 // business has no cost of sales, which for a utility buying fuel is simply false.
@@ -1177,6 +1278,11 @@ async function main() {
           revAnnualBy[fy] = totalRevBy[fy];
       }
     }
+    // Last word on the top line: the filer's own income-statement arithmetic (see
+    // applyIncomeStatementIdentity). Runs after the chains and the below-cost repair, so it
+    // arbitrates whatever they produced, and never for a depository — the banks desk reconstructs
+    // those from net interest income and noninterest income and is already correct.
+    if (!isBankCo) applyIncomeStatementIdentity(facts, revAnnualBy, ticker, (m) => console.warn(`  ! ${m}`));
     const latestRev = latestEntry(revAnnualBy);
     const revLatest = latestRev?.val ?? null;
     // The fiscal calendar (banks desk F2): each year's true period-end date from the revenue
@@ -1976,7 +2082,7 @@ async function main() {
 }
 
 // Exported for the offline extraction test and the wire's performance line; only hit EDGAR when run directly.
-export { instantMap, quarterFlowMap, quarterSeries, latestObservation, annualByYear, deriveOpInc, revenueTagsFor, CONCEPTS, fyOfEnd, sgaSeries, thinCor };
+export { instantMap, quarterFlowMap, quarterSeries, latestObservation, annualByYear, deriveOpInc, revenueTagsFor, CONCEPTS, fyOfEnd, sgaSeries, thinCor, corByYear, applyIncomeStatementIdentity, IDENTITY_FROZEN };
 
 if (import.meta.url === pathToFileURL(process.argv[1] || "").href) {
   main().catch((err) => {
