@@ -4,7 +4,7 @@
 // equity and tangible book, how efficiently it runs, how disciplined the lending is,
 // and how cheap and sticky the funding is. Pure arithmetic on the filing data.
 
-import { fmtMoney } from "./fundamentals.mjs";
+import { fmtMoney, latestReported } from "./fundamentals.mjs";
 
 const pc = (v, dp = 0) => (v == null ? "—" : `${(v * 100).toFixed(dp)}%`);
 const median = (xs) => { if (!xs.length) return null; const s = [...xs].sort((a, b) => a - b); const m = Math.floor(s.length / 2); return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
@@ -204,6 +204,14 @@ export function buildFinancialScorecard(company, subtype = "bank") {
     return l.netChargeOffs != null && l.loansHeldForInvestment ? Math.abs(l.netChargeOffs) / l.loansHeldForInvestment : null;
   }).filter((v) => v != null && Number.isFinite(v));
   const worstNco = ncoSeries.length >= 3 ? Math.max(...ncoSeries) : null;
+  // The record fallback for the latest-year-missing case (fires only when ncoRate is null AND the
+  // dollars are absent too — the Bank7 shape, 48 of 241 banks when measured).
+  const priorNco = ncoRate == null && L.netChargeOffs == null
+    ? latestReported(company, (l) =>
+        l.netChargeOffs != null && l.loansHeldForInvestment > 0
+          ? { nco: Math.abs(l.netChargeOffs), loans: l.loansHeldForInvestment, rate: Math.abs(l.netChargeOffs) / l.loansHeldForInvestment }
+          : null)
+    : null;
   const allowShare = L.allowanceForCreditLosses != null && L.loansHeldForInvestment ? L.allowanceForCreditLosses / L.loansHeldForInvestment : null;
   const creditCheck = ncoRate == null && L.netChargeOffs != null
     // The dollars are verified but the loan denominator is withheld (Wells Fargo's loan book
@@ -217,6 +225,20 @@ export function buildFinancialScorecard(company, subtype = "bank") {
       tone: "info",
       label: "Dollars only — loan base withheld",
       note: "Loans actually written off, net of recoveries. The rate against the loan book is the comparable figure, and it is withheld here because the loan base itself is not cleanly tagged — a rate on a guessed denominator would be a wrong number. Read the dollar trend against the bank's own history.",
+    }
+    : ncoRate == null && priorNco
+    // THE BANK7 SHAPE, retired (2026-07-28). The latest year's charge-offs are not yet tagged but
+    // the record holds them — Bank7 read "Not enough data" while carrying $16.5M (2023) and $1.8M
+    // (2024). Charge-offs are a FLOW read, so the most recent reported year, named, is the honest
+    // figure; "not derivable" was a false claim about a record that derived it fine last year.
+    ? {
+      title: "Net charge-offs",
+      concept: "combined-ratio",
+      value: `${pc(priorNco.value.rate, 2)} · FY${priorNco.fy}`,
+      formula: `FY${priorNco.fy}, the most recent year reported: charge-offs ${$(priorNco.value.nco)} ÷ loans ${$(priorNco.value.loans)}${worstNco != null ? ` · worst year on record ${pc(worstNco, 2)}` : ""}`,
+      tone: "info",
+      label: `Last reported FY${priorNco.fy}`,
+      note: "The latest fiscal year's charge-offs are not yet tagged in the structured data, so this reads the most recent year that is — named, never passed off as current. Loans actually written off net of recoveries; the worst year in the record, not the average, is Graham's read, because a loan book's sins are committed in the good years and confessed in the bad ones.",
     }
     : ncoRate == null
     ? none("Net charge-offs", "Not derivable from the filings' structured data — some filers carry recoveries only on segment axes, and a gross figure dressed as net would be a wrong number.", "combined-ratio")

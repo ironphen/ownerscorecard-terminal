@@ -152,7 +152,15 @@ if (!isFin && debtOk && roicSeries.length >= 3 && roicMed != null) {
   else if (negativeCCC) s2 = "Customers and suppliers fund the business through negative working capital, a structural edge the ratio does not show.";
 
   let s3;
-  if (band === "high") s3 = "Whether these returns reflect real pricing power or an accounting artifact is the judgment the 10-K is for.";
+  // A REGULATED UTILITY IS THE OPPOSITE OF A PRICE-TAKER (utilities desk, 2026-07-28). Its returns
+  // land in the low band by DESIGN — a commission caps them — so the generic low-band sentence
+  // called 68 legal monopolies "price-taker territory," the exact inversion of what they are. The
+  // SIC class is the same line the archetype's utility handling draws; merchant generators in the
+  // range get a capped-return sentence that is still closer to true for them than "price-taker."
+  const sicN = Number(company?.sic) || 0;
+  if (sicN >= 4900 && sicN <= 4991 && band !== "high")
+    s3 = "Modest returns here are the design, not a verdict: a regulated utility's prices are set by commission, so the questions are the return the regulator allows, how fast the invested base it earns that return on is growing, and the health of the relationship with the commissions that decide both — all of which live in the 10-K, not the multiple.";
+  else if (band === "high") s3 = "Whether these returns reflect real pricing power or an accounting artifact is the judgment the 10-K is for.";
   else if (band === "mid") s3 = "Returns like these are solid but short of clear franchise economics; whether they hold is what the 10-K settles, not the multiple.";
   else if (cyclical) s3 = "The cycle and the balance sheet decide this one; the worst year tells more than the median, and the rest is in the 10-K.";
   else s3 = "This is price-taker territory, where the balance sheet and the cycle matter more than any multiple; the rest is in the 10-K.";

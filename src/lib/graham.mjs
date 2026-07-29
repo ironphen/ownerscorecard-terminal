@@ -39,9 +39,25 @@ export function grahamTests(company) {
     }
   }
 
+  // GRAHAM'S OWN UTILITY SUBSTITUTION (The Intelligent Investor, ch. 14). For public utilities he
+  // replaced BOTH balance-sheet tests — the current ratio and debt-against-working-capital — with a
+  // single one: debt not exceeding twice the stock equity at book. His stated reason: the
+  // working-capital factor "takes care of itself in this industry as part of the continuous
+  // financing of its growth by sales of bonds and shares." Before 2026-07-28 the site ran the
+  // industrial tests on the utility shelves anyway, and 75 of 83 utilities failed a liquidity test
+  // Graham explicitly exempted them from — his framework misquoted on exactly the industry he
+  // carved out. Applied by SIC class (4900-4991), which is how Graham himself applied it — by
+  // industry membership; the desk survey's regulated/merchant distinction is a finer cut than his
+  // book makes, and the note carries the word "utility" so a merchant generator's reader can see
+  // which rule was applied. Test names stay identical so the Almanac's six criteria stay six.
+  const isUtility = (() => { const s = Number(company?.sic) || 0; return s >= 4900 && s <= 4991; })();
+
   // 2, Strong current ratio
   const ca = L.currentAssets, cl = L.currentLiabilities;
-  if (ca != null && cl != null && cl > 0) {
+  if (isUtility) {
+    add("Strong liquidity", "Current ratio ≥ 2× (waived for utilities)", "exempt", "na",
+      "Graham exempted public utilities from this test: their working capital “takes care of itself” through the continuous bond-and-share financing of growth, so a thin current ratio is the industry's structure, not a warning. His substitute test — debt no more than twice book equity — is the next line.");
+  } else if (ca != null && cl != null && cl > 0) {
     const cr = ca / cl;
     add("Strong liquidity", "Current ratio ≥ 2×", `${cr.toFixed(2)}×`, cr >= 2 ? "pass" : cr >= 1.5 ? "near" : "fail",
       "Current assets at least twice current liabilities, near-term bills covered without touching the business. Strict by design: many cash-rich modern firms run leaner and miss it, holding their cushion in longer-dated securities.",
@@ -50,8 +66,20 @@ export function grahamTests(company) {
     add("Strong liquidity", "Current ratio ≥ 2×", "—", "na", "Current assets / liabilities not in the data yet.");
   }
 
-  // 3, Conservative debt: total debt ≤ working capital (Graham's industrial test, using total debt as the stricter proxy for long-term debt)
-  if (ca != null && cl != null && !debtReliable(L)) {
+  // 3, Conservative debt: total debt ≤ working capital (Graham's industrial test, using total debt
+  // as the stricter proxy for long-term debt) — except utilities, which get his substitute test.
+  if (isUtility && L.totalDebt != null && L.stockholdersEquity > 0 && debtReliable(L)) {
+    const eq = L.stockholdersEquity;
+    add("Conservative debt", "Debt ≤ 2× equity (Graham's utility test)", `${$(L.totalDebt)} vs ${$(eq)} equity`,
+      L.totalDebt <= 2 * eq ? "pass" : L.totalDebt <= 2.5 * eq ? "near" : "fail",
+      "Graham's own substitution for public utilities: debt not exceeding twice the stock equity at book value, in place of the working-capital tests an industrial faces. A utility finances its plant with bonds by design; the question is whether the borrowing stays inside the equity behind it.",
+      { debt: L.totalDebt, equity: eq, delta: L.totalDebt <= 2 * eq ? null : L.totalDebt - 2 * eq });
+  } else if (isUtility) {
+    add("Conservative debt", "Debt ≤ 2× equity (Graham's utility test)", "—", "na",
+      debtReliable(L)
+        ? "Equity or total debt is not readable in the structured data this year, so Graham's utility debt test can't be run honestly."
+        : "The filings tag only a fraction of the debt this company's interest bill implies (much of it sits under segment dimensions the data source strips), so this test can't be run honestly.");
+  } else if (ca != null && cl != null && !debtReliable(L)) {
     add("Conservative debt", "Debt ≤ working capital", "—", "na",
       "The filings tag only a fraction of the debt this company's interest bill implies (much of it sits under segment dimensions the data source strips), so this test can't be run honestly.");
   } else if (ca != null && cl != null && L.totalDebt != null) {

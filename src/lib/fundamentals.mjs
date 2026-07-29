@@ -1043,6 +1043,33 @@ export function shortRecord(r) {
   return !!r && r.years != null && (r.years < 3 || (r.of != null && r.years * 2 < r.of));
 }
 
+// THE FLOW-CHECK RECORD FALLBACK (utilities desk survey, 2026-07-28). Thirty-two of the
+// thirty-seven desk scorecard checks read company.lines — the latest fiscal year — beside a
+// ten-year record. For a STOCK check (a capital ratio, the held-to-maturity marks) that is right:
+// the question is about today. For a FLOW check (charge-offs, reserve development, a combined
+// ratio) the record is the point, and the latest year is often the one still missing — Bank7's
+// charge-offs read "Not enough data" while its record held $16.5M (2023) and $1.8M (2024). This
+// walks the record newest-first and returns the most recent year the read answers, with the fiscal
+// year attached, so a surface can say "last reported FY2024" instead of lying in either direction.
+// `read` returns null for a year it cannot answer; anything else is the answer. Capped at
+// `maxLagYears` behind the record's own latest year — a decade-old flow resurrected as the headline
+// would be the opposite failure, so beyond the cap the surface withholds and says the record is old.
+export function latestReported(company, read, maxLagYears = 3) {
+  const latestFy = company?.fy ?? null;
+  const rows = [
+    { L: company?.lines, fy: latestFy },
+    ...[...(company?.history || [])].reverse().map((h) => ({ L: h?.lines, fy: h?.fy ?? null })),
+  ];
+  for (const r of rows) {
+    if (!r.L) continue;
+    const v = read(r.L);
+    if (v == null) continue;
+    if (latestFy != null && r.fy != null && latestFy - r.fy > maxLagYears) return null;
+    return { value: v, fy: r.fy, isLatest: r.fy != null && r.fy === latestFy };
+  }
+  return null;
+}
+
 // Read a yearly series the way an owner does — through the cycle, not on the endpoints. The single-year
 // reporting calendar is an accident of accounting that GBM look through, so "this year's margin vs the
 // one ten years ago" is a trap: a lone trough, a peak, or a one-off charge at either endpoint can make
