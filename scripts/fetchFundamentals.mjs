@@ -1543,6 +1543,39 @@ async function main() {
       ? `https://www.sec.gov/Archives/edgar/data/${Number(cik)}/${accnNoDash}/${anchor.accn}-index.htm`
       : `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${cik}&type=10-K&count=10`;
 
+    // THE CORROBORATED FILL, second application (REIT dividends, 2026-07-28; the first is the
+    // OGS revenue fill above, and the gate is identical — the filer's own testimony). Brixmor
+    // pays its whole distribution but the dividendsPaid chain covers only FY2013-14: since then
+    // its only payment line is PaymentsOfCapitalDistribution, the REIT return-of-capital element.
+    // That element is NOT a dividends synonym — measured across every cached filer, Hertz and
+    // Funko tag zeros under it in years they paid nothing of the kind, United's 2008 special
+    // rides it, Beazer's is negative, and Public Storage's carries common PLUS preferred beside
+    // a common-only chain (filling it would silently switch the record's composition mid-stream;
+    // it disagrees in all seven overlap years and is refused). Only a filer whose overlap years
+    // agree has testified the two elements are one figure — and "agree" includes the filer's own
+    // printed rounding: Brixmor tags 19.2M in the chain beside 19,209,000 in the element, the
+    // same figure disclosed at tenth-of-a-million precision, so a base that is round at $100k
+    // accepts an alternative within half that step. The rule admits exactly Brixmor across the
+    // whole cache (eleven dark years fill); Beazer's negatives, Clear Secure's both-directions
+    // splits and Public Storage's preferred layer all fail it, which is what makes it safe.
+    // No overlap proves nothing and fills nothing.
+    const dividendsBy = annualByYear(facts, CONCEPTS.dividendsPaid);
+    for (const altTag of ["PaymentsOfCapitalDistribution"]) {
+      const alt = annualByYear(facts, [altTag]);
+      const overlap = Object.keys(alt).filter((fy) => dividendsBy[fy]?.val != null);
+      if (!overlap.length) continue;
+      const agrees = overlap.every((fy) => {
+        const a = dividendsBy[fy].val, b = alt[fy].val;
+        if (Math.abs(b - a) <= 1e-5 * Math.abs(a)) return true;
+        return a % 1e5 === 0 && Math.abs(b - a) <= 5e4;
+      });
+      if (!agrees) continue;
+      for (const fy of Object.keys(alt)) {
+        if (dividendsBy[fy]?.val != null) continue;
+        console.warn(`  ! ${ticker} dividendsPaid ${fy}: filled from ${altTag} (${alt[fy].val}) — equal to the chain in every overlap year`);
+        dividendsBy[fy] = { ...alt[fy] };
+      }
+    }
     // Up to ~10 years of history for the durability strips.
     const ha = {
       revenue: valuesByYear(revAnnualBy),
@@ -1555,7 +1588,7 @@ async function main() {
       capex: collectAnnual(facts, CONCEPTS.capex),
       costOfRevenue: valuesByYear(corByYear(facts)),
       depreciation: collectAnnual(facts, CONCEPTS.depreciation),
-      dividendsPaid: collectAnnual(facts, CONCEPTS.dividendsPaid),
+      dividendsPaid: valuesByYear(dividendsBy),
       buybacks: collectAnnual(facts, CONCEPTS.buybacks),
       repurchasedShares: collectAnnual(facts, CONCEPTS.repurchasedShares, "shares"),
       sharesDiluted: collectAnnual(facts, CONCEPTS.sharesDiluted, "shares"),
@@ -1957,7 +1990,10 @@ async function main() {
         acquisitionSpend: pick(CONCEPTS.acquisitionSpend),
         goodwillImpairment: pick(CONCEPTS.goodwillImpairment),
         assetImpairment: pick(CONCEPTS.assetImpairment),
-        dividendsPaid: pick(CONCEPTS.dividendsPaid),
+        // Read from the record's own filled series at the anchor year (the corroborated fill
+        // above), not a fresh pick — measured across the cache the two never disagree except
+        // where the fill recovered years the chain lacks, which is the point.
+        dividendsPaid: anchor?.fy != null ? (ha.dividendsPaid?.[anchor.fy] ?? null) : null,
         buybacks: pick(CONCEPTS.buybacks),
         repurchasedShares: fixShareScale(pickAnnual(facts, CONCEPTS.repurchasedShares, "shares")?.val ?? null, shareRef),
         stockholdersEquity: inst(CONCEPTS.stockholdersEquity),
