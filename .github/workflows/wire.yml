@@ -6,7 +6,13 @@ name: Filing Wire
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 11 * * 1-5" # weekdays 11:00 UTC, after most filings post
+    - cron: "0 11 * * 1-5" # weekdays 11:00 UTC (pre-market ET): the self-heal pass for anything the evening missed
+    # The same-evening pass (2026-07-29): most 10-Qs are accepted between market close and the
+    # 5:30pm ET cutoff, so a 23:30 UTC run (6:30-7:30pm ET across DST) publishes them the night
+    # they land. Where companyfacts hasn't ingested a filing yet — Rambus's June 10-Q sat
+    # un-ingested for over a day — the fetch reads the filing's own extracted XBRL instance,
+    # gated on its comparatives agreeing with the ingested record (scripts/filingFacts.mjs).
+    - cron: "30 23 * * 1-5"
 
 permissions:
   contents: write

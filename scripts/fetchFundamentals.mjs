@@ -26,6 +26,7 @@ import { hasBankData, banksLines, BANK_LINE_NAMES } from "./banksLines.mjs";
 import { hasSoftwareData, softwareLines, SOFTWARE_LINE_NAMES } from "./softwareLines.mjs";
 import { hasOilGasData, oilGasLines, OILGAS_LINE_NAMES } from "./oilGasLines.mjs";
 import { rateRegulatedConceptCount, utilitiesLines } from "./utilitiesLines.mjs";
+import { freshFilingMerge } from "./filingFacts.mjs";
 // Desk lines are deterministic extractions: the same facts give the same lines every run, so an
 // absence is always a deliberate gate, never a transient tag miss — the field carry-over below
 // must never resurrect one from a prior file (Wells Fargo's withheld charge-offs came back from
@@ -1216,10 +1217,10 @@ async function main() {
     }
 
     // Industry code (drives the archetype classifier). Non-fatal if it fails.
-    let sic = null, sicDescription = null, primaryTicker = null;
+    let sic = null, sicDescription = null, primaryTicker = null, sub = null;
     try {
       await sleep(THROTTLE_MS);
-      const sub = await getJSON(`https://data.sec.gov/submissions/CIK${cik}.json`);
+      sub = await getJSON(`https://data.sec.gov/submissions/CIK${cik}.json`);
       sic = sub?.sic || null;
       sicDescription = sub?.sicDescription || null;
       // The issuer's own registered-securities order, the filed fact the listings tie-break asked
@@ -1231,6 +1232,19 @@ async function main() {
       primaryTicker = Array.isArray(sub?.tickers) && sub.tickers.length ? String(sub.tickers[0]).toUpperCase() : null;
     } catch {
       /* leave null */
+    }
+
+    // THE FRESH-FILING MERGE (2026-07-29, scripts/filingFacts.mjs): when the latest 10-K/10-Q on
+    // the filer's own submissions record postdates everything companyfacts carries — Rambus's
+    // June-quarter 10-Q sat accepted for over a day while the API still served March — the
+    // filing's extracted XBRL instance fills the gap, gated on its own comparatives agreeing
+    // with the ingested record to the dollar (ten overlapping facts minimum, any disagreement
+    // refuses the whole document). Append-only, so the merge retires itself as the API catches
+    // up; a failure warns and the extraction continues on companyfacts alone.
+    if (sub) {
+      await sleep(THROTTLE_MS);
+      const fresh = await freshFilingMerge(facts, sub, cik, { headers: HEADERS, warn: (m) => console.warn(`  ! ${ticker}: ${m}`) });
+      if (fresh) console.log(`  ${ticker}: ${fresh.form} for ${fresh.reportDate} merged from the filing itself (${fresh.merged} facts, ${fresh.overlaps} comparatives agreed) — companyfacts had not ingested it yet`);
     }
 
     // Display name: a curated universe name wins; otherwise fall back to EDGAR's own
