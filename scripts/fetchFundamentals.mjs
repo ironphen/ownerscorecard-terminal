@@ -433,7 +433,15 @@ function revenueTagsFor(sic, facts) {
   if (sicN === 7359) return LESSOR_REVENUE;
   // Broker-dealers and asset managers: pick-max across the totals (see BROKER_REVENUE).
   if (sicN === 6211) return BROKER_REVENUE;
-  if (sicN >= 4900 && sicN <= 4991 && facts?.facts?.["us-gaap"]?.RegulatedAndUnregulatedOperatingRevenue) return UTILITY_REVENUE;
+  // A regulated utility's statement total is "Operating Revenue" (us-gaap:Revenues); the ASC 606
+  // contract tag many of them also file is a subtotal that excludes alternative-revenue programs.
+  // The gate was one tag's presence, which missed CMS Energy — its quarterly revenue served the
+  // contract subtotal ($1,842M against the statement's $1,920M, verified on the filing) — so it
+  // now also fires on the utilities desk's own membership test, the >=5 rate-regulated-concept
+  // count (candidate-scoped by the SIC range here; merchant generators fail the count and keep
+  // the general ladder).
+  if (sicN >= 4900 && sicN <= 4991 &&
+    (facts?.facts?.["us-gaap"]?.RegulatedAndUnregulatedOperatingRevenue || rateRegulatedConceptCount(facts) >= 5)) return UTILITY_REVENUE;
   return CONCEPTS.revenue;
 }
 
@@ -1077,7 +1085,10 @@ function instantMap(facts, tags, unit = "USD") {
       if (!u.form || !u.end || u.start) continue;
       if (!(u.form.startsWith("10-K") || u.form.startsWith("10-Q"))) continue;
       const f = u.filed || "";
-      if (!(u.end in out) || f >= (filed[u.end] || "")) { out[u.end] = u.val; filed[u.end] = f; }
+      // STRICTLY later filed wins (a real restatement); on a tie the FIRST ladder rung stands.
+      // This was `>=` until 2026-07-29, which let a later rung overwrite the primary concept
+      // whenever both were tagged in the same filing — see quarterFlowMap below for the damage.
+      if (!(u.end in out) || f > (filed[u.end] || "")) { out[u.end] = u.val; filed[u.end] = f; }
     }
   }
   return out;
@@ -1085,18 +1096,42 @@ function instantMap(facts, tags, unit = "USD") {
 // An income line as a true three-month quarterly flow: 10-Qs report both a 3-month and a cumulative
 // year-to-date duration, so we keep only the ~90-day observations. (Cash flow is YTD-only and so is
 // not read this way — burn comes from the TTM figure instead.) Map of end-date -> quarterly value.
-function quarterFlowMap(facts, tags, unit = "USD") {
-  const out = {}, filed = {};
+//
+// Rebuilt 2026-07-29 in annualByYear's shape, because its old flat walk let ANY later-or-equal
+// filed date overwrite the incumbent — so the LAST ladder rung won whenever one filing tagged two
+// concepts for the same quarter, and a later filing's comparative under a minor rung beat the
+// primary concept's original fact. The damage was measured before the rebuild: 12,214 quarterly
+// cells across 500 of 597 cached filers, 4,513 of them by more than ten percent. AvalonBay's
+// quarterly "revenue" was its ~$1.8M management-fee sliver beside $325M of net income; Hertz's was
+// a $36M footnote line against a $1,873M statement total; Dominion's was a contract figure LARGER
+// than its own total revenue; Encompass and Simon printed net income a fifth high (the ProfitLoss
+// rung, noncontrolling interests included, beating the attributable line EPS is computed from);
+// Abbott's read a hundred-million-rounded highlights tag. Every repair in a three-agent hostile
+// verification matched the filer's own rendered statement to the dollar.
+//
+// The shape now matches the annual doctrine exactly: within a tag the latest filing wins the
+// quarter (restatements land), across tags the CHAIN ORDER decides — a lower rung fills only the
+// quarters the rungs above it lack. pickMax mirrors annualByYear's REIT/insurer/lessor/broker
+// exception: whichever tag carries the LARGER value for the quarter is the real top line (Simon
+// books the complete total under "Revenues" while a pure-rent trust's whole top line is the lease
+// concept; first-rung-wins would serve the component).
+function quarterFlowMap(facts, tags, unit = "USD", pickMax = false) {
+  const out = {};
   for (const tag of tags) {
     const units = facts?.facts?.["us-gaap"]?.[tag]?.units?.[unit];
     if (!units) continue;
+    const perTag = {};
     for (const u of units) {
       if (!u.form || !u.start || !u.end) continue;
       if (!(u.form.startsWith("10-K") || u.form.startsWith("10-Q"))) continue;
       const dur = days(u.start, u.end);
       if (dur < 80 || dur > 100) continue; // a single quarter, not a YTD or annual span
       const f = u.filed || "";
-      if (!(u.end in out) || f >= (filed[u.end] || "")) { out[u.end] = u.val; filed[u.end] = f; }
+      if (!perTag[u.end] || f > perTag[u.end].filed) perTag[u.end] = { val: u.val, filed: f };
+    }
+    for (const end in perTag) {
+      if (!(end in out)) { out[end] = perTag[end].val; continue; }
+      if (pickMax && perTag[end].val > out[end]) out[end] = perTag[end].val;
     }
   }
   return out;
@@ -1104,11 +1139,13 @@ function quarterFlowMap(facts, tags, unit = "USD") {
 // The last n quarters: liquidity (current assets/liabilities, cash) as instants, and revenue/earnings
 // as three-month flows, merged on the period end. Drives the trend and the recent-quarter momentum;
 // every figure raw, so the ratios are derived in page code and never need re-fetching.
-function quarterSeries(facts, revTags, n = 8) {
+function quarterSeries(facts, revTags, n = 8, pickMaxRev = false) {
   const ca = instantMap(facts, CONCEPTS.currentAssets);
   const cl = instantMap(facts, CONCEPTS.currentLiabilities);
   const cash = instantMap(facts, CONCEPTS.cashAndEquivalents);
-  const rev = quarterFlowMap(facts, revTags);
+  // pickMaxRev = the same cohorts whose ANNUAL revenue reads pick-max (REIT/insurer/lessor/
+  // broker): whichever tag carries the larger quarter is the real top line.
+  const rev = quarterFlowMap(facts, revTags, "USD", pickMaxRev);
   const ni = quarterFlowMap(facts, CONCEPTS.netIncome);
   const oi = quarterFlowMap(facts, CONCEPTS.operatingIncome);
   const ends = [...new Set([...Object.keys(ca), ...Object.keys(rev)])].sort();
@@ -1948,7 +1985,7 @@ async function main() {
             intangibleAssets: instq(CONCEPTS.intangibleAssets),
             sharesOutstanding: fixShareScale(pickInstant(facts, CONCEPTS.sharesOutstanding, "shares", fyEnds)?.val ?? null, shareRef),
           },
-          series: quarterSeries(facts, revTags),
+          series: quarterSeries(facts, revTags, 8, isReitCo || isInsurerCo || isLessorCo || isBrokerCo),
         }
       : null;
 
