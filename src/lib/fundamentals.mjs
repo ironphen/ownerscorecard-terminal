@@ -636,7 +636,13 @@ function revenueGrowing(c) {
 export function ownerEarningsBridgeFor(L, fy, company) {
   const ni = L?.netIncome, cfo = L?.cashFromOps, capex = L?.capex;
   if (ni == null || cfo == null || capex == null) return null;
-  const dep = L.depreciation != null ? L.depreciation : null;
+  // A NEGATIVE depreciation is not a non-cash charge added back. AES tags
+  // DepreciationAmortizationAndAccretionNet at −$1.46B — an accretion-swamped net line — and the
+  // bridge printed it as an add-back with a minus sign on it. The record keeps the value as filed;
+  // HERE the row claims "added back", so a non-positive value is withheld from that claim and the
+  // residual line (`other`, computed below from whatever this excludes) absorbs the reconciliation,
+  // which is arithmetically where a net accretion belongs. The walk still closes to the dollar.
+  const dep = L.depreciation > 0 ? L.depreciation : null;
   const sbc = L.stockBasedComp != null ? L.stockBasedComp : null;
   const capexAbs = Math.abs(capex);
   const other = cfo - ni - (dep || 0) - (sbc || 0);

@@ -192,7 +192,11 @@ const CONCEPTS = {
     "ResearchAndDevelopmentExpenseSoftwareExcludingAcquiredInProcessCost",
   ],
   stockBasedComp: ["ShareBasedCompensation"],
-  dividendsPaid: ["PaymentsOfDividendsCommonStock", "PaymentsOfDividends"],
+  // PaymentsOfOrdinaryDividends appended 2026-07-28 (utilities desk survey): Duke tags all three
+  // elements but the first two stopped covering recent years — the Oracle tag-migration shape — so
+  // $3.30B of dividends read as absent. A per-year ladder means the append serves only the years the
+  // earlier rungs lack; 32 cached filers gain a dividends line, none loses one.
+  dividendsPaid: ["PaymentsOfDividendsCommonStock", "PaymentsOfDividends", "PaymentsOfOrdinaryDividends"],
   buybacks: ["PaymentsForRepurchaseOfCommonStock"],
   // Cash actually spent buying other businesses, the direct measure of how acquisitive a company
   // is. Paired with goodwill on the balance sheet and impairments on the income statement, it tells
@@ -1283,8 +1287,36 @@ async function main() {
     // arbitrates whatever they produced, and never for a depository — the banks desk reconstructs
     // those from net interest income and noninterest income and is already correct.
     if (!isBankCo) applyIncomeStatementIdentity(facts, revAnnualBy, ticker, (m) => console.warn(`  ! ${m}`));
+    // THE CORROBORATED FILL (utilities desk, 2026-07-28). ONE Gas Holdings' revenue chain went dark
+    // after FY2022 — since then its only top line is RegulatedOperatingRevenue, absent from every
+    // chain — and the record kept serving the FY2022 fact as current ($2,578,005,000 printed on the
+    // FY2025 page verbatim). The identity ladder cannot rescue it: OGS tags no undimensioned
+    // CostsAndExpenses or OperatingExpenses, so no rung closes.
+    //
+    // The gate here is the filer's own testimony instead: an alternative element may fill years the
+    // chain lacks ONLY where every year both elements carry a value they agree TO THE DOLLAR (within
+    // the same rounding window the ladder uses). OGS's one overlap year, FY2022, has
+    // RegulatedOperatingRevenue equal to Revenues exactly — the filer itself states the two are one
+    // figure. The six of eight current taggers for whom this element is a PARTIAL top line disagree
+    // in their overlap years and are refused by the same test, which is what makes the fill safe:
+    // the tag list is named, never a sweep, and a filer with no overlap year proves nothing and
+    // fills nothing.
+    if (!isBankCo) {
+      for (const altTag of ["RegulatedOperatingRevenue"]) {
+        const alt = annualByYear(facts, [altTag], "USD");
+        const overlap = Object.keys(alt).filter((fy) => revAnnualBy[fy]?.val != null);
+        if (!overlap.length) continue;
+        const agrees = overlap.every((fy) => Math.abs(alt[fy].val - revAnnualBy[fy].val) <= 1e-5 * Math.abs(revAnnualBy[fy].val));
+        if (!agrees) continue;
+        for (const fy of Object.keys(alt)) {
+          if (revAnnualBy[fy]?.val != null) continue;
+          console.warn(`  ! ${ticker} revenue ${fy}: filled from ${altTag} (${alt[fy].val}) — equal to the chain in every overlap year`);
+          revAnnualBy[fy] = { ...alt[fy] };
+        }
+      }
+    }
     const latestRev = latestEntry(revAnnualBy);
-    const revLatest = latestRev?.val ?? null;
+    let revLatest = latestRev?.val ?? null;
     // The fiscal calendar (banks desk F2): each year's true period-end date from the revenue
     // record — the pin every balance-sheet instant below is checked against, so a dead tag's
     // mid-year or transition-date balance can never masquerade as a fiscal year's value.
@@ -1298,6 +1330,17 @@ async function main() {
     const anchor = (oi && latestRev)
       ? (new Date(oi.end) >= new Date(latestRev.end) ? oi : latestRev)
       : (oi || latestRev); // for fy / period / filing link
+    // A REVENUE FACT MAY ONLY SPEAK FOR THE YEAR IT BELONGS TO. When the anchor (the record's own
+    // latest year) is newer than the newest revenue fact, the top line for that year is MISSING, not
+    // whatever the old fact says — OGS's FY2025 page printed its FY2022 revenue verbatim for three
+    // years because this line did not exist. The corroborated fill above rescues the year where the
+    // filer's own overlap testimony allows it; where it does not, the year shows a dash. Keyed to the
+    // anchor's fiscal year, never to max(end) over facts: forward-dated schedule facts (PPL's lease
+    // maturities carry end=2026-12-31 in a 2021 filing) make max(end) itself a wrong-number machine.
+    if (latestRev && anchor && latestRev.fy !== anchor.fy) {
+      console.warn(`  ! ${ticker} revenue: newest fact is fy${latestRev.fy} but the record's latest year is fy${anchor.fy} — withheld rather than served as current`);
+      revLatest = null;
+    }
     const maxOf = (...vals) => { const xs = vals.filter((v) => v != null); return xs.length ? Math.max(...xs) : null; };
     // Total debt: long-term + current from the component tags, taken against the max of
     // every aggregate total-debt tag. We take the MAX across the tags (not a priority
