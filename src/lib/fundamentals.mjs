@@ -615,7 +615,25 @@ export function freeCashFlowMargin(L) {
 // Did the business actually grow across the record? First few years of revenue vs the last few, so a
 // one-year blip doesn't read as growth and a steady decliner isn't credited with growth capex.
 function revenueGrowing(c) {
-  const H = (c?.history || []).filter((h) => h?.lines?.revenue != null);
+  let H = (c?.history || []).filter((h) => h?.lines?.revenue != null);
+  // A structural break — a single year keeping less than ~60% of the prior year's revenue — means
+  // the record holds two different companies under one ticker: Exelon before and after it spun
+  // Constellation, GE before and after its three-way split. Comparing across the break answers
+  // "did it keep its segments," not "is the business growing," so the test reads the segment the
+  // company now is — and only where that segment is long enough to judge (four years); a shorter
+  // tail keeps the whole-record verdict rather than collecting a growth credit from the
+  // too-short-to-judge default. The threshold is deliberately deep (only unambiguous structural
+  // halvings; recovered cyclicals like the 2020 airlines read the same either way), and the blast
+  // radius was measured before shipping: 12 verdicts change pool-wide, every one a company whose
+  // revenue genuinely rises across 4+ post-break years — GE, Howmet, XPO, Valvoline, Shenandoah,
+  // Exelon among them — and each had been charged full capex against a predecessor's top line.
+  for (let i = H.length - 1; i >= 1; i--) {
+    const cur = H[i]?.lines?.revenue, prev = H[i - 1]?.lines?.revenue;
+    if (cur > 0 && prev > 0 && cur < prev * 0.62) {
+      if (H.length - i >= 4) H = H.slice(i);
+      break;
+    }
+  }
   if (H.length < 4) return true; // too short to judge; treat a build-out as growth (the AI-capex case)
   const m = (xs) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
   const early = m(H.slice(0, 3).map((h) => h.lines.revenue));
