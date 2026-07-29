@@ -25,6 +25,7 @@ import { hasInsuranceData, insuranceLines, fillClaimsFromRollforward, INSURANCE_
 import { hasBankData, banksLines, BANK_LINE_NAMES } from "./banksLines.mjs";
 import { hasSoftwareData, softwareLines, SOFTWARE_LINE_NAMES } from "./softwareLines.mjs";
 import { hasOilGasData, oilGasLines, OILGAS_LINE_NAMES } from "./oilGasLines.mjs";
+import { rateRegulatedConceptCount, utilitiesLines } from "./utilitiesLines.mjs";
 // Desk lines are deterministic extractions: the same facts give the same lines every run, so an
 // absence is always a deliberate gate, never a transient tag miss — the field carry-over below
 // must never resurrect one from a prior file (Wells Fargo's withheld charge-offs came back from
@@ -1706,9 +1707,20 @@ async function main() {
     const og = !ins && !bank && hasOilGasData(facts) ? oilGasLines(facts, fyEnds) : null;
     if (og) for (const w of og.flags?.warns || []) console.warn(`  ! ${ticker} oil&gas: ${w}`);
     if (soft) for (const w of soft.flags?.warns || []) console.warn(`  ! ${ticker} software: ${w}`);
+    // The utilities desk (scripts/utilitiesLines.mjs): the regulated balance sheet and the
+    // reinvestment engine, gated on the filer's own testimony — a utility candidate (SIC
+    // 4900-4991 or a taxonomy Utilities override) carrying >=5 distinct rate-regulated
+    // concepts. Candidate-scoped, never universe-wide: EQT would pass on its pre-spin
+    // pipeline legacy tags, and a merchant generator like Vistra fails at the count itself.
+    const sicNum = Number(sic) || 0;
+    const utilityCandidate = (sicNum >= 4900 && sicNum <= 4991)
+      || sectorOfIndustry(industryLabelOf({ ticker, sic })) === "Utilities";
+    const rateRegulated = utilityCandidate && rateRegulatedConceptCount(facts) >= 5;
+    const ute = rateRegulated ? utilitiesLines(facts, fyEnds) : null;
+    if (ute) for (const w of ute.flags?.warns || []) console.warn(`  ! ${ticker} utilities: ${w}`);
     const insYear = (fy) => {
       const o = {};
-      for (const src of [ins, bank, soft, og]) {
+      for (const src of [ins, bank, soft, og, ute]) {
         if (!src) continue;
         for (const [line, series] of Object.entries(src.flows)) if (series[fy] != null) o[line] = series[fy];
         for (const [line, series] of Object.entries(src.instants)) if (series[fy] != null) o[line] = series[fy];
@@ -1729,7 +1741,7 @@ async function main() {
         if (anchor?.fy != null && maxFy < anchor.fy) return null;
         return series[maxFy];
       };
-      for (const src of [ins, bank, soft, og]) {
+      for (const src of [ins, bank, soft, og, ute]) {
         if (!src) continue;
         for (const [line, series] of Object.entries(src.flows)) { const v = latestOf(series); if (v != null) o[line] = v; }
         for (const [line, series] of Object.entries(src.instants)) { const v = latestOf(series); if (v != null) o[line] = v; }
@@ -1925,6 +1937,12 @@ async function main() {
       cik,
       sic,
       sicDescription,
+      // The utilities desk's membership gate, decided at extraction from the filer's own tags
+      // (>=5 distinct rate-regulated concepts on a utility candidate). Present only when true;
+      // every utilities surface — lens, scorecard, columns — routes on this, never on SIC alone,
+      // so a merchant generator on a utility SIC never wears a regulated costume.
+      ...(rateRegulated ? { rateRegulated: true } : {}),
+      ...(ute?.flags?.utilityPlantBasis ? { utilityPlantBasis: ute.flags.utilityPlantBasis } : {}),
       // When this record was last EXTRACTED, which is not the same as the file's asOf: a partial
       // run rewrites the whole file while touching only its cohort, and without a per-record stamp
       // a decade-old extraction is indistinguishable from this morning's. The stamp is what turns

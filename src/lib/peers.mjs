@@ -135,7 +135,13 @@ export function selectPeers(company, all, n = 7) {
   //
   // The test is symmetric: an operating company (kind null) benches only other operating companies,
   // so a bank can no longer wander into a table read on gross margin either.
-  const lensGuard = (pool) => pool.filter((c) => (financialKind(c) || null) === myKind);
+  //
+  // The utilities split rides the same guard (Wave C, 2026-07-28): a rate-regulated utility — the
+  // pipeline's own gate flag, the filer's testimony — benches only other regulated utilities, and a
+  // merchant generator sharing its shelf benches other merchants. Both sides carry kind null, so
+  // the financial kinds are untouched; what changes is that Southern's bench can no longer seat
+  // Vistra and read it on columns no commission caps.
+  const lensGuard = (pool) => pool.filter((c) => (financialKind(c) || null) === myKind && !!c.rateRegulated === !!company.rateRegulated);
   const pool = universe;
 
   // Sub-industry closeness: a shared 4-digit SIC is a tight match, 3-digit close, 2-digit loose, none far.

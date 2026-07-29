@@ -7,6 +7,7 @@ import { buildReitScorecard, cashPayout, debtToAssets, ebitdaCoverage } from "..
 import { buildInsurerScorecard, combinedRatio } from "../lib/insurers.mjs";
 import { buildFeeScorecard } from "../lib/feeFinancials.mjs";
 import { buildManagedCareScorecard, medicalLossRatio } from "../lib/managedCare.mjs";
+import { buildUtilityScorecard } from "../lib/utilities.mjs";
 import { moatReport } from "../lib/durability.mjs";
 import { grahamTests } from "../lib/graham.mjs";
 import { financialKind, financialSubtype } from "../lib/archetype.mjs";
@@ -30,12 +31,18 @@ const GLABEL = { pass: "Pass", near: "Near", fail: "Miss", na: "—" };
 // ratio.
 const fk = financialKind(company);
 const isFin = !!fk;
+// A rate-regulated utility (the pipeline's own gate, never SIC alone) is read on the regulated
+// questions — the earned return against the allowed one, the growing invested base, the AFUDC
+// credit, the regulatory ledger — instead of the industrial quality checks a commission-capped
+// return would flunk by design. Graham's tests still run below: his 1972 utility substitution
+// lives inside grahamTests itself.
 const { sections } =
   fk === "reit" ? buildReitScorecard(company)
   : fk === "insurer" ? buildInsurerScorecard(company, financialSubtype(company))
   : fk === "managedCare" ? buildManagedCareScorecard(company)
   : fk === "fee" ? buildFeeScorecard(company, financialSubtype(company))
   : fk === "bank" ? buildFinancialScorecard(company, financialSubtype(company))
+  : company.rateRegulated ? buildUtilityScorecard(company)
   : buildScorecard(company);
 // The filing's own pricing words, threaded into the moat report so the margin/pricing-power line
 // reads the number and the company's language together. Withheld for financials (where "pricing

@@ -28,7 +28,8 @@ import {
   recordMedian,
   shortRecord,
 } from "./fundamentals.mjs";
-import { tangibleEquity, returnOnTangibleEquity, roteOverRecord } from "./financials.mjs";
+import { tangibleEquity, returnOnTangibleEquity, roteOverRecord, returnOnEquity } from "./financials.mjs";
+import { plantGrowth, afudcShare } from "./utilities.mjs";
 import { floatOf } from "./insurers.mjs";
 import { medicalLossRatio } from "./managedCare.mjs";
 import { cashPayout } from "./reits.mjs";
@@ -86,6 +87,20 @@ export const COL = {
   // the payout against it answers what FFO was being asked — whether the distribution is earned.
   cashFromOps: { key: "cashFromOps", label: "Cash from operations", basis: "latest fiscal year, USD", type: "money", concept: "cash-from-operations" },
   cashPayout: { key: "cashPayout", label: "Dividend / operating cash", basis: "dividends paid ÷ cash from operations · median over the record", type: "pct", concept: "dividend-coverage" },
+  // The utilities desk's five (Wave C, 2026-07-28; docs/utilities-desk-survey.md). The centerpiece
+  // Buffett's utility letters read: the return actually EARNED on shareholders' capital against the
+  // one the commission allows; the growth of the invested base that return is earned on (never
+  // labeled rate base — that number is not filed in structured form; utility plant is the proxy,
+  // on the filer's own basis); the AFUDC construction credit's weight in earnings; and the
+  // regulatory ledger as filed. Cells answer only for filers passing the pipeline's rate-regulated
+  // gate — a merchant generator on the same shelf prints honest blanks in these columns. Declared
+  // here, before the dividend line, so the sector table's declaration order matches the industry
+  // table's own.
+  roe: { key: "roe", label: "Return on equity", basis: "earned, consolidated · median over the record", type: "pct", concept: "return-on-equity" },
+  plantGrowth: { key: "plantGrowth", label: "Utility plant growth", basis: "annualized over the record, on the filer's own basis", type: "pct" },
+  afudcShare: { key: "afudcShare", label: "AFUDC share of earnings", basis: "equity allowance ÷ net income · latest FY", type: "pct" },
+  regAssets: { key: "regAssets", label: "Regulatory assets", basis: "latest fiscal year, USD", type: "money" },
+  regLiabilities: { key: "regLiabilities", label: "Regulatory liabilities", basis: "latest fiscal year, USD", type: "money" },
   dividendsPaid: { key: "dividendsPaid", label: "Dividends paid", basis: "latest fiscal year, USD", type: "money" },
   totalAssets: { key: "totalAssets", label: "Total assets", basis: "latest fiscal year, USD", type: "money" },
   // The software desk's three: what is already contracted and lands within a year, what the
@@ -138,12 +153,23 @@ export const FAMILIES = {
     name: "General operating",
     columns: [COL.revenue, COL.grossMargin, COL.operatingMargin, COL.ownerEarnings, COL.roic, COL.netDebt],
   },
-  // Heavy operators whose cost-of-revenue line is unreliably tagged across the pools (utilities,
-  // transport, hospitality): the gross-margin column would read "—" for most members, so it is
+  // Heavy operators whose cost-of-revenue line is unreliably tagged across the pools (transport,
+  // hospitality, midstream): the gross-margin column would read "—" for most members, so it is
   // dropped and dividends paid — a line an owner of these businesses actually reads — stands in.
   heavy: {
     name: "Heavy operating",
     columns: [COL.revenue, COL.operatingMargin, COL.ownerEarnings, COL.roic, COL.netDebt, COL.dividendsPaid],
+  },
+  // Regulated utilities (Wave C, 2026-07-28): the desk's centerpiece replaces the industrial read
+  // that a commission-capped return flunks by design — ROIC and owner earnings answer the wrong
+  // question for a business whose growth capex earns the allowed return and is financed rather
+  // than expensed against the owner. Net debt moves to the company page beside Graham's own
+  // debt-to-equity utility test; the dividend line stays, because it is the line these companies
+  // are owned for. Merchant generators and YieldCos on these shelves fail the pipeline's
+  // rate-regulated gate and print honest blanks in the specialist cells.
+  utility: {
+    name: "Regulated utilities",
+    columns: [COL.revenue, COL.roe, COL.plantGrowth, COL.afudcShare, COL.regAssets, COL.regLiabilities, COL.dividendsPaid],
   },
   // Lenders: read on the balance sheet, not the operating line — the reconstructed top line, the
   // lending spread in dollars, the funding base, the profit, and the return on hard capital.
@@ -316,8 +342,16 @@ export const SECTOR_COLUMNS = {
   // 194 rows, general + heavy. Gross margin answers 61% and is dropped; dividends paid fails
   // coverage at 26%. Kept: 84-96%.
   "Communication Services": [COL.revenue, COL.operatingMargin, COL.ownerEarnings, COL.roic, COL.netDebt],
-  // 115 rows, single family (heavy): its columns unchanged. Lowest answered is owner earnings, 81%.
-  "Utilities": [COL.revenue, COL.operatingMargin, COL.ownerEarnings, COL.roic, COL.netDebt, COL.dividendsPaid],
+  // 116 rows, single family (utility, Wave C 2026-07-28), AMENDED per the rule's own step 4: the
+  // family's four specialist columns answer 34-53% at sector scale (the merchant generators and
+  // YieldCos on these shelves fail the rate-regulated gate, honestly blank on a forty-row industry
+  // table and a wall of holes here), so they stay one step down on the four industry tables. The
+  // sector keeps the universal reads — earned ROE 98%, dividends 87% — plus net debt, hand-restored
+  // on the Information Technology precedent (91% answered; a sector this leveraged without a debt
+  // column is the rule outranking the judgment it serves). The industrial read this replaced
+  // (operating margin, owner earnings, ROIC) answered the wrong question for a regulated book,
+  // which is the desk's whole finding.
+  "Utilities": [COL.revenue, COL.netDebt, COL.roe, COL.dividendsPaid],
   // 184 rows, single family (property): its columns unchanged. Funds from operations does not
   // appear because it was withdrawn from the library on 2026-07-25 — no REIT tags it, and rebuilt
   // from the standard tags it missed Simon Property by half; cash from operations is filed and
@@ -494,6 +528,20 @@ export function groupingCells(company, familyKey, terms, columns = null) {
         // Gated: a company whose tangible book is gone today has no return on it to report, whatever
         // it earned before the goodwill arrived (financials.roteOverRecord).
         return pctRec(roteOverRecord(company, rec));
+      case "roe":
+        // Earned, consolidated, through the record — the utilities desk's read of the regulated
+        // return, computable for any row (the eq>0 guard withholds the negative-book fabrications).
+        return pctRec(rec(company, (yl) => returnOnEquity(yl)));
+      case "plantGrowth":
+        // Non-null only for filers whose record carries utility plant on one basis (the pipeline
+        // locks net vs gross per filer; the two differ 23-49% and are never mixed).
+        return pctRec(plantGrowth(company));
+      case "afudcShare":
+        return pct(afudcShare(L));
+      case "regAssets":
+        return money(L.regulatoryAssets);
+      case "regLiabilities":
+        return money(L.regulatoryLiabilities);
       case "tangibleEquity":
         return money(tangibleEquity(L));
       case "premiums":

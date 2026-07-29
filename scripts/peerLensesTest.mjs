@@ -63,13 +63,14 @@ const BENCH_KEY = {
   bookedYear: "bookedYear", salesMarketing: "salesMarketing", stockComp: "stockComp",
   rdIntensity: "rdIntensity", capexIntensity: "capexIntensity", inventoryDays: "inventoryDays",
   reserveLife: "reserveLife", reserveReplacement: "reserveReplacement", pudShare: "pudShare",
+  roe: "roe", plantGrowth: "plantGrowth", afudcShare: "afudcShare",
 };
 // Which peer lens a /groupings family's members are read on. Producer maps to the plain operating
 // lens because its three reserve columns were measured too sparse for a seven-row bench.
 const FAMILY_TO_LENS = {
   software: "software", semiconductor: "semiconductor", producer: "operating",
   general: "operating", heavy: "operating", lender: "bank", insurer: "insurer",
-  managedCare: "managedCare", property: "reit", fee: "fee",
+  managedCare: "managedCare", property: "reit", fee: "fee", utility: "utility",
 };
 ok("every grouping family maps to a peer lens", Object.keys(FAMILIES).every((f) => PEER_LENSES[FAMILY_TO_LENS[f]]));
 
@@ -144,10 +145,17 @@ ok("return on tangible equity still renders where the denominator exists",
   // listing by any filed fact we hold.
   ok("the no-common-stock case is a known miss, not a silent guess", !secondary.has("BPYPM"));
 
-  // The four measured refusals stay off every bench.
+  // The measured refusals stay off every bench.
   ok("contracted revenue stays on the software TABLE and off the bench", !keysFor("MSFT").includes("bookedYear"));
   ok("the reserve columns stay on the producer TABLE and off the bench",
     !["reserveLife", "reserveReplacement", "pudShare"].some((k) => keysFor("FANG").includes(k)));
+
+  // The utilities desk (Wave C, 2026-07-28): membership rides the pipeline's rate-regulated gate,
+  // never the shelf — Southern reads on the regulated lens, and Vistra, on the same shelf, keeps
+  // the plain operating lens because no commission caps a merchant generator.
+  ok("a regulated utility's bench carries the desk's columns", keysFor("SO").join(",") === "roe,plantGrowth,payout");
+  ok("a merchant generator on a utility shelf keeps the operating lens", lensKeyFor(byT("VST")) === "operating");
+  ok("the AFUDC share stays on the utilities TABLE and off the bench", !keysFor("SO").includes("afudcShare"));
 }
 
 // ---------------------------------------------------------------------------------------------

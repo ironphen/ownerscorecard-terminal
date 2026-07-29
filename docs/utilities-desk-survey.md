@@ -11,12 +11,22 @@ would address the sector, recorded here, reversible by the owner.*
 118 rows sit on the four utilities shelves; 98 are primary businesses (67 US, 23 ADR, 5 JP,
 3 EU). Of the US primaries, 13 carry none of the regulated economics (Vistra, NRG, Talen,
 Constellation, YieldCos, RNG sellers); of the ADRs, 12. **Membership rides the ≥5-concept
-rate-regulated tag-family gate**, which separates the pool at 3-versus-7 with zero overlap.
-Element *presence* was refuted as a membership test: it admits Genie Energy (a reseller
-tagging one regulatory liability) and Hallador (a coal miner tagging one regulatory asset).
-The desk's reachable cohort is **~54 businesses** (51 US + 3 US-GAAP Canadians). The 8 IFRS
-regulated ADRs, the JP pool and the EU pool are out of reach of this tag set, and the pages
-must not imply otherwise.
+rate-regulated tag-family gate.** *(Corrected by the Wave C census, wf_be39d3c2, hostile-
+replicated: the survey's "3-versus-7 with zero overlap" was wrong at count 4 — NRG and ONEOK
+land there — but the separation is real: failers top out at 4, passers begin at 7 (UGI), so
+the ≥5 cut sits inside a clean two-wide empty band and any threshold in 5..7 admits the
+identical cohort.)* Element *presence* was refuted as a membership test: it admits Genie
+Energy (count 1) and Hallador (count 1). The gate is CANDIDATE-SCOPED (SIC 4900-4991 or a
+taxonomy Utilities override), never universe-wide: EQT would pass at 9 on the legacy tags of
+its pre-spin pipeline business. The exhaustive control sweep found one genuine seam: **MDU
+Resources** (count 13, SEC SIC stale at mining from the Knife River era) is a pure regulated
+utility post its two spinoffs — it received the taxonomy override and gates in. The measured
+cohort is **76 rows, 60 distinct CIKs** (US pool: 70 rows, 55 CIKs, flagged `rateRegulated`
+at extraction). The IFRS regulated ADRs, the JP pool and the EU pool are out of reach of
+this tag set; the three US-GAAP Canadians (AQN, EMA, FTS) file the concepts on 40-F in CAD,
+which the 10-K/USD readers correctly skip — their read is a deliberate follow-up, not a
+silent extension. TC Energy (TRP) is a US-GAAP 40-F filer that would likely gate in once its
+payload is fetched.
 
 ## What XBRL carries (census over 67 US CIKs)
 
@@ -85,11 +95,48 @@ Graham's own 1972 substitution for utilities (exempt from the current-ratio test
 exempted them from — 75/83 currently fail it — judged instead on debt ≤ 2× equity plus the
 dividend record); EXC spin-aware revenueGrowing; owner-earnings rate-base sentence.
 
-**WAVE C — columns**, membership = the ≥5-concept gate, n≈54, each decided for the peer
-bench per the completeness guard, each reading through the record via the shared
-readThroughRecord wrapper (see below): regulatory assets & liabilities; net-utility-plant
-growth; AFUDC-equity share; earned ROE through the record. Bench ruling: drop gross margin
-for the utilities cohort (69/83 blank, 3 verified fragments lead the bench today).
+**WAVE C — columns (SHIPPED 2026-07-28).** The pipeline gained `scripts/utilitiesLines.mjs`
+(the gate + four extractions, banks-desk architecture) and every surface consumed it:
+
+- *The gate*: `rateRegulated` decided at extraction, persisted on the record; scorecard,
+  lens and columns all route on it, never on SIC. Vistra/NRG excluded at the count itself.
+- *Regulatory assets & liabilities*: the current+noncurrent pair, both legs present in the
+  year, or noncurrent alone for a filer that never tags a current portion. Total tags are
+  NOT read in this wave — Southern's undimensioned RegulatoryAssets is a component ~100×
+  below its NetRegulatoryAssets series (a wrong number, not a missing one), and ATO/NFG
+  totals run 1.3-105× the pair. A corroborated total-tag fill (the OGS/Brixmor gate) is a
+  measured follow-up. NetRegulatoryAssets ships as-filed as the net position (SO's only
+  long series).
+- *Utility plant*: basis-locked per filer (net ≥4y or ≥gross-years wins; else gross
+  plant-in-service; `utilityPlantBasis` travels on the record; net-vs-gross differ 23-49%
+  and are never mixed). Growth = annualized over the readable record, recordMedian's
+  {value, years, of} shape so gaps and short records carry their count. The 12 regulated
+  filers whose plant is subsidiary-dimensioned withhold with a named label.
+- *AFUDC equity*: the single tag, zero switches, zero overlap disagreements; dark years
+  withheld; share of net income only when income is positive; latestReported fallback on
+  the scorecard. WTRG's instant-shaped variant is a deliberate exception NOT taken.
+- *Earned ROE*: cyc(returnOnEquity) reused verbatim — no new arithmetic.
+- *Company page*: `buildUtilityScorecard` (src/lib/utilities.mjs) replaces the industrial
+  scorecard for gate-passers — earned ROE vs the allowed band, AFUDC share, plant + growth,
+  the regulatory ledger, and the holdco disclosure on NEE/SRE/UGI/AES/OTTR.
+- *Bench (measured over the 54 utility benches)*: earned ROE clears half on 54/54, plant
+  growth 46/54, dividend coverage 54/54 — the utility lens is [roe, plantGrowth, payout].
+  AFUDC share cleared 33/54 and is REFUSED_ON_BENCH; gross margin never enters (69/83
+  blank on the old heavy benches). The peers lens guard now splits on the gate flag, so
+  Southern's bench can no longer seat Vistra.
+- */groupings*: the four shelves moved family heavy→utility; the industry tables carry
+  [revenue, roe, plantGrowth, afudcShare, regAssets, regLiabilities, dividendsPaid]; the
+  SECTOR table narrows by hand amendment (rule step 4) to [revenue, netDebt, roe,
+  dividendsPaid] because the specialist columns answer 34-53% at sector scale where the
+  merchant rows honestly dash.
+
+**WAVE C FOLLOW-UPS, measured and queued**: the ADR utilities read (40-F + CAD instants for
+AQN/EMA/FTS; fetch TRP's payload); the corroborated total-tag fill for the regulatory pair;
+WTRG's instant-shaped AFUDC exception (needs one 10-K text verification); the NFG equity
+cross-tag guard in fetchFundamentals (undimensioned StockholdersEquity −625.7M against
+Inc-NCI 2,079.9M for FY2022-24 — the parent+NCI=total identity is the discriminator; DUK
+FY2015 carries a bogus −1M parent-equity fact of the same class); the extension-tagged
+dividend keyholes (FRT, SPG, BDN, PSA's preferred-inclusive capital distribution).
 
 ## The cross-desk prescription (applies before Wave C)
 

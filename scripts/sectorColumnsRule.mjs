@@ -55,6 +55,16 @@ export const AMENDMENTS = {
   // refusing to print it sector-wide because two families were crowded is the rule outranking the
   // judgment it was meant to serve.
   "Information Technology": { add: ["netDebt"] },
+  // Utilities narrows to the universal reads (Wave C, 2026-07-28). The single-family branch would
+  // carry the utility family's four specialist columns onto the sector table, where they answer
+  // 34-53% of rows — the merchant generators and YieldCos that share these shelves fail the
+  // rate-regulated gate and print dashes, which is honest on a forty-row industry table and a wall
+  // of holes at sector scale (the anti-dash floor exists for exactly this). The regulated ledger
+  // and the reinvestment columns live one step down on the four industry tables; the sector keeps
+  // what every kind of power-and-water business can answer — the earned return, the dividend, and
+  // net debt, hand-restored on the Information Technology precedent because a sector this
+  // leveraged without a debt column is the rule outranking the judgment it serves (answers 91%).
+  "Utilities": { add: ["netDebt"], drop: ["plantGrowth", "afudcShare", "regAssets", "regLiabilities"] },
   // FLAGGED, NOT APPLIED: Financials gaining TOTAL ASSETS. It answers 97% of Financials rows and
   // is the size measure a lender is genuinely read on, and revenue for a bank is a reconstruction.
   // Against it: total assets appears in no Financials family today, only in the property family, so

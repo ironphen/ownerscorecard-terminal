@@ -58,6 +58,7 @@ import {
 } from "./fundamentals.mjs";
 import { returnOnEquity, returnOnTangibleEquity, efficiencyRatio, netInterestMargin, roteOverRecord } from "./financials.mjs";
 import { cashPayout, debtToAssets } from "./reits.mjs";
+import { plantGrowth } from "./utilities.mjs";
 import { combinedRatio, lossRatio } from "./insurers.mjs";
 import { medicalLossRatio } from "./managedCare.mjs";
 import { floatYield } from "./peers.mjs";
@@ -127,6 +128,14 @@ export const PEER_COL = {
     read: cyc(share("netIncome", "totalAssets")) },
   mlr: { key: "mlr", label: "Medical loss ratio", concept: "medical-loss-ratio", dp: 0, basis: CYCLE, read: cyc((L) => medicalLossRatio(L)) },
 
+  // ---- the utilities desk (Wave C, 2026-07-28): the regulated compounder's two lines ----
+  // Earned ROE rides the existing roe column below; plant growth is the reinvestment runway, on
+  // the filer's own basis (net, or plant-in-service where net is unfiled — the pipeline locks the
+  // basis per filer and the two are never mixed). recordMedian's shape is reused so a short or
+  // gappy record carries its count.
+  plantGrowth: { key: "plantGrowth", label: "Plant growth", concept: null, dp: 1, basis: "annualized over the record",
+    read: (c) => { const g = plantGrowth(c); return g ? { value: g.value, years: g.years, of: g.of } : null; } },
+
   // ---- property ----
   cashMargin: { key: "cashMargin", label: "Cash margin", concept: "free-cash-flow", dp: 0, basis: CYCLE,
     read: cyc(share("cashFromOps", "revenue")) },
@@ -155,6 +164,13 @@ export const PEER_LENSES = {
   managedCare: [C.mlr, C.opMargin, C.roe],
   fee: [C.opMargin, C.netMargin, C.roe],
   reit: [C.cashMargin, C.cashOnAssets, C.payout, C.debtToAssets],
+  // Regulated utilities (Wave C, 2026-07-28), measured over the 54 utility benches the lens
+  // renders on: earned ROE clears half the bench on 54 of 54 and plant growth on 46 of 54; the
+  // dividend-coverage column answers 54 of 54, and it is the line these companies are owned for.
+  // The AFUDC share cleared only 33 of 54 and is refused below; gross margin never enters — it
+  // was blank on 69 of the 83 old heavy-utility benches, with the three printing cells being
+  // verified fragments of pass-through fuel cost.
+  utility: [C.roe, C.plantGrowth, C.payout],
 };
 
 // Which /groupings families map to a specialist operating lens. Everything else operating — general,
@@ -169,6 +185,11 @@ export function lensKeyFor(company) {
   if (kind === "managedCare") return "managedCare";
   if (kind === "fee") return "fee";
   if (kind === "reit") return "reit";
+  // The utilities route rides the PIPELINE'S gate flag, never the shelf family: the four utility
+  // shelves also hold merchant generators and YieldCos, whose regulated cells would be blank on
+  // every bench and whose economics no commission caps. The flag is the filer's own testimony
+  // (>=5 rate-regulated concepts, decided at extraction), so membership maintains itself.
+  if (company?.rateRegulated) return "utility";
   const label = industryLabelOf(company);
   const family = label ? shelfOfIndustry(label)?.family : null;
   return FAMILY_LENS[family] || "operating";
@@ -195,6 +216,7 @@ export const REFUSED_ON_BENCH = {
   reserveLife: "clears half on 8 of 62 producer benches; 12 of 63 producers tag both reserves and production",
   reserveReplacement: "clears half on 6 of 62 producer benches",
   pudShare: "clears half on 16 of 62 producer benches",
+  afudcShare: "clears half on 33 of 54 regulated-utility benches; only 29 of 55 gate-passing filers carry the equity leg at their anchor year — it stays on the forty-row table and the company page",
 };
 
 // Refusals that hold on SOME lenses only, keyed `lens.column`. Return on tangible equity is the whole
