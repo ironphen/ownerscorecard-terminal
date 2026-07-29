@@ -1216,12 +1216,19 @@ async function main() {
     }
 
     // Industry code (drives the archetype classifier). Non-fatal if it fails.
-    let sic = null, sicDescription = null;
+    let sic = null, sicDescription = null, primaryTicker = null;
     try {
       await sleep(THROTTLE_MS);
       const sub = await getJSON(`https://data.sec.gov/submissions/CIK${cik}.json`);
       sic = sub?.sic || null;
       sicDescription = sub?.sicDescription || null;
+      // The issuer's own registered-securities order, the filed fact the listings tie-break asked
+      // for: EDGAR lists the registrant's tickers with the common stock first (DTE before its four
+      // baby bonds, SO before its notes, DUK before DUKB — verified across the multi-listing
+      // utility CIKs). Without it, equal-length tickers tie-broke alphabetically and DTE's shelf
+      // row was its 2080 baby bond DTB. Stored on every row of the CIK so listings.mjs can prefer
+      // the fact and keep the shape heuristic only as the fallback for un-refreshed records.
+      primaryTicker = Array.isArray(sub?.tickers) && sub.tickers.length ? String(sub.tickers[0]).toUpperCase() : null;
     } catch {
       /* leave null */
     }
@@ -1943,6 +1950,7 @@ async function main() {
       // so a merchant generator on a utility SIC never wears a regulated costume.
       ...(rateRegulated ? { rateRegulated: true } : {}),
       ...(ute?.flags?.utilityPlantBasis ? { utilityPlantBasis: ute.flags.utilityPlantBasis } : {}),
+      ...(primaryTicker ? { primaryTicker } : {}),
       // When this record was last EXTRACTED, which is not the same as the file's asOf: a partial
       // run rewrites the whole file while touching only its cohort, and without a per-record stamp
       // a decade-old extraction is indistinguishable from this morning's. The stamp is what turns

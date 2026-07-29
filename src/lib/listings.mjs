@@ -10,9 +10,24 @@
 //
 // The test is the CIK, never the ticker shape. A suffix rule would be a guess dressed as a rule —
 // exactly the class of blanket heuristic that cost us Arrowhead's tax history and Jones Lang
-// LaSalle's archetype earlier the same week. Sharing a CIK with another listing is a filed fact.
-// Among listings that share one, the shortest ticker is the common stock in every case checked; ties
-// break alphabetically so the choice is stable across builds rather than dependent on file order.
+// LaSalle's archetype earlier the same week.
+//
+// WHICH sibling is the business is now a FILED FACT where the record carries it (2026-07-28): the
+// pipeline stores `primaryTicker`, the first entry of the issuer's own registered-securities list in
+// its SEC submissions record, which lists the common stock first (DTE before its four baby bonds,
+// SO before its notes, DUK before DUKB — verified across the multi-listing utility CIKs). The old
+// shape heuristic — shortest ticker, ties alphabetical — remains only as the fallback for rows not
+// yet re-extracted, and it is what once made DTE's shelf row its 2080 baby bond DTB (equal length,
+// B before E).
+
+// The primary among one CIK's sibling rows: the filed fact when any sibling carries it and it names
+// a ticker actually in the group; the shape heuristic otherwise.
+function primaryOf(rows) {
+  const tickers = rows.map((r) => r.ticker);
+  const filed = rows.map((r) => r.primaryTicker).find((p) => p && tickers.includes(p));
+  if (filed) return filed;
+  return [...tickers].sort((a, b) => a.length - b.length || (a < b ? -1 : 1))[0];
+}
 
 // Build once per pool: ticker -> true when this listing is not the issuer's primary one.
 export function secondaryListings(companies) {
@@ -22,26 +37,23 @@ export function secondaryListings(companies) {
     const ticker = String(c?.ticker || "").toUpperCase();
     if (!cik || !ticker) continue;
     if (!byCik.has(cik)) byCik.set(cik, []);
-    byCik.get(cik).push(ticker);
+    byCik.get(cik).push({ ticker, primaryTicker: c?.primaryTicker ? String(c.primaryTicker).toUpperCase() : null });
   }
   const secondary = new Set();
-  for (const tickers of byCik.values()) {
-    if (tickers.length < 2) continue;
-    const primary = [...tickers].sort((a, b) => a.length - b.length || (a < b ? -1 : 1))[0];
-    for (const t of tickers) if (t !== primary) secondary.add(t);
+  for (const rows of byCik.values()) {
+    if (rows.length < 2) continue;
+    const primary = primaryOf(rows);
+    for (const r of rows) if (r.ticker !== primary) secondary.add(r.ticker);
   }
   return secondary;
 }
 
-// KNOWN LIMITATION, recorded rather than guessed around. This test finds a claim on a business by
-// noticing that it shares a CIK with something shorter-tickered. Where an issuer's COMMON stock is not
-// in the pool at all, its preferred series look like the primary listing and are treated as one:
+// KNOWN LIMITATION, recorded rather than guessed around. Where an issuer's COMMON stock is not in
+// the pool at all, its preferred series look like the primary listing and are treated as one:
 // Brookfield Property's four series (BPYPM/N/O/P, one CIK, one name, no common — the partnership was
-// taken private) and CHS's CHSCO are the live cases. Nothing in the data separates them. The universe
-// files carry a ticker, a name and a country and no security title, so the only available signal is
-// the ticker's shape, and a suffix rule is a guess dressed as a rule — the class of blanket heuristic
-// that cost Arrowhead its tax history and Jones Lang LaSalle its archetype. Closing this needs a
-// filed fact (the security title from the SEC submissions feed), not a cleverer inference.
+// taken private) and CHS's CHSCO are the live cases. The filed registered-securities list cannot
+// separate them either, because no common is registered — the first-listed security IS a preferred.
+// That is a fact about the issuer, not a gap in the rule.
 //
 // Memoized per pool array, because the peer bench asks this on every one of 3,623 company pages and
 // the answer only changes when the pool does.
@@ -61,8 +73,8 @@ export function primaryTickerFor(companies, ticker) {
   if (!me?.cik) return t;
   const siblings = (companies || [])
     .filter((c) => String(c?.cik || "") === String(me.cik))
-    .map((c) => String(c.ticker || "").toUpperCase())
-    .filter(Boolean);
+    .map((c) => ({ ticker: String(c.ticker || "").toUpperCase(), primaryTicker: c?.primaryTicker ? String(c.primaryTicker).toUpperCase() : null }))
+    .filter((r) => r.ticker);
   if (siblings.length < 2) return t;
-  return siblings.sort((a, b) => a.length - b.length || (a < b ? -1 : 1))[0];
+  return primaryOf(siblings);
 }
