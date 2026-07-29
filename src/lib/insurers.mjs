@@ -8,7 +8,7 @@
 // from the filer's total benefits, losses and expenses over premiums earned, so
 // non-underwriting costs can nudge it a point or two either way from the headline.
 
-import { fmtMoney, currencySymbol } from "./fundamentals.mjs";
+import { fmtMoney, currencySymbol, latestReported } from "./fundamentals.mjs";
 import { returnOnEquity } from "./financials.mjs";
 
 const median = (xs) => { if (!xs.length) return null; const s = [...xs].sort((a, b) => a - b); const m = Math.floor(s.length / 2); return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
@@ -216,7 +216,24 @@ export function buildInsurerScorecard(company, subtype = "insurer") {
     // earns over what is credited to policyholders — never a combined ratio, which reads a
     // life insurer's designed benefit excess as a permanent "underwriting loss."
     const spread = spreadOverCrediting(L);
-    const spreadCheck = spread == null ? invCheck : {
+    // The record fallback (the Bank7 shape): a crediting spread is a flow read, so the most
+    // recent reported year, named, beats falling silently back to plain investment income.
+    // Measured: 1 of 31 life rows recovers. All three legs read from the same prior year.
+    const priorSpread = spread == null
+      ? latestReported(company, (l) => {
+          const v = spreadOverCrediting(l);
+          return v != null ? { spread: v, inv: l.investmentIncome, credited: Math.abs(l.interestCredited), fl: floatOf(l)?.value } : null;
+        })
+      : null;
+    const spreadCheck = spread == null ? (priorSpread ? {
+      title: "Spread over crediting",
+      concept: "insurance-float",
+      value: `${pc(priorSpread.value.spread, 1)} · FY${priorSpread.fy}`,
+      formula: `FY${priorSpread.fy}, the most recent year reported: (investment income ${$(priorSpread.value.inv)} − interest credited ${$(priorSpread.value.credited)}) ÷ that year's float ${$(priorSpread.value.fl)}`,
+      tone: "info",
+      label: `Last reported FY${priorSpread.fy}`,
+      note: "The life insurer's engine — what the float earns invested less what is credited to policyholders — read at the most recent year the filing data carries all three legs, and named rather than passed off as current.",
+    } : invCheck) : {
       title: "Spread over crediting",
       concept: "insurance-float",
       value: pc(spread, 1),
@@ -236,6 +253,20 @@ export function buildInsurerScorecard(company, subtype = "insurer") {
 
   // Property & casualty, and general insurers: the combined ratio is the right lens.
   const comb = combinedRatio(L), lr = lossRatio(L);
+  // The record fallback for the latest-year-missing case (the Bank7 shape, carried over from the
+  // banks desk 2026-07-28): an underwriting result is a FLOW read, so when the latest year's
+  // premiums or claims are not yet tagged but the record holds them, the most recent reported
+  // year — named, never passed off as current — beats a false "not found." Measured before
+  // shipping: 7 of 80 P&C rows recover a ratio this way; the other blanks are genuine.
+  const priorComb = comb == null && lr == null
+    ? latestReported(company, (l) => {
+        if (!l) return null;
+        const c2 = combinedRatio(l);
+        if (c2 != null) return { comb: c2, total: Math.abs(l.lossesAndExpenses), prem: l.premiumsEarned };
+        const l2 = lossRatio(l);
+        return l2 != null ? { lr: l2, claims: Math.abs(l.claimsIncurred), prem: l.premiumsEarned } : null;
+      })
+    : null;
   const combCheck = comb != null ? {
     title: "Combined ratio",
     concept: "combined-ratio",
@@ -249,14 +280,41 @@ export function buildInsurerScorecard(company, subtype = "insurer") {
     value: pc(lr), formula: `Claims incurred ${$(Math.abs(L.claimsIncurred))} ÷ premiums earned ${$(L.premiumsEarned)}`,
     tone: lr > 0.8 ? "warn" : "ok", label: "Claims share of premiums",
     note: "Claims as a share of premiums (the expense side was not cleanly tagged, so we show the loss ratio alone rather than a full combined ratio). Lower is better; the rest of underwriting cost sits on top of this.",
+  } : priorComb ? {
+    title: priorComb.value.comb != null ? "Combined ratio" : "Loss ratio",
+    concept: "combined-ratio",
+    value: `${priorComb.value.comb != null ? `≈ ${pc(priorComb.value.comb)}` : pc(priorComb.value.lr)} · FY${priorComb.fy}`,
+    formula: priorComb.value.comb != null
+      ? `FY${priorComb.fy}, the most recent year reported: total benefits, losses and expenses ${$(priorComb.value.total)} ÷ premiums earned ${$(priorComb.value.prem)}`
+      : `FY${priorComb.fy}, the most recent year reported: claims incurred ${$(priorComb.value.claims)} ÷ premiums earned ${$(priorComb.value.prem)}`,
+    tone: "info",
+    label: `Last reported FY${priorComb.fy}`,
+    note: "The latest fiscal year's premiums or claims are not yet tagged in the structured data, so this reads the most recent year that is — named, never passed off as current. The underwriting question it answers is the same: did the policies pay for themselves, or is the float being rented at a loss?",
   } : none("Combined ratio", "Premiums or claims weren't found in the filing data.", "combined-ratio");
 
   // Cost of float, the Buffett line itself: negative cost means the insurer was PAID to hold
   // other people's money. Computable only on the full float arithmetic with a banded
   // underwriting total; withheld otherwise.
   const cof = costOfFloat(L);
+  // Same record fallback as the combined ratio, and both legs read from the SAME prior year —
+  // a prior underwriting result over today's float would be two years dressed as one figure.
+  // Measured: 5 of 80 P&C rows recover.
+  const priorCof = cof == null
+    ? latestReported(company, (l) => {
+        const v = costOfFloat(l);
+        return v != null ? { cof: v, uw: underwritingResult(l), fl: floatOf(l)?.value } : null;
+      })
+    : null;
   const costCheck = cof == null
-    ? none("Cost of float", "Needs the full float arithmetic and a cleanly tagged underwriting total; a partial figure would mislead.", "insurance-float")
+    ? (priorCof ? {
+      title: "Cost of float",
+      concept: "insurance-float",
+      value: `${pc(priorCof.value.cof, 1)} · FY${priorCof.fy}`,
+      formula: `FY${priorCof.fy}, the most recent year reported: underwriting ${priorCof.value.cof <= 0 ? "profit" : "loss"} ${$(Math.abs(priorCof.value.uw))} ÷ that year's float ${$(priorCof.value.fl)}`,
+      tone: "info",
+      label: `Last reported FY${priorCof.fy}`,
+      note: "Buffett's own yardstick — the underwriting result as the price of holding the float — read at the most recent year the filing data carries it, both legs from that same year, and named rather than passed off as current.",
+    } : none("Cost of float", "Needs the full float arithmetic and a cleanly tagged underwriting total; a partial figure would mislead.", "insurance-float"))
     : {
       title: "Cost of float",
       concept: "insurance-float",

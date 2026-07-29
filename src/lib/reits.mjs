@@ -10,7 +10,7 @@
 // carries it — and is read with an under-capture guard. Net asset value and occupancy need cap
 // rates and operating detail we do not force.
 
-import { fmtMoney, currencySymbol } from "./fundamentals.mjs";
+import { fmtMoney, currencySymbol, latestReported } from "./fundamentals.mjs";
 
 const median = (xs) => { if (!xs.length) return null; const s = [...xs].sort((a, b) => a - b); const m = Math.floor(s.length / 2); return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
 const pc = (v, dp = 0) => (v == null ? "—" : `${v < 0 ? "−" : ""}${(Math.abs(v) * 100).toFixed(dp)}%`);
@@ -179,7 +179,30 @@ export function buildReitScorecard(company) {
   };
 
   const payout = cashPayout(L);
-  const payoutCheck = payout == null ? none("Dividend coverage", "Dividends or operating cash flow missing.", "free-cash-flow") : {
+  // The record fallback for the latest-year-missing case (the Bank7 shape, carried over from the
+  // banks desk 2026-07-28): coverage is a FLOW read, so when the latest year's dividends or
+  // operating cash are not yet tagged but the record holds both, the most recent reported year —
+  // named — beats a false "missing." Measured: 11 of 159 rows recover (Diversified Healthcare,
+  // Office Properties, the Brookfield Property preferred listings).
+  const priorPayout = payout == null
+    ? latestReported(company, (l) => {
+        const v = cashPayout(l);
+        return v != null ? { payout: v, div: Math.abs(l.dividendsPaid), cfo: l.cashFromOps } : null;
+      })
+    : null;
+  const payoutCheck = payout == null ? (priorPayout ? {
+    title: "Is the distribution covered by cash?",
+    concept: "free-cash-flow",
+    value: `${pc(priorPayout.value.payout)} · FY${priorPayout.fy}`,
+    formula: `FY${priorPayout.fy}, the most recent year reported: dividends ${$(priorPayout.value.div)} ÷ cash from operations ${$(priorPayout.value.cfo)}`,
+    tone: "info",
+    label: `Last reported FY${priorPayout.fy}`,
+    note: "The latest fiscal year's dividends or operating cash are not yet tagged in the structured data, so coverage reads the most recent year where both are — named, never passed off as current. The question is unchanged: is the distribution funded by the properties, or by something else?",
+  } : L.dividendsPaid != null && !(L.cashFromOps > 0)
+    ? none("Dividend coverage", "Dividends were paid, but operating cash was zero or negative — a coverage ratio against a negative base is meaningless, so it is withheld. A distribution beside negative operating cash is being funded by borrowing or asset sales; the cash flow statement says which.", "free-cash-flow")
+    : L.cashFromOps > 0
+    ? none("Dividend coverage", "No dividends are tagged in the structured data within the record's window — either none were paid, or the filer reports them under a variant tag the pipeline does not yet read. The financing section of the 10-K settles which.", "free-cash-flow")
+    : none("Dividend coverage", "Dividends or operating cash flow missing.", "free-cash-flow")) : {
     title: "Is the distribution covered by cash?",
     concept: "free-cash-flow",
     value: pc(payout), formula: `Dividends ${$(Math.abs(L.dividendsPaid))} ÷ cash from operations ${$(cash)}`,
