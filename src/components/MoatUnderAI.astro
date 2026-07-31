@@ -76,7 +76,7 @@ if (exp.tier === "elevated" && (assetLight || wasDurable)) {
 
 <section class="aimoat">
   <div class="head">
-    <h3 class="secHead"><Term id="too-hard-pile">Does AI threaten the moat?</Term></h3>
+    <h4 class="secHead"><Term id="too-hard-pile">Does AI threaten the moat?</Term></h4>
     <span class="tierBadge" style={`color:${TONE_COLOR[tier.tone]}; border-color:${TONE_COLOR[tier.tone]}`}>{tier.label} contestability</span>
   </div>
   <p class="lead">{cap(exp.reason)}.</p>
@@ -99,6 +99,8 @@ if (exp.tier === "elevated" && (assetLight || wasDurable)) {
 <style>
   .aimoat { margin: 18px 0 0; padding-top: 16px; border-top: 1px solid var(--rule-strong); }
   .head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  /* Scorecard's subhead idiom minus the underline: .aimoat's own border-top already rules
+     this card off, and two rules would double it. */
   .secHead { font-family: var(--sans); font-weight: 600; margin: 0; font-size: 11.5px; letter-spacing: 0.09em; text-transform: uppercase; color: var(--ink); }
   .tierBadge { font-family: var(--sans); font-size: 10.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; border: 1px solid; border-radius: 2px; padding: 2px 8px; flex: 0 0 auto; }
   .lead { font-size: 14px; line-height: 1.55; color: var(--ink-soft); margin: 10px 0 0; max-width: 74ch; }

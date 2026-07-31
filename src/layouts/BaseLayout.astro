@@ -302,6 +302,10 @@ const jsonLdBlocks = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
       :root[data-theme="dark"] .ttMoon { display: none; }
 
       main { margin-top: 22px; }
+      /* The proven kicker idiom, promoted global (UX survey item 21): seven pages carried the
+         identical rule, two drifting to 0.08em for no stated reason. Pages with a genuinely
+         different label (the dateline, the nav) keep their own. */
+      .kicker { font-family: var(--sans); font-size: 11px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--muted); }
 
       /* ---- footer ---- */
       footer { border-top: 1px solid var(--rule-strong); margin-top: 48px; padding-top: 16px; }

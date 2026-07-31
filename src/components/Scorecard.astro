@@ -178,7 +178,7 @@ const enrich = (sec) => ({
 
   {sections.map(enrich).map((sec) => (
     <div class="section">
-      <h3 class="secHead">{sec.heading}</h3>
+      <h4 class="secHead">{sec.heading}</h4>
       <ul class="checks">
         {sec.checks.map((c) => (
           <li>
@@ -199,7 +199,7 @@ const enrich = (sec) => ({
 
   {graham ? (
     <div class="section">
-      <h3 class="secHead">Graham’s defensive tests{graham.testable ? ` · ${graham.passes} of ${graham.testable} met` : ""}</h3>
+      <h4 class="secHead">Graham’s defensive tests{graham.testable ? ` · ${graham.passes} of ${graham.testable} met` : ""}</h4>
       <p class="durNote">Graham’s numerical criteria for the defensive investor (<em>The Intelligent Investor</em>, ch. 14), run on the filings. A floor of safety, not a buy signal; many fine modern businesses fail his strictest liquidity rules by design.</p>
       <ul class="report">
         {graham.tests.map((t) => (
@@ -218,7 +218,7 @@ const enrich = (sec) => ({
 
   {report ? (
     <div class="section">
-      <h3 class="secHead">Durability &amp; moat, {report.years[0]}–{report.years[report.years.length - 1]}</h3>
+      <h4 class="secHead">Durability &amp; moat, {report.years[0]}–{report.years[report.years.length - 1]}</h4>
       <p class="durNote">Whether the record’s returns held, and what the capital reinvested earned.</p>
       <ul class="report">
         {report.facts.map((ft) => (
@@ -253,14 +253,16 @@ const enrich = (sec) => ({
 
   /* The cockroach banner: a material weakness / restatement is a disclosed FACT, elevated so it can't
      be missed, but restrained — a border and a colored label, not a shouting box. Present, never pronounce. */
-  .cockroach { border: 1px solid var(--warn, #b4690e); border-left-width: 3px; padding: 11px 14px; margin: 14px 0 0; }
+  .cockroach { border: 1px solid var(--warn); border-left-width: 3px; padding: 11px 14px; margin: 14px 0 0; }
   .cockroach .ck { margin: 0 0 7px; }
-  .ckLabel { font-family: var(--sans); font-weight: 700; font-size: 13.5px; color: var(--warn, #b4690e); letter-spacing: 0.01em; }
+  .ckLabel { font-family: var(--sans); font-weight: 700; font-size: 13.5px; color: var(--warn); letter-spacing: 0.01em; }
   .ckq { font-family: var(--serif); font-size: 13.5px; line-height: 1.5; color: var(--ink-soft); margin: 4px 0 0; border-left: 0; padding: 0; max-width: 78ch; }
   .ckNote { font-size: 12.5px; color: var(--ink-dim); margin: 6px 0 0; line-height: 1.5; max-width: 78ch; }
   .ckNote a { color: var(--accent); white-space: nowrap; }
 
   .section { margin-top: 18px; }
+  /* The subhead idiom (shared with MoatUnderAI, which drops the border because its own card
+     carries a border-top — a stated divergence, not drift). */
   .secHead {
     font-family: var(--sans); font-weight: 600;
     margin: 0; font-size: 11.5px; letter-spacing: 0.09em; text-transform: uppercase;

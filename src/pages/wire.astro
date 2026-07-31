@@ -95,6 +95,23 @@ const chipTitle = (c) => {
     : `expected ${c.range.lo} to ${c.range.hi}, from its own last four filings; due by ${c.dueBy}`;
   return `${name ? name + " — " : ""}${what}; ${when}; must file within ${c.statutoryDays} days of period end`;
 };
+// The results-8-K expected line (UX survey item 22): only an 8-K whose label says results were
+// reported, only a company the week-ahead model knows, and only when the announced period's
+// periodic filing has not already arrived. An estimate window prints as a range; where the
+// window says nothing, the statutory deadline prints as the fact it is; where neither exists,
+// silence.
+const expectedLine = (it) => {
+  if (it.form !== "8-K" || it.label !== "Reported results") return null;
+  const t = String(it.ticker).toUpperCase();
+  const up = (upcoming.companies || {})[t];
+  if (!up?.nextForm || !/^10-[KQ]/.test(up.nextForm)) return null;
+  if (alreadyFiled.has(t + "|" + up.nextForm)) return null;
+  const range = estimateRange(up, today);
+  if (!range) return null;
+  return range.kind === "estimate"
+    ? `figures arrive with the ${up.nextForm} · expected ${fmtMD(range.lo)}–${fmtMD(range.hi)}`
+    : `figures arrive with the ${up.nextForm} · due by ${fmtMD(range.lo)}`;
+};
 ---
 
 <BaseLayout title="The Filing Wire, Owner Scorecard">
@@ -148,6 +165,11 @@ const chipTitle = (c) => {
                 <span class="form">{it.form}</span>
                 {it.url ? <a class="src" href={it.url} target="_blank" rel="noopener">source →</a> : null}
               </div>
+              {/* A results 8-K announces; the figures arrive with the periodic filing. The line
+                  names when, from the same backtested window the week-ahead band prints — an
+                  estimate range where one exists, the statutory due date as the fact behind it
+                  otherwise. No press-release parsing, no earnings-date guess (refused above). */}
+              {expectedLine(it) ? <p class="expect">{expectedLine(it)}</p> : null}
               {it.performance && perfLine(it.performance) ? (
                 <div class="perf">
                   <p class="line">{perfLine(it.performance)}</p>
@@ -200,5 +222,6 @@ const chipTitle = (c) => {
     .perf .q { font-family: var(--serif); font-size: 13.5px; line-height: 1.5; color: var(--ink-soft); border-left: 2px solid var(--accent); padding: 2px 0 2px 12px; margin: 5px 0; }
     .perf .note { font-size: 11px; letter-spacing: 0.03em; color: var(--muted); margin: 4px 0 0; }
     .empty { color: var(--muted); font-family: var(--serif); font-style: italic; }
+    .expect { font-size: 11.5px; color: var(--muted); margin: 3px 0 0; }
   </style>
 </BaseLayout>
