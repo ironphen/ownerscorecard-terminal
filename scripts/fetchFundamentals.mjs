@@ -1722,6 +1722,38 @@ async function main() {
         dividendsBy[fy] = { ...alt[fy] };
       }
     }
+    // A PURE partnership never enters the rung above: its dividend chain is empty in EVERY year,
+    // so there is no chain overlap to testify against, and the record printed one of the market's
+    // steadiest payers as a non-payer (EPD pays ~$4.7B a year). The witness for this case is the
+    // filer's own equity-statement rollforward, PartnersCapitalAccountDistributions — a different
+    // statement carrying the same concept. A paid-basis distribution element earns testimony when
+    // it ties that rollforward at 0.1% (or $100k) in at least 3 overlap years and at least 80% of
+    // them; testimony fills the tag's agreeing and witness-absent years, and a disagreeing year
+    // never fills. Measured on the four all-null partnership records: EPD ties 15/15 and fills;
+    // CQP ties 9/11 (the two misses are its pre-modern 2009-10 structure, which stay withheld);
+    // NGL ties 5/8 (a preferred-class wedge) and USAC 0 exact (a DRIP wedge) — both refuse whole,
+    // and the Graham dividend criterion now withholds rather than calling their silence "none paid".
+    if (!Object.keys(dividendsBy).length) {
+      const witBy = annualByYear(facts, ["PartnersCapitalAccountDistributions"]);
+      for (const altTag of [
+        "DistributionMadeToLimitedPartnerCashDistributionsPaid",
+        "DistributionMadeToMemberOrLimitedPartnerCashDistributionsPaid",
+        "DistributionMadeToLimitedLiabilityCompanyLLCMemberCashDistributionsPaid",
+        "PaymentsOfCapitalDistribution",
+      ]) {
+        const alt = annualByYear(facts, [altTag]);
+        const overlap = Object.keys(alt).filter((fy) => witBy[fy]?.val != null);
+        const agrees = overlap.filter((fy) => Math.abs(alt[fy].val - witBy[fy].val) <= Math.max(1e-3 * Math.abs(witBy[fy].val), 1e5));
+        if (agrees.length < 3 || agrees.length < 0.8 * overlap.length) continue;
+        const agreeSet = new Set(agrees);
+        for (const fy of Object.keys(alt)) {
+          if (dividendsBy[fy]?.val != null) continue;
+          if (witBy[fy]?.val != null && !agreeSet.has(fy)) continue;
+          console.warn(`  ! ${ticker} dividendsPaid ${fy}: distributions filled from ${altTag} (${alt[fy].val}) — ties the partners'-capital rollforward in ${agrees.length}/${overlap.length} overlap years`);
+          dividendsBy[fy] = { ...alt[fy] };
+        }
+      }
+    }
     // Up to ~10 years of history for the durability strips.
     const ha = {
       revenue: valuesByYear(revAnnualBy),

@@ -112,6 +112,17 @@ export function grahamTests(company) {
   const total = H.length;
   if (total >= 5) {
     const dv = H.map((h) => h.lines.dividendsPaid);
+    // An ALL-NULL column is not a non-payer — it is a record with no dividend line tagged at
+    // all (the partnership pattern: EPD pays ~$4.8B a year under distribution tags the chain
+    // doesn't carry). Line 111's own doctrine: a missing read is unknown. So the criterion is
+    // withheld, never failed, when not one year carries the tag — "none paid" would be a wrong
+    // sentence about one of the market's steadiest payers.
+    const allNull = dv.every((v) => v == null);
+    if (allNull) {
+      add("Dividend record", "Uninterrupted dividends", "no dividend line tagged in the data", "na",
+        "An unbroken dividend was Graham's mark of durability. This record carries no dividends-paid line in any year — common for partnerships, whose distributions file under tags the chain doesn't read — so the criterion is withheld rather than judged on silence.",
+        { paid: 0, years: total, untagged: total, delta: null });
+    } else {
     const paidAt = (i) => i >= 0 && i < total && dv[i] != null && Math.abs(dv[i]) > 0;
     const paid = dv.filter((v, i) => paidAt(i)).length;
     const untagged = dv.filter((v, i) => v == null && paidAt(i - 1) && paidAt(i + 1)).length;
@@ -125,6 +136,7 @@ export function grahamTests(company) {
       "An unbroken dividend was Graham's mark of durability. He wanted twenty years; the filings show about ten, and a single suspension breaks the streak. Non-payers, many fine modern compounders, fall outside his defensive net by design." +
         (untagged > 0 ? ` ${untagged === 1 ? "One year" : `${untagged} years`} of this record ${untagged === 1 ? "is" : "are"} untagged in the data, with the dividend paid on both sides; a lone missing tag is treated as unknown, not a suspension, so the streak is judged on the tagged years.` : ""),
       { paid, years: total, untagged, delta: unpaid === 0 && paid > 0 ? null : unpaid });
+    }
   }
 
   // 6, Earnings growth: net income up ≥ 33% over the record (3-yr averages, to smooth).

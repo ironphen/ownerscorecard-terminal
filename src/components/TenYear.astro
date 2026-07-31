@@ -113,6 +113,10 @@ const ROW = {
   retainedToEquity: { label: "Retained to equity", short: "Retained/eq", g: 2, kind: "neutral", get: (L) => {
     if (L.netIncome == null || !(L.stockholdersEquity > 0)) return "—";
     if (L.dividendsPaid == null && everPaidDiv) return "—"; // unknown, not zero, for a dividend payer
+    // A partnership's null is missing data, never "none paid": distributions file under tags the
+    // chain may not carry (EPD pays ~$4.8B a year), and printing NI/equity as if every dollar were
+    // retained would be an ROE-size wrong number on one of the market's steadiest payers.
+    if (L.dividendsPaid == null && company?.equityLabel) return "—";
     const div = L.dividendsPaid != null ? Math.abs(L.dividendsPaid) : 0;
     return marginStr(L.netIncome - div, L.stockholdersEquity, 0);
   } },

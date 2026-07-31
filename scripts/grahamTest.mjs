@@ -53,10 +53,13 @@ const divTest = (divs) => grahamTests(co(divs)).tests.find((t) => t.name === "Di
   const t = divTest([1, 1, 1, 1, 0, 1, 1, 1, 1, 1]);
   check("a tagged zero year breaks the streak", t.status !== "pass" && t.untagged === 0);
 }
-// A non-payer (all null) keeps failing.
+// An ALL-NULL column is withheld, never failed (UX survey ruling 2026-07-31): not one year
+// carries the tag, so the record holds no evidence either way — the partnership pattern, where
+// distributions file under tags the chain doesn't read (EPD pays ~$4.7B a year). A true
+// non-payer that ever TAGGED a zero year still fails (the case above); silence is not a zero.
 {
   const t = divTest([null, null, null, null, null, null, null, null, null, null]);
-  check("an all-null record is a non-payer → fail", t.status === "fail" && t.value === "none paid");
+  check("an all-null record is withheld, not a non-payer", t.status === "na" && /no dividend line tagged/.test(t.value));
 }
 
 // Test 7: the quoted EPS is the 3-year average (the calculator's gate basis), latest year the aside.
