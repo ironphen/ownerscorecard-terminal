@@ -704,6 +704,75 @@ function applyIncomeStatementIdentity(facts, revAnnualBy, ticker, W) {
 // business has no cost of sales, which for a utility buying fuel is simply false.
 const thinCor = (cor, rev) => (cor != null && rev > 0 && cor / rev < 0.01 ? null : cor);
 
+// GATE C (record-table survey Build 8) — the cash-flow walk. The record gains the other two
+// thirds of the cash-flow statement (investing and financing, as-filed, ungated) plus the
+// exchange-rate effect, and a Change-in-cash cell that renders ONLY in a year where the walk
+// closes: CFO + CFI + CFF (+ FX when the filer's delta concept includes it) equals the filer's
+// own tagged delta to the dollar. Discontinued-operations legs are admitted as closers (a filer
+// whose main legs are continuing-only), and sub-material dust (under 0.5% of the biggest leg,
+// the filer's own rounding seam) passes. Measured pool-wide by the survey: 95.5% of 24,853
+// years tie exactly, +281 via disc-ops, +409 dust. On failure the delta cell alone is withheld
+// — Acadia's FY2018 delta tag (−37.10M) contradicts its own legs and balance sheet (−16.78M):
+// the TAG is the error, and a wrong tag must not become a rendered figure. A filer tagging only
+// the excluding-FX delta gets FX added back only because the walk just corroborated the sum.
+// Never checked against balance-sheet cash (a 41.3% restricted-cash wedge lives there).
+const CF_TAGS = {
+  cfi: ["NetCashProvidedByUsedInInvestingActivities", "NetCashProvidedByUsedInInvestingActivitiesContinuingOperations"],
+  cff: ["NetCashProvidedByUsedInFinancingActivities", "NetCashProvidedByUsedInFinancingActivitiesContinuingOperations"],
+  fx: [
+    "EffectOfExchangeRateOnCashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents",
+    "EffectOfExchangeRateOnCashCashEquivalentsRestrictedCashAndRestrictedCashEquivalentsIncludingDisposalGroupAndDiscontinuedOperations",
+    "EffectOfExchangeRateOnCashAndCashEquivalents",
+    "EffectOfExchangeRateOnCashAndCashEquivalentsContinuingOperations",
+  ],
+  dIncl: [
+    "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalentsPeriodIncreaseDecreaseIncludingExchangeRateEffect",
+    "CashAndCashEquivalentsPeriodIncreaseDecrease",
+    "CashPeriodIncreaseDecrease",
+  ],
+  dExcl: [
+    "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalentsPeriodIncreaseDecreaseExcludingExchangeRateEffect",
+    "CashAndCashEquivalentsPeriodIncreaseDecreaseExcludingExchangeRateEffect",
+  ],
+  disc: [
+    "CashProvidedByUsedInOperatingActivitiesDiscontinuedOperations",
+    "CashProvidedByUsedInInvestingActivitiesDiscontinuedOperations",
+    "CashProvidedByUsedInFinancingActivitiesDiscontinuedOperations",
+  ],
+};
+function cashWalkByYear(facts) {
+  const cfoBy = collectAnnual(facts, CONCEPTS.cashFromOps);
+  const cfiBy = collectAnnual(facts, CF_TAGS.cfi);
+  const cffBy = collectAnnual(facts, CF_TAGS.cff);
+  const fxBy = collectAnnual(facts, CF_TAGS.fx);
+  const inclBy = collectAnnual(facts, CF_TAGS.dIncl);
+  const exclBy = collectAnnual(facts, CF_TAGS.dExcl);
+  const T = 2;
+  const out = {};
+  const fys = new Set([...Object.keys(cfiBy), ...Object.keys(cffBy)]);
+  for (const fy of fys) {
+    const cfo = cfoBy[fy] ?? null, cfi = cfiBy[fy] ?? null, cff = cffBy[fy] ?? null;
+    const fx = fxBy[fy] ?? null;
+    const row = { cfi, cff, fx, delta: null };
+    out[fy] = row;
+    if (cfo == null || cfi == null || cff == null) continue;
+    let target = null, sum = null, exclBasis = false;
+    if (inclBy[fy] != null) { target = inclBy[fy]; sum = cfo + cfi + cff + (fx ?? 0); }
+    else if (exclBy[fy] != null) { target = exclBy[fy]; sum = cfo + cfi + cff; exclBasis = true; }
+    if (target == null) continue;
+    let diff = sum - target;
+    if (Math.abs(diff) > T) {
+      const disc = CF_TAGS.disc.reduce((s, t) => s + (collectAnnual(facts, [t])[fy] ?? 0), 0);
+      if (Math.abs(diff + disc) <= T || Math.abs(diff - disc) <= T) diff = 0;
+    }
+    const big = Math.max(Math.abs(cfo), Math.abs(cfi), Math.abs(cff), Math.abs(target));
+    if (Math.abs(diff) <= T || Math.abs(diff) <= 0.005 * big) {
+      row.delta = exclBasis ? target + (fx ?? 0) : target;
+    }
+  }
+  return out;
+}
+
 // GATE D (record-table survey Build 6) — the gross-margin filer-arbiter. The filer's own
 // GrossProfit subtotal judges the derived margin year by year. Four rungs, in order:
 //   agree (≤2pt of revenue)      → the subtotal is stored beside the cost line; nothing changes.
@@ -1785,6 +1854,7 @@ async function main() {
       pretaxIncome: collectAnnual(facts, CONCEPTS.pretaxIncome),
       netIncome: collectAnnual(facts, CONCEPTS.netIncome),
       cashFromOps: collectAnnual(facts, CONCEPTS.cashFromOps),
+      cashWalk: cashWalkByYear(facts),
       capex: collectAnnual(facts, CONCEPTS.capex),
       costOfRevenue: valuesByYear(corByYear(facts)),
       depreciation: collectAnnual(facts, CONCEPTS.depreciation),
@@ -1996,6 +2066,10 @@ async function main() {
           currentAssets: hi.ca[fy] ?? null,
           currentLiabilities: hi.cl[fy] ?? null,
           cashFromOps: ha.cashFromOps[fy] ?? null,
+          cfInvesting: ha.cashWalk[fy]?.cfi ?? null,
+          cfFinancing: ha.cashWalk[fy]?.cff ?? null,
+          fxEffect: ha.cashWalk[fy]?.fx ?? null,
+          deltaCash: ha.cashWalk[fy]?.delta ?? null,
           capex: ha.capex[fy] ?? null,
           costOfRevenue: ha.costOfRevenue[fy] ?? null,
           depreciation: ha.depreciation[fy] ?? null,
@@ -2212,6 +2286,10 @@ async function main() {
         netIncome: pick(CONCEPTS.netIncome),
         totalDebt,
         cashFromOps: pick(CONCEPTS.cashFromOps),
+        cfInvesting: anchor?.fy != null ? (ha.cashWalk[anchor.fy]?.cfi ?? null) : null,
+        cfFinancing: anchor?.fy != null ? (ha.cashWalk[anchor.fy]?.cff ?? null) : null,
+        fxEffect: anchor?.fy != null ? (ha.cashWalk[anchor.fy]?.fx ?? null) : null,
+        deltaCash: anchor?.fy != null ? (ha.cashWalk[anchor.fy]?.delta ?? null) : null,
         depreciation: pick(CONCEPTS.depreciation),
         capex: pick(CONCEPTS.capex),
         incomeTaxExpense: pick(CONCEPTS.incomeTaxExpense),
