@@ -285,6 +285,10 @@ const CONCEPTS = {
   netPPE: [
     "PropertyPlantAndEquipmentNet",
     "PropertyPlantAndEquipmentAndFinanceLeaseRightOfUseAssetAfterAccumulatedDepreciationAndAmortization",
+    // Utilities tag their plant under the PublicUtilities family and often nothing else —
+    // Southern's net plant is $114.4B under this tag with no plain PP&E-net anywhere (record-
+    // table survey Build 3, 2026-07-31). Trailing rung: fills only where the plain tags are dark.
+    "PublicUtilitiesPropertyPlantAndEquipmentNet",
   ],
   operatingLeaseAsset: ["OperatingLeaseRightOfUseAsset"],
   sharesDiluted: [
