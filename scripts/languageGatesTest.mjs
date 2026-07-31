@@ -19,6 +19,7 @@ import {
   softwareRetentionRead, customerLadderRead, softwareKpiRead, softwareKpiAssemble,
   reserveEngineerRead, ogCriticalTopics,
   reitLeasingRead,
+  utilityRegRead,
 } from "./fetchFilings.mjs";
 
 let pass = 0, fail = 0;
@@ -979,6 +980,117 @@ ok("noteWindow: the LAST heading occurrence wins (TOC echoes don't)",
     (() => { const r = read("The following table summarizes the geographic diversity of our Portfolio by state, ranked by ABR, as of December 31, 2025, including the Percent Leased of 92.1% for our largest state."); return !r?.occupancy; })());
   ok("forward-looking occupancy ('We expect…') never renders",
     (() => { const r = read("We expect occupancy of approximately 96.0% as of December 31, 2025 based on current leasing volumes."); return !r?.occupancy; })());
+}
+
+// ---------------- BUILD 10 — utilities disallowance ledger + securitization keyhole (U P1 +
+// P3 bundled, both QUOTE-ONLY; docs/qualitative-desks-survey.md SECTION 3). Every filing
+// sentence below is VERBATIM from the named FY2025 10-K as the lane's own splitter flattens
+// it (fetched and measured 2026-07-31 on the doc's 14 utility filings; the 14 cross-sector
+// non-utility controls — JPM FLG TRV UNH PLD O SPG MSFT DDOG XOM DVN WMT CAT AAL — scored
+// zero on both lanes end-to-end). The laws under test: the actor + in-sentence dollar +
+// past-tense verb triple; a REQUEST is never a disallowance; a commission DENYING a proposed
+// disallowance is the company's win and dies; the SFAS-90 accounting-policy boilerplate and
+// the colon-glued bullet list die; an anaphoric open ships only as the contiguous span with
+// its own prior sentence; the appeal sentence is a court ACTION, dollar-bearing preferred;
+// gravest dollars first, Jaccard dedupe keeping the gravest member, cap 3; the verb-class
+// label fails closed to "filed". ----------------
+
+{
+  const dis = (mdnaText) => utilityRegRead({ mdnaText, fullText: "", fy: 2025 })?.disallowances;
+  const sec = (mdnaText) => utilityRegRead({ mdnaText, fullText: "", fy: 2025 })?.securitizations;
+
+  // --- WEC, the pinned pair (177.2 / 178.9): the impairment sentence and its anaphoric
+  // detail sentence ship as ONE contiguous span; the November-2023 order sentence, a near-dup
+  // of the gravest combined-disallowance sentence, dies to it in the Jaccard pass.
+  const wecNov = "In November 2023, the ICC issued written rate orders that disallowed $ 177.2 million of previously incurred capital costs related to the construction and improvement of PGL's service centers and $ 1.7 million of capital costs related to NSG's construction of a gas infrastructure project.";
+  const wecComb = "As part of its decisions, the ICC, among other things, disallowed $ 236.2 million of capital costs related to the construction and improvement of PGL's shops and facilities and $ 1.7 million of capital costs related to NSG's construction of a gas infrastructure project.";
+  const wecImp = "As the ICC did not grant a rehearing on the disallowance of PGL's and NSG's capital costs, we recorded a $ 178.9 million non-cash impairment of our property, plant, and equipment during the fourth quarter of 2023.";
+  const wecThis = "This amount included $ 177.2 million of previously incurred disallowed costs at PGL related to its shops and facilities, and the $ 1.7 million of capital costs disallowed at NSG.";
+  const wecPet = "In June 2024, PGL and NSG filed a petition with the Illinois Appellate Court for review of the November 2023 and May 2024 orders.";
+  const wecAppeal = "The appeal includes the ICC's $ 237.9 million combined disallowance of capital costs at PGL and NSG discussed above, along with the $ 116.0 million disallowance of capital investments needed to meet safety and reliability requirements of PGL's natural gas delivery system.";
+  {
+    const rows = dis([wecNov, wecComb, wecImp, wecThis, wecPet, wecAppeal].join(" "));
+    ok("WEC: gravest first — the $ 236.2 million combined disallowance leads the ledger",
+      rows?.length === 3 && rows[0].figures[0] === "$ 236.2 million" && rows[0].kind === "issued");
+    ok("WEC: 177.2 and 178.9 ship together as one contiguous span (the anaphoric detail glued to its own prior)",
+      rows?.some((r) => r.quote === `${wecImp} ${wecThis}` && r.figures.includes("$ 178.9 million") && r.figures.includes("$ 177.2 million")));
+    // The November-2023 order and the combined-decision sentence are DIFFERENT facts
+    // (measured jaccard 0.417, well under the 0.65 registrant-swap band) — both stand,
+    // gravest dollars first, and the cap holds the ledger at three.
+    ok("WEC: the November-2023 order sentence is its own fact and ranks below the span, gravest first",
+      rows?.[2]?.quote === wecNov && rows[2].figures[0] === "$ 177.2 million");
+    ok("WEC: the dollar-bearing appeal-scope sentence rides alongside the disallowance",
+      rows?.[0].appeal === wecAppeal);
+    ok("WEC: every rendered figure is the quote's own characters (the weld law re-checked)",
+      rows?.every((r) => r.figures.every((f) => r.quote.includes(f))));
+  }
+
+  // --- SO, the doc's pin: 127 + rehearing 43. The appeal sentence is the COMPANY's court
+  // action carrying its own dollar, quoted beside the order, never blended with it.
+  const soDis = "In connection with Nicor Gas' 2023 general base rate case proceeding, the Illinois Commission disallowed $ 127 million of capital investments that have been completed or were planned to be completed through December 31, 2024.";
+  const soReh = "On December 22, 2025, Nicor Gas filed a petition for rehearing with the Illinois Appellate Court specifically addressing $ 43 million of the base rate case disallowances.";
+  ok("SO: the Illinois Commission's $ 127 million disallowance ships with the $ 43 million rehearing petition alongside",
+    (() => { const r = dis(`${soDis} ${soReh}`); return r?.length === 1 && r[0].figures[0] === "$ 127 million" && r[0].kind === "issued" && r[0].appeal === soReh; })());
+
+  // --- EIX, the doc's pin: 88. The note sentence opens anaphorically ("As a result of the
+  // decision…") and ships only as the span with the CPUC-issued prior; the SFAS-90
+  // accounting-policy boilerplate beside it can never be a row.
+  const eixBoiler = "Accounting principles for rate-regulated enterprises also require recognition of an impairment loss if it becomes probable that the regulated utility will abandon a plant investment, or if it becomes probable that the cost of a recently completed plant will be disallowed, either directly or indirectly, for ratemaking purposes, and a reasonable estimate of the disallowance amount can be made.";
+  const eixSept = "In September 2025, the CPUC issued a final decision in SCE's 2025 GRC proceeding.";
+  const eixResult = "As a result of the decision, SCE recorded an $ 88 million impairment of utility property, plant and equipment that was disallowed by the CPUC, primarily related to the rooftop solar photovoltaic program.";
+  ok("EIX: the $ 88 million impairment ships as the span with its CPUC-issued prior, verb-class issued",
+    (() => { const r = dis([eixBoiler, eixSept, eixResult].join(" ")); return r?.length === 1 && r[0].quote === `${eixSept} ${eixResult}` && r[0].figures[0] === "$ 88 million" && r[0].kind === "issued"; })());
+  ok("EIX: the SFAS-90 'will be disallowed… reasonable estimate' boilerplate is never a row on its own",
+    dis(eixBoiler) === undefined);
+  ok("EIX: the colon-glued bullet ('…primarily related to: $88 million impairment…') is flattened-list debris, refused",
+    dis("Asset Impairment Charges of $106 million recorded in 2025 primarily related to: $88 million impairment of utility property, plant and equipment associated with historical capital expenditures disallowed in SCE's 2025 GRC final decision.") === undefined);
+
+  // --- AEP, both lanes. Lane A: the WVPSC order span ships (glued heading stripped from the
+  // prior); the company's remand TESTIMONY and the commission's DENIAL of an intervenor's
+  // proposed disallowance both die — a request is never a disallowance, and neither is a win.
+  const aepOrder = "APCo and WPCo Rate Matters (Applies to AEP and APCo) ENEC (Expanded Net Energy Cost) Filings In January 2024, the WVPSC issued an order resolving APCo's and WPCo's ( the Companies) 2021-2023 ENEC cases.";
+  const aepInOrder = "In the order, the WVPSC: (a) disallowed $ 232 million in ENEC under-recovered costs as of February 28, 2023 ($ 136 million related to APCo) and (b) approved the recovery of $ 321 million of ENEC under-recovered costs as of February 28, 2023 ($ 174 million related to APCo) plus a 4 % debt carrying charge rate over a ten-year recovery period starting September 1, 2024.";
+  ok("AEP: the WVPSC order span ships with the glued section heading stripped off the prior",
+    (() => { const r = dis(`${aepOrder} ${aepInOrder}`); return r?.length === 1 && r[0].quote.startsWith("In January 2024, the WVPSC issued an order") && r[0].figures.includes("$ 232 million") && r[0].kind === "issued"; })());
+  ok("AEP: the Companies' remand testimony 'supporting a reduction… of at least $ 179 million' is advocacy, never a disallowance",
+    dis("In June 2025, the Companies submitted direct testimony on remand supporting a reduction to the WVPSC's previously-ordered disallowance of at least $ 179 million.") === undefined);
+  ok("AEP: the WVPSC DENYING an intervenor-recommended disallowance is the company's win, never a ledger row",
+    dis("The WVPSC denied an intervenor-recommended ENEC under-recovery disallowance of $ 19 million.") === undefined);
+
+  // Lane B: KPCo's issuance ships as ISSUED with the heading stripped; APCo's proposed
+  // Virginia securitization ships as a REQUEST (verb-class fails closed to filed) and is
+  // refused by the disallowance lane outright.
+  const aepKpco = "Kentucky Securitization Case In June 2025, KPCo issued $478 million of securitization bonds to recover $500 million of regulatory assets, including $311 million of plant retirement costs, $79 million of deferred storm costs related to 2020, 2021, 2022 and 2023 major storms, $56 million of under-recovered purchased power rider costs, $51 million of deferred purchased power expenses and $3 million of issuance-related expenses, including KPSC advisor expenses.";
+  const aepVa = "In July 2025, APCo filed a request with the Virginia SCC to finance, through the issuance of proposed 20-year securitization bonds, approximately $1.4 billion of Virginia jurisdictional undepreciated property balances and a major storm operation and maintenance regulatory asset deferral balance.";
+  ok("AEP: KPCo's $478/$500 million issuance ships as ISSUED, glued heading stripped",
+    (() => { const r = sec(aepKpco); return r?.length === 1 && r[0].kind === "issued" && r[0].quote.startsWith("In June 2025, KPCo issued") && r[0].figures.includes("$478 million") && r[0].figures.includes("$500 million"); })());
+  ok("AEP: the Virginia $1.4 billion renders as a request — filed, never an issuance",
+    (() => { const r = sec(aepVa); return r?.length === 1 && r[0].kind === "filed" && r[0].figures[0] === "$1.4 billion"; })());
+  ok("AEP: the same Virginia request is never a disallowance",
+    dis(aepVa) === undefined);
+
+  // --- ETR, the doc's pin: 2.57B / 1.657B in the LPSC settlement sentence, one quote, both
+  // dollars the filer's own characters; the verb class stays 'filed' — authorization to
+  // finance is not bonds issued, and the label fails closed.
+  ok("ETR: the settlement sentence ships with $ 2.57 billion and $ 1.657 billion as verbatim figures, verb-class filed",
+    (() => {
+      const r = sec("The settlement agreement contains the following key terms: $ 2.57 billion of restoration costs from Hurricane Ida, Hurricane Laura, Hurricane Delta, Hurricane Zeta, and Winter Storm Uri were prudently incurred and eligible for recovery; carrying costs of $ 59.2 million were recoverable; and Entergy Louisiana was authorized to finance $ 1.657 billion utilizing the securitization process authorized by Act 55, as supplemented by Act 293.");
+      return r?.length === 1 && r[0].kind === "filed" && r[0].figures.includes("$ 2.57 billion") && r[0].figures.includes("$ 1.657 billion") && r[0].figures.every((f) => r[0].quote.includes(f));
+    })());
+
+  // --- DUK: the storm-recovery-bonds issuance verb reads ISSUED.
+  ok("DUK: 'issued $ 582 million and $ 461 million… of storm recovery bonds' is an issuance",
+    (() => { const r = sec("In September 2025, Duke Energy Carolinas and Duke Energy Progress issued $ 582 million and $ 461 million, respectively, of storm recovery bonds."); return r?.length === 1 && r[0].kind === "issued"; })());
+
+  // --- The controls' shapes (measured zero on all 14 non-utility filings; the lane is
+  // rateRegulated-gated besides). JPM's securitization-trust sentence carries the anchor and
+  // the dollars but no measured object token; the SEC is never a commission actor.
+  ok("JPM-shape: a credit-card securitization trust sentence scores zero — the object token list is measured, not decorative",
+    sec("As of December 31, 2025 and 2024, the Firm held undivided interests in Firm-sponsored credit card securitization trusts of $ 5.4 billion and $ 6.6 billion, respectively.") === undefined);
+  ok("the Securities and Exchange Commission is never a rate commission actor",
+    dis("In 2025, we recorded an impairment charge of $ 25 million following comments from the Securities and Exchange Commission on our accounting.") === undefined);
+  ok("zero incidence is silence: a filer with no qualifying sentence returns nothing at all",
+    utilityRegRead({ mdnaText: "Operating revenues increased in 2025 primarily due to rate base growth and favorable weather across our service territories.", fullText: "", fy: 2025 }) === null);
 }
 
 console.log(`\nlanguageGatesTest: ${pass} passed, ${fail} failed`);

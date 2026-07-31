@@ -1,0 +1,111 @@
+---
+// Utilities: the disallowance ledger + the securitization keyhole (qualitative survey Build
+// 10; docs/qualitative-desks-survey.md §Utilities P1 + P3). QUOTE-ONLY, both lanes: every
+// dollar the reader sees is a verbatim substring of the filed sentence — the lane never
+// computes, totals, or restates a number. Rendered beside the debt ladder (the securitized
+// bonds are debt moved off the meter) and one act below the record table's regulatory pair;
+// present-never-pronounce: whether a disallowance is a wound or a rounding error is the
+// reader's to judge. The substring identity is asserted at extraction time and RE-CHECKED
+// here (the Build 9 precedent), so a record that drifts from its quote retires rather than
+// render. Utilities only, on the rateRegulated flag — the desk's own tag census, never SIC.
+import language from "../data/language.json";
+
+const { company } = Astro.props;
+const rec = company?.rateRegulated ? (language?.companies?.[company?.ticker] || null) : null;
+const reg = rec?.utilityReg || null;
+
+// Render-time weld re-check: a figure that is not the quote's own characters retires the row.
+const sub = (r) => r.quote && (r.figures || []).every((f) => r.quote.includes(f));
+const disallowances = (reg?.disallowances || []).filter(sub);
+const securitizations = (reg?.securitizations || []).filter(sub);
+const show = disallowances.length || securitizations.length;
+
+// Up to three chips per row; the quote carries the rest (KPCo's issuance names seven dollars).
+const chips = (r) => (r.figures || []).slice(0, 3);
+const disTag = (k) => (k === "issued" ? "commission action" : "as recorded in the filing");
+const secTag = (k) => (k === "issued" ? "bonds issued" : "request or proceeding");
+---
+
+{show ? (
+  <section class="ureg">
+    <div class="head">
+      <h3 class="secTitle">Regulatory matters, in the filing&rsquo;s words</h3>
+      <div class="hmeta">
+        {reg.fy ? <span class="asof">FY{reg.fy} 10-K</span> : null}
+        {rec?.sourceUrl ? <a class="src" href={rec.sourceUrl} target="_blank" rel="noopener">the filing, SEC EDGAR →</a> : null}
+      </div>
+    </div>
+    <p class="intro">
+      For a rate-regulated utility the commission&rsquo;s pen writes the economics. Two things it wrote here, quoted
+      verbatim from the 10-K, gravest dollars first: costs the commission disallowed, and catastrophe or retirement
+      costs moved off the meter through securitization bonds. Nothing below is computed; every figure is the
+      filer&rsquo;s own sentence.
+    </p>
+
+    {disallowances.length ? (
+      <div class="lane">
+        <p class="lab">Disallowances the filing records</p>
+        <ul class="rows">
+          {disallowances.map((r) => (
+            <li class="row">
+              <div class="chips">
+                {chips(r).map((f) => <span class="chip">{f}</span>)}
+                <span class={`tag ${r.kind}`}>{disTag(r.kind)}</span>
+              </div>
+              <blockquote class="q">&ldquo;{r.quote}&rdquo;</blockquote>
+              {r.appeal ? <p class="appeal"><span class="alab">and on appeal:</span> &ldquo;{r.appeal}&rdquo;</p> : null}
+            </li>
+          ))}
+        </ul>
+      </div>
+    ) : null}
+
+    {securitizations.length ? (
+      <div class="lane">
+        <p class="lab">Costs financed through securitization bonds</p>
+        <ul class="rows">
+          {securitizations.map((r) => (
+            <li class="row">
+              <div class="chips">
+                {chips(r).map((f) => <span class="chip">{f}</span>)}
+                <span class={`tag ${r.kind}`}>{secTag(r.kind)}</span>
+              </div>
+              <blockquote class="q">&ldquo;{r.quote}&rdquo;</blockquote>
+            </li>
+          ))}
+        </ul>
+      </div>
+    ) : null}
+
+    <p class="foot">
+      Sentences from the Regulatory Matters disclosures and MD&amp;A of the latest 10-K, largest dollars first, at
+      most three to a lane. &ldquo;Commission action&rdquo; and &ldquo;bonds issued&rdquo; mark sentences that carry the
+      completed act in the filer&rsquo;s own verb; everything else renders as a recording, request, or proceeding —
+      never as a decided outcome. A filer with no qualifying sentence shows nothing here.
+    </p>
+  </section>
+) : null}
+
+<style>
+  .ureg { margin: 24px 0; }
+  .head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; border-bottom: 1px solid var(--rule-strong); padding-bottom: 6px; }
+  .secTitle { margin: 0; }
+  .hmeta { display: inline-flex; align-items: baseline; gap: 12px; flex-wrap: wrap; justify-content: flex-end; }
+  .asof { font-size: 11.5px; letter-spacing: 0.03em; text-transform: uppercase; color: var(--muted); flex: 0 0 auto; }
+  .src { font-size: 12px; color: var(--accent); flex: 0 0 auto; }
+  .intro { font-family: var(--serif); font-style: italic; font-size: 13.5px; color: var(--muted); margin: 9px 0 0; max-width: 74ch; line-height: 1.6; }
+
+  .lane { margin: 16px 0 0; }
+  .lab { font-family: var(--sans); font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); margin: 0 0 6px; }
+  .rows { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+  .row { border-left: 2px solid var(--rule-strong); padding: 2px 0 2px 12px; }
+  .chips { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+  .chip { font-family: var(--sans); font-size: 12.5px; font-weight: 700; color: var(--ink); border: 1px solid var(--rule-strong); padding: 1px 7px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .tag { font-family: var(--sans); font-size: 10.5px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+  .tag.issued { color: var(--accent); }
+  .q { font-family: var(--serif); font-style: italic; font-size: 14px; line-height: 1.6; color: var(--ink-soft); margin: 7px 0 0; max-width: 78ch; }
+  .appeal { font-family: var(--serif); font-size: 13px; line-height: 1.6; color: var(--ink-dim); margin: 6px 0 0; max-width: 76ch; }
+  .alab { font-family: var(--sans); font-style: normal; font-size: 10.5px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); margin-right: 4px; }
+
+  .foot { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--rule-strong); margin-top: 16px; padding-top: 10px; max-width: 78ch; }
+</style>

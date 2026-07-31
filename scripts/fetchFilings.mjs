@@ -24,7 +24,7 @@ import { compactJson } from "../src/lib/dataFile.mjs";
 // MD&A / unpaid-losses-note sentence to the filed number via the shared weld law, and the
 // lane is scoped by the insurer/managed-care ARCHETYPE, never SIC alone (Trupanion, a pet
 // insurer inside SIC 6324, is the measured false-attacher the archetype rule exists for).
-import { noteWindows, weld } from "../src/lib/quoteWeld.mjs";
+import { noteWindows, weld, jaccardDedupe } from "../src/lib/quoteWeld.mjs";
 import { financialKind } from "../src/lib/archetype.mjs";
 
 const UA = process.env.SEC_USER_AGENT || "Owner Scorecard research (ryanreinsant@gmail.com)";
@@ -866,7 +866,7 @@ function bizLeadText(business, form) {
   return m > 200 ? business.slice(m) : business;
 }
 
-async function getFiling(cik, f, totalDebtMillions = null, devTarget = null, depTarget = null, swTarget = false, ogTarget = false, reitTarget = false) {
+async function getFiling(cik, f, totalDebtMillions = null, devTarget = null, depTarget = null, swTarget = false, ogTarget = false, reitTarget = false, utilTarget = false) {
   const accnNoDash = f.accn.replace(/-/g, "");
   const base = `https://www.sec.gov/Archives/edgar/data/${Number(cik)}/${accnNoDash}`;
   let url = `${base}/${f.doc}`;
@@ -967,7 +967,14 @@ async function getFiling(cik, f, totalDebtMillions = null, devTarget = null, dep
       reitRead = reitLeasingRead({ businessText: business, item2Text: item2, mdnaText: mdna, fy, fyeDate: f.reportDate });
     } catch { reitRead = null; }
   }
-  return { url, business: { ...metrics(business), lead: leadSentences(bizLeadText(business, f.form)), head: business.slice(0, 800) }, mdna: { ...md, lead: leadSentences(mdna), candor: candorSignals(mdna, md.sents) }, risk: metrics(risk), reportDate: f.reportDate, debtMaturity, reserveRead, uninsuredRead, swRead, ogRead, reitRead };
+  // The utilities disallowance ledger + securitization keyhole (Build 10): MD&A plus the
+  // Regulatory/Rate Matters note windows, read from the full text (the notes sit past the
+  // narrative sections). Current filing only, quote-only, rateRegulated names only.
+  let utilRead = null;
+  if (utilTarget && fy && f.form === "10-K") {
+    try { utilRead = utilityRegRead({ mdnaText: mdna, fullText: text, fy }); } catch { utilRead = null; }
+  }
+  return { url, business: { ...metrics(business), lead: leadSentences(bizLeadText(business, f.form)), head: business.slice(0, 800) }, mdna: { ...md, lead: leadSentences(mdna), candor: candorSignals(mdna, md.sents) }, risk: metrics(risk), reportDate: f.reportDate, debtMaturity, reserveRead, uninsuredRead, swRead, ogRead, reitRead, utilRead };
 }
 
 // ---- executive pay (proxy statement / DEF 14A) ----
@@ -2688,6 +2695,224 @@ function reitLeasingRead({ businessText = "", item2Text = "", mdnaText = "", fy,
   };
 }
 
+// ---- Utilities: the disallowance ledger + the securitization keyhole (Build 10 of the
+// qualitative survey, 2026-07-31; docs/qualitative-desks-survey.md §Utilities P1 + P3, same
+// M5/M6 machinery, both QUOTE-ONLY) ----
+//
+// Two lanes over one candidate pool (MD&A + heading-scoped Regulatory/Rate Matters note
+// windows), both shipping the filer's own sentences with every rendered dollar a verbatim
+// substring — the lane never computes, totals, or restates a number.
+//
+// LANE 1 — the commission's pen: declarative past-tense sentences where a NAMED commission
+// disallowed costs, denied recovery, or forced a charge/impairment, with the dollar in the
+// filer's own sentence. The gate is the triple: a commission ACTOR (in the sentence or the
+// immediately prior sentence) + an IN-SENTENCE DOLLAR + a PAST-TENSE verb of the completed
+// action. A REQUEST is never a disallowance (the request/testimony/proposal frames die), a
+// commission DENYING a proposed disallowance is the company's win and dies, and the
+// hypothetical/forward frames die (the SFAS-90 "will be disallowed… reasonable estimate…
+// can be made" boilerplate in every utility's accounting-policies note). An appeal sentence
+// — a court/rehearing ACTION, dollar-bearing preferred — ships alongside its disallowance
+// (Nicor's "$ 43 million" rehearing petition beside the Illinois Commission's $ 127 million
+// order). Verb-class label (the commission ISSUED the act vs merely narrated-as-FILED)
+// fails closed to "filed". Jaccard dedupe, gravest dollars first, cap 3.
+//
+// LANE 2 — costs moved off the meter: storm/wildfire/plant-retirement costs financed
+// through securitization bonds, dollar-anchored. Anchor + in-sentence dollar + a measured
+// OBJECT token (storm/hurricane/wildfire/system restoration/plant retirement/regulatory
+// asset/settlement/restoration costs — the widened securitized-bonds anchor is what reaches
+// EIX's TKM financing). A FILED request renders as a request, never an issuance: the
+// "issued" label requires the bonds-issued verb pattern and fails closed to "filed" (APCo's
+// proposed $ 1.4 billion Virginia securitization stays a request on the page).
+//
+// Measured on the 14 real utility 10-Ks (AEP ATO AWK CNP DUK EIX ETR HE PNW SO UTL WEC WMB
+// XEL, fetched 2026-07-31): disallowances fire on 5 (AEP EIX ETR SO WEC), securitization on
+// 5 (AEP CNP DUK EIX ETR); WEC 177.2/178.9 (one contiguous span), SO 127 + rehearing 43,
+// EIX 88 (the CPUC-issued span), AEP KPCo 478/500 issued + Virginia 1.4B as a request, ETR
+// 2.57B/1.657B all reproduce; the 9 zero-incidence names and 14 cross-sector non-utility
+// controls (JPM FLG TRV UNH PLD O SPG MSFT DDOG XOM DVN WMT CAT AAL) score zero on both.
+const REG_NOTE_HEADS = /Regulatory\s+(?:Matters|Environment)|Rate\s+(?:Matters|Proceedings)|Regulatory\s+Assets\s+and\s+Liabilities|Storm\s+Cost\s+Recovery|Securitization/i;
+// A named commission, never the SEC/FTC/CFTC/European Commission (each present in every
+// 10-K and each a false actor for a RATE regulator).
+const REG_ACTOR_NOT = /Securities\s+and\s+Exchange\s+Commission|Exchange\s+Commission|Federal\s+Trade\s+Commission|Futures\s+Trading\s+Commission|European\s+Commission|Commission\s+file/gi;
+// State commission acronyms as the corpus writes them, the spelled-out form, a titled
+// "<Name> Commission", and the GRC token (measured: EIX narrates its decision only as
+// "SCE's 2025 GRC final decision" — the acronym is load-bearing, the survey's own finding).
+const REG_ACTOR = /\b(?:[A-Z]{2,6}P[SU]C|CPUC|FERC|ICC|LPSC|MPSC|APSC|PSCW|PUCO|PUCT|IURC|NCUC|KPSC|OPUC|WUTC|SCC|ACC|PUC|PSC)\b|Public\s+(?:Utility|Utilities|Service)\s+Commission|\b[A-Z][a-z]+\s+Commission\b|\bthe\s+Commission\b|\bGRC\b/;
+const regHasActor = (s) => !!s && REG_ACTOR.test(String(s).replace(REG_ACTOR_NOT, " "));
+const REG_DIS_VOCAB = /disallow\w*|denied\s+recovery|denial\s+of\s+recovery|write-?off|impairment/i;
+const REG_DOLLAR = /\$\s?[\d,]+(?:\.\d+)?\s*(?:million|billion)/i;
+const REG_DIS_PAST = /\b(?:disallowed|denied|excluded|rejected|upheld|ordered|imposed|issued|recorded|wrote\s+off|written\s+off|impaired|resulted\s+in)\b/i;
+const REG_HYPO = /\b(?:if|could|would|might|should|may\s+be|may\s+result|unless|to\s+the\s+extent|is\s+probable\s+that|will\s+be|cannot\s+predict|potential\s+for|expects?\s+to|anticipates?\b)\b/i;
+const REG_REQUEST = /\b(?:filed\s+(?:a|an|its)\s+(?:request|application|petition)|request(?:ed|ing)?\s+(?:approval|authorization|recovery)|propos(?:ed|es|ing|al)|seek(?:s|ing)?|sought|recommend(?:ed|s|ing)?|testimony)\b/i;
+const REG_TABLE = /\b(19|20)\d{2}\s+(19|20)\d{2}\b|\(in\s+(?:thousands|millions)|following\s+tables?\b|tables?\s+(?:below|above)\b/i;
+const REG_DENIED_DISALLOWANCE = /denied[^.;]{0,80}disallowance/i;
+// Flattened-list debris: a colon feeding a bare dollar is a bullet list the HTML collapsed
+// (EIX's "…primarily related to: $88 million impairment…" quotes ONE bullet of two as if it
+// were the sentence), and an MD&A variance bullet narrates an earnings delta, not the act.
+const REG_COLON_LIST = /:\s*\$/;
+const REG_VARIANCE_BULLET = /^An?\s+\$\s?[\d,]+(?:\.\d+)?\s*(?:million|billion)\s+(?:increase|decrease)\b/i;
+// The appeal sentence is a court ACTION — a filing or a ruling — not any sentence saying
+// "rehearing" (WEC's "As the ICC did not grant a rehearing… we recorded…" is the charge).
+const REG_APPEAL = /\b(?:appeal\w*|rehearing|petition\s+for\s+(?:review|rehearing)|notice\s+of\s+appeal|appellate)\b/i;
+const REG_APPEAL_VERB = /\b(?:filed|appeal(?:ed|ing)?|upheld|granted|denied|dismissed|affirmed|reversed|remanded|vacated)\b/i;
+const REG_SEC_ANCHOR = /securitiz\w+|securitized\s+bonds|recovery\s+bonds/i;
+const REG_SEC_OBJECT = /\b(?:storms?|hurricanes?|wildfires?|winter\s+storm|system\s+restoration|plant\s+retirement|regulatory\s+assets?|settlement|restoration\s+costs)\b/i;
+const REG_SEC_ISSUED = /\b(?:issued|sold)\b[^.;]{0,160}?\b(?:securitization|securitized|storm\s+recovery|recovery)\s+bonds\b|\b(?:securitization|securitized|storm\s+recovery|recovery)\s+bonds\b[^.;]{0,60}\bwere\s+(?:issued|sold)\b|\bissued\s+securitized\s+bonds\b/i;
+const REG_SEC_STAFF = /\bstaff\b[^.;]{0,60}\brecommend/i;
+const REG_ANAPHORA = /^(?:This|These|Such|It\b|The\s+(?:net\s+)?(?:bond\s+)?proceeds)\b/;
+// An anaphoric open ships only as the contiguous span with its own preceding sentence
+// (the Build 2 letter-span / Build 9 dated-sibling precedent) — or not at all.
+const REG_GLUE_LEAD = /^(?:This|These|Such|It\b|As\s+a\s+result|In\s+the\s+order|The\s+amount|This\s+amount)/;
+// A glued section label before a date-led open: "Kentucky Securitization Case In June 2025,
+// KPCo issued…" — the label run tolerates parenthesized asides and comma'd storm names
+// (AEP's "(Applies to AEP and APCo)", ETR's "Bonds - Hurricane Laura, …, and Winter Storm
+// Uri"); the lookahead demands a date-led or in-connection open, which running prose never
+// hands a bare Title-Case run.
+const stripRegHeading = (s) =>
+  s.replace(/^(?:[A-Z][A-Za-z&\-']+)(?:[\s,]+(?:and|of|the|or|&|-|—|[A-Z][A-Za-z&\-']+|\([^)]{0,44}\)|(?:19|20)\d{2}|[IVX]+)){0,11}\s+(?=(?:In|On|During|As|At|Following|Under)\s(?:[A-Z]|the\s|its\s|a\s|an\s|early|late|mid|connection|addition|response|third|fourth|first|second|(?:19|20)\d{2}))/, "");
+
+// Raw pieces (split + trimmed, unfiltered) so a candidate's PRIOR is the true adjacent
+// sentence — the immediately-prior actor rung and the glue both depend on adjacency, and a
+// filtered-out short declarative (EIX's 57-letter "the CPUC issued a final decision…") must
+// still serve as prior. Local by design, the devSentences precedent.
+function regPieces(text) {
+  if (!text) return [];
+  return String(text)
+    .split(/(?<=[.!?]["”’']?)\s+(?=[A-Z(“"$0-9]|i[A-Z])/)
+    .map((s) => s.replace(/\s+/g, " ").trim().replace(/^(?:(?:19|20)\d{2}\s+)+(?=[A-Z“"$])/, ""));
+}
+function regProse(s) {
+  if (s.length < 50 || s.length > 520) return false;
+  if (!/^[A-Z“"(]/.test(s)) return false; // a lowercase or bare-dollar open is a fragment / list bullet
+  const digits = (s.match(/\d/g) || []).length;
+  const letters = (s.match(/[a-zA-Z]/g) || []).length;
+  return letters >= 60 && digits / (digits + letters) <= 0.4;
+}
+const regGlueOk = (prior) => !!prior && prior.length >= 40 && prior.length <= 400 && /^[A-Z“"(]/.test(prior);
+
+const regDollarsIn = (s) => [...s.matchAll(/\$\s?([\d,]+(?:\.\d+)?)\s*(million|billion)/gi)]
+  .map((m) => ({ text: m[0], value: parseFloat(m[1].replace(/,/g, "")) * (/billion/i.test(m[2]) ? 1e9 : 1e6) }));
+
+// Rank ("gravest dollars first") by the dollar the verb acts on — the first dollar within
+// reach after a vocab verb ("disallowed $ 127 million of the $ 415 million" ranks 127, not
+// the in-sentence maximum) — else the largest dollar in the sentence. Ordering only: the
+// rank never renders, every visible figure stays a verbatim substring of its quote.
+function regRankDollar(s) {
+  const m = s.match(/(?:disallow\w*|denied|write-?off|wrote\s+off|impairment(?:s)?|charge(?:s)?)(?:\s+\S+){0,7}?\s(\$\s?[\d,]+(?:\.\d+)?\s*(?:million|billion))/i);
+  if (m) { const d = regDollarsIn(m[1]); if (d.length) return d[0].value; }
+  const all = regDollarsIn(s);
+  return all.length ? Math.max(...all.map((d) => d.value)) : 0;
+}
+
+// One candidate pool for both lanes: the extracted MD&A, then every Regulatory/Rate-Matters
+// note window (the M5 noteWindows scoper — the real note hides behind TOC echoes and
+// cross-references). Zones keep their internal order for the prior-sentence rung and the
+// appeal search; a sentence already seen in an earlier zone is marked dup, never re-gated.
+function regZones(mdnaText, fullText) {
+  const pools = [];
+  const seen = new Set();
+  const addZone = (text) => {
+    const ss = regPieces(text).map(stripRegHeading);
+    const zone = [];
+    for (let i = 0; i < ss.length; i++) {
+      const prose = regProse(ss[i]);
+      const k = ss[i].toLowerCase().slice(0, 160);
+      const dup = prose && seen.has(k);
+      if (prose && !dup) seen.add(k);
+      zone.push({ s: ss[i], prior: ss[i - 1] || "", dup, prose });
+    }
+    if (zone.length) pools.push(zone);
+  };
+  addZone(mdnaText);
+  for (const win of noteWindows(fullText, REG_NOTE_HEADS)) addZone(win);
+  return pools;
+}
+
+// Gravest dollars first, THEN the M6 Jaccard dedupe (so the largest-dollar member of a
+// near-dup cluster is the one that stands; length breaks rank ties so a glued span beats
+// its own member), then a substring pass (a span absorbs the member sentences it contains).
+function regCapRows(hits, cap = 3) {
+  hits.sort((a, b) => b.rank - a.rank || b.quote.length - a.quote.length);
+  const kept = jaccardDedupe(hits.map((h) => h.quote));
+  const out = [];
+  for (const r of hits) {
+    if (!kept.includes(r.quote)) continue;
+    if (out.some((o) => o.quote.includes(r.quote) || r.quote.includes(o.quote))) continue;
+    out.push(r);
+  }
+  return out.slice(0, cap);
+}
+
+function utilityDisallowances(zones) {
+  const hits = [];
+  for (const zone of zones) {
+    for (let i = 0; i < zone.length; i++) {
+      const { s, prior, dup, prose } = zone[i];
+      if (dup || !prose) continue;
+      if (!REG_DIS_VOCAB.test(s) || !REG_DOLLAR.test(s)) continue;
+      if (!(regHasActor(s) || regHasActor(prior))) continue;
+      if (!REG_DIS_PAST.test(s)) continue;
+      if (REG_HYPO.test(s) || REG_REQUEST.test(s) || REG_TABLE.test(s) || REG_DENIED_DISALLOWANCE.test(s)) continue;
+      if (REG_COLON_LIST.test(s) || REG_VARIANCE_BULLET.test(s)) continue;
+      let quote = s;
+      if (REG_GLUE_LEAD.test(s)) {
+        if (!regGlueOk(prior) || REG_TABLE.test(prior) || REG_HYPO.test(prior) || (prior + " " + s).length > 800) continue;
+        quote = prior + " " + s;
+      }
+      let appeal = null;
+      for (let j = i + 1; j < zone.length && j <= i + 25; j++) {
+        if (!zone[j].prose) continue;
+        const a = zone[j].s;
+        if (!REG_APPEAL.test(a) || !REG_APPEAL_VERB.test(a) || REG_TABLE.test(a) || REG_HYPO.test(a)) continue;
+        if (REG_DOLLAR.test(a)) { appeal = a; break; }
+        if (!appeal) appeal = a;
+      }
+      const issued =
+        /\bdisallowed\s+by\s+(?:the\s+)?[A-Z]/.test(quote) ||
+        new RegExp(REG_ACTOR.source + "[^.;]{0,60}\\b(?:disallowed|denied|excluded|imposed|ordered|upheld|issued|entered)\\b").test(quote.replace(REG_ACTOR_NOT, " ")) ||
+        new RegExp(REG_ACTOR.source + "[^.;]{0,60}\\b(?:issued|entered)\\b[^.;]{0,60}\\b(?:order|decision)s?\\b").test(String(prior).replace(REG_ACTOR_NOT, " "));
+      hits.push({ quote, appeal, kind: issued ? "issued" : "filed", rank: regRankDollar(quote) });
+    }
+  }
+  return regCapRows(hits).map(({ quote, appeal, kind }) => {
+    const figures = regDollarsIn(quote).map((d) => d.text);
+    // The weld law, asserted at write time: every figure is the filer's own characters.
+    weld(quote, figures.map((text) => ({ text, kind: "verbatim" })));
+    return { quote, figures, kind, ...(appeal ? { appeal } : {}) };
+  });
+}
+
+function utilitySecuritization(zones) {
+  const hits = [];
+  for (const zone of zones) {
+    for (const { s, dup, prose } of zone) {
+      if (dup || !prose) continue;
+      if (!REG_SEC_ANCHOR.test(s) || !REG_DOLLAR.test(s) || !REG_SEC_OBJECT.test(s)) continue;
+      if (REG_HYPO.test(s) || REG_TABLE.test(s) || REG_ANAPHORA.test(s) || REG_SEC_STAFF.test(s)) continue;
+      const all = regDollarsIn(s);
+      hits.push({ quote: s, kind: REG_SEC_ISSUED.test(s) ? "issued" : "filed", rank: Math.max(...all.map((d) => d.value)) });
+    }
+  }
+  return regCapRows(hits).map(({ quote, kind }) => {
+    const figures = regDollarsIn(quote).map((d) => d.text);
+    weld(quote, figures.map((text) => ({ text, kind: "verbatim" })));
+    return { quote, figures, kind };
+  });
+}
+
+function utilityRegRead({ mdnaText = "", fullText = "", fy }) {
+  if (!fy) return null;
+  const zones = regZones(mdnaText, fullText);
+  const disallowances = utilityDisallowances(zones);
+  const securitizations = utilitySecuritization(zones);
+  if (!disallowances.length && !securitizations.length) return null;
+  return {
+    fy,
+    ...(disallowances.length ? { disallowances } : {}),
+    ...(securitizations.length ? { securitizations } : {}),
+  };
+}
+
 async function main() {
   // Carry-over: start from the existing file, so a partial run (a ticker limit, or a pool that comes
   // up empty) never wipes good entries — fresh results overlay, and names no longer in either
@@ -2766,10 +2991,13 @@ async function main() {
     // The REIT desk's scope (Build 9): the ARCHETYPE gate, never SIC alone (the Build 4
     // precedent) — equity REITs as the pipeline classifies them, US 10-K filers only.
     const reitTarget = !isAdr && devKind === "reit";
+    // The utilities desk's scope (Build 10): the rateRegulated flag — the desk's own tag
+    // census on the record (utilitiesLines' ≥5-concept gate), never SIC alone. 73 filers.
+    const utilTarget = !isAdr && !!c.rateRegulated;
     let cur, prior;
     try {
       await sleep(THROTTLE);
-      cur = await getFiling(c.cik, filings[0], totalDebtMillions, devTarget, depTarget, swTarget, ogTarget, reitTarget);
+      cur = await getFiling(c.cik, filings[0], totalDebtMillions, devTarget, depTarget, swTarget, ogTarget, reitTarget, utilTarget);
       if (filings[1]) { await sleep(THROTTLE); prior = await getFiling(c.cik, filings[1], null, null, null, swTarget); }
     } catch (e) { console.warn(`  ! ${tk}: filing ${e.message}`); continue; }
 
@@ -2894,6 +3122,11 @@ async function main() {
         // the sentence's own dollar pair). Absent means the gates passed nothing — silence
         // over filler; a stated withhold carries its reason.
         ...(cur.reitRead ? { reitLeasing: cur.reitRead } : {}),
+        // The utilities disallowance ledger + securitization keyhole (Build 10): the
+        // commission's completed acts and the storm/retirement costs moved off the meter, in
+        // the filer's own sentences, every dollar a verbatim substring, quote-only — the lane
+        // never computes. Absent means zero incidence — silence over filler.
+        ...(cur.utilRead ? { utilityReg: cur.utilRead } : {}),
       };
       ok++;
       console.log(`  ✓ ${tk}: ${flags.length} owner-flags, MD&A ${cur.mdna.words}w` + (comp ? `, payRatio ${comp.payRatio}:1` : "") + (debtMaturity ? `, debt-wall $${(debtMaturity.total / 1e9).toFixed(1)}B` : ""));
@@ -2916,7 +3149,7 @@ async function main() {
 }
 
 // Exported for the offline logic test; only hit EDGAR when run directly.
-export { ownerFlags, FLAG_THEMES, sentences, isProse, diff, extractPayRatio, extractInsiderOwnership, extractInsiderGroup, htmlToText, section, fetchText, businessDescription, candorSignals, businessBrief, buffettRead, BIZ_HUMANCAP, BIZ_LINEAGE, BIZ_ASPIRATIONAL, BRIEF_ORPHAN, PROMO, smellsLikeRisk, fortyFSections, folderDocs, extractSections, MW_DECLARED, MW_ABSENT, MW_OTHER_ENTITY, RESTATED, RESTATED_CONTRACT, INTEGRITY_FUTURE, ADMIT, NOT_ADMIT, BLAME_OTHERS, reserveDevelopmentRead, devSentences, uninsuredDepositsRead, uninsSentences, softwareRetentionRead, customerLadderRead, softwareKpiRead, softwareKpiAssemble, swSentences, swCounts, reserveEngineerRead, ogCriticalTopics, ogSentences, reitLeasingRead, reitSpreadRead, reitOccupancyRead, reitSentences };
+export { ownerFlags, FLAG_THEMES, sentences, isProse, diff, extractPayRatio, extractInsiderOwnership, extractInsiderGroup, htmlToText, section, fetchText, businessDescription, candorSignals, businessBrief, buffettRead, BIZ_HUMANCAP, BIZ_LINEAGE, BIZ_ASPIRATIONAL, BRIEF_ORPHAN, PROMO, smellsLikeRisk, fortyFSections, folderDocs, extractSections, MW_DECLARED, MW_ABSENT, MW_OTHER_ENTITY, RESTATED, RESTATED_CONTRACT, INTEGRITY_FUTURE, ADMIT, NOT_ADMIT, BLAME_OTHERS, reserveDevelopmentRead, devSentences, uninsuredDepositsRead, uninsSentences, softwareRetentionRead, customerLadderRead, softwareKpiRead, softwareKpiAssemble, swSentences, swCounts, reserveEngineerRead, ogCriticalTopics, ogSentences, reitLeasingRead, reitSpreadRead, reitOccupancyRead, reitSentences, utilityRegRead, utilityDisallowances, utilitySecuritization, regZones, regPieces };
 
 if (import.meta.url === pathToFileURL(process.argv[1] || "").href) {
   main().catch((e) => { console.error(`\n❌ ${e.message}\n`); process.exit(1); });
