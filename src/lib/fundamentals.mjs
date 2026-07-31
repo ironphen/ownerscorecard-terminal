@@ -776,10 +776,14 @@ export function cashConversionCycle(c) {
 // is worth seeing, because a rate reverting to normal moves reported earnings without the business
 // changing. Null on a loss year (the rate is meaningless) or an out-of-band figure (a tax benefit).
 export function effectiveTaxRate(L) {
-  const tax = L?.incomeTaxExpense, ni = L?.netIncome;
-  if (tax == null || ni == null) return null;
-  const pretax = ni + tax;
-  if (!(pretax > 0)) return null;
+  const tax = L?.incomeTaxExpense;
+  if (tax == null) return null;
+  // GATE E (record-table survey, 2026-07-31): the filer's own pretax line is the denominator
+  // wherever it is tagged. The NI+tax reconstruction misses by the noncontrolling-interest and
+  // equity-method wedge — 1,175 rendered years sat more than 3 points off (AECOM's FY2023 read
+  // 50.3% against a filed-basis 26.3%) — and stays only as the fallback for pretax-dark years.
+  const pretax = L?.pretaxIncome != null ? L.pretaxIncome : (L?.netIncome != null ? L.netIncome + tax : null);
+  if (pretax == null || !(pretax > 0)) return null;
   const r = tax / pretax;
   return r < -0.1 || r > 0.6 ? null : r;
 }

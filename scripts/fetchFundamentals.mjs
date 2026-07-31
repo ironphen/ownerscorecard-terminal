@@ -170,6 +170,12 @@ const CONCEPTS = {
     "LongTermLineOfCredit",
     "OtherLongTermDebtNoncurrent",
   ],
+  // The filer's own pretax subtotal (record-table survey Build 5): the tax rate's honest
+  // denominator, and the coming income-statement row. Two-element ladder per the desk census.
+  pretaxIncome: [
+    "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest",
+    "IncomeLossFromContinuingOperationsBeforeIncomeTaxesMinorityInterestAndIncomeLossFromEquityMethodInvestments",
+  ],
   incomeTaxExpense: ["IncomeTaxExpenseBenefit"],
   costOfRevenue: ["CostOfGoodsAndServicesSold", "CostOfRevenue", "CostOfGoodsSold"],
   // Operating cost drivers below the gross-margin line: the buckets between gross profit and
@@ -1675,6 +1681,7 @@ async function main() {
       costsAndExpenses: collectAnnual(facts, CONCEPTS.costsAndExpenses),
       interestExpense: collectAnnual(facts, CONCEPTS.interestExpense),
       incomeTaxExpense: collectAnnual(facts, CONCEPTS.incomeTaxExpense),
+      pretaxIncome: collectAnnual(facts, CONCEPTS.pretaxIncome),
       netIncome: collectAnnual(facts, CONCEPTS.netIncome),
       cashFromOps: collectAnnual(facts, CONCEPTS.cashFromOps),
       capex: collectAnnual(facts, CONCEPTS.capex),
@@ -1863,6 +1870,7 @@ async function main() {
           operatingIncome: deriveOpInc(ha.operatingIncome[fy] ?? null, ha.revenue[fy] ?? null, ha.costsAndExpenses[fy] ?? null, ha.netIncome[fy] ?? null, ha.incomeTaxExpense[fy] ?? null, ha.interestExpense[fy] ?? null),
           interestExpense: ha.interestExpense[fy] ?? null,
           incomeTaxExpense: ha.incomeTaxExpense[fy] ?? null,
+          pretaxIncome: ha.pretaxIncome[fy] ?? null,
           netIncome: ha.netIncome[fy] ?? null,
           stockBasedComp: ha.stockBasedComp[fy] ?? null,
           sgaExpense: ha.sgaExpense[fy] ?? null,
@@ -2102,6 +2110,7 @@ async function main() {
         depreciation: pick(CONCEPTS.depreciation),
         capex: pick(CONCEPTS.capex),
         incomeTaxExpense: pick(CONCEPTS.incomeTaxExpense),
+        pretaxIncome: anchor?.fy != null ? (ha.pretaxIncome?.[anchor.fy] ?? null) : null,
         costOfRevenue: (() => {
           const e = latestEntry(corByYear(facts));
           if (!e) return null;

@@ -69,6 +69,9 @@ const ROW = {
   premiums: { label: "Premiums earned", short: "Premiums", g: 1, get: (L) => money(L.premiumsEarned) },
   invInc: { label: "Investment income", short: "Inv. inc.", g: 1, get: (L) => money(L.investmentIncome) },
   provision: { label: "Credit-loss provision", short: "Provision", g: 1, kind: "neutral", get: (L) => money(L.provisionForCreditLosses) },
+  // The filer's own pretax subtotal (record-table survey Build 5): the income statement's last
+  // stop before the government's share, and the denominator Gate E holds the tax rate to.
+  pretax: { label: "Pretax income", short: "Pretax", g: 1, get: (L) => money(L.pretaxIncome) },
   netIncome: { label: "Net income", short: "Net inc.", g: 1, get: (L) => money(L.netIncome) },
   netMargin: { label: "Net margin", short: "Net mgn", g: 1, get: (L) => marginStr(L.netIncome, L.revenue) },
   // --- group 4: the per-share array, a Value Line page's heart — every owner figure reduced to one
@@ -217,7 +220,7 @@ const ROW = {
 // sparse-row prune below drops whatever a business lacks (no inventory for a software maker, no R&D for
 // a retailer, no goodwill for one that never acquires).
 const FULL = [
-  ROW.revenue, ROW.grossMargin, ROW.sga, ROW.rnd, ROW.opIncome, ROW.opMargin, ROW.netIncome, ROW.taxRate,
+  ROW.revenue, ROW.grossMargin, ROW.sga, ROW.rnd, ROW.opIncome, ROW.opMargin, ROW.pretax, ROW.netIncome, ROW.taxRate,
   ROW.cashFromOps, ROW.depreciation, ROW.wcOther, ROW.capex, ROW.capexToRev, ROW.ownerEarnings, ROW.oeMargin, ROW.freeCashFlow, ROW.fcfMargin, ROW.acquisitions, ROW.dividendsPaidAbs, ROW.buybacksAbs, ROW.roic, ROW.roe, ROW.retainedToEquity,
   ROW.cash, ROW.receivables, ROW.inventoryRow, ROW.accountsPayable, ROW.operatingWC, ROW.currentAssets, ROW.currentLiabilities, ROW.currentRatio, ROW.netPPERow, ROW.goodwillRow, ROW.totalAssets, ROW.totalDebt, ROW.netDebt, ROW.intCov, ROW.equity, ROW.sbcToRev, ROW.goodwillImp,
   // Per share: the share count leads (the divisor), then top line, earnings, the two cash measures, the
@@ -232,7 +235,7 @@ const SETS = {
   // Banks gained their statement skeleton 2026-07-31 (record-table survey Build 2): the two
   // interest legs above NII so the spread is a checked subtotal, the loan book and its allowance
   // opening the balance-sheet band, and the capital actually returned in dollars.
-  financial: [ROW.revenue, ROW.intIncome, ROW.intExpenseBank, ROW.nii, ROW.feeIncome, ROW.provision, ROW.netIncome, ROW.taxRate, ROW.roa, ROW.roe, ROW.retainedToEquity, ROW.rotce, ROW.efficiency, ROW.dividendsPaidAbs, ROW.buybacksAbs, ROW.loans, ROW.allowance, ROW.totalAssets, ROW.deposits, ROW.goodwillRow, ROW.equity, ROW.shares, ROW.eps, ROW.dps, ROW.bvps, ROW.tbvps],
+  financial: [ROW.revenue, ROW.intIncome, ROW.intExpenseBank, ROW.nii, ROW.feeIncome, ROW.provision, ROW.pretax, ROW.netIncome, ROW.taxRate, ROW.roa, ROW.roe, ROW.retainedToEquity, ROW.rotce, ROW.efficiency, ROW.dividendsPaidAbs, ROW.buybacksAbs, ROW.loans, ROW.allowance, ROW.totalAssets, ROW.deposits, ROW.goodwillRow, ROW.equity, ROW.shares, ROW.eps, ROW.dps, ROW.bvps, ROW.tbvps],
   // Insurers read on the combined ratio and float, but they also generate cash, and a group
   // that owns operating businesses under an insurance SIC (a conglomerate, say) is read on its
   // owner economics too. So the owner-earnings bridge and cash sit beside the underwriting
@@ -240,11 +243,11 @@ const SETS = {
   // The written-vs-earned pair, the combined ratio's two halves, and the honesty meter itself —
   // prior-year reserve development, signed as filed — joined the record 2026-07-31 (record-table
   // survey Build 2), with the capital actually returned in dollars.
-  insurer: [ROW.revenue, ROW.premiumsWritten, ROW.premiums, ROW.invInc, ROW.netIncome, ROW.taxRate, ROW.cashFromOps, ROW.ownerEarnings, ROW.lossRatio, ROW.expenseRatioRow, ROW.combined, ROW.reserveDev, ROW.roe, ROW.retainedToEquity, ROW.dividendsPaidAbs, ROW.buybacksAbs, ROW.float, ROW.totalAssets, ROW.cash, ROW.equity, ROW.shares, ROW.eps, ROW.ownerEarningsPS, ROW.dps, ROW.bvps],
+  insurer: [ROW.revenue, ROW.premiumsWritten, ROW.premiums, ROW.invInc, ROW.pretax, ROW.netIncome, ROW.taxRate, ROW.cashFromOps, ROW.ownerEarnings, ROW.lossRatio, ROW.expenseRatioRow, ROW.combined, ROW.reserveDev, ROW.roe, ROW.retainedToEquity, ROW.dividendsPaidAbs, ROW.buybacksAbs, ROW.float, ROW.totalAssets, ROW.cash, ROW.equity, ROW.shares, ROW.eps, ROW.ownerEarningsPS, ROW.dps, ROW.bvps],
   // Life insurers: the spread-and-book-value story, no combined ratio (see insurers.mjs).
-  lifeInsurer: [ROW.revenue, ROW.premiumsWritten, ROW.premiums, ROW.invInc, ROW.netIncome, ROW.taxRate, ROW.cashFromOps, ROW.ownerEarnings, ROW.roe, ROW.retainedToEquity, ROW.dividendsPaidAbs, ROW.buybacksAbs, ROW.float, ROW.totalAssets, ROW.cash, ROW.equity, ROW.shares, ROW.eps, ROW.ownerEarningsPS, ROW.dps, ROW.bvps],
-  fee: [ROW.revenue, ROW.opMargin, ROW.netMargin, ROW.netIncome, ROW.taxRate, ROW.ownerEarnings, ROW.roe, ROW.retainedToEquity, ROW.totalAssets, ROW.cash, ROW.equity, ROW.shares, ROW.revenuePS, ROW.eps, ROW.ownerEarningsPS, ROW.dps, ROW.bvps],
-  managedCare: [ROW.revenue, ROW.premiums, ROW.mlr, ROW.opMargin, ROW.netIncome, ROW.taxRate, ROW.roe, ROW.retainedToEquity, ROW.totalAssets, ROW.equity, ROW.shares, ROW.revenuePS, ROW.eps, ROW.dps, ROW.bvps],
+  lifeInsurer: [ROW.revenue, ROW.premiumsWritten, ROW.premiums, ROW.invInc, ROW.pretax, ROW.netIncome, ROW.taxRate, ROW.cashFromOps, ROW.ownerEarnings, ROW.roe, ROW.retainedToEquity, ROW.dividendsPaidAbs, ROW.buybacksAbs, ROW.float, ROW.totalAssets, ROW.cash, ROW.equity, ROW.shares, ROW.eps, ROW.ownerEarningsPS, ROW.dps, ROW.bvps],
+  fee: [ROW.revenue, ROW.opMargin, ROW.netMargin, ROW.pretax, ROW.netIncome, ROW.taxRate, ROW.ownerEarnings, ROW.roe, ROW.retainedToEquity, ROW.totalAssets, ROW.cash, ROW.equity, ROW.shares, ROW.revenuePS, ROW.eps, ROW.ownerEarningsPS, ROW.dps, ROW.bvps],
+  managedCare: [ROW.revenue, ROW.premiums, ROW.mlr, ROW.opMargin, ROW.pretax, ROW.netIncome, ROW.taxRate, ROW.roe, ROW.retainedToEquity, ROW.totalAssets, ROW.equity, ROW.shares, ROW.revenuePS, ROW.eps, ROW.dps, ROW.bvps],
   // The REIT record gained depreciation (the charge the whole industry disputes, shown as
   // filed), dividends in dollars above the coverage ratio they feed, and the interest bill
   // beside its coverage (record-table survey Build 2, 2026-07-31).
