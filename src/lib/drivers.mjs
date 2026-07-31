@@ -120,10 +120,20 @@ function verifyFigure(s, from, actualPct, actualDelta, pctTol) {
 }
 
 const CONSOLIDATED = [
-  { key: "revenue", label: "Revenue", re: /^["“']?(?:In\s+(?:fiscal\s+(?:year\s+)?)?\d{4},?\s+)?(?:Our\s+|The\s+Company['’]s\s+)?(?:Total\s+|Consolidated\s+|Net\s+)?(?:revenues?|net\s+sales|sales)\b/i },
-  { key: "operatingIncome", label: "Operating income", re: /^["“']?(?:In\s+(?:fiscal\s+(?:year\s+)?)?\d{4},?\s+)?(?:Our\s+|The\s+Company['’]s\s+)?(?:Total\s+|Consolidated\s+)?(?:operating\s+income|income\s+from\s+operations|operating\s+profit)\b/i },
-  { key: "netIncome", label: "Net income", re: /^["“']?(?:In\s+(?:fiscal\s+(?:year\s+)?)?\d{4},?\s+)?(?:Our\s+|The\s+Company['’]s\s+)?(?:Consolidated\s+)?(?:net\s+income|net\s+earnings)\b/i },
+  { key: "revenue", label: "Revenue", re: /^["“']?(?:In\s+(?:fiscal\s+(?:year\s+)?)?\d{4},?\s+)?(?:Our\s+|The\s+Company['’]s\s+)?(?:Total\s+|Consolidated\s+|Net\s+)?(?:revenues?|net\s+sales|sales)\b/i,
+    core: /\b(?:revenues?|net\s+sales|sales)\b/i },
+  { key: "operatingIncome", label: "Operating income", re: /^["“']?(?:In\s+(?:fiscal\s+(?:year\s+)?)?\d{4},?\s+)?(?:Our\s+|The\s+Company['’]s\s+)?(?:Total\s+|Consolidated\s+)?(?:operating\s+income|income\s+from\s+operations|operating\s+profit)\b/i,
+    core: /\b(?:operating\s+income|income\s+from\s+operations|operating\s+profit)\b/i },
+  { key: "netIncome", label: "Net income", re: /^["“']?(?:In\s+(?:fiscal\s+(?:year\s+)?)?\d{4},?\s+)?(?:Our\s+|The\s+Company['’]s\s+)?(?:Consolidated\s+)?(?:net\s+income|net\s+earnings)\b/i,
+    core: /\b(?:net\s+income|net\s+earnings)\b/i },
 ];
+
+// A sentence that is really a flattened TABLE — headers, year pairs, unit parentheticals — can
+// carry the anchor word and even a verifiable figure, and the weld then decorates debris:
+// "Net sales Year Ended December 31, 2025 2024 Change…" shipped as a revenue driver at seven
+// filers (LH, QTWO, GEN, VISN, CALY, CCK, DHR class, full-pool diff 2026-07-31). Two adjacent
+// bare years never occur in prose; unit parentheticals and "the table below" name themselves.
+const TABLE_DEBRIS = /\b(19|20)\d{2}\s+(19|20)\d{2}\b|\(in\s+(?:thousands|millions)|the\s+(?:table|tables)\s+below|following\s+tables?\b/i;
 
 function directionAgrees(s, head, wantUp) {
   const up = UP.test(head), down = DOWN.test(head);
@@ -146,9 +156,14 @@ function withCause(s, next, fy) {
 // The caller supplies the XBRL changes to verify against: { [line key]: { pct, delta } }.
 // fetchDrivers builds them from the fundamentals history; fetchWire from the filed period's
 // companyfacts. A line with no change supplied is never quoted — no proof, no ship.
+// A narration on an adjusted or pro-forma base can tie the GAAP change by coincidence and ship
+// a non-GAAP claim under a GAAP label: Lamar's "compared to acquisition-adjusted net revenues"
+// matched the computed +2.7% within tolerance (2026-07-31, Build 3 of the qualitative survey).
+const NONGAAP_BASIS = /acquisition-?adjusted|on\s+an?\s+(?:acquisition-)?adjusted\s+basis|pro\s+forma\s+basis|adjusted\s+net\s+revenues?/i;
+
 function pickConsolidated(sents, { fy = 2025, changes = {} } = {}) {
   const out = [];
-  for (const { key, label, re } of CONSOLIDATED) {
+  for (const { key, label, re, core } of CONSOLIDATED) {
     const chg = changes[key];
     if (!chg) continue;
     for (let i = 0; i < sents.length; i++) {
@@ -156,11 +171,37 @@ function pickConsolidated(sents, { fy = 2025, changes = {} } = {}) {
       const m = re.exec(s);
       if (!m) continue;
       if (key === "revenue" && SEG_GLUE.test(s)) continue;
-      // A consolidated claim must not be anchored by a segment-scoped subject ("Operating
-      // income for the AZZ Metal Coatings segment increased 11.5%..."): the figure can sit
-      // within tolerance of the consolidated change by coincidence and ship a clause about
-      // one segment as if it were the whole company. Scope words BEFORE the change verb kill
-      // the sentence; a segment named after the verb is a cause, which is what we want quoted.
+      if (NONGAAP_BASIS.test(s)) continue;
+      if (TABLE_DEBRIS.test(s)) continue;
+      // THE SUBJECT-SCOPE KILL, widened 2026-07-31 (Build 3; each rung measured on a live wrong
+      // row). The anchor keyword must BE the sentence's subject, whole and unscoped:
+      //   (a) a from/for modifier right after it narrows the claim to a component — Frost's "Net
+      //       revenues from interchange and card transaction fees" shipped as "Revenue +8.3%";
+      //   (b) a capital letter right after it means the keyword was a GLUED HEADING and the real
+      //       subject follows — Healthpeak's "Revenues Rental income decreased…" shipped the
+      //       rental component as consolidated revenue (Travelers' "Revenues Earned Premiums…"
+      //       row was the same shape, numerically right only because premiums ARE its revenue —
+      //       it dies here and returns under the insurer desk's own anchors);
+      //   (c) segment/division scope words before the verb, as before.
+      // Each rung below was tuned against the full-pool regeneration diff (2026-07-31): the
+      // first cut killed 154 rows, and reading them sorted the righteous kills (AbbVie's
+      // Venclexta PRODUCT revenue and PowerFleet's services revenue had been shipping as
+      // consolidated) from three over-fires now exempted: "for 2025" is TEMPORAL, not scope;
+      // "attributable to shareholders" is the parent line, not a component; and a glued heading
+      // whose following text re-matches the SAME anchor ("Net Revenues Net revenues increased…",
+      // Allegion/Aon/Booz Allen) is benign duplication — only a DIFFERENT subject after the
+      // heading (Healthpeak's "Revenues Rental income…") is a mislabel.
+      const afterHead = s.slice(m[0].length);
+      if (/^\s+(?:from|generated\s+by|related\s+to)\b(?!\s+continuing\b)/i.test(afterHead)) continue;
+      if (/^\s+for\s+(?!(?:the\s+)?(?:year|fiscal|20\d\d|three|six|nine|twelve)\b)/i.test(afterHead)) continue;
+      if (/^\s+of\s+(?!\$|approximately|about|nearly|roughly)[a-z]/i.test(afterHead)) continue;
+      // A capital after the anchor is a glued heading — kill it UNLESS the anchor's own core
+      // keyword reappears shortly after, which means the heading merely repeats the subject
+      // ("Net Income Attributable to HEICO Net income attributable to HEICO increased 34%…",
+      // "Operating Income As a result of the items above, operating income was…") rather than
+      // introducing a different one (Healthpeak's "Revenues Rental income…" stays dead: rental
+      // income is not the revenue keyword).
+      if (/^\s+[A-Z]/.test(afterHead) && !core.test(afterHead.slice(0, 140))) continue;
       const verbAt = s.slice(0, 300).search(new RegExp(UP.source + "|" + DOWN.source, "i"));
       const subject = verbAt > 0 ? s.slice(0, verbAt) : s.slice(0, 300);
       if (/\b(?:segment|division|business\s+unit|reporting\s+unit)\b/i.test(subject.slice(m[0].length))) continue;

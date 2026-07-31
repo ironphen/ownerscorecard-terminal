@@ -351,9 +351,15 @@ function ccRevenueBoundPcts(quote) {
   while ((m = bwd.exec(quote))) { if (!CC_NON_REVENUE.test((m[1] || "") + (m[2] || ""))) out.push({ pct: parseFloat(m[3]), idx: m.index }); }
   return out.filter((o) => o.pct >= 5 && o.pct <= 99).sort((a, b) => a.idx - b.idx);
 }
+// A percentage scoped to a SUBSET of the company ("the three largest customers of this
+// business … 20 percent of its total operating revenues" — Williams, about its gas-storage
+// operation) must never be welded onto CONSOLIDATED revenue: the multiplication shipped
+// ~$2.4B against a figure that belongs to one business line (audit fix #1, 2026-07-31). The
+// quote itself may still render; only the dollar weld dies.
+const CC_SUBSET_SCOPE = /\bcustomers?\s+of\s+(?:this|that|such|each)\s+(?:business|segment|division|unit)\b|\bof\s+(?:this|that|such)\s+(?:business|segment|division|unit)(?:'s)?\b/i;
 export function customerConcentration(quote) {
   if (!quote || typeof quote !== "string") return null;
-  if (CC_GEO_TYPE.test(quote) || CC_DENIAL.test(quote)) return null;
+  if (CC_GEO_TYPE.test(quote) || CC_DENIAL.test(quote) || CC_SUBSET_SCOPE.test(quote)) return null;
   const single = CC_SINGLE.test(quote) || CC_ONE.test(quote);
   const multi = CC_MULTI.test(quote);
   if (!single && !multi) return null;

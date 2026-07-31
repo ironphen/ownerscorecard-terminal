@@ -137,5 +137,77 @@ ok("letter-spanned headings glue back together in htmlToText",
 ok("a pointer-stub MD&A withholds instead of shipping candor on 250 words",
   extractSections("Item 7. Management's Discussion and Analysis The information required by this item is incorporated by reference to Exhibit 13 of this report. Item 7A. Quantitative and Qualitative Disclosures", "10-K").mdna === "");
 
+// ---------------- BUILD 3 — the weld assertion and the widened subject-scope kill ----------------
+const { weld, jaccardDedupe, noteWindow } = await import("../src/lib/quoteWeld.mjs");
+const { pickConsolidated, splitSentences } = await import("../src/lib/drivers.mjs");
+
+{
+  const q = "Net income increased $63.2 million, or 28.7%, to $282.4 million for the year ended December 31, 2025.";
+  ok("weld: a verbatim chip passes", !!weld(q, [{ text: "28.7%", kind: "verbatim" }]));
+  let died = false; try { weld(q, [{ text: "27.8%", kind: "verbatim" }]); } catch { died = true; }
+  ok("weld: a transposed-digit chip dies at write time", died);
+  died = false; try { weld(q, [{ text: "28.7%", kind: "computed" }]); } catch { died = true; }
+  ok("weld: a computed chip without a named source dies", died);
+  ok("weld: a computed chip with its source passes", !!weld(q, [{ text: "+28.7%", kind: "computed", source: "lines.netIncome" }]));
+}
+
+{
+  // The three live wrong rows, each pinned as its own kill class (the sentences verbatim from
+  // drivers.json 2026-07-31). Frost's from-scope, Healthpeak's glued heading, Lamar's non-GAAP
+  // base — every one previously shipped as a consolidated "Revenue" chip.
+  const changes = { revenue: { pct: 8.3, delta: null } };
+  const kill = (sent) => pickConsolidated([sent], { fy: 2025, changes }).length === 0;
+  ok("CFR: 'Net revenues from interchange…' can no longer anchor consolidated revenue",
+    kill("Net revenues from interchange and card transaction fees for 2025 increased $1.8 million, or 8.3%, compared to 2024 primarily due to an increase in volume."));
+  ok("HR: a glued 'Revenues' heading over a rental-income sentence is not the subject",
+    kill("Revenues Rental income increased $94.7 million, or 8.3%, primarily due to acquisitions completed during the year."));
+  ok("LAMR: an acquisition-adjusted base can never verify a GAAP chip",
+    kill("Net revenues for the year ended December 31, 2025, as compared to acquisition-adjusted net revenues for the comparable period in 2024, increased $45.6 million or 8.3% primarily due to higher occupancy."));
+  ok("a clean consolidated sentence still ships",
+    pickConsolidated(["Net revenues increased $1.8 million, or 8.3%, in 2025 compared to 2024, primarily due to higher volumes."], { fy: 2025, changes }).length === 1);
+
+  // The full-pool regeneration diff tuned the kills (154 first-cut losses read one by one):
+  // three over-fire classes exempted, two bonus righteous kills discovered and held.
+  const ships = (sent, key, pct) => pickConsolidated([sent], { fy: 2025, changes: { [key]: { pct, delta: null } } }).length === 1;
+  ok("ALLE: a glued heading whose text re-matches the SAME anchor is benign duplication and ships",
+    ships("Net Revenues Net revenues for the year ended December 31, 2025, increased by 8.3%, or $295.1 million, primarily due to higher volumes.", "revenue", 8.3));
+  ok("ALRM: 'attributable to common stockholders' is the parent line, not component scope",
+    ships("Net income attributable to common stockholders increased 8.3% to $132.6 million in 2025 from $124.1 million in 2024, primarily due to higher revenue.", "netIncome", 8.3));
+  ok("AGCO: 'for 2025' is temporal, not scope",
+    ships("Net sales for 2025 were $10,082.0 million, or 8.3% lower than 2024, primarily due to lower sales volumes.", "revenue", -8.3));
+  ok("ABBV: a PRODUCT's revenue ('for Venclexta') can never ship as consolidated",
+    !ships("Net revenues for Venclexta increased 8.3% in 2025 primarily driven by increased demand.", "revenue", 8.3));
+  ok("AIOT: 'Revenues from services' is a component, killed",
+    !ships("Revenues from services increased by $82.9 million, or 8.3%, in 2025, primarily driven by growth.", "revenue", 8.3));
+  // Second full-pool diff (65 losses, read one by one): the long-glued-heading benign class and
+  // the table-debris class, each pinned from the filer that taught it.
+  ok("HEI: a glued heading LONGER than the anchor is still benign when the core keyword repeats",
+    ships("Net Income Attributable to HEICO Net income attributable to HEICO increased by 8.3% to a record $690.4 million in fiscal 2025, primarily due to higher sales.", "netIncome", 8.3));
+  ok("CBOE: 'Operating Income As a result of the items above, operating income…' ships",
+    ships("Operating Income As a result of the items above, operating income for the year ended December 31, 2025 was $1.2 billion, up 8.3%, primarily reflecting higher revenue.", "operatingIncome", 8.3));
+  ok("APD: 'the table below' is debris, never a driver",
+    !ships("Sales The table below summarizes the major factors that impacted consolidated sales for the periods presented: Volume increased 8.3%, primarily due to demand.", "revenue", 8.3));
+  ok("GEN: a flattened table header (two adjacent years) is debris",
+    !ships("Net revenues Fiscal Year % Change (In millions, except for percentages) 2026 2025 Net revenues increased 8.3% primarily due to growth.", "revenue", 8.3));
+}
+
+ok("jaccardDedupe: a combined-registrant near-duplicate collapses to the first occurrence",
+  jaccardDedupe([
+    "We recorded a regulatory asset of $177.2 million related to the storm costs at Wisconsin Electric.",
+    "We recorded a regulatory asset of $178.9 million related to the storm costs at Wisconsin Gas.",
+    "Rate base grew nine percent on the year across the utility segment.",
+  ]).length === 2);
+
+ok("noteWindow: the LAST heading occurrence wins (TOC echoes don't)",
+  /real disclosure/.test(noteWindow("Reinsurance ... 12 (toc row) filler filler. Later in the notes: Reinsurance The real disclosure sits here with retention of $100 million.", /reinsurance/i)));
+
+{
+  const { customerConcentration } = await import("../src/lib/business.mjs");
+  ok("WMB: a subset-scoped concentration ('customers of this business') never welds to consolidated revenue",
+    customerConcentration("The three largest customers of this business in 2025 accounted for approximately 20 percent of its total operating revenues.") === null);
+  ok("a whole-company concentration still welds",
+    customerConcentration("Our largest customer accounted for approximately 20 percent of our total revenues in 2025.")?.pct === 0.2);
+}
+
 console.log(`\nlanguageGatesTest: ${pass} passed, ${fail} failed`);
 if (fail) process.exit(1);
