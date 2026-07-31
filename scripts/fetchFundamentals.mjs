@@ -27,6 +27,7 @@ import { hasSoftwareData, softwareLines, SOFTWARE_LINE_NAMES } from "./softwareL
 import { hasOilGasData, oilGasLines, OILGAS_LINE_NAMES } from "./oilGasLines.mjs";
 import { rateRegulatedConceptCount, utilitiesLines } from "./utilitiesLines.mjs";
 import { freshFilingMerge } from "./filingFacts.mjs";
+import { equityByYear } from "./equityGate.mjs";
 // Desk lines are deterministic extractions: the same facts give the same lines every run, so an
 // absence is always a deliberate gate, never a transient tag miss — the field carry-over below
 // must never resurrect one from a prior file (Wells Fargo's withheld charge-offs came back from
@@ -1737,8 +1738,17 @@ async function main() {
     // The majority-scale reference, never the max: a single mistagged-HIGH history year must not
     // become the scale the current count gets "corrected" toward (src/lib/shareScale.mjs).
     const shareRef = majorityShareRef(ha.sharesDiluted) ?? Math.max(0, ...Object.values(ha.sharesDiluted).filter((v) => v != null));
+    // GATE B (record-table accounting survey, 2026-07-31, scripts/equityGate.mjs): the equity
+    // line ships only corroborated by the filer's own arithmetic. Twelve issuer-years of bogus
+    // equity were live when it was built — National Fuel Gas printed −$625.7M against a true
+    // $2,079.9B-book and a 34.2% ROIC against a real 14.4% — and 816 more years carried a later
+    // filing's poisoned comparative over the year's own self-agreeing statement (Kemper's
+    // FY2021). Chain, vintage, component-match and the assets−liabilities witness arbitrate;
+    // an uncorroborated year is withheld, and its ROE, ROIC and book value withhold with it.
+    const eqGate = equityByYear(facts, fyEnds);
+    for (const w of eqGate.warns) console.warn(`  ! ${ticker} ${w}`);
     const hi = {
-      equity: collectInstant(facts, CONCEPTS.stockholdersEquity, "USD", fyEnds),
+      equity: eqGate.series,
       cash: collectInstant(facts, CONCEPTS.cashAndEquivalents, "USD", fyEnds),
       stInv: collectInstant(facts, CONCEPTS.shortTermInvestments, "USD", fyEnds),
       ltMkt: collectInstant(facts, CONCEPTS.longTermMarketable, "USD", fyEnds),
@@ -1858,6 +1868,9 @@ async function main() {
           assetImpairment: ha.assetImpairment[fy] ?? null,
           totalDebt: maxOf(hi.ltd[fy] != null || hi.cur[fy] != null ? (hi.ltd[fy] || 0) + (hi.cur[fy] || 0) : null, splitYear(fy), aggYear(fy)),
           stockholdersEquity: hi.equity[fy] ?? null,
+          minorityInterest: eqGate.minorityInterest[fy] ?? null,
+          temporaryEquity: eqGate.temporaryEquity[fy] ?? null,
+          equityInclNci: eqGate.inclNci[fy] ?? null,
           cashAndEquivalents: hi.cash[fy] ?? null,
           shortTermInvestments: hi.stInv[fy] ?? null,
           longTermMarketable: hi.ltMkt[fy] ?? null,
@@ -2030,6 +2043,10 @@ async function main() {
       ...(rateRegulated ? { rateRegulated: true } : {}),
       ...(ute?.flags?.utilityPlantBasis ? { utilityPlantBasis: ute.flags.utilityPlantBasis } : {}),
       ...(primaryTicker ? { primaryTicker } : {}),
+      // Gate B's basis marker: when the anchor year's stored equity is the including-NCI figure
+      // (the parent tag was the corroborated-away mistag), downstream surfaces must not add a
+      // noncontrolling-interests row on top of it — that would double-count.
+      ...(anchor?.fy != null && eqGate.basis[anchor.fy] === "inclNci" ? { equityBasis: "inclNci" } : {}),
       // When this record was last EXTRACTED, which is not the same as the file's asOf: a partial
       // run rewrites the whole file while touching only its cohort, and without a per-record stamp
       // a decade-old extraction is indistinguishable from this morning's. The stamp is what turns
@@ -2101,7 +2118,12 @@ async function main() {
         dividendsPaid: anchor?.fy != null ? (ha.dividendsPaid?.[anchor.fy] ?? null) : null,
         buybacks: pick(CONCEPTS.buybacks),
         repurchasedShares: fixShareScale(pickAnnual(facts, CONCEPTS.repurchasedShares, "shares")?.val ?? null, shareRef),
-        stockholdersEquity: inst(CONCEPTS.stockholdersEquity),
+        // The Gate B series at the anchor year, never a fresh pick — the corroborated figure
+        // and the current figure must be one figure (a withheld year stays withheld here too).
+        stockholdersEquity: anchor?.fy != null ? (eqGate.series[anchor.fy] ?? null) : null,
+        minorityInterest: anchor?.fy != null ? (eqGate.minorityInterest[anchor.fy] ?? null) : null,
+        temporaryEquity: anchor?.fy != null ? (eqGate.temporaryEquity[anchor.fy] ?? null) : null,
+        equityInclNci: anchor?.fy != null ? (eqGate.inclNci[anchor.fy] ?? null) : null,
         cashAndEquivalents: inst(CONCEPTS.cashAndEquivalents),
         shortTermInvestments: inst(CONCEPTS.shortTermInvestments),
         longTermMarketable: inst(CONCEPTS.longTermMarketable),
