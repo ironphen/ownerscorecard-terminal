@@ -17,6 +17,7 @@ import {
   ownerFlags, buffettRead,
   uninsuredDepositsRead,
   softwareRetentionRead, customerLadderRead, softwareKpiRead, softwareKpiAssemble,
+  reserveEngineerRead, ogCriticalTopics,
 } from "./fetchFilings.mjs";
 
 let pass = 0, fail = 0;
@@ -731,6 +732,150 @@ ok("noteWindow: the LAST heading occurrence wins (TOC echoes don't)",
     const asm = softwareKpiAssemble(cur, pri);
     ok("PD does not fire: numeric both years, no cohort renamed", !asm.tripwire);
   }
+}
+
+// ---------------- BUILD 8 — O&G reserve attribution + critical-estimates topics (O&G P1 +
+// P2 bundled; docs/qualitative-desks-survey.md SECTION 3). Every filing sentence below is
+// VERBATIM from the named FY2025 10-K as the pipeline flattens it (fetched and measured
+// 2026-07-31). The lane's laws: firm dictionary >= 2 occurrences, dictionary miss =
+// silence; VERB FIDELITY — the filer's own token, never normalized ("reviewed" is NEVER
+// rendered as "audited"); a coverage percent chips ONLY from inside the sentence with its
+// verbatim object phrase; the PV-token ban (no PV-10 / present-value figures); XOM renders
+// internal-only from its own sentence. The 15/15 attribution sample reproduces. On topics,
+// the doc's 13/15 measured 15/15 on the real filings: EGY's critical-estimates section
+// continues past ARO/taxes into "Oil and Gas Accounting — Reserves Determination" and XOM's
+// zone sat behind the extraction gap the survey itself flags — both name reserve estimation
+// verbatim in their own sections, so both render (the stated Build 8 deviation, filings
+// over stored expectation). ----
+
+{
+  // A firm's second occurrence rides a fragment too short to ever be a candidate sentence,
+  // so the >=2 dictionary rung is satisfied without adding quote material.
+  const attr = (fullText) => reserveEngineerRead({ fullText, fy: 2025 });
+  const plus = (s, firm) => `${s} ${firm}.`;
+
+  // DVN, the doc's named coverage exemplar: 91% welds with its verbatim object phrase.
+  const dvn = "During 2025, we engaged DeGolyer and MacNaughton to audit 91% of our proved reserves.";
+  {
+    const r = attr(plus(dvn, "DeGolyer and MacNaughton"));
+    ok("DVN: DeGolyer and MacNaughton ships with the filer's word 'audit' and coverage 91%",
+      r?.firms?.length === 1 && r.firms[0].firm === "DeGolyer and MacNaughton" && r.firms[0].verb === "audit"
+      && r.firms[0].coverage?.pct === "91%" && r.firms[0].coverage?.object === "of our proved reserves");
+    ok("DVN: the coverage chip and its object are one contiguous run of the sentence's own characters",
+      r.firms[0].sentence.includes(`${r.firms[0].coverage.pct} ${r.firms[0].coverage.object}`));
+  }
+  ok("dictionary rung: the same sentence with only ONE firm occurrence ships nothing",
+    attr(dvn) === null);
+  ok("in-sentence rung: a percent in the NEIGHBORING sentence never chips",
+    (() => { const r = attr(plus("During 2025, we engaged DeGolyer and MacNaughton to audit our proved reserves. The audit covered 91% of our proved reserves.", "DeGolyer and MacNaughton")); return r?.firms?.[0] && !r.firms[0].coverage; })());
+
+  // COP, the verb-fidelity headline: ConocoPhillips retains a REVIEW and renders "reviewed".
+  const cop = "During 2025, our processes and controls used to assess over 90 percent of proved reserves as of December 31, 2025, were reviewed by D&M.";
+  {
+    const r = attr(plus(cop, "D&M"));
+    ok("COP: renders 'reviewed' — the filer's own verb, never normalized to 'audited'",
+      r?.firms?.[0]?.verb === "reviewed" && r.firms[0].coverage?.pct === "over 90 percent" && r.firms[0].coverage?.object === "of proved reserves");
+    let died = false;
+    try { weld(cop, [{ text: "audited", kind: "verbatim" }]); } catch { died = true; }
+    ok("COP red-team: welding the normalized verb 'audited' onto the review sentence dies at write time", died);
+  }
+
+  // CVX: the 13% legacy-Hess audit — the acquisition frame rides INSIDE the quote.
+  {
+    const cvx = "Accordingly, the company continued to retain DeGolyer and MacNaughton, an independent petroleum engineering consulting firm, to complete an audit of the legacy Hess proved reserves at December 31, 2025 (representing approximately 13 percent of Chevron's total proved reserves).";
+    const r = attr(plus(cvx, "DeGolyer and MacNaughton"));
+    ok("CVX: 'approximately 13 percent' chips with its verbatim object, the legacy-Hess frame inside the quote",
+      r?.firms?.[0]?.verb === "audit" && r.firms[0].coverage?.pct === "approximately 13 percent"
+      && r.firms[0].coverage?.object === "of Chevron's total proved reserves" && /legacy Hess/.test(r.firms[0].sentence));
+  }
+
+  // CRK, the PV-token ban: '100% of our total PV 10 Value' is a share of VALUE, not of
+  // reserves — the verb and quote ship, the percent never wears a coverage chip.
+  {
+    const crk = 'Netherland, Sewell & Associates, Inc. ("NSAI") audited 100% of our total PV 10 Value as of December 31, 2025.';
+    const r = attr(plus(crk, "NSAI"));
+    ok("CRK: ships 'audited' with NO coverage chip — the PV-token ban holds",
+      r?.firms?.[0]?.verb === "audited" && r.firms[0].coverage === undefined);
+  }
+
+  // EOG: the engagement sentence chips 'not less than 75%'; the multi-year opinion sentence
+  // (84%, 85% and 83%) can never chip — three percents have no deterministic object.
+  ok("EOG: 'not less than 75%' chips from the engagement sentence with its object phrase",
+    (() => { const r = attr(plus("Additionally, EOG engages DeGolyer and MacNaughton (D&M), independent petroleum consultants, to perform independent reserves evaluation of select EOG properties comprising not less than 75% of EOG's estimates of proved reserves.", "D&M")); return r?.firms?.[0]?.coverage?.pct === "not less than 75%" && r.firms[0].coverage.object === "of EOG's estimates of proved reserves"; })());
+  ok("EOG: the three-percent opinions sentence alone ships nothing (no attribution verb binds the firm)",
+    attr(plus("Opinions by D&M for the years ended December 31, 2025, 2024 and 2023 covered producing areas containing 84%, 85% and 83%, respectively, of proved reserves of EOG on a net-equivalent-barrel-of-oil basis.", "D&M")) === null);
+
+  // The rest of the 15-name sample, pinned to the stored records' own outcomes.
+  ok("OXY: 'reviewed' with 'approximately 39%' — the second review-class filer",
+    (() => { const r = attr(plus("In 2025, Ryder Scott reviewed approximately 39% of the Company's proved oil and gas reserves.", "Ryder Scott")); return r?.firms?.[0]?.verb === "reviewed" && r.firms[0].coverage?.pct === "approximately 39%"; })());
+  ok("FANG: 'audits' with 100% of our total proved reserves — the object trims the year list",
+    (() => { const r = attr(plus("The purpose of Ryder Scott's audits was to provide additional assurance on the reasonableness of internally prepared reserve estimates and covered 100% of our total proved reserves for 2025, 2024 and 2023.", "Ryder Scott")); return r?.firms?.[0]?.verb === "audits" && r.firms[0].coverage?.object === "of our total proved reserves"; })());
+  ok("EQT: the comma-listed object phrase survives whole ('of the total net natural gas, NGLs and oil proved reserves')",
+    (() => { const r = attr(plus("In the course of its audit, NSAI conducted a detailed review of 100 % of the total net natural gas, NGLs and oil proved reserves attributable to the Company's interests as of December 31, 2025.", "NSAI")); return r?.firms?.[0]?.coverage?.pct === "100 %" && r.firms[0].coverage.object === "of the total net natural gas, NGLs and oil proved reserves"; })());
+  ok("TPL: 'prepared' with 100% of our total PDP reserves",
+    (() => { const r = attr(plus("The PDP reserve analysis prepared by Ryder Scott covered 100% of our total PDP reserves for 2025.", "Ryder Scott")); return r?.firms?.[0]?.verb === "prepared" && r.firms[0].coverage?.object === "of our total PDP reserves"; })());
+  ok("SD: 'prepared' — the percent BEFORE the firm still chips with its object ('Approximately 97.9%')",
+    (() => { const r = attr(plus('Preparation of Reserves Estimates Approximately 97.9% of the proved oil, natural gas and NGL reserves disclosed in this report have been independently prepared by Cawley, Gillespie & Associates ("CGA"), a leader of petroleum property analysis for industry and financial institutions.', "CGA")); return r?.firms?.[0]?.verb === "prepared" && r.firms[0].coverage?.pct === "Approximately 97.9%" && r.firms[0].coverage.object === "of the proved oil, natural gas and NGL reserves"; })());
+  ok("MTDR: 'audited' — the verb NEAREST the firm wins over the staff's 'prepared' upstream",
+    (() => { const r = attr(plus("These estimates were prepared by our engineering staff and audited by Netherland, Sewell & Associates, Inc., independent reservoir engineers.", "NSAI")); return r?.firms?.[0]?.verb === "audited"; })());
+
+  // EGY, the two-firm filer: NSAI leads (more occurrences), GLJ ships its OWN sentence whose
+  // "Prior to 2025" dating rides inside the quote — never stripped from its verb.
+  {
+    const egy = 'Our reserves information was evaluated by the independent petroleum engineering firm, Netherland, Sewell & Associates, Inc. ("NSAI"). Prior to 2025, reserves information for Canada was independently evaluated by GLJ Ltd. ("GLJ").';
+    const r = attr(`${egy} NSAI. GLJ.`);
+    ok("EGY: both firms ship, NSAI first, each with its own sentence",
+      r?.firms?.length === 2 && r.firms[0].firm === "Netherland, Sewell & Associates" && r.firms[1].firm === "GLJ" && /Prior to 2025/.test(r.firms[1].sentence));
+  }
+
+  // The kills: risk-factor hypotheticals and exhibit-index debris never become the quote.
+  ok("TPL risk factor ('…may prove to be incorrect') never ships",
+    attr(plus('In estimating our PDP reserves, we and Ryder Scott Company, L.P. ("Ryder Scott"), an independent third-party petroleum engineering firm, must make various assumptions with respect to many matters that may prove to be incorrect, including future oil, gas, and NGL prices.', "Ryder Scott")) === null);
+  ok("an exhibit-index row ('99.1* Audit Letter of …') never ships",
+    attr(plus("99.1* Audit Letter of Netherland, Sewell & Associates, Inc. on Proved Reserves as of December 31, 2025.", "NSAI")) === null);
+
+  // XOM, the internal-only class: no dictionary firm anywhere, and the filer's own sentence
+  // under its Item 1202(a)(7) qualifications heading carries the read — with the glued
+  // heading stripped from the front.
+  const xomFx = "Qualifications of Reserves Technical Oversight Group and Internal Controls over Proved Reserves ExxonMobil has a dedicated Global Reserves and Resources group that provides technical oversight and is separate from the operating organization.";
+  {
+    const r = attr(xomFx);
+    ok("XOM: internal-only renders from the filer's own sentence, heading stripped",
+      r?.internal === true && r.sentence === "ExxonMobil has a dedicated Global Reserves and Resources group that provides technical oversight and is separate from the operating organization.");
+  }
+  ok("internal-only never fires while a dictionary firm is in the filing",
+    (() => { const r = attr(`${xomFx} ${plus(dvn, "DeGolyer and MacNaughton")}`); return !!r && !r.internal && r.firms?.[0]?.firm === "DeGolyer and MacNaughton"; })());
+  ok("dictionary miss with no qualifications heading = silence",
+    attr("Our reserves were estimated by our internal engineering staff in accordance with SEC rules and reviewed by senior management before publication of this annual report.") === null);
+
+  // --- the O&G critical-estimates topics (M5 windows over the full text) ---
+  ok("EQT: the doc's pinned zone names reserve estimation, and reserves LEADS the topic list",
+    (() => { const c = ogCriticalTopics("Critical Accounting Estimates The following critical accounting estimates, which were reviewed by the Audit Committee of our Board of Directors, relate to our more significant estimates and assumptions used in the preparation of the Consolidated Financial Statements. Our proved reserve estimates rely on several significant assumptions, including future rates of production and estimated ultimate recoveries of developed and undeveloped reserves. Capitalized costs of oil and natural gas properties are depleted using the unit-of-production method based upon production and estimates of proved reserves quantities."); return c?.topics?.[0] === "Oil & gas reserve estimates" && c.topics.includes("Depletion & DD&A"); })());
+  ok("XOM: its own zone sentence names the judgment (the stated Build 8 deviation — the filing over the survey's 13/15)",
+    (() => { const c = ogCriticalTopics("CRITICAL ACCOUNTING ESTIMATES The preparation of financial statements requires management to make estimates and judgments that affect the reported amounts of assets and liabilities in the consolidated financial statements. The estimation of proved reserves is controlled by the Corporation through long-standing approval guidelines."); return c?.topics?.includes("Oil & gas reserve estimates"); })());
+  ok("EGY notes: a cross-reference ('see Item 1. Business Reserve Information') is never a topic",
+    ogCriticalTopics('Critical Accounting Policies and Estimates Successful Efforts Method of Accounting for crude oil, natural gas and NGLs Activities. For a discussion of the reserve estimation process, including internal controls, see " Item 1. Business Reserve Information ."') === null);
+  ok("a present-value table lead-in is never reserve-estimation evidence (the PV ban reaches the topic lane)",
+    ogCriticalTopics("Critical Accounting Estimates are described below for the periods presented in this report. The following table presents estimated future net cash flows from proved reserves and the present value of such net cash flows discounted at a rate of ten percent per annum.") === null);
+  ok("an ARO-only zone names asset retirement obligations and NOT reserves — the vocabulary does not over-fire",
+    (() => { const c = ogCriticalTopics("CRITICAL ACCOUNTING ESTIMATES The preparation of Financial Statements in accordance with GAAP requires us to make estimates and assumptions that affect the reported amounts of assets and liabilities in the financial statements. Asset Retirement Obligations The Company has significant obligations to remove tangible equipment and restore land or seabed at the end of oil and gas production operations, and estimating the future plugging and abandonment costs requires management to make judgments inherent in the calculation of the future obligation."); return c?.topics?.length === 1 && c.topics[0] === "Asset retirement obligations"; })());
+
+  // --- the taxonomy wall: "reserves" never collides with an insurer's loss reserves ---
+  const bpIns = (sents, ogCrit = null) => buffettRead({ mdna: { sents }, business: { sents: [] }, risk: { sents: [] } }, true, ogCrit);
+  const insZone = [
+    "Critical accounting estimates are those we consider most important to the portrayal of our financial condition and results.",
+    "Our reserve for losses and loss adjustment expenses involves significant judgment about the ultimate cost of claims incurred but not reported to us.",
+  ];
+  ok("an insurer's zone names Insurance reserves, never the O&G topic — the label enters ONLY via the O&G-scoped parameter",
+    (() => { const j = bpIns(insZone)?.judgment; return j?.topics?.includes("Insurance reserves") && !j.topics.some((t) => /oil & gas/i.test(t)); })());
+  ok("MTDR: the merged judgment now NAMES reserves — O&G topics lead, the generic MD&A topics follow",
+    (() => {
+      const j = bpIns(
+        ["Critical accounting policies and estimates involving significant judgment are described below in this section of the report.", "Significant judgment is required in determining our provision for income taxes and our deferred tax positions for each of the years presented."],
+        { topics: ["Oil & gas reserve estimates", "Depletion & DD&A"], quote: "x" }
+      )?.judgment;
+      return j?.topics?.[0] === "Oil & gas reserve estimates" && j.topics.includes("Income taxes");
+    })());
 }
 
 console.log(`\nlanguageGatesTest: ${pass} passed, ${fail} failed`);

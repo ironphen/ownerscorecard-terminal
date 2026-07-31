@@ -83,6 +83,24 @@ const swRead = (() => {
   if (!nrr.length && !ladder.length && !withheld.length && !tripwire.length) return null;
   return { nrr, ladder, withheld, tripwire };
 })();
+// The reserve-block provenance line (qualitative survey Build 8, O&G): who stands behind the
+// proved-reserve figures the section below reads — the Item 1202 attribution in the filer's
+// own words. Verb fidelity is absolute: the verb shown is the filer's own token from the
+// quoted sentence ("reviewed" is never rendered as "audited"), and any coverage share is the
+// sentence's own percent with its verbatim object phrase. All three are welded at extraction
+// and RE-CHECKED here as substrings of the stored sentence; the fiscal year must tie the
+// scorecard's, so a stale attribution never sits under a fresher record. Internal-only filers
+// (Exxon's class) render their own internal-process sentence; a dictionary miss renders nothing.
+const OG_HEADING = "The reserves, and what it costs to keep them";
+const ogProv = (() => {
+  const a = language?.companies?.[company.ticker]?.reserveAttribution || null;
+  if (!a || String(a.fy) !== String(company.fy)) return null;
+  if (a.internal) return a.sentence ? { internal: true, sentence: a.sentence } : null;
+  const firms = (a.firms || []).filter((f) =>
+    f.sentence && f.verb && f.sentence.includes(f.verb) &&
+    (!f.coverage || f.sentence.includes(`${f.coverage.pct} ${f.coverage.object}`)));
+  return firms.length ? { firms } : null;
+})();
 const toneWord = (t) => (t === "favorable" ? "favorable" : "unfavorable");
 const ckTrim = (s) => { s = String(s || "").replace(/\s+/g, " ").trim(); return s.length > 260 ? s.slice(0, 260).replace(/\s+\S*$/, "") + "…" : s; };
 const graham = company.market !== "JP" && !isFin ? grahamTests(company) : null;
@@ -178,6 +196,8 @@ const swAnchor = swRead
 // and — on the anchor check — the filing's own language about the reliability of the numbers.
 const enrich = (sec) => ({
   ...sec,
+  // The provenance line rides the O&G reserves block itself — the figures it stands behind.
+  ...(ogProv && sec.heading === OG_HEADING ? { ogProv } : {}),
   checks: sec.checks.map((c) => {
     let cc = peerCtx[c.title] ? { ...c, peer: peerCtx[c.title] } : c;
     if (eqTie && c === eqAnchor) cc = { ...cc, lang: eqTie.text, langTone: eqTie.tone };
@@ -272,6 +292,22 @@ const enrich = (sec) => ({
           </li>
         ))}
       </ul>
+      {sec.ogProv ? (
+        <div class="devTie ogProv">
+          <span class="devMark">Who stands behind these figures</span>
+          {sec.ogProv.internal ? (
+            <blockquote class="devQ">“{sec.ogProv.sentence}”</blockquote>
+          ) : (
+            sec.ogProv.firms.map((f) => (
+              <div class="swRow">
+                <span class="swLabel">{f.firm} — the filing’s word: “{f.verb}”{f.coverage ? <> — “{f.coverage.pct} {f.coverage.object}”</> : null}</span>
+                <blockquote class="devQ">“{f.sentence}”</blockquote>
+              </div>
+            ))
+          )}
+          <span class="devCheck">{sec.ogProv.internal ? "✓ no independent petroleum engineering firm is named in the filing — the sentence is the filer’s own" : "✓ the verb and any coverage share are the sentence’s own characters — never normalized"}{company.sourceUrl ? <> · <a href={company.sourceUrl} target="_blank" rel="noopener">verify →</a></> : null}</span>
+        </div>
+      ) : null}
     </div>
   ))}
 
@@ -397,6 +433,8 @@ const enrich = (sec) => ({
   /* The software read (Build 7): rows share the devTie idiom; only the row header is new. */
   .swRow { margin: 7px 0 0; }
   .swRow:first-of-type { margin-top: 4px; }
+  .ogProv .devQ { margin-top: 2px; }
+  .ogProv a { color: var(--accent); white-space: nowrap; }
   .swHead { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
   .swLabel { font-family: var(--sans); font-size: 11.5px; letter-spacing: 0.02em; color: var(--ink-dim); }
   .swFig { font-family: var(--sans); font-weight: 600; font-size: 13px; color: var(--ink); white-space: nowrap; }

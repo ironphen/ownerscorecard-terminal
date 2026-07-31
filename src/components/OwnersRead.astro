@@ -60,6 +60,40 @@ if (unins && String(unins.fy) === String(company.fy)) {
   }
 }
 
+// 0b. Who stands behind the reserves (O&G — Build 8 of the qualitative survey, 2026-07-31):
+// the Reg S-K Item 1202 attribution, the owner's question a producer's whole record hangs on —
+// every reserve figure on the page is an estimate, and this names whose. Three shapes, all
+// gated at extraction and re-checked here: the FIRM(S) with the filer's own verb (never
+// normalized — ConocoPhillips' word is "reviewed" and that is the word shown) and any
+// in-sentence coverage share with its verbatim object phrase; the INTERNAL-only declaration
+// in the filer's own sentence (Exxon's class); or nothing — a dictionary miss is silence.
+// A second firm (VAALCO's GLJ, dated "Prior to 2025" inside its own sentence) rides the note
+// with its full sentence, so its dating is never stripped from its verb.
+const rAttr = L?.reserveAttribution;
+if (rAttr && String(rAttr.fy) === String(company.fy)) {
+  const rq = "Who stands behind the reserve estimates?";
+  if (rAttr.internal && rAttr.sentence) {
+    items.push({
+      q: rq,
+      fig: "Internal — the filing names no independent petroleum engineering firm",
+      quote: rAttr.sentence,
+    });
+  } else if (!rAttr.internal) {
+    const rFirms = (rAttr.firms || []).filter((f) =>
+      f.sentence && f.verb && f.sentence.includes(f.verb) &&
+      (!f.coverage || f.sentence.includes(`${f.coverage.pct} ${f.coverage.object}`)));
+    if (rFirms.length) {
+      const [lead, ...rest] = rFirms;
+      items.push({
+        q: rq,
+        fig: `${lead.firm} — the filing’s word: “${lead.verb}”${lead.coverage ? ` — “${lead.coverage.pct} ${lead.coverage.object}”` : ""}`,
+        quote: lead.sentence,
+        ...(rest.length ? { note: rest.map((f) => `The filing also names ${f.firm}: “${f.sentence}”`).join(" ") } : {}),
+      });
+    }
+  }
+}
+
 // 1. Concentration — how much of the top line rides on one buyer. The one genuinely owner-grade weld
 // kept from the old section: parsed conservatively from the company's own disclosure (the parser
 // rejects geographic / receivable / backlog bases), so it fires only where a dominant buyer is real.

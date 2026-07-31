@@ -866,7 +866,7 @@ function bizLeadText(business, form) {
   return m > 200 ? business.slice(m) : business;
 }
 
-async function getFiling(cik, f, totalDebtMillions = null, devTarget = null, depTarget = null, swTarget = false) {
+async function getFiling(cik, f, totalDebtMillions = null, devTarget = null, depTarget = null, swTarget = false, ogTarget = false) {
   const accnNoDash = f.accn.replace(/-/g, "");
   const base = `https://www.sec.gov/Archives/edgar/data/${Number(cik)}/${accnNoDash}`;
   let url = `${base}/${f.doc}`;
@@ -943,7 +943,19 @@ async function getFiling(cik, f, totalDebtMillions = null, devTarget = null, dep
   if (swTarget && fy) {
     try { swRead = softwareKpiRead({ mdnaText: mdna, businessText: business, fy }); } catch { swRead = null; }
   }
-  return { url, business: { ...metrics(business), lead: leadSentences(bizLeadText(business, f.form)), head: business.slice(0, 800) }, mdna: { ...md, lead: leadSentences(mdna), candor: candorSignals(mdna, md.sents) }, risk: metrics(risk), reportDate: f.reportDate, debtMaturity, reserveRead, uninsuredRead, swRead };
+  // The O&G desk's lanes (Build 8): reserve-engineer attribution and the sector's
+  // critical-estimates topics, both full-filing text scans (the Item 1202 disclosure and the
+  // critical-estimates window both sit past — or astray of — the extracted narrative
+  // sections on the largest filers), run only for the producer/integrated/royalty SIC scope.
+  let ogRead = null;
+  if (ogTarget && fy) {
+    try {
+      const attribution = reserveEngineerRead({ fullText: text, fy });
+      const crit = ogCriticalTopics(text);
+      ogRead = attribution || crit ? { ...(attribution ? { attribution } : {}), ...(crit ? { crit } : {}) } : null;
+    } catch { ogRead = null; }
+  }
+  return { url, business: { ...metrics(business), lead: leadSentences(bizLeadText(business, f.form)), head: business.slice(0, 800) }, mdna: { ...md, lead: leadSentences(mdna), candor: candorSignals(mdna, md.sents) }, risk: metrics(risk), reportDate: f.reportDate, debtMaturity, reserveRead, uninsuredRead, swRead, ogRead };
 }
 
 // ---- executive pay (proxy statement / DEF 14A) ----
@@ -1433,7 +1445,7 @@ const isFinancialSic = (sic) => { const n = Number(sic); return n >= 6000 && n <
 // their pricing story is the price deck, a different lane.
 const isPriceTakerSic = (sic) => { const n = Number(sic); return n === 1311 || n === 6792; };
 
-function buffettRead(cur, isFinancial) {
+function buffettRead(cur, isFinancial, ogCrit = null) {
   const mdna = cur?.mdna?.sents || [];
   const biz = cur?.business?.sents || [];
   const risk = cur?.risk?.sents || [];
@@ -1477,8 +1489,15 @@ function buffettRead(cur, isFinancial) {
       : null;
   }
 
-  // 2. Where the numbers are soft.
-  const judgment = criticalEstimates(mdna);
+  // 2. Where the numbers are soft. For the O&G scope the caller supplies the sector's own
+  // topics (Build 8) measured across every critical-estimates window in the full filing;
+  // they LEAD the list (reserve estimation is the sector's first judgment), the generic
+  // MD&A-zone topics follow, and the generic quote — when one exists — stands.
+  let judgment = criticalEstimates(mdna);
+  if (ogCrit?.topics?.length) {
+    const topics = [...ogCrit.topics, ...(judgment?.topics || []).filter((t) => !ogCrit.topics.includes(t))];
+    judgment = { topics, count: topics.length, quote: judgment?.quote || ogCrit.quote };
+  }
 
   // 3. Accounting integrity.
   const materialWeakness = integritySentence([...mdna, ...risk], MW_DECLARED, MW_ABSENT, MW_OTHER_ENTITY);
@@ -2163,6 +2182,224 @@ function softwareKpiAssemble(cur, pri) {
   };
 }
 
+// ---- Who stands behind the reserves + O&G critical-estimates topics (Build 8 of the
+// qualitative survey, 2026-07-31; docs/qualitative-desks-survey.md §O&G P1 + P2 bundled) ----
+//
+// LANE 1 — reserve-engineer attribution (Reg S-K Item 1202(a)(7)/(8)): WHICH independent
+// petroleum engineering firm stands behind the proved-reserve estimates, in the filer's own
+// words. Gates, each measured on the 15-name FY2025 corpus (CVX XOM COP EOG FANG EQT MTDR
+// EGY TPL DVN CRK SD NOG BSM OXY):
+//   FIRM DICTIONARY — the named independent firms only, and a firm must appear >= 2 times in
+//     the filing (a passing mention is not an attribution); dictionary miss = silence. All
+//     five firm groups the corpus carries reproduce: NSAI (BSM, EQT, MTDR, EGY, CRK), D&M
+//     (CVX, COP, DVN, EOG), Ryder Scott (FANG, OXY, TPL), Cawley Gillespie (NOG, SD), GLJ
+//     (EGY, second firm — its "Prior to 2025" dating rides inside its own quoted sentence).
+//   VERB FIDELITY — the filer's own verb, the token nearest the firm's name in the sentence,
+//     NEVER normalized: "reviewed" is never rendered as "audited". ConocoPhillips and
+//     Occidental retain review firms and render "reviewed"; Devon and Chevron render "audit";
+//     SandRidge and Texas Pacific render "prepared". The verb is welded (substring of the
+//     quote) at write time.
+//   COVERAGE — a share-of-reserves percent renders ONLY from inside the chosen sentence with
+//     its verbatim object phrase (DVN "91%" "of our proved reserves"; CVX "approximately 13
+//     percent" "of Chevron's total proved reserves" — the legacy-Hess frame rides inside the
+//     quote). Exactly one qualified percent in the sentence, and the object phrase must name
+//     reserves — EOG's multi-year "84%, 85% and 83%" opinion sentence can never chip.
+//   PV-TOKEN BAN — no PV-10 / present-value figures in this lane: a percent whose sentence
+//     or object carries a present-value token never chips (Comstock's "audited 100% of our
+//     total PV 10 Value" ships its verb and quote, but 100%-of-value never wears a
+//     reserves-coverage chip — the basis would be wrong).
+//   INTERNAL-ONLY (the XOM class) — when NO dictionary firm appears anywhere, the lane may
+//     still say the process is internal, but only from the filer's own sentence under its
+//     Item 1202(a)(7) qualifications heading ("ExxonMobil has a dedicated Global Reserves
+//     and Resources group… separate from the operating organization"). No heading, no
+//     sentence — silence.
+//
+// LANE 2 — the sector's critical-estimates topics: proved-reserve estimation, depletion /
+// units-of-production DD&A, ceiling test / impairment of properties, asset retirement
+// obligations — vocabulary hits inside the filer's own Critical Accounting Estimates
+// window(s), scanned across EVERY heading occurrence in the full filing text (the M5
+// noteWindows precedent: EQT's real section hides behind ten in-section echoes; CVX's and
+// DVN's sit past the extracted MD&A). O&G-TAXONOMY-SCOPED: the vocabulary runs only for the
+// producer/integrated/royalty SICs (1311, 2911, 6792), so "reserves" NEVER collides with an
+// insurer's loss reserves. Topic evidence must be a prose sentence (no tables), never a
+// cross-reference, and never a present-value sentence. Measured: 15/15 corpus names name
+// reserve estimation — the survey's 13/15 undercounted by two because EGY's section
+// continues past ARO/taxes into "Oil and Gas Accounting — Reserves Determination" and XOM's
+// zone was unreachable behind the extraction gap the survey itself flags; both filers name
+// the judgment verbatim in their own sections, so both render.
+const OG_FIRMS = [
+  ["Netherland, Sewell & Associates", /Netherland,?\s+Sewell(?:\s*(?:&|and)\s*Associates)?(?:,?\s+Inc\.?)?|\bNSAI\b/],
+  ["Ryder Scott", /Ryder\s+Scott(?:\s+Company)?(?:,?\s+L\.?P\.?)?/],
+  ["DeGolyer and MacNaughton", /DeGolyer\s+(?:and|&)\s+MacNaughton|\bD&M\b/],
+  ["Cawley, Gillespie & Associates", /Cawley,?\s+Gillespie(?:\s*(?:&|and)\s*Associates)?(?:,?\s+Inc\.?)?|\bCGA\b/],
+  ["W.D. Von Gonten", /(?:W\.?\s?D\.?\s+)?Von\s+Gonten/],
+  ["Miller and Lents", /Miller\s+(?:and|&)\s+Lents/],
+  ["LaRoche Petroleum Consultants", /LaRoche\s+Petroleum/],
+  ["Sproule", /\bSproule\b/],
+  ["McDaniel & Associates", /McDaniel\s+(?:&|and)\s+Associates/],
+  ["GLJ", /\bGLJ\b/],
+  ["Haas Petroleum Engineering", /Haas\s+Petroleum/],
+  ["Forrest Garb & Associates", /Forrest\s+(?:A\.\s+)?Garb/],
+  ["KLS Petroleum Consulting", /\bKLS\b/],
+  ["Wright & Company", /Wright\s+(?:&|and)\s+Co/],
+];
+// The filer's verb universe as the corpus writes it — prepared / audited / evaluated /
+// reviewed families, including the noun forms filers use verbally ("to complete an audit
+// of", "perform independent reserves evaluation"). Estimating verbs stay OUT: "In
+// estimating our PDP reserves, we and Ryder Scott… may prove to be incorrect" is TPL's risk
+// factor, not its attribution.
+const OG_VERB = /\b(?:audited|audits?|auditing|prepared|prepares?|preparing|evaluated|evaluates?|evaluating|evaluations?|reviewed|reviews?|reviewing)\b/gi;
+const OG_DEBRIS = /\bconsent of\b|\bfiled herewith\b|\bfurnished herewith\b|\bincorporated (?:herein )?by reference\b|\bexhibit\b/i;
+const OG_ATTR_HYPO = /\b(?:could|may|might|would)\b/i;
+const OG_PV = /\bPV[-\s]?10\b|\bpresent value\b|\bstandardized measure\b|\bfuture net (?:cash flows?|revenues?)\b/i;
+const OG_PCT = /(?:(?:approximately|about|over|nearly|at least|not less than|more than)\s+)?\d{1,3}(?:\.\d+)?\s?(?:%|percent\b)/gi;
+
+// The lane's own splitter (the devSentences precedent — local by design). Two shapes taught
+// it: "Inc."/"L.P." inside a firm's registered name is not a sentence end (Comstock's
+// attribution split in half without the lookbehind), and a leading page number or footnote
+// marker is provably not content.
+function ogSentences(text) {
+  if (!text) return [];
+  return String(text)
+    .replace(/\d+\s+table of contents/gi, " ")
+    .split(/(?<=[.!?]["”’']?)(?<!\b(?:Inc|Ltd|Corp|Co|No|L\.P)\.["”’']?)\s+(?=[A-Z(“"$0-9])/)
+    .map((s) => s.replace(/\s+/g, " ").trim().replace(/^\(\d+\)\s+/, "").replace(/^\d{1,4}\s+(?=[A-Z“"$])/, ""))
+    .filter((s) => {
+      if (s.length < 60 || s.length > 600) return false;
+      if (/table of contents/i.test(s)) return false;
+      if (/^\d{1,3}\.\d+\*?\s/.test(s)) return false; // an exhibit-index row ("99.1* Audit Letter of …")
+      const digits = (s.match(/\d/g) || []).length;
+      const letters = (s.match(/[a-zA-Z]/g) || []).length;
+      return letters >= 60 && digits / (digits + letters) <= 0.3;
+    });
+}
+
+// The filer's own verb — the dictionary token nearest the firm's name. Verb fidelity is
+// absolute: whatever word this returns is the word the page shows.
+function ogNearestVerb(s, firmIdx, firmLen) {
+  let best = null;
+  for (const m of s.matchAll(new RegExp(OG_VERB.source, "gi"))) {
+    const d = m.index > firmIdx ? m.index - (firmIdx + firmLen) : firmIdx - (m.index + m[0].length);
+    if (d <= 90 && (!best || d < best.d)) best = { verb: m[0], d };
+  }
+  return best?.verb ?? null;
+}
+
+// The in-sentence coverage share: exactly one qualified percent whose "of …" object phrase
+// names reserves and carries no present-value token. The object is trimmed where the
+// sentence moves on from WHAT was covered to when/where — the trim only shortens a phrase
+// that remains a literal substring of the quote, so the weld still holds.
+function ogCoverage(s) {
+  const ms = [...s.matchAll(new RegExp(OG_PCT.source, "gi"))];
+  if (ms.length !== 1) return null;
+  const m = ms[0];
+  const om = s.slice(m.index + m[0].length).match(/^\s*(of\s+[^.();]{3,140})/i);
+  if (!om) return null;
+  const object = om[1]
+    .split(/\s+(?:as of|attributable to|disclosed|were|was|which|and (?:is|are|does))\s+|\s+for\s+(?=(?:19|20)\d\d)|,\s+(?=(?:a|an|the)\s+\w+\s+of\b)/i)[0]
+    .replace(/[\s,]+$/, "");
+  if (!/reserves\b/i.test(object)) return null;
+  if (OG_PV.test(object)) return null;
+  return { pct: m[0], object };
+}
+
+function reserveEngineerRead({ fullText = "", fy }) {
+  if (!fullText || !fy) return null;
+  const eligible = [];
+  for (const [firm, re] of OG_FIRMS) {
+    const n = (fullText.match(new RegExp(re.source, "g")) || []).length;
+    if (n >= 2) eligible.push({ firm, re, n });
+  }
+  const sents = eligible.length ? ogSentences(fullText) : [];
+  const firms = [];
+  for (const { firm, re, n } of eligible) {
+    let best = null;
+    for (const s of sents) {
+      const fm = s.match(new RegExp(re.source));
+      if (!fm) continue;
+      if (OG_DEBRIS.test(s) || OG_ATTR_HYPO.test(s)) continue;
+      const verb = ogNearestVerb(s, fm.index, fm[0].length);
+      if (!verb) continue;
+      // The PV ban: a percent may chip only from a PV-free sentence with a reserves object.
+      const coverage = OG_PV.test(s) ? null : ogCoverage(s);
+      let score = 0;
+      if (coverage) score += 3;
+      if (/\bindependent(?:ly)?\b/i.test(s)) score += 1;
+      if (OG_PV.test(s)) score -= 1;
+      if (!best || score > best.score) best = { firm, count: n, verb, coverage, sentence: s, score };
+    }
+    if (best) firms.push(best);
+  }
+  firms.sort((a, b) => b.count - a.count);
+  if (firms.length) {
+    // The weld law at write time: the verb and both coverage halves are the filer's own characters.
+    for (const f of firms) {
+      weld(f.sentence, [
+        { text: f.verb, kind: "verbatim" },
+        ...(f.coverage ? [{ text: f.coverage.pct, kind: "verbatim" }, { text: f.coverage.object, kind: "verbatim" }] : []),
+      ]);
+    }
+    return { fy, firms: firms.map(({ firm, verb, coverage, sentence }) => ({ firm, verb, ...(coverage ? { coverage } : {}), sentence })) };
+  }
+  if (eligible.length) return null; // a firm is named but no clean sentence — silence over debris
+  // Internal-only, the XOM class: no dictionary firm anywhere, and the filer's own
+  // qualifications heading declares the internal arrangement in its own sentence.
+  const qm = fullText.match(/Qualifications of[^.]{0,90}(?:Reserves?|reserves?)/);
+  if (qm) {
+    const win = fullText.slice(qm.index, qm.index + 3000);
+    let sent = ogSentences(win).find((s) => /\b(?:internal|dedicated|its own)\b[^.]{0,160}\b(?:group|staff|engineers?|organization|personnel)\b/i.test(s) && !OG_ATTR_HYPO.test(s));
+    if (sent) {
+      // The Item 1202(a)(7) heading glues onto the zone's first sentence; strip only that
+      // bounded, anchored heading run, never sentence content.
+      sent = sent.replace(/^Qualifications of\b.{0,140}?Proved Reserves\s+(?=[A-Z])/, "");
+      weld(sent, []);
+      return { fy, internal: true, sentence: sent };
+    }
+  }
+  return null;
+}
+
+// A cross-reference names a topic without discussing it — EGY's notes point "see 'Item 1.
+// Business Reserve Information'" at a section that lives elsewhere; the pointer is not the
+// filer naming a judgment.
+const OG_CRIT_XREF = /\bsee\b[^.]{0,90}\b(?:item|note|business|report)\b|\bdiscussed\s+(?:in|under|below)\b|\brefer\s+to\b|\bfor further discussion\b|\bin item\s+\d/i;
+const OG_CRIT_TOPICS = [
+  ["Oil & gas reserve estimates", /\b(?:proved|oil and(?: natural)? gas|crude oil|natural gas)\b[^.;]{0,60}\breserves?\b[^.;]{0,120}\bestimat|\bestimat\w*[^.;]{0,60}\b(?:proved|oil and(?: natural)? gas)\s+reserves?\b|\breserves?\s+estimat(?:es?|ion)\b|\bestimat(?:es?|ion|ing)\s+of\s+(?:proved\s+)?(?:oil|gas|crude|natural gas|reserves)/i],
+  ["Depletion & DD&A", /\bunits?[\s-]of[\s-]production\b|\bdepletion\b|\bDD&A\b/i],
+  ["Ceiling test / impairment of properties", /\bceiling\s+test\b|\bimpair\w*[^.;]{0,80}\b(?:proved|oil and(?: natural)? gas|unproved)\s+propert|\b(?:proved|oil and(?: natural)? gas|unproved)\s+propert\w*[^.;]{0,80}\bimpair/i],
+  ["Asset retirement obligations", /\basset\s+retirement\s+obligations?\b/i],
+];
+
+function ogCriticalTopics(fullText, { maxChars = 12000 } = {}) {
+  if (!fullText) return null;
+  const found = new Map();
+  const re = new RegExp(CRIT_HEAD.source, "gi");
+  let m, lastEnd = -1;
+  while ((m = re.exec(fullText)) !== null) {
+    if (m.index < lastEnd) continue;
+    const win = fullText.slice(m.index, m.index + maxChars);
+    lastEnd = m.index + win.length;
+    const sents = ogSentences(win).filter((s) => {
+      if (OG_CRIT_XREF.test(s)) return false;
+      if (OG_PV.test(s) || /following tables?\b|tables? (?:below|above)\b/i.test(s)) return false;
+      // Evidence must be prose-grade: a flattened reserve-rollforward row is not the filer
+      // naming a judgment (EQT's "Balance at January 1, 2025 7,460 …").
+      const digits = (s.match(/\d/g) || []).length;
+      const letters = (s.match(/[a-zA-Z]/g) || []).length;
+      return digits / (digits + letters) <= 0.09;
+    });
+    for (const [label, tre] of OG_CRIT_TOPICS) {
+      if (found.has(label)) continue;
+      const hit = sents.find((s) => tre.test(s));
+      if (hit) found.set(label, hit);
+    }
+  }
+  if (!found.size) return null;
+  // List order, not discovery order: reserve estimation is THE sector judgment and leads.
+  const topics = OG_CRIT_TOPICS.map(([label]) => label).filter((l) => found.has(l));
+  return { topics, quote: cleanQuote(found.get(topics[0]) || "").slice(0, 280) || null };
+}
+
 async function main() {
   // Carry-over: start from the existing file, so a partial run (a ticker limit, or a pool that comes
   // up empty) never wipes good entries — fresh results overlay, and names no longer in either
@@ -2233,10 +2470,15 @@ async function main() {
     // the current record has a corroboration and tripwire counterparty.
     const sicSw = Number(c.sic) || 0;
     const swTarget = !isAdr && sicSw >= 7370 && sicSw <= 7374;
+    // The O&G desk's scope (Build 8): producers (1311), integrateds (2911) and the oil
+    // royalty SIC (6792 — Texas Pacific, per the M7 re-route), US 10-K filers only. A pure
+    // refiner inside 2911 carries no reserves disclosure and the dictionary-miss rule keeps
+    // it silent.
+    const ogTarget = !isAdr && (sicSw === 1311 || sicSw === 2911 || sicSw === 6792);
     let cur, prior;
     try {
       await sleep(THROTTLE);
-      cur = await getFiling(c.cik, filings[0], totalDebtMillions, devTarget, depTarget, swTarget);
+      cur = await getFiling(c.cik, filings[0], totalDebtMillions, devTarget, depTarget, swTarget, ogTarget);
       if (filings[1]) { await sleep(THROTTLE); prior = await getFiling(c.cik, filings[1], null, null, null, swTarget); }
     } catch (e) { console.warn(`  ! ${tk}: filing ${e.message}`); continue; }
 
@@ -2335,7 +2577,7 @@ async function main() {
         },
         risk: { words: cur.risk.words, wordsPrior: prior?.risk.words ?? null },
         aiRead: aiSignal(cur, prior),
-        buffettRead: buffettRead(cur, isFinancialSic(c.sic) || isPriceTakerSic(c.sic)),
+        buffettRead: buffettRead(cur, isFinancialSic(c.sic) || isPriceTakerSic(c.sic), cur.ogRead?.crit ?? null),
         comp,
         debtMaturity,
         // The reserve-development sentence, welded to the filed number (Build 4). Absent means
@@ -2350,6 +2592,11 @@ async function main() {
         // corroborated across filings, plus the KPI discontinuity tripwire. Absent means
         // the gates passed nothing — silence over filler.
         ...((() => { const sw = softwareKpiAssemble(cur.swRead, prior?.swRead ?? null); return sw ? { softwareRead: sw } : {}; })()),
+        // Who stands behind the reserves (Build 8, O&G): the Item 1202 attribution — firm,
+        // the filer's own verb, and any in-sentence coverage share, all welded to the quoted
+        // sentence; or the filer's own internal-process sentence. Absent means the firm
+        // dictionary missed and no qualifications sentence exists — silence over filler.
+        ...(cur.ogRead?.attribution ? { reserveAttribution: cur.ogRead.attribution } : {}),
       };
       ok++;
       console.log(`  ✓ ${tk}: ${flags.length} owner-flags, MD&A ${cur.mdna.words}w` + (comp ? `, payRatio ${comp.payRatio}:1` : "") + (debtMaturity ? `, debt-wall $${(debtMaturity.total / 1e9).toFixed(1)}B` : ""));
@@ -2372,7 +2619,7 @@ async function main() {
 }
 
 // Exported for the offline logic test; only hit EDGAR when run directly.
-export { ownerFlags, FLAG_THEMES, sentences, isProse, diff, extractPayRatio, extractInsiderOwnership, extractInsiderGroup, htmlToText, section, fetchText, businessDescription, candorSignals, businessBrief, buffettRead, BIZ_HUMANCAP, BIZ_LINEAGE, BIZ_ASPIRATIONAL, BRIEF_ORPHAN, PROMO, smellsLikeRisk, fortyFSections, folderDocs, extractSections, MW_DECLARED, MW_ABSENT, MW_OTHER_ENTITY, RESTATED, RESTATED_CONTRACT, INTEGRITY_FUTURE, ADMIT, NOT_ADMIT, BLAME_OTHERS, reserveDevelopmentRead, devSentences, uninsuredDepositsRead, uninsSentences, softwareRetentionRead, customerLadderRead, softwareKpiRead, softwareKpiAssemble, swSentences, swCounts };
+export { ownerFlags, FLAG_THEMES, sentences, isProse, diff, extractPayRatio, extractInsiderOwnership, extractInsiderGroup, htmlToText, section, fetchText, businessDescription, candorSignals, businessBrief, buffettRead, BIZ_HUMANCAP, BIZ_LINEAGE, BIZ_ASPIRATIONAL, BRIEF_ORPHAN, PROMO, smellsLikeRisk, fortyFSections, folderDocs, extractSections, MW_DECLARED, MW_ABSENT, MW_OTHER_ENTITY, RESTATED, RESTATED_CONTRACT, INTEGRITY_FUTURE, ADMIT, NOT_ADMIT, BLAME_OTHERS, reserveDevelopmentRead, devSentences, uninsuredDepositsRead, uninsSentences, softwareRetentionRead, customerLadderRead, softwareKpiRead, softwareKpiAssemble, swSentences, swCounts, reserveEngineerRead, ogCriticalTopics, ogSentences };
 
 if (import.meta.url === pathToFileURL(process.argv[1] || "").href) {
   main().catch((e) => { console.error(`\n❌ ${e.message}\n`); process.exit(1); });
