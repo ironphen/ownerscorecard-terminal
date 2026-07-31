@@ -704,6 +704,110 @@ function applyIncomeStatementIdentity(facts, revAnnualBy, ticker, W) {
 // business has no cost of sales, which for a utility buying fuel is simply false.
 const thinCor = (cor, rev) => (cor != null && rev > 0 && cor / rev < 0.01 ? null : cor);
 
+// GATE A (record-table survey Build 10) — the vintage-set balance sheet. Per company-year, the
+// identity's members (assets, liabilities, mezzanine, noncontrolling interests, equity incl.
+// NCI) are selected as a SET from the newest accession whose OWN figures satisfy
+// A = L + mezz + Eincl within 2x the declared rounding (inferred from the members' trailing
+// zeros) — never mixed across filings. The survey measured within-vintage articulation at 97.6%
+// of 20,481 testable company-years, and 1,195 shipped years were cross-vintage chimeras: a
+// partial re-tag's assets beside an older vintage's liabilities (Berkshire's FY2020 off by
+// $6.4B, JPMorgan's FY2019 by $902M). A newest accession that carries the full set but fails
+// the identity is reported and passed over for the newest accession that ties itself; if none
+// ties, the year's liabilities/mezzanine/NCI cells are withheld — never the whole record.
+// Flows keep latest-filed-wins law; only balance instants change selection here.
+const GATE_A_TAGS = {
+  assets: ["Assets"],
+  liabilities: ["Liabilities"],
+  eIncl: ["StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest", "PartnersCapitalIncludingPortionAttributableToNoncontrollingInterest"],
+  ePar: ["StockholdersEquity", "PartnersCapital", "LimitedPartnersCapitalAccount"],
+  nci: ["MinorityInterest"],
+  mezz: [
+    "TemporaryEquityCarryingAmountIncludingPortionAttributableToNoncontrollingInterests",
+    "TemporaryEquityCarryingAmountAttributableToParent",
+    "RedeemableNoncontrollingInterestEquityCarryingAmount",
+  ],
+};
+const trailingZeros = (v) => {
+  let n = Math.abs(Math.round(v)), z = 0;
+  if (n === 0) return 6;
+  while (n % 10 === 0 && z < 6) { n /= 10; z++; }
+  return z;
+};
+function vintageBalanceSets(facts, fyEnds, ticker) {
+  const daysApart = (a, b) => Math.abs(Math.round((new Date(b) - new Date(a)) / 86400000));
+  // per fy: accn -> { tagGroup -> value, filed }
+  const perFy = {};
+  for (const [group, tags] of Object.entries(GATE_A_TAGS)) {
+    for (const tag of tags) {
+      const units = facts?.facts?.["us-gaap"]?.[tag]?.units?.USD;
+      if (!units) continue;
+      for (const u of units) {
+        if (!u.form || !u.end || u.start || !u.accn) continue;
+        if (!(u.form.startsWith("10-K") || u.form.startsWith("10-Q"))) continue;
+        for (const [fy, end] of Object.entries(fyEnds)) {
+          if (daysApart(end, u.end) > 14) continue;
+          const acc = ((perFy[fy] ||= {})[u.accn] ||= { filed: u.filed || "", vals: {}, mezzByTag: {} });
+          // companyfacts repeats one fact across frames (FY beside Q4), so every group takes the
+          // first value per tag — the mezzanine, a SUM across its three concepts, would otherwise
+          // double-count a duplicated entry.
+          if (group === "mezz") { if (acc.mezzByTag[tag] == null) acc.mezzByTag[tag] = u.val; }
+          else if (acc.vals[group] == null) acc.vals[group] = u.val;
+          if ((u.filed || "") > acc.filed) acc.filed = u.filed || "";
+        }
+      }
+    }
+  }
+  const out = {};
+  for (const [fy, accs] of Object.entries(perFy)) {
+    const ordered = Object.entries(accs).sort((a, b) => (b[1].filed || "").localeCompare(a[1].filed || ""));
+    let newestFullFailed = null;
+    for (const [accn, { vals, filed, mezzByTag }] of ordered) {
+      const a = vals.assets, l = vals.liabilities;
+      const eincl = vals.eIncl ?? (vals.ePar != null ? vals.ePar + (vals.nci ?? 0) : null);
+      if (a == null || l == null || eincl == null) continue;
+      // The Incl tag IS the mezzanine total; the parent and redeemable-NCI tags are its two
+      // disjoint components, summed only when the total is absent (never all three — that
+      // would double-count the components under their own total).
+      const mbt = mezzByTag || {};
+      const mezzTotal = mbt["TemporaryEquityCarryingAmountIncludingPortionAttributableToNoncontrollingInterests"];
+      const mezzParts = ["TemporaryEquityCarryingAmountAttributableToParent", "RedeemableNoncontrollingInterestEquityCarryingAmount"].filter((t) => mbt[t] != null);
+      const mezz = mezzTotal ?? (mezzParts.length ? mezzParts.reduce((s, t) => s + mbt[t], 0) : 0);
+      vals.mezz = mezzTotal != null || mezzParts.length ? mezz : null;
+      const tol = 2 * 10 ** Math.min(trailingZeros(a), trailingZeros(l), trailingZeros(eincl));
+      if (Math.abs(a - (l + mezz + eincl)) <= tol) {
+        out[fy] = { assets: a, liabilities: l, mezz: vals.mezz ?? null, nci: vals.nci ?? null, accn, filed };
+        break;
+      }
+      if (!newestFullFailed) newestFullFailed = { accn, delta: a - (l + mezz + eincl) };
+    }
+    if (!out[fy] && newestFullFailed) {
+      console.warn(`  ! ${ticker} balance FY${fy}: no accession's own set articulates (newest full set ${newestFullFailed.accn} off by ${(newestFullFailed.delta / 1e6).toFixed(1)}M) — liabilities/mezzanine/NCI withheld for the year`);
+      out[fy] = { withheld: true };
+    }
+  }
+  return out;
+}
+function applyVintageBalanceGate(rec, facts, anchorFy, ticker, fyEnds) {
+  const sets = vintageBalanceSets(facts, fyEnds, ticker);
+  if (!Object.keys(sets).length) return;
+  const rows = [
+    ...(rec.history || []).filter((h) => h?.lines).map((h) => ({ fy: String(h.fy), L: h.lines })),
+    ...(rec.lines && anchorFy != null ? [{ fy: String(anchorFy), L: rec.lines }] : []),
+  ];
+  for (const { fy, L } of rows) {
+    const set = sets[fy];
+    if (!set) continue; // no accession carried the full identity: the KO/EPD/HCA no-tag class — cells stay per-tag law (mostly dashes)
+    if (set.withheld) { L.totalLiabilities = null; L.temporaryEquity = null; L.minorityInterest = null; continue; }
+    if (L.totalAssets != null && Math.abs(L.totalAssets - set.assets) > 2) {
+      console.warn(`  ! ${ticker} balance FY${fy}: assets restated to the articulating vintage (${(L.totalAssets / 1e6).toFixed(0)}M -> ${(set.assets / 1e6).toFixed(0)}M, ${set.accn})`);
+    }
+    L.totalAssets = set.assets;
+    L.totalLiabilities = set.liabilities;
+    L.temporaryEquity = set.mezz;
+    L.minorityInterest = set.nci;
+  }
+}
+
 // GATE C (record-table survey Build 8) — the cash-flow walk. The record gains the other two
 // thirds of the cash-flow statement (investing and financing, as-filed, ungated) plus the
 // exchange-rate effect, and a Change-in-cash cell that renders ONLY in a year where the walk
@@ -2405,6 +2509,9 @@ async function main() {
       // After the fragment floor, so a year whose cost line was just nulled as a fragment falls
       // to the gate's GP-lights rung instead of printing a near-100% margin.
       applyGrossProfitGate(rec, facts, anchor?.fy ?? null, ticker);
+      // GATE A last: the vintage-set selection for balance instants (assets restated to the
+      // articulating accession; liabilities/mezzanine/NCI stored only as a self-tying set).
+      applyVintageBalanceGate(rec, facts, anchor?.fy ?? null, ticker, fyEnds);
       companies.push(rec);
       console.log(`  ✓ ${ticker} (CIK ${cik}, FY${anchor?.fy ?? "?"})`);
     } else {

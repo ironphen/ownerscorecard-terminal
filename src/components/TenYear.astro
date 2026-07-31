@@ -175,6 +175,14 @@ const ROW = {
     },
   },
   intCov: { label: "Interest coverage", short: "Int. cov.", g: 3, get: (L) => (L.operatingIncome != null && L.interestExpense != null && L.interestExpense > 0 ? xStr(L.operatingIncome / L.interestExpense) : "—") },
+  // The claims run completes (record-table survey Build 10, behind Gate A): every dollar of the
+  // filer's own liabilities total, the mezzanine standing between debt and equity, and the
+  // outside shareholders' slice — so the balance-sheet band closes on an identity the reader
+  // can check by addition. The NCI row suppresses where Gate B stored including-NCI equity
+  // (printing it again would double-count).
+  totalLiabilitiesRow: { label: "Total liabilities", short: "Total liab.", g: 3, kind: "neutral", get: (L) => money(L.totalLiabilities) },
+  redeemableRow: { label: "Redeemable interests", short: "Redeemable", g: 3, kind: "neutral", get: (L) => money(L.temporaryEquity) },
+  nciRow: { label: "Noncontrolling interests", short: "NCI", g: 3, kind: "neutral", get: (L) => (company?.equityBasis ? "—" : money(L.minorityInterest)) },
   ndEbitda: {
     label: "Net debt / EBITDA", short: "ND/EBITDA", g: 3, kind: "leverage",
     get: (L) => {
@@ -246,7 +254,7 @@ const ROW = {
 const FULL = [
   ROW.revenue, ROW.grossProfitRow, ROW.grossMargin, ROW.sga, ROW.rnd, ROW.opIncome, ROW.opMargin, ROW.pretax, ROW.netIncome, ROW.taxRate,
   ROW.cashFromOps, ROW.depreciation, ROW.wcOther, ROW.capex, ROW.capexToRev, ROW.ownerEarnings, ROW.oeMargin, ROW.freeCashFlow, ROW.fcfMargin, ROW.acquisitions, ROW.dividendsPaidAbs, ROW.buybacksAbs, ROW.cfInvesting, ROW.cfFinancing, ROW.fxEffect, ROW.deltaCash, ROW.roic, ROW.roe, ROW.retainedToEquity,
-  ROW.cash, ROW.receivables, ROW.inventoryRow, ROW.accountsPayable, ROW.operatingWC, ROW.currentAssets, ROW.currentLiabilities, ROW.currentRatio, ROW.netPPERow, ROW.goodwillRow, ROW.totalAssets, ROW.totalDebt, ROW.netDebt, ROW.intCov, ROW.equity, ROW.sbcToRev, ROW.goodwillImp,
+  ROW.cash, ROW.receivables, ROW.inventoryRow, ROW.accountsPayable, ROW.operatingWC, ROW.currentAssets, ROW.currentLiabilities, ROW.currentRatio, ROW.netPPERow, ROW.goodwillRow, ROW.totalAssets, ROW.totalDebt, ROW.netDebt, ROW.intCov, ROW.totalLiabilitiesRow, ROW.redeemableRow, ROW.nciRow, ROW.equity, ROW.sbcToRev, ROW.goodwillImp,
   // Per share: the share count leads (the divisor), then top line, earnings, the two cash measures, the
   // dividend, capital spending and book value — every figure above reduced to one share (Value Line's
   // per-share array order), so dilution or buybacks show.
@@ -269,7 +277,7 @@ const SETS = {
   // Banks gained their statement skeleton 2026-07-31 (record-table survey Build 2): the two
   // interest legs above NII so the spread is a checked subtotal, the loan book and its allowance
   // opening the balance-sheet band, and the capital actually returned in dollars.
-  financial: [ROW.revenue, ROW.intIncome, ROW.intExpenseBank, ROW.nii, ROW.feeIncome, ROW.provision, ROW.pretax, ROW.netIncome, ROW.taxRate, ROW.roa, ROW.roe, ROW.retainedToEquity, ROW.rotce, ROW.efficiency, ROW.dividendsPaidAbs, ROW.buybacksAbs, ROW.cfInvesting, ROW.cfFinancing, ROW.fxEffect, ROW.deltaCash, ROW.loans, ROW.allowance, ROW.totalAssets, ROW.deposits, ROW.goodwillRow, ROW.equity, ROW.shares, ROW.eps, ROW.dps, ROW.bvps, ROW.tbvps],
+  financial: [ROW.revenue, ROW.intIncome, ROW.intExpenseBank, ROW.nii, ROW.feeIncome, ROW.provision, ROW.pretax, ROW.netIncome, ROW.taxRate, ROW.roa, ROW.roe, ROW.retainedToEquity, ROW.rotce, ROW.efficiency, ROW.dividendsPaidAbs, ROW.buybacksAbs, ROW.cfInvesting, ROW.cfFinancing, ROW.fxEffect, ROW.deltaCash, ROW.loans, ROW.allowance, ROW.totalAssets, ROW.deposits, ROW.goodwillRow, ROW.totalLiabilitiesRow, ROW.redeemableRow, ROW.nciRow, ROW.equity, ROW.shares, ROW.eps, ROW.dps, ROW.bvps, ROW.tbvps],
   // Insurers read on the combined ratio and float, but they also generate cash, and a group
   // that owns operating businesses under an insurance SIC (a conglomerate, say) is read on its
   // owner economics too. So the owner-earnings bridge and cash sit beside the underwriting
@@ -277,15 +285,15 @@ const SETS = {
   // The written-vs-earned pair, the combined ratio's two halves, and the honesty meter itself —
   // prior-year reserve development, signed as filed — joined the record 2026-07-31 (record-table
   // survey Build 2), with the capital actually returned in dollars.
-  insurer: [ROW.revenue, ROW.premiumsWritten, ROW.premiums, ROW.invInc, ROW.pretax, ROW.netIncome, ROW.taxRate, ROW.cashFromOps, ROW.ownerEarnings, ROW.lossRatio, ROW.expenseRatioRow, ROW.combined, ROW.reserveDev, ROW.roe, ROW.retainedToEquity, ROW.dividendsPaidAbs, ROW.buybacksAbs, ROW.cfInvesting, ROW.cfFinancing, ROW.fxEffect, ROW.deltaCash, ROW.investmentsTotal, ROW.float, ROW.totalAssets, ROW.equity, ROW.shares, ROW.eps, ROW.ownerEarningsPS, ROW.dps, ROW.bvps],
+  insurer: [ROW.revenue, ROW.premiumsWritten, ROW.premiums, ROW.invInc, ROW.pretax, ROW.netIncome, ROW.taxRate, ROW.cashFromOps, ROW.ownerEarnings, ROW.lossRatio, ROW.expenseRatioRow, ROW.combined, ROW.reserveDev, ROW.roe, ROW.retainedToEquity, ROW.dividendsPaidAbs, ROW.buybacksAbs, ROW.cfInvesting, ROW.cfFinancing, ROW.fxEffect, ROW.deltaCash, ROW.investmentsTotal, ROW.float, ROW.totalAssets, ROW.totalLiabilitiesRow, ROW.redeemableRow, ROW.nciRow, ROW.equity, ROW.shares, ROW.eps, ROW.ownerEarningsPS, ROW.dps, ROW.bvps],
   // Life insurers: the spread-and-book-value story, no combined ratio (see insurers.mjs).
-  lifeInsurer: [ROW.revenue, ROW.premiumsWritten, ROW.premiums, ROW.invInc, ROW.pretax, ROW.netIncome, ROW.taxRate, ROW.cashFromOps, ROW.ownerEarnings, ROW.roe, ROW.retainedToEquity, ROW.dividendsPaidAbs, ROW.buybacksAbs, ROW.cfInvesting, ROW.cfFinancing, ROW.fxEffect, ROW.deltaCash, ROW.investmentsTotal, ROW.float, ROW.totalAssets, ROW.equity, ROW.shares, ROW.eps, ROW.ownerEarningsPS, ROW.dps, ROW.bvps],
-  fee: [ROW.revenue, ROW.opMargin, ROW.netMargin, ROW.pretax, ROW.netIncome, ROW.taxRate, ROW.ownerEarnings, ROW.cfInvesting, ROW.cfFinancing, ROW.fxEffect, ROW.deltaCash, ROW.roe, ROW.retainedToEquity, ROW.totalAssets, ROW.cash, ROW.equity, ROW.shares, ROW.revenuePS, ROW.eps, ROW.ownerEarningsPS, ROW.dps, ROW.bvps],
-  managedCare: [ROW.revenue, ROW.premiums, ROW.mlr, ROW.opMargin, ROW.pretax, ROW.netIncome, ROW.taxRate, ROW.roe, ROW.retainedToEquity, ROW.cfInvesting, ROW.cfFinancing, ROW.fxEffect, ROW.deltaCash, ROW.totalAssets, ROW.equity, ROW.shares, ROW.revenuePS, ROW.eps, ROW.dps, ROW.bvps],
+  lifeInsurer: [ROW.revenue, ROW.premiumsWritten, ROW.premiums, ROW.invInc, ROW.pretax, ROW.netIncome, ROW.taxRate, ROW.cashFromOps, ROW.ownerEarnings, ROW.roe, ROW.retainedToEquity, ROW.dividendsPaidAbs, ROW.buybacksAbs, ROW.cfInvesting, ROW.cfFinancing, ROW.fxEffect, ROW.deltaCash, ROW.investmentsTotal, ROW.float, ROW.totalAssets, ROW.totalLiabilitiesRow, ROW.redeemableRow, ROW.nciRow, ROW.equity, ROW.shares, ROW.eps, ROW.ownerEarningsPS, ROW.dps, ROW.bvps],
+  fee: [ROW.revenue, ROW.opMargin, ROW.netMargin, ROW.pretax, ROW.netIncome, ROW.taxRate, ROW.ownerEarnings, ROW.cfInvesting, ROW.cfFinancing, ROW.fxEffect, ROW.deltaCash, ROW.roe, ROW.retainedToEquity, ROW.totalAssets, ROW.cash, ROW.totalLiabilitiesRow, ROW.redeemableRow, ROW.nciRow, ROW.equity, ROW.shares, ROW.revenuePS, ROW.eps, ROW.ownerEarningsPS, ROW.dps, ROW.bvps],
+  managedCare: [ROW.revenue, ROW.premiums, ROW.mlr, ROW.opMargin, ROW.pretax, ROW.netIncome, ROW.taxRate, ROW.roe, ROW.retainedToEquity, ROW.cfInvesting, ROW.cfFinancing, ROW.fxEffect, ROW.deltaCash, ROW.totalAssets, ROW.totalLiabilitiesRow, ROW.redeemableRow, ROW.nciRow, ROW.equity, ROW.shares, ROW.revenuePS, ROW.eps, ROW.dps, ROW.bvps],
   // The REIT record gained depreciation (the charge the whole industry disputes, shown as
   // filed), dividends in dollars above the coverage ratio they feed, and the interest bill
   // beside its coverage (record-table survey Build 2, 2026-07-31).
-  reit: [ROW.revenue, ROW.netIncome, ROW.depreciation, ROW.cashOps, ROW.dividendsPaidAbs, ROW.payout, ROW.cfInvesting, ROW.cfFinancing, ROW.fxEffect, ROW.deltaCash, ROW.realEstate, ROW.totalAssets, ROW.debtAssets, ROW.totalDebt, ROW.netDebt, ROW.intExpense, ROW.intCov, ROW.equity, ROW.shares,  ROW.dps, ROW.bvps],
+  reit: [ROW.revenue, ROW.netIncome, ROW.depreciation, ROW.cashOps, ROW.dividendsPaidAbs, ROW.payout, ROW.cfInvesting, ROW.cfFinancing, ROW.fxEffect, ROW.deltaCash, ROW.realEstate, ROW.totalAssets, ROW.debtAssets, ROW.totalDebt, ROW.netDebt, ROW.intExpense, ROW.intCov, ROW.totalLiabilitiesRow, ROW.redeemableRow, ROW.nciRow, ROW.equity, ROW.shares,  ROW.dps, ROW.bvps],
   general: FULL,
 };
 
