@@ -29,11 +29,15 @@ const ok = (msg) => console.log(`  ✓ ${msg}`);
 // dated filing-cover count — replaced the weighted-average diluted count as the price-to-value
 // share basis on both the company page and the compare card (they moved together, by design).
 // netDebt re-pinned 2026-07-17: the headline figure now nets against cash + short-term only
+// GOLDEN pins are construction-regression guards, not data freezes: they move whenever the
+// pinned filer's record legitimately refreshes (AAPL re-pinned 2026-07-31 when its June-2026
+// quarter arrived in the pool sweep — the stale pin blocked three deploys in CI while the local
+// grep filter missed "1 failure(s)"; read npm's OWN exit code, not the filter's).
 // (netDebtOf), the one shared definition — no longer liquidAssets (which folded in long-term
 // marketable and sign-flipped a cash-rich name against the grouping table). AAPL: net cash → net
 // debt, matching every surface.
 const GOLDEN = {
-  AAPL: { mode: "owner-earnings", oe: 129174000000, oeNormalized: 104494472092.51096, oeMaint: 127507000000, sbc: 13473000000, gDeliv: 0.00386460187350135, netDebt: 14207000000, shares: 14687356000, eps3: 6.870785093427753, bvps: 7.250522149800141, rev: 451442000000, gRev: 0.06645550690783386, ni: 122575000000 },
+  AAPL: { mode: "owner-earnings", oe: 136683000000, oeNormalized: 104494472092.51096, oeMaint: 134009000000, sbc: 13706000000, gDeliv: 0.00386460187350135, netDebt: 19948000000, shares: 14594180000, eps3: 6.914651365590028, bvps: 7.367320397583146, rev: 466823000000, gRev: 0.06645550690783386, ni: 128930000000 },
   // Re-pinned 2026-07-29: Coca-Cola's Q2-2026 10-Q (quarter ended 2026-07-03) merged same-day via
   // the fresh-filing pipeline (310 facts, 295 comparatives agreed), advancing the TTM one quarter.
   KO: { mode: "owner-earnings", oe: 14297000000, oeNormalized: 9885434569.217644, oeMaint: 15292000000, sbc: 266000000, gDeliv: -0.12679835295624164, netDebt: 29966000000, shares: 4302549243, eps3: 2.669115296863553, bvps: 8.401995644515624, rev: 50129000000, gRev: 0.07457823127133056, ni: 14316000000 },
