@@ -1,9 +1,12 @@
 #!/usr/bin/env node
 // fetchDrivers.mjs — "the year, in the company's own words."
 //
-// For each line the record shows (consolidated revenue, operating income, net income) and each
-// reportable segment the company discloses, find the MD&A sentence where the COMPANY explains the
-// year's move, verbatim — and ship it only when the sentence proves itself against the record:
+// For each line the record shows (consolidated revenue, operating income, net income — and,
+// since Build 5 of the 2026-07-31 qualitative survey, net premiums earned/written on carriers
+// and net interest income / provision for credit losses on banks, wherever the fundamentals
+// history carries the series) and each reportable segment the company discloses, find the MD&A
+// sentence where the COMPANY explains the year's move, verbatim — and ship it only when the
+// sentence proves itself against the record:
 //
 //   1. ANCHORED  — the sentence begins with the line item or the company's own segment label
 //                  (from segments.json), so "Cost of ... revenue" can never masquerade as revenue.
@@ -133,7 +136,29 @@ function pickSegments(sents, tk, fy) {
 // fundamentals.sourceUrl is the filing's index page; the MD&A lives in the primary document
 // beside it. Resolve via the folder's index.json: the primary doc is the ticker-dated .htm
 // (never an exhibit, never the index itself); when naming is odd, the largest .htm wins.
+//
+// Build 5 (2026-07-31): 234 US-pool rows — most of the 255 banks among them — carry a
+// browse-edgar QUERY url as sourceUrl, not a filing index. That page is an EDGAR search
+// results page; fetching it yielded no MD&A and those filers silently extracted NOTHING
+// (bank drivers coverage was 2/255 for exactly this reason). Resolve that shape through the
+// submissions API instead: latest plain 10-K (never a 10-K/A, which can omit MD&A) → its
+// folder → its primaryDocument.
 async function resolvePrimaryDoc(sourceUrl) {
+  const be = /cgi-bin\/browse-edgar[^"']*?CIK=(\d{1,10})/i.exec(sourceUrl);
+  if (be) {
+    const cik10 = be[1].padStart(10, "0");
+    let sub = null;
+    try { sub = JSON.parse((await fetchText(`https://data.sec.gov/submissions/CIK${cik10}.json`)) || "null"); } catch { return null; }
+    const r = sub?.filings?.recent;
+    if (!r) return null;
+    for (let i = 0; i < (r.form || []).length; i++) {
+      if (r.form[i] !== "10-K") continue;
+      if (!r.primaryDocument?.[i]) return null;
+      const folder = `https://www.sec.gov/Archives/edgar/data/${parseInt(cik10, 10)}/${r.accessionNumber[i].replace(/-/g, "")}/`;
+      return folder + r.primaryDocument[i];
+    }
+    return null;
+  }
   if (!/-index\.html?$/i.test(sourceUrl)) return sourceUrl;
   const folder = sourceUrl.slice(0, sourceUrl.lastIndexOf("/") + 1);
   try {
@@ -190,8 +215,9 @@ async function main() {
   console.log(`\n✅ Drivers: ${hit}/${companies.length} companies with at least one verified sentence`);
 }
 
-export { toBlocks, mdnaText, splitSentences, pickConsolidated, pickSegments };
-// (the first four re-exported from src/lib/drivers.mjs, where they now live)
+export { toBlocks, mdnaText, splitSentences, pickConsolidated, pickSegments, forCompany, resolvePrimaryDoc, consolidatedChanges };
+// (the first four re-exported from src/lib/drivers.mjs, where they now live; forCompany and
+// friends exported for scoped audit/regression runs that need per-ticker control)
 
 if (import.meta.url === pathToFileURL(process.argv[1] || "").href) {
   main().catch((e) => { console.error(`❌ ${e.message}`); process.exit(1); });
