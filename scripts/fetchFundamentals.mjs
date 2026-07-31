@@ -1374,6 +1374,34 @@ async function main() {
         }
       }
     }
+    // THE REVENUE KEYHOLE (named targets, 2026-07-30): two filers' latest-year top line is
+    // unreachable by every chain, fill and identity rung, yet sits verified in their own filings.
+    // L3Harris tags FY2025's $21,865M on a QUARTER-length context (2025-10-04→2026-01-02, fp:FY,
+    // twice) — EDGAR's own renderer leaves the annual column blank — while the printed
+    // consolidated statement, the MD&A table and the segment note all carry 21,865 and close
+    // arithmetically (15,487+6,378; the four segments net of intersegment). NRP's FY2025 10-K
+    // files NO undimensioned revenue tag at all; its printed "Total revenues and other income"
+    // is $207,282 thousand, which its filed CostsAndExpenses + OperatingIncomeLoss equal TO THE
+    // DOLLAR, corroborated by the segment note (204,222+3,060) and the MD&A change table.
+    // Each entry fills ONLY a year the record lacks, and ONLY while the payload still testifies
+    // (the mis-contexted fact with this exact value, or the identity pair still summing to it) —
+    // a corrected refiling or companyfacts ingestion retires the entry with no human in the loop.
+    // Both were the honest casualties of the staleness guard: their old pages had served the
+    // PRIOR year's revenue as current, which was worse.
+    const REVENUE_KEYHOLE = {
+      LHX: { fy: 2025, end: "2026-01-02", filed: "2026-02-12", val: 21865000000, test: () => Object.values(facts?.facts?.["us-gaap"] || {}).some((n) => (n.units?.USD || []).some((u) => u.end === "2026-01-02" && u.val === 21865000000 && u.form === "10-K")) },
+      NRP: { fy: 2025, end: "2025-12-31", filed: "2026-02-27", val: 207282000, test: () => {
+        const ce = annualByYear(facts, ["CostsAndExpenses"])["2025"]?.val, oiK = annualByYear(facts, ["OperatingIncomeLoss"])["2025"]?.val;
+        return ce != null && oiK != null && ce + oiK === 207282000;
+      } },
+    };
+    {
+      const kh = REVENUE_KEYHOLE[ticker.toUpperCase()];
+      if (kh && revAnnualBy[kh.fy]?.val == null && kh.test()) {
+        revAnnualBy[kh.fy] = { val: kh.val, end: kh.end, filed: kh.filed, form: "10-K" };
+        console.warn(`  ! ${ticker} revenue ${kh.fy}: filled from the named keyhole (${kh.val}) — verified against the filing's own printed statement; retires itself when the payload heals`);
+      }
+    }
     const latestRev = latestEntry(revAnnualBy);
     let revLatest = latestRev?.val ?? null;
     // The fiscal calendar (banks desk F2): each year's true period-end date from the revenue
