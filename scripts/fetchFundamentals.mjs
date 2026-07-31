@@ -324,6 +324,10 @@ const CONCEPTS = {
   // narrower filed fact, never a rebuilt total (Wave A adds the scope label and off-BS line).
   provisionForCreditLosses: ["ProvisionForLoanLeaseAndOtherLosses", "ProvisionForLoanAndLeaseLosses", "ProvisionForLoanLossesExpensed", "FinancingReceivableExcludingAccruedInterestCreditLossExpenseReversal"],
   totalAssets: ["Assets"],
+  // The insurer portfolio total, as-filed (record-table survey Build 7): the single subtotal an
+  // insurer's balance sheet leads with. No component construction — 88 of the 105-insurer cohort
+  // tag it; the rest (Berkshire, Aflac) file components only and show an honest dash.
+  investments: ["Investments"],
   deposits: ["Deposits"],
   goodwill: ["Goodwill"],
   intangibleAssets: ["IntangibleAssetsNetExcludingGoodwill", "FiniteLivedIntangibleAssetsNet"],
@@ -1815,6 +1819,7 @@ async function main() {
       inventory: collectInstant(facts, CONCEPTS.inventory, "USD", fyEnds),
       accountsPayable: collectInstant(facts, CONCEPTS.accountsPayable, "USD", fyEnds),
       assets: collectInstant(facts, CONCEPTS.totalAssets, "USD", fyEnds),
+      investments: collectInstant(facts, CONCEPTS.investments, "USD", fyEnds),
       deposits: collectInstant(facts, CONCEPTS.deposits, "USD", fyEnds),
       goodwill: collectInstant(facts, CONCEPTS.goodwill, "USD", fyEnds),
       intangibles: collectInstant(facts, CONCEPTS.intangibleAssets, "USD", fyEnds),
@@ -1950,6 +1955,7 @@ async function main() {
           noninterestExpense: ha.noninterestExpense[fy] ?? null,
           provisionForCreditLosses: ha.provisionForCreditLosses[fy] ?? null,
           totalAssets: hi.assets[fy] ?? null,
+          investmentsTotal: hi.investments[fy] ?? null,
           deposits: hi.deposits[fy] ?? null,
           goodwill: hi.goodwill[fy] ?? null,
           intangibleAssets: hi.intangibles[fy] ?? null,
@@ -2034,6 +2040,7 @@ async function main() {
             noninterestExpense: tf(CONCEPTS.noninterestExpense),
             provisionForCreditLosses: tf(CONCEPTS.provisionForCreditLosses),
             totalAssets: latestObservation(facts, CONCEPTS.totalAssets, "USD", true)?.val ?? null,
+            investmentsTotal: latestObservation(facts, CONCEPTS.investments, "USD", true)?.val ?? null,
             deposits: latestObservation(facts, CONCEPTS.deposits, "USD", true)?.val ?? null,
             goodwill: latestObservation(facts, CONCEPTS.goodwill, "USD", true)?.val ?? null,
             intangibleAssets: latestObservation(facts, CONCEPTS.intangibleAssets, "USD", true)?.val ?? null,
@@ -2077,6 +2084,7 @@ async function main() {
             operatingLeaseNoncurrent: instq(CONCEPTS.operatingLeaseNoncurrent),
             totalLiabilities: instq(CONCEPTS.totalLiabilities),
             totalAssets: instq(CONCEPTS.totalAssets),
+            investmentsTotal: instq(CONCEPTS.investments),
             stockholdersEquity: instq(CONCEPTS.stockholdersEquity),
             goodwill: instq(CONCEPTS.goodwill),
             intangibleAssets: instq(CONCEPTS.intangibleAssets),
@@ -2199,6 +2207,7 @@ async function main() {
         noninterestExpense: pick(CONCEPTS.noninterestExpense),
         provisionForCreditLosses: pick(CONCEPTS.provisionForCreditLosses),
         totalAssets: inst(CONCEPTS.totalAssets),
+        investmentsTotal: inst(CONCEPTS.investments),
         deposits: inst(CONCEPTS.deposits),
         goodwill: inst(CONCEPTS.goodwill),
         intangibleAssets: inst(CONCEPTS.intangibleAssets),

@@ -150,6 +150,10 @@ const ROW = {
   totalDebt: { label: "Total debt", short: "Debt", g: 3, get: (L) => (debtOk ? money(L.totalDebt) : "—") },
   deposits: { label: "Deposits", short: "Deposits", g: 3, get: (L) => money(L.deposits) },
   cash: { label: "Cash & investments", short: "Cash+inv", g: 3, get: (L) => { const v = liquidAssets(L); return v == null ? "—" : money(v); } },
+  // The portfolio total as-filed (record-table survey Build 7): for an insurer the portfolio IS
+  // the business, and the liquid-assets composite understated Chubb's book 23-fold. Heads the
+  // insurer balance-sheet band; component-only taggers (Berkshire, Aflac) prune to a dash.
+  investmentsTotal: { label: "Investments (total)", short: "Investments", g: 3, get: (L) => money(L.investmentsTotal) },
   netDebt: {
     label: "Net debt / (cash)", short: "Net debt", g: 3, kind: "netdebt",
     get: (L) => {
@@ -246,9 +250,9 @@ const SETS = {
   // The written-vs-earned pair, the combined ratio's two halves, and the honesty meter itself —
   // prior-year reserve development, signed as filed — joined the record 2026-07-31 (record-table
   // survey Build 2), with the capital actually returned in dollars.
-  insurer: [ROW.revenue, ROW.premiumsWritten, ROW.premiums, ROW.invInc, ROW.pretax, ROW.netIncome, ROW.taxRate, ROW.cashFromOps, ROW.ownerEarnings, ROW.lossRatio, ROW.expenseRatioRow, ROW.combined, ROW.reserveDev, ROW.roe, ROW.retainedToEquity, ROW.dividendsPaidAbs, ROW.buybacksAbs, ROW.float, ROW.totalAssets, ROW.cash, ROW.equity, ROW.shares, ROW.eps, ROW.ownerEarningsPS, ROW.dps, ROW.bvps],
+  insurer: [ROW.revenue, ROW.premiumsWritten, ROW.premiums, ROW.invInc, ROW.pretax, ROW.netIncome, ROW.taxRate, ROW.cashFromOps, ROW.ownerEarnings, ROW.lossRatio, ROW.expenseRatioRow, ROW.combined, ROW.reserveDev, ROW.roe, ROW.retainedToEquity, ROW.dividendsPaidAbs, ROW.buybacksAbs, ROW.investmentsTotal, ROW.float, ROW.totalAssets, ROW.equity, ROW.shares, ROW.eps, ROW.ownerEarningsPS, ROW.dps, ROW.bvps],
   // Life insurers: the spread-and-book-value story, no combined ratio (see insurers.mjs).
-  lifeInsurer: [ROW.revenue, ROW.premiumsWritten, ROW.premiums, ROW.invInc, ROW.pretax, ROW.netIncome, ROW.taxRate, ROW.cashFromOps, ROW.ownerEarnings, ROW.roe, ROW.retainedToEquity, ROW.dividendsPaidAbs, ROW.buybacksAbs, ROW.float, ROW.totalAssets, ROW.cash, ROW.equity, ROW.shares, ROW.eps, ROW.ownerEarningsPS, ROW.dps, ROW.bvps],
+  lifeInsurer: [ROW.revenue, ROW.premiumsWritten, ROW.premiums, ROW.invInc, ROW.pretax, ROW.netIncome, ROW.taxRate, ROW.cashFromOps, ROW.ownerEarnings, ROW.roe, ROW.retainedToEquity, ROW.dividendsPaidAbs, ROW.buybacksAbs, ROW.investmentsTotal, ROW.float, ROW.totalAssets, ROW.equity, ROW.shares, ROW.eps, ROW.ownerEarningsPS, ROW.dps, ROW.bvps],
   fee: [ROW.revenue, ROW.opMargin, ROW.netMargin, ROW.pretax, ROW.netIncome, ROW.taxRate, ROW.ownerEarnings, ROW.roe, ROW.retainedToEquity, ROW.totalAssets, ROW.cash, ROW.equity, ROW.shares, ROW.revenuePS, ROW.eps, ROW.ownerEarningsPS, ROW.dps, ROW.bvps],
   managedCare: [ROW.revenue, ROW.premiums, ROW.mlr, ROW.opMargin, ROW.pretax, ROW.netIncome, ROW.taxRate, ROW.roe, ROW.retainedToEquity, ROW.totalAssets, ROW.equity, ROW.shares, ROW.revenuePS, ROW.eps, ROW.dps, ROW.bvps],
   // The REIT record gained depreciation (the charge the whole industry disputes, shown as
