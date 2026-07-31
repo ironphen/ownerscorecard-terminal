@@ -220,6 +220,11 @@ const ROW = {
   currentLiabilities: { label: "Current liabilities", short: "Cur. liab.", g: 3, kind: "neutral", get: (L) => money(L.currentLiabilities) },
   // Fixed assets, the missing tangible anchor of band 3 (record-table survey Build 3).
   netPPERow: { label: "Net PP&E", short: "Net PP&E", g: 3, kind: "neutral", get: (L) => money(L.netPPE) },
+  // The regulated balance sheet's own pair (record-table survey Build 9), as-filed and never
+  // netted: what the commission owes the shareholders, and what the shareholders owe the
+  // ratepayers. Both neutral — a net regulatory liability position is economics, not a fault.
+  regAssets: { label: "Regulatory assets", short: "Reg. assets", g: 3, kind: "neutral", get: (L) => money(L.regulatoryAssets) },
+  regLiabilities: { label: "Regulatory liabilities", short: "Reg. liab.", g: 3, kind: "neutral", get: (L) => money(L.regulatoryLiabilities) },
   goodwillRow: { label: "Goodwill", short: "Goodwill", g: 3, kind: "neutral", get: (L) => money(L.goodwill) },
   totalAssets: { label: "Total assets", short: "Assets", g: 3, kind: "neutral", get: (L) => money(L.totalAssets) },
   // A partnership's book is partners' capital, and the extractor says which basis won
@@ -249,7 +254,17 @@ const FULL = [
 ];
 // Operating companies get the full snapshot above; banks, insurers and REITs each read on their
 // own measures, so they keep a curated set. Rows the data can't fill drop out below.
+// The utility variant (record-table survey Build 9): FULL, plus the regulatory pair after the
+// plant it rides on, and the interest bill beside the coverage it feeds — a regulated utility
+// is a bond-like claim on allowed returns, and its record must show the regulator's ledger.
+const UTILITY = (() => {
+  const rows = [...FULL];
+  rows.splice(rows.indexOf(ROW.netPPERow) + 1, 0, ROW.regAssets, ROW.regLiabilities);
+  rows.splice(rows.indexOf(ROW.intCov), 0, ROW.intExpense);
+  return rows;
+})();
 const SETS = {
+  utility: UTILITY,
   assetLight: FULL, consumer: FULL, capital: FULL, retail: FULL,
   // Banks gained their statement skeleton 2026-07-31 (record-table survey Build 2): the two
   // interest legs above NII so the spread is a checked subtotal, the loan book and its allowance
@@ -336,7 +351,7 @@ const shareNotes = [];
 // The Japanese pool carries a curated sector and never passes through the SIC engine, so
 // prefer it; the US pool resolves the model from the financial kind, then the shape.
 const fk = financialKind(company);
-const setKey = company.sector || (fk === "insurer" ? (financialSubtype(company) === "life-insurer" ? "lifeInsurer" : "insurer") : fk === "reit" ? "reit" : fk === "managedCare" ? "managedCare" : fk === "fee" ? "fee" : fk === "bank" ? "financial" : sector.key);
+const setKey = company.sector || (fk === "insurer" ? (financialSubtype(company) === "life-insurer" ? "lifeInsurer" : "insurer") : fk === "reit" ? "reit" : fk === "managedCare" ? "managedCare" : fk === "fee" ? "fee" : fk === "bank" ? "financial" : company.rateRegulated ? "utility" : sector.key);
 const chosen = SETS[setKey] || SETS.general;
 
 // Link a row's label to its entry on the Concepts page, where the term is defined.
