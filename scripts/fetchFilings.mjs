@@ -1076,6 +1076,21 @@ function aiSignal(cur, prior) {
   const newComp = prior ? compHits.find((s) => isNew(s)) : null;
   const pointed = newComp || compHits[0] || null;
   const capHits = opp.filter((s) => hasAI(s) && !AI_EXCLUDE.test(s));
+  // A capability quote must still SAY AI after the display cap (audit-fix item 7): the 280-char
+  // slice could cut ahead of the AI token — Trupanion rendered a zero-AI-words quote — and a
+  // glued pair can carry its token only in the half the cap discards. Split to sentences first,
+  // keep the AI-bearing one, and reject any candidate whose final rendered string lost the token;
+  // the next hit gets its turn, and no survivor means no quote (the classification stands on the
+  // hits; the quote is evidence, and evidence that no longer says AI is not evidence).
+  const capQuote = (() => {
+    for (const h of capHits) {
+      const sents = String(h).split(/(?<=[.!?])\s+(?=[A-Z"'“])/);
+      const s = sents.find((x) => hasAI(x)) || h;
+      const q = cleanQuote(s).slice(0, 280);
+      if (hasAI(q)) return q;
+    }
+    return null;
+  })();
   return {
     inRisk: compHits.length > 0,        // names AI specifically as a competitive risk
     mentionsAIRisk: anyAIrisk,          // mentions AI anywhere in the risk factors
@@ -1084,7 +1099,7 @@ function aiSignal(cur, prior) {
     newThisYear: !!newComp,
     newQuote: newComp ? cleanQuote(newComp).slice(0, 320) : null,
     asCapability: capHits.length > 0,
-    capabilityQuote: capHits.length ? cleanQuote(capHits[0]).slice(0, 280) : null,
+    capabilityQuote: capQuote,
   };
 }
 
@@ -1102,6 +1117,11 @@ function aiSignal(cur, prior) {
 const DENIES_CONC = /\bno\s+(single|individual|one|other|material)?\s*(customer|client|tenant|bottler|distributor|reseller|supplier|vendor|product|end customer)s?\b[^.]{0,80}\b(account|represent|generat|exceed|made?\s+up|compris|more than|greater than|equal to|\d{1,2}\s?%)|\bdid not have any (customer|client|tenant)s?\b/i;
 const NOT_DEP = /\bnot\s+(currently |materially |significantly |substantially |overly |heavily )?(dependent|reliant)\s+(up)?on\s+(a |any |the )?(single|one|individual|small (number|group)|limited number|group of)\b|\bdo not believe (that )?(we|it) (are|is)[\s\S]{0,40}\b(dependent|reliant)\b/i;
 const deniesConc = (s) => DENIES_CONC.test(s) || NOT_DEP.test(s);
+// A GEOGRAPHIC revenue split wears concentration's clothes — "customers outside the United
+// States accounted for 54% of revenue" is a mix fact, not a dependence fact — and it was 12 of
+// the software cohort's 127 concentration quotes (audit-fix item 9). Same class the weld-side
+// parser already rejects; the lens now rejects it too, so the quote never ships at all.
+const CC_GEO_LENS = /\bcustomers?\s+(?:located\s+|based\s+)?(?:in|outside|within)\b|\boutside\s+(?:of\s+)?(?:the\s+)?(?:u\.?s\.?|united states)\b|\bby\s+geograph\w*\b|\binternational\s+(?:customers?|markets?|revenues?)\b/i;
 
 const FLAG_THEMES = [
   {
@@ -1117,6 +1137,7 @@ const FLAG_THEMES = [
     // word "customers" next to some number, that mislabels subscriber/headcount lines.
     test: (s) =>
       !deniesConc(s) &&
+      !CC_GEO_LENS.test(s) &&
       /\bcustomers?\b/i.test(s) &&
       /\d{1,3}\s?(%|percent)/i.test(s) &&
       /(account|represent|concentrat|% of|percent of|of (its |our |total |net )*(net )?(revenue|sales|operating revenue))/i.test(s),
@@ -1207,10 +1228,11 @@ const ANCHOR = /\$\s?\d|\d{1,3}\s?%|\b(single|sole|one |two |largest|primary|lim
 // From the current filing's prose pool (sentence + section tag), pick the single
 // strongest sentence per theme: signal-bearing, specific (a number helps), the
 // right length, with theme-specific weighting. Returns up to 7, gravest first.
-function ownerFlags(pool) {
+function ownerFlags(pool, skipLenses = null) {
   const used = new Set();
   const out = [];
   for (const th of FLAG_THEMES) {
+    if (skipLenses && skipLenses.has(th.lens)) continue;
     let best = null, bestScore = -1;
     for (const p of pool) {
       if (used.has(p.s) || !th.test(p.s)) continue;
@@ -1264,6 +1286,12 @@ const COST_OFFSET = /\b(pass(?:ed|ing)?(?: these| through| on| along)|offset(?: 
 // NOT passed through, the squeeze that compresses margin. Guards passedThrough from reading the word
 // "offset" as a positive when the sentence is saying the opposite.
 const OFFSET_NEG = /\b(unable to|not (?:fully|able)|could not|did not|cannot|failed to|only partial\w*|partially|insufficient to|did little to|less than|not enough to)\b[\s\S]{0,25}(offset|pass\w*|recover\w*|mitigat\w*)|\b(offset|pass\w*|recover\w*|mitigat\w*)[\s\S]{0,20}\b(only partial|not (?:fully|enough)|partial\w*)\b/i;
+// Revenue-recognition allocation mechanics — standalone selling price, transaction-price
+// allocation, performance obligations — carry the pressure vocabulary without a market claim.
+const PRICE_REVREC = /\b(standalone selling prices?|SSP\b|revenue recognition|allocat\w*[\s\S]{0,25}transaction prices?|performance obligations?)\b/i;
+// An operating-expense line variance is prose about the company's own spending, not about the
+// price of its inputs; its "increase ... partially offset by" grammar is bookkeeping, not a squeeze.
+const COST_OPEX_VARIANCE = /\b(research and development|r&d expense|sales and marketing|selling, general|general and administrative|g&a\b|stock-based compensation|personnel(?:-related)? (costs?|expenses?)|headcount|hiring)\b/i;
 // The cost sentence is declarative about what happened, including the negative case ("we were unable
 // to offset"), so it uses a conditional-only guard, not the full HYPO (which would drop that case).
 const COST_HYPO = /\b(if\s|may\b|might\b|could\b|risk that|no assurance|in the event|whether (we|the))\b/i;
@@ -1383,6 +1411,12 @@ function criticalEstimates(mdnaSents) {
 // investment offices. Their MD&As speak of funding costs, deposit mix and credit costs, which the
 // industrial input-cost/pricing-power regexes misread, so the pricing facet is withheld for them.
 const isFinancialSic = (sic) => { const n = Number(sic); return n >= 6000 && n <= 6799; };
+// The upstream/royalty wall (audit-fix item 8): a producer of crude and gas (SIC 1311) or an oil
+// royalty holder (6792 — Texas Pacific, previously behind the financials wall by accident of its
+// SIC band) TAKES the commodity price; "higher realized prices" is the market's doing, not a moat,
+// and the desk measured the facet 9-for-9 false on the upstream cohort. Withheld, not filtered:
+// their pricing story is the price deck, a different lane.
+const isPriceTakerSic = (sic) => { const n = Number(sic); return n === 1311 || n === 6792; };
 
 function buffettRead(cur, isFinancial) {
   const mdna = cur?.mdna?.sents || [];
@@ -1406,12 +1440,18 @@ function buffettRead(cur, isFinancial) {
     const powerCount = sales.filter((raw) => isPower(cq(raw))).length;
     // Raised price AND volume/demand held or grew — the textbook moat, in one sentence.
     const powerStrong = sales.some((raw) => { const s = cq(raw); return isPower(s) && VOLUME_HELD.test(s); });
-    const pressure = bestSentence(mdna, PRICE_DOWN, [HYPO, PRICE_NONPRODUCT]);
+    // Standalone-selling-price / revenue-allocation mechanics match the pressure vocabulary
+    // ('price competition' inside an SSP-estimation sentence) while saying nothing about the
+    // market: Microsoft's rev-rec note shipped as pricing pressure (audit-fix item 8).
+    const pressure = bestSentence(mdna, PRICE_DOWN, [HYPO, PRICE_NONPRODUCT, PRICE_REVREC]);
     // The cost sentence must itself resolve the question — pass-through (COST_OFFSET) or squeeze
     // (OFFSET_NEG) — not merely name inflation. Prefer a quantified one.
     const costStance = mdna
       .map(cq)
-      .filter((s) => s.length >= 45 && s.length <= 300 && COST_UP.test(s) && !COST_HYPO.test(s) && (COST_OFFSET.test(s) || OFFSET_NEG.test(s)))
+      // An operating-expense variance ('R&D grew, partially offset by capitalization') is not a
+      // stance on input-cost pass-through, however hard its bare 'partially' leans on OFFSET_NEG —
+      // C3.ai's R&D sentence shipped as a cost squeeze (audit-fix item 8).
+      .filter((s) => s.length >= 45 && s.length <= 300 && COST_UP.test(s) && !COST_HYPO.test(s) && !COST_OPEX_VARIANCE.test(s) && (COST_OFFSET.test(s) || OFFSET_NEG.test(s)))
       .sort((a, b) => (/\d/.test(b) ? 1 : 0) - (/\d/.test(a) ? 1 : 0))[0] || null;
     pricing = (power || pressure || costStance)
       ? {
@@ -1657,7 +1697,13 @@ async function main() {
     const pool = [];
     for (const [sec, m] of [["Business", cur.business], ["MD&A", cur.mdna], ["Risk Factors", cur.risk]])
       for (const s of m.sents || []) pool.push({ s, section: sec });
-    const flags = ownerFlags(pool);
+    // The concentration lens is retired where it misreads by construction (audit-fix item 9):
+    // a bank's "customers" are depositors (27/42 measured deposit-side), a REIT's are tenants
+    // the lens reads blind in both directions, a utility's are ratepayers (38/60 off-lens).
+    // Absence over mislabels until the sector-correct replacements ship.
+    const sicN = Number(c.sic) || 0;
+    const ccRetired = (sicN >= 6020 && sicN <= 6199) || sicN === 6798 || (sicN >= 4900 && sicN <= 4991);
+    const flags = ownerFlags(pool, ccRetired ? new Set(["Customer concentration"]) : null);
 
     // Executive pay from the latest proxy (non-fatal, a bonus layer). US only: foreign private
     // issuers file no DEF 14A, so the proxy pull is skipped for the ADR pool.
@@ -1733,7 +1779,7 @@ async function main() {
         },
         risk: { words: cur.risk.words, wordsPrior: prior?.risk.words ?? null },
         aiRead: aiSignal(cur, prior),
-        buffettRead: buffettRead(cur, isFinancialSic(c.sic)),
+        buffettRead: buffettRead(cur, isFinancialSic(c.sic) || isPriceTakerSic(c.sic)),
         comp,
         debtMaturity,
         // The reserve-development sentence, welded to the filed number (Build 4). Absent means

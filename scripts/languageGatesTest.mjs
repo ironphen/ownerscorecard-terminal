@@ -14,6 +14,7 @@ import {
   ADMIT, NOT_ADMIT, BLAME_OTHERS,
   businessDescription, extractSections, htmlToText,
   reserveDevelopmentRead,
+  ownerFlags, buffettRead,
 } from "./fetchFilings.mjs";
 
 let pass = 0, fail = 0;
@@ -327,6 +328,133 @@ ok("noteWindow: the LAST heading occurrence wins (TOC echoes don't)",
     ok("note window: a development sentence in the statement notes welds without any MD&A",
       !!r && r.check === "dollar" && r.narrated === "$ 25.8 million");
   }
+}
+
+// ---------------- BUILD 5 — insurer premium anchors + bank credit-cycle drivers (Banks P2 +
+// Insurers P3 merged; docs/qualitative-desks-survey.md SECTION 3). Every filing sentence below
+// is VERBATIM from the named FY2025 10-K as the drivers pipeline flattens it (fetched and
+// measured 2026-07-31); every {pct, delta} is computed from the fundamentals history the
+// caller supplies. Four gates + subject-scope kill unchanged; the one new deny is the
+// deltaGuard: a narrated CHANGE dollar that contradicts the computed delta kills a sentence
+// even when its percentage ties by coincidence — the division-masquerade Chubb and Travelers
+// both measured live. ----
+
+{
+  const pick = (sents, key, pct, delta) => pickConsolidated(sents, { fy: 2025, changes: { [key]: { pct, delta } } });
+
+  // CFR (canary): the GAAP NII sentence ties +8.20% computed vs 8.1% narrated; the cause rides
+  // the continuation sentence, and the sentence itself runs 48 letters — the splitter's floor
+  // was measured against exactly this shape.
+  const cfrNii = "Net interest income for 2025 increased $130.3 million, or 8.1%, compared to 2024.";
+  const cfrCont = "The increase was primarily related to decreases in the average costs of interest-bearing deposit accounts and repurchase agreements combined with an increase in the average volume of loans, and increases in the average yield on and volume of taxable securities, and, to a lesser extent, tax-exempt securities, among other things.";
+  ok("CFR: net interest income welds (+8.20% computed, 8.1% narrated), cause from the continuation",
+    (() => { const r = pick([cfrNii, cfrCont], "netInterestIncome", 8.1974, 131537000); return r.length === 1 && r[0].line === "netInterestIncome" && r[0].check === "pct"; })());
+  ok("CFR: the taxable-equivalent basis never anchors the GAAP line (its +7.9% ties +8.2% GAAP by coincidence)",
+    pick(["Taxable-equivalent net interest income for 2025 increased $134.0 million, or 7.9%, compared to 2024.", cfrCont], "netInterestIncome", 8.1974, 131537000).length === 0);
+  ok("CFR: the 48-letter bank driver sentence survives the sentence pool",
+    splitSentences(cfrNii + " " + cfrCont).length === 2);
+
+  // FLG (canary): provision ties TO THE DOLLAR (-908M), behind a glued "Comparison to Prior
+  // Year" heading, cause from the continuation. The stored tag-chain figure is the arbiter:
+  // against a different filed delta the same sentence must NOT weld (nothing ties, no row).
+  const flg = "Comparison to Prior Year For the year ended December 31, 2025, the provision for credit losses decreased $908 million compared to the corresponding period for 2024.";
+  const flgCont = "This decrease is primarily due to the normalization of credit trends, collateral values and borrower financials, which has resulted in a stabilized ACL and lower net charge-offs in our multi-family and CRE portfolios.";
+  ok("FLG: the provision welds on the dollar (-908M exactly)",
+    (() => { const r = pick([flg, flgCont], "provisionForCreditLosses", -83.1502, -908000000); return r.length === 1 && r[0].check === "dollar"; })());
+  ok("FLG red-team: the stored XBRL figure decides — against a non-tying filed delta, no row",
+    pick([flg, flgCont], "provisionForCreditLosses", -75.0, -820000000).length === 0);
+  ok("FLG: the parenthesized-percent table tail no longer glues the narration to the table",
+    splitSentences("Provision for credit losses $ 184 $ 1,092 $ 833 $ (908) (83) % " + flg).some((s) => /^Comparison to Prior Year For the year ended/.test(s)));
+  ok("FLG: the rate-sensitivity hypothetical ('estimated change in net interest income…') never anchors",
+    pick(["At December 31, 2025, the estimated change in net interest income over the next twelve months for a 100 basis point reduction in short term interest rates is an increase of 1.51% percent."], "netInterestIncome", -20.0279, -431000000).length === 0);
+
+  // PLMR (canary): +57.2% exact, glued "Net Earned Premiums" heading benign (core reappears),
+  // narrated $291.9M ties the computed $291.948M delta; and it was reachable only because the
+  // numbered page footer ("51 Table of Contents") is stripped before sentence splitting.
+  const plmr = "Net Earned Premiums Net earned premiums increased $291.9 million, or 57.2%, to $802.6 million for the year ended December 31, 2025 from $510.7 million for the year ended December 31, 2024 due primarily to the earning of increased gross written premiums offset by the earning of ceded written premiums under reinsurance agreements.";
+  ok("PLMR: net earned premiums welds at 57.2% exact",
+    (() => { const r = pick([plmr], "premiumsEarned", 57.1676, 291948000); return r.length === 1 && r[0].pct === 57.2 && r[0].check === "pct"; })());
+  ok("PLMR: the numbered page footer no longer buries the sentence behind it",
+    splitSentences("Ceded premiums as a share of gross premiums decreased against the prior period on business mix. 51 Table of Contents " + plmr).some((s) => /^Net Earned Premiums Net earned premiums increased/.test(s)));
+  const plmrW = "Net Written Premiums Net written premiums increased $319.2 million, or 49.5%, to $964.0 million for the year ended December 31, 2025 from $644.9 million for the year ended December 31, 2024.";
+  const plmrWCont = "The increase was primarily due to an increase in gross written premiums, primarily in our Casualty and Crop lines, partially offset by increased ceded written premiums.";
+  ok("PLMR: net written premiums welds (+49.5%, delta ties $319.2M vs $319.171M), cause from the continuation",
+    (() => { const r = pick([plmrW, plmrWCont], "premiumsWrittenNet", 49.4954, 319171000); return r.length === 1 && r[0].check === "pct"; })());
+
+  // KNSL (canary): 16.7% exact, cause in-sentence.
+  ok("KNSL: net earned premiums welds at 16.7% exact",
+    (() => { const r = pick(["Net earned premiums were $1.6 billion for the year ended December 31, 2025 compared to $1.4 billion for the year ended December 31, 2024, an increase of $225.4 million, or 16.7% due primarily to continued earning of premium from prior-period growth in gross written premiums and higher net retention levels."], "premiumsEarned", 16.6884, 225372000); return r.length === 1 && r[0].pct === 16.7; })());
+
+  // CB (canary, THE TRAP): a division's premiums — "$81 million, or 6.4 percent" — tie the
+  // consolidated +6.36% within tolerance by coincidence, with no scope word in the sentence.
+  // The narrated $81M against the computed $3,168M delta is the tell; the deltaGuard kills it.
+  ok("CB: the division-premium sentence dies — its narrated $81M contradicts the consolidated $3.17B delta",
+    pick(["Net premiums earned increased $81 million, or 6.4 percent, in 2025, reflecting the changes in net premiums written described above."], "premiumsEarned", 6.3556, 3168000000).length === 0);
+
+  // TRV (canary): the old benign-by-luck "Revenues Earned Premiums" revenue row fell to the
+  // insurer anchors — which then refuse it too: the sentence is the Business Insurance
+  // segment's ($22.41B earned, "$1.07 billion or 5% higher"), its 5% ties the consolidated
+  // +4.70% by coincidence, and its narrated delta contradicts the consolidated $1.97B.
+  const trvSeg = "Revenues Earned Premiums Earned premiums in 2025 were $22.41 billion, $1.07 billion or 5% higher than in 2024, primarily reflecting the increase in net written premiums over the preceding twelve months.";
+  ok("TRV: the segment's glued-heading premium sentence dies on the delta guard",
+    pick([trvSeg], "premiumsEarned", 4.7042, 1973000000).length === 0);
+  ok("TRV: the same glued heading is still not consolidated REVENUE either (Build 3's rung holds)",
+    pick([trvSeg], "revenue", 5.18, 2405000000).length === 0);
+  // The mirrored consolidated shape (synthetic: TRV's own consolidated figures in the same
+  // glued-heading form) ships — the allowance is live, the guard kills only contradictions.
+  ok("a consolidated glued-heading premium sentence with a TYING delta ships",
+    (() => { const r = pick(["Revenues Earned Premiums Earned premiums in 2025 were $43.91 billion, $1.97 billion or 5% higher than in 2024, primarily reflecting the increase in net written premiums over the preceding twelve months."], "premiumsEarned", 4.7042, 1973000000); return r.length === 1 && r[0].check === "pct"; })());
+
+  // Three trap classes measured live on the Build 5 pool run (each shipped before its kill,
+  // none had ever shipped in the baseline — the kills cost nothing and buy the doctrine):
+
+  // (1) The FTE class: banks write the taxable-equivalent qualifier AFTER the line item, where
+  // no head anchor can refuse it, and the FTE change ties the GAAP series within tolerance by
+  // coincidence — the Lamar non-GAAP-basis class in postfix form.
+  ok("AVBH: 'on a taxable equivalent basis' after the anchor never verifies the GAAP chip",
+    pick(["Net interest income on a taxable equivalent basis for the year ended December 31, 2025, was $87.3 million, an increase of $12.1 million, or 16% over $75.2 million for the year ended December 31, 2024.", "The increase in net interest income was primarily due to loan growth."], "netInterestIncome", 16.1, 12100000).length === 0);
+  ok("TFC: the bare '- TE' acronym form dies too",
+    pick(["Net interest income - TE for the year ended December 31, 2025 was up $316 million, or 2.2%, compared to the year ended December 31, 2024 primarily due to loan and deposit growth, fixed-rate asset repricing, and the balance sheet."], "netInterestIncome", 2.4, 316000000).length === 0);
+
+  // (2) The gross-for-net class: the survey regex's optional "Gross" head shipped W. R.
+  // Berkley's gross-written +6.3% under the "Net premiums written" chip (net computed +6.2%,
+  // a coincidence tie). A gross narration can never anchor a net line.
+  ok("WRB: a gross-premiums sentence never wears the net-premiums chip",
+    pick(["Gross premiums written were $15,105 million in 2025, an increase of 6% from $14,211 million in 2024.", "The increase was due to the growth in the Insurance segment of $803 million and in the Reinsurance & Monoline Excess segment."], "premiumsWrittenNet", 6.2, 894000000).length === 0);
+
+  // (3) The adjacent-dollar table run: Root's flattened table row glued to the NEXT
+  // paragraph's gross-premium cause sentence and pct-tied the consolidated +30.9%.
+  ok("ROOT: three adjacent dollar cells are a table, never a driver",
+    pick(["Net premiums earned $ 1,401.7 $ 1,070.9 $ 330.8 30.9 % Gross premiums written increased due to growth in new writings as a result of continued growth in our partnership channel."], "premiumsEarned", 30.9, 330800000).length === 0);
+
+  // And the survivor beside them: a plain net-written narration on a real filer still ships.
+  ok("LMND: net written premium welds (+83.9% computed, 84% narrated, $348.4M delta tie)",
+    (() => { const r = pick(["Net written premium increased $348.4 million, or 84%, to $763.5 million for the year ended December 31, 2025 compared to the year ended December 31, 2024 due to factors noted above."], "premiumsWrittenNet", 83.9, 348400000); return r.length === 1 && r[0].check === "pct"; })());
+}
+
+// ---------------- AUDIT-FIX ITEMS 6-9 (2026-07-31): the structural render gates ----------------
+{
+  // Item 9: the lens skip-set — a bank/REIT/utility pool never receives a concentration flag.
+  const ccPool = [{ s: "Our largest customer accounted for 14% of total revenues in 2025, and our top five customers represented 38% of revenues.", section: "Business" }];
+  ok("item 9: a genuine concentration sentence flags for an operator",
+    ownerFlags(ccPool).some((f) => f.lens === "Customer concentration"));
+  ok("item 9: the same sentence never flags when the lens is retired for the archetype",
+    !ownerFlags(ccPool, new Set(["Customer concentration"])).some((f) => f.lens === "Customer concentration"));
+  // Item 9: geography wears concentration's clothes and dies at the lens.
+  ok("item 9: a geographic revenue split never wears the concentration flag",
+    !theme("Customer concentration").test("Customers outside the United States accounted for 54% of our total revenues for the year ended December 31, 2025."));
+
+  // Item 8: rev-rec allocation mechanics are not pricing pressure.
+  const bp = (mdnaSents) => buffettRead({ mdna: { sents: mdnaSents }, business: { sents: [] }, risk: { sents: [] } }, false);
+  ok("item 8: a standalone-selling-price sentence never ships as pricing pressure",
+    bp(["Significant judgment is required in determining standalone selling prices where price competition and discounting practices affect the range of observable prices for our products."])?.pricing?.pressure == null);
+  // Item 8: an operating-expense variance is not an input-cost stance, however hard its bare
+  // "partially" leans on OFFSET_NEG.
+  ok("item 8: an R&D-variance sentence never ships as a cost squeeze",
+    bp(["Research and development expenses increased $28.4 million due to higher personnel costs, partially offset by an increase in capitalized software development costs."])?.pricing?.costInflation == null);
+  // The genuine squeeze beside it still ships.
+  ok("item 8: a real unrecovered input-cost squeeze still ships",
+    bp(["Raw material costs increased $42 million during 2025, and our price increases were not able to fully offset these higher input costs."])?.pricing?.costInflation != null);
 }
 
 console.log(`\nlanguageGatesTest: ${pass} passed, ${fail} failed`);

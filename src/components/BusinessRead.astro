@@ -18,7 +18,7 @@ import { insurerQuality } from "../lib/insurers.mjs";
 import { feeQuality } from "../lib/feeFinancials.mjs";
 import { managedCareQuality } from "../lib/managedCare.mjs";
 import { financialKind, financialSubtype } from "../lib/archetype.mjs";
-import { businessLever, businessPhrase, industryLensClause, weakLede, pickNote, cleanOwnerFlags } from "../lib/business.mjs";
+import { businessLever, businessPhrase, industryLensClause, weakLede, pickNote, cleanOwnerFlags, customerConcentration } from "../lib/business.mjs";
 import { needleReport } from "../lib/needle.mjs";
 import notes from "../data/notes.json";
 
@@ -58,7 +58,12 @@ const seg = segmentsData?.companies?.[company.ticker];
 // driver, reusing the same ownerFlags the section below sets against the numbers. A
 // pointer, not a repeat: the quote and the weld stay in "what the filing emphasizes".
 const DRIVER_LENSES = new Set(["Customer concentration", "Pricing power & competition", "Supplier & input dependence", "Concentrated dependence", "Cyclicality & demand"]);
-const oflags = cleanOwnerFlags(L?.ownerFlags);
+// The pointer inherits the display gate the flag itself must pass below (audit-fix item 6): a
+// concentration flag whose weld nulls — a deposit-basis or channel-mix sentence wearing the
+// lens's clothes — cannot drive "the filing leans hardest on X" when the section under it will
+// refuse to show that very flag as a figure. JPMorgan's deposit-growth pointer and
+// Progressive's channel-mix pointer both die on this one rule.
+const oflags = cleanOwnerFlags(L?.ownerFlags).filter((f) => f.lens !== "Customer concentration" || customerConcentration(f.quote) != null);
 const topFlag = oflags.find((f) => DRIVER_LENSES.has(f.lens)) || oflags[0] || null;
 const flagPointer = topFlag
   ? ` On its own account, the filing leans hardest on ${topFlag.lens.toLowerCase()}, set against the numbers in what the filing emphasizes, below.`

@@ -10,12 +10,18 @@ const D = driversData?.companies?.[String(company?.ticker || "").toUpperCase()] 
 
 const rows = D
   ? [
-      ...(D.consolidated || []).map((x) => ({ chip: x.label, pct: x.pct, sentence: x.sentence, check: x.check })),
+      ...(D.consolidated || []).map((x) => ({ chip: x.label, key: x.key, pct: x.pct, sentence: x.sentence, check: x.check })),
       ...(D.segments || []).map((x) => ({ chip: x.segment, pct: x.pct, sentence: x.sentence, check: x.check, metric: x.metric })),
     ]
   : [];
 
-const fmtPct = (p) => `${p > 0 ? "+" : ""}${p.toFixed(1)}%`;
+// A provision is a reserve line, not a result: a rise can be prudence and a fall a release, and
+// coloring either as good or bad would be a verdict (the record table's provision row is neutral
+// for the same reason). And past ~1000% the base is a sliver — a −$46k prior-year credit printed
+// +9,745.7% — so the ratio carries nothing beyond "≈ divide by zero"; the tied sentence still
+// shows, the chip just declines to dress noise as a figure (the record's own n/m law).
+const neutralChip = (r) => r.key === "provisionForCreditLosses";
+const fmtPct = (p) => (Math.abs(p) > 1000 ? "n/m" : `${p > 0 ? "+" : ""}${p.toFixed(1)}%`);
 const checkNote = (c) =>
   c === "pct" || c === "dollar"
     ? "figure matches the filed record"
@@ -39,7 +45,7 @@ const mdnaUrl = D?.sourceUrl || null;
         <li class="row">
           <span class="chip">
             <span class="chipName">{r.chip}</span>
-            <span class={`chipPct ${r.pct < 0 ? "neg" : "pos"}`}>{fmtPct(r.pct)}</span>
+            <span class={`chipPct ${neutralChip(r) || Math.abs(r.pct) > 1000 ? "flat" : r.pct < 0 ? "neg" : "pos"}`}>{fmtPct(r.pct)}</span>
             {r.metric === "operatingIncome" ? <span class="chipMetric">op. income</span> : null}
           </span>
           <blockquote class="q">“{r.sentence}”</blockquote>
@@ -62,6 +68,7 @@ const mdnaUrl = D?.sourceUrl || null;
   .chipPct { font-family: var(--sans); font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; }
   .chipPct.pos { color: var(--good); }
   .chipPct.neg { color: var(--bad); }
+  .chipPct.flat { color: var(--muted); }
   .chipMetric { font-family: var(--sans); font-size: 10.5px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
   .q { font-family: var(--serif); font-size: 15px; line-height: 1.55; color: var(--ink-soft); margin: 6px 0 4px; padding: 0 0 0 14px; border-left: 2px solid var(--rule-strong); max-width: 78ch; }
   .check { font-family: var(--sans); font-size: 11px; letter-spacing: 0.03em; color: var(--muted); }
