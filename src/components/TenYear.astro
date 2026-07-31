@@ -4,7 +4,7 @@ import { fmtMoney, currencySymbol, roicValue, liquidAssets, topLineRevenue, debt
 import { returnOnEquity, returnOnTangibleEquity, returnOnAssets, efficiencyRatio, tangibleEquity } from "../lib/financials.mjs";
 import { splitFactorsByFy } from "../lib/capital.mjs";
 import { cashPayout, debtToAssets } from "../lib/reits.mjs";
-import { combinedRatio, lossRatio } from "../lib/insurers.mjs";
+import { combinedRatio, lossRatio, expenseRatio } from "../lib/insurers.mjs";
 import { medicalLossRatio } from "../lib/managedCare.mjs";
 import Term from "./Term.astro";
 
@@ -113,6 +113,22 @@ const ROW = {
   roa: { label: "Return on assets", short: "ROA", g: 2, get: (L) => { const r = returnOnAssets(L); return r == null ? "—" : `${(r * 100).toFixed(1)}%`; } },
   rotce: { label: "Return on tangible equity", short: "ROTCE", g: 2, get: (L) => { const r = returnOnTangibleEquity(L); return r == null ? "—" : `${(r * 100).toFixed(0)}%`; } },
   efficiency: { label: "Efficiency ratio", short: "Effic.", g: 2, get: (L) => { const r = efficiencyRatio(L); return r == null ? "—" : `${(r * 100).toFixed(0)}%`; } },
+  // The banks' interest legs: NII becomes a checked subtotal a reader can add.
+  intIncome: { label: "Interest income", short: "Int. inc.", g: 1, get: (L) => money(L.totalInterestIncome) },
+  intExpenseBank: { label: "Interest expense", short: "Int. exp.", g: 1, kind: "neutral", get: (L) => money(L.totalInterestExpense) },
+  // The insurer's written-vs-earned pair and the two halves of the combined ratio.
+  premiumsWritten: { label: "Premiums written (net)", short: "Prem. written", g: 1, get: (L) => money(L.premiumsWrittenNet) },
+  expenseRatioRow: { label: "Expense ratio", short: "Expense", g: 2, get: (L) => { const r = expenseRatio(L); return r == null ? "—" : `${(r * 100).toFixed(0)}%`; } },
+  // The honesty meter, finally on the record: the filer's own restatement of what its old
+  // accident years actually cost. Signed as filed — negative is favorable (reserves released),
+  // the sign convention verified pool-wide by the insurance desk (uniform; TRV's flipped custom
+  // tag corrected at extraction).
+  reserveDev: { label: "Prior-yr reserve development", short: "Reserve dev.", g: 2, kind: "dev", get: (L) => money(L.reserveDevelopmentPriorYear) },
+  // The bank's loan book beside the reserve held against it — the balance-sheet band opens on
+  // what the bank actually owns.
+  loans: { label: "Loans held for investment", short: "Loans", g: 3, get: (L) => money(L.loansHeldForInvestment) },
+  allowance: { label: "Credit-loss allowance", short: "Allowance", g: 3, kind: "neutral", get: (L) => money(L.allowanceForCreditLosses) },
+  intExpense: { label: "Interest expense", short: "Int. exp.", g: 3, kind: "neutral", get: (L) => money(L.interestExpense) },
   combined: { label: "Combined ratio", short: "Combined", g: 2, get: (L) => { const c = combinedRatio(L); return c == null ? "—" : `≈ ${(c * 100).toFixed(0)}%`; } },
   lossRatio: { label: "Loss ratio", short: "Loss", g: 2, get: (L) => { const r = lossRatio(L); return r == null ? "—" : `${(r * 100).toFixed(0)}%`; } },
   mlr: { label: "Medical loss ratio", short: "MLR", g: 1, get: (L) => { const r = medicalLossRatio(L); return r == null ? "—" : `${(r * 100).toFixed(0)}%`; } },
@@ -208,17 +224,26 @@ const FULL = [
 // own measures, so they keep a curated set. Rows the data can't fill drop out below.
 const SETS = {
   assetLight: FULL, consumer: FULL, capital: FULL, retail: FULL,
-  financial: [ROW.revenue, ROW.nii, ROW.feeIncome, ROW.provision, ROW.netIncome, ROW.taxRate, ROW.roa, ROW.roe, ROW.retainedToEquity, ROW.rotce, ROW.efficiency, ROW.totalAssets, ROW.deposits, ROW.goodwillRow, ROW.equity, ROW.shares, ROW.eps, ROW.dps, ROW.bvps, ROW.tbvps],
+  // Banks gained their statement skeleton 2026-07-31 (record-table survey Build 2): the two
+  // interest legs above NII so the spread is a checked subtotal, the loan book and its allowance
+  // opening the balance-sheet band, and the capital actually returned in dollars.
+  financial: [ROW.revenue, ROW.intIncome, ROW.intExpenseBank, ROW.nii, ROW.feeIncome, ROW.provision, ROW.netIncome, ROW.taxRate, ROW.roa, ROW.roe, ROW.retainedToEquity, ROW.rotce, ROW.efficiency, ROW.dividendsPaidAbs, ROW.buybacksAbs, ROW.loans, ROW.allowance, ROW.totalAssets, ROW.deposits, ROW.goodwillRow, ROW.equity, ROW.shares, ROW.eps, ROW.dps, ROW.bvps, ROW.tbvps],
   // Insurers read on the combined ratio and float, but they also generate cash, and a group
   // that owns operating businesses under an insurance SIC (a conglomerate, say) is read on its
   // owner economics too. So the owner-earnings bridge and cash sit beside the underwriting
   // measures; the sparse-row prune drops whichever a given filer doesn't support.
-  insurer: [ROW.revenue, ROW.premiums, ROW.invInc, ROW.netIncome, ROW.taxRate, ROW.cashFromOps, ROW.ownerEarnings, ROW.combined, ROW.lossRatio, ROW.roe, ROW.retainedToEquity, ROW.float, ROW.totalAssets, ROW.cash, ROW.equity, ROW.shares, ROW.eps, ROW.ownerEarningsPS, ROW.dps, ROW.bvps],
+  // The written-vs-earned pair, the combined ratio's two halves, and the honesty meter itself —
+  // prior-year reserve development, signed as filed — joined the record 2026-07-31 (record-table
+  // survey Build 2), with the capital actually returned in dollars.
+  insurer: [ROW.revenue, ROW.premiumsWritten, ROW.premiums, ROW.invInc, ROW.netIncome, ROW.taxRate, ROW.cashFromOps, ROW.ownerEarnings, ROW.lossRatio, ROW.expenseRatioRow, ROW.combined, ROW.reserveDev, ROW.roe, ROW.retainedToEquity, ROW.dividendsPaidAbs, ROW.buybacksAbs, ROW.float, ROW.totalAssets, ROW.cash, ROW.equity, ROW.shares, ROW.eps, ROW.ownerEarningsPS, ROW.dps, ROW.bvps],
   // Life insurers: the spread-and-book-value story, no combined ratio (see insurers.mjs).
-  lifeInsurer: [ROW.revenue, ROW.premiums, ROW.invInc, ROW.netIncome, ROW.taxRate, ROW.cashFromOps, ROW.ownerEarnings, ROW.roe, ROW.retainedToEquity, ROW.float, ROW.totalAssets, ROW.cash, ROW.equity, ROW.shares, ROW.eps, ROW.ownerEarningsPS, ROW.dps, ROW.bvps],
+  lifeInsurer: [ROW.revenue, ROW.premiumsWritten, ROW.premiums, ROW.invInc, ROW.netIncome, ROW.taxRate, ROW.cashFromOps, ROW.ownerEarnings, ROW.roe, ROW.retainedToEquity, ROW.dividendsPaidAbs, ROW.buybacksAbs, ROW.float, ROW.totalAssets, ROW.cash, ROW.equity, ROW.shares, ROW.eps, ROW.ownerEarningsPS, ROW.dps, ROW.bvps],
   fee: [ROW.revenue, ROW.opMargin, ROW.netMargin, ROW.netIncome, ROW.taxRate, ROW.ownerEarnings, ROW.roe, ROW.retainedToEquity, ROW.totalAssets, ROW.cash, ROW.equity, ROW.shares, ROW.revenuePS, ROW.eps, ROW.ownerEarningsPS, ROW.dps, ROW.bvps],
   managedCare: [ROW.revenue, ROW.premiums, ROW.mlr, ROW.opMargin, ROW.netIncome, ROW.taxRate, ROW.roe, ROW.retainedToEquity, ROW.totalAssets, ROW.equity, ROW.shares, ROW.revenuePS, ROW.eps, ROW.dps, ROW.bvps],
-  reit: [ROW.revenue, ROW.netIncome, ROW.cashOps, ROW.payout, ROW.realEstate, ROW.totalAssets, ROW.debtAssets, ROW.totalDebt, ROW.netDebt, ROW.intCov, ROW.equity, ROW.shares,  ROW.dps, ROW.bvps],
+  // The REIT record gained depreciation (the charge the whole industry disputes, shown as
+  // filed), dividends in dollars above the coverage ratio they feed, and the interest bill
+  // beside its coverage (record-table survey Build 2, 2026-07-31).
+  reit: [ROW.revenue, ROW.netIncome, ROW.depreciation, ROW.cashOps, ROW.dividendsPaidAbs, ROW.payout, ROW.realEstate, ROW.totalAssets, ROW.debtAssets, ROW.totalDebt, ROW.netDebt, ROW.intExpense, ROW.intCov, ROW.equity, ROW.shares,  ROW.dps, ROW.bvps],
   general: FULL,
 };
 
@@ -330,6 +355,7 @@ const cellClass = (kind, c) => {
   if (kind === "charge") return c === "—" ? "" : "neg"; // a goodwill write-down, red in the year it lands
   const neg = c.startsWith("(") || c.startsWith("−");
   if (kind === "netdebt") return neg ? "pos" : "";
+  if (kind === "dev") return c === "—" ? "" : neg ? "pos" : "neg"; // development: released reserves green, shortfalls red
   if (kind === "neutral" || kind === "leverage") return ""; // a provision or leverage figure isn't a loss
   return neg ? "neg" : "";
 };
