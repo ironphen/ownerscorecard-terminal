@@ -67,10 +67,31 @@ const tol = (v) => Math.max(1e-4 * Math.abs(v || 0), 1e6);
 
 // The full gate: returns { series, inclNci, minorityInterest, temporaryEquity, basis, warns }.
 // `series` is the equity the record stores per year; `basis[fy]` says which side it is.
+// A partnership files no stockholders' equity at all — Enterprise Products' book lives under
+// PartnersCapital, and five MLPs carried a null equity line through their whole records
+// (record-table survey Build 4, 2026-07-31). The partners rungs are TRAILING per year: a
+// corporate tag with facts for the year always wins, so no corporation is touched, and the
+// same corroboration law applies either way. `partnersYears` reports which years read on the
+// partnership basis so the record can label the row "Partners' capital" instead of lying.
+const PAR_LADDER = ["StockholdersEquity", "PartnersCapital", "LimitedPartnersCapitalAccount"];
+const INCL_LADDER = ["StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest", "PartnersCapitalIncludingPortionAttributableToNoncontrollingInterest"];
+function ladderVintages(facts, tags, fyEnds) {
+  const perTag = tags.map((t) => vintagesByYear(facts, t, fyEnds) || {});
+  const out = {}, source = {};
+  for (let i = 0; i < perTag.length; i++) {
+    for (const fy of Object.keys(perTag[i])) {
+      if (!(fy in out)) { out[fy] = perTag[i][fy]; source[fy] = tags[i]; }
+    }
+  }
+  return { out, source };
+}
+
 export function equityByYear(facts, fyEnds) {
   const warns = [];
-  const parV = vintagesByYear(facts, "StockholdersEquity", fyEnds) || {};
-  const inclV = vintagesByYear(facts, "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest", fyEnds) || {};
+  const parL = ladderVintages(facts, PAR_LADDER, fyEnds);
+  const inclL = ladderVintages(facts, INCL_LADDER, fyEnds);
+  const parV = parL.out, inclV = inclL.out;
+  const partnersYears = new Set(Object.keys(parL.source).filter((fy) => parL.source[fy] !== "StockholdersEquity"));
   const par = {}, incl = {};
   for (const fy of Object.keys(parV)) par[fy] = parV[fy][0].val;
   for (const fy of Object.keys(inclV)) incl[fy] = inclV[fy][0].val;
@@ -151,5 +172,5 @@ export function equityByYear(facts, fyEnds) {
     basis[fy] = "withheld";
     warns.push(`equity ${fy}: the filer's equity tags disagree (parent ${p}, incl-NCI ${q}, NCI ${m ?? "untagged"}) and neither side is corroborated — the year is withheld`);
   }
-  return { series, inclNci: inclOut, minorityInterest: mi, temporaryEquity: mezz, basis, warns };
+  return { series, inclNci: inclOut, minorityInterest: mi, temporaryEquity: mezz, basis, warns, partnersYears };
 }

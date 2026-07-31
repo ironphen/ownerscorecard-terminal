@@ -200,7 +200,10 @@ const ROW = {
   netPPERow: { label: "Net PP&E", short: "Net PP&E", g: 3, kind: "neutral", get: (L) => money(L.netPPE) },
   goodwillRow: { label: "Goodwill", short: "Goodwill", g: 3, kind: "neutral", get: (L) => money(L.goodwill) },
   totalAssets: { label: "Total assets", short: "Assets", g: 3, kind: "neutral", get: (L) => money(L.totalAssets) },
-  equity: { label: "Shareholders’ equity", short: "Equity", g: 3, kind: "neutral", get: (L) => money(L.stockholdersEquity) },
+  // A partnership's book is partners' capital, and the extractor says which basis won
+  // (record-table survey Build 4) — calling Enterprise Products' capital "shareholders'
+  // equity" would be the wrong word for a business with no shareholders.
+  equity: { label: company?.equityLabel || "Shareholders’ equity", short: company?.equityLabel ? "Capital" : "Equity", g: 3, kind: "neutral", get: (L) => money(L.stockholdersEquity) },
   operatingWC: { label: "Operating working capital", short: "Oper. WC", g: 3, kind: "neutral", get: (L) => ((L.receivables != null || L.inventory != null) ? money((L.receivables || 0) + (L.inventory || 0) - (L.accountsPayable || 0)) : "—") },
   currentRatio: { label: "Current ratio", short: "Curr. ratio", g: 3, kind: "neutral", get: (L) => (L.currentAssets != null && L.currentLiabilities > 0 ? xStr(L.currentAssets / L.currentLiabilities, 1) : "—") },
   goodwillImp: { label: "Goodwill written down", short: "GW imp.", g: 3, kind: "charge", get: (L) => (L.goodwillImpairment ? money(Math.abs(L.goodwillImpairment)) : "—") },

@@ -2051,6 +2051,8 @@ async function main() {
       // (the parent tag was the corroborated-away mistag), downstream surfaces must not add a
       // noncontrolling-interests row on top of it — that would double-count.
       ...(anchor?.fy != null && eqGate.basis[anchor.fy] === "inclNci" ? { equityBasis: "inclNci" } : {}),
+      // A partnership's book is partners' capital; the record's equity row must say so.
+      ...(anchor?.fy != null && eqGate.partnersYears?.has(String(anchor.fy)) ? { equityLabel: "Partners' capital" } : {}),
       // When this record was last EXTRACTED, which is not the same as the file's asOf: a partial
       // run rewrites the whole file while touching only its cohort, and without a per-record stamp
       // a decade-old extraction is indistinguishable from this morning's. The stamp is what turns
