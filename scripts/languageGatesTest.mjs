@@ -18,6 +18,7 @@ import {
   uninsuredDepositsRead,
   softwareRetentionRead, customerLadderRead, softwareKpiRead, softwareKpiAssemble,
   reserveEngineerRead, ogCriticalTopics,
+  reitLeasingRead,
 } from "./fetchFilings.mjs";
 
 let pass = 0, fail = 0;
@@ -876,6 +877,108 @@ ok("noteWindow: the LAST heading occurrence wins (TOC echoes don't)",
       )?.judgment;
       return j?.topics?.[0] === "Oil & gas reserve estimates" && j.topics.includes("Income taxes");
     })());
+}
+
+// ---------------- BUILD 9 — REIT re-leasing spreads + occupancy (P1 + P2 bundled on the
+// weld; docs/qualitative-desks-survey.md). Every sentence below is verbatim from the FY2025
+// filings the lane was measured on (PLD BRX REXR O KIM BDN SPG, with AVB/HST silent), pinned
+// as literals. The laws under test: compound-token anchors only — never bare "spread";
+// SOFR/credit-spread sentences score zero; the period lives in the rendered quote; the
+// occupancy as-of date equals the fiscal year end; comparison-clause figures never chip; the
+// recapture dollar-pair tie verifies or withholds; multi-scope filers render per scope,
+// never a blend; same-scope disagreement withholds both. ----------------
+
+{
+  const read = (textOrZones, fy = 2025, fye = "2025-12-31") =>
+    reitLeasingRead({ mdnaText: Array.isArray(textOrZones) ? textOrZones.join(" ") : textOrZones, fy, fyeDate: fye });
+
+  // --- Lane A: the landlord's own pricing line ---
+  const brxSp = "During 2025, we achieved rent spreads on new leases of 38.7% and blended rent spreads on new and renewal leases of 21.7% excluding options or 16.4% including options.";
+  ok("BRX: 38.7 / 21.7 / 16.4 chip in the filer's own class order, from one sentence",
+    (() => { const r = read(brxSp); return r?.spreads?.length === 1 && r.spreads[0].figures.join("|") === "38.7%|21.7%|16.4%" && r.spreads[0].sentence === brxSp; })());
+
+  const pld = "These factors contributed to occupancy in our operating portfolio of 95.6% at December 31, 2025, and rent change on leases that commenced during the year of 50.1% on a net effective basis, both metrics based on our ownership share.";
+  ok("PLD: the mixed sentence splits by clause — 50.1% is the spread, 95.6% the occupancy, never crossed",
+    (() => { const r = read(pld); return r?.spreads?.[0]?.figures.join("|") === "50.1%" && r?.occupancy?.[0]?.figures.join("|") === "95.6%"; })());
+
+  // REXR: the verb-led highlights bullet carries no period of its own; the quote becomes the
+  // contiguous span with its fiscal-year-dated sibling, so the period is in the quote.
+  const rexrPrev = "Same Property Portfolio (2) average occupancy for the year ended December 31, 2025 was 96.4% and ending occupancy at year-end was 96.5%.";
+  const rexrBullet = "Executed a total 478 new and renewal leases with a combined 10.4 million rentable square feet, with leasing spreads of 23.4% on a GAAP basis and 10.7% on a cash basis.";
+  ok("REXR: both bases chip and the dated sibling rides inside the quote",
+    (() => { const r = read(`${rexrPrev} ${rexrBullet}`); return r?.spreads?.[0]?.figures.join("|") === "23.4%|10.7%" && /year ended December 31, 2025/.test(r.spreads[0].sentence) && r.spreads[0].sentence.endsWith(rexrBullet); })());
+  ok("REXR: the same bullet WITHOUT a dated sibling ships nothing — the period gate holds",
+    (() => { const r = read(`We operate industrial properties across infill Southern California. ${rexrBullet}`); return !r?.spreads; })());
+  ok("REXR: the land-lease footnote (94.0%/27.0%, no period in sentence) ships nothing",
+    (() => { const r = read("For the renewal land lease transactions, the net effective and cash leasing spreads were 94.0% and 27.0%, respectively."); return !r?.spreads; })());
+
+  // O: the internal dollar-pair tie — the sentence's own dollars compute to its stated rate.
+  const oSp = "During the year ended December 31, 2025, the new annualized base rent on re-leased units was $301.99 million, as compared to the previous annual rent of $290.61 million on the same units, representing a rent recapture rate of 103.9% on the re-leased units.";
+  ok("O: 103.9% chips and the pair ties — $301.99M ÷ $290.61M = 103.92% against the stated 103.9%",
+    (() => { const r = read(oSp); return r?.spreads?.[0]?.figures.join("|") === "103.9%" && r.spreads[0].tie?.computed === "103.92%" && r.spreads[0].tie.a === "$301.99 million" && r.spreads[0].tie.b === "$290.61 million"; })());
+  ok("O red-team: a doctored dollar breaks the tie and the row WITHHOLDS with its reason, no figure quoted",
+    (() => { const r = read(oSp.replace("$301.99", "$311.99")); return !r?.spreads && r?.spreadsWithheld?.length === 1 && /disagrees/.test(r.spreadsWithheld[0].reason); })());
+  ok("O: the quarterly recapture sentence (Q4's 104.9%) dies on the sub-annual gate",
+    (() => { const r = read("During the three months ended December 31, 2025, the new annualized base rent on re-leased units was $88.30 million, as compared to the previous annual rent of $84.21 million on the same units, representing a rent recapture rate of 104.9% on the re-leased units."); return !r?.spreads; })());
+
+  // The doc's zero-controls: KIM's and BDN's bare "spread" is credit language, and must score zero.
+  ok("KIM: 'plus an applicable spread determined by the Company's credit ratings' scores zero",
+    (() => { const r = read("The Credit Facility accrues interest at a rate of Adjusted Term SOFR, as defined in the terms of the Credit Facility, plus an applicable spread determined by the Company's credit ratings."); return !r?.spreads; })());
+  ok("BDN: the tender-offer fixed spread (basis points) scores zero",
+    (() => { const r = read("The purchase price offered per $1,000 principal amount of 2024 Notes pursuant to the Tender Offer was determined by reference to the fixed spread for the 2024 Notes of 0 basis points plus the yield based on the bid-side price of the 4.10% U.S. Treasury note due 2026."); return !r?.spreads; })());
+  ok("a compound-anchored sentence that still says SOFR is rejected — the credit deny is not anchor-shadowed",
+    (() => { const r = read("During 2025, rent spreads on our credit facility priced at SOFR plus 85 basis points improved by 12.0%."); return !r?.spreads; })());
+
+  // --- Lane B: occupancy, dated to fiscal year end ---
+  const brxOcc = "As of December 31, 2025, billed and leased occupancy were 91.6% and 95.1%, respectively, compared to 91.4% and 95.2%, respectively, as of December 31, 2024.";
+  ok("BRX: 91.6/95.1 chip; the comparison clause's 91.4/95.2 never do",
+    (() => { const r = read(brxOcc); return r?.occupancy?.length === 1 && r.occupancy[0].figures.join("|") === "91.6%|95.1%"; })());
+  ok("the as-of gate: the same disclosure dated only to the PRIOR year end ships nothing",
+    (() => { const r = read("As of December 31, 2024, billed and leased occupancy were 91.4% and 95.2%, respectively."); return !r?.occupancy; })());
+  ok("the as-of gate: a mid-year date (June 30, 2025) is not the fiscal year end and ships nothing",
+    (() => { const r = read("As of June 30, 2025, billed and leased occupancy were 91.2% and 94.8%, respectively."); return !r?.occupancy; })());
+
+  // REXR, the multi-scope filer: each scope renders with its own words inside the quote.
+  const rexr909 = "As of December 31, 2025, our consolidated properties were 90.9% leased to tenants in a variety of industries, with no single tenant accounting for more than 2.4% of our total annualized in-place base rent.";
+  const rexrRates = "As of December 31, 2025, our consolidated portfolio, inclusive of space in repositioning as described in the subsequent paragraph, was approximately 90.2% occupied, while our stabilized consolidated portfolio exclusive of such space was approximately 96.0% occupied.";
+  ok("REXR: three scopes, three rows, each with its own scope words — never a blend",
+    (() => {
+      const r = read([rexr909, rexrRates, rexrPrev]);
+      return r?.occupancy?.length === 3
+        && r.occupancy[0].figures.join("|") === "90.9%" && /consolidated properties/.test(r.occupancy[0].sentence)
+        && r.occupancy[1].figures.join("|") === "90.2%|96.0%" && /stabilized consolidated portfolio/.test(r.occupancy[1].sentence)
+        && r.occupancy[2].figures.join("|") === "96.4%|96.5%" && /Same Property Portfolio/.test(r.occupancy[2].sentence);
+    })());
+  ok("REXR: the dual-year 'respectively' sentence chips only the record year's figure (96.5, not 96.4-of-2024)",
+    (() => { const r = read("As of December 31, 2025 and 2024, our Same Property Portfolio occupancy was approximately 96.5% and 96.4%, respectively."); return r?.occupancy?.[0]?.figures.join("|") === "96.5%"; })());
+  ok("REXR: same-scope rows that AGREE collapse to one — the richer highlights form stands",
+    (() => { const r = read([rexrPrev, "As of December 31, 2025 and 2024, our Same Property Portfolio occupancy was approximately 96.5% and 96.4%, respectively."]); return r?.occupancy?.length === 1 && r.occupancy[0].figures.join("|") === "96.4%|96.5%"; })());
+  ok("anaphoric scope ('in these markets') is refused — the scope words are not in the sentence",
+    (() => { const r = read("Excluding vacant space at these properties, our weighted average occupancy rate as of December 31, 2025, in these markets was 95.3%, 99.2% and 96.4%, respectively."); return !r?.occupancy; })());
+
+  // BDN and KIM: where the same scope is stated twice and agrees, the prior-year-comparison
+  // form is the row (both pinned sentences are the doc's own samples).
+  const bdnCmp = "Occupancy at our Core Properties at December 31, 2025 was 88.3% compared to 87.8% at December 31, 2024.";
+  ok("BDN: the comparison-bearing Core Properties sentence is the row, 88.3% only",
+    (() => { const r = read(["As of December 31, 2025, the Core Properties were approximately 88.3% occupied.", bdnCmp]); return r?.occupancy?.length === 1 && r.occupancy[0].sentence === bdnCmp && r.occupancy[0].figures.join("|") === "88.3%"; })());
+  ok("KIM: consolidated (96.6%, comparison form kept) and pro-rata (96.4%) are DIFFERENT scopes — both render",
+    (() => {
+      const r = read(["As of December 31, 2025, the Company's proportionate share of its portfolio occupancy was 96.4%.",
+        "As of December 31, 2025, the Company's consolidated operating portfolio, comprised of 458 shopping center properties aggregating 79.5 million square feet of GLA, was 96.6% leased.",
+        "Consolidated operating portfolio occupancy at December 31, 2025 was 96.6% as compared to 96.4% at December 31, 2024."]);
+      return r?.occupancy?.length === 2 && r.occupancy[0].figures.join("|") === "96.4%" && r.occupancy[1].figures.join("|") === "96.6%" && /as compared to/.test(r.occupancy[1].sentence);
+    })());
+  ok("same-scope DISAGREEMENT withholds both — neither is quoted as the fact",
+    (() => { const r = read(["As of December 31, 2025, the Core Properties were approximately 88.3% occupied.", "Occupancy at our Core Properties at December 31, 2025 was 89.3% compared to 87.8% at December 31, 2024."]); return !r?.occupancy && r?.occupancyWithheld?.length === 1; })());
+
+  ok("SPG: the U.S.-abbreviation sentence stays whole and 96.4% chips; the 'from 96.5%' comparison never does",
+    (() => { const r = read("Ending occupancy for our U.S. Malls and Premium Outlets decreased 0.1% to 96.4% as of December 31, 2025, from 96.5% as of December 31, 2024."); return r?.occupancy?.[0]?.figures.join("|") === "96.4%"; })());
+  ok("O: 98.9% leased chips; the comparison's 98.7% never does",
+    (() => { const r = read("As of December 31, 2025, our portfolio of 15,511 properties was 98.9% leased with 173 properties available for lease or sale, as compared to 98.7% leased with 205 properties available for lease as of December 31, 2024."); return r?.occupancy?.[0]?.figures.join("|") === "98.9%"; })());
+  ok("a table lead-in ('The following table… as of December 31, 2025') is never an occupancy row",
+    (() => { const r = read("The following table summarizes the geographic diversity of our Portfolio by state, ranked by ABR, as of December 31, 2025, including the Percent Leased of 92.1% for our largest state."); return !r?.occupancy; })());
+  ok("forward-looking occupancy ('We expect…') never renders",
+    (() => { const r = read("We expect occupancy of approximately 96.0% as of December 31, 2025 based on current leasing volumes."); return !r?.occupancy; })());
 }
 
 console.log(`\nlanguageGatesTest: ${pass} passed, ${fail} failed`);

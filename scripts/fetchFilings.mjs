@@ -866,7 +866,7 @@ function bizLeadText(business, form) {
   return m > 200 ? business.slice(m) : business;
 }
 
-async function getFiling(cik, f, totalDebtMillions = null, devTarget = null, depTarget = null, swTarget = false, ogTarget = false) {
+async function getFiling(cik, f, totalDebtMillions = null, devTarget = null, depTarget = null, swTarget = false, ogTarget = false, reitTarget = false) {
   const accnNoDash = f.accn.replace(/-/g, "");
   const base = `https://www.sec.gov/Archives/edgar/data/${Number(cik)}/${accnNoDash}`;
   let url = `${base}/${f.doc}`;
@@ -955,7 +955,19 @@ async function getFiling(cik, f, totalDebtMillions = null, devTarget = null, dep
       ogRead = attribution || crit ? { ...(attribution ? { attribution } : {}), ...(crit ? { crit } : {}) } : null;
     } catch { ogRead = null; }
   }
-  return { url, business: { ...metrics(business), lead: leadSentences(bizLeadText(business, f.form)), head: business.slice(0, 800) }, mdna: { ...md, lead: leadSentences(mdna), candor: candorSignals(mdna, md.sents) }, risk: metrics(risk), reportDate: f.reportDate, debtMaturity, reserveRead, uninsuredRead, swRead, ogRead };
+  // The REIT re-leasing spreads + occupancy lanes (Build 9): the doc's Items 1/2/7 scope —
+  // the extracted Business and MD&A plus an Item 2 Properties window cut here (percent-leased
+  // sentences live in Properties, outside every extracted narrative section: REXR's "90.9%
+  // leased", KIM's "96.6% leased"). Current filing only; no filed weld target exists, the
+  // verification is the in-sentence date and the sentence's own dollar pair.
+  let reitRead = null;
+  if (reitTarget && fy && f.form === "10-K") {
+    try {
+      const item2 = section(text, `item\\s*2${SEP}propert`, [`item\\s*3${SEP}legal`, `item\\s*4${SEP}mine`], null, 40);
+      reitRead = reitLeasingRead({ businessText: business, item2Text: item2, mdnaText: mdna, fy, fyeDate: f.reportDate });
+    } catch { reitRead = null; }
+  }
+  return { url, business: { ...metrics(business), lead: leadSentences(bizLeadText(business, f.form)), head: business.slice(0, 800) }, mdna: { ...md, lead: leadSentences(mdna), candor: candorSignals(mdna, md.sents) }, risk: metrics(risk), reportDate: f.reportDate, debtMaturity, reserveRead, uninsuredRead, swRead, ogRead, reitRead };
 }
 
 // ---- executive pay (proxy statement / DEF 14A) ----
@@ -2400,6 +2412,282 @@ function ogCriticalTopics(fullText, { maxChars = 12000 } = {}) {
   return { topics, quote: cleanQuote(found.get(topics[0]) || "").slice(0, 280) || null };
 }
 
+// ---- REIT re-leasing spreads + occupancy (Build 9 of the qualitative survey, 2026-07-31;
+// docs/qualitative-desks-survey.md §REIT P1 + P2 bundled on quoteWeld) ----
+//
+// LANE A — re-leasing economics, the landlord's own pricing line: the MD&A/Business sentence
+// where the filer states the rent achieved on new and renewal leases against the expiring
+// rent. Gates, each measured on the survey's 10-filing FY2025 corpus (PLD BRX REXR O KIM BDN
+// SPG AVB HST + the residential/hotel refusal class):
+//   COMPOUND-TOKEN ANCHORS ONLY, never bare "spread" — a REIT 10-K's bare "spread" is
+//     interest-rate language (all 8 KIM and 5 BDN occurrences are SOFR/credit spreads:
+//     "plus an applicable spread determined by the Company's credit ratings"); the anchors
+//     are the doc's three: rent/leasing/re-leasing/releasing spreads, rent change on leases,
+//     rent recapture rate. SOFR/basis-point/credit-rating sentences are rejected outright.
+//   PERIOD IN THE QUOTE — the record's fiscal year named in the sentence (BRX "During 2025",
+//     O "During the year ended December 31, 2025"); sub-annual periods rejected (O's Q4
+//     recapture sentence dies on "three months ended"). One measured extension: a verb-led
+//     highlights BULLET ("Executed a total 478 new and renewal leases… with leasing spreads
+//     of 23.4%…", Rexford) carries no period of its own — the quote becomes the contiguous
+//     two-sentence span with its immediately preceding, fiscal-year-dated sibling, so the
+//     period is in the rendered quote verbatim (the Build 2 letter-span-glue precedent).
+//   CLAUSE-SCOPED FIGURES — each anchor's figures are the pct tokens between it and the next
+//     anchor/comparator, so BRX's one sentence yields 38.7 / 21.7 / 16.4 in the filer's own
+//     class order and PLD's occupancy figure in the same sentence never chips as a spread. A
+//     pct trailed by a different year's own period phrase ("…16.5% during the year ended
+//     December 31, 2024") is the prior year's figure and never chips.
+//   INTERNAL DOLLAR-PAIR TIE (the Realty Income class) — when the recapture sentence carries
+//     both dollars, the computed ratio must tie the stated rate at the sentence's own
+//     precision ($301.99M / $290.61M = 103.92% against the stated 103.9%); the tie is the
+//     verification, and a same-scope disagreement withholds the row with its reason stated.
+//
+// LANE B — portfolio occupancy, dated, in the filer's words: the percent-leased/occupied
+// sentence from Items 1/2/7 whose IN-SENTENCE as-of date equals the record's fiscal year end
+// (the gate that kills stale mid-year figures, TOC rows and table glue at the root). Figures
+// in a comparison clause ("compared to 91.4% and 95.2%… as of December 31, 2024") never
+// chip; a dual-year "respectively" sentence pairs figures to years positionally (the Build 7
+// parallel-structure law) and chips only the record year's; a multi-scope filer (Rexford's
+// consolidated / stabilized / Same Property scopes) renders each scope as its own row with
+// its own scope words inside the quote — never a blend. Same-scope rows that agree collapse
+// to the prior-year-comparison form (the BDN/KIM doc samples); same-scope rows that DISAGREE
+// withhold both, neither quoted as the fact.
+const REIT_SPREAD_ANCHOR = /\b(?:(?:rent|leasing|re-?leasing|releasing)\s+spreads?|rent\s+change\s+on\s+(?:new\s+and\s+renewal\s+)?leases|rent\s+recapture\s+rate)\b/gi;
+const REIT_CREDIT = /\bSOFR\b|\bbasis\s+points?\b|\bbps\b|\bcredit\s+spread|\bcredit\s+rating|\binterest\s+rate|\bswap\b|\byield\s+spread/i;
+const REIT_SUBANNUAL = /\b(?:three|six|nine)\s+months\b|\bquarter(?:ly|s)?\b|\bQ[1-4][\s-]?(?:19|20)\d\d\b/i;
+const REIT_TABLE_GLUE = /\bfollowing\s+tables?\b|\(dollars?\s+in\b|\(in\s+(?:thousands|millions)\b|\(square\s+(?:feet|footage)\b|\bweighted\s+average\s+lease\s+term\b/i;
+const REIT_HYPO = /\b(?:if\s|may\s|might\s|could\s|would\s|expect|assum|estimate|believe|anticipat|project|forecast|target)/i;
+// Anaphoric scope ("in these markets", "at these properties") points at a paragraph the
+// quote does not carry — scope words must live inside the sentence, so the reference-shaped
+// form is refused (REXR's "…in these markets was 95.3%, 99.2% and 96.4%, respectively" names
+// its markets only in the sentences before it). A same-sentence back-reference ("…exclusive
+// of such space…" after naming the space) is self-contained and stays.
+const REIT_ANAPHORA = /\bthese\s+(?:markets|properties|assets|submarkets|centers)\b/i;
+const REIT_PCT = /(?<!\d)(?:approximately\s+)?\(?\d{1,3}(?:\.\d{1,2})?\)?\s?%/g;
+const REIT_BULLET_VERB = /^(?:Executed|Achieved|Completed|Signed|Leased|Delivered|Stabilized|Commenced|Renewed)\b/;
+const REIT_COMPARATOR = /\bcompared\s+(?:to|with)\b|\bversus\b|\bup\s+from\b|\bdown\s+from\b|\bfrom\s+(?=(?:approximately\s+)?\d{2}(?:\.\d)?\s?%)/i;
+
+// The lane's own splitter (the devSentences/ogSentences precedent — local by design): the
+// occupancy forms run short ("As of December 31, 2025, leased occupancy was 92.2%…"), so the
+// floor sits at 40; prose-shape is a separate test so the spread gates can report honestly.
+// "U.S."/"U.K." join the abbreviation lookbehind: Simon's occupancy sentence ("Ending
+// occupancy for our U.S. Malls and Premium Outlets decreased 0.1% to 96.4%…") split at
+// "U.S." and lost its anchor token to the fragment — measured, the survey pins SPG 96.4.
+function reitSentences(text) {
+  if (!text) return [];
+  return String(text)
+    .replace(/\d+\s+table of contents/gi, " ")
+    // A highlights list ends on a footnote rule ("cash basis. ____ (1) For a
+    // reconciliation…"); the underscore run is never content and, unstripped, it glues the
+    // last bullet to its footnote past the length ceiling (REXR's spread bullet, measured).
+    .replace(/_{3,}/g, " ")
+    .split(/(?<=[.!?]["”’']?)(?<!\b(?:Inc|Ltd|Corp|Co|No|L\.P|U\.S|U\.K)\.["”’']?)\s+(?=[A-Z(“"$0-9])/)
+    .map((s) => s.replace(/\s+/g, " ").trim())
+    .filter((s) => s.length >= 40 && s.length <= 700);
+}
+function reitProse(s) {
+  const digits = (s.match(/\d/g) || []).length;
+  const letters = (s.match(/[a-zA-Z]/g) || []).length;
+  return letters >= 35 && digits / (digits + letters) <= 0.28 && !/table of contents/i.test(s);
+}
+
+const REIT_MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+// The in-sentence as-of date must equal the record's fiscal year end — exact month, day, year.
+function reitFyeInSentence(s, fyeDate) {
+  if (!fyeDate) return false;
+  const [y, m, d] = fyeDate.split("-").map(Number);
+  return new RegExp(`\\b${REIT_MONTHS[m - 1]}\\s+${d},?\\s+${y}\\b`).test(s);
+}
+function reitNamesFyPeriod(s, fy) {
+  return new RegExp(`\\b(?:during|in|for)\\s+(?:fiscal\\s+(?:year\\s+)?)?${fy}\\b|\\byears?\\s+ended\\s+\\w+\\s+\\d{1,2},?\\s+${fy}\\b|\\b(?:at|as\\s+of)\\s+\\w+\\s+\\d{1,2},?\\s+${fy}\\b`, "i").test(s);
+}
+
+function reitSpreadRead(zones, fy, fyeDate) {
+  const rows = [], withheld = [];
+  const seen = new Set();
+  for (const zone of zones) {
+    const sents = reitSentences(zone);
+    for (let i = 0; i < sents.length; i++) {
+      const s = sents[i];
+      REIT_SPREAD_ANCHOR.lastIndex = 0;
+      if (!REIT_SPREAD_ANCHOR.test(s)) continue;
+      REIT_SPREAD_ANCHOR.lastIndex = 0;
+      if (!reitProse(s)) continue;
+      if (REIT_CREDIT.test(s) || REIT_SUBANNUAL.test(s) || REIT_TABLE_GLUE.test(s) || REIT_HYPO.test(s)) continue;
+      // The period gate, with the measured highlights-bullet extension (see the lane header).
+      let quote = s;
+      if (!reitNamesFyPeriod(s, fy) && !reitFyeInSentence(s, fyeDate)) {
+        const prev = sents[i - 1];
+        if (prev && REIT_BULLET_VERB.test(s) && (reitNamesFyPeriod(prev, fy) || reitFyeInSentence(prev, fyeDate)) && zone.includes(prev + " " + s)) {
+          quote = prev + " " + s;
+        } else continue;
+      }
+      // Clause-scoped figures: each anchor's pct tokens, up to the next anchor or comparator.
+      const anchors = [...s.matchAll(REIT_SPREAD_ANCHOR)];
+      const cm = s.match(REIT_COMPARATOR);
+      const cmpAt = cm ? cm.index : s.length;
+      const figures = [];
+      for (let a = 0; a < anchors.length; a++) {
+        const from = anchors[a].index + anchors[a][0].length;
+        let to = a + 1 < anchors.length ? anchors[a + 1].index : s.length;
+        if (cmpAt > from && cmpAt < to) to = cmpAt;
+        for (const pm of s.slice(from, to).matchAll(REIT_PCT)) {
+          const tok = pm[0].trim();
+          const n = parseFloat(tok.replace(/[^\d.]/g, ""));
+          if (!(n >= 0.1 && n <= 400)) continue;
+          // A figure whose own trailing period phrase names a different year is the prior
+          // year's — it never chips (BRX's "…and 16.5% during the year ended December 31, 2024").
+          const tail = s.slice(from + pm.index + pm[0].length, from + pm.index + pm[0].length + 55);
+          const ym = tail.match(/\b(?:19|20)\d\d\b/);
+          if (ym && Number(ym[0]) !== fy) continue;
+          if (!figures.includes(tok)) figures.push(tok);
+        }
+      }
+      if (!figures.length) continue;
+      const cleaned = cleanQuote(quote);
+      if (seen.has(cleaned)) continue;
+      seen.add(cleaned);
+      // The internal dollar-pair tie (Realty Income): stated rate vs the sentence's own pair.
+      let tie = null;
+      if (/recapture/i.test(s)) {
+        const dm = [...s.matchAll(/\$\s?(\d[\d,]*(?:\.\d+)?)\s*(?:million|billion|thousand)?/gi)];
+        if (dm.length === 2) {
+          const a = parseFloat(dm[0][1].replace(/,/g, "")), b = parseFloat(dm[1][1].replace(/,/g, ""));
+          const statedTok = figures[0];
+          const stated = parseFloat(statedTok.replace(/[^\d.]/g, ""));
+          const dp = (statedTok.match(/\.(\d+)/) || [, ""])[1].length;
+          if (b > 0 && Number.isFinite(stated)) {
+            const computed = (a / b) * 100;
+            if (Math.abs(computed - stated) <= Math.pow(10, -dp)) {
+              tie = { computed: computed.toFixed(Math.max(dp + 1, 2)) + "%", a: dm[0][0].trim(), b: dm[1][0].trim() };
+            } else {
+              withheld.push({ reason: "the stated recapture rate disagrees with the sentence's own dollar pair", stated: statedTok, computed: computed.toFixed(2) + "%", sentence: cleaned });
+              continue;
+            }
+          }
+        }
+      }
+      // The weld law at write time: every figure — and both halves of any tie — is the
+      // filer's own characters; the tie value itself is the desk's computed chip, sourced.
+      weld(cleaned, [
+        ...figures.map((f) => ({ text: f, kind: "verbatim" })),
+        ...(tie ? [{ text: tie.a, kind: "verbatim" }, { text: tie.b, kind: "verbatim" }, { text: tie.computed, kind: "computed", source: `${tie.a} ÷ ${tie.b}, the sentence's own dollar pair` }] : []),
+      ]);
+      rows.push({ sentence: cleaned, figures, ...(tie ? { tie } : {}) });
+    }
+  }
+  // A row whose figure set is contained in an earlier row's is the same disclosure restated
+  // in part (BRX's base-rent decomposition repeats the 16.4% headline) — the fuller row stands.
+  const kept = [];
+  for (const r of rows) {
+    if (kept.some((k) => r.figures.every((f) => k.figures.includes(f)))) continue;
+    kept.push(r);
+  }
+  return { rows: kept.slice(0, 2), withheld };
+}
+
+const REIT_OCC_A1 = /(?<!\d)\d{2}(?:\.\d)?\s?%\s?(?:leased|occupied)\b/g;
+// The doc's second anchor, sentence-scoped. The gap class is [\s\S] rather than the survey
+// note's [^.] because the lane is already sentence-scoped and the real SPG sentence crosses
+// dots the note's shorthand could not ("…occupancy for our U.S. Malls and Premium Outlets
+// decreased 0.1% to 96.4%…" — measured, the survey pins SPG 96.4 as covered).
+const REIT_OCC_A2 = /\b(?:occupancy|percent(?:age)?\s+leased)\b[\s\S]{0,60}?(?<!\d)\d{2}(?:\.\d)?\s?%/gi;
+const REIT_SCOPE_STOP = new Set(["occupancy", "occupied", "leased", "percent", "respectively", "approximately", "compared", "versus", "was", "were", "and", "the", "our", "its", "for", "with", "while", "from", "that", "this", "year", "years", "ended", "end", "december", "january", "february", "march", "april", "june", "july", "august", "september", "october", "november"]);
+const reitScopeTokens = (s) => new Set(String(s).toLowerCase().replace(/[^a-z\s-]/g, " ").split(/\s+/).filter((w) => w.length >= 3 && !REIT_SCOPE_STOP.has(w)));
+
+function reitOccupancyRead(zones, fy, fyeDate) {
+  const rows = [], withheldRows = [];
+  const seen = new Set();
+  for (const zone of zones) {
+    for (const s of reitSentences(zone)) {
+      if (!reitProse(s)) continue;
+      if (REIT_TABLE_GLUE.test(s) || REIT_HYPO.test(s) || REIT_ANAPHORA.test(s)) continue;
+      if (!reitFyeInSentence(s, fyeDate)) continue;
+      const cm = s.match(REIT_COMPARATOR);
+      const cmpAt = cm ? cm.index : s.length;
+      const figures = [];
+      const take = (tok, at) => {
+        const t = tok.trim();
+        if (at >= cmpAt) return; // a comparison-clause figure is the prior period's — never chips
+        const n = parseFloat(t.replace(/[^\d.]/g, ""));
+        if (n >= 10 && n <= 100 && !figures.some((f) => f.at === at)) figures.push({ text: t, at });
+      };
+      for (const m of s.matchAll(REIT_OCC_A1)) take(m[0].match(/\d{2}(?:\.\d)?\s?%/)[0], m.index);
+      for (const m of s.matchAll(REIT_OCC_A2)) {
+        const pm = m[0].match(/\d{2}(?:\.\d)?\s?%$/);
+        if (!pm) continue;
+        take(pm[0], m.index + m[0].length - pm[0].length);
+        // Run-extension: "billed and leased occupancy were 91.6% and 95.1%, respectively" —
+        // the contiguous and/or-run belongs to the same anchored statement.
+        const after = s.slice(m.index + m[0].length);
+        const run = after.match(/^(?:\s?,?\s?(?:and|or)\s+(?:approximately\s+)?\d{2}(?:\.\d)?\s?%)+/);
+        if (run) for (const rm of run[0].matchAll(/\d{2}(?:\.\d)?\s?%/g)) take(rm[0], m.index + m[0].length + rm.index);
+      }
+      if (!figures.length) continue;
+      figures.sort((a, b) => a.at - b.at);
+      let figs = figures.map((f) => f.text);
+      // Dual-year positional pairing (the Build 7 parallel-structure law): "As of December 31,
+      // 2025 and 2024, … 96.5% and 96.4%, respectively" chips only the record year's figure;
+      // a count mismatch means the pairing is unreadable and the sentence ships nothing.
+      const head = s.slice(0, figures[0].at);
+      const dual = head.match(/\b((?:19|20)\d\d)\s+and\s+((?:19|20)\d\d)\b/);
+      if (dual && cmpAt === s.length) {
+        const yrs = [Number(dual[1]), Number(dual[2])];
+        if (!yrs.includes(fy)) continue;
+        if (figs.length !== yrs.length) continue;
+        figs = [figs[yrs.indexOf(fy)]];
+      }
+      const cleaned = cleanQuote(s);
+      if (seen.has(cleaned)) continue;
+      seen.add(cleaned);
+      weld(cleaned, figs.map((f) => ({ text: f, kind: "verbatim" })));
+      rows.push({ sentence: cleaned, figures: figs, scope: reitScopeTokens(s), compared: cmpAt < s.length || !!dual });
+    }
+  }
+  // Scope-collapse: rows about the SAME scope (token containment — the appositive-heavy KIM
+  // form holds the shorter row's every word) either agree, in which case the prior-year-
+  // comparison form with the most figures stands (the doc's BDN/KIM samples are both the
+  // "compared to" form), or they disagree, in which case BOTH withhold, neither as the fact.
+  const kept = [];
+  for (const r of rows) {
+    const match = kept.find((k) => {
+      const [small, big] = r.scope.size <= k.scope.size ? [r.scope, k.scope] : [k.scope, r.scope];
+      if (!small.size) return false;
+      let inter = 0;
+      for (const w of small) if (big.has(w)) inter++;
+      return inter / small.size >= 0.75;
+    });
+    if (!match) { kept.push(r); continue; }
+    const sameFigs = match.figures.length === r.figures.length && match.figures.every((f, i) => parseFloat(f) === parseFloat(r.figures[i]));
+    const overlap = match.figures.some((f) => r.figures.some((g) => parseFloat(f) === parseFloat(g)));
+    if (sameFigs || overlap) {
+      // Agreement: prefer more figures, then the comparison-bearing form.
+      if (r.figures.length > match.figures.length || (r.figures.length === match.figures.length && r.compared && !match.compared)) {
+        kept[kept.indexOf(match)] = r;
+      }
+    } else {
+      withheldRows.push({ reason: "two same-scope occupancy sentences disagree", a: match.sentence, b: r.sentence });
+      kept.splice(kept.indexOf(match), 1);
+    }
+  }
+  return { rows: kept.slice(0, 4).map(({ sentence, figures }) => ({ sentence, figures })), withheld: withheldRows };
+}
+
+function reitLeasingRead({ businessText = "", item2Text = "", mdnaText = "", fy, fyeDate }) {
+  if (!fy || !fyeDate) return null;
+  const zones = [businessText, item2Text, mdnaText].filter(Boolean);
+  const sp = reitSpreadRead(zones, fy, fyeDate);
+  const occ = reitOccupancyRead(zones, fy, fyeDate);
+  if (!sp.rows.length && !sp.withheld.length && !occ.rows.length && !occ.withheld.length) return null;
+  return {
+    fy,
+    asOf: fyeDate,
+    ...(sp.rows.length ? { spreads: sp.rows } : {}),
+    ...(sp.withheld.length ? { spreadsWithheld: sp.withheld.slice(0, 2) } : {}),
+    ...(occ.rows.length ? { occupancy: occ.rows } : {}),
+    ...(occ.withheld.length ? { occupancyWithheld: occ.withheld.slice(0, 2) } : {}),
+  };
+}
+
 async function main() {
   // Carry-over: start from the existing file, so a partial run (a ticker limit, or a pool that comes
   // up empty) never wipes good entries — fresh results overlay, and names no longer in either
@@ -2475,10 +2763,13 @@ async function main() {
     // refiner inside 2911 carries no reserves disclosure and the dictionary-miss rule keeps
     // it silent.
     const ogTarget = !isAdr && (sicSw === 1311 || sicSw === 2911 || sicSw === 6792);
+    // The REIT desk's scope (Build 9): the ARCHETYPE gate, never SIC alone (the Build 4
+    // precedent) — equity REITs as the pipeline classifies them, US 10-K filers only.
+    const reitTarget = !isAdr && devKind === "reit";
     let cur, prior;
     try {
       await sleep(THROTTLE);
-      cur = await getFiling(c.cik, filings[0], totalDebtMillions, devTarget, depTarget, swTarget, ogTarget);
+      cur = await getFiling(c.cik, filings[0], totalDebtMillions, devTarget, depTarget, swTarget, ogTarget, reitTarget);
       if (filings[1]) { await sleep(THROTTLE); prior = await getFiling(c.cik, filings[1], null, null, null, swTarget); }
     } catch (e) { console.warn(`  ! ${tk}: filing ${e.message}`); continue; }
 
@@ -2597,6 +2888,12 @@ async function main() {
         // sentence; or the filer's own internal-process sentence. Absent means the firm
         // dictionary missed and no qualifications sentence exists — silence over filler.
         ...(cur.ogRead?.attribution ? { reserveAttribution: cur.ogRead.attribution } : {}),
+        // The REIT re-leasing spreads + occupancy read (Build 9): the landlord's own pricing
+        // sentence and the dated occupancy sentence(s), every rendered figure a verbatim
+        // substring of its quote (the only computed value — the recapture tie — is sourced to
+        // the sentence's own dollar pair). Absent means the gates passed nothing — silence
+        // over filler; a stated withhold carries its reason.
+        ...(cur.reitRead ? { reitLeasing: cur.reitRead } : {}),
       };
       ok++;
       console.log(`  ✓ ${tk}: ${flags.length} owner-flags, MD&A ${cur.mdna.words}w` + (comp ? `, payRatio ${comp.payRatio}:1` : "") + (debtMaturity ? `, debt-wall $${(debtMaturity.total / 1e9).toFixed(1)}B` : ""));
@@ -2619,7 +2916,7 @@ async function main() {
 }
 
 // Exported for the offline logic test; only hit EDGAR when run directly.
-export { ownerFlags, FLAG_THEMES, sentences, isProse, diff, extractPayRatio, extractInsiderOwnership, extractInsiderGroup, htmlToText, section, fetchText, businessDescription, candorSignals, businessBrief, buffettRead, BIZ_HUMANCAP, BIZ_LINEAGE, BIZ_ASPIRATIONAL, BRIEF_ORPHAN, PROMO, smellsLikeRisk, fortyFSections, folderDocs, extractSections, MW_DECLARED, MW_ABSENT, MW_OTHER_ENTITY, RESTATED, RESTATED_CONTRACT, INTEGRITY_FUTURE, ADMIT, NOT_ADMIT, BLAME_OTHERS, reserveDevelopmentRead, devSentences, uninsuredDepositsRead, uninsSentences, softwareRetentionRead, customerLadderRead, softwareKpiRead, softwareKpiAssemble, swSentences, swCounts, reserveEngineerRead, ogCriticalTopics, ogSentences };
+export { ownerFlags, FLAG_THEMES, sentences, isProse, diff, extractPayRatio, extractInsiderOwnership, extractInsiderGroup, htmlToText, section, fetchText, businessDescription, candorSignals, businessBrief, buffettRead, BIZ_HUMANCAP, BIZ_LINEAGE, BIZ_ASPIRATIONAL, BRIEF_ORPHAN, PROMO, smellsLikeRisk, fortyFSections, folderDocs, extractSections, MW_DECLARED, MW_ABSENT, MW_OTHER_ENTITY, RESTATED, RESTATED_CONTRACT, INTEGRITY_FUTURE, ADMIT, NOT_ADMIT, BLAME_OTHERS, reserveDevelopmentRead, devSentences, uninsuredDepositsRead, uninsSentences, softwareRetentionRead, customerLadderRead, softwareKpiRead, softwareKpiAssemble, swSentences, swCounts, reserveEngineerRead, ogCriticalTopics, ogSentences, reitLeasingRead, reitSpreadRead, reitOccupancyRead, reitSentences };
 
 if (import.meta.url === pathToFileURL(process.argv[1] || "").href) {
   main().catch((e) => { console.error(`\n❌ ${e.message}\n`); process.exit(1); });

@@ -101,6 +101,26 @@ const ogProv = (() => {
     (!f.coverage || f.sentence.includes(`${f.coverage.pct} ${f.coverage.object}`)));
   return firms.length ? { firms } : null;
 })();
+// The REIT re-leasing spreads + occupancy read (qualitative survey Build 9): the landlord's
+// own pricing sentence — rent spreads, rent change, rent recapture — and the dated occupancy
+// sentence(s), every rendered figure a verbatim substring of its quoted sentence, asserted at
+// extraction time and RE-CHECKED here so a record that drifts from its quote retires rather
+// than render. The one computed value, the recapture tie, re-checks both of its dollar
+// halves as the sentence's own characters. fy-gated like every weld: a stale read never sits
+// beside a newer scorecard year. The spread block is the sector's pricing surface (the
+// generic pricing facet is withheld for SIC 6798 by the financials gate), rendered on the
+// yield-on-cost check; occupancy renders beside the cash-payout check it physically drives.
+const reitReadRaw = fk === "reit" ? (language?.companies?.[company.ticker]?.reitLeasing || null) : null;
+const reitRead = (() => {
+  if (!reitReadRaw || String(reitReadRaw.fy) !== String(company.fy)) return null;
+  const sub = (r) => r.sentence && (r.figures || []).every((f) => r.sentence.includes(f));
+  const spreads = (reitReadRaw.spreads || []).filter((r) => sub(r) && (!r.tie || (r.sentence.includes(r.tie.a) && r.sentence.includes(r.tie.b))));
+  const occupancy = (reitReadRaw.occupancy || []).filter(sub);
+  const spreadsWithheld = reitReadRaw.spreadsWithheld || [];
+  const occupancyWithheld = reitReadRaw.occupancyWithheld || [];
+  if (!spreads.length && !occupancy.length && !spreadsWithheld.length && !occupancyWithheld.length) return null;
+  return { spreads, occupancy, spreadsWithheld, occupancyWithheld, asOf: reitReadRaw.asOf || null };
+})();
 const toneWord = (t) => (t === "favorable" ? "favorable" : "unfavorable");
 const ckTrim = (s) => { s = String(s || "").replace(/\s+/g, " ").trim(); return s.length > 260 ? s.slice(0, 260).replace(/\s+\S*$/, "") + "…" : s; };
 const graham = company.market !== "JP" && !isFin ? grahamTests(company) : null;
@@ -203,6 +223,11 @@ const enrich = (sec) => ({
     if (eqTie && c === eqAnchor) cc = { ...cc, lang: eqTie.text, langTone: eqTie.tone };
     if (devTie && c.title === "Reserve development" && c.value !== "—") cc = { ...cc, dev: devTie };
     if (swRead && c === swAnchor) cc = { ...cc, sw: swRead };
+    // The REIT read's two slots, matched by concept (titles vary with the data-missing
+    // fallbacks): spreads on the yield-on-cost check — the pricing stand-in — and
+    // occupancy beside the cash-payout check.
+    if (reitRead && (reitRead.spreads.length || reitRead.spreadsWithheld.length) && c.concept === "roic") cc = { ...cc, reitSp: reitRead };
+    if (reitRead && (reitRead.occupancy.length || reitRead.occupancyWithheld.length) && c.concept === "free-cash-flow") cc = { ...cc, reitOcc: reitRead };
     return cc;
   }),
 });
@@ -274,6 +299,36 @@ const enrich = (sec) => ({
                     <blockquote class="devQ swPriorQ">Last year’s filing: “{t.prior}”</blockquote>
                   </div>
                 ))}
+              </div>
+            ) : null}
+            {c.reitSp ? (
+              <div class="devTie swTie">
+                <span class="devMark">Re-leasing economics, in the filing’s words</span>
+                {c.reitSp.spreads.map((r) => (
+                  <div class="swRow">
+                    <div class="swHead"><span class="swLabel">The landlord’s own pricing line</span><span class="swFig">{r.figures.join(" · ")}</span></div>
+                    <blockquote class="devQ">“{r.sentence}”</blockquote>
+                    <span class="devCheck">✓ every figure is the sentence’s own characters{r.tie ? ` · the sentence’s dollar pair ${r.tie.a} ÷ ${r.tie.b} computes to ${r.tie.computed}, tying the stated rate` : ""}</span>
+                  </div>
+                ))}
+                {c.reitSp.spreadsWithheld.map((w) => (
+                  <p class="swWithheld">A re-leasing sentence was withheld: {w.reason} (stated {w.stated}, computed {w.computed}). Neither figure is quoted as the fact — read the filing linked above.</p>
+                ))}
+              </div>
+            ) : null}
+            {c.reitOcc ? (
+              <div class="devTie swTie">
+                <span class="devMark">Occupancy at fiscal year end, in the filing’s words</span>
+                {c.reitOcc.occupancy.map((r) => (
+                  <div class="swRow">
+                    <div class="swHead"><span class="swLabel">Occupancy, as filed — the scope is the sentence’s own words</span><span class="swFig">{r.figures.join(" · ")}</span></div>
+                    <blockquote class="devQ">“{r.sentence}”</blockquote>
+                  </div>
+                ))}
+                {c.reitOcc.occupancyWithheld.map((w) => (
+                  <p class="swWithheld">Two same-scope occupancy sentences in this filing disagree, so neither is quoted as the fact here. Read the filing linked above.</p>
+                ))}
+                <span class="devCheck">✓ each figure is its sentence’s own characters, dated to the fiscal year end inside the sentence</span>
               </div>
             ) : null}
             {c.dev ? (c.dev.conflict ? (
