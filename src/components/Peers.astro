@@ -9,7 +9,7 @@ import { financialKind } from "../lib/archetype.mjs";
 import { selectPeers, peerStat, REIT_SUBSECTOR_LABELS } from "../lib/peers.mjs";
 import { peerColumnsFor, lensKeyFor } from "../lib/peerLenses.mjs";
 import { shortRecord } from "../lib/fundamentals.mjs";
-import { secondaryListingsCached, primaryTickerFor } from "../lib/listings.mjs";
+import { secondaryListingsCached, primaryTickerFor, consolidatedParentOf } from "../lib/listings.mjs";
 
 // One array, built once per module load rather than once per page, so the memoized listing set in
 // listings.mjs has a stable identity to key its WeakMap on across all 3,623 company pages.
@@ -58,6 +58,9 @@ const cls = classify(company);
 const secondary = secondaryListingsCached(listingPool).has(String(company?.ticker || "").toUpperCase());
 const parentTicker = secondary ? primaryTickerFor(listingPool, company.ticker) : null;
 const parent = parentTicker ? listingPool.find((c) => String(c.ticker).toUpperCase() === parentTicker) : null;
+// A consolidated vehicle (BEPC/BIPC/XIFR) is a different fact from a preferred series, and the
+// pointer must say the true thing about each.
+const consolidatedIn = secondary && !!consolidatedParentOf(company?.ticker);
 
 // ONE COLUMN, ONE CURRENCY. Until 2026-07-27 the Revenue cell printed each row in the row's own
 // currency — fmtMoney(revenue, c.currency) — under a bare "Revenue" header, so a foreign filer's
@@ -196,9 +199,16 @@ const intro =
   <section class="peers">
     <h3 class="secTitle pHead">Peers</h3>
     <p class="pNote">
-      {company.name} is listed here as a claim on a business rather than as the business itself &mdash;
-      a preferred series, a bond or a warrant, filed under the same registrant as the common stock.
-      A comparative table lines businesses up against one another, so there is none here.
+      {consolidatedIn ? (
+        <>{company.name} is a separately listed vehicle whose results are consolidated inside
+        another filer's own accounts &mdash; the assets and earnings behind this ticker are already
+        counted, whole, in that company's figures. A comparative table lines whole businesses up
+        against one another, so seating both rows would count the same dollars twice.</>
+      ) : (
+        <>{company.name} is listed here as a claim on a business rather than as the business itself &mdash;
+        a preferred series, a bond or a warrant, filed under the same registrant as the common stock.
+        A comparative table lines businesses up against one another, so there is none here.</>
+      )}
       {parent ? (
         <> The business behind it is <a href={`/c/${parentTicker}`}>{parent.name} ({parentTicker})</a>,
         where the record, the scorecard and the peer bench are.</>

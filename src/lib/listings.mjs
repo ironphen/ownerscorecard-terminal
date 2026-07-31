@@ -20,6 +20,25 @@
 // yet re-extracted, and it is what once made DTE's shelf row its 2080 baby bond DTB (equal length,
 // B before E).
 
+// CONSOLIDATED ELSEWHERE (named targets, 2026-07-30): registrants whose entire results are
+// consolidated inside ANOTHER row's filings, under a different CIK — so the CIK test cannot see
+// them, and a comparative surface seating both counts the same assets twice. The linkage is
+// stated only in filing text, so the instrument is a verified list, never an inference:
+//   BEPC — Brookfield Renewable Corporation, a share-class vehicle whose class-A shares are
+//     exchangeable one-for-one into BEP units; its carve-out results sit inside Brookfield
+//     Renewable Partners' consolidated figures (both 20-F filers say so).
+//   BIPC — the same structure over Brookfield Infrastructure Partners (BIP).
+//   XIFR — XPLR Infrastructure LP (formerly NextEra Energy Partners): NextEra consolidates it,
+//     so its $1.2B of revenue and its plant are already inside NEE's $27.4B.
+// Each keeps its page; what it stops doing is COUNTING — the same treatment as a preferred
+// series, gated on the consolidating parent actually being in the pool at hand (a pool without
+// the parent must keep the row, or the business vanishes from that surface entirely).
+export const CONSOLIDATED_ELSEWHERE = { BEPC: "BEP", BIPC: "BIP", XIFR: "NEE" };
+
+export function consolidatedParentOf(ticker) {
+  return CONSOLIDATED_ELSEWHERE[String(ticker || "").toUpperCase()] || null;
+}
+
 // The primary among one CIK's sibling rows: the filed fact when any sibling carries it and it names
 // a ticker actually in the group; the shape heuristic otherwise.
 function primaryOf(rows) {
@@ -45,6 +64,11 @@ export function secondaryListings(companies) {
     const primary = primaryOf(rows);
     for (const r of rows) if (r.ticker !== primary) secondary.add(r.ticker);
   }
+  // The cross-CIK consolidated vehicles, gated on their parent being in this pool.
+  const present = new Set((companies || []).map((c) => String(c?.ticker || "").toUpperCase()));
+  for (const [child, parent] of Object.entries(CONSOLIDATED_ELSEWHERE)) {
+    if (present.has(child) && present.has(parent)) secondary.add(child);
+  }
   return secondary;
 }
 
@@ -69,6 +93,8 @@ export function secondaryListingsCached(companies) {
 // claim on it.
 export function primaryTickerFor(companies, ticker) {
   const t = String(ticker || "").toUpperCase();
+  const cons = CONSOLIDATED_ELSEWHERE[t];
+  if (cons && (companies || []).some((c) => String(c?.ticker || "").toUpperCase() === cons)) return cons;
   const me = (companies || []).find((c) => String(c?.ticker || "").toUpperCase() === t);
   if (!me?.cik) return t;
   const siblings = (companies || [])
