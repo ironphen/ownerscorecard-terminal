@@ -245,7 +245,11 @@ const ADJUSTED = /\b(non[\s-]?GAAP|adjusted (EBITDA|earnings|net income|operatin
 // The conditional/hypothetical guard keeps a forward-looking risk factor ("our results could fall
 // short if…") out; genuine candor is declarative about what already happened. "should have" must be
 // the regretful kind ("we should have acted sooner"), not "investors should have access."
-const ADMIT = /\b(were wrong|made (a |several |some )?mistakes?|misjudged|overpaid|over[\s-]?estimated|too optimistic|fell short of|did not meet (our|the)|failed to (meet|deliver|achieve|execute)|were disappointed|disappointing (results|performance|year|quarter)|underperformed|below (our )?expectations|in hindsight|should have (done|known|anticipated|recognized|acted|been|moved|invested|exited|sold|reduced|avoided|foreseen|started|focused))\b/i;
+// Narrowed 2026-07-30 (hygiene pass): "did not meet our underwriting standards" is a VIRTUE
+// sentence (RLI describing business it declined) and "depreciated over estimated useful lives"
+// is accounting boilerplate — both were shipping as confessed misses. "Well short of" added as a
+// genuine admission form (UnitedHealth's own wording).
+const ADMIT = /\b(were wrong|made (a |several |some )?mistakes?|misjudged|overpaid|over[\s-]?estimated\b(?![\s\S]{0,25}useful li(fe|ves))|too optimistic|(fell|were|was) (well )?short of|failed to (meet|deliver|achieve|execute)|were disappointed|disappointing (results|performance|year|quarter)|underperformed|below (our )?expectations|in hindsight|should have (done|known|anticipated|recognized|acted|been|moved|invested|exited|sold|reduced|avoided|foreseen|started|focused))\b/i;
 const NOT_ADMIT = /\b(may|might|could|would|if\s|risk that|in the event|to the extent|no assurance|cannot assure|future)\b/i;
 // Owning a miss means OWNING it. When the failure is pinned on someone else — a supplier, a partner,
 // a customer who "failed to meet its obligations" — it is the opposite of candor, so it is excluded.
@@ -1037,8 +1041,8 @@ function aiSignal(cur, prior) {
 // than 10% of revenue", Coca-Cola; "we are not dependent on any single supplier".) The customer,
 // supplier and dependence themes share this guard so a company that discloses it has no
 // concentration isn't shown a concentration risk.
-const DENIES_CONC = /\bno\s+(single|individual|one|other|material)?\s*(customer|client|bottler|distributor|reseller|supplier|vendor|product|end customer)s?\b[^.]{0,80}\b(account|represent|generat|exceed|made?\s+up|compris|more than|greater than|equal to|\d{1,2}\s?%)/i;
-const NOT_DEP = /\bnot\s+(currently |materially |significantly |overly |heavily )?(dependent|reliant)\s+(up)?on\s+(a |any |the )?(single|one|individual|small (number|group)|limited number|group of)\b/i;
+const DENIES_CONC = /\bno\s+(single|individual|one|other|material)?\s*(customer|client|tenant|bottler|distributor|reseller|supplier|vendor|product|end customer)s?\b[^.]{0,80}\b(account|represent|generat|exceed|made?\s+up|compris|more than|greater than|equal to|\d{1,2}\s?%)|\bdid not have any (customer|client|tenant)s?\b/i;
+const NOT_DEP = /\bnot\s+(currently |materially |significantly |substantially |overly |heavily )?(dependent|reliant)\s+(up)?on\s+(a |any |the )?(single|one|individual|small (number|group)|limited number|group of)\b|\bdo not believe (that )?(we|it) (are|is)[\s\S]{0,40}\b(dependent|reliant)\b/i;
 const deniesConc = (s) => DENIES_CONC.test(s) || NOT_DEP.test(s);
 
 const FLAG_THEMES = [
@@ -1089,7 +1093,11 @@ const FLAG_THEMES = [
   {
     lens: "Debt terms & refinancing",
     why: "The fine print behind the debt. Covenants and near-term maturities decide who is really in control when a year goes badly.",
-    test: (s) => /(financial covenant|covenants (under|contained|require)|indenture|refinanc|debt maturit|maturities of|revolving credit facility|default under)/i.test(s),
+    // A lender's sentence about its BORROWERS' debt or the mortgages it holds is credit-book
+    // disclosure, not the company's own debt terms — 40 of 236 bank debt flags fired on it, and
+    // RLI's MBS portfolio wore the flag (2026-07-30 pass).
+    test: (s) => !/\bborrowers?\b|mortgage-?backed/i.test(s) &&
+      /(financial covenant|covenants (under|contained|require)|indenture|refinanc|debt maturit|maturities of|revolving credit facility|default under)/i.test(s),
     bonus: (s) => (/(covenant|default)/i.test(s) ? 2 : 0),
   },
   {
@@ -1099,7 +1107,7 @@ const FLAG_THEMES = [
     // a lawsuit, a fine, a court ruling, a defendant, a specific allegation), never
     // an operational $-line with an incidental "settle"/"penalty"/"contingency".
     test: (s) =>
-      /(class action|securities (class action|fraud)|antitrust (suit|claim|lawsuit|investigation|matter|case|action|complaint|litigation|fine|probe)|monopoliz|anticompetitive|patent (infringement|dispute|suit|litigation)|product liability|qui tam|whistleblower|consent decree|(named (as )?a defendant|is a defendant|are defendants|sued (us|the company|the))|(lawsuit|complaint|class action|legal proceeding)s? (filed|brought|pending|alleging|seeking|that allege)|settle\w+ (of |a |an |the |this |that |certain |previously )*(lawsuit|litigation|class action|legal (matter|proceeding|claim|action)|patent|antitrust|opioid)|jury (verdict|award\w*|found)|(court|circuit|appeals?|tribunal|judge)[\sa-zA-Z']{0,30}(ruled|awarded|affirmed|reversed|judgment|denial|dismiss|enjoin)|investigation by (the )?(SEC|DOJ|FTC|EU|European Commission|attorney general|Department of Justice|state)|(fine|penalty)[\s\S]{0,25}(EC|European Commission|antitrust|competition authorit)|appeal\w+ the (EC|EU|European|decision)|infring\w+ (our|its|the|on|upon)|alleg\w+ (that|monopoli|fraud|infring|breach|violations? of|discriminat)|(IRS|tax authorit\w+)[\s\S]{0,55}(propos\w+|seeking|asserted|deficiency|adjustment|disput|notice)|(charge|liability|accru\w+|reserve|provision|net gains?)[\s\S]{0,50}(litigation|legal (matter|proceeding|settlement|claim)|class action|antitrust|opioid|interchange))/i.test(s),
+      /(class action|securities (class action|fraud)|antitrust (suit|claim|lawsuit|investigation|matter|case|action|complaint|litigation|fine|probe)|monopoliz|anticompetitive|patent (infringement|dispute|suit|litigation)|product liability|qui tam|whistleblower|consent decree|(named (as )?a defendant|is a defendant|are defendants|sued (us|the company|the))|(lawsuit|complaint|class action|legal proceeding)s? (filed|brought|pending|alleging|seeking|that allege)|settle\w+ (of |a |an |the |this |that |certain |previously )*(lawsuit|litigation|class action|legal (matter|proceeding|claim|action)|patent|antitrust|opioid)|jury (verdict|award\w*|found)|(court|circuit|appeals?|tribunal|judge)[\sa-zA-Z']{0,30}(ruled|awarded|affirmed|reversed|judgment|denial|dismiss|enjoin)|investigation by (the )?(SEC|DOJ|FTC|EU|European Commission|attorney general|Department of Justice|state)|\b(fines?|penalt\w+)\b[\s\S]{0,25}\b(EC\b|European Commission|antitrust|competition authorit)|\b(European Commission|competition authorit\w*)\b[\s\S]{0,30}\b(imposed|fines?|penalt\w+)\b|appeal\w+ the (EC\b|EU\b|European|decision)|infring\w+ (our|its|the|on|upon)|alleg\w+ (that|monopoli|fraud|infring|breach|violations? of|discriminat)|(IRS|tax authorit\w+)[\s\S]{0,55}(propos\w+|seeking|asserted|deficiency|adjustment|disput|notice)|(charge|liability|accru\w+|reserve|provision|net gains?)[\s\S]{0,50}(litigation|legal (matter|proceeding|settlement|claim)|class action|antitrust|opioid|interchange))/i.test(s),
     bonus: (s) => (/(class action|antitrust|securities fraud|patent|consent decree|qui tam|monopoli|\$\s?[\d,.]+\s?(million|billion))/i.test(s) ? 2 : 0),
   },
   {
@@ -1113,16 +1121,22 @@ const FLAG_THEMES = [
     why: "How the business behaves when the economy turns. A cyclical earns its keep across the whole cycle, not at the peak.",
     // Require named cyclicality/seasonality or an industry downturn, not a generic
     // "a recession could hurt demand" that is true of every business.
-    test: (s) => /(cyclical|highly seasonal|(industry|severe|sharp|prolonged|economic) downturn|downturn in (the|our|demand)|recession\w*[\s\S]{0,30}(reduce|decreas|lower|impact|demand|weaken|soften))/i.test(s),
+    // "Countercyclical" is a bank REGULATOR'S capital-buffer term, not a statement that the
+    // business is cyclical — 25 of 204 bank cyclicality flags fired on it (2026-07-30 pass).
+    test: (s) => !/countercyclical|capital buffer/i.test(s) &&
+      /(cyclical|highly seasonal|(industry|severe|sharp|prolonged|economic) downturn|downturn in (the|our|demand)|recession\w*[\s\S]{0,30}(reduce|decreas|lower|impact|demand|weaken|soften))/i.test(s),
     bonus: (s) => (/(cyclical|industry downturn|severe downturn)/i.test(s) ? 1 : 0),
   },
   {
     lens: "Regulation & policy",
     why: "Rules that can rewrite the economics, tariffs, antitrust, data, export controls.",
     // Require a specific named regime, not generic "we comply with regulations".
+    // The agency acronyms are word-bounded: case-insensitive bare "EPA" matched inside "preparation"
+    // and "repair" (75 of 150 software Regulation flags measured false on it), "FDA" inside nothing
+    // yet but the same class. Suppress-only narrowing, 2026-07-30 hygiene pass.
     test: (s) =>
-      /(tariff|export control|economic sanction|antitrust|data privacy|GDPR|CHIPS Act|Inflation Reduction Act|Dodd-Frank|emissions?|FDA|EPA|FTC|DOJ|European Commission|net neutrality|price (control|cap)|excise tax|sugar tax|container deposit|extended producer responsibility)/i.test(s) &&
-      /(could|may|would|adversely|materially|restrict|increase|impose|prohibit|penalt|fine|subject to|harm|impact|require|cost|ban|limit|tax)/i.test(s),
+      /(tariff|export control|economic sanction|antitrust|data privacy|\bGDPR\b|CHIPS Act|Inflation Reduction Act|Dodd-Frank|emissions?|\bFDA\b|\bEPA\b|\bFTC\b|\bDOJ\b|European Commission|net neutrality|price (control|cap)|excise tax|sugar tax|container deposit|extended producer responsibility)/i.test(s) &&
+      /(could|may|would|adversely|materially|restrict|increase|impose|prohibit|penalt|\bfines?\b|subject to|harm|impact|require|cost|ban|limit|tax)/i.test(s),
     bonus: () => 0,
   },
 ];
@@ -1223,8 +1237,18 @@ const PRICE_NONPRODUCT = /\b(initial purchasers?|notes?|bonds?|debentures?|senio
 const INTEGRITY_FUTURE = /\b(may|might|could|would|should|if|whether|future|risk that|fail(ure)? to|in the event|to the extent|potential|possible|were we|able to|designed to|intended to|in order to|required to|expose us|subject us|result in|lead to|cause us)\b/i;
 // A material weakness actually declared as existing/identified, in a factual frame.
 const MW_DECLARED = /\b(identified|concluded|determined|disclosed|existed|exists|reported)\b[\s\S]{0,40}\bmaterial weakness/i;
-const MW_ABSENT = /\b(no|not|without|did not (identify|have|note|find)|none|free (of|from)|absence of|reasonable assurance|were not|was not|have not|is not|are not|remediated|been remediated)\b[\s\S]{0,40}material weakness|material weakness(es)?[\s\S]{0,40}\b(did not|were not|was not|have not|not (identif|exist|present)|been remediated|was remediated)/i;
+// The absence/cured side widened 2026-07-30 (hygiene pass): "in the past"/"in prior periods"
+// framings and "fully remediated" were slipping through, and the cured verb could sit further
+// than 40 characters from the noun (Molina's and Trupanion's cured weaknesses shipped as live
+// cockroach banners) — the window is now 90.
+const MW_ABSENT = /\b(no|not|without|did not (identify|have|note|find)|none|free (of|from)|absence of|reasonable assurance|were not|was not|have not|is not|are not|remediated|been remediated|fully remediated|in the past|in prior (periods?|years?))\b[\s\S]{0,90}material weakness|material weakness(es)?[\s\S]{0,90}\b(did not|were not|was not|have not|not (identif|exist|present)|been remediated|was remediated|fully remediated|in the past|in prior (periods?|years?))/i;
+// Another ENTITY'S weakness is not the registrant's: AES wore a banner for its investee
+// Fluence's cured weakness. Deny when the weakness is framed as an investee's/venture's.
+const MW_OTHER_ENTITY = /\b(investee|equity[\s-]method|unconsolidated|joint venture|acquiree|target compan)/i;
 // A restatement that actually happened: past-tense "restated", tied to the financial statements.
+// "Amended and Restated Credit Agreement" is a CONTRACT name, not an accounting restatement —
+// Boston Properties wore a cockroach banner for refinancing its revolver (2026-07-30 pass).
+const RESTATED_CONTRACT = /\bamended and restated\b[\s\S]{0,60}\b(credit (agreement|facility)|revolving|loan agreement|indenture|bylaws|certificate|partnership agreement|lease)/i;
 const RESTATED = /\b(restated|have restated|has restated|were restated|restatement of (our|its|the|previously))\b[\s\S]{0,60}\b(financial statements?|prior (period|year)|previously (issued|reported)|results of operations|consolidated|balance sheet)\b|\bpreviously (issued|reported)[\s\S]{0,40}(financial statements?)[\s\S]{0,30}\b(were |have been )?restated\b/i;
 
 // The judgment-heavy estimates a 10-K's "Critical Accounting Estimates" section names. We map the
@@ -1267,12 +1291,13 @@ function bestSentence(sents, want, avoid = [], prefer = []) {
 // not be a negation or a remediation-only mention (absent). The risk factors are dense with "could
 // result in a material weakness" hypotheticals, so this guard, not the loose pricing one, is what
 // keeps the facet to the rare companies that truly admit one.
-function integritySentence(sents, declared, absent) {
+function integritySentence(sents, declared, absent, deny = null) {
   for (const raw of sents || []) {
     const s = cleanQuote(String(raw || ""));
     if (s.length < 40 || s.length > 300) continue;
     if (INTEGRITY_FUTURE.test(s) || !declared.test(s)) continue;
     if (absent && absent.test(s)) continue;
+    if (deny && deny.test(s)) continue;
     return s;
   }
   return null;
@@ -1343,8 +1368,8 @@ function buffettRead(cur, isFinancial) {
   const judgment = criticalEstimates(mdna);
 
   // 3. Accounting integrity.
-  const materialWeakness = integritySentence([...mdna, ...risk], MW_DECLARED, MW_ABSENT);
-  const restatement = integritySentence([...mdna, ...risk], RESTATED, null);
+  const materialWeakness = integritySentence([...mdna, ...risk], MW_DECLARED, MW_ABSENT, MW_OTHER_ENTITY);
+  const restatement = integritySentence([...mdna, ...risk], RESTATED, RESTATED_CONTRACT);
   const integrity = materialWeakness || restatement ? { materialWeakness: materialWeakness || null, restatement: restatement || null } : null;
 
   if (!pricing && !judgment && !integrity) return null;
@@ -1514,7 +1539,7 @@ async function main() {
 }
 
 // Exported for the offline logic test; only hit EDGAR when run directly.
-export { ownerFlags, FLAG_THEMES, sentences, isProse, diff, extractPayRatio, extractInsiderOwnership, extractInsiderGroup, htmlToText, section, fetchText, businessDescription, candorSignals, businessBrief, buffettRead, BIZ_HUMANCAP, BIZ_LINEAGE, BIZ_ASPIRATIONAL, BRIEF_ORPHAN, PROMO, smellsLikeRisk, fortyFSections, folderDocs, extractSections };
+export { ownerFlags, FLAG_THEMES, sentences, isProse, diff, extractPayRatio, extractInsiderOwnership, extractInsiderGroup, htmlToText, section, fetchText, businessDescription, candorSignals, businessBrief, buffettRead, BIZ_HUMANCAP, BIZ_LINEAGE, BIZ_ASPIRATIONAL, BRIEF_ORPHAN, PROMO, smellsLikeRisk, fortyFSections, folderDocs, extractSections, MW_DECLARED, MW_ABSENT, MW_OTHER_ENTITY, RESTATED, RESTATED_CONTRACT, INTEGRITY_FUTURE, ADMIT, NOT_ADMIT, BLAME_OTHERS };
 
 if (import.meta.url === pathToFileURL(process.argv[1] || "").href) {
   main().catch((e) => { console.error(`\n❌ ${e.message}\n`); process.exit(1); });
