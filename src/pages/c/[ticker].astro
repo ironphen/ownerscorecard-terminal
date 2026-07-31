@@ -131,6 +131,10 @@ const recentFiling = fund
       .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0))[0] || null)
   : null;
 const recentLine = recentFiling ? perfLine(recentFiling.performance) : null;
+// The filed date links the day's wire page — the entry sits among that day's filers — but only
+// when the day page exists (the wire archive starts 2026-02-17; an older date would link a 404).
+const wireDayFiles = import.meta.glob("../../data/wire-days/*.json");
+const wireDayHref = recentFiling?.date && Object.keys(wireDayFiles).some((p) => p.endsWith(`/${recentFiling.date}.json`)) ? `/wire/${recentFiling.date}` : null;
 
 
 // This company's place in the Manual (docs/discovery-design.md feature 2): the previous and next
@@ -295,7 +299,7 @@ const ogImageAlt = ogImage ? `${name} (${ticker}): the owner's record at a glanc
           <div class="recentHead">
             <span class="recentTag">Most recent quarterly filing</span>
             <span class="recentForm">{recentFiling.form}</span>
-            <span class="recentWhen">filed {fmtDate(new Date(recentFiling.date + "T00:00:00Z"))}</span>
+            <span class="recentWhen">filed {wireDayHref ? <a href={wireDayHref}>{fmtDate(new Date(recentFiling.date + "T00:00:00Z"))}</a> : fmtDate(new Date(recentFiling.date + "T00:00:00Z"))}</span>
             {recentFiling.url ? (
               <a class="recentSrc" href={recentFiling.url} target="_blank" rel="noopener noreferrer">Source at SEC EDGAR &rarr;</a>
             ) : null}

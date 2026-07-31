@@ -208,7 +208,7 @@ const description = `${sector.name}: all ${rows.length.toLocaleString()} compani
           <tr id={r.ticker}>
             <td class="sel"><label><input type="checkbox" class="pick" data-tk={r.ticker} aria-label={`Pick ${r.ticker} to compare`} /></label></td>
             <td class="txt tk" data-s={r.ticker}><a href={r.href}>{r.ticker}</a></td>
-            <td class="txt nm" data-s={r.name.toLowerCase()}><span class="nmIn">{r.name}</span></td>
+            <td class="txt nm" data-s={r.name.toLowerCase()}><span class="nmIn"><a href={r.href}>{r.name}</a></span></td>
             <td class="txt ind" data-s={r.industry.toLowerCase()}><a href={r.industryHref}>{r.industry}</a></td>
             {r.cells.map((cell) => (
               <td class={`num${cell.sort == null ? " off" : ""}`} data-s={cell.sort}>{cell.text}</td>
