@@ -866,7 +866,7 @@ function bizLeadText(business, form) {
   return m > 200 ? business.slice(m) : business;
 }
 
-async function getFiling(cik, f, totalDebtMillions = null, devTarget = null) {
+async function getFiling(cik, f, totalDebtMillions = null, devTarget = null, depTarget = null) {
   const accnNoDash = f.accn.replace(/-/g, "");
   const base = `https://www.sec.gov/Archives/edgar/data/${Number(cik)}/${accnNoDash}`;
   let url = `${base}/${f.doc}`;
@@ -928,7 +928,15 @@ async function getFiling(cik, f, totalDebtMillions = null, devTarget = null) {
   if (devTarget && devTarget.stored != null && fy) {
     try { reserveRead = reserveDevelopmentRead({ mdnaText: mdna, fullText: text, fy, stored: devTarget.stored, kind: devTarget.kind }); } catch { reserveRead = null; }
   }
-  return { url, business: { ...metrics(business), lead: leadSentences(bizLeadText(business, f.form)), head: business.slice(0, 800) }, mdna: { ...md, lead: leadSentences(mdna), candor: candorSignals(mdna, md.sents) }, risk: metrics(risk), reportDate: f.reportDate, debtMaturity, reserveRead };
+  // The uninsured-deposits lane (Build 6): like Build 4, it runs only when the caller supplied
+  // the weld denominator — the stored XBRL Deposits line for THIS filing's fiscal year. The
+  // netted-basis verdict reads the full text (GCBC's exclusion table sits past the extracted
+  // MD&A); candidates come from the MD&A window alone.
+  let uninsuredRead = null;
+  if (depTarget && depTarget.deposits > 0 && fy) {
+    try { uninsuredRead = uninsuredDepositsRead({ mdnaText: mdna, fullText: text, fy, deposits: depTarget.deposits }); } catch { uninsuredRead = null; }
+  }
+  return { url, business: { ...metrics(business), lead: leadSentences(bizLeadText(business, f.form)), head: business.slice(0, 800) }, mdna: { ...md, lead: leadSentences(mdna), candor: candorSignals(mdna, md.sents) }, risk: metrics(risk), reportDate: f.reportDate, debtMaturity, reserveRead, uninsuredRead };
 }
 
 // ---- executive pay (proxy statement / DEF 14A) ----
@@ -1623,6 +1631,199 @@ function reserveDevelopmentRead({ mdnaText = "", fullText = "", fy, stored, kind
   return null;
 }
 
+// ---- uninsured deposits, welded (Build 6 of the qualitative survey, 2026-07-31) ----
+// docs/qualitative-desks-survey.md, Banks P3 as CONDITIONED by Section 1 item 3: rung (a)
+// plus quote-only for single-figure sentences; rungs (b)/(c) — computing a share or a dollar
+// with nothing to check it against — wait for a measured basis-divergence study. This lane is
+// the bank replacement for the retired customer-concentration lens (audit-fix item 9): the
+// filer's OWN uninsured-deposit disclosure sentence, verbatim, shipped only when it checks
+// against the deposits line the quant desk already stores (lines.deposits, XBRL Deposits).
+//
+// The rungs, measured on the survey's 11 FY2025 bank filings:
+//   RUNG (a) — a sentence stating BOTH the dollar and the percent welds only when the dollar
+//     over stored Deposits lands within 1.5 points of the STATED percent (FLG: $13.5B/$66.0B
+//     = 20.45% vs "20 percent" — inside). Outside 1.5pt is a STATED withhold, never a quote.
+//   QUOTE-ONLY — a single-figure sentence (a dollar with no percent, or a percent with no
+//     dollar) ships as the quote alone, with NO computed figure beside it: computing the
+//     missing side IS rung (b), and rung (b) waits (JPM $1,558.6B, PNC $209.3B on its own
+//     FFIEC 031 basis, WAL $22.9B, BMRC "31%" — the survey's clean-prose ships alongside
+//     FLG). Dollars are still sanity-bound to stored Deposits (0 < $/Deposits ≤ 1) so a
+//     mis-scaled figure can never ship; a dollar with no billion/million unit is refused
+//     outright (a "(in thousands)" numeral has no knowable scale in prose).
+//   NETTED BASIS — a filer whose uninsured disclosure nets collateralized / affiliate /
+//     intercompany deposits produces ZERO welds and ZERO quotes, a stated withhold carrying
+//     the filer's own basis words (CUBI "less collateralized and affiliate deposits"; VLY
+//     "excluding collateralized government deposits and intercompany deposits"; GCBC's
+//     $1.05B collateralized exclusion; EWBC's "adjustment to exclude…"). The numerator is
+//     not on the gross XBRL Deposits basis, so the check runs on the wrong denominator —
+//     and VLY is the pinned proof that the arithmetic can TIE anyway ($14.6B/$52.2B =
+//     27.98% vs its stated "28 percent"): no gate downstream of the basis can see the miss,
+//     so the basis itself is the gate.
+//   EXCLUDES — FDIC special-assessment boilerplate (anchored "special assessment" /
+//     "December 31, 2022" per the survey; present in CUBI, VLY, CFR, PNC, WAL, FLG);
+//     hypothetical / risk-factor conditional phrasing, including the reliance idiom
+//     ("…and we rely on these deposits for liquidity" — CFR's 52% sentence lives in Item
+//     1A); liquidity-COVERAGE sentences, whose figure is the excess or the coverage ratio,
+//     never the level (FLG's "$13.6 billion" excess, ZION's "sources of liquidity
+//     exceeded…", BMRC's "fully covered by the Bank's available funding sources", CUBI's
+//     "124%…161%" — four measured cases); insured-network mitigation programs (WAL's CDARS
+//     /ICS sentence, whose $50/$285 million are program limits, not the level); time-deposit
+//     SUBSET narration; table debris (digit share, "following table", "(in thousands)", and
+//     an all-caps page-header run — ZION's glued "ZIONS BANCORPORATION, NATIONAL
+//     ASSOCIATION…" two-figure sentence is a table capture, not clean prose).
+// Basis words stay INSIDE the quote: "uninsured or not collateralized by securities or
+// letters of credit" (FLG) and "based on the regulatory instructions in … FFIEC 031" (PNC)
+// render because the sentence ships verbatim; the fig line carries only the computed
+// arithmetic with its named XBRL source. No basis is ever paraphrased outside the quote.
+const UNINS_SPECIAL = /special\s+assessments?\b|December\s+31,\s+2022/i;
+// An exclusion verb reaching a collateralized/affiliate/intercompany object — or the
+// bare "after (certain) exclusions" table caption — is a netted-basis disclosure by
+// construction. "less than" is a comparative, never a netting ("deposits less than the
+// FDIC limit"), and "not collateralized" / "uncollateralized" carry no exclusion verb, so
+// FLG's and BMRC's basis phrases never trip this.
+const UNINS_NETTED = /\b(?:excluding|excludes?|excluded|less(?!\s+than\b)|net\s+of|adjust(?:ed|ment)?s?\s+to\s+exclude)\b[^.;]{0,80}\b(?:collateralized|affiliate|intercompany)\b|\bafter\s+(?:certain\s+)?exclusions?\b/i;
+// The level statement, in the shapes the 11 filings actually use — noun→amount (JPM "were
+// $1,558.6 billion", PNC "was estimated to be $209.3 billion", WAL "of $22.9 billion"),
+// dollar-first (FLG "$13.5 billion of deposits that are uninsured"), and percent-of (BMRC
+// "31% of uninsured…", CFR-shape "52% of our deposits were uninsured").
+const UNINS_LEVEL = new RegExp(
+  [
+    String.raw`uninsured\s+(?:[a-z][\w'./-]*\s+){0,3}deposits?\b[^.;]{0,120}?\b(?:was|were|is|are|totaled|totaling|amounted\s+to|had|includes?|included|at|of|estimated)(?:\s+(?:estimated|approximately|to\s+be|at))*\s*\$`,
+    String.raw`\$\s?[\d,]+(?:\.\d+)?\s*(?:billion|million|trillion)?\s+of\s+(?:[a-z][\w-]*\s+){0,3}deposits?\s+that\s+are\s+uninsured`,
+    String.raw`\$\s?[\d,]+(?:\.\d+)?\s*(?:billion|million|trillion)?\s+of\s+uninsured\s+deposits?`,
+    String.raw`(?:%|percent)\s+of\s+uninsured`,
+    String.raw`(?:%|percent)\s+of\s+(?:[a-z][\w-]*\s+){0,3}deposits?\s+(?:was|were|are|is)\s+uninsured`,
+  ].join("|"),
+  "i"
+);
+// Risk-factor conditional phrasing (broader than the global HYPO — none of the five measured
+// ships carries could/may/might/would) plus the reliance idiom, the in-sentence marker of
+// Item 1A scope that survives CFR's measured MD&A section bleed.
+const UNINS_HYPO = /\b(?:could|may|might|would)\b|\bwe\s+rely\b|\breliance\b|\bdepend(?:s|ed|ing|ent|ence)?\b/i;
+// A liquidity-coverage claim: exceed/cover linked to liquidity, funding sources, or borrowing
+// capacity. "covered by FDIC deposit insurance" (FLG's exemplar) has none of the three nouns
+// in reach and is untouched.
+const UNINS_COVERAGE = /\b(?:liquidity|funding\s+sources?|borrowing\s+capacity)\b[^.;]{0,120}\b(?:exceed|cover)\w*\b|\b(?:exceed|cover)\w*\b[^.;]{0,120}\b(?:liquidity|funding\s+sources?|borrowing\s+capacity)\b/i;
+const UNINS_MITIGATION = /\bmitigat\w+\b|\bCDARS\b|\bIntraFi\b|\bICS\s+programs?\b/i;
+const UNINS_TIME_SUBSET = /\btime\s+deposits?\b/i;
+const UNINS_TABLE = /table\s+of\s+contents|following\s+tables?\b|tables?\s+(?:below|above)\b|\(in\s+(?:thousands|millions|billions)|\(dollars\s+in|%%/i;
+const UNINS_CAPS_RUN = /(?:\b[A-Z]{2,}[,.]?\s+){3,}/;
+
+// The lane's own splitter (local by design, like devSentences — the drivers splitter is under
+// a zero-diff regression): sentence-end boundaries plus the bare percent table tail. WAL's
+// ship sits directly behind "…Total deposits $ 73,817 2.08 % $ 65,719 2.43 % $ 53,563 2.13 %
+// At December 31, 2025…" with no sentence boundary at all — a digit-% tail followed by a
+// capital is a table edge, never prose, so it opens a boundary (the drivers precedent, widened
+// from the parenthesized form because bank deposit tables print bare rate percents).
+function uninsSentences(text) {
+  if (!text) return [];
+  return String(text)
+    .replace(/\s\d{1,4}\s+Table\s+of\s+Contents(?=\s)/gi, " ")
+    .split(/(?<=[.!?]["”’']?)\s+(?=[A-Z(“"$0-9])|(?<=\d\s?%)\s+(?=[A-Z])|(?<=\)\s?%)\s+(?=[A-Z])/)
+    .map((s) => s.replace(/\s+/g, " ").trim())
+    .filter((s) => {
+      if (s.length < 50 || s.length > 520) return false;
+      const digits = (s.match(/\d/g) || []).length;
+      const letters = (s.match(/[a-zA-Z]/g) || []).length;
+      return letters >= 45 && digits / (digits + letters) <= 0.4;
+    });
+}
+
+// Stated figures: unit dollars and percents. A dollar numeral with no unit word is refused at
+// the candidate gate — its scale is unknowable in flattened prose.
+const uninsDollars = (s) => [...s.matchAll(/\$\s?([\d,]+(?:\.\d+)?)\s*(billion|million|trillion)\b/gi)]
+  .map((m) => ({ text: m[0], value: parseFloat(m[1].replace(/,/g, "")) * (/trillion/i.test(m[2]) ? 1e12 : /billion/i.test(m[2]) ? 1e9 : 1e6) }));
+const uninsUnitlessDollar = (s) => /\$\s?[\d,]+(?:\.\d+)?(?!\s*(?:billion|million|trillion)\b)(?![\d,.])/i.test(s.replace(/\$\s?[\d,]+(?:\.\d+)?\s*(?:billion|million|trillion)\b/gi, " "));
+const uninsPcts = (s) => [...s.matchAll(/(\d+(?:\.\d+)?)\s*(?:%|percent\b)/gi)].map((m) => ({ text: m[0], value: parseFloat(m[1]) }));
+
+// The netted-basis verdict is a FILER-level fact read from raw spans, not prose-filtered
+// sentences — VLY's basis phrase rides a digit-heavy table blob no sentence filter keeps.
+// Special-assessment spans are ignored first: that boilerplate's own "adjusted to exclude the
+// first $5 billion" (WAL, verbatim) would otherwise mark every assessed bank as netted.
+function uninsNettedBasis(texts) {
+  for (const text of texts) {
+    if (!text) continue;
+    const re = /uninsured/gi;
+    let m;
+    while ((m = re.exec(text)) !== null) {
+      const span = text.slice(Math.max(0, m.index - 220), m.index + 320);
+      if (UNINS_SPECIAL.test(span)) continue;
+      const b = span.match(UNINS_NETTED);
+      if (b) return b[0].replace(/\s+/g, " ").trim().slice(0, 120);
+    }
+  }
+  return null;
+}
+
+function uninsuredDepositsRead({ mdnaText = "", fullText = "", fy, deposits }) {
+  if (!deposits || deposits <= 0 || !fy) return null;
+  // The basis gate first: a netted-basis filer ships nothing, and says why.
+  const basis = uninsNettedBasis([mdnaText, fullText]);
+  if (basis) return { fy, withheld: true, reason: "netted basis", basis };
+
+  const seen = new Set();
+  const candidates = [];
+  for (const s of uninsSentences(mdnaText)) {
+    if (!/uninsured/i.test(s)) continue;
+    const k = s.toLowerCase().slice(0, 160);
+    if (seen.has(k)) continue;
+    seen.add(k);
+    if (UNINS_SPECIAL.test(s) || UNINS_TABLE.test(s) || UNINS_CAPS_RUN.test(s)) continue;
+    if (UNINS_TIME_SUBSET.test(s) || UNINS_MITIGATION.test(s) || UNINS_COVERAGE.test(s)) continue;
+    if (HYPO.test(s) || UNINS_HYPO.test(s)) continue;
+    if (!UNINS_LEVEL.test(s)) continue;
+    // A named year must reach the filing's fiscal year (drivers' yearOk idiom); FLG's
+    // exemplar names no year and passes on the figure gates alone.
+    const yrs = [...s.matchAll(/\b(20\d\d)\b/g)].map((y) => parseInt(y[1], 10));
+    if (yrs.length && Math.max(...yrs) < fy) continue;
+    if (uninsUnitlessDollar(s)) continue;
+    const ds = uninsDollars(s), ps = uninsPcts(s);
+    if (!ds.length && !ps.length) continue;
+    // Sanity bounds against the stored line: no stated dollar above total deposits, no
+    // percent above 100 — a mis-scaled or mis-scoped figure fails closed.
+    if (ds.some((d) => d.value <= 0 || d.value > deposits * 1.005)) continue;
+    if (ps.some((p) => p.value <= 0 || p.value > 100)) continue;
+    candidates.push({ s, ds, ps });
+  }
+
+  // Rung (a): both figures stated — the dollar over stored Deposits must land within 1.5
+  // points of the stated percent. Document order pairs the figures (every measured sentence
+  // narrates current year first); the smallest gap wins among passers.
+  const two = candidates.filter((c) => c.ds.length && c.ps.length);
+  let best = null;
+  for (const c of two) {
+    const computed = (c.ds[0].value / deposits) * 100;
+    const gap = Math.abs(computed - c.ps[0].value);
+    if (gap <= 1.5 && (!best || gap < best.gap)) best = { ...c, computed, gap };
+  }
+  if (best) {
+    const computedPct = +best.computed.toFixed(2);
+    // The weld law at write time: stated figures are the filer's own characters; the
+    // computed percent names its source line.
+    const { quote } = weld(best.s, [
+      { text: best.ds[0].text, kind: "verbatim" },
+      { text: best.ps[0].text, kind: "verbatim" },
+      { text: String(computedPct), kind: "computed", source: "lines.deposits (XBRL Deposits)" },
+    ]);
+    return { fy, deposits, sentence: quote, statedDollar: best.ds[0].text, statedPct: best.ps[0].text, computedPct, gapPct: +best.gap.toFixed(2), check: "pct" };
+  }
+  // Every two-figure sentence failed the check: a stated withhold for the filer — falling
+  // back to a different single-figure sentence would dodge the failed reconciliation.
+  if (two.length) {
+    const c = two[0];
+    const computed = +((c.ds[0].value / deposits) * 100).toFixed(2);
+    return { fy, withheld: true, reason: "check", statedDollar: c.ds[0].text, statedPct: c.ps[0].text, computedPct: computed, gapPct: +Math.abs(computed - c.ps[0].value).toFixed(2) };
+  }
+  // Quote-only: the first single-figure level statement in document order, no computed chip.
+  if (candidates.length) {
+    const c = candidates[0];
+    const anchor = c.ds[0]?.text ?? c.ps[0]?.text;
+    const { quote } = weld(c.s, [{ text: anchor, kind: "verbatim" }]);
+    return { fy, deposits, sentence: quote, check: "quote" };
+  }
+  return null;
+}
+
 async function main() {
   // Carry-over: start from the existing file, so a partial run (a ticker limit, or a pool that comes
   // up empty) never wipes good entries — fresh results overlay, and names no longer in either
@@ -1677,10 +1878,21 @@ async function main() {
         ?? (String(c.fy) === String(fyYear) ? c.lines?.reserveDevelopmentPriorYear : null);
       if (fyYear && devStored != null && devStored !== 0) devTarget = { stored: devStored, kind: devKind };
     }
+    // The uninsured-deposits weld denominator (Build 6): stored XBRL Deposits for the CURRENT
+    // filing's fiscal year, banks only (the archetype, never SIC alone — the Build 4 precedent).
+    // No fiscal-year-matched deposits line, no lane: a stale denominator would fail the check
+    // for the wrong reason, so the lane waits for the fundamentals heal instead.
+    let depTarget = null;
+    if (devKind === "bank") {
+      const fyYear = filings[0].reportDate ? parseInt(filings[0].reportDate.slice(0, 4)) : null;
+      const depStored = (c.history || []).find((h) => h.fy === fyYear)?.lines?.deposits
+        ?? (String(c.fy) === String(fyYear) ? c.lines?.deposits : null);
+      if (fyYear && depStored > 0) depTarget = { deposits: depStored };
+    }
     let cur, prior;
     try {
       await sleep(THROTTLE);
-      cur = await getFiling(c.cik, filings[0], totalDebtMillions, devTarget);
+      cur = await getFiling(c.cik, filings[0], totalDebtMillions, devTarget, depTarget);
       if (filings[1]) { await sleep(THROTTLE); prior = await getFiling(c.cik, filings[1]); }
     } catch (e) { console.warn(`  ! ${tk}: filing ${e.message}`); continue; }
 
@@ -1785,6 +1997,10 @@ async function main() {
         // The reserve-development sentence, welded to the filed number (Build 4). Absent means
         // the lane found nothing that passed all four rungs — silence over filler.
         ...(cur.reserveRead ? { reserveDevelopment: cur.reserveRead } : {}),
+        // The uninsured-deposits read (Build 6, banks): a welded or quote-only disclosure
+        // sentence, or a stated withhold with its reason. Absent means the lane found no
+        // level statement that passed the gates — silence over filler.
+        ...(cur.uninsuredRead ? { uninsuredDeposits: cur.uninsuredRead } : {}),
       };
       ok++;
       console.log(`  ✓ ${tk}: ${flags.length} owner-flags, MD&A ${cur.mdna.words}w` + (comp ? `, payRatio ${comp.payRatio}:1` : "") + (debtMaturity ? `, debt-wall $${(debtMaturity.total / 1e9).toFixed(1)}B` : ""));
@@ -1807,7 +2023,7 @@ async function main() {
 }
 
 // Exported for the offline logic test; only hit EDGAR when run directly.
-export { ownerFlags, FLAG_THEMES, sentences, isProse, diff, extractPayRatio, extractInsiderOwnership, extractInsiderGroup, htmlToText, section, fetchText, businessDescription, candorSignals, businessBrief, buffettRead, BIZ_HUMANCAP, BIZ_LINEAGE, BIZ_ASPIRATIONAL, BRIEF_ORPHAN, PROMO, smellsLikeRisk, fortyFSections, folderDocs, extractSections, MW_DECLARED, MW_ABSENT, MW_OTHER_ENTITY, RESTATED, RESTATED_CONTRACT, INTEGRITY_FUTURE, ADMIT, NOT_ADMIT, BLAME_OTHERS, reserveDevelopmentRead, devSentences };
+export { ownerFlags, FLAG_THEMES, sentences, isProse, diff, extractPayRatio, extractInsiderOwnership, extractInsiderGroup, htmlToText, section, fetchText, businessDescription, candorSignals, businessBrief, buffettRead, BIZ_HUMANCAP, BIZ_LINEAGE, BIZ_ASPIRATIONAL, BRIEF_ORPHAN, PROMO, smellsLikeRisk, fortyFSections, folderDocs, extractSections, MW_DECLARED, MW_ABSENT, MW_OTHER_ENTITY, RESTATED, RESTATED_CONTRACT, INTEGRITY_FUTURE, ADMIT, NOT_ADMIT, BLAME_OTHERS, reserveDevelopmentRead, devSentences, uninsuredDepositsRead, uninsSentences };
 
 if (import.meta.url === pathToFileURL(process.argv[1] || "").href) {
   main().catch((e) => { console.error(`\n❌ ${e.message}\n`); process.exit(1); });

@@ -25,6 +25,41 @@ const rev = topLineRevenue(cur, company) ?? topLineRevenue(company.lines, compan
 
 const items = [];
 
+// 0. Uninsured deposits (banks — Build 6 of the qualitative survey, 2026-07-31): the sector-correct
+// replacement for the retired customer-concentration lens, in the slot it used to occupy. A bank's
+// "customers" are depositors, and the owner's concentration question is which deposits could leave
+// overnight. The entry exists only for banks and only in three shapes, all gated at extraction:
+// a WELD (the sentence's stated dollar over XBRL Deposits landed within 1.5 points of its stated
+// percent — the computed share may render, sourced), a QUOTE-ONLY (a single-figure disclosure; no
+// computed figure, the filer's words alone), or a stated WITHHOLD (a netted-basis disclosure the
+// record cannot check, or a stated share that failed the reconciliation). Basis words — "not
+// collateralized by securities or letters of credit", "FFIEC 031" — stay inside the verbatim
+// quote, never paraphrased out here. Rendered only when the entry's fiscal year and deposits
+// figure tie the live record (the Scorecard devTie precedent), so a re-based line can never sit
+// under a stale computed share.
+const unins = L?.uninsuredDeposits;
+if (unins && String(unins.fy) === String(company.fy)) {
+  const uq = "How much of the deposit base could leave overnight?";
+  const depTie = unins.deposits != null && company?.lines?.deposits === unins.deposits;
+  if (!unins.withheld && unins.sentence && depTie) {
+    items.push({
+      q: uq,
+      fig: unins.check === "pct"
+        ? `≈${unins.computedPct}% — the sentence's ${unins.statedDollar} over the ${$(unins.deposits)} Deposits line (XBRL, FY${unins.fy})`
+        : `Deposits ${$(unins.deposits)} (XBRL, FY${unins.fy}) — the uninsured portion in the filer's own words`,
+      quote: unins.sentence,
+    });
+  } else if (unins.withheld) {
+    items.push({
+      q: uq,
+      fig: "withheld",
+      note: unins.reason === "netted basis"
+        ? `the filing states its uninsured deposits on a netted basis ("${unins.basis}…"), which cannot be checked against the deposits line the record carries — withheld rather than shown unverified`
+        : `the filing's stated uninsured share does not reconcile against the record's deposits line within 1.5 points — withheld rather than shown unverified`,
+    });
+  }
+}
+
 // 1. Concentration — how much of the top line rides on one buyer. The one genuinely owner-grade weld
 // kept from the old section: parsed conservatively from the company's own disclosure (the parser
 // rejects geographic / receivable / backlog bases), so it fires only where a dominant buyer is real.

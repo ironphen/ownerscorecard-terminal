@@ -15,6 +15,7 @@ import {
   businessDescription, extractSections, htmlToText,
   reserveDevelopmentRead,
   ownerFlags, buffettRead,
+  uninsuredDepositsRead,
 } from "./fetchFilings.mjs";
 
 let pass = 0, fail = 0;
@@ -455,6 +456,90 @@ ok("noteWindow: the LAST heading occurrence wins (TOC echoes don't)",
   // The genuine squeeze beside it still ships.
   ok("item 8: a real unrecovered input-cost squeeze still ships",
     bp(["Raw material costs increased $42 million during 2025, and our price increases were not able to fully offset these higher input costs."])?.pricing?.costInflation != null);
+}
+
+// ---------------- BUILD 6 — uninsured deposits, rung (a) + quote-only (Banks P3 as
+// CONDITIONED; docs/qualitative-desks-survey.md SECTION 1 item 3 + SECTION 3). Every filing
+// sentence below is VERBATIM from the named FY2025 10-K as the pipeline flattens it (fetched
+// and measured 2026-07-31); every deposits denominator is the stored XBRL Deposits line for
+// that fiscal year. The lane ships three shapes only: a WELD (stated $ over Deposits within
+// 1.5pt of the stated %), a QUOTE-ONLY single-figure disclosure (no computed figure — that IS
+// rung (b), and rung (b) waits), or a stated WITHHOLD (netted basis, or a failed check).
+// Measured on the survey's 11 filings end-to-end: FLG welds at 20.45%; JPM/PNC/WAL/BMRC ship
+// quote-only (with FLG, exactly the survey's five clean-prose names); CUBI/VLY/EWBC/GCBC
+// withhold as netted-basis; ZION and CFR are silence. ----
+
+{
+  const read = (mdnaText, deposits, fullText = "") => uninsuredDepositsRead({ mdnaText, fullText, fy: 2025, deposits });
+
+  // FLG (the exemplar): $13.5B over stored Deposits of exactly $66.0B computes 20.45%,
+  // inside 1.5 points of the sentence's own "20 percent". The basis words — "uninsured or
+  // not collateralized by securities or letters of credit" — ride INSIDE the quote.
+  const flg = "The majority of our customer deposits are covered by FDIC deposit insurance with $13.5 billion of deposits that are uninsured or not collateralized by securities or letters of credit, representing 20 percent of our overall deposit base.";
+  ok("FLG: the exemplar welds (20.45% computed vs '20 percent' stated, gap 0.45pt, Deposits 66.0B exact)",
+    (() => { const r = read(flg, 66.0e9); return !!r && r.check === "pct" && r.computedPct === 20.45 && r.gapPct === 0.45 && r.statedDollar === "$13.5 billion" && r.statedPct === "20 percent" && r.sentence === flg; })());
+  ok("FLG red-team: the stored XBRL line decides — against a different Deposits figure the same sentence is a stated withhold, never a quote",
+    (() => { const r = read(flg, 55.0e9); return !!r && r.withheld === true && r.reason === "check" && r.gapPct > 1.5; })());
+  ok("FLG: the liquidity-EXCESS sentence never ships — its $13.6 billion is the excess, not the level",
+    read("As of December 31, 2025, total bank liquidity exceeds the balance of our uninsured deposits by $13.6 billion.", 66.0e9) === null);
+
+  // The quote-only rung: single-figure disclosures ship the filer's words alone. Computing
+  // the missing percent is rung (b) — killed until a measured basis-divergence study.
+  const jpm = "At December 31, 2025 and 2024, Firmwide estimated uninsured deposits were $1,558.6 billion and $1,414.0 billion, respectively, primarily reflecting wholesale operating deposits.";
+  ok("JPM: a single-figure disclosure ships quote-only, NO computed percent beside it",
+    (() => { const r = read(jpm, 2559.32e9); return !!r && r.check === "quote" && r.computedPct === undefined && r.sentence === jpm; })());
+  const pnc = "The aggregate amount of uninsured deposits, based on the regulatory instructions in the Consolidated Reports of Condition and Income - FFIEC 031, was estimated to be $209.3 billion and $194.9 billion at December 31, 2025 and 2024, respectively.";
+  ok("PNC: ships quote-only with its FFIEC basis INSIDE the quote — basis words are never paraphrased outside it",
+    (() => { const r = read(pnc, 440.866e9); return !!r && r.check === "quote" && /FFIEC 031/.test(r.sentence); })());
+  ok("BMRC: the percent-only disclosure ships quote-only ('31% of uninsured and/or uncollateralized deposits')",
+    (() => { const r = read("We maintain a well-diversified deposit base, with an estimated 31% of uninsured and/or uncollateralized deposits as of December 31, 2025.", 3.415542e9); return !!r && r.check === "quote" && r.computedPct === undefined; })());
+
+  // WAL: the ship sits directly behind a bare digit-% table tail with no sentence boundary
+  // at all — the lane's splitter opens one, and the clean sentence emerges.
+  const wal = "At December 31, 2025 and 2024, the Company had total uninsured deposits of $22.9 billion and $17.6 billion, respectively.";
+  ok("WAL: the % table tail opens a boundary and the glued ship emerges clean",
+    (() => { const r = read("Total deposits $ 73,817 2.08 % $ 65,719 2.43 % $ 53,563 2.13 % " + wal, 77.159e9); return !!r && r.check === "quote" && r.sentence === wal; })());
+  ok("WAL: the CDARS/ICS mitigation sentence never ships — its dollars are program limits, not the level",
+    read("To mitigate the uninsured deposit risk, the Company participates in the CDARS and ICS programs, which allow an individual customer to invest up to $50 million and $285 million, respectively, through one participating financial institution or, a combined total of $335 million per individual customer, with the entire amount being covered by FDIC insurance.", 77.159e9) === null);
+  ok("WAL: the special-assessment boilerplate's own 'adjusted to exclude…' never marks the filer netted-basis",
+    (() => { const sa = "Throughout the initial eight-quarter collection period, the special assessment was collected at a quarterly rate of 3.36 basis points, multiplied by an institution's estimated uninsured deposits as of December 31, 2022, adjusted to exclude the first $5 billion of estimated uninsured deposits."; const r = read(sa + " " + wal, 77.159e9); return !!r && r.check === "quote" && r.sentence === wal; })());
+
+  // The netted-basis gate: a filer whose disclosure nets collateralized/affiliate/intercompany
+  // deposits produces ZERO welds and ZERO quotes — a stated withhold with the filer's own
+  // basis words. CUBI's clean-looking "$8.6 billion" sentence sits right beside the netted
+  // series; the basis verdict outranks it.
+  ok("CUBI: netted-basis withhold, stated with the filer's own words ('less collateralized and affiliate deposits')",
+    (() => { const cubi = "The total amount of estimated uninsured deposits was $8.6 billion and $7.3 billion at December 31, 2025 and 2024, respectively. We maintain a strong liquidity position, with $10.6 billion of liquidity immediately available consisting of cash on hand and available borrowing capacity from the FHLB and the FRB, which covered approximately 124% of uninsured deposits and approximately 161% of uninsured deposits less collateralized and affiliate deposits at December 31, 2025."; const r = read(cubi, 20.778704e9); return !!r && r.withheld === true && r.reason === "netted basis" && /less collateralized and affiliate/.test(r.basis); })());
+  // VLY is the pinned PROOF the basis gate must outrank the arithmetic: its netted numerator
+  // over gross XBRL Deposits TIES its own stated percent ($14.6B/$52.18B = 27.98% vs "28
+  // percent", gap 0.02pt) — the wrong denominator is invisible to the check, so the basis
+  // itself is the gate (survey Section 1 item 3, verbatim reasoning).
+  ok("VLY: the arithmetic ties at 0.02pt and the netted basis STILL withholds — no gate downstream of the basis can see the miss",
+    (() => { const vly = "Total estimated uninsured deposits, excluding collateralized government deposits and intercompany deposits (i.e., deposits eliminated in consolidation), totaled approximately $14.6 billion, or 28 percent of total deposits, at December 31, 2025 as compared to $12.6 billion, or 25 percent of total deposits, at December 31, 2024."; const r = read(vly, 52.183093e9); return !!r && r.withheld === true && r.reason === "netted basis"; })());
+  ok("EWBC: 'an adjustment to exclude collateralized and affiliate deposits' marks the filer netted — zero welds",
+    (() => { const r = read("Management believes that presenting uninsured domestic deposits with an adjustment to exclude collateralized and affiliate deposits provides a more accurate view of the deposits at risk, given that collateralized deposits are secured, and affiliate deposits are not customer-facing and are eliminated in consolidation.", 67.082701e9); return !!r && r.withheld === true && r.reason === "netted basis"; })());
+  ok("GCBC: the netted verdict reads the FULL text — the exclusion table sits past the thin extracted MD&A",
+    (() => { const r = read("", 2.639835e9, "The following table estimates uninsured deposits after certain exclusions : (Dollars in thousands) At June 30, 2025 Uninsured deposits, per regulatory requirements $ 1,437,328 Less: Affiliate deposits (59,018 ) Collateralized deposits (1,049,268 ) Uninsured deposits, after exclusions $ 329,042"); return !!r && r.withheld === true && r.reason === "netted basis"; })());
+
+  // The remaining measured kills: each was a live near-miss on the sample.
+  ok("ZION: the page-header-glued two-figure sentence is a table capture, not clean prose — refused",
+    read("ZIONS BANCORPORATION, NATIONAL ASSOCIATION AND SUBSIDIARIES At December 31, 2025, the total estimated amount of uninsured deposits was $34.4 billion, or 45% of total deposits, compared with $34.4 billion, or 45%, at December 31, 2024.", 75.644e9) === null);
+  ok("ZION: a liquidity-coverage sentence never wears the level ('sources of liquidity exceeded…')",
+    read("At December 31, 2025, our sources of liquidity exceeded the estimated amount of uninsured deposits of $34.4 billion without the need to sell any investment securities.", 75.644e9) === null);
+  ok("BMRC: its own coverage sentence never ships — the $2.148 billion and 209% are the coverage, not the level",
+    read("Such uninsured deposits were fully covered by the Bank's available funding sources, including unrestricted cash, unencumbered available-for-sale securities, and a total available borrowing capacity of $2.148 billion, or 63% of total deposits, and 209% of estimated uninsured and/or uncollateralized deposits as of December 31, 2025.", 3.415542e9) === null);
+  ok("CFR: the Item 1A sentence dies on the reliance idiom ('…and we rely on these deposits for liquidity') — risk-factor scope survives the measured MD&A section bleed",
+    read("As of December 31, 2025, approximately 52% of our deposits were uninsured and we rely on these deposits for liquidity.", 42.917864e9) === null);
+  ok("the FDIC special-assessment boilerplate is never a candidate (anchored 'December 31, 2022' / 'special assessment')",
+    read("The assessment base for the special assessments is equal to an insured depository institution's estimated uninsured deposits, reported as of December 31, 2022, adjusted to exclude the first $5 billion in estimated uninsured deposits from the insured depository institution.", 66.0e9) === null);
+  ok("EWBC-class: a time-deposit SUBSET never wears the level ('Uninsured time deposits totaled $15.2 billion')",
+    read("Uninsured time deposits totaled $15.2 billion as of December 31, 2025.", 67.082701e9) === null);
+  ok("a dollar with no unit word is refused — a '(in thousands)' numeral has no knowable scale in prose",
+    read("Total estimated uninsured deposits were $ 1,437,328 at June 30, 2025.", 2.639835e9) === null);
+  ok("a prior-year-only sentence never ships in the current filing",
+    read("At December 31, 2024, the Company had total uninsured deposits of $17.6 billion.", 77.159e9) === null);
+  ok("a stated dollar above the whole Deposits line fails closed — a mis-scoped figure cannot ship",
+    read("At December 31, 2025, the Company had total uninsured deposits of $122.9 billion.", 77.159e9) === null);
 }
 
 console.log(`\nlanguageGatesTest: ${pass} passed, ${fail} failed`);
