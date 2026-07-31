@@ -16,6 +16,7 @@ import {
   reserveDevelopmentRead,
   ownerFlags, buffettRead,
   uninsuredDepositsRead,
+  softwareRetentionRead, customerLadderRead, softwareKpiRead, softwareKpiAssemble,
 } from "./fetchFilings.mjs";
 
 let pass = 0, fail = 0;
@@ -540,6 +541,196 @@ ok("noteWindow: the LAST heading occurrence wins (TOC echoes don't)",
     read("At December 31, 2024, the Company had total uninsured deposits of $17.6 billion.", 77.159e9) === null);
   ok("a stated dollar above the whole Deposits line fails closed — a mis-scoped figure cannot ship",
     read("At December 31, 2025, the Company had total uninsured deposits of $122.9 billion.", 77.159e9) === null);
+}
+
+// ---------------- BUILD 7 — software NRR + the customer ladder (SW P1 + P2, both pure M3
+// substring lanes; docs/qualitative-desks-survey.md SECTION 3), plus the SW P3 discontinuity
+// tripwire riding the records. Every filing sentence below is VERBATIM from the named
+// FY2025/FY2026 10-K as the pipeline flattens it (fetched and measured 2026-07-31). The lane
+// never computes, totals, normalizes, or restates a number: every shipped figure is a
+// substring of its own quoted sentence, welded at write time. ----
+
+{
+  const nrrOf = (mdnaText, fy) => softwareRetentionRead(mdnaText, fy).retention;
+  const ladOf = (mdnaText, fy, businessText = "") => customerLadderRead({ mdnaText, businessText, fy });
+
+  // --- lane 1: the seven NRR names, figures verbatim-in-sentence ---
+  const mdbNrr = "As of January 31, 2026, our net ARR expansion rate was approximately 121%.";
+  {
+    const r = nrrOf(mdbNrr, 2026);
+    ok("MDB: net ARR expansion rate ships 'approximately 121%'", r.length === 1 && r[0].figure === "approximately 121%" && r[0].label === "net ARR expansion rate");
+    ok("MDB: the shipped figure is a literal substring of the shipped sentence", r[0].sentence.includes(r[0].figure));
+  }
+  ok("MDB: 'Historically … has been over 120%' never ships — no period binding, comparative figure",
+    nrrOf("Historically, our net ARR expansion rate has been over 120%.", 2026).length === 0);
+
+  ok("PD: 98% binds to 'the fiscal year ended January 31, 2026'",
+    (() => { const r = nrrOf("Our dollar-based net retention rate was 98% for the fiscal year ended January 31, 2026.", 2026); return r.length === 1 && r[0].figure === "98%"; })());
+
+  const ddogNrr = "As of December 31, 2025, our trailing 12-month dollar-based net retention rate was about 120%.";
+  const ddogStaleBand = "As of December 31, 2024, our trailing 12-month dollar-based net retention rate was high-110%'s.";
+  {
+    const r = softwareRetentionRead(ddogNrr + " " + ddogStaleBand, 2025);
+    ok("DDOG: 'about 120%' ships with the qualifier inside the chip", r.retention.length === 1 && r.retention[0].figure === "about 120%");
+    ok("DDOG: the 2024-dated band sentence in the CURRENT filing is neither a figure nor a band record (period binding)",
+      r.bands.length === 0);
+  }
+  ok("DDOG prior filing: the current-bound band is recorded as a BAND, never as a figure",
+    (() => { const r = softwareRetentionRead(ddogStaleBand, 2024); return r.retention.length === 0 && r.bands.length === 1 && r.bands[0].band === "high-110%'s"; })());
+
+  const netNrr = "Our dollar-based net retention rates were 120%, 111%, and 115% for the three months ended December 31, 2025, 2024, and 2023, respectively.";
+  {
+    const r = nrrOf(netNrr, 2025);
+    ok("NET: the three-period sentence ships 120% — parallel structure pairs value to year, basis words stay inside the quote",
+      r.length === 1 && r[0].figure === "120%" && /three months ended/.test(r[0].sentence));
+  }
+  ok("NET: the revenue-driver sentence (40% beside 120%, both years the same) dies on monotonicity",
+    nrrOf("The increase in revenue was primarily due to the addition of new paying customers, which increased by 40% during the year ended December 31, 2025, as well as expansion within our existing paying customers, which was reflected by our dollar-based net retention rate of 120% for the three months ended December 31, 2025.", 2025).length === 0);
+  ok("parallel red-team: three values against two years ships nothing",
+    nrrOf("Our dollar-based net retention rates were 120%, 111%, and 115% for the three months ended December 31, 2025 and 2024, respectively.", 2025).length === 0);
+  ok("monotonicity red-team: a shuffled year list ships nothing",
+    nrrOf("Our dollar-based net retention rates were 120%, 111%, and 115% for the three months ended December 31, 2025, 2023, and 2024, respectively.", 2025).length === 0);
+
+  ok("ESTC: 'approximately 112%' ships",
+    (() => { const r = nrrOf("Our Net Expansion Rate was approximately 112% as of April 30, 2026.", 2026); return r.length === 1 && r[0].figure === "approximately 112%"; })());
+  ok("ESTC: the hypothetical 100% decoy dies ('if each customer … would be 100%')",
+    nrrOf("For instance, if each customer had a one-year subscription and renewed its subscription for the same amount, the Net Expansion Rate would be 100%.", 2026).length === 0);
+
+  const frogNrr = "As of December 31, 2025 and 2024, our net dollar retention rate was 119% and 116%, respectively.";
+  ok("FROG: 119% ships from the two-period sentence", (() => { const r = nrrOf(frogNrr, 2025); return r.length === 1 && r[0].figure === "119%"; })());
+  ok("FROG: the forward-looking sentence never anchors ('We expect our net dollar retention rate to remain relatively stable…')",
+    nrrOf("We expect our net dollar retention rate to remain relatively stable, with minor fluctuations around current levels.", 2025).length === 0);
+
+  // AMPL, the two-variant case: TTM and ending are DIFFERENT metrics under near-identical
+  // labels — they ship as two rows and each corroborates only against its own kind.
+  const amplTtm = "As of December 31, 2025 and 2024, our dollar-based net retention rate (TTM) across paying customers was 104% and 97%, respectively.";
+  const amplEnd = "Additionally, our ending dollar-based net retention rate for paying customers as of December 31, 2025 and 2024, was 105% and 100%, respectively.";
+  const amplUnlabeled = "As of December 31, 2025 and 2024, our TTM was 104% and 97%, respectively, for paying customers.";
+  {
+    const r = nrrOf([amplTtm, amplEnd, amplUnlabeled].join(" "), 2025);
+    ok("AMPL: the two label variants ship as two rows (104% TTM, 105% ending)",
+      r.length === 2 && r[0].figure === "104%" && r[1].figure === "105%" && r[0].label !== r[1].label);
+    ok("AMPL: the unlabeled 'our TTM was' sentence is never a row", !r.some((x) => x.sentence === amplUnlabeled));
+  }
+
+  // --- cross-filing prior-year corroboration (assembly) ---
+  const kpi = (mdnaText, fy, businessText = "") => softwareKpiRead({ mdnaText, businessText, fy });
+  {
+    const cur = kpi(netNrr, 2025);
+    const pri = kpi("Our dollar-based net retention rates for the three months ended December 31, 2024, 2023, and 2022 were 111%, 115%, and 122%, respectively.", 2024);
+    const asm = softwareKpiAssemble(cur, pri);
+    ok("NET: the prior filing's 111%/115% corroborate the current sentence's 2024/2023 figures",
+      asm.nrr?.length === 1 && asm.nrr[0].corroborated === true && !asm.withheld);
+  }
+  {
+    const cur = kpi(frogNrr, 2025);
+    const priGood = kpi("As of December 31, 2024 and 2023, our net dollar retention rate was 116% and 119%, respectively.", 2024);
+    ok("FROG: 116% for 2024 corroborates across filings", softwareKpiAssemble(cur, priGood).nrr?.[0]?.corroborated === true);
+    const priBad = kpi("As of December 31, 2024 and 2023, our net dollar retention rate was 112% and 119%, respectively.", 2024);
+    const asm = softwareKpiAssemble(cur, priBad);
+    ok("corroboration red-team: a conflicting prior-year figure is a stated withhold — no figure ships, both sentences named",
+      !asm.nrr && asm.withheld?.length === 1 && asm.withheld[0].year === 2024 && !!asm.withheld[0].current && !!asm.withheld[0].prior);
+  }
+  {
+    const cur = kpi([amplTtm, amplEnd].join(" "), 2025);
+    const pri = kpi([
+      "As of December 31, 2024 and 2023, our dollar-based net retention rate (TTM) across paying customers was 97% and 101%, respectively.",
+      "Additionally, our ending dollar-based net retention rate for paying customers as of December 31, 2024 and 2023, was 100% and 98%, respectively.",
+    ].join(" "), 2024);
+    const asm = softwareKpiAssemble(cur, pri);
+    ok("AMPL: each variant corroborates against its own kind (TTM 97, ending 100), never across",
+      asm.nrr?.length === 2 && asm.nrr.every((x) => x.corroborated === true));
+  }
+
+  // --- lane 2: the customer ladder, nine names ---
+  ok("MDB: 2,799 at $100,000 from the three-period 'respectively' run",
+    (() => { const r = ladOf("The number of customers with $100,000 or greater in ARR was 2,799, 2,396 and 2,052 as of January 31, 2026, 2025 and 2024, respectively.", 2026); return r.ladder.length === 1 && r.ladder[0].count === "2,799" && r.ladder[0].threshold === "$100,000"; })());
+  ok("MDB: the total ships 'over 65,200' — the qualifier is part of the figure and rides the chip",
+    (() => { const r = ladOf("As of January 31, 2026, we had over 65,200 customers across a wide range of industries and in over 100 countries, compared to over 54,500 customers and over 47,800 customers as of January 31, 2025 and 2024, respectively.", 2026); return r.ladder.length === 1 && r.ladder[0].count === "over 65,200" && !r.ladder[0].threshold && r.refused.length === 0; })());
+
+  ok("PD: 15,351 ships from the compared-to sentence (the count WITH its prior year)",
+    (() => { const r = ladOf("As of January 31, 2026, we had 15,351 paying customers spanning organizations of a broad range of sizes and industries, compared to 15,114 as of January 31, 2025.", 2026); return r.ladder.length === 1 && r.ladder[0].count === "15,351"; })());
+  ok("PD: the undated 'Of these customers, 861…' cohort sentence never ships (no period binding)",
+    ladOf('Of these customers, 861 customers contribute annual recurring revenue ("ARR") in excess of $100.0 thousand, and 79 customers contribute ARR in excess of $1.0 million.', 2026).ladder.length === 0);
+
+  ok("DDOG: 4,310 at $100,000 — the 90%-of-ARR share stays inside the quote",
+    (() => { const r = ladOf("As of December 31, 2025, we had approximately 4,310 customers with annual run-rate revenue, or ARR, of $100,000 or more, representing 90% of our ARR, up from 3,610 as of December 31, 2024, representing 88% of our ARR.", 2025); return r.ladder.length === 1 && r.ladder[0].count === "approximately 4,310" && r.ladder[0].threshold === "$100,000" && /90% of our ARR/.test(r.ladder[0].sentence); })());
+  ok("DDOG: 603 at $1.0 million ('up from 462' pairs the years)",
+    (() => { const r = ladOf("As of December 31, 2025, we had approximately 603 customers with annual run-rate revenue, or ARR, of $1.0 million or more, up from 462 as of December 31, 2024.", 2025); return r.ladder.length === 1 && r.ladder[0].count === "approximately 603" && r.ladder[0].threshold === "$1.0 million"; })());
+  ok("DDOG: '1,000 out-of-the-box integrations … our customers' is not a customer count",
+    ladOf("", 2025, "We have over 1,000 out-of-the-box integrations with technologies to provide significant value to our customers without the need for professional services.").ladder.length === 0);
+  ok("DDOG: a bare comparative WITHOUT a metric in reach ('in over 160 countries') is not a loud failure",
+    (() => { const r = ladOf("", 2025, "As of December 31, 2025, we had approximately 32,700 customers in over 160 countries."); return r.refused.length === 0 && r.ladder.length === 1 && r.ladder[0].count === "approximately 32,700"; })());
+
+  // NET, the pinned loud failure: page glue ate the threshold's dollar form. The glue-strip
+  // removes only the literal "Table of contents" run, so the orphaned page number stays and
+  // the closed set refuses the phrase LOUDLY — "greater than 82" can never ship.
+  {
+    const r = ladOf("We view the number of customers with Annualized Revenue greater than 82 Table of contents $100,000 as indicative of our penetration within large enterprise accounts.", 2025);
+    ok("NET: 'greater than 82 Table of contents' fails the closed threshold set loudly — recorded, nothing ships",
+      r.ladder.length === 0 && r.refused.length === 1 && r.refused[0].token === "greater than 82" && r.refused[0].reason === "threshold set");
+  }
+  ok("NET: the clean cohort sentence beside the decoy ships 4,298 at $100,000",
+    (() => { const r = ladOf("The number of paying customers with Annualized Revenue greater than $100,000 was 4,298, 3,497, and 2,756 for the three months ended December 31, 2025, 2024, and 2023, respectively.", 2025); return r.ladder.length === 1 && r.ladder[0].count === "4,298" && r.ladder[0].threshold === "$100,000"; })());
+  ok("NET: the paying-customer total ships 332,466 from the number-of run",
+    (() => { const r = ladOf("The number of paying customers was 332,466, 237,714, and 189,791 for the three months ended December 31, 2025, 2024, and 2023, respectively.", 2025); return r.ladder.length === 1 && r.ladder[0].count === "332,466" && !r.ladder[0].threshold; })());
+
+  ok("ESTC: 'over 1,720' at $100,000 — the was-run counts are counts, never loud-failed thresholds",
+    (() => { const r = ladOf('The number of customers who represented greater than $100,000 in annual contract value ("ACV") was over 1,720 and over 1,510 as of April 30, 2026 and 2025, respectively.', 2026); return r.refused.length === 0 && r.ladder.length === 1 && r.ladder[0].count === "over 1,720"; })());
+  ok("ESTC: 'over 240' at $1.0 million",
+    (() => { const r = ladOf("In addition, we had over 240 customers who represented greater than $1.0 million in ACV as of April 30, 2026.", 2026); return r.ladder.length === 1 && r.ladder[0].count === "over 240" && r.ladder[0].threshold === "$1.0 million"; })());
+  ok("ESTC: the total ships 'approximately 24,000' from the three-period comparison",
+    (() => { const r = ladOf("", 2026, "As of April 30, 2026, we had approximately 24,000 customers compared to approximately 21,500 and approximately 21,000 customers as of April 30, 2025 and 2024, respectively."); return r.ladder.length === 1 && r.ladder[0].count === "approximately 24,000"; })());
+
+  ok("FROG: 1,168 at $100,000 ('1,168 of our customers', date-glued run stays clean)",
+    (() => { const r = ladOf("As of December 31, 2025, 1,168 of our customers had ARR of $100,000 or more, increasing from 1,018 customers as of December 31, 2024.", 2025); return r.ladder.length === 1 && r.ladder[0].count === "1,168"; })());
+  ok("FROG: 74 at $1.0 million",
+    (() => { const r = ladOf("We had 74 customers with ARR of at least $1.0 million as of December 31, 2025, increasing from 52 customers as of December 31, 2024.", 2025); return r.ladder.length === 1 && r.ladder[0].count === "74"; })());
+
+  ok("AMPL: the single-year two-cohort sentence ships TWO rows (698 at $100,000, 56 at $1.0 million) by interleaved pairing",
+    (() => { const r = ladOf('As of December 31, 2025, we had 698 paying customers that each represented greater than $100,000 in annual recurring revenue ("ARR") and 56 customers that each represented greater than $1.0 million in ARR, demonstrating the mission critical nature of our platform to help customers succeed in the new digital age.', 2025); return r.ladder.length === 2 && r.ladder[0].count === "698" && r.ladder[0].threshold === "$100,000" && r.ladder[1].count === "56" && r.ladder[1].threshold === "$1.0 million"; })());
+  ok("AMPL: the flattened metric-table row ('…(TTM) 104 % 97 % Paying Customers with ARR of $100,000 or greater 698 591 18 %') is refused — the destroyed header makes number-to-year mapping impossible",
+    ladOf("54 As of December 31, 2025 2024 YoY Growth (dollar values in millions) Annual Recurring Revenue (ARR) $ 366 $ 312 17 % Dollar-Based Net Retention Rate (TTM) 104 % 97 % Paying Customers with ARR of $100,000 or greater 698 591 18 %", 2025).ladder.length === 0);
+  ok("AMPL: a prior-year-only cohort sentence in the current filing never ships ('…for the years ended December 31, 2024')",
+    ladOf("In comparison, we had 591 customers that each represented greater than $100,000 in ARR and 42 customers that each represented greater than $1.0 million in ARR for the years ended December 31, 2024.", 2025).ladder.length === 0);
+
+  const iotCore = "As of January 31, 2026, we had more than 12,000 customers who each represented $25,000 or more in ARR, or Core Customers, and approximately 85% of our ARR came from Core Customers.";
+  const iotCorePri = "As of February 1, 2025, we had more than 20,000 customers, each representing $10,000 or more in ARR, or Core Customers, and approximately 93% of our ARR came from Core Customers.";
+  ok("IOT: 'more than 12,000' Core Customers at $25,000, cohort label captured",
+    (() => { const r = ladOf(iotCore, 2026); return r.ladder.length === 1 && r.ladder[0].count === "more than 12,000" && r.ladder[0].threshold === "$25,000" && r.ladder[0].cohort === "Core Customers"; })());
+  ok("IOT: 3,194 at $100,000 from the ascending from/to sentence — the CURRENT year's count, not the prior",
+    (() => { const r = ladOf("The number of our customers representing over $100,000 in ARR has increased over time from 2,484 as of February 1, 2025 to 3,194 customers as of January 31, 2026.", 2026); return r.ladder.length === 1 && r.ladder[0].count === "3,194"; })());
+  ok("IOT: 'Under our prior definition…' never ships — a superseded basis is not a rung",
+    ladOf("", 2026, "Under our prior definition, as of January 31, 2026, we had over 23,000 customers with over $10,000 in ARR, and approximately 94% of our total ARR came from customers with over $10,000 in ARR.").ladder.length === 0);
+
+  ok("NOW: 603 at $5 million from the comma-run ('We had 603, 502, and 420 customers…')",
+    (() => { const r = ladOf("We had 603, 502, and 420 customers with ACV greater than $5 million as of December 31, 2025, 2024 and 2023, respectively.", 2025); return r.ladder.length === 1 && r.ladder[0].count === "603" && r.ladder[0].threshold === "$5 million"; })());
+  ok("NOW: the total ships 'approximately 8,700' whole, never split at its comma",
+    (() => { const r = ladOf("As of December 31, 2025, we had approximately 8,700 customers across a wide variety of industries.", 2025); return r.ladder.length === 1 && r.ladder[0].count === "approximately 8,700"; })());
+
+  // --- the discontinuity tripwire: compares only already-gated records ---
+  {
+    const cur = kpi(iotCore, 2026);
+    const pri = kpi(iotCorePri, 2025);
+    const asm = softwareKpiAssemble(cur, pri);
+    ok("IOT fires REDEFINED: the same named cohort moved $10,000 → $25,000, both sentences ship side by side",
+      asm.tripwire?.length === 1 && asm.tripwire[0].flag === "REDEFINED" && asm.tripwire[0].label === "Core Customers"
+      && asm.tripwire[0].current === iotCore && asm.tripwire[0].prior === iotCorePri);
+  }
+  {
+    const cur = kpi(ddogNrr + " " + ddogStaleBand, 2025);
+    const pri = kpi(ddogStaleBand, 2024);
+    const asm = softwareKpiAssemble(cur, pri);
+    ok("DDOG fires DEGRADED: a numeric figure beside the prior filing's qualitative band, both sentences ship",
+      asm.tripwire?.length === 1 && asm.tripwire[0].flag === "DEGRADED"
+      && asm.tripwire[0].current === ddogNrr && asm.tripwire[0].prior === ddogStaleBand);
+  }
+  {
+    const cur = kpi("Our dollar-based net retention rate was 98% for the fiscal year ended January 31, 2026.", 2026);
+    const pri = kpi("Our dollar-based net retention rate was 106% for the fiscal year ended January 31, 2025.", 2025);
+    const asm = softwareKpiAssemble(cur, pri);
+    ok("PD does not fire: numeric both years, no cohort renamed", !asm.tripwire);
+  }
 }
 
 console.log(`\nlanguageGatesTest: ${pass} passed, ${fail} failed`);

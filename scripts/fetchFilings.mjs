@@ -866,7 +866,7 @@ function bizLeadText(business, form) {
   return m > 200 ? business.slice(m) : business;
 }
 
-async function getFiling(cik, f, totalDebtMillions = null, devTarget = null, depTarget = null) {
+async function getFiling(cik, f, totalDebtMillions = null, devTarget = null, depTarget = null, swTarget = false) {
   const accnNoDash = f.accn.replace(/-/g, "");
   const base = `https://www.sec.gov/Archives/edgar/data/${Number(cik)}/${accnNoDash}`;
   let url = `${base}/${f.doc}`;
@@ -936,7 +936,14 @@ async function getFiling(cik, f, totalDebtMillions = null, devTarget = null, dep
   if (depTarget && depTarget.deposits > 0 && fy) {
     try { uninsuredRead = uninsuredDepositsRead({ mdnaText: mdna, fullText: text, fy, deposits: depTarget.deposits }); } catch { uninsuredRead = null; }
   }
-  return { url, business: { ...metrics(business), lead: leadSentences(bizLeadText(business, f.form)), head: business.slice(0, 800) }, mdna: { ...md, lead: leadSentences(mdna), candor: candorSignals(mdna, md.sents) }, risk: metrics(risk), reportDate: f.reportDate, debtMaturity, reserveRead, uninsuredRead };
+  // The software NRR + customer-ladder lanes (Build 7): pure substring lanes over the filing's
+  // own MD&A and Business text, run for BOTH filings when the caller flags a software name —
+  // the prior filing's gated record is the corroboration and tripwire counterparty.
+  let swRead = null;
+  if (swTarget && fy) {
+    try { swRead = softwareKpiRead({ mdnaText: mdna, businessText: business, fy }); } catch { swRead = null; }
+  }
+  return { url, business: { ...metrics(business), lead: leadSentences(bizLeadText(business, f.form)), head: business.slice(0, 800) }, mdna: { ...md, lead: leadSentences(mdna), candor: candorSignals(mdna, md.sents) }, risk: metrics(risk), reportDate: f.reportDate, debtMaturity, reserveRead, uninsuredRead, swRead };
 }
 
 // ---- executive pay (proxy statement / DEF 14A) ----
@@ -1824,6 +1831,338 @@ function uninsuredDepositsRead({ mdnaText = "", fullText = "", fy, deposits }) {
   return null;
 }
 
+// ---- Software NRR + the customer ladder, in the filer's own words (Build 7 of the
+// qualitative survey, 2026-07-31; docs/qualitative-desks-survey.md §Software P1 + P2, both
+// pure M3 substring lanes) ----
+//
+// Two lanes, one law: the lane NEVER computes, totals, normalizes, or restates a number —
+// every figure the reader sees is a verbatim substring of the quoted filer sentence, asserted
+// through weld() at write time. The survey's own refusal stands behind the design: the seven
+// disclosing filers compute INCOMPATIBLE numbers under near-identical labels (Cloudflare's is
+// a three-month snapshot, Datadog's trailing-12-month, PagerDuty's fiscal-year), so there is
+// no cross-company column, band, or median — each page carries only its own filer's sentence,
+// whose basis words ride inside the quote.
+//
+// LANE 1 — net revenue retention (MD&A only, never Risk Factors). Gates, each measured on the
+// FY2025/FY2026 sample filings:
+//   ANCHOR — the closed label vocabulary (dollar-based net retention/expansion rate, net
+//     dollar retention rate, net ARR expansion rate, net expansion rate, net revenue
+//     retention) plus a declarative was/were. Definitional prose ("We calculate…") carries no
+//     figure and dies on the figure gate; MongoDB's "Historically… has been over 120%" has no
+//     verb-year binding and dies on the period gate.
+//   CLOSED FIGURE SET — a percent with an optional approximately/about qualifier, bounded
+//     50–300. Datadog's qualitative band ("high-110%'s") is NOT a figure: it is recorded as a
+//     BAND (fuel for the discontinuity tripwire), never shipped as a value.
+//   PERIOD BINDING — the sentence must name the filing's fiscal year, and the year list's
+//     maximum must BE that year (Datadog's "As of December 31, 2024…" sentence inside the
+//     FY2025 filing dies here, so a stale figure can never wear the current label).
+//   PARALLEL STRUCTURE + MONOTONICITY — on a multi-value sentence the percent count must
+//     equal the year count and the years must be strictly monotonic, so value↔period pairing
+//     is deterministic (Cloudflare's "120%, 111%, and 115% … 2025, 2024, and 2023"). A
+//     revenue-driver sentence whose two years are BOTH the current year (40% new-customer
+//     growth beside the 120% retention figure) fails monotonicity and dies.
+//   HYPOTHETICAL/FORWARD KILL — Elastic's "if each customer… renewed…, the Net Expansion Rate
+//     would be 100%" decoy dies on the illustration guard; JFrog's "We expect our net dollar
+//     retention rate to remain relatively stable" dies on the forward guard.
+//   CROSS-FILING CORROBORATION (assembly time) — where the current sentence states a
+//     prior-year figure, the prior year's filing must carry a consistent figure for that year
+//     under the SAME label variant; a conflict is a stated withhold that quotes neither as
+//     the fact. Amplitude's two label variants (TTM vs ending) are corroborated each against
+//     its own kind and ship as two rows.
+//
+// LANE 2 — the customer ladder (MD&A first, Business as fallback — sentence-anchored ONLY;
+// flattened table rows like Amplitude's "Paying Customers with ARR of $100,000 or greater 698
+// 591 18 %" die on the table guard because number-to-year mapping needs the destroyed header).
+//   COUNTS — three shapes, all measured: a count adjacent to "customers" (with a closed
+//     qualifier set), a comparison-connective count ("compared to 15,114 as of…", "up from
+//     3,610"), and the number-of value-run ("The number of paying customers was 332,466,
+//     237,714, and 189,791 for…"). PagerDuty's "established Fortune 100 companies" and
+//     Datadog's "1,000 out-of-the-box integrations" never parse as counts.
+//   CLOSED THRESHOLD SET — a cohort threshold must be a dollar form from the closed set
+//     ($5,000/$10,000/$25,000/$50,000/$100,000/$500,000, $100.0 thousand, $1/$1.0/$5/$10
+//     million). A metric-bound comparative whose number lost its dollar form to page glue
+//     FAILS LOUDLY (recorded + warned), never ships: Cloudflare's "Annualized Revenue greater
+//     than 82 Table of contents $100,000" is the pinned case — a naive strip would ship
+//     "greater than 82". The glue-strip removes only the literal "Table of Contents" run, so
+//     the orphaned page number stays and the closed set refuses the phrase.
+//   PERIOD BINDING + PARALLEL STRUCTURE — same law as lane 1, over counts↔years; a
+//     single-year sentence may instead pair counts↔thresholds positionally when they
+//     interleave (Amplitude's "698 … greater than $100,000 … and 56 … greater than $1.0
+//     million"). A sentence where neither pairing is deterministic ships nothing — which is
+//     the gate that keeps Amplitude's BIZ "56 and 42 customers" prior-year trap out.
+//   SUPERSEDED-BASIS KILL — "Under our prior definition…" (Samsara) never ships.
+//
+// TRIPWIRE (SW P3 fast-follow, riding these records only — it never reads fresh text):
+//   REDEFINED — the same NAMED cohort carries a different closed-set threshold in the two
+//     filings' gated rows (Samsara's Core Customers, $10,000 → $25,000). Ships both
+//     sentences verbatim side by side.
+//   DEGRADED — the same label variant is a numeric figure in one filing and a qualitative
+//     band in the other (Datadog: "was about 120%" beside "was high-110%'s"). Both sentences
+//     ship side by side. PagerDuty (numeric both years, no cohort renames) fires nothing.
+
+const SW_NRR_LABEL = /(?:\b(ending|trailing\s+(?:12|twelve)[-\s]month)\s+)?\b(dollar-based\s+net\s+(?:retention|expansion)\s+rates?|net\s+dollar\s+retention\s+rates?|net\s+revenue\s+retention(?:\s+rates?)?|net\s+ARR\s+expansion\s+rates?|net\s+expansion\s+rates?)\b(\s*\(\s*TTM\s*\))?/i;
+const SW_TABLE = /\b(19|20)\d{2}\s+(19|20)\d{2}\b|\(in\s+(?:thousands|millions|billions)|\(dollars?\s+(?:in|values)|following\s+tables?\b|tables?\s+(?:below|above)\b|as\s+follows\b/i;
+const SW_ILLUSTRATION = /\bwould\b|\bfor\s+(?:instance|example)\b|\bhypothetical\b|\billustrat/i;
+const SW_FORWARD = /\bwe\s+expect\b|\bexpects?\s+(?:our|to)\b|\banticipate|\bguidance\b|\bgoing\s+forward\b|\bfuture\s+periods?\b|\bmay\s+fluctuate\b/i;
+const SW_PRIOR_DEF = /\bunder\s+our\s+(?:prior|previous|former)\s+definition\b|\bpreviously\s+(?:defined|disclosed)\b/i;
+// The qualitative band (never a figure, always tripwire fuel): "high-110%'s", "mid-110%s".
+const SW_BAND = /\b(?:low|mid|high)-\d{2,3}\s?%'?s?\b/i;
+// The closed figure set: a percent, optional approximation qualifier, never a band fragment
+// (the lookbehind keeps "110%" inside "high-110%'s" from reading as a figure).
+const SW_PCT = /(?:approximately\s+|about\s+|~\s?)?(?<![-\d])\d{2,3}(?:\.\d+)?\s?%(?!'s)/g;
+// The closed threshold set: the ladder-threshold universe as filers actually print it.
+const SW_THRESH = /\$\s?(?:5|10|25|50|75|100|150|200|250|500)(?:,000|\.0\s*thousand)\b|\$\s?100\.0\s+thousand\b|\$\s?(?:1|2|5|10)(?:\.0)?\s+million\b|\$\s?1,000,000\b/gi;
+const SW_METRIC_WORD = /\bARR\b|\bACV\b|annual\s+contract\s+value|annual\s+run-rate\s+revenue|annual(?:ized)?\s+(?:recurring\s+)?revenue|\bspend(?:ing)?\b|\bannually\b/i;
+
+// The lane's own splitter. The glue-strip removes ONLY the literal "Table of Contents" run —
+// deliberately NOT the page number beside it, so a threshold phrase the glue destroyed stays
+// destroyed and fails the closed set loudly instead of quietly re-assembling into a pass. A
+// LEADING page number on a sentence is stripped (it is provably not content there).
+function swSentences(text) {
+  if (!text) return [];
+  return String(text)
+    .replace(/\bTable\s+of\s+Contents\b/gi, " ")
+    .split(/(?<=[.!?]["”’']?)\s+(?=[A-Z(“"$0-9])/)
+    .map((s) => s.replace(/\s+/g, " ").trim().replace(/^\d{1,4}\s+(?=[A-Z“"$])/, ""))
+    .filter((s) => {
+      if (s.length < 40 || s.length > 620) return false;
+      const digits = (s.match(/\d/g) || []).length;
+      const letters = (s.match(/[a-zA-Z]/g) || []).length;
+      return letters >= 40 && digits / (digits + letters) <= 0.4;
+    });
+}
+
+const swYears = (s) => [...s.matchAll(/\b(20\d\d)\b/g)].map((m) => parseInt(m[1], 10));
+const swMonotonic = (ys) => ys.every((y, i) => i === 0 || y < ys[i - 1]) || ys.every((y, i) => i === 0 || y > ys[i - 1]);
+const swNum = (v) => parseFloat(String(v).replace(/[^\d.]/g, ""));
+
+// Lane 1: the filer's own NRR sentence, MD&A scope only.
+function softwareRetentionRead(mdnaText, fy) {
+  if (!fy) return { fy, retention: [], bands: [] };
+  const rows = [], bands = [];
+  const seenKey = new Set();
+  for (const s of swSentences(mdnaText)) {
+    const lm = s.match(SW_NRR_LABEL);
+    if (!lm) continue;
+    if (SW_TABLE.test(s)) continue;
+    if (HYPO.test(s) || SW_ILLUSTRATION.test(s) || SW_FORWARD.test(s)) continue;
+    const key = ((lm[1] ? lm[1].toLowerCase().replace(/twelve/, "12").replace(/\s+/g, " ") + " " : "")
+      + lm[2].toLowerCase().replace(/\s+/g, " ").replace(/rates\b/, "rate")
+      + (lm[3] ? " (ttm)" : "")).trim();
+    const years = swYears(s);
+    if (!years.length || Math.max(...years) !== fy) continue;
+    // The band path: a qualitative value is recorded for the tripwire, never shipped as a figure.
+    if (SW_BAND.test(s) && ![...s.matchAll(SW_PCT)].length) {
+      if (!bands.some((b) => b.key === key)) bands.push({ key, label: lm[0].trim(), band: s.match(SW_BAND)[0], sentence: s });
+      continue;
+    }
+    // The closed figure set, bounded: an NRR outside 50–300 is not this metric.
+    if (!/\b(?:was|were)\b/i.test(s)) continue;
+    const figs = [...s.matchAll(SW_PCT)].map((m) => m[0]).filter((f) => { const n = swNum(f); return n >= 50 && n <= 300; });
+    if (!figs.length) continue;
+    // Parallel structure + monotonicity: values pair to years positionally, or not at all.
+    if (figs.length !== years.length || !swMonotonic(years)) continue;
+    const idx = years.indexOf(fy);
+    if (idx < 0) continue;
+    const figure = figs[idx];
+    if (seenKey.has(key)) continue;
+    seenKey.add(key);
+    // The weld law at write time: the figure is the filer's own characters.
+    weld(s, [{ text: figure, kind: "verbatim" }]);
+    rows.push({ key, label: lm[0].trim(), figure, periods: years.map((y, i) => ({ y, v: figs[i] })), sentence: s });
+  }
+  return { fy, retention: rows, bands };
+}
+
+// Lane 2 count extraction: the three measured shapes, each returning { text, value, index }.
+const SW_COUNT_QUAL = String.raw`(?:(?:more\s+than|over|approximately|about|nearly)\s+)?`;
+function swCounts(s) {
+  const out = [];
+  const push = (text, index) => {
+    const v = parseInt(text.replace(/[^\d]/g, ""), 10);
+    if (!Number.isFinite(v) || v < 10) return;
+    // A bare four-digit year is never a customer count (a comma-grouped "2,025" would be),
+    // and a day-of-month glued behind its month name ("December 31, …") is a date, not a
+    // count — the guards that keep a date-glued run ("…2025, 1,168 of our customers") clean.
+    const raw = text.replace(/^(?:more\s+than|over|approximately|about|nearly)\s+/i, "");
+    if (/^(?:19|20)\d\d$/.test(raw)) return;
+    if (/(?:january|february|march|april|may|june|july|august|september|october|november|december)\s*$/i.test(s.slice(Math.max(0, index - 12), index))) return;
+    if (out.some((c) => index >= c.index && index < c.index + c.text.length)) return;
+    out.push({ text: text.trim(), value: v, index });
+  };
+  // (a) adjacency: a count — or an explicit ", and"-separated run of counts (ServiceNow's
+  // "We had 603, 502, and 420 customers…") — directly qualifying "customers". A number token
+  // is whole (comma-grouped thousands never split), and bare space-separated numbers never
+  // chain, so a flattened table row cannot read as a run.
+  const NUM = String.raw`\d{1,3}(?:,\d{3})+|\d+`;
+  const adj = new RegExp(String.raw`((?:${SW_COUNT_QUAL}(?:${NUM}))(?:(?:\s*,\s*(?:and\s+)?|\s+and\s+)(?:${SW_COUNT_QUAL}(?:${NUM})))*)\s+(?:(?:paying|total|large|new|Core)\s+)?(?:of\s+(?:our|the)\s+)?[Cc]ustomers\b`, "g");
+  for (const m of s.matchAll(adj)) {
+    // Re-tokenize the run with the same NUM shape — a naive comma split would break a
+    // comma-grouped thousand ("approximately 8,700" is one count, not two).
+    const tok = new RegExp(String.raw`(?:(?:more\s+than|over|approximately|about|nearly)\s+)?(?:${NUM})`, "g");
+    for (const t of m[1].matchAll(tok)) push(t[0], m.index + t.index);
+  }
+  // (b) the number-of value-run: "number of … customers … was N, N and N".
+  if (/number\s+of\s+(?:our\s+)?(?:paying\s+|paid\s+|total\s+|large\s+)?customers/i.test(s)) {
+    const vm = s.match(/\b(?:was|were)\s+/i);
+    if (vm) {
+      let at = vm.index + vm[0].length;
+      const tokenRe = /^(?:\s*(?:over|approximately|about|more\s+than|nearly|and)\s+|\s*,\s*)*\s*(\d{1,3}(?:,\d{3})+|\d+)(?!\s*%)/;
+      for (;;) {
+        const t = s.slice(at).match(tokenRe);
+        if (!t) break;
+        const i = at + t[0].indexOf(t[1]);
+        // A bare four-digit year in the run means the scan crossed into a date — stop before
+        // it (the RAW token: a comma-grouped "2,052" is a count, never a year).
+        if (/^(?:19|20)\d\d$/.test(t[1])) break;
+        const qual = s.slice(at, i).match(/(?:over|approximately|about|more\s+than|nearly)\s*$/i);
+        push((qual ? qual[0].trim() + " " : "") + t[1], qual ? i - qual[0].length : i);
+        at = i + t[1].length;
+      }
+    }
+  }
+  // (c) comparison connectives: the count may drop its noun ("compared to 15,114 as of…").
+  const cmp = new RegExp(String.raw`\b(?:compared\s+to|up\s+from|down\s+from|increasing\s+from|decreasing\s+from|from)\s+(${SW_COUNT_QUAL}\d[\d,]*)(?!\s*%)`, "gi");
+  for (const m of s.matchAll(cmp)) {
+    const after = s.slice(m.index + m[0].length).match(/^\s*(\S+)/);
+    const next = after ? after[1].toLowerCase().replace(/[^a-z]/g, "") : "";
+    // The number must read as a customer count in context: followed by "customers", a date, or
+    // a list continuation — "from 713 employees" is somebody else's number.
+    if (next && !["customers", "as", "and", "to", "in"].includes(next) && !/^(?:january|february|march|april|may|june|july|august|september|october|november|december)$/.test(next)) continue;
+    push(m[1], m.index + m[0].indexOf(m[1].trim()));
+  }
+  return out.sort((a, b) => a.index - b.index);
+}
+
+// Lane 2: the customer ladder. MD&A first (the metrics' home), Business as fallback.
+function customerLadderRead({ mdnaText = "", businessText = "", fy }) {
+  if (!fy) return { fy, ladder: [], refused: [] };
+  const byKey = new Map();
+  const refused = [];
+  for (const body of [mdnaText, businessText]) {
+    for (const s of swSentences(body)) {
+      if (!/customers/i.test(s)) continue;
+      if (SW_TABLE.test(s) || SW_PRIOR_DEF.test(s)) continue;
+      if (/\bif\s/i.test(s) || SW_ILLUSTRATION.test(s)) continue;
+      const counts = swCounts(s);
+      // Thresholds from the closed set, in order.
+      const thresholds = [...s.matchAll(SW_THRESH)].map((m) => ({ text: m[0].trim(), index: m.index }));
+      // The loud gate: a metric-bound comparative whose number is NOT a closed-set dollar form
+      // (page glue ate the real threshold). Recorded and warned, never shipped, and the
+      // sentence produces no rows at all.
+      let loud = false;
+      for (const m of s.matchAll(/\b(?:greater\s+than|more\s+than|in\s+excess\s+of|at\s+least|over)\s+(\d[\d,]*)(?!\s*%)(?![\d,])/gi)) {
+        const numAt = m.index + m[0].search(/\d/);
+        if (counts.some((c) => numAt >= c.index && numAt < c.index + c.text.length)) continue;
+        const before = s.slice(Math.max(0, m.index - 80), m.index);
+        const afterTx = s.slice(m.index + m[0].length, m.index + m[0].length + 60);
+        if (SW_METRIC_WORD.test(before) || SW_METRIC_WORD.test(afterTx)) {
+          refused.push({ reason: "threshold set", token: m[0].trim(), sentence: s });
+          console.warn(`  ! customer ladder: threshold "${m[0].trim()}" fails the closed set (page glue?) — refused loudly, sentence ships nothing`);
+          loud = true;
+        }
+      }
+      if (loud) continue;
+      if (!counts.length) continue;
+      const years = swYears(s);
+      if (!years.length || Math.max(...years) !== fy) continue;
+      const cohortName = (s.match(/,\s*or\s+((?:[A-Z][\w-]*\s+){1,2}Customers)\b/) || s.match(/\b((?:Core|Impact)\s+Customers)\b/) || [])[1] || null;
+      const rows = [];
+      if (thresholds.length <= 1 && counts.length === years.length && swMonotonic(years)) {
+        // Period series: counts pair to years positionally; the current year's count ships.
+        const idx = years.indexOf(fy);
+        if (idx >= 0) rows.push({ count: counts[idx].text, threshold: thresholds[0]?.text || null });
+      } else if (years.length === 1 && counts.length === thresholds.length && counts.length >= 1) {
+        // Cohort series: each count pairs with its nearest FOLLOWING threshold, disjointly.
+        let ok = true;
+        for (let i = 0; i < counts.length; i++) {
+          const next = counts[i + 1]?.index ?? Infinity;
+          if (!(thresholds[i].index > counts[i].index && thresholds[i].index < next)) ok = false;
+        }
+        if (ok) for (let i = 0; i < counts.length; i++) rows.push({ count: counts[i].text, threshold: thresholds[i].text });
+      }
+      for (const r of rows) {
+        const key = r.threshold ? "t:" + String(swNum(r.threshold) * (/million/i.test(r.threshold) ? 1e6 : /thousand/i.test(r.threshold) ? 1e3 : 1)) : "total";
+        const periods = counts.length === years.length ? years.length : 1;
+        const prev = byKey.get(key);
+        // First hit wins, except a multi-period sentence (the count WITH its prior-year
+        // comparison) outranks a single-period one for the same rung.
+        if (prev && !(periods > prev.periods)) continue;
+        weld(s, [{ text: r.count, kind: "verbatim" }, ...(r.threshold ? [{ text: r.threshold, kind: "verbatim" }] : [])]);
+        byKey.set(key, { count: r.count, threshold: r.threshold, cohort: cohortName, sentence: s, periods });
+      }
+    }
+  }
+  const ladder = [...byKey.values()].map(({ count, threshold, cohort, sentence }) => ({
+    count, ...(threshold ? { threshold } : {}), ...(cohort ? { cohort } : {}), sentence,
+  }));
+  return { fy, ladder, refused };
+}
+
+// Per-filing read (runs inside getFiling, where the section texts are in hand).
+function softwareKpiRead({ mdnaText = "", businessText = "", fy }) {
+  const nrr = softwareRetentionRead(mdnaText, fy);
+  const lad = customerLadderRead({ mdnaText, businessText, fy });
+  if (!nrr.retention.length && !nrr.bands.length && !lad.ladder.length && !lad.refused.length) return null;
+  return { fy, retention: nrr.retention, bands: nrr.bands, ladder: lad.ladder, refused: lad.refused };
+}
+
+const swThreshValue = (t) => swNum(t) * (/million/i.test(t) ? 1e6 : /thousand/i.test(t) ? 1e3 : 1);
+
+// Cross-filing assembly: prior-year corroboration and the discontinuity tripwire. Compares
+// only already-gated records — it never reads fresh text, so it inherits their anchoring.
+function softwareKpiAssemble(cur, pri) {
+  if (!cur) return null;
+  const nrr = [], withheld = [];
+  for (const r of cur.retention || []) {
+    const p = (pri?.retention || []).find((x) => x.key === r.key);
+    let conflict = null, corroborated = false;
+    for (const pd of r.periods || []) {
+      if (pd.y >= cur.fy) continue;
+      const pp = p?.periods?.find((q) => q.y === pd.y);
+      if (!pp) continue;
+      if (Math.abs(swNum(pd.v) - swNum(pp.v)) > 0.001) conflict = { year: pd.y, current: r.sentence, prior: p.sentence };
+      else corroborated = true;
+    }
+    if (conflict) {
+      console.warn(`  ! NRR: the ${conflict.year} figure disagrees across filings — stated withhold, neither quoted as the fact`);
+      withheld.push({ label: r.label, ...conflict });
+      continue;
+    }
+    nrr.push({ label: r.label, figure: r.figure, sentence: r.sentence, ...(corroborated ? { corroborated: true } : {}) });
+  }
+  const tripwire = [];
+  // REDEFINED: the same named cohort, a different closed-set threshold across the filings.
+  for (const c of cur.ladder || []) {
+    if (!c.cohort || !c.threshold) continue;
+    const p = (pri?.ladder || []).find((x) => x.cohort && x.threshold && x.cohort.toLowerCase() === c.cohort.toLowerCase());
+    if (p && swThreshValue(p.threshold) !== swThreshValue(c.threshold))
+      tripwire.push({ flag: "REDEFINED", label: c.cohort, current: c.sentence, prior: p.sentence });
+  }
+  // DEGRADED: numeric on one side of the pair, a qualitative band on the other, same variant.
+  for (const r of cur.retention || []) {
+    const b = (pri?.bands || []).find((x) => x.key === r.key);
+    if (b) tripwire.push({ flag: "DEGRADED", label: r.label, current: r.sentence, prior: b.sentence });
+  }
+  for (const b of cur.bands || []) {
+    const p = (pri?.retention || []).find((x) => x.key === b.key);
+    if (p) tripwire.push({ flag: "DEGRADED", label: b.label, current: b.sentence, prior: p.sentence });
+  }
+  const ladder = (cur.ladder || []).map(({ count, threshold, cohort, sentence }) => ({
+    count, ...(threshold ? { threshold } : {}), ...(cohort ? { cohort } : {}), sentence,
+  }));
+  const refused = (cur.refused || []).slice(0, 2);
+  if (!nrr.length && !withheld.length && !ladder.length && !tripwire.length && !refused.length) return null;
+  return {
+    fy: cur.fy,
+    ...(nrr.length ? { nrr } : {}),
+    ...(withheld.length ? { withheld } : {}),
+    ...(ladder.length ? { ladder } : {}),
+    ...(tripwire.length ? { tripwire } : {}),
+    ...(refused.length ? { refused } : {}),
+  };
+}
+
 async function main() {
   // Carry-over: start from the existing file, so a partial run (a ticker limit, or a pool that comes
   // up empty) never wipes good entries — fresh results overlay, and names no longer in either
@@ -1889,11 +2228,16 @@ async function main() {
         ?? (String(c.fy) === String(fyYear) ? c.lines?.deposits : null);
       if (fyYear && depStored > 0) depTarget = { deposits: depStored };
     }
+    // The software desk's lanes (Build 7): the desk's own SIC scope (7370-7374, the shelf
+    // definition), US 10-K filers only. The prior filing is read through the same gates so
+    // the current record has a corroboration and tripwire counterparty.
+    const sicSw = Number(c.sic) || 0;
+    const swTarget = !isAdr && sicSw >= 7370 && sicSw <= 7374;
     let cur, prior;
     try {
       await sleep(THROTTLE);
-      cur = await getFiling(c.cik, filings[0], totalDebtMillions, devTarget, depTarget);
-      if (filings[1]) { await sleep(THROTTLE); prior = await getFiling(c.cik, filings[1]); }
+      cur = await getFiling(c.cik, filings[0], totalDebtMillions, devTarget, depTarget, swTarget);
+      if (filings[1]) { await sleep(THROTTLE); prior = await getFiling(c.cik, filings[1], null, null, null, swTarget); }
     } catch (e) { console.warn(`  ! ${tk}: filing ${e.message}`); continue; }
 
     // Quality gate: a clean qualitative extraction (Business + MD&A + Risk) runs
@@ -2001,6 +2345,11 @@ async function main() {
         // sentence, or a stated withhold with its reason. Absent means the lane found no
         // level statement that passed the gates — silence over filler.
         ...(cur.uninsuredRead ? { uninsuredDeposits: cur.uninsuredRead } : {}),
+        // The software NRR + customer-ladder read (Build 7): the filer's own retention and
+        // customer-count sentences with their figures as verbatim substrings, prior-year
+        // corroborated across filings, plus the KPI discontinuity tripwire. Absent means
+        // the gates passed nothing — silence over filler.
+        ...((() => { const sw = softwareKpiAssemble(cur.swRead, prior?.swRead ?? null); return sw ? { softwareRead: sw } : {}; })()),
       };
       ok++;
       console.log(`  ✓ ${tk}: ${flags.length} owner-flags, MD&A ${cur.mdna.words}w` + (comp ? `, payRatio ${comp.payRatio}:1` : "") + (debtMaturity ? `, debt-wall $${(debtMaturity.total / 1e9).toFixed(1)}B` : ""));
@@ -2023,7 +2372,7 @@ async function main() {
 }
 
 // Exported for the offline logic test; only hit EDGAR when run directly.
-export { ownerFlags, FLAG_THEMES, sentences, isProse, diff, extractPayRatio, extractInsiderOwnership, extractInsiderGroup, htmlToText, section, fetchText, businessDescription, candorSignals, businessBrief, buffettRead, BIZ_HUMANCAP, BIZ_LINEAGE, BIZ_ASPIRATIONAL, BRIEF_ORPHAN, PROMO, smellsLikeRisk, fortyFSections, folderDocs, extractSections, MW_DECLARED, MW_ABSENT, MW_OTHER_ENTITY, RESTATED, RESTATED_CONTRACT, INTEGRITY_FUTURE, ADMIT, NOT_ADMIT, BLAME_OTHERS, reserveDevelopmentRead, devSentences, uninsuredDepositsRead, uninsSentences };
+export { ownerFlags, FLAG_THEMES, sentences, isProse, diff, extractPayRatio, extractInsiderOwnership, extractInsiderGroup, htmlToText, section, fetchText, businessDescription, candorSignals, businessBrief, buffettRead, BIZ_HUMANCAP, BIZ_LINEAGE, BIZ_ASPIRATIONAL, BRIEF_ORPHAN, PROMO, smellsLikeRisk, fortyFSections, folderDocs, extractSections, MW_DECLARED, MW_ABSENT, MW_OTHER_ENTITY, RESTATED, RESTATED_CONTRACT, INTEGRITY_FUTURE, ADMIT, NOT_ADMIT, BLAME_OTHERS, reserveDevelopmentRead, devSentences, uninsuredDepositsRead, uninsSentences, softwareRetentionRead, customerLadderRead, softwareKpiRead, softwareKpiAssemble, swSentences, swCounts };
 
 if (import.meta.url === pathToFileURL(process.argv[1] || "").href) {
   main().catch((e) => { console.error(`\n❌ ${e.message}\n`); process.exit(1); });
