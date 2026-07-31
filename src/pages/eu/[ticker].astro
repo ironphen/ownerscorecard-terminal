@@ -7,6 +7,7 @@
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import eu from "../../data/fundamentals.eu.json";
 import TenYear from "../../components/TenYear.astro";
+import SectionBar from "../../components/SectionBar.astro";
 import OwnerEarningsBridge from "../../components/OwnerEarningsBridge.astro";
 import Scorecard from "../../components/Scorecard.astro";
 import Capital from "../../components/Capital.astro";
@@ -105,6 +106,19 @@ const peerResult = fund ? selectPeers(fund, PEER_UNIVERSE) : { peers: [], basis:
         <div class="meta">Latest filing: FY{fund.fy} annual report · ESEF (Inline XBRL)</div>
       </header>
 
+      <SectionBar
+        id="top"
+        label={ticker}
+        sub={name || ""}
+        links={[
+          { href: "#sec-business", label: "The business" },
+          { href: "#sec-mix", label: "Mix" },
+          { href: "#act-record", label: "The record" },
+          { href: "#act-quality", label: "Quality" },
+          { href: "#act-price", label: "Price" },
+        ]}
+      />
+
       <section class="band note">
         <p>
           This is a quantitative scorecard. The numbers below are read from {name}&rsquo;s ESEF
@@ -118,13 +132,13 @@ const peerResult = fund ? selectPeers(fund, PEER_UNIVERSE) : { peers: [], basis:
 
       <div id="sec-mix" class="sec"><Segments company={fund} /></div>
 
-      <section class="actGroup">
+      <section id="act-record" class="actGroup">
         <ActHeader n="I" title="The record" lede="What the business has done across the cycle, read straight from the ESEF filing: the multi-year record, and the walk from reported profit to the cash an owner could take out." />
         <div id="sec-record" class="sec"><TenYear company={fund} /></div>
         <div id="sec-bridge" class="sec"><OwnerEarningsBridge company={fund} /></div>
       </section>
 
-      <section class="actGroup">
+      <section id="act-quality" class="actGroup">
         <ActHeader n="II" title="Quality &amp; stewardship" lede="Returns, the balance sheet, and stewardship. The same checks the US pages run, in the reporting currency." />
         <div id="sec-peers" class="sec"><Peers company={fund} peers={peerResult.peers} basis={peerResult.basis} subsector={peerResult.subsector} shelfNoun={peerResult.shelfNoun} sector={peerResult.sector} /></div>
         <div id="sec-scorecard" class="sec"><Scorecard company={fund} /></div>
@@ -134,7 +148,7 @@ const peerResult = fund ? selectPeers(fund, PEER_UNIVERSE) : { peers: [], basis:
           who moves between pools meets the same page. */}
       </section>
 
-      <section class="actGroup">
+      <section id="act-price" class="actGroup">
         <ActHeader n="III" title="The price" lede="What a price would have to assume, set against the record above. You bring the price, in the reporting currency." />
         <div id="sec-price" class="sec"><Valuation company={fund} /><CompareLink company={fund} /></div>
       </section>
@@ -155,5 +169,7 @@ const peerResult = fund ? selectPeers(fund, PEER_UNIVERSE) : { peers: [], basis:
     .band.note p { font-size: 14px; color: var(--ink-soft); max-width: 70ch; line-height: 1.55; }
     .actGroup { margin: 0 0 10px; }
     .sec { margin: 0 0 6px; }
+    .sec { scroll-margin-top: 52px; }
+    .actGroup { scroll-margin-top: 46px; }
   </style>
 </BaseLayout>

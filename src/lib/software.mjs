@@ -129,7 +129,7 @@ export function dilutionCheck(company) {
     : drift > -0.05 ? "The count is edging down"
     : "The count is genuinely shrinking";
 
-  const parts = [`Stock compensation ${$(sbc)}, ${pc(sbcShare, 1)} of revenue`];
+  const parts = [`Stock compensation ${$(sbc)} (fiscal ${company?.fy ?? "year"}), ${pc(sbcShare, 1)} of revenue`];
   if (bought) parts.push(`repurchases ${$(buyback)}`);
   else parts.push("no repurchases");
   if (span) parts.push(`diluted shares ${drift >= 0 ? "+" : ""}${(drift * 100).toFixed(1)}% since ${span.from.fy}`);

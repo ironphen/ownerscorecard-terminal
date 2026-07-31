@@ -1132,6 +1132,27 @@ function latestObservation(facts, tags, unit = "USD", instant = false) {
   return best;
 }
 
+// THE TTM PAYABLES PAIR-GUARD (UX survey item 5, the reg-pair pattern): many filers tag the pure
+// trade-payables concept on the annual balance sheet but only the COMBINED payables-and-accrued
+// concept in their 10-Qs. The old ladder walked both, so the trailing cell silently switched
+// basis mid-record — Coca-Cola's working capital swung from $1.8B to −$7.1B on the tag change,
+// not the business. The guard: the pure concept stands when the latest quarter carries it; a
+// combined-only quarter is decomposed through the filer's own latest year where BOTH concepts
+// were tagged (the FY relationship); with no such year, the cell is withheld — a dash beats a
+// figure whose basis jumped.
+function ttmPayables(facts) {
+  const pure = latestObservation(facts, ["AccountsPayableCurrent", "AccountsPayableTradeCurrent"], "USD", true);
+  const comb = latestObservation(facts, ["AccountsPayableAndAccruedLiabilitiesCurrent"], "USD", true);
+  if (pure && (!comb || pure.end >= comb.end)) return pure.val;
+  if (!comb) return null;
+  const pureM = instantMap(facts, ["AccountsPayableCurrent", "AccountsPayableTradeCurrent"]);
+  const combM = instantMap(facts, ["AccountsPayableAndAccruedLiabilitiesCurrent"]);
+  const both = Object.keys(pureM).filter((end) => combM[end] > 0).sort();
+  if (!both.length) return null;
+  const end = both[both.length - 1];
+  return comb.val * (pureM[end] / combM[end]);
+}
+
 // ---- quarterly series (for the Current Position trend + recent-quarter momentum) ----
 // A balance-sheet line over the recent quarter-ends: every instant observation (10-K + 10-Q),
 // keyed by period end, latest filing winning a restatement. Map of end-date -> value.
@@ -2061,7 +2082,7 @@ async function main() {
             longTermMarketable: latestObservation(facts, CONCEPTS.longTermMarketable, "USD", true)?.val ?? null,
             receivables: latestObservation(facts, CONCEPTS.receivables, "USD", true)?.val ?? null,
             inventory: latestObservation(facts, CONCEPTS.inventory, "USD", true)?.val ?? null,
-            accountsPayable: latestObservation(facts, CONCEPTS.accountsPayable, "USD", true)?.val ?? null,
+            accountsPayable: ttmPayables(facts),
             currentAssets: latestObservation(facts, CONCEPTS.currentAssets, "USD", true)?.val ?? null,
             currentLiabilities: latestObservation(facts, CONCEPTS.currentLiabilities, "USD", true)?.val ?? null,
             currentDebt: ttmCurDebt ?? null,

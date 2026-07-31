@@ -7,8 +7,6 @@ tickers: []
 draft: true
 ---
 
-import CompoundingExplorer from "../../components/CompoundingExplorer.jsx";
-
 This is a draft (`draft: true`), so it never appears on the live site — it exists as a
 reference for how publishing works. Drafts are visible when running `npm run dev`.
 
@@ -27,12 +25,19 @@ reference for how publishing works. Drafts are visible when running `npm run dev
 
 ## Interactive graphics
 
-Because articles are MDX, a React component drops straight into the prose and only
-loads its JavaScript when scrolled into view. This one is `<CompoundingExplorer />`:
+Because articles are MDX, a React component can drop straight into the prose and load
+its JavaScript only when scrolled into view:
 
-<CompoundingExplorer client:visible />
+```mdx
+import Explorer from "../../components/Explorer.jsx";
+
+<Explorer client:visible />
+```
 
 Components like this live in `src/components/`. Plain articles ship zero JavaScript.
+Note: a `client:` directive in any article, even a draft, makes the build emit the
+React runtime (~186KB) into `_astro/` whether or not a published page uses it — so no
+interactive component is kept in the tree until a published article actually renders one.
 
 ## Linking to site data
 

@@ -205,7 +205,7 @@ if (b) {
 
   /* The multi-year ledger: each bridge step a row, each fiscal year a column. The newest year leads
      (leftmost, accent-marked) and stays in view; older years scroll off to the right on narrow screens. */
-  .scroll { margin: 16px 0 0; overflow-x: auto; }
+  .scroll { margin: 16px 0 0; overflow-x: auto; overscroll-behavior-x: contain; }
   .oebt { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
   .oebt th, .oebt td { padding: 7px 11px; text-align: right; white-space: nowrap; }
   .oebt thead th { font-family: var(--sans); font-size: 11.5px; font-weight: 700; letter-spacing: 0.03em; color: var(--muted); border-bottom: 1px solid var(--rule-strong); }

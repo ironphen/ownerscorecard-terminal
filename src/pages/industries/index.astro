@@ -1,0 +1,96 @@
+---
+// The chapter system's contents page (UX survey 2026-07-31, item 18). The 101 chapters received
+// 3,800+ inbound links and the company pages' breadcrumbs named them, but no page anywhere
+// listed them and the bare /industries URL 404'd — a lattice with no spine. This page is the
+// spine: every chapter under its sector head, in the taxonomy's fixed file order, framed as
+// chapters (a reading surface), not tables. The comparative tables keep their own door at
+// /groupings; the two link each other and duplicate nothing.
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import fundamentals from "../../data/fundamentals.json";
+import adrData from "../../data/fundamentals.adr.json";
+import jpData from "../../data/fundamentals.jp.json";
+import { industryOrder } from "../../lib/chapters.mjs";
+import { SECTORS, groupingByNoun } from "../../lib/groupingColumns.mjs";
+import { dataAsOf, fmtAsOf } from "../../lib/freshness.mjs";
+
+const { chapters } = industryOrder(fundamentals.companies, adrData.companies, jpData.companies);
+const total = chapters.reduce((a, c) => a + c.members.length, 0);
+
+// Chapters grouped under their sector heads, sectors in the taxonomy's fixed file order and
+// chapters alphabetical within each — a reading order, never a ranking.
+const bySector = SECTORS.map((s) => ({
+  sector: s,
+  chapters: chapters
+    .filter((c) => c.shelfNoun && groupingByNoun.get(c.shelfNoun)?.sector === s.name)
+    .sort((a, b) => (a.label < b.label ? -1 : 1)),
+})).filter((g) => g.chapters.length);
+const orphans = chapters.filter((c) => !c.shelfNoun || !groupingByNoun.get(c.shelfNoun)?.sector);
+
+const refreshed = fmtAsOf(dataAsOf);
+---
+
+<BaseLayout
+  title="The industry chapters — Owner Scorecard"
+  description={`${chapters.length} industry chapters under ${bySector.length} sectors: every company in its industry, A to Z, as a reading surface — no sorting, no ranking, withheld records in their alphabetical place.`}
+>
+  <header class="hero">
+    <span class="kicker">Contents</span>
+    <h1>The industry chapters</h1>
+    <p class="lede">
+      {chapters.length} chapters under {bySector.length} sectors, {total.toLocaleString()} companies
+      in all. A chapter is a reading surface: every member A to Z by ticker, the same four lines
+      each, withheld and flagged records in their alphabetical place. No sorting, no filters, no
+      rank. The same shelves as sortable comparative tables live at <a href="/groupings">the
+      groupings</a>.
+    </p>
+    {refreshed ? <p class="dateline">From the latest filings · data as of {refreshed}.</p> : null}
+  </header>
+
+  {bySector.map((g) => (
+    <section class="secGroup">
+      <h2><a href={`/groupings/sector/${g.sector.slug}`}>{g.sector.name}</a></h2>
+      <ul class="chapList">
+        {g.chapters.map((c) => (
+          <li>
+            <a href={`/industries/${c.slug}`}>{c.label}</a>
+            <span class="ct">{c.members.length}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  ))}
+  {orphans.length ? (
+    <section class="secGroup">
+      <h2>Awaiting a shelf</h2>
+      <ul class="chapList">
+        {orphans.map((c) => (
+          <li>
+            <a href={`/industries/${c.slug}`}>{c.label}</a>
+            <span class="ct">{c.members.length}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  ) : null}
+
+  <p class="foot">
+    Chapters are alphabetical within each sector head; the count beside each is its membership
+    across every pool. The heads link each sector's own comparative table.
+  </p>
+
+  <style>
+    .hero { margin: 26px 0 8px; }
+    .kicker { font-family: var(--sans); font-size: 11.5px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--muted); }
+    h1 { margin: 6px 0 10px; }
+    .lede { max-width: 72ch; color: var(--ink-soft); line-height: 1.6; }
+    .dateline { font-size: 12px; color: var(--muted); margin: 10px 0 0; }
+    .secGroup { margin: 26px 0 0; }
+    .secGroup h2 { font-size: 17px; border-bottom: 1px solid var(--rule); padding-bottom: 4px; margin: 0 0 8px; }
+    .secGroup h2 a { color: var(--ink); }
+    .secGroup h2 a:hover { color: var(--accent); text-decoration: none; }
+    .chapList { list-style: none; margin: 0; padding: 0; column-width: 22em; column-gap: 36px; }
+    .chapList li { display: flex; justify-content: space-between; gap: 10px; padding: 4px 0; break-inside: avoid; border-bottom: 1px solid var(--rule-soft); }
+    .chapList .ct { font-family: var(--sans); font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; flex: 0 0 auto; }
+    .foot { font-size: 12.5px; color: var(--muted); margin: 26px 0 8px; max-width: 72ch; }
+  </style>
+</BaseLayout>

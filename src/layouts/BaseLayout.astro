@@ -267,6 +267,11 @@ const jsonLdBlocks = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
         .nav { gap: 14px; }
         .navGroup { gap: 14px; }
       }
+      /* On a phone the wrapped masthead rows sit close; taller link padding keeps each row a
+         real tap target without changing the type. */
+      @media (max-width: 520px) {
+        .nav a { padding: 8px 1px; }
+      }
 
       /* The search affordance: a pill that reads as the primary action, sitting just left of the
          section links. Opens the site-wide search overlay (or, on the home page, its own box). */
@@ -303,7 +308,7 @@ const jsonLdBlocks = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
       footer .colophon {
         font-family: var(--serif); font-size: 14px; color: var(--muted); margin: 0 0 10px;
       }
-      footer small { display: block; color: var(--faint); font-size: 12px; line-height: 1.5; }
+      footer small { display: block; color: var(--muted); font-size: 12px; line-height: 1.5; }
 
       @media (max-width: 520px) {
         body { font-size: 16px; padding: 0 14px 48px; }

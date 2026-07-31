@@ -499,7 +499,7 @@ const spanNote = (g, header) => (g && g.yrs !== header ? ` (${g.yrs}-yr)` : "");
   /* The scroll pane: relative so the left-edge fade can sit OVER the scroller (a child of the
      scroller itself would ride along with the content). */
   .scrollbox { position: relative; margin-top: 4px; }
-  .wrap { overflow-x: auto; }
+  .wrap { overflow-x: auto; overscroll-behavior-x: contain; }
   /* The fade is the affordance that history continues leftward off-screen (the table opens
      scrolled fully right, Value Line style); it hides at the left end via the script. */
   .fadeL { position: absolute; top: 0; bottom: 0; left: 0; width: 26px; pointer-events: none; background: linear-gradient(to right, var(--paper), transparent); opacity: 1; transition: opacity 0.15s; }

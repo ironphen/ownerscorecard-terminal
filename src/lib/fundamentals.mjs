@@ -2,6 +2,7 @@
 // Imported by both Astro pages (server) and React islands (client), so keep it
 // pure ESM with no Node or browser built-ins.
 import { financialKind } from "./archetype.mjs";
+import { capitalHistory } from "./capital.mjs";
 // Circular by construction (software.mjs formats money with fmtMoney below), which ESM resolves
 // because every use sits inside a function body rather than at module load.
 import { softwareSection } from "./software.mjs";
@@ -724,7 +725,17 @@ export function capitalAllocation(c) {
   note += payout > 1
     ? " Sustained, that pattern draws down cash or adds debt; the net-debt line above shows where it stands."
     : " Returning most of it is the mark of a mature business with little left to reinvest at a high return; reinvesting most could mean a long runway, or empire-building. The split doesn't say which; the return earned on it (see ROIC) does.";
-  return { value: `${(payout * 100).toFixed(0)}%`, formula: `Dividends + buybacks ${$(returned)} ÷ Owner Earnings ${$(oc)}`, tone: "info", label, note };
+  // THE WINDOW, NAMED (UX survey M-D): this card reads one fiscal year while the capital-
+  // allocation section under it reads the whole record — Coca-Cola met 150% here and 112% there
+  // with neither naming its span, and the reader was left to reconcile two figures alone. The
+  // record's own proportion (the same construction that section renders) joins the sentence so
+  // the pair reads as one argument. Call-time circular import; capital.mjs and this module only
+  // reference each other inside function bodies.
+  let spanRatio = null, spanYears = null;
+  try { const capH = capitalHistory(c); if (capH?.returnedOfOE != null) { spanRatio = capH.returnedOfOE; spanYears = capH.span; } } catch {}
+  if (spanRatio != null && Math.round(spanRatio * 100) !== Math.round(payout * 100))
+    note += ` This year's proportion is ${(payout * 100).toFixed(0)}%; across the record (${spanYears}) it is ${(spanRatio * 100).toFixed(0)}%, the capital-allocation section below.`;
+  return { value: `${(payout * 100).toFixed(0)}%`, formula: `Dividends + buybacks ${$(returned)} ÷ Owner Earnings ${$(oc)} — this fiscal year`, tone: "info", label, note };
 }
 
 // A business that certainly carries inventory: makers and builders (agriculture through

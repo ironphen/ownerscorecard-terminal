@@ -12,6 +12,7 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { fetchText } from "./fetchFilings.mjs";
 import { toBlocks, mdnaText, splitSentences, pickConsolidated } from "../src/lib/drivers.mjs";
+import { freshFilingMerge } from "./filingFacts.mjs";
 import { annualByYear, quarterFlowMap, deriveOpInc, revenueTagsFor, CONCEPTS } from "./fetchFundamentals.mjs";
 
 const UA = process.env.SEC_USER_AGENT || "Owner Scorecard research (ryanreinsant@gmail.com)";
@@ -129,12 +130,25 @@ function lineOf(cur, prior) {
   return { yoy: +((100 * (cur - prior)) / prior).toFixed(1), cur, prior };
 }
 
-async function performanceFor(c, r, i) {
+async function performanceFor(c, r, i, sub) {
   const form = r.form[i], reportDate = r.reportDate?.[i];
   if (!reportDate || !r.primaryDocument[i]) return null;
   try {
     const facts = await getJSON(`https://data.sec.gov/api/xbrl/companyfacts/CIK${c.cik}.json`);
     await sleep(150);
+    // THE SAME-EVENING FALLBACK (UX survey item M-A, via the fresh-filing merge of cf0d848): a
+    // just-accepted filing's figures often precede companyfacts ingestion by hours — the wire
+    // then printed an apology on dozens of items whose numbers were sitting in the filing's own
+    // XBRL instance. The corroborated merge (comparatives must agree at declared precision)
+    // fills facts append-only before the percentages are computed; it retires itself as the API
+    // catches up, and a refused document leaves the honest null in place.
+    if (sub) {
+      try {
+        const fresh = await freshFilingMerge(facts, sub, c.cik, { headers: HEADERS, warn: (m) => console.warn(`  ! ${c.ticker}: ${m}`) });
+        if (fresh) console.log(`  ${c.ticker}: ${fresh.form} for ${fresh.reportDate} merged from the filing itself for the wire line`);
+      } catch {}
+      await sleep(150);
+    }
     const tCur = Date.parse(reportDate + "T00:00:00Z");
     const priD = new Date(tCur);
     priD.setUTCFullYear(priD.getUTCFullYear() - 1);
@@ -245,7 +259,7 @@ async function main() {
       let performance = null;
       if ((form === "10-K" || form === "10-Q") && date >= recentCutoff && diffed < 2) {
         if (accn in cache && !(cache[accn] == null && date >= retryCutoff)) performance = cache[accn];
-        else { performance = await performanceFor(c, r, i); diffed++; }
+        else { performance = await performanceFor(c, r, i, j); diffed++; }
       }
 
       items.push({ ticker: c.ticker, name: c.name || c.ticker, form, date, label, grave, accn, url, performance });

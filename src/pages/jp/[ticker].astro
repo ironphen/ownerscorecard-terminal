@@ -2,6 +2,7 @@
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import jp from "../../data/fundamentals.jp.json";
 import TenYear from "../../components/TenYear.astro";
+import SectionBar from "../../components/SectionBar.astro";
 import OwnerEarningsBridge from "../../components/OwnerEarningsBridge.astro";
 import Scorecard from "../../components/Scorecard.astro";
 import Capital from "../../components/Capital.astro";
@@ -175,6 +176,19 @@ const peerResult = fund ? selectPeers(fund, PEER_UNIVERSE) : { peers: [], basis:
         <div class="meta">Latest filing: FY{fund.fy} annual securities report (有価証券報告書) · EDINET</div>
       </header>
 
+      <SectionBar
+        id="top"
+        label={ticker}
+        sub={name || ""}
+        links={[
+          { href: "#sec-business", label: "The business" },
+          { href: "#sec-mix", label: "Mix" },
+          { href: "#act-record", label: "The record" },
+          { href: "#act-quality", label: "Quality" },
+          { href: "#act-price", label: "Price" },
+        ]}
+      />
+
       <section class="band note">
         {note ? (
           <p>
@@ -215,13 +229,13 @@ const peerResult = fund ? selectPeers(fund, PEER_UNIVERSE) : { peers: [], basis:
 
       <div id="sec-mix" class="sec"><Segments company={fund} /></div>
 
-      <section class="actGroup">
+      <section id="act-record" class="actGroup">
         <ActHeader n="I" title="The record" lede="What the business has done across the cycle, read straight from the EDINET filing: the multi-year record, and the walk from reported profit to the cash an owner could take out." />
         <div id="sec-record" class="sec"><TenYear company={fund} /></div>
         <div id="sec-bridge" class="sec"><OwnerEarningsBridge company={fund} /></div>
       </section>
 
-      <section class="actGroup">
+      <section id="act-quality" class="actGroup">
         <ActHeader n="II" title="Quality &amp; stewardship" lede="Returns, the balance sheet, and stewardship. The same checks the US pages run, in yen." />
         <div id="sec-peers" class="sec"><Peers company={fund} peers={peerResult.peers} basis={peerResult.basis} subsector={peerResult.subsector} shelfNoun={peerResult.shelfNoun} sector={peerResult.sector} /></div>
         <div id="sec-scorecard" class="sec"><Scorecard company={fund} /></div>
@@ -231,7 +245,7 @@ const peerResult = fund ? selectPeers(fund, PEER_UNIVERSE) : { peers: [], basis:
           who moves between pools meets the same page. */}
       </section>
 
-      <section class="actGroup">
+      <section id="act-price" class="actGroup">
         <ActHeader n="III" title="The price" lede="What a price would have to assume, set against the record above." />
         <div id="sec-price" class="sec"><Valuation company={fund} /><CompareLink company={fund} /></div>
       </section>
@@ -301,7 +315,8 @@ const peerResult = fund ? selectPeers(fund, PEER_UNIVERSE) : { peers: [], basis:
     .briefFoot { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--rule-strong); margin-top: 14px; padding-top: 10px; max-width: 72ch; }
     @media (max-width: 560px) { .brief .r { grid-template-columns: 1fr; gap: 4px; } }
 
-    .sec { scroll-margin-top: 16px; }
+    .sec { scroll-margin-top: 52px; }
+    .actGroup { scroll-margin-top: 46px; }
     .foot { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); margin: 20px 0 0; line-height: 1.5; max-width: 76ch; border-top: 1px solid var(--rule); padding-top: 12px; }
   </style>
 </BaseLayout>

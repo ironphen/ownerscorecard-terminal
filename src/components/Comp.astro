@@ -43,8 +43,10 @@ const showPay = payYears.length >= 3;
 // Against revenue (scale) and operating profit (materiality). Not owner earnings:
 // CFO adds SBC back, so it's baked into that denominator, a muddled comparison.
 const pctOf = (n, d, dp = 0) => (n != null && d && d > 0 ? `${((n / d) * 100).toFixed(dp)}%` : null);
-const sbcRev = sbc != null ? pctOf(sbc, rev) : null;
-const sbcOI = sbc != null ? pctOf(sbc, oi) : null;
+// One decimal, matching the buyback card's own rounding: the same $279M read "1%" here and
+// "0.6%" there on one page (UX survey M-D), which on a correctness publication is a defect.
+const sbcRev = sbc != null ? pctOf(sbc, rev, 1) : null;
+const sbcOI = sbc != null ? pctOf(sbc, oi, 1) : null;
 
 // Insider ownership: a percent above ~80% is a super-voting-class / voting-power column captured in
 // place of economic ownership UNLESS the group's beneficially-owned shares (kept beside the percent)
@@ -120,7 +122,7 @@ const srcUrl = pay?.sourceUrl || comp?.sourceUrl || null;
       {sbc != null && rev ? (
         <li>
           <div class="r"><span class="k">Stock-based compensation</span><span class="v">{$(sbc)}</span></div>
-          <p class="n">The slice of the business handed to employees in shares this year, {sbcRev} of revenue{sbcOI ? `, equal to ${sbcOI} of operating profit` : ""}. Buffett's oldest accounting fight: this is compensation, compensation is an expense, real whether or not the headline earnings admit it. One trap: the cash-flow statement adds SBC back, so the operating cash, and the owner earnings drawn from it, are flattered by exactly this amount; counted as the cost it is, what an owner keeps is lower.</p>
+          <p class="n">The slice of the business handed to employees in shares in fiscal {company.fy ?? "the latest year"}, {sbcRev} of revenue{sbcOI ? `, equal to ${sbcOI} of operating profit` : ""}. Buffett's oldest accounting fight: this is compensation, compensation is an expense, real whether or not the headline earnings admit it. One trap: the cash-flow statement adds SBC back, so the operating cash, and the owner earnings drawn from it, are flattered by exactly this amount; counted as the cost it is, what an owner keeps is lower.</p>
         </li>
       ) : null}
     </ul>

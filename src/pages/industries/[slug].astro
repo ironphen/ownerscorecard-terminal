@@ -44,6 +44,15 @@ const memberHrefs = members.map((m) => chapterMemberHref(m));
 // Null where curation has not caught up with a shelf; the link simply does not render.
 const grouping = chapter.shelfNoun ? groupingByNoun.get(chapter.shelfNoun) : null;
 
+// The chapter's place in the book (UX survey item 18): its sector head, and the chapters on
+// either side in the contents' fixed alphabetical order — the same page-to-page walk the
+// Manual gives its entries.
+const { chapters: allChapters } = industryOrder(fundamentals.companies, adrData.companies, jpData.companies);
+const chIdx = allChapters.findIndex((c) => c.slug === slug);
+const prevCh = chIdx > 0 ? allChapters[chIdx - 1] : null;
+const nextCh = chIdx >= 0 && chIdx < allChapters.length - 1 ? allChapters[chIdx + 1] : null;
+const sectorOf = grouping?.sector || null;
+
 // Each group read states exactly what was computed, carries the count of members it was read on,
 // and renders its absence honestly — "not applied" where the read is a category error for every
 // member, "not read" where the inputs were not in the filings. Never a mark against the list.
@@ -85,7 +94,7 @@ const description = one
   </p>
 
   <header class="hero">
-    <span class="kicker">An industry chapter{chapter.shelfNoun ? ` · ${chapter.shelfNoun}` : ""}</span>
+    <span class="kicker"><a href="/industries">An industry chapter</a>{chapter.shelfNoun ? ` · ${chapter.shelfNoun}` : ""}</span>
     <h1>{chapter.label}</h1>
     <p class="range">
       {one
@@ -124,6 +133,11 @@ const description = one
     </p>
   ) : null}
 
+  <nav class="chFeet" aria-label="Chapter order">
+    {prevCh ? <a href={`/industries/${prevCh.slug}`}>&larr; {prevCh.label}</a> : <span />}
+    <a href="/industries">Contents</a>
+    {nextCh ? <a href={`/industries/${nextCh.slug}`}>{nextCh.label} &rarr;</a> : <span />}
+  </nav>
   <p class="foot">
     The same four lines for every member, in strict ticker order; a figure that could not be read
     renders as "not read," never as a mark against the record beside it. The header describes the
@@ -170,6 +184,7 @@ const description = one
 
     #entries { scroll-margin-top: 16px; }
 
+    .chFeet { display: flex; justify-content: space-between; gap: 14px; margin: 22px 0 0; font-family: var(--sans); font-size: 12.5px; }
     .foot { font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--muted); margin: 18px 0 0; line-height: 1.6; max-width: 78ch; border-top: 1px solid var(--rule-strong); padding-top: 12px; }
   </style>
 </BaseLayout>

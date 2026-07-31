@@ -6,6 +6,7 @@ import voteResults from "../../data/voteResults.json";
 import Scorecard from "../../components/Scorecard.astro";
 import Portrait from "../../components/Portrait.astro";
 import TenYear from "../../components/TenYear.astro";
+import SectionBar from "../../components/SectionBar.astro";
 import CapitalAllocation from "../../components/CapitalAllocation.astro";
 import CurrentPosition from "../../components/CurrentPosition.astro";
 import Peers from "../../components/Peers.astro";
@@ -270,16 +271,18 @@ const ogImageAlt = ogImage ? `${name} (${ticker}): the owner's record at a glanc
   </header>
 
   {fund ? (
-    <div class="cbar">
-      <a class="cbar-id" href="#top">{ticker}<span class="cbar-nm">{name ? ` · ${name}` : ""}</span></a>
-      <nav class="secnav" aria-label="Sections">
-        <a href="#act-what">The business</a>
-        <a href="#act-record">The record</a>
-        <a href="#act-quality">Quality</a>
-        <a href="#act-price">Price</a>
-        {related.length ? <a href="#sec-writing">Notes</a> : null}
-      </nav>
-    </div>
+    <SectionBar
+      id="top"
+      label={ticker}
+      sub={name || ""}
+      links={[
+        { href: "#act-what", label: "The business" },
+        { href: "#act-record", label: "The record" },
+        { href: "#act-quality", label: "Quality" },
+        { href: "#act-price", label: "Price" },
+        ...(related.length ? [{ href: "#sec-writing", label: "Notes" }] : []),
+      ]}
+    />
   ) : null}
 
   {fund ? (
@@ -294,7 +297,7 @@ const ogImageAlt = ogImage ? `${name} (${ticker}): the owner's record at a glanc
   {fund ? (
     <section id="act-record" class="actGroup">
       <ActHeader n="II" title="The record" lede="Ten years of arithmetic, read across the cycle." />
-      {recentFiling ? (
+      {recentFiling && (recentLine || recentFiling.performance?.driver) ? (
         <div id="sec-recent" class="sec recent">
           <div class="recentHead">
             <span class="recentTag">Most recent quarterly filing</span>
@@ -432,20 +435,8 @@ const ogImageAlt = ogImage ? `${name} (${ticker}): the owner's record at a glanc
     .noteFlag a { font-weight: 600; }
 
 
-    /* Sticky company bar, ticker always in view, plus section jump-nav. */
-    .cbar {
-      position: sticky; top: 0; z-index: 40; background: var(--paper);
-      display: flex; align-items: center; gap: 12px;
-      border-bottom: 1px solid var(--rule-strong); padding: 8px 0; margin: 12px 0 0;
-    }
-    .cbar-id { font-family: var(--sans); font-weight: 800; font-size: 14px; color: var(--ink); flex: 0 0 auto; }
-    .cbar-id:hover { color: var(--accent); text-decoration: none; }
-    .cbar-nm { font-weight: 500; color: var(--muted); font-size: 12.5px; }
-    .secnav { display: flex; gap: 2px; overflow-x: auto; flex: 1 1 auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
-    .secnav::-webkit-scrollbar { display: none; }
-    .secnav a { flex: 0 0 auto; font-family: var(--sans); font-size: 11.5px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); padding: 4px 9px; white-space: nowrap; border-bottom: 2px solid transparent; }
-    .secnav a:hover { color: var(--ink); text-decoration: none; }
-    .secnav a.active { color: var(--ink); border-bottom-color: var(--accent); }
+    /* The sticky company bar lives in SectionBar.astro (extracted 2026-07-31, UX survey item
+       16, so the JP and EU pages share it); the scroll margins its height implies stay here. */
     .sec { scroll-margin-top: 52px; }
     .actGroup { scroll-margin-top: 46px; }
     /* The first act follows the sticky bar directly, so it needs no big top gap; later acts
@@ -469,37 +460,7 @@ const ogImageAlt = ogImage ? `${name} (${ticker}): the owner's record at a glanc
     .recentLine { font-family: var(--serif); font-size: 15px; line-height: 1.5; color: var(--ink); margin: 9px 0 0; }
     .recentQuote { font-family: var(--serif); font-style: italic; font-size: 14px; line-height: 1.6; color: var(--ink-dim); margin: 8px 0 0; max-width: 72ch; }
     .recentNote { font-size: 11.5px; color: var(--muted); margin: 8px 0 0; }
-    @media (max-width: 560px) { .cbar-nm { display: none; } .recentSrc { margin-left: 0; } }
+    @media (max-width: 560px) { .recentSrc { margin-left: 0; } }
   </style>
 
-  <script is:inline>
-    (function () {
-      const bar = document.querySelector(".cbar");
-      if (!bar) return;
-      const nav = bar.querySelector(".secnav");
-      // Drop nav links whose section rendered nothing (e.g. a company with no proxy or filing data).
-      nav.querySelectorAll("a").forEach((a) => {
-        const el = document.getElementById(a.getAttribute("href").slice(1));
-        if (!el || el.children.length === 0) a.remove();
-      });
-      const links = Array.from(nav.querySelectorAll("a"));
-      const byId = {}; links.forEach((a) => (byId[a.getAttribute("href").slice(1)] = a));
-      const targets = links.map((a) => document.getElementById(a.getAttribute("href").slice(1))).filter(Boolean);
-      if (!("IntersectionObserver" in window) || !targets.length) return;
-      let active = null;
-      const obs = new IntersectionObserver((entries) => {
-        entries.forEach((e) => {
-          if (!e.isIntersecting) return;
-          const a = byId[e.target.id];
-          if (!a || a === active) return;
-          if (active) active.classList.remove("active");
-          a.classList.add("active"); active = a;
-          const l = a.offsetLeft, r = l + a.offsetWidth;
-          if (l < nav.scrollLeft) nav.scrollLeft = l - 12;
-          else if (r > nav.scrollLeft + nav.clientWidth) nav.scrollLeft = r - nav.clientWidth + 12;
-        });
-      }, { rootMargin: "-15% 0px -75% 0px", threshold: 0 });
-      targets.forEach((t) => obs.observe(t));
-    })();
-  </script>
 </BaseLayout>

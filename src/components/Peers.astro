@@ -277,12 +277,20 @@ const intro =
   .peers { margin: 22px 0; }
   .pHead { border-bottom: 1px solid var(--rule-strong); padding-bottom: 6px; display: block; }
   .pNote { font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--muted); margin: 9px 0 6px; }
-  .wrap { overflow-x: auto; }
-  table { border-collapse: collapse; width: 100%; font-size: 13px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .wrap { overflow-x: auto; overscroll-behavior-x: contain; }
+  /* border-collapse: separate, because collapsed borders don't travel with sticky cells — the
+     groupings tables' lesson, inherited with their frozen identity column (UX survey item 17):
+     mid-scroll on a phone, every row keeps its company cell. */
+  table { border-collapse: separate; border-spacing: 0; width: 100%; font-size: 13px; font-variant-numeric: tabular-nums; white-space: nowrap; }
   thead th { font-weight: 600; color: var(--muted); font-size: 12px; text-align: right; padding: 8px 10px 6px; border-bottom: 1px solid var(--rule); }
   thead th.tl, tbody th.tl { text-align: left; }
   tbody th.tl { font-weight: 600; padding: 9px 12px 9px 0; }
   tbody th.tl a { color: var(--accent); }
+  /* The frozen identity column: opaque background so no figure bleeds under it, a seam rule on
+     its right edge. The row tint travels with the sticky cell via the same tint on the th. */
+  thead th.tl, tbody th.tl, tfoot th.tl { position: sticky; left: 0; z-index: 1; background: var(--paper); border-right: 1px solid var(--rule); padding-right: 10px; }
+  thead th.tl { z-index: 2; }
+  tr.me th.tl { background: var(--accent-tint); }
   .nm { color: var(--muted); font-weight: 400; font-size: 12px; margin-left: 8px; }
   td { text-align: right; padding: 9px 10px; border-bottom: 1px solid var(--rule); }
   tr.me th.tl a, tr.me td { font-weight: 700; }
@@ -302,4 +310,14 @@ const intro =
      supports and is printed; the count says so, quietly, so the figure is never mistaken for a
      normalized level. */
   .shrt { font-size: 10px; color: var(--muted); margin-left: 4px; vertical-align: 2px; }
+
+  /* The record table's own narrow step (UX survey item 17): tighter type, and the long company
+     name leaves the frozen identity cell so it stays a ticker's width — the same hide the sticky
+     company bar applies to its own name at this width. No column is cut. */
+  @media (max-width: 560px) {
+    table { font-size: 11.5px; }
+    thead th { padding: 7px 7px 5px; font-size: 10.5px; }
+    td { padding: 6px 7px; }
+    .nm { display: none; }
+  }
 </style>

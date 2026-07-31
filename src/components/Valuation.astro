@@ -598,7 +598,7 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
       <div class="bases" role="group" aria-label="Adjust the owner-earnings base">
         <span class="basesLbl">Base</span>
         <label class="tog"><input type="checkbox" id="oeNorm" checked={defaultNorm} /> Normalize · through-cycle{oeNormalized != null ? <> (<b>{$(oeNormalized)}</b>)</> : null}</label>
-        <label class="tog"><input type="checkbox" id="oeSbc" /> Net of stock comp{sbcLatest > 0 ? <> (−<b>{$(sbcLatest)}</b>)</> : null}</label>
+        <label class="tog"><input type="checkbox" id="oeSbc" /> Net of stock comp{sbcLatest > 0 ? <> (−<b>{$(sbcLatest)}</b>{co.ttm?.lines?.stockBasedComp != null ? " TTM" : ""})</> : null}</label>
         {offerMaint ? <label class="tog"><input type="checkbox" id="oeMaint" checked={defaultMaint} /> Steady-state · maintenance capex{ownerEarningsMaint != null ? <> (<b>{$(ownerEarningsMaint)}</b>)</> : null}</label> : null}
       </div>
       <p class="baseUsed" id="baseUsed" aria-live="polite">—</p>
@@ -793,7 +793,7 @@ const bondAsOf = bondRawAsOf ? new Date(bondRawAsOf).toLocaleDateString("en-US",
   .sens { margin: 18px 0 0; }
   .sens[hidden] { display: none; }
   .sensLbl { font-size: 11.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
-  .sensWrap { overflow-x: auto; margin: 10px 0 0; }
+  .sensWrap { overflow-x: auto; overscroll-behavior-x: contain; margin: 10px 0 0; }
   .sensTbl { border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: 13px; }
   .sensTbl th, .sensTbl td { border: 1px solid var(--rule); padding: 5px 13px; text-align: right; white-space: nowrap; }
   .sensTbl thead th { color: var(--muted); font-weight: 600; font-size: 11px; letter-spacing: 0.03em; }
