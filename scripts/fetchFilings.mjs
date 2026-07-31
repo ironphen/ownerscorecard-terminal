@@ -51,6 +51,13 @@ function htmlToText(html) {
   return html
     .replace(/<script[\s\S]*?<\/script>/gi, " ")
     .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    // Letter-spaced headings arrive as ADJACENT inline elements with no whitespace between
+    // ("<span>B</span><span>USINESS</span>" becomes "B USINESS" once tags turn to spaces) —
+    // Microsoft's whole 10-K is set that way, its Item anchors never matched, and every
+    // section came back one word (Build 2 of the qualitative survey, 2026-07-31). Word
+    // characters separated ONLY by inline tags glue back together; a real space or block
+    // boundary in the source is never touched.
+    .replace(/([A-Za-z0-9])(?:<\/(?:span|font|b|i|em|strong|u|sup|sub|a)>)+(?:<(?:span|font|b|i|em|strong|u|sup|sub|a)(?:\s[^>]*)?>)+(?=[A-Za-z0-9])/gi, "$1")
     .replace(/<[^>]+>/g, " ")
     .replace(/&nbsp;|&#160;/gi, " ")
     .replace(/&amp;/gi, "&")
@@ -101,6 +108,13 @@ const START_QUOTE_BEFORE = /["'“]\s*$/;
 // Statements…" (TD SYNNEX) taught the guard its conjunctions: a heading is never preceded by
 // a running clause's "and/with", and mid-prose references usually are.
 const XREF_BEFORE = /\b(see|under|within|refer(?:ence|red)?|described|discussed|contained|included|noted|defined|set\s+forth|pursuant\s+to|provided|listed|appearing|presented|reported|found|shown|available|and|with)\s+(?:to|in|under|above|below|elsewhere)?\s*["'“]?\s*$/i;
+// A cross-reference often cites the heading WITH its part — `see "Part I, Item 1. Business"`
+// (Everspin's MD&A did, and the capture it seeded ran 19,061 words and beat the real Item 1 in
+// the longest-candidate contest, so the hero lede became a design-win definition from the
+// MD&A's Key Metrics block). "Part I," is never prose, so stripping a trailing part-label from
+// the before-context and re-testing the same guards catches the cited form without touching a
+// genuine "PART I" page banner, which has no see/quote context in front of it.
+const stripPart = (ctx) => ctx.replace(/["'“]?\s*part\s+[ivx]+\b[\s,.:]*$/i, "");
 function section(text, startRe, endRes, validate, minSpan = 40) {
   const cands = [];
   let m;
@@ -111,8 +125,9 @@ function section(text, startRe, endRes, validate, minSpan = 40) {
     // the heading (quoted, followed by "above" / "of this report" / "and Note", or PRECEDED by "see" /
     // "as noted under" / "described in" — the same test the end headings get; Scholastic's only
     // in-body "Item 1. Business" was "as noted under Item 1. Business" inside its Risk Factors).
-    if (PAGE_AFTER.test(after) || START_XREF_AFTER.test(after) || START_QUOTE_BEFORE.test(text.slice(Math.max(0, from - 8), from)) ||
-        XREF_BEFORE.test(text.slice(Math.max(0, from - 28), from))) continue;
+    const beforeCtx = stripPart(text.slice(Math.max(0, from - 44), from));
+    if (PAGE_AFTER.test(after) || START_XREF_AFTER.test(after) || START_QUOTE_BEFORE.test(beforeCtx) ||
+        XREF_BEFORE.test(beforeCtx)) continue;
     let to = text.length;
     for (const er of endRes) {
       const e = new RegExp(er, "gi");
@@ -124,8 +139,8 @@ function section(text, startRe, endRes, validate, minSpan = 40) {
       let em;
       while ((em = e.exec(text)) !== null) {
         // A real heading, not a cross-reference: not verb/conjunction-led, not quoted.
-        if (!XREF_BEFORE.test(text.slice(Math.max(0, em.index - 34), em.index)) &&
-            !START_QUOTE_BEFORE.test(text.slice(Math.max(0, em.index - 4), em.index))) break;
+        const emBefore = stripPart(text.slice(Math.max(0, em.index - 50), em.index));
+        if (!XREF_BEFORE.test(emBefore) && !START_QUOTE_BEFORE.test(emBefore)) break;
       }
       if (em && em.index < to) to = em.index;
     }
@@ -308,7 +323,7 @@ function candorSignals(text, sents) {
 // — they let MD&A junk through ("our fixed costs to build and run the business") for too little gain.
 const BIZ_DOING = /\b(designs?|manufactures?|manufacturing|develops?|markets?|provides?|providing|operates?|sells?|selling|distributes?|produces?|producing|delivers?|offers?|offering|supplies|supplying|pioneers?|pioneered|specializ\w+|engineers?\s+and\s+\w|engineers?\s+\w+\s+(products|systems|solutions))\b/i;
 const BIZ_ISA = /\b(is|are)\s+(a|an|the|one of)\b[^.]{0,60}?\b(compan|provider|manufacturer|producer|retailer|developer|operator|maker|supplier|distributor|platform|business|leader|corporation|holding|bank|insurer|airline|carrier|restaurant|brand|chain|franchis|network|marketplace|trust|utility|pharmaceutical|biopharmaceutical|biotechnolog|technolog|healthcare|energy|refiner|exchange|processor|grocer|wholesaler|broker|dealer|lender|integrator|miner|reit|firm|enterprise|agency|builder|contractor|franchisor|servicer|underwriter|reinsurer|conglomerate)\w*/i;
-const BIZ_SKIP = /(was|were)\s+incorporated|incorporated\s+(under|in)\b|reincorporat|organized under the laws|founded in\s+\d|fiscal year|forward-looking|securities (act|exchange) of|report on form|unless the context|initial public offering|principal executive offices|market for (the )?registrant|common equity|equity securities|stockholder matters|\bmay\b|could\s+(adversely|result|harm|cause|materially|impair)|no assurance|our ability to|unsubstantiated|misleading|negative publicity|table of contents|\bcould\b|\bif (we|our|the company|a |an |adverse)|decline in (consumer|demand|sales)|reasonable basis for (our|the) opinion|provide a reasonable basis|standards of the public company accounting|fair value\b|cost of capital|non-?gaap|balance sheets? (include|reflect)|internally generated cash|dividends are reinvested|consideration we expect|we expect to be entitled|notice letter|corporate headquarters|(listed|traded|trades|trading|registered)\s+on (the )?(nasdaq|new york|nyse)|began trading|common stock (is|has)\s*(been\s*)?(listed|registered|traded)|in our (definitive )?proxy|responsive to this item|incorporated by reference|does not trade in the public market|\b(is|are) subject to\b|corporation (formed|organized)\b|further described (in|below|elsewhere)|\bor in the value of\b|value of the collateral|(reportable|reporting)\s+(business\s+)?segments?\s+are\b|represent(s|ed)\s+[^.]{0,28}\b(majority|\d+%)[^.]{0,18}\brevenue/i;
+const BIZ_SKIP = /(was|were)\s+incorporated|incorporated\s+(under|in)\b|reincorporat|organized under the laws|founded in\s+\d|fiscal year|forward-looking|securities (act|exchange) of|report on form|unless the context|initial public offering|principal executive offices|market for (the )?registrant|common equity|equity securities|stockholder matters|\bmay\b|could\s+(adversely|result|harm|cause|materially|impair)|no assurance|our ability to|unsubstantiated|misleading|negative publicity|table of contents|\bcould\b|\bif (we|our|the company|a |an |adverse)|decline in (consumer|demand|sales)|reasonable basis for (our|the) opinion|provide a reasonable basis|standards of the public company accounting|fair value\b|cost of capital|non-?gaap|balance sheets? (include|reflect)|internally generated cash|dividends are reinvested|consideration we expect|we expect to be entitled|notice letter|corporate headquarters|(listed|traded|trades|trading|registered)\s+on (the )?(nasdaq|new york|nyse)|began trading|common stock (is|has)\s*(been\s*)?(listed|registered|traded)|in our (definitive )?proxy|responsive to this item|incorporated by reference|does not trade in the public market|\b(is|are) subject to\b|corporation (formed|organized)\b|further described (in|below|elsewhere)|\bor in the value of\b|value of the collateral|(reportable|reporting)\s+(business\s+)?segments?\s+are\b|represent(s|ed)\s+[^.]{0,28}\b(majority|\d+%)[^.]{0,18}\brevenue|we (define|use the term)\b|we consider [^.]{0,60}\bto occur when\b/i;
 // A weak subject: the sentence is about employees, customers or a side note, not the
 // company itself, so it is not a description of the business.
 const BIZ_WEAK = /^(we also\b|when\s+we\b|founded\b|established\b|originally\b|since (our|its|we)\b|our (mission|vision|strateg|purpose|goals?|values|history|story|customers?|employees?|people|associates|team|more than|over\s|approximately|roughly|nearly)|our\b[^.]{0,40}\b(purpose|mission|vision)\b[^.]{0,120}\bis\s+to\b|we have (sharpened|built|been developing|also been|grown|expanded)|we strive|we seek\b|we aim\b|we (encounter|rely|depend|compete|consistently|correctly|pursue|understand|assess|estimate|disposed)\b|we have (entered|received)\b|[a-z][\w& .,'-]{0,38}'s\s+(vision|mission|purpose)\s+is\s+to\b|[a-z][\w& .,'-]{0,38}\b(strives?|aims?)\s+to\b|[a-z][\w& .,'-]{0,38}\bbelieves\b|[a-z][\w& .,'-]{0,30}'s\s+growth\b|[a-z][\w& .,'-]{0,30}\balso has\b)/i;
@@ -542,6 +557,12 @@ function businessDescription(sents, name, ticker) {
     // at the top (Lucid's "shaping the future of mobility" outranked its own "designed,
     // developed, manufactures and sells two EVs" at 1.5 — it takes 2.0 to flip them).
     score -= ((s.match(PROMO) || []).length + (s.match(BIZ_ASPIRATIONAL) || []).length) * 2;
+    // A customer-BENEFIT frame is a value proposition, not a description: Everspin's "enables
+    // our customers to design products … with the assurance that it will be available" outscored
+    // its own "We are a pioneer in the successful commercialization of MRAM" by 0.2 (2026-07-31,
+    // the owner's live report). Costed like a promo hit, so a concrete is-a beats it but it can
+    // still stand where a filer offers nothing better.
+    if (/\benables? (our|its|your) customers\b|\bwith the assurance\b|\bpeace of mind\b|\bwith confidence\b/i.test(s)) score -= 2;
     score -= Math.min(i, 3) * 0.6;              // the opener is usually the intended one — but cap the
     // penalty: with the MD&A Overview appended after Item 1, an unbounded penalty sank every clean
     // description sitting a dozen sentences deep (the Overview is a fallback for a thin Item 1, and a
@@ -730,6 +751,29 @@ function extractSections(text, form) {
     if (wordsOf(mdna) < 200) { const fb = section(text, FALLBACK_10K.mdna[0], FALLBACK_10K.mdna[1], headIsProse, 1500); if (wordsOf(fb) > wordsOf(mdna)) mdna = fb; }
     if (wordsOf(risk) < 200) { const fb = section(text, FALLBACK_10K.risk[0], FALLBACK_10K.risk[1], headIsProse, 1500); if (wordsOf(fb) > wordsOf(risk)) risk = fb; }
     if (wordsOf(business) < 200) { const fb = businessFallback(text, FALLBACK_10K.risk[0]); if (wordsOf(fb) > wordsOf(business)) business = fb; }
+  }
+  // Build 2 sanity gates (qualitative survey, 2026-07-31): every failure below goes to WITHHELD,
+  // never to a mislabeled window, because each lane downstream inherits this denominator.
+  //
+  // A pointer-stub MD&A ("…incorporated by reference to Exhibit 13") is not an MD&A: Progressive's
+  // Item 7 is ~250 words of cross-reference, and candor densities computed on it shipped as if
+  // they were measurement. An empty section is the honest zero — candor withholds with it.
+  if (wordsOf(mdna) < 500 && /incorporated\s+(?:herein\s+)?by\s+reference/i.test(mdna)) mdna = "";
+  // A "risk section" that is a third of the whole document is a failed END anchor wearing a
+  // section's name: JPMorgan's read 126,947 words — sixty percent of the filing — and reached the
+  // statement notes; UVE's ran into its loss triangle; Diamondback's overran into Note 9. Flags
+  // and the AI read then draw from the sections that ARE bounded.
+  const docW = wordsOf(text);
+  if (docW > 0 && wordsOf(risk) / docW > 0.35) risk = "";
+  // Oil & gas 10-Ks open Item 1 with a defined-terms glossary ('"Bbl" means one stock tank
+  // barrel…'); Diamondback's hero lede was its glossary. When a glossary heading sits at the
+  // section's head, the business prose starts after the last definitional line.
+  if (/^[\s\S]{0,800}?\bglossary\b/i.test(business) && /["'“][^"'”]{1,60}["'”]\s+(?:means|refers to)\b/i.test(business.slice(0, 4000))) {
+    const zone = business.slice(0, 25000);
+    let lastEnd = -1, dm;
+    const dre = /["'“][^"'”]{1,60}["'”]\s+(?:means|refers to)\b[^.]{0,300}\./g;
+    while ((dm = dre.exec(zone)) !== null) lastEnd = dm.index + dm[0].length;
+    if (lastEnd > 0) business = business.slice(lastEnd);
   }
   return { business, mdna, risk };
 }

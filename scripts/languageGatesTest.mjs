@@ -12,6 +12,7 @@ import {
   FLAG_THEMES,
   MW_DECLARED, MW_ABSENT, MW_OTHER_ENTITY, RESTATED, RESTATED_CONTRACT, INTEGRITY_FUTURE,
   ADMIT, NOT_ADMIT, BLAME_OTHERS,
+  businessDescription, extractSections, htmlToText,
 } from "./fetchFilings.mjs";
 
 let pass = 0, fail = 0;
@@ -94,6 +95,47 @@ ok("a genuine EPA action still wears Regulation",
 
 ok("software 'preparation' prose no longer wears Regulation via the EPA acronym",
   !theme("Regulation").test("The preparation of financial statements requires management to make estimates that could materially impact reported amounts."));
+
+// ---------------- BUILD 2 — the section seeder and the hero ranker (Everspin, the owner's
+// live report 2026-07-31: the page led with a design-win DEFINITION because an MD&A
+// cross-reference `see "Part I, Item 1. Business"` seeded a 19,061-word capture that beat the
+// real Item 1, and even with the right pool the customer-benefit frame outscored the is-a). ----
+
+{
+  // The Everspin candidate pool, pinned: the is-a must beat both the definition and the benefit frame.
+  // Filing order: the is-a opens Item 1; the benefit frame and the definition come later.
+  const pool = [
+    "We are a pioneer in the successful commercialization of Magnetoresistive Random Access Memory (MRAM) technology.",
+    "Everspin enables our customers to design products incorporating our technology with the assurance that it will be available for many years to come.",
+    "We consider a design win to occur when an OEM or contract manufacturer notifies us that it has qualified one of our products as a component in a product or system for production.",
+  ];
+  const lede = businessDescription(pool, "Everspin Technologies Inc.", "MRAM");
+  ok("MRAM: the is-a description beats the design-win definition and the customer-benefit frame",
+    /pioneer in the successful commercialization/.test(String(lede)));
+  ok("a 'we define X as' sentence can never be a hero lede",
+    businessDescription(["We define Adjusted net income as net income adjusted for stock-based compensation expense."], "Anyco Inc.", "ANY") === null);
+}
+
+{
+  // The "Part I," cross-reference form: a cited heading must not seed the section while the
+  // real heading (prose after it, no citation before it) must. Synthetic fixture, minimal.
+  const fx = [
+    "Table of Contents Page PART I Item 1. Business 4 Item 1A. Risk Factors 10",
+    "PART I Item 1. Business General " + "We are a maker of widgets for industrial customers worldwide. ".repeat(60),
+    "Item 1A. Risk Factors " + "Our business could be harmed by many things. ".repeat(30),
+    "Item 7. Management's Discussion and Analysis " + "Revenue rose on widget demand. ".repeat(120),
+    'For an overview of our business, see "Part I, Item 1. Business." Key Metrics We monitor a variety of key financial metrics. ' + "More MD&A prose follows here at length. ".repeat(80),
+  ].join(" ");
+  const secs = extractSections(fx, "10-K");
+  ok("a cited 'Part I, Item 1. Business' cross-reference does not seed the business section",
+    /maker of widgets/.test(secs.business) && !/Key Metrics/.test(secs.business));
+}
+
+ok("letter-spanned headings glue back together in htmlToText",
+  htmlToText("<p><span>B</span><span>USINESS</span> overview of the company</p>") === "BUSINESS overview of the company");
+
+ok("a pointer-stub MD&A withholds instead of shipping candor on 250 words",
+  extractSections("Item 7. Management's Discussion and Analysis The information required by this item is incorporated by reference to Exhibit 13 of this report. Item 7A. Quantitative and Qualitative Disclosures", "10-K").mdna === "");
 
 console.log(`\nlanguageGatesTest: ${pass} passed, ${fail} failed`);
 if (fail) process.exit(1);
