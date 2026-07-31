@@ -6,7 +6,7 @@ import { buildFinancialScorecard, returnOnEquity, returnOnTangibleEquity, effici
 import { buildReitScorecard, cashPayout, debtToAssets, ebitdaCoverage } from "../lib/reits.mjs";
 import { buildInsurerScorecard, combinedRatio } from "../lib/insurers.mjs";
 import { buildFeeScorecard } from "../lib/feeFinancials.mjs";
-import { buildManagedCareScorecard, medicalLossRatio } from "../lib/managedCare.mjs";
+import { buildManagedCareScorecard, medicalLossRatio, mlrTrendTie } from "../lib/managedCare.mjs";
 import { buildUtilityScorecard } from "../lib/utilities.mjs";
 import { moatReport } from "../lib/durability.mjs";
 import { grahamTests } from "../lib/graham.mjs";
@@ -121,6 +121,18 @@ const reitRead = (() => {
   if (!spreads.length && !occupancy.length && !spreadsWithheld.length && !occupancyWithheld.length) return null;
   return { spreads, occupancy, spreadsWithheld, occupancyWithheld, asOf: reitReadRaw.asOf || null };
 })();
+// The managed-care MLR cost-trend read (qualitative survey Build 11): the filer's own
+// cost-trend sentence, tiered at extraction against the desk's computed medical loss ratio
+// and RE-VERIFIED here by mlrTrendTie — the fiscal year must tie, the recomputed ratio must
+// still equal the one the sentence was tiered against, every stated figure must still be the
+// sentence's own characters, and a level badge must still match at the sentence's declared
+// precision; a record that drifts retires rather than render. This is the sector's pricing
+// surface (the generic pricing facet is withheld for SIC 6324 by the financials wall — the
+// managed-care desk's stand-in, the Build 9 REIT precedent), rendered on the medical-loss-
+// ratio check the tier was computed against.
+const mcMlr = fk === "managedCare"
+  ? mlrTrendTie(company, language?.companies?.[company.ticker]?.mlrTrend || null)
+  : null;
 const toneWord = (t) => (t === "favorable" ? "favorable" : "unfavorable");
 const ckTrim = (s) => { s = String(s || "").replace(/\s+/g, " ").trim(); return s.length > 260 ? s.slice(0, 260).replace(/\s+\S*$/, "") + "…" : s; };
 const graham = company.market !== "JP" && !isFin ? grahamTests(company) : null;
@@ -228,6 +240,9 @@ const enrich = (sec) => ({
     // occupancy beside the cash-payout check.
     if (reitRead && (reitRead.spreads.length || reitRead.spreadsWithheld.length) && c.concept === "roic") cc = { ...cc, reitSp: reitRead };
     if (reitRead && (reitRead.occupancy.length || reitRead.occupancyWithheld.length) && c.concept === "free-cash-flow") cc = { ...cc, reitOcc: reitRead };
+    // The managed-care pricing slot: the MLR check itself (matched by title — the desk's
+    // sibling checks share the medical-loss-ratio concept id).
+    if (mcMlr && c.title === "Medical loss ratio") cc = { ...cc, mcMlr };
     return cc;
   }),
 });
@@ -329,6 +344,16 @@ const enrich = (sec) => ({
                   <p class="swWithheld">Two same-scope occupancy sentences in this filing disagree, so neither is quoted as the fact here. Read the filing linked above.</p>
                 ))}
                 <span class="devCheck">✓ each figure is its sentence’s own characters, dated to the fiscal year end inside the sentence</span>
+              </div>
+            ) : null}
+            {c.mcMlr ? (
+              <div class="devTie swTie">
+                <span class="devMark">Pricing against the trend, in the filing’s words</span>
+                <div class="swRow">
+                  {c.mcMlr.figs.length ? <div class="swHead"><span class="swLabel">{c.mcMlr.label}</span><span class="swFig">{c.mcMlr.figs.join(" · ")}</span></div> : null}
+                  <blockquote class="devQ">“{c.mcMlr.sentence}”</blockquote>
+                  <span class="devCheck">✓ {c.mcMlr.check}</span>
+                </div>
               </div>
             ) : null}
             {c.dev ? (c.dev.conflict ? (

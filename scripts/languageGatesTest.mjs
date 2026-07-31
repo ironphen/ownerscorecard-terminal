@@ -20,7 +20,9 @@ import {
   reserveEngineerRead, ogCriticalTopics,
   reitLeasingRead,
   utilityRegRead,
+  mlrCostTrendRead,
 } from "./fetchFilings.mjs";
+import { mlrTrendTie } from "../src/lib/managedCare.mjs";
 
 let pass = 0, fail = 0;
 const ok = (name, cond) => { console.log((cond ? "ok   " : "FAIL ") + name); cond ? pass++ : fail++; };
@@ -1091,6 +1093,127 @@ ok("noteWindow: the LAST heading occurrence wins (TOC echoes don't)",
     dis("In 2025, we recorded an impairment charge of $ 25 million following comments from the Securities and Exchange Commission on our accounting.") === undefined);
   ok("zero incidence is silence: a filer with no qualifying sentence returns nothing at all",
     utilityRegRead({ mdnaText: "Operating revenues increased in 2025 primarily due to rate base growth and favorable weather across our service territories.", fullText: "", fy: 2025 }) === null);
+}
+
+// ---------------- BUILD 11 — managed-care MLR cost-trend read (MC P2, the sector's pricing
+// stand-in; docs/qualitative-desks-survey.md SECTION 3). Every filing sentence below is
+// VERBATIM from the named FY2025 10-K as the lane's own splitter flattens it (fetched and
+// measured 2026-07-31); every {mlr, mlrPrior} is the desk's OWN computed medical loss ratio
+// from the filed claims and premiums lines — the figure the sentence is tiered against. The
+// laws under test: no computed MLR = no lane at all; a LEVEL badge only when every stated
+// level matches the computed record at the sentence's own declared precision; direction-only
+// beneath it; a segment sentence never ships, however well its number ties; a stated figure
+// beyond one unit at its own precision dies outright, never downgraded. ----------------
+
+{
+  const mc = (mdnaText, mlr, mlrPrior) => mlrCostTrendRead({ mdnaText, fy: 2025, mlr, mlrPrior });
+  // The desk's own ratios, from the filed lines (claimsIncurred / premiumsEarned, $M):
+  const MOH = { mlr: 39488 / 43052, prior: 34428 / 38627 };   // 91.722% / 89.129%
+  const OSCR = { mlr: 10019.025 / 11469.893, prior: 7332.589 / 8971.259 }; // 87.351% / 81.734%
+  const UNH = { mlr: 313995 / 352229, prior: 264185 / 308810 }; // 89.145% / 85.549%
+  const CI = { mlr: 34349 / 40261, prior: 38648 / 45996 };    // 85.316% / 84.025%
+  const HUM = { mlr: 110812 / 122825, prior: 100664 / 112104 }; // 90.219% / 89.795%
+
+  // --- MOH, the doc's pinned badge (91.7/89.1): the ALL-CAPS heading glue is stripped, both
+  // stated levels match the computed record at the filer's own one-decimal precision, and the
+  // "260 basis points" is consistent with the computed 259.2 at its tens-of-bps precision.
+  const mohBadge = "MEDICAL CARE RATIO The consolidated MCR increased to 91.7% in 2025, compared with 89.1% in 2024, or 260 basis points.";
+  const mohClean = "The consolidated MCR increased to 91.7% in 2025, compared with 89.1% in 2024, or 260 basis points.";
+  {
+    const r = mc(mohBadge, MOH.mlr, MOH.prior);
+    ok("MOH: the consolidated MCR sentence earns the LEVEL badge, heading glue stripped",
+      !!r && r.tier === "level" && r.sentence === mohClean && r.stated.level === "91.7%" && r.stated.prior === "89.1%");
+    ok("MOH: every stated figure is a literal substring of the shipped sentence (the weld law)",
+      !!r && r.sentence.includes(r.stated.level) && r.sentence.includes(r.stated.prior));
+    ok("MOH: the computed figures ride the record as the desk's own, at full precision",
+      !!r && r.computed.pct === 91.722 && r.computed.priorPct === 89.129);
+  }
+  ok("MOH red-team: the same sentence against a shifted record dies outright — a level beyond one unit is never downgraded to direction-only",
+    mc(mohBadge, 0.905, MOH.prior) === null);
+  ok("no computed MLR = no lane: the same perfect sentence ships nothing (the ALHC/TRUP wall)",
+    mc(mohBadge, null, null) === null);
+
+  // --- MOH's segment rows, the subject-scope kill (M4: scope noun before the verb rejects):
+  // the Medicaid MCR row dies before any figure is read, and the Medicare MCR row — whose
+  // 89.1% ties the consolidated PRIOR by pure coincidence — dies the same way.
+  ok("MOH: 'The Medicaid MCR increased…' is a segment figure and never ships",
+    mc("The Medicaid MCR increased 150 basis points to 91.8% in 2025, compared to 90.3% in 2024.", MOH.mlr, MOH.prior) === null);
+  ok("MOH: the Medicare MCR sentence dies though its 89.1% ties the consolidated prior — the coincidence class",
+    mc("Form 10-K | 44 The Medicare MCR increased to 92.4% in 2025, from 89.1% in 2024, or 330 basis points.", MOH.mlr, MOH.prior) === null);
+  ok("MOH: with the badge sentence present, the badge outranks every direction-only candidate",
+    (() => { const r = mc(`The increase reflects a higher MCR in all of our segments, driven mainly by a challenging medical cost trend environment due to increased utilization in 2025. ${mohBadge}`, MOH.mlr, MOH.prior); return !!r && r.tier === "level"; })());
+
+  // --- OSCR, the doc's pin (5.7 vs 5.6pt): a stated point-change with no level ships
+  // DIRECTION-ONLY — the 5.7% is the difference of the filer's own rounded levels, consistent
+  // with the desk's computed 5.616 within one unit at its own precision, and never a badge.
+  const oscr57 = "MLR increased 5.7% year over year for the year ended December 31, 2025, primarily driven by an increase in average market morbidity that resulted in an increase in the net risk adjustment transfer accrual, as well as higher utilization that was not fully offset by risk adjustment.";
+  {
+    const r = mc(oscr57, OSCR.mlr, OSCR.prior);
+    ok("OSCR: the 5.7% move ships direction-only beside the desk's computed 5.6pt",
+      !!r && r.tier === "direction" && r.dir === "rose" && r.stated.delta === "5.7%" && r.computed.deltaPts === 5.616 && r.sentence === oscr57);
+  }
+  // The flattened MLR table row would BADGE — its 87.4/81.7 round exactly to the computed
+  // record — so the table guard is load-bearing, not decorative.
+  ok("OSCR: the flattened table row ($ (443,151) … 87.4 % 81.7 %…) is debris and never a badge",
+    mc("$ (443,151) $ 25,432 Medical Loss Ratio (MLR) 87.4 % 81.7 % SG&A Expense Ratio 17.5 % 19.1 % Premium Premium revenue increased $2,498.6 million, or 28% , for the year ended December 31, 2025, compared to the same period in 2024.", OSCR.mlr, OSCR.prior) === null);
+  ok("OSCR: the medical-expense dollar sentence ('increased $2,686.4 million, or 37%') is a line-item variance this lane cannot verify — dollars die whole",
+    mc("Medical Expenses and MLR Medical expenses increased $2,686.4 million, or 37%, for the year ended December 31, 2025, compared to the year ended December 31, 2024, primarily due to increased membership and medical cost trend.", OSCR.mlr, OSCR.prior) === null);
+
+  // --- UNH, the doc's pin: the well-short admission — the pricing-fell-short idiom, figure-
+  // free, shipped on direction alone against the desk's rising record.
+  const unhShort = "For 2025, our pricing trends and patient and member health status assumptions were well-short of the medical cost trends incurred, significantly impacting our earnings.";
+  {
+    const r = mc(unhShort, UNH.mlr, UNH.prior);
+    ok("UNH: the 'well-short' sentence surfaces, direction-only, no figure",
+      !!r && r.tier === "direction" && r.dir === "rose" && !r.stated && r.sentence === unhShort);
+  }
+  ok("UNH red-team: the same sentence against a FALLING computed record ships nothing — direction must agree",
+    mc(unhShort, UNH.prior, UNH.mlr) === null);
+  ok("UNH: the restructuring-impact sentence ('$2.5 billion impact … increased medical costs $623 million') never anchors — the cost line must be the subject",
+    mc("The $2.5 billion impact of the restructuring and other actions was a reduction to premium revenue of $122 million and investment and other income of $397 million, and increased medical costs $623 million and operating costs $1.4 billion on a full year basis in 2025.", UNH.mlr, UNH.prior) === null);
+  ok("UNH: the well-short admission outranks a later figure-free trend sentence — earliest wins within a tier",
+    (() => { const r = mc(`${unhShort} Medical costs increased in 2025 primarily due to elevated medical cost trend and growth in people served.`, UNH.mlr, UNH.prior); return !!r && r.sentence === unhShort; })());
+
+  // --- CI, the doc's twin kills. The 120 bps sentence sits in the Cigna Healthcare SEGMENT
+  // zone (measured: the heading precedes it with no consolidated marker between), and its
+  // loose tie to the desk's consolidated 129 bps cannot rescue it — a segment's ratio on the
+  // segment's adjusted basis is not the consolidated record's.
+  const ciZone = "Cigna Healthcare Segment 2025 versus 2024 Commentary regarding percentage changes (or bps) and dollar variances represents the driver's impact on the overall category. Pre-tax adjusted income from operations decreased 2%, primarily due to lower contributions from the Individual and Family Plans business. The medical care ratio increased 120 bps, primarily due to higher medical costs, driven by the Individual and Family Plans business.";
+  ok("CI: the 120 bps segment coincidence dies in the segment zone",
+    mc(ciZone, CI.mlr, CI.prior) === null);
+  ok("CI: the Evernorth pharmacy-cost sentence is not the medical book and dies",
+    mc("Pharmacy and other service costs increased 18%, primarily reflecting higher utilization of prescription drugs from customer growth in Evernorth Health Services in 2025.", CI.mlr, CI.prior) === null);
+  ok("CI: the expense-line variance ('Medical costs and other benefit expenses decreased 11%…') contradicts the desk's rising ratio and dies outright",
+    mc("Medical costs and other benefit expenses decreased 11%, primarily driven by the impact of the HCSC transaction (-18%), partially offset by higher medical costs within our ongoing U.S. Healthcare businesses (+7%) in 2025.", CI.mlr, CI.prior) === null);
+
+  // --- HUM, measured live (the doc's own +0.4pt smallest-delta example): the one-sentence
+  // ratio narration badges — 90.2/89.8 tie the computed 90.219/89.795 at one decimal, and the
+  // "40 basis points" is the filer's own rounding of the computed 42.4 at tens-of-bps
+  // precision.
+  ok("HUM: the consolidated benefit ratio sentence earns the badge (90.2/89.8, '40 basis points' consistent at its own precision)",
+    (() => {
+      const r = mc("The consolidated benefit ratio increased 40 basis points from 89.8% in the 2024 period to 90.2% in the 2025 period primarily due to a shift in line of business mix resulting from growth in the state-based contracts and stand-alone PDP businesses that carry a higher benefit ratio, combined with a reduction in individual Medicare Advantage membership, and the year-over-year increase in the Medicare stand-alone PDP benefit ratio driven by the impact of the IRA.", HUM.mlr, HUM.prior);
+      return !!r && r.tier === "level" && r.stated.level === "90.2%" && r.stated.prior === "89.8%";
+    })());
+
+  // --- CLOV-shape: the non-GAAP definitional apparatus never ships (definition, methodology,
+  // present tense — nothing declarative about the year's trend).
+  ok("CLOV: 'We calculate our BER by taking…' is a definition, not a trend sentence",
+    mc("We calculate our BER by taking the total of Insurance net medical expenses incurred and quality improvements, and dividing that total by premiums earned on a net basis, in 2025.", 0.82908, 0.74826) === null);
+
+  // --- The render-side tie (mlrTrendTie): the quote renders only while the recomputed record
+  // still equals the one the sentence was tiered against — a healed line retires the quote.
+  {
+    const rec = mc(mohBadge, MOH.mlr, MOH.prior);
+    const company = { fy: 2025, lines: { claimsIncurred: 39488, premiumsEarned: 43052 }, history: [{ fy: 2024, lines: { claimsIncurred: 34428, premiumsEarned: 38627 } }] };
+    const tie = mlrTrendTie(company, rec);
+    ok("render tie: the MOH badge renders with both stated figures and the desk's computed ratio named as its own",
+      !!tie && tie.tier === "level" && tie.figs.join("|") === "91.7%|89.1%" && /desk's own computed medical loss ratio/.test(tie.check));
+    ok("render tie: a healed claims line retires the quote rather than sit beside a number it no longer ties",
+      mlrTrendTie({ ...company, lines: { claimsIncurred: 39900, premiumsEarned: 43052 } }, rec) === null);
+    ok("render tie: a stale fiscal year retires the quote",
+      mlrTrendTie({ ...company, fy: 2026 }, rec) === null);
+  }
 }
 
 console.log(`\nlanguageGatesTest: ${pass} passed, ${fail} failed`);

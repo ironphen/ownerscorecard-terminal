@@ -127,6 +127,68 @@ export function buildManagedCareScorecard(company) {
   };
 }
 
+// The MLR cost-trend tie (qualitative survey Build 11): the render-side re-verification of
+// the extraction-time weld. The stored sentence renders ONLY while (a) the fiscal year still
+// ties the scorecard's, (b) the desk's medical loss ratio RECOMPUTED from today's lines still
+// equals the one the sentence was tiered against (a healed or restated record retires the
+// quote rather than sit beside a number it no longer ties), (c) every stated figure is still a
+// literal substring of the sentence, and (d) the badge's level still matches at the sentence's
+// own declared precision. Returns display fields or null; the computed figures are always
+// named as the desk's own, never as the filer's.
+export function mlrTrendTie(company, read) {
+  if (!read || !read.sentence || String(read.fy) !== String(company?.fy)) return null;
+  const cur = medicalLossRatio(company?.lines);
+  if (cur == null || read.computed?.pct == null) return null;
+  const pct = cur * 100;
+  if (Math.abs(pct - read.computed.pct) > 0.05) return null;
+  const priorLines = (company?.history || []).find((h) => Number(h.fy) === Number(company.fy) - 1)?.lines;
+  const priorMlr = medicalLossRatio(priorLines);
+  const priorPct = priorMlr == null ? null : priorMlr * 100;
+  if (read.computed.priorPct != null && (priorPct == null || Math.abs(priorPct - read.computed.priorPct) > 0.05)) return null;
+  const p1 = (v) => `${v.toFixed(1)}%`;
+  const asFiled = "medical costs ÷ premiums earned, as filed";
+  if (read.tier === "level") {
+    const stated = read.stated || {};
+    if (!stated.level || !read.sentence.includes(stated.level)) return null;
+    const dp = (v) => (String(v).match(/\.(\d+)/) || [, ""])[1].length;
+    if (parseFloat(stated.level).toFixed(dp(stated.level)) !== pct.toFixed(dp(stated.level))) return null;
+    if (stated.prior) {
+      if (!read.sentence.includes(stated.prior) || priorPct == null) return null;
+      if (parseFloat(stated.prior).toFixed(dp(stated.prior)) !== priorPct.toFixed(dp(stated.prior))) return null;
+    }
+    return {
+      tier: "level",
+      sentence: read.sentence,
+      figs: [stated.level, ...(stated.prior ? [stated.prior] : [])],
+      label: "The filer's stated ratio",
+      check: `the stated ${stated.level}${stated.prior ? ` and ${stated.prior}` : ""} match the desk's own computed medical loss ratio — ${p1(pct)} in FY${company.fy}${stated.prior && priorPct != null ? `, ${p1(priorPct)} in FY${Number(company.fy) - 1}` : ""} (${asFiled}) — at the sentence's own precision`,
+    };
+  }
+  // Direction-only: the tier needs the prior-year record to still exist and to still move the
+  // way the sentence reads.
+  if (priorPct == null) return null;
+  const delta = pct - priorPct;
+  if ((read.dir === "rose") !== (delta > 0)) return null;
+  const move = `${read.dir} ${Math.abs(delta).toFixed(1)} points, ${p1(priorPct)} to ${p1(pct)}`;
+  if (read.stated?.delta) {
+    if (!read.sentence.includes(read.stated.delta)) return null;
+    return {
+      tier: "direction",
+      sentence: read.sentence,
+      figs: [read.stated.delta],
+      label: "The filer's stated move",
+      check: `direction only, no level stated: the desk's own computed medical loss ratio ${move} (${asFiled}); the sentence's ${read.stated.delta} is the filer's own rounding of the same move`,
+    };
+  }
+  return {
+    tier: "direction",
+    sentence: read.sentence,
+    figs: [],
+    label: "The cost trend, in management's words",
+    check: `direction only: the sentence reads costs as ${read.dir === "rose" ? "outrunning" : "trailing"} premiums, and the desk's own computed medical loss ratio agrees — ${move} (${asFiled})`,
+  };
+}
+
 export function managedCareQuality(company) {
   const H = (company?.history || []).filter((h) => h?.lines?.revenue != null);
   const mlrSeries = H.map((h) => medicalLossRatio(h.lines)).filter((v) => v != null);

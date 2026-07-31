@@ -26,6 +26,9 @@ import { compactJson } from "../src/lib/dataFile.mjs";
 // insurer inside SIC 6324, is the measured false-attacher the archetype rule exists for).
 import { noteWindows, weld, jaccardDedupe } from "../src/lib/quoteWeld.mjs";
 import { financialKind } from "../src/lib/archetype.mjs";
+// Build 11: the managed-care MLR cost-trend lane tiers the filer's sentence against the
+// desk's OWN computed medical loss ratio — the same guarded figure the scorecard shows.
+import { medicalLossRatio } from "../src/lib/managedCare.mjs";
 
 const UA = process.env.SEC_USER_AGENT || "Owner Scorecard research (ryanreinsant@gmail.com)";
 const HEADERS = { "User-Agent": UA, "Accept-Encoding": "gzip, deflate" };
@@ -866,7 +869,7 @@ function bizLeadText(business, form) {
   return m > 200 ? business.slice(m) : business;
 }
 
-async function getFiling(cik, f, totalDebtMillions = null, devTarget = null, depTarget = null, swTarget = false, ogTarget = false, reitTarget = false, utilTarget = false) {
+async function getFiling(cik, f, totalDebtMillions = null, devTarget = null, depTarget = null, swTarget = false, ogTarget = false, reitTarget = false, utilTarget = false, mcTarget = null) {
   const accnNoDash = f.accn.replace(/-/g, "");
   const base = `https://www.sec.gov/Archives/edgar/data/${Number(cik)}/${accnNoDash}`;
   let url = `${base}/${f.doc}`;
@@ -974,7 +977,14 @@ async function getFiling(cik, f, totalDebtMillions = null, devTarget = null, dep
   if (utilTarget && fy && f.form === "10-K") {
     try { utilRead = utilityRegRead({ mdnaText: mdna, fullText: text, fy }); } catch { utilRead = null; }
   }
-  return { url, business: { ...metrics(business), lead: leadSentences(bizLeadText(business, f.form)), head: business.slice(0, 800) }, mdna: { ...md, lead: leadSentences(mdna), candor: candorSignals(mdna, md.sents) }, risk: metrics(risk), reportDate: f.reportDate, debtMaturity, reserveRead, uninsuredRead, swRead, ogRead, reitRead, utilRead };
+  // The managed-care MLR cost-trend read (Build 11): MD&A sentences only (the doc's scope),
+  // run only when the caller supplied the desk's computed MLR for THIS filing's fiscal year —
+  // no computed MLR, no lane (Alignment and Trupanion never even scan).
+  let mcRead = null;
+  if (mcTarget && mcTarget.mlr != null && fy && f.form === "10-K") {
+    try { mcRead = mlrCostTrendRead({ mdnaText: mdna, fy, mlr: mcTarget.mlr, mlrPrior: mcTarget.mlrPrior }); } catch { mcRead = null; }
+  }
+  return { url, business: { ...metrics(business), lead: leadSentences(bizLeadText(business, f.form)), head: business.slice(0, 800) }, mdna: { ...md, lead: leadSentences(mdna), candor: candorSignals(mdna, md.sents) }, risk: metrics(risk), reportDate: f.reportDate, debtMaturity, reserveRead, uninsuredRead, swRead, ogRead, reitRead, utilRead, mcRead };
 }
 
 // ---- executive pay (proxy statement / DEF 14A) ----
@@ -2913,6 +2923,222 @@ function utilityRegRead({ mdnaText = "", fullText = "", fy }) {
   };
 }
 
+// ---- Managed care: pricing against the trend — the MLR-anchored cost-trend read (Build 11
+// of the qualitative survey, 2026-07-31; docs/qualitative-desks-survey.md §Managed care P2,
+// the sector's replacement for the withheld pricing facet) ----
+//
+// The filer's own medical-cost-trend sentence from the MD&A, TIERED against the desk's own
+// computed medical loss ratio (lines.claimsIncurred ÷ lines.premiumsEarned via
+// medicalLossRatio — the same guarded figure the scorecard shows). No computed MLR for the
+// filing's fiscal year = no lane at all: Alignment (extension-tag costs) and Trupanion (a pet
+// insurer inside SIC 6324 with neither line tagged) never even scan — the archetype rule plus
+// the computed-figure wall, both measured.
+//
+// The tiers, measured on the 10 real FY2025 10-Ks (fetched 2026-07-31):
+//   LEVEL BADGE — a consolidated sentence stating the ratio's level(s) earns the badge only
+//     when every stated level matches the desk's computed MLR at the sentence's OWN declared
+//     precision (MOH: "The consolidated MCR increased to 91.7% in 2025, compared with 89.1%
+//     in 2024, or 260 basis points." — computed 91.722%/89.129% round to the filer's own
+//     91.7/89.1; the 260 bps is consistent within one rounding unit of the computed 259.3).
+//   DIRECTION-ONLY — a sentence that agrees only in direction ships without the badge: a
+//     stated point-change that is CONSISTENT with the computed delta within one unit at its
+//     own precision (OSCR: "MLR increased 5.7%…" — the difference of its own rounded levels —
+//     beside the desk's 5.6pt), or a figure-free trend sentence, including the
+//     pricing-fell-short idiom (UNH: "For 2025, our pricing trends and patient and member
+//     health status assumptions were well-short of the medical cost trends incurred…").
+//   SEGMENT KILL — a segment-scoped sentence never ships, however well its number ties (a
+//     segment's MLR is not the consolidated record's — the coincidence class): in-sentence
+//     subject scope (MOH's "The Medicaid MCR increased…", and its Medicare MCR sentence whose
+//     89.1% ties the consolidated prior by pure coincidence) and zone scope (CI's "The
+//     medical care ratio increased 120 bps…" sits under the "Cigna Healthcare Segment"
+//     heading, and its 120 bps loosely ties the desk's consolidated 129 — the tie cannot
+//     rescue it, because it is the segment's figure on the segment's adjusted basis).
+//   WRONG-NUMBER KILL — any stated level or point-change that CONTRADICTS the computed record
+//     beyond one unit at its own precision dies outright (never downgraded to direction-only:
+//     a wrong number inside a rendered quote is worse than silence). CI's "Medical costs and
+//     other benefit expenses decreased 11%…" — an expense-line variance, not the ratio — dies
+//     here (11 points against the desk's 1.3). Dollar-bearing sentences die whole: this lane
+//     verifies ratios, and a dollar it cannot check never ships; Evernorth's pharmacy-cost
+//     sentences are not the medical book and die on the pharmacy kill.
+// One row ships: the badge outranks direction-only; within a tier the earliest MD&A sentence
+// (the overview's thesis) wins — measured on UNH, where the well-short admission leads.
+const MC_ANCHOR = /\bmedical\s+costs?\b|\bbenefit\s+expenses?\b|\bMCR\b|\bMLR\b|\bHBR\b|\bBER\b|\bmedical\s+cost\s+trends?\b|\bcare\s+activity\b|\bcare\s+patterns?\b|\bmedical\s+care\s+ratio\b|\bmedical\s+loss\s+ratio\b|\bhealth\s+benefits?\s+ratio\b|\bbenefit\s+expense\s+ratio\b|\bbenefits?\s+ratio\b|\bhealthcare\s+costs?\b|\bmedical\s+expenses?\b/i;
+// The pricing-fell-short idiom, its own accepted shape (the subject is pricing, the object is
+// the cost trend — the one form where the anchor legitimately follows the verb).
+const MC_IDIOM = /\b(?:pricing|premium|rate)s?\b[^.;]{0,120}?\b(?:well[- ]short\s+of|short\s+of|lagged(?:\s+behind)?|fell\s+behind)\b[^.;]{0,80}?\bmedical\s+cost\s+trends?\b/i;
+// Declarative past / present-perfect TREND verbs — never bare was/were, which let a
+// subordinate clause ("…retroactive premium items … that were recognized…", MOH's Medicaid
+// subsection) masquerade as the trend statement. The FIRST match splits subject from
+// predicate, and the anchor must sit on the subject side (revenue/income-anchored sentences
+// and impact attributions — UNH's "$2.5 billion impact … increased medical costs" — die here).
+const MC_VERB = /\b(?:increased|decreased|rose|declined|grew|fell|improved|deteriorated|worsened|moderated)\b/i;
+const MC_UP = /\b(?:increased?|increases|rose|grew|higher|elevated|deteriorated|worsened|accelerated)\b/i;
+const MC_DOWN = /\b(?:decreased?|decreases|declined?|fell|lower|moderated|improved)\b/i;
+// Forward-looking frames (never "than we expected" — the backward comparison that carries the
+// sector's genuine trend narration); fy+1 is bound in the function.
+const MC_FORWARD = /\b(?:we\s+)?(?:expect|anticipate|believe|project|intend)s?\b|\boutlook\b|\bguidance\b|\bgoing\s+forward\b|\bwill\s+(?:likely\s+)?(?:be|continue|result|increase|decrease|remain|vary|impact)\b|\bfuture\s+periods?\b/i;
+// Definitional / methodology frames: CLOV's non-GAAP BER apparatus ("We calculate our BER by
+// taking…", "…BER adjusts out activity…" dies on tense), MOH's "MCR represents…".
+const MC_DEFN = /\brepresents?\b|\bis\s+(?:a\s+|an\s+)?(?:metric|measure|key|defined|calculated|included|impacted|subject)\b|\bdefined\s+as\b|\bwe\s+(?:calculate|use|regularly\s+review|consider|start)\b|\bmanagement\s+uses\b|\bmeans\b/i;
+// Flattened-table debris: the DEV_TABLE forms plus a parenthesized negative dollar and an
+// adjacent bare-percent pair — OSCR's "$ (443,151) … 87.4 % 81.7 %" table row would otherwise
+// BADGE (its levels round exactly to the computed record); the guard is measured-necessary.
+const MC_TABLE = /\b(19|20)\d{2}\s+(19|20)\d{2}\b|\(in\s+(?:thousands|millions)|following\s+tables?\b|tables?\s+(?:below|above)\b|\$\s?\(|\d\s?%\s+\d[\d,.]*\s?%|Table\s+of\s+Contents/i;
+// The pharmacy book is not the medical book (CI's Evernorth class).
+const MC_PHARM = /\bpharmacy\b|\bprescription\s+drugs?\b/i;
+// In-sentence segment scope, tested on the SUBJECT side only (M4's words: scope noun or
+// segment label BEFORE the verb rejects the sentence — Humana's cause tail may name its
+// Medicare PDP ratio without scoping the consolidated subject): a program / segment word
+// reaching the ratio noun (MOH's "The Medicaid MCR", "The Medicare MCR"). Program names stay
+// case-sensitive.
+const MC_RATIO_SRC = "(?:MCR|MLR|HBR|BER|[Mm]edical\\s+(?:care|loss)\\s+ratio|[Hh]ealth\\s+benefits?\\s+ratio|[Bb]enefits?\\s+(?:expense\\s+)?ratio)";
+const MC_SEG_INLINE = new RegExp("\\b(?:Medicaid|Medicare(?:\\s+Advantage)?|Marketplace|Commercial|Specialty|International|Employer\\s+Group|D-SNP)\\b[^.;:]{0,30}?" + MC_RATIO_SRC);
+const MC_SEG_INLINE2 = new RegExp("\\b(?:segment|division)(?:'s)?\\b[^.;:]{0,40}?" + MC_RATIO_SRC, "i");
+// Zone scope, measured on the 10 MD&As: a heading-shaped "<Name…> Segment" run (never the
+// quoted "Segment Reporting" cross-reference — the {1,6} title words and the tail guard
+// exclude it) versus the consolidated-results markers. CI's 120 bps sits at 26.8k, after
+// "Cigna Healthcare Segment" at 23.2k with no consolidated marker before it; UNH's well-short
+// sentence at 6.6k precedes UNH's first segment heading at 19.7k.
+const MC_SEG_HEAD = /(?<!["“”])\b(?:[A-Z][\w&'.,-]*\s+){1,6}Segments?\b(?!\s+(?:Reporting|reporting|Performance|performance))/g;
+const MC_CONS_MARK = /\bconsolidated\s+results\s+of\s+operations\b|\bCONSOLIDATED\s+RESULTS\b|\bConsolidated\s+Operating\s+Results\b|C\s?ONSOLIDATED\s+R\s?ESULTS/g;
+
+// The lane's own splitter, offset-tracking (the zone rule needs each sentence's position) and
+// glue-stripping: leading "NN Table of Contents", "Form 10-K | NN", bare years, and the
+// ALL-CAPS heading run MOH glues onto its badge sentence ("MEDICAL CARE RATIO The
+// consolidated MCR increased…" — the quote must ship as the filer's sentence, not the page
+// furniture). Local by design, the devSentences precedent.
+function mcSentences(text) {
+  if (!text) return [];
+  const out = [];
+  const push = (raw, at) => {
+    let s = raw.replace(/\s+/g, " ").trim();
+    s = s.replace(/^\d{1,4}\s+Table\s+of\s+Contents\s+/i, "")
+      .replace(/^Form\s+10-K\s*\|\s*\d{1,4}\s+/i, "")
+      .replace(/^(?:(?:19|20)\d{2}\s+)+(?=[A-Z“"$])/, "")
+      .replace(/^(?:[A-Z][A-Z&'’-]*\s+){2,}(?=[A-Z][a-z])/, "");
+    // 600-char ceiling (over devSentences' 520): Humana narrates its ratio in one 560-char
+    // sentence whose levels tie the computed record exactly. 45-letter floor (the
+    // uninsSentences precedent): MOH's badge sentence runs 58 letters — ratio sentences are
+    // digit-heavy and short by construction.
+    if (s.length < 50 || s.length > 600) return;
+    const digits = (s.match(/\d/g) || []).length;
+    const letters = (s.match(/[a-zA-Z]/g) || []).length;
+    if (letters < 45 || digits / (digits + letters) > 0.4) return;
+    out.push({ s, at });
+  };
+  const re = /(?<=[.!?]["”’']?)\s+(?=[A-Z(“"$0-9]|i[A-Z])/g;
+  let last = 0, m;
+  while ((m = re.exec(text)) !== null) { push(text.slice(last, m.index), last); last = re.lastIndex; }
+  push(text.slice(last), last);
+  return out;
+}
+
+// Stated figures, year-bound. Levels only in the paired "X% in <year>" form (an unpaired
+// level is unverifiable against a dated record and dies); point-changes in the verb-led
+// "% / percentage point" form and the bps form. Declared precision = the filer's own decimals.
+const mcLevelPairs = (s) => [...s.matchAll(/(\d{2,3}(?:\.\d+)?)\s?%\s+in\s+(?:the\s+)?(20\d\d)/g)]
+  .map((m) => ({ text: `${m[1]}%`, value: parseFloat(m[1]), year: +m[2], unit: Math.pow(10, -((m[1].split(".")[1] || "").length)) }));
+const mcDeltaPct = (s) => [...s.matchAll(/(?:increased|decreased|rose|declined|grew|improved|deteriorated|higher|lower)\s+(?:by\s+)?(?:approximately\s+)?(\d{1,2}(?:\.\d+)?)\s?(?:%|percent\b|percentage\s+points?\b)/gi)]
+  .map((m) => ({ text: `${m[1]}%`, pts: parseFloat(m[1]), unit: Math.pow(10, -((m[1].split(".")[1] || "").length)) }));
+// A bps delta stated to a trailing zero declares tens-of-bps precision (HUM's "40 basis
+// points" is the difference of its own 0.1%-rounded levels — 42.4 computed; MOH's "260" sits
+// 0.8 from the computed 259.2); a non-round bps figure declares single-bp precision.
+const mcDeltaBps = (s) => [...s.matchAll(/(\d{1,4})\s?(?:bps|basis\s+points)\b/gi)]
+  .map((m) => { const n = parseInt(m[1], 10); return { text: m[0], pts: n / 100, unit: n % 10 === 0 ? 0.1 : 0.01 }; });
+
+function mlrCostTrendRead({ mdnaText = "", fy, mlr, mlrPrior }) {
+  // The wall: no desk-computed MLR for THIS filing's fiscal year, no lane at all.
+  if (mlr == null || !fy || !mdnaText) return null;
+  const pct = mlr * 100;
+  const priorPct = mlrPrior == null ? null : mlrPrior * 100;
+  const deltaPts = priorPct == null ? null : pct - priorPct;
+  const fwd = new RegExp(MC_FORWARD.source + `|\\b${fy + 1}\\b`, "i");
+  // Zone events once per text: the last segment heading vs the last consolidated marker
+  // before a sentence decides its zone; before any marker, the overview is consolidated.
+  const segAt = [...mdnaText.matchAll(MC_SEG_HEAD)].map((m) => m.index);
+  const consAt = [...mdnaText.matchAll(MC_CONS_MARK)].map((m) => m.index);
+  const inSegmentZone = (at) => {
+    const lastSeg = segAt.filter((i) => i < at).pop() ?? -1;
+    const lastCons = consAt.filter((i) => i < at).pop() ?? -1;
+    return lastSeg > lastCons;
+  };
+
+  const rows = [];
+  for (const { s, at } of mcSentences(mdnaText)) {
+    const idiom = MC_IDIOM.test(s);
+    if (!idiom && !MC_ANCHOR.test(s)) continue;
+    if (MC_TABLE.test(s) || MC_PHARM.test(s)) continue;
+    if (HYPO.test(s) || fwd.test(s) || MC_DEFN.test(s)) continue;
+    let subj = s;
+    if (!idiom) {
+      // Subject-side anchor: the cost line or ratio must be what the sentence is ABOUT.
+      const v = s.match(MC_VERB);
+      if (!v) continue;
+      subj = s.slice(0, v.index);
+      if (!MC_ANCHOR.test(subj)) continue;
+    }
+    if (!devYearOk(s, fy)) continue;
+    // A dollar this lane cannot verify never ships inside a rendered quote.
+    if (/\$\s?[\d,.]+/.test(s)) continue;
+    // Segment scope: the in-sentence subject first, then the zone; an in-sentence
+    // "consolidated" subject is the filer's own scope word and overrides the zone.
+    if (MC_SEG_INLINE.test(subj) || MC_SEG_INLINE2.test(subj)) continue;
+    if (!/\bconsolidated\b/i.test(s) && inSegmentZone(at)) continue;
+    // Stated figures against the desk's computed record — the verification gate. A stated
+    // figure beyond one unit at its own precision is a contradiction and the sentence dies;
+    // within a unit but not exact at the declared rounding is the rounding-path divergence
+    // class, eligible for direction-only (never the badge).
+    const levels = mcLevelPairs(s);
+    const deltas = [...mcDeltaPct(s), ...mcDeltaBps(s)];
+    let contradiction = false, statedDelta = null;
+    let fyLevels = 0, fyExact = 0, prLevels = 0, prExact = 0, levelMatch = null, priorMatch = null;
+    for (const lv of levels) {
+      const dp = (lv.text.match(/\.(\d+)/) || [, ""])[1].length;
+      if (lv.year === fy) {
+        if (Math.abs(lv.value - pct) > lv.unit) { contradiction = true; break; }
+        fyLevels++;
+        if (lv.value.toFixed(dp) === pct.toFixed(dp)) { fyExact++; levelMatch = levelMatch || lv; }
+      } else if (lv.year === fy - 1) {
+        if (priorPct == null || Math.abs(lv.value - priorPct) > lv.unit) { contradiction = true; break; }
+        prLevels++;
+        if (lv.value.toFixed(dp) === priorPct.toFixed(dp)) { prExact++; priorMatch = priorMatch || lv; }
+      } else { contradiction = true; break; }
+    }
+    if (!contradiction) for (const d of deltas) {
+      if (deltaPts == null || Math.abs(d.pts - Math.abs(deltaPts)) > d.unit) { contradiction = true; break; }
+      statedDelta = statedDelta || d;
+    }
+    if (contradiction) continue;
+    // Level badge: EVERY stated level equals the computed record at the sentence's own
+    // declared precision — exact at that rounding, not merely within a unit.
+    const badge = fyLevels > 0 && fyExact === fyLevels && prExact === prLevels;
+    if (badge) { rows.push({ tier: "level", s, at, levelMatch, priorMatch }); continue; }
+    // Direction-only: the sentence's own direction (or the idiom, which reads costs as
+    // outrunning pricing) must agree with the computed delta's sign.
+    if (deltaPts == null || Math.abs(deltaPts) < 0.05) continue;
+    const up = MC_UP.test(s), down = MC_DOWN.test(s);
+    const dir = idiom ? "up" : up && !down ? "up" : down && !up ? "down" : null;
+    if (!dir) continue;
+    if ((dir === "up") !== (deltaPts > 0)) continue;
+    rows.push({ tier: "direction", s, at, statedDelta, dir });
+  }
+  if (!rows.length) return null;
+  rows.sort((a, b) => (a.tier === b.tier ? a.at - b.at : a.tier === "level" ? -1 : 1));
+  const w = rows[0];
+  const round3 = (v) => (v == null ? null : +v.toFixed(3));
+  const computed = { pct: round3(pct), priorPct: round3(priorPct), deltaPts: round3(deltaPts) };
+  const chips = [{ text: String(computed.pct), kind: "computed", source: "lines.claimsIncurred ÷ lines.premiumsEarned (medicalLossRatio)" }];
+  if (w.tier === "level") {
+    const stated = { level: w.levelMatch.text, ...(w.priorMatch ? { prior: w.priorMatch.text } : {}) };
+    // The weld law, asserted at write time: every stated figure is the filer's own characters.
+    weld(w.s, [{ text: stated.level, kind: "verbatim" }, ...(stated.prior ? [{ text: stated.prior, kind: "verbatim" }] : []), ...chips]);
+    return { fy, tier: "level", sentence: w.s, stated, computed };
+  }
+  const stated = w.statedDelta ? { delta: w.statedDelta.text, deltaPts: w.statedDelta.pts } : {};
+  weld(w.s, [...(stated.delta && w.s.includes(stated.delta) ? [{ text: stated.delta, kind: "verbatim" }] : []), ...chips]);
+  return { fy, tier: "direction", sentence: w.s, dir: w.dir === "up" ? "rose" : "fell", ...(stated.delta ? { stated } : {}), computed };
+}
+
 async function main() {
   // Carry-over: start from the existing file, so a partial run (a ticker limit, or a pool that comes
   // up empty) never wipes good entries — fresh results overlay, and names no longer in either
@@ -2994,10 +3220,23 @@ async function main() {
     // The utilities desk's scope (Build 10): the rateRegulated flag — the desk's own tag
     // census on the record (utilitiesLines' ≥5-concept gate), never SIC alone. 73 filers.
     const utilTarget = !isAdr && !!c.rateRegulated;
+    // The managed-care MLR target (Build 11): the desk's OWN computed medical loss ratio for
+    // the CURRENT filing's fiscal year (and the prior year, for the direction tier), from the
+    // same history the scorecard reads. Archetype-scoped, never SIC alone (the Build 4
+    // precedent), and the computed figure is the wall: no computed MLR, no lane — Alignment
+    // (extension-tag costs) and Trupanion (neither line tagged) never scan.
+    let mcTarget = null;
+    if (!isAdr && devKind === "managedCare") {
+      const fyYear = filings[0].reportDate ? parseInt(filings[0].reportDate.slice(0, 4)) : null;
+      const linesFor = (y) => (c.history || []).find((h) => h.fy === y)?.lines
+        ?? (String(c.fy) === String(y) ? c.lines : null);
+      const mlr = fyYear ? medicalLossRatio(linesFor(fyYear)) : null;
+      if (fyYear && mlr != null) mcTarget = { mlr, mlrPrior: medicalLossRatio(linesFor(fyYear - 1)) };
+    }
     let cur, prior;
     try {
       await sleep(THROTTLE);
-      cur = await getFiling(c.cik, filings[0], totalDebtMillions, devTarget, depTarget, swTarget, ogTarget, reitTarget, utilTarget);
+      cur = await getFiling(c.cik, filings[0], totalDebtMillions, devTarget, depTarget, swTarget, ogTarget, reitTarget, utilTarget, mcTarget);
       if (filings[1]) { await sleep(THROTTLE); prior = await getFiling(c.cik, filings[1], null, null, null, swTarget); }
     } catch (e) { console.warn(`  ! ${tk}: filing ${e.message}`); continue; }
 
@@ -3127,6 +3366,12 @@ async function main() {
         // the filer's own sentences, every dollar a verbatim substring, quote-only — the lane
         // never computes. Absent means zero incidence — silence over filler.
         ...(cur.utilRead ? { utilityReg: cur.utilRead } : {}),
+        // The managed-care MLR cost-trend read (Build 11): the filer's own cost-trend
+        // sentence tiered against the desk's computed medical loss ratio — a level badge only
+        // at the sentence's own declared precision, direction-only beneath it, segment
+        // figures never. Absent means no computed MLR or nothing passed — silence over
+        // filler.
+        ...(cur.mcRead ? { mlrTrend: cur.mcRead } : {}),
       };
       ok++;
       console.log(`  ✓ ${tk}: ${flags.length} owner-flags, MD&A ${cur.mdna.words}w` + (comp ? `, payRatio ${comp.payRatio}:1` : "") + (debtMaturity ? `, debt-wall $${(debtMaturity.total / 1e9).toFixed(1)}B` : ""));
@@ -3149,7 +3394,7 @@ async function main() {
 }
 
 // Exported for the offline logic test; only hit EDGAR when run directly.
-export { ownerFlags, FLAG_THEMES, sentences, isProse, diff, extractPayRatio, extractInsiderOwnership, extractInsiderGroup, htmlToText, section, fetchText, businessDescription, candorSignals, businessBrief, buffettRead, BIZ_HUMANCAP, BIZ_LINEAGE, BIZ_ASPIRATIONAL, BRIEF_ORPHAN, PROMO, smellsLikeRisk, fortyFSections, folderDocs, extractSections, MW_DECLARED, MW_ABSENT, MW_OTHER_ENTITY, RESTATED, RESTATED_CONTRACT, INTEGRITY_FUTURE, ADMIT, NOT_ADMIT, BLAME_OTHERS, reserveDevelopmentRead, devSentences, uninsuredDepositsRead, uninsSentences, softwareRetentionRead, customerLadderRead, softwareKpiRead, softwareKpiAssemble, swSentences, swCounts, reserveEngineerRead, ogCriticalTopics, ogSentences, reitLeasingRead, reitSpreadRead, reitOccupancyRead, reitSentences, utilityRegRead, utilityDisallowances, utilitySecuritization, regZones, regPieces };
+export { ownerFlags, FLAG_THEMES, sentences, isProse, diff, extractPayRatio, extractInsiderOwnership, extractInsiderGroup, htmlToText, section, fetchText, businessDescription, candorSignals, businessBrief, buffettRead, BIZ_HUMANCAP, BIZ_LINEAGE, BIZ_ASPIRATIONAL, BRIEF_ORPHAN, PROMO, smellsLikeRisk, fortyFSections, folderDocs, extractSections, MW_DECLARED, MW_ABSENT, MW_OTHER_ENTITY, RESTATED, RESTATED_CONTRACT, INTEGRITY_FUTURE, ADMIT, NOT_ADMIT, BLAME_OTHERS, reserveDevelopmentRead, devSentences, uninsuredDepositsRead, uninsSentences, softwareRetentionRead, customerLadderRead, softwareKpiRead, softwareKpiAssemble, swSentences, swCounts, reserveEngineerRead, ogCriticalTopics, ogSentences, reitLeasingRead, reitSpreadRead, reitOccupancyRead, reitSentences, utilityRegRead, utilityDisallowances, utilitySecuritization, regZones, regPieces, mlrCostTrendRead, mcSentences };
 
 if (import.meta.url === pathToFileURL(process.argv[1] || "").href) {
   main().catch((e) => { console.error(`\n❌ ${e.message}\n`); process.exit(1); });
