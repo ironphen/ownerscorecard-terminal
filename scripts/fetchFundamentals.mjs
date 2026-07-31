@@ -789,7 +789,16 @@ function vintageBalanceSets(facts, fyEnds, ticker) {
 }
 function applyVintageBalanceGate(rec, facts, anchorFy, ticker, fyEnds) {
   const sets = vintageBalanceSets(facts, fyEnds, ticker);
-  if (!Object.keys(sets).length) return;
+  if (!Object.keys(sets).length) {
+    // The tripwire (2026-07-31): a filer that TAGS Liabilities but yields zero articulating
+    // sets is never lawful silence — the first pool sweep left MSFT/WFC/XOM in that state (a
+    // transient blind spot that healed on solo re-touch, root cause unidentified) and, with
+    // every stamp fresh, the weekly cron would never have re-touched them. Warn loudly so a
+    // recurrence is visible in the run log instead of shipping as quiet dashes.
+    const hasLTag = (facts?.facts?.["us-gaap"]?.Liabilities?.units?.USD || []).some((u) => !u.start && u.accn);
+    if (hasLTag) console.warn(`  ! ${ticker} balance: Liabilities is tagged but NO year produced an articulating set — investigate before trusting this record's dashes`);
+    return;
+  }
   const rows = [
     ...(rec.history || []).filter((h) => h?.lines).map((h) => ({ fy: String(h.fy), L: h.lines })),
     ...(rec.lines && anchorFy != null ? [{ fy: String(anchorFy), L: rec.lines }] : []),

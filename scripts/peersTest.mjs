@@ -116,7 +116,12 @@ const thinResult = selectPeers(GOLD1, thinUniv);
     const label = industryLabelOf(c);
     if (!label || (labelCount.get(label) || 0) < 5) continue;
     const r = selectPeers(c, all);
-    if (!r.peers.length || r.subsector) continue;
+    // A bench whose basis is NOT "industry" widened on the ladder's own law and its heading
+    // names the rung (shelf noun or sector) — honest, labeled widening, like the REIT subsector
+    // exception beside it. The floor exists to catch off-label rows under an INDUSTRY-claiming
+    // heading; counting a declared sector bench as misalignment failed the suite the first time
+    // the pool's thin labels (Cadiz's water micro-caps) lawfully widened (2026-07-31).
+    if (!r.peers.length || r.subsector || r.basis !== "industry") continue;
     checked++;
     if (r.peers.every((p) => industryLabelOf(p) === label)) clean++;
   }
