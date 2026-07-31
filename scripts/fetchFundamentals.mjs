@@ -700,6 +700,50 @@ function applyIncomeStatementIdentity(facts, revAnnualBy, ticker, W) {
 // business has no cost of sales, which for a utility buying fuel is simply false.
 const thinCor = (cor, rev) => (cor != null && rev > 0 && cor / rev < 0.01 ? null : cor);
 
+// GATE D (record-table survey Build 6) — the gross-margin filer-arbiter. The filer's own
+// GrossProfit subtotal judges the derived margin year by year. Four rungs, in order:
+//   agree (≤2pt of revenue)      → the subtotal is stored beside the cost line; nothing changes.
+//   cost line dark, GP filed     → GP lights the margin (the 65 dark-margin filers).
+//   disagree, explained          → the half-bucket conviction: our ladder's CostOfGoodsSold plus
+//                                  the filer's CostOfServices completes to revenue − GP, so the
+//                                  captured cost was the goods half of a split the ladder cannot
+//                                  see (AAR's pattern; Baker Hughes FY2017 printed 45.3% against
+//                                  a filed 17.7%). The cost line is repaired to the filer's own
+//                                  subtraction and the margin heals on every surface.
+//   disagree, unexplained        → WITHHOLD the year: both legs null, the margin goes dark.
+// A subtotal the filer printed beats a difference we composed; a disagreement nobody can explain
+// beats neither, so it ships as silence.
+function applyGrossProfitGate(rec, facts, anchorFy, ticker) {
+  const gpBy = collectAnnual(facts, ["GrossProfit"]);
+  if (!Object.keys(gpBy).length) return;
+  const svcBy = collectAnnual(facts, ["CostOfServices"]);
+  const rows = [
+    ...(rec.history || []).filter((h) => h?.lines).map((h) => ({ fy: String(h.fy), L: h.lines })),
+    ...(rec.lines && anchorFy != null ? [{ fy: String(anchorFy), L: rec.lines }] : []),
+  ];
+  for (const { fy, L } of rows) {
+    const gp = gpBy[fy];
+    if (gp == null || !L.revenue) continue;
+    const rev = L.revenue, cor = L.costOfRevenue;
+    if (cor == null) { L.grossProfit = gp; continue; }
+    if (Math.abs(rev - cor - gp) <= 0.02 * Math.abs(rev)) { L.grossProfit = gp; continue; }
+    // The completion must tie within 1% of revenue — half the 2pt disagreement trigger, so the
+    // explanation is always tighter than the crime. Baker Hughes FY2017 carries a 0.56%-of-revenue
+    // residue between its two filed halves and revenue − GP (a small other-cost line inside the
+    // filer's own subtraction); the halves-sum evidence still convicts the ladder's goods pick.
+    const svc = svcBy[fy];
+    if (svc != null && Math.abs(cor + svc - (rev - gp)) <= Math.max(0.01 * Math.abs(rev), 2e6)) {
+      console.warn(`  ! ${ticker} FY${fy}: gross margin repaired — cost line was the goods half of a split (${(cor / 1e6).toFixed(0)}M + services ${(svc / 1e6).toFixed(0)}M = revenue − filed gross profit)`);
+      L.costOfRevenue = rev - gp;
+      L.grossProfit = gp;
+      continue;
+    }
+    console.warn(`  ! ${ticker} FY${fy}: gross margin withheld — filed GrossProfit ${(gp / 1e6).toFixed(0)}M disagrees with revenue − cost (${((rev - cor) / 1e6).toFixed(0)}M) beyond 2pt and nothing explains the gap`);
+    L.costOfRevenue = null;
+    L.grossProfit = null;
+  }
+}
+
 // Rebuild SG&A year by year from whichever legs the filer actually files. The combined element
 // wins where it exists. Where it does not but BOTH legs do, their sum is the concept the row
 // claims to show. Where only general-and-administrative exists, it stands alone, which is right
@@ -2218,6 +2262,9 @@ async function main() {
       // cost element it stopped filing in 2011. (The same floor now also sits inside
       // lib/fundamentals.grossMargin, so a fragment cannot reach a margin by any route.)
       if (rec.ttm?.lines) rec.ttm.lines.costOfRevenue = thinCor(rec.ttm.lines.costOfRevenue, rec.ttm.lines.revenue);
+      // After the fragment floor, so a year whose cost line was just nulled as a fragment falls
+      // to the gate's GP-lights rung instead of printing a near-100% margin.
+      applyGrossProfitGate(rec, facts, anchor?.fy ?? null, ticker);
       companies.push(rec);
       console.log(`  ✓ ${ticker} (CIK ${cik}, FY${anchor?.fy ?? "?"})`);
     } else {

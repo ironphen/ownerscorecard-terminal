@@ -915,6 +915,15 @@ export function revenueIsScale(L) {
 // below — a cost-of-revenue line mis-tagged, printing a negative gross beside a healthy operating
 // margin, as GE's does — the cost figure is wrong, so withhold rather than render an impossible number.
 export function grossMargin(L) {
+  // GATE D (record-table survey Build 6): where the filer tagged its own GrossProfit subtotal and
+  // the cost ladder is dark, the filed subtraction lights the margin — the fetcher's arbiter has
+  // already withheld the years where the two disagree unexplained, so a lone grossProfit here is
+  // either the only figure the filer gave or the survivor of that arbitration. The impossibility
+  // guards stay: a margin above 100% means the subtotal was paired with the wrong top line.
+  if (L?.grossProfit != null && L.revenue && L.costOfRevenue == null) {
+    const gm = L.grossProfit / L.revenue;
+    return gm > 1.001 || gm < -1 ? null : gm;
+  }
   if (!L || !L.revenue || L.costOfRevenue == null) return null;
   // A COST OF REVENUE UNDER A HUNDREDTH OF REVENUE IS A FRAGMENT, NOT A TOTAL. The fetcher has
   // applied this floor to the record's own years since the CenterPoint case (a utility that buys
@@ -958,8 +967,17 @@ export function grossMargin(L) {
 function grossMarginRecord(company) {
   return (company?.history || [])
     .filter((h) => h?.lines)
-    .map((h) => ({ fy: h.fy, gm: grossMargin(h.lines) }))
+    .map((h) => ({ fy: h.fy, gm: grossMargin(h.lines), filed: h.lines.grossProfit != null }))
     .filter((r) => r.gm != null);
+}
+
+// The gross-profit dollar row (record-table survey Build 6): the filed subtotal where the filer
+// gave one, revenue less the cost line otherwise — but only in a year whose margin passed the
+// gates above, so the dollar figure can never print where the ratio was refused.
+export function grossProfitAbs(L) {
+  const gm = grossMargin(L);
+  if (gm == null) return null;
+  return L.grossProfit != null ? L.grossProfit : L.revenue - L.costOfRevenue;
 }
 export function grossMarginSwings(company) {
   const ser = grossMarginRecord(company);
@@ -981,7 +999,10 @@ export function gmCorrupt(gm, company) {
 }
 export function corruptGrossMarginYears(company) {
   if (!grossMarginSwings(company)) return new Set();
-  return new Set(grossMarginRecord(company).filter((r) => gmCorrupt(r.gm, company)).map((r) => r.fy));
+  // A year whose margin comes from the filer's own GrossProfit subtotal is never an artifact of a
+  // captured-near-zero cost line — the swing test exists to catch that mis-tag, and a filed
+  // subtotal cannot commit it. Only derived years can be convicted.
+  return new Set(grossMarginRecord(company).filter((r) => !r.filed && gmCorrupt(r.gm, company)).map((r) => r.fy));
 }
 
 export function ownerEarningsMargin(L, company) {

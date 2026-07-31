@@ -1,6 +1,6 @@
 ---
 import { classify, financialKind, financialSubtype } from "../lib/archetype.mjs";
-import { fmtMoney, currencySymbol, roicValue, liquidAssets, topLineRevenue, debtReliable, oiReliable, effectiveTaxRate, ownerEarningsAbs, freeCashFlowAbs, grossMargin, corruptGrossMarginYears, gmCorrupt } from "../lib/fundamentals.mjs";
+import { fmtMoney, currencySymbol, roicValue, liquidAssets, topLineRevenue, debtReliable, oiReliable, effectiveTaxRate, ownerEarningsAbs, freeCashFlowAbs, grossMargin, grossProfitAbs, corruptGrossMarginYears, gmCorrupt } from "../lib/fundamentals.mjs";
 import { returnOnEquity, returnOnTangibleEquity, returnOnAssets, efficiencyRatio, tangibleEquity } from "../lib/financials.mjs";
 import { splitFactorsByFy } from "../lib/capital.mjs";
 import { cashPayout, debtToAssets } from "../lib/reits.mjs";
@@ -63,6 +63,9 @@ const xStr = (v, dp = 1) => (v == null ? "—" : `${v.toFixed(dp)}×`);
 const ROW = {
   // --- group 1: what it earned ---
   revenue: { label: "Revenue", short: "Revenue", g: 1, get: (L) => money(topLineRevenue(L, company)) },
+  // The filer's first subtraction in dollars (record-table survey Build 6): the filed GrossProfit
+  // subtotal where one exists, revenue less the cost line otherwise, refused wherever the margin is.
+  grossProfitRow: { label: "Gross profit", short: "Gross prof.", g: 1, get: (L) => money(grossProfitAbs(L)) },
   grossMargin: { label: "Gross margin", short: "Gross mgn", g: 1, get: (L) => { const v = grossMargin(L); return v == null ? "—" : marginStr(v, 1, 0); } },
   opMargin: { label: "Operating margin", short: "Op. mgn", g: 1, get: (L) => (oiOk ? marginStr(L.operatingIncome, L.revenue) : "—") },
   nii: { label: "Net interest income", short: "Net int.", g: 1, get: (L) => money(L.netInterestIncome) },
@@ -220,7 +223,7 @@ const ROW = {
 // sparse-row prune below drops whatever a business lacks (no inventory for a software maker, no R&D for
 // a retailer, no goodwill for one that never acquires).
 const FULL = [
-  ROW.revenue, ROW.grossMargin, ROW.sga, ROW.rnd, ROW.opIncome, ROW.opMargin, ROW.pretax, ROW.netIncome, ROW.taxRate,
+  ROW.revenue, ROW.grossProfitRow, ROW.grossMargin, ROW.sga, ROW.rnd, ROW.opIncome, ROW.opMargin, ROW.pretax, ROW.netIncome, ROW.taxRate,
   ROW.cashFromOps, ROW.depreciation, ROW.wcOther, ROW.capex, ROW.capexToRev, ROW.ownerEarnings, ROW.oeMargin, ROW.freeCashFlow, ROW.fcfMargin, ROW.acquisitions, ROW.dividendsPaidAbs, ROW.buybacksAbs, ROW.roic, ROW.roe, ROW.retainedToEquity,
   ROW.cash, ROW.receivables, ROW.inventoryRow, ROW.accountsPayable, ROW.operatingWC, ROW.currentAssets, ROW.currentLiabilities, ROW.currentRatio, ROW.netPPERow, ROW.goodwillRow, ROW.totalAssets, ROW.totalDebt, ROW.netDebt, ROW.intCov, ROW.equity, ROW.sbcToRev, ROW.goodwillImp,
   // Per share: the share count leads (the divisor), then top line, earnings, the two cash measures, the
