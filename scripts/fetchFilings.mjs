@@ -20,6 +20,12 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { extractDebtMaturity } from "./debtMaturity.mjs";
 import { compactJson } from "../src/lib/dataFile.mjs";
+// Build 4 of the qualitative survey (2026-07-31): the reserve-development lane welds the one
+// MD&A / unpaid-losses-note sentence to the filed number via the shared weld law, and the
+// lane is scoped by the insurer/managed-care ARCHETYPE, never SIC alone (Trupanion, a pet
+// insurer inside SIC 6324, is the measured false-attacher the archetype rule exists for).
+import { noteWindows, weld } from "../src/lib/quoteWeld.mjs";
+import { financialKind } from "../src/lib/archetype.mjs";
 
 const UA = process.env.SEC_USER_AGENT || "Owner Scorecard research (ryanreinsant@gmail.com)";
 const HEADERS = { "User-Agent": UA, "Accept-Encoding": "gzip, deflate" };
@@ -860,7 +866,7 @@ function bizLeadText(business, form) {
   return m > 200 ? business.slice(m) : business;
 }
 
-async function getFiling(cik, f, totalDebtMillions = null) {
+async function getFiling(cik, f, totalDebtMillions = null, devTarget = null) {
   const accnNoDash = f.accn.replace(/-/g, "");
   const base = `https://www.sec.gov/Archives/edgar/data/${Number(cik)}/${accnNoDash}`;
   let url = `${base}/${f.doc}`;
@@ -914,7 +920,15 @@ async function getFiling(cik, f, totalDebtMillions = null) {
   const fy = f.reportDate ? parseInt(f.reportDate.slice(0, 4)) : null;
   let debtMaturity = null;
   try { debtMaturity = fy ? extractDebtMaturity(text, fy, totalDebtMillions) : null; } catch { debtMaturity = null; }
-  return { url, business: { ...metrics(business), lead: leadSentences(bizLeadText(business, f.form)), head: business.slice(0, 800) }, mdna: { ...md, lead: leadSentences(mdna), candor: candorSignals(mdna, md.sents) }, risk: metrics(risk), reportDate: f.reportDate, debtMaturity };
+  // The reserve-development lane (Build 4): like the debt ladder, it reads past the narrative
+  // sections into the statement notes, so it runs here where the full text is in hand. Only
+  // when the caller supplied a weld target — the filed development number for THIS filing's
+  // fiscal year; no filed number, no lane.
+  let reserveRead = null;
+  if (devTarget && devTarget.stored != null && fy) {
+    try { reserveRead = reserveDevelopmentRead({ mdnaText: mdna, fullText: text, fy, stored: devTarget.stored, kind: devTarget.kind }); } catch { reserveRead = null; }
+  }
+  return { url, business: { ...metrics(business), lead: leadSentences(bizLeadText(business, f.form)), head: business.slice(0, 800) }, mdna: { ...md, lead: leadSentences(mdna), candor: candorSignals(mdna, md.sents) }, risk: metrics(risk), reportDate: f.reportDate, debtMaturity, reserveRead };
 }
 
 // ---- executive pay (proxy statement / DEF 14A) ----
@@ -1420,6 +1434,155 @@ function buffettRead(cur, isFinancial) {
   return { pricing, judgment, integrity };
 }
 
+// ---- Reserve development, in management's own words (Build 4, insurers + managed care as ONE
+// lane; docs/qualitative-desks-survey.md §Insurers P1 + §Managed care P1) ----
+//
+// The single declarative sentence in which management narrates prior-year reserve development,
+// shipped ONLY beside the filed number the quant desk already stores
+// (lines.reserveDevelopmentPriorYear; sign convention verified three ways — TenYear's dev-kind
+// comment, the insurer and managed-care scorecards, and re-measured on this build's own sample:
+// TRV −939M ↔ "net favorable", UVE +25.8M ↔ "adverse", UNH −140M ↔ "favorable" — NEGATIVE is
+// favorable, uniform). Four gate rungs, all measured on the real FY2025 filings:
+//   1. ANCHOR — a declarative sentence carrying a prior-year reference AND a development word
+//      AND one unambiguous tone word (definitional/hypothetical/forward framings die on the
+//      guards; "adverse deviation" / "moderately adverse" are actuarial terms of art, stripped
+//      before the tone is read so Centene's and Molina's methodology prose can't conflict).
+//   2. TONE-SIGN — the sentence's favorable/adverse must agree with the stored number's sign.
+//      A pool whose only anchored sentences DISAGREE with the sign (W. R. Berkley: narrative
+//      "favorable $3 million / $47 million", filed +$34 million adverse) returns a stated
+//      CONFLICT record — the page says the two disagree and quotes neither as the fact.
+//   3. DOLLAR TIE — a narrated dollar must tie the stored number within 6% (Markel's $488.3M
+//      ties exactly; Humana's "$1.0 billion" vs $1,029M ties at 2.8%). Among tying sentences
+//      the smallest gap wins, so a consolidated exact tie beats a segment near-miss. The chip
+//      is asserted through weld() at write time: it must be the filer's own characters.
+//   4. CURRENT-YEAR — the sentence must name the filing's fiscal year, and where it dates the
+//      development with "for the year(s) ended …" the current year must be in THAT list
+//      (Trupanion's "As of December 31, 2025 … for the year ended December 31, 2024" dies).
+// Managed care only: a tone-agreeing, current-year sentence that carries NO dollar at all may
+// ship as a cause quote (check: "direction") — the Alignment Health downgrade the survey
+// pinned; a sentence with dollars that fail the tie never ships. Insurers ship weld-or-nothing.
+const DEV_TONE_FAV = /\bfavorable\b/i;
+const DEV_TONE_ADV = /\b(?:unfavorable|adverse)\b/i;
+const DEV_TERM_OF_ART = /\badverse\s+deviation\b|\bmoderately\s+adverse\b/gi;
+const DEV_PRIOR = /\bprior[\s-]+(?:accident[\s-]+|policy[\s-]+|fiscal[\s-]+|report(?:ed)?[\s-]+)?(?:year|years|period|periods)\b/i;
+const DEV_WORD = /\bdevelop(?:ment|ments|ed)\b|\bre-?estimat\w+/i;
+// Forward-looking framings only — never "better than expected", the backward comparison that
+// carries half the sector's genuine development narration.
+const DEV_FORWARD = /\b(?:we\s+)?(?:expect|anticipate)s?\s|\boutlook\b|\bguidance\b|\bgoing\s+forward\b|\bwill\s+(?:likely\s+)?(?:be|continue|result|develop|occur|lead|experience)\b|\bfuture\s+periods?\b|\bcould\s+develop\b|\bmay\s+(?:experience|result|develop|continue)\b|\bsubsequent\s+periods?\b/i;
+// Flattened-table debris: two adjacent bare years never occur in prose (Humana's factor-change
+// table), and "the following table" names itself (Travelers' catastrophe table lead-in).
+const DEV_TABLE = /\b(19|20)\d{2}\s+(19|20)\d{2}\b|\(in\s+(?:thousands|millions)|following\s+tables?\b|tables?\s+(?:below|above)\b/i;
+// The subject-scope kill (M4): a segment-scoped development sentence must never weld or
+// conflict against the consolidated line — AFG's Q4 segment adverse sliver would otherwise
+// manufacture a false disagreement against its favorable consolidated year.
+const DEV_SCOPE = /\b(?:segment|division|business\s+unit)\b/i;
+// The note headings the M5 window scoper targets, across both kinds: the unpaid-losses note
+// and its filer variants (Travelers titles it "Insurance Claim Reserves"; Cincinnati's prose
+// sits under the loss-reserves discussion), plus the managed-care claims-payable note.
+const DEV_NOTE_HEADS = /(?:Liabilit(?:y|ies)|Reserves?)\s+for\s+(?:Unpaid\s+)?(?:Losses?|Claims?)|Unpaid\s+(?:Losses?|Claims?)\s+and\s+(?:Loss|Claims?)|Insurance\s+Claim\s+Reserves?|Loss(?:es)?\s+and\s+Loss\s+(?:Adjustment\s+)?Expense\s+Reserves?|Prior\s+Year\s+(?:Reserve\s+)?Development|(?:Medical|Health\s?care|Healthcare)\s+(?:Claims?|Costs?)\s+Payable|\bBenefits\s+Payable\b|\bClaims\s+Payable\b|Unpaid\s+Claims/i;
+
+// The lane's own splitter: development sentences legitimately run digit-heavy (UnitedHealth's
+// "$140 million, $700 million and $840 million, respectively" is 17% digits, over sentences()'
+// prose cap), and a year-label subheading glues onto the note's opening sentence ("2025 In
+// 2025, estimated claims…" — Travelers), so boundaries may open on a digit and a leading bare
+// year is stripped. Local by design: drivers.mjs' splitter is under a zero-diff regression.
+function devSentences(text) {
+  if (!text) return [];
+  return String(text)
+    .split(/(?<=[.!?]["”’']?)\s+(?=[A-Z(“"$0-9]|i[A-Z])/)
+    .map((s) => s.replace(/\s+/g, " ").trim().replace(/^(?:(?:19|20)\d{2}\s+)+(?=[A-Z“"$])/, ""))
+    .filter((s) => {
+      if (s.length < 50 || s.length > 520) return false;
+      const digits = (s.match(/\d/g) || []).length;
+      const letters = (s.match(/[a-zA-Z]/g) || []).length;
+      return letters >= 60 && digits / (digits + letters) <= 0.4;
+    });
+}
+
+// One unambiguous tone, or none. A mixed sentence may still resolve through a consistent
+// "net favorable/unfavorable" (Travelers narrates gross favorable beside offsetting adverse);
+// mixed "net" directions (AFG's quarter-on-quarter comparison) stay ambiguous and ship nothing.
+function devTone(s) {
+  const t = s.replace(DEV_TERM_OF_ART, " ");
+  const fav = DEV_TONE_FAV.test(t), adv = DEV_TONE_ADV.test(t);
+  if (fav && !adv) return "favorable";
+  if (adv && !fav) return "adverse";
+  if (fav && adv) {
+    const nets = [...t.matchAll(/\bnet\s+(favorable|unfavorable|adverse)\b/gi)].map((m) => (m[1].toLowerCase() === "favorable" ? "favorable" : "adverse"));
+    if (nets.length && nets.every((x) => x === nets[0])) return nets[0];
+  }
+  return null;
+}
+
+function devYearOk(s, fy) {
+  if (!new RegExp(`\\b${fy}\\b`).test(s)) return false;
+  const ends = [...s.matchAll(/\byears?\s+ended\b/gi)];
+  if (ends.length) {
+    const named = new Set();
+    for (const m of ends) for (const y of s.slice(m.index, m.index + 60).matchAll(/\b(20\d\d)\b/g)) named.add(+y[1]);
+    if (named.size && !named.has(fy)) return false;
+  }
+  return true;
+}
+
+function devDollars(s) {
+  return [...s.matchAll(/\$\s*([\d,]+(?:\.\d+)?)\s*(billion|million)/gi)]
+    .map((m) => ({ text: m[0], value: parseFloat(m[1].replace(/,/g, "")) * (/billion/i.test(m[2]) ? 1e9 : 1e6) }));
+}
+
+function reserveDevelopmentRead({ mdnaText = "", fullText = "", fy, stored, kind }) {
+  if (stored == null || stored === 0 || !fy) return null;
+  const filedTone = stored < 0 ? "favorable" : "adverse";
+  const pool = [];
+  const seen = new Set();
+  const push = (s) => { const k = s.toLowerCase().slice(0, 160); if (!seen.has(k)) { seen.add(k); pool.push(s); } };
+  for (const s of devSentences(mdnaText)) push(s);
+  for (const win of noteWindows(fullText, DEV_NOTE_HEADS)) for (const s of devSentences(win)) push(s);
+
+  const agreeing = [], conflicting = [];
+  for (const s of pool) {
+    if (!DEV_PRIOR.test(s) || !DEV_WORD.test(s)) continue;
+    const tone = devTone(s);
+    if (!tone) continue;
+    if (HYPO.test(s) || DEV_FORWARD.test(s) || DEV_TABLE.test(s) || DEV_SCOPE.test(s)) continue;
+    if (!devYearOk(s, fy)) continue;
+    (tone === filedTone ? agreeing : conflicting).push(s);
+  }
+
+  // Rung 3: the narrated dollar must tie the stored number within 6%; the smallest gap wins.
+  let best = null;
+  for (const s of agreeing) {
+    for (const d of devDollars(s)) {
+      const gap = Math.abs(d.value - Math.abs(stored)) / Math.abs(stored);
+      if (gap <= 0.06 && (!best || gap < best.gap)) best = { s, chip: d.text, gap };
+    }
+  }
+  if (best) {
+    // The weld law, asserted at write time: the chip must be the filer's own characters.
+    const { quote } = weld(best.s, [
+      { text: best.chip, kind: "verbatim" },
+      { text: String(stored), kind: "computed", source: "lines.reserveDevelopmentPriorYear" },
+    ]);
+    return { fy, stored, tone: filedTone, sentence: quote, narrated: best.chip, gapPct: +(best.gap * 100).toFixed(1), check: "dollar" };
+  }
+  // The stated withhold: every anchored sentence disagrees with the filed sign. Say so; quote
+  // neither as truth. (Never fired when ANY agreeing sentence exists — a mixed narrative is
+  // silence, not a disagreement claim.)
+  if (conflicting.length && !agreeing.length) {
+    return { fy, stored, conflict: true, narrativeTone: filedTone === "favorable" ? "adverse" : "favorable", filedTone };
+  }
+  // The managed-care downgrade: a dollar-free cause sentence may ship on direction alone.
+  // A sentence carrying ANY dollar figure that failed the tie never ships.
+  if (kind === "managedCare") {
+    const cause = agreeing.find((s) => !/\$/.test(s));
+    if (cause) {
+      weld(cause, [{ text: String(stored), kind: "computed", source: "lines.reserveDevelopmentPriorYear" }]);
+      return { fy, stored, tone: filedTone, sentence: cause, check: "direction" };
+    }
+  }
+  return null;
+}
+
 async function main() {
   // Carry-over: start from the existing file, so a partial run (a ticker limit, or a pool that comes
   // up empty) never wipes good entries — fresh results overlay, and names no longer in either
@@ -1462,10 +1625,22 @@ async function main() {
     // let through a wall the gate then rejects (which is how Axis Capital's mis-parse blocked a refresh).
     const anchorDebt = c.ttm?.lines?.totalDebt ?? c.lines?.totalDebt;
     const totalDebtMillions = anchorDebt != null ? anchorDebt / 1e6 : null;
+    // The reserve-development weld target (Build 4): the filed prior-year development number
+    // for the CURRENT filing's fiscal year, from the same history the record table reads.
+    // Archetype-scoped (insurer / managed care), never SIC alone; no filed number, no lane —
+    // Trupanion (SIC 6324, no tagged development line) never even scans.
+    let devTarget = null;
+    const devKind = financialKind(c);
+    if (devKind === "insurer" || devKind === "managedCare") {
+      const fyYear = filings[0].reportDate ? parseInt(filings[0].reportDate.slice(0, 4)) : null;
+      const devStored = (c.history || []).find((h) => h.fy === fyYear)?.lines?.reserveDevelopmentPriorYear
+        ?? (String(c.fy) === String(fyYear) ? c.lines?.reserveDevelopmentPriorYear : null);
+      if (fyYear && devStored != null && devStored !== 0) devTarget = { stored: devStored, kind: devKind };
+    }
     let cur, prior;
     try {
       await sleep(THROTTLE);
-      cur = await getFiling(c.cik, filings[0], totalDebtMillions);
+      cur = await getFiling(c.cik, filings[0], totalDebtMillions, devTarget);
       if (filings[1]) { await sleep(THROTTLE); prior = await getFiling(c.cik, filings[1]); }
     } catch (e) { console.warn(`  ! ${tk}: filing ${e.message}`); continue; }
 
@@ -1561,6 +1736,9 @@ async function main() {
         buffettRead: buffettRead(cur, isFinancialSic(c.sic)),
         comp,
         debtMaturity,
+        // The reserve-development sentence, welded to the filed number (Build 4). Absent means
+        // the lane found nothing that passed all four rungs — silence over filler.
+        ...(cur.reserveRead ? { reserveDevelopment: cur.reserveRead } : {}),
       };
       ok++;
       console.log(`  ✓ ${tk}: ${flags.length} owner-flags, MD&A ${cur.mdna.words}w` + (comp ? `, payRatio ${comp.payRatio}:1` : "") + (debtMaturity ? `, debt-wall $${(debtMaturity.total / 1e9).toFixed(1)}B` : ""));
@@ -1583,7 +1761,7 @@ async function main() {
 }
 
 // Exported for the offline logic test; only hit EDGAR when run directly.
-export { ownerFlags, FLAG_THEMES, sentences, isProse, diff, extractPayRatio, extractInsiderOwnership, extractInsiderGroup, htmlToText, section, fetchText, businessDescription, candorSignals, businessBrief, buffettRead, BIZ_HUMANCAP, BIZ_LINEAGE, BIZ_ASPIRATIONAL, BRIEF_ORPHAN, PROMO, smellsLikeRisk, fortyFSections, folderDocs, extractSections, MW_DECLARED, MW_ABSENT, MW_OTHER_ENTITY, RESTATED, RESTATED_CONTRACT, INTEGRITY_FUTURE, ADMIT, NOT_ADMIT, BLAME_OTHERS };
+export { ownerFlags, FLAG_THEMES, sentences, isProse, diff, extractPayRatio, extractInsiderOwnership, extractInsiderGroup, htmlToText, section, fetchText, businessDescription, candorSignals, businessBrief, buffettRead, BIZ_HUMANCAP, BIZ_LINEAGE, BIZ_ASPIRATIONAL, BRIEF_ORPHAN, PROMO, smellsLikeRisk, fortyFSections, folderDocs, extractSections, MW_DECLARED, MW_ABSENT, MW_OTHER_ENTITY, RESTATED, RESTATED_CONTRACT, INTEGRITY_FUTURE, ADMIT, NOT_ADMIT, BLAME_OTHERS, reserveDevelopmentRead, devSentences };
 
 if (import.meta.url === pathToFileURL(process.argv[1] || "").href) {
   main().catch((e) => { console.error(`\n❌ ${e.message}\n`); process.exit(1); });

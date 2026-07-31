@@ -13,6 +13,7 @@ import {
   MW_DECLARED, MW_ABSENT, MW_OTHER_ENTITY, RESTATED, RESTATED_CONTRACT, INTEGRITY_FUTURE,
   ADMIT, NOT_ADMIT, BLAME_OTHERS,
   businessDescription, extractSections, htmlToText,
+  reserveDevelopmentRead,
 } from "./fetchFilings.mjs";
 
 let pass = 0, fail = 0;
@@ -207,6 +208,125 @@ ok("noteWindow: the LAST heading occurrence wins (TOC echoes don't)",
     customerConcentration("The three largest customers of this business in 2025 accounted for approximately 20 percent of its total operating revenues.") === null);
   ok("a whole-company concentration still welds",
     customerConcentration("Our largest customer accounted for approximately 20 percent of our total revenues in 2025.")?.pct === 0.2);
+}
+
+// ---------------- BUILD 4 — reserve development in management's own words (insurers +
+// managed care as ONE lane). Every sentence below is VERBATIM from the named FY2025 10-K as
+// the pipeline flattens it (fetched and measured 2026-07-31); every stored figure is the
+// filer's own lines.reserveDevelopmentPriorYear, signed as filed (negative = favorable). The
+// welds must weld, Berkley must withhold with the stated conflict, Trupanion must stay silent,
+// Alignment must downgrade to the cause quote — the full four-rung gate, pinned. ----
+
+{
+  const dev = (mdnaText, stored, kind = "insurer", fy = 2025) =>
+    reserveDevelopmentRead({ mdnaText, fullText: "", fy, stored, kind });
+
+  // TRV: the note sentence carries three dollars; only the filed $939M ties, and the chip is
+  // the filer's own characters (spaces included — the weld law is substring identity).
+  const trv = "In 2025 , estimated claims and claim adjustment expenses incurred included $ 939 million of net favorable development for claims arising in prior years, including $ 1.04 billion of net favorable prior year reserve development and $ 43 million of accretion of discount that impacted the Company's results of operations.";
+  {
+    const r = dev(trv, -939e6);
+    ok("TRV: welds $939M exactly, from a three-dollar sentence", !!r && r.check === "dollar" && r.narrated === "$ 939 million" && r.gapPct === 0);
+    ok("TRV: the welded chip is a literal substring of the shipped sentence", !!r && r.sentence.includes(r.narrated));
+  }
+  ok("TRV red-team: the same sentence against a different filed figure does not weld",
+    dev(trv, -839e6) === null);
+
+  ok("CINF: welds $196M from the loss-reserves-note sentence",
+    (() => { const r = dev("We experienced $ 196 million of favorable development on prior accident years including $ 130 million of favorable development in commercial lines, $ 4 million of favorable development in personal lines and $ 19 million of favorable development in excess and surplus lines during 2025.", -196e6); return !!r && r.check === "dollar" && r.narrated === "$ 196 million" && r.gapPct === 0; })());
+
+  // MKL, both pinned behaviors: the segment near-miss alone welds inside the 6% band (the
+  // survey's 0.9% case), and when the consolidated exact-tie sentence is present it wins.
+  const mklSeg = "The 2025 combined ratio included $484.0 million of favorable development on prior accident years loss reserves compared to $454.9 million in 2024.";
+  const mklCons = "Our underwriting results included $488.3 million, $455.3 million, and $38.6 million of net favorable development on prior years loss reserves in 2025, 2024, and 2023, respectively, which represented 3.1%, 3.1%, and 0.3%, respectively, of beginning of year net reserves.";
+  ok("MKL: $484.0M narrated vs $488.3M tagged welds at 0.9%, inside the 6% tie",
+    (() => { const r = dev(mklSeg, -488.3e6); return !!r && r.narrated === "$484.0 million" && r.gapPct === 0.9; })());
+  ok("MKL: the exact consolidated tie beats the near-miss (smallest gap wins)",
+    (() => { const r = dev(`${mklSeg} ${mklCons}`, -488.3e6); return !!r && r.narrated === "$488.3 million" && r.gapPct === 0; })());
+
+  ok("RLI: welds $99M against the tagged $98.978M",
+    (() => { const r = dev("Results for each period benefited from favorable development on prior years' loss reserves, which provided additional pretax earnings of $99 million in 2025, compared to $95 million in 2024.", -98.978e6); return !!r && r.narrated === "$99 million" && r.gapPct === 0; })());
+
+  ok("UVE: welds as ADVERSE — the sentence's direction and the positive filed sign agree",
+    (() => { const r = dev("During the year ended December 31, 2025, there was $ 25.8 million adverse prior years' reserve development, net.", 25.83e6); return !!r && r.tone === "adverse" && r.narrated === "$ 25.8 million"; })());
+
+  // WRB, the tone-sign conflict: every anchored current-year sentence narrates favorable while
+  // the filed line is signed adverse. The record is a stated withhold that quotes neither.
+  {
+    const wrb = [
+      "Favorable prior year reserve development (net of premium offsets) was $3 million in 2025 and $4 million in 2024 (refer to Note 13 of our consolidated financial statements for more detail).",
+      "Favorable prior year reserve development was $47 million in 2025 and $12 million in 2024.",
+    ].join(" ");
+    const r = dev(wrb, 34.446e6);
+    ok("WRB: tone-sign conflict returns a stated withhold, not a quote and not silence",
+      !!r && r.conflict === true && r.narrativeTone === "favorable" && r.filedTone === "adverse" && !r.sentence);
+  }
+
+  // TRUP, twice dead: no filed number means the lane never runs; and even handed a number, its
+  // sentence dates the development "for the year ended December 31, 2024" — the wrong year.
+  const trup = "As of December 31, 2025, we had a favorable development on veterinary invoice reserves of $2.5 million for the year ended December 31, 2024.";
+  ok("TRUP: no filed development line, no lane", dev(trup, null, "managedCare") === null);
+  ok("TRUP: the wrong-year sentence cannot weld even against a matching figure",
+    dev(trup, -2.5e6, "managedCare") === null);
+
+  // AFG, the segment pattern: the Q4 segment adverse sliver must neither weld nor manufacture
+  // a conflict against the favorable consolidated year, and the workers'-comp line dollar
+  // ($108M vs $81M filed) fails the tie — the lane stays silent.
+  {
+    const afg = [
+      "Aggregate Aggregate underwriting results for AFG's property and casualty insurance segment include adverse prior year reserve development of $3 million in the fourth quarter of 2025 and $2 million in the fourth quarter of 2024 related to business outside of the Specialty group that AFG no longer writes.",
+      "AFG recorded favorable prior year reserve development of $108 million in 2025, $128 million in 2024 and $116 million in 2023, related to its workers' compensation coverage due to lower than anticipated medical severity.",
+    ].join(" ");
+    ok("AFG: segment-scoped and non-tying sentences produce silence, not a weld or a false conflict",
+      dev(afg, -81e6) === null);
+  }
+
+  ok("UNH: the 140/700/840 sentence welds on the current year's $140 million only",
+    (() => { const r = dev("Medical costs in 2025, 2024 and 2023 included favorable medical cost development related to prior years of $140 million, $700 million and $840 million, respectively.", -140e6, "managedCare"); return !!r && r.narrated === "$140 million" && r.gapPct === 0; })());
+
+  ok("OSCR: welds to the dollar ($239.5M narrated, $239.525M tagged)",
+    (() => { const r = dev("Healthcare costs in the years ended December 31, 2025 and 2024 included favorable healthcare claim development related to prior years, net of reinsurance of $239.5 million and $164.7 million, respectively.", -239.525e6, "managedCare"); return !!r && r.narrated === "$239.5 million" && r.gapPct <= 0.1; })());
+
+  ok("HUM: '$1.0 billion' vs $1,029M tagged welds at 2.8%, inside the 6% tie",
+    (() => { const r = dev("Consolidated benefits expense included $1.0 billion of favorable prior-period medical claims reserve development in the 2025 period and $701 million of favorable prior-period medical claims reserve development in the 2024 period.", -1029e6, "managedCare"); return !!r && r.narrated === "$1.0 billion" && r.gapPct === 2.8; })());
+
+  // ALHC, the pinned downgrade: the note's dollar sentence is tabulated in bare thousands
+  // ("$ 20,243", on its own stated ex-PAD basis) and can never weld or ship; the dollar-free
+  // cause sentence ships on direction alone.
+  {
+    const alhc = [
+      "We recognized a favorable prior year development, excluding provision for adverse deviation, of $ 20,243 , $ 7,052 , and $ 10,996 for the years ended December 31, 2025, 2024, and 2023, respectively.",
+      "The favorable prior year development incurred in 2025, 2024 and 2023 was primarily due to better-than-expected claims recoveries and actual claims expense being less than expected.",
+    ].join(" ");
+    const r = dev(alhc, -25.389e6, "managedCare");
+    ok("ALHC: downgrades to the cause quote — direction-only, the unverifiable-dollar sentence refused",
+      !!r && r.check === "direction" && /better-than-expected claims recoveries/.test(r.sentence) && !/20,243/.test(r.sentence));
+  }
+
+  // MOH rides the same downgrade (measured live 2026-07-31): its "$98 million" sentence dates
+  // the SUBJECT years with "for the years ended … 2024, 2023 and 2022", which the wrong-year
+  // rung cannot distinguish from Trupanion's form, so it fails closed and the dollar-free
+  // cause sentence ships instead — conservative on purpose.
+  ok("MOH: ships the cause quote on direction",
+    (() => { const r = dev("The favorable prior year development recognized in 2025 was primarily attributable to lower than expected utilization of medical services by our members.", -98e6, "managedCare"); return !!r && r.check === "direction"; })());
+
+  // Insurers ship weld-or-nothing: the same dollar-free agreeing sentence that ships for a
+  // health plan stays silent on a carrier (the survey sanctioned the downgrade for managed
+  // care only — Kinsale's loss-ratio narration must not become a quote lane by the side door).
+  ok("KNSL-class: a dollar-free agreeing sentence ships nothing for an insurer",
+    dev("The decrease in the loss ratio for the year ended December 31, 2025 was due primarily to higher relative net favorable development of loss reserves from prior accident years.", -62.8e6, "insurer") === null);
+
+  // The M5 note-window path: the sentence sits in the statement notes, past the MD&A, behind
+  // a TOC echo of the same heading — reachable with no MD&A text at all.
+  {
+    const fx = "Table of Contents Liability for Unpaid Losses 12 Item 8. " +
+      "Filler prose about the business, none of it development. ".repeat(20) +
+      "Liability for Unpaid Losses and Loss Adjustment Expenses The following summarizes activity. During the year ended December 31, 2025, there was $ 25.8 million adverse prior years' reserve development, net. " +
+      "More filler after the note. ".repeat(10);
+    const r = reserveDevelopmentRead({ mdnaText: "", fullText: fx, fy: 2025, stored: 25.83e6, kind: "insurer" });
+    ok("note window: a development sentence in the statement notes welds without any MD&A",
+      !!r && r.check === "dollar" && r.narrated === "$ 25.8 million");
+  }
 }
 
 console.log(`\nlanguageGatesTest: ${pass} passed, ${fail} failed`);

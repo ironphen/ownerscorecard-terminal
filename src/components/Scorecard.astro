@@ -57,6 +57,17 @@ const report = isFin ? null : moatReport(company, { pricing: pricingLang, candor
 // the Scorecard (Graham's honesty test comes before any ratio) rather than buried in the earnings-
 // quality note. Verbatim, with a pointer to verify; present, never pronounce.
 const cockroach = language?.companies?.[company.ticker]?.buffettRead?.integrity || null;
+// The reserve-development sentence (qualitative survey Build 4): management's own narration of
+// prior-year development, welded at extraction time to the same filed number the insurer /
+// managed-care "Reserve development" check shows. Rendered only while the filed number still
+// equals the one the sentence was welded to — if the quant desk heals or restates the line, the
+// quote retires rather than sit beside a number it no longer ties. A conflict record (the
+// narrative and the filed number disagree on direction) renders as a stated withhold that
+// quotes neither as the fact.
+const devRead = (fk === "insurer" || fk === "managedCare") ? (language?.companies?.[company.ticker]?.reserveDevelopment || null) : null;
+const devTie = devRead && String(devRead.fy) === String(company.fy) && company?.lines?.reserveDevelopmentPriorYear === devRead.stored
+  ? devRead : null;
+const toneWord = (t) => (t === "favorable" ? "favorable" : "unfavorable");
 const ckTrim = (s) => { s = String(s || "").replace(/\s+/g, " ").trim(); return s.length > 260 ? s.slice(0, 260).replace(/\s+\S*$/, "") + "…" : s; };
 const graham = company.market !== "JP" && !isFin ? grahamTests(company) : null;
 
@@ -145,6 +156,7 @@ const enrich = (sec) => ({
   checks: sec.checks.map((c) => {
     let cc = peerCtx[c.title] ? { ...c, peer: peerCtx[c.title] } : c;
     if (eqTie && c === eqAnchor) cc = { ...cc, lang: eqTie.text, langTone: eqTie.tone };
+    if (devTie && c.title === "Reserve development" && c.value !== "—") cc = { ...cc, dev: devTie };
     return cc;
   }),
 });
@@ -190,6 +202,18 @@ const enrich = (sec) => ({
             {c.formula ? <div class="formula">{c.formula}</div> : null}
             {c.peer ? <div class="peer">{c.peer}</div> : null}
             {c.lang ? <p class="langTie" style={`border-color:${TONE_COLOR[c.langTone]}`}><span class="langMark" style={`color:${TONE_COLOR[c.langTone]}`}>In the filing’s words</span> {c.lang}</p> : null}
+            {c.dev ? (c.dev.conflict ? (
+              <p class="devTie">
+                <span class="devMark">In the filing’s words</span>
+                Management’s narrative describes the year’s prior-year development as {toneWord(c.dev.narrativeTone)}, while the development line filed in the structured data is signed {toneWord(c.dev.filedTone)}. The two disagree, so neither is quoted as the fact here — read the filing linked above.
+              </p>
+            ) : (
+              <div class="devTie">
+                <span class="devMark">In the filing’s words</span>
+                <blockquote class="devQ">“{c.dev.sentence}”</blockquote>
+                <span class="devCheck">✓ {c.dev.check === "dollar" ? (c.dev.gapPct >= 0.5 ? `the narrated ${c.dev.narrated} sits ${c.dev.gapPct.toFixed(1)}% from the filed figure` : `the narrated ${c.dev.narrated} ties the filed figure`) : "direction matches the filed record"} · the words are the company’s</span>
+              </div>
+            )) : null}
             <details class="why"><summary>What this means</summary><p class="note">{c.note}</p></details>
           </li>
         ))}
@@ -308,6 +332,14 @@ const enrich = (sec) => ({
      record — not another data line. The marker names the source; the clause does the reasoning. */
   .langTie { font-family: var(--serif); font-size: 13.5px; color: var(--ink-soft); line-height: 1.55; margin: 7px 0 0; padding: 1px 0 1px 12px; border-left: 2px solid var(--rule-strong); max-width: 74ch; }
   .langMark { font-family: var(--sans); font-style: normal; font-weight: 700; font-size: 10.5px; letter-spacing: 0.05em; text-transform: uppercase; margin-right: 6px; }
+
+  /* The reserve-development sentence beside the filed number: the same second-voice idiom as
+     .langTie, with the sentence set as a real quotation and the tie stated beneath it. The
+     conflict form carries no quote at all — a stated withhold, not a highlight. */
+  .devTie { font-family: var(--serif); font-size: 13.5px; color: var(--ink-soft); line-height: 1.55; margin: 8px 0 0; padding: 1px 0 1px 12px; border-left: 2px solid var(--rule-strong); max-width: 76ch; }
+  .devMark { display: block; font-family: var(--sans); font-style: normal; font-weight: 700; font-size: 10.5px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); margin: 0 0 3px; }
+  .devQ { font-family: var(--serif); font-size: 14px; line-height: 1.55; color: var(--ink-soft); margin: 0; padding: 0; border: 0; }
+  .devCheck { display: block; font-family: var(--sans); font-size: 11px; letter-spacing: 0.03em; color: var(--muted); margin-top: 4px; }
 
   .gbadge { font-family: var(--sans); font-size: 10.5px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; border: 1px solid; border-radius: 2px; padding: 1px 7px; flex: 0 0 auto; }
   .gcrit { font-size: 13px; color: var(--muted); margin-top: 3px; font-variant-numeric: tabular-nums; }

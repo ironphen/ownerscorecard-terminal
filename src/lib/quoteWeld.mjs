@@ -46,6 +46,29 @@ export function noteWindow(text, headRe, { maxChars = 30000, take = "last", boun
   return win;
 }
 
+// noteWindows: every occurrence's window, not just one. The single-window form above breaks on
+// insurer 10-Ks two ways at once: the note heading echoes in the TOC (so "first" is wrong) AND
+// in the back-of-book Schedule VI property-casualty supplement (so "last" is wrong too —
+// Travelers' unpaid-losses heading matches 800 characters from the end of the document while
+// the real Note 8 sits 170,000 characters earlier). Scanning ALL occurrences costs a little
+// text and loses nothing: the caller's sentence gates decide what ships, the windows only
+// bound where it may look. Additive helper (Build 4, 2026-07-31); noteWindow() is untouched.
+export function noteWindows(text, headRe, { maxChars = 30000 } = {}) {
+  if (!text) return [];
+  const re = new RegExp(headRe.source || headRe, (headRe.flags || "i").replace("g", "") + "g");
+  const out = [];
+  let m, lastEnd = -1;
+  while ((m = re.exec(text)) !== null) {
+    // Skip a match already inside the previous window — overlapping repeats of a running
+    // "(Continued)" heading would otherwise multiply the same text.
+    if (m.index < lastEnd) continue;
+    const win = text.slice(m.index, m.index + maxChars);
+    out.push(win);
+    lastEnd = m.index + win.length;
+  }
+  return out;
+}
+
 // ---- combined-registrant dedupe (M6) ----
 // A combined filing (WEC and its utility subsidiaries; Southern and its opcos) repeats every
 // disclosure sentence two or three times with only the entity name changed. Jaccard over word
