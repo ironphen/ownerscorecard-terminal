@@ -1,6 +1,6 @@
 {
   "date": "2026-07-24",
-  "asOf": "2026-07-31",
+  "asOf": "2026-08-01",
   "source": "SEC EDGAR, recent filings",
   "items": [
     {
@@ -118,8 +118,8 @@
           "cur": 279000000,
           "prior": 257000000
         },
-        "driver": "Operating Income Operating income increased 9% to $279 million for the three months ended June 30, 2026 compared to the three months ended June 30, 2025, reflecting an increase in operating margin from 9% to 10%.",
-        "driverLine": "operatingIncome",
+        "driver": "Revenue Revenue decreased 4% to $2,800 million for the three months ended June 30, 2026 compared to the prior year period. The decrease was primarily driven by the impact of slowed procurement which resulted in reduced headcount and billable expenses.",
+        "driverLine": "revenue",
         "check": "pct"
       }
     },
@@ -395,7 +395,19 @@
       "grave": false,
       "accn": "0001751788-26-000147",
       "url": "https://www.sec.gov/Archives/edgar/data/1751788/000175178826000147/dow-20260630.htm",
-      "performance": null
+      "performance": {
+        "period": "2026-06-30",
+        "basis": "quarter",
+        "rev": {
+          "yoy": 19.7,
+          "cur": 12092000000,
+          "prior": 10104000000
+        },
+        "oi": null,
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
     },
     {
       "ticker": "DRI",
@@ -497,9 +509,9 @@
           "prior": 7473000
         },
         "oi": null,
-        "driver": null,
-        "driverLine": null,
-        "check": null
+        "driver": "Revenues increased by $6.4 million, or 86.0%, to $13.9 million for the three months ended June 30, 2026, from $7.5 million for the three months ended June 30, 2025. The increase in revenues was primarily due to management services revenue recognized at our new Hearthstone segment and an increase in management services revenue at our Great Park segment during the three months ended June 30, 2026.",
+        "driverLine": "revenue",
+        "check": "pct"
       }
     },
     {
@@ -613,9 +625,9 @@
           "prior": 458491000
         },
         "oi": null,
-        "driver": null,
-        "driverLine": null,
-        "check": null
+        "driver": "Revenues Consolidated Consolidated revenues increased 2.7% to $470.8 million during the three months ended June 30, 2026 compared to $458.5 million for the corresponding period in 2025 as a result of the factors discussed below under Reportable Segments.",
+        "driverLine": "revenue",
+        "check": "pct"
       }
     },
     {
@@ -921,6 +933,17 @@
       }
     },
     {
+      "ticker": "LHX",
+      "name": "L3Harris",
+      "form": "8-K",
+      "date": "2026-07-24",
+      "label": "Executive or board change",
+      "grave": false,
+      "accn": "0000202058-26-000047",
+      "url": "https://www.sec.gov/Archives/edgar/data/202058/000020205826000047/hrs-20260723.htm",
+      "performance": null
+    },
+    {
       "ticker": "LMB",
       "name": "Limbach Holdings Inc.",
       "form": "8-K",
@@ -1170,7 +1193,23 @@
       "grave": false,
       "accn": "0000753308-26-000060",
       "url": "https://www.sec.gov/Archives/edgar/data/753308/000075330826000060/nee-20260630.htm",
-      "performance": null
+      "performance": {
+        "period": "2026-06-30",
+        "basis": "quarter",
+        "rev": {
+          "yoy": 12.4,
+          "cur": 7534000000,
+          "prior": 6700000000
+        },
+        "oi": {
+          "yoy": 17.1,
+          "cur": 2238000000,
+          "prior": 1911000000
+        },
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
     },
     {
       "ticker": "NEE",

@@ -1,6 +1,6 @@
 {
   "date": "2026-07-28",
-  "asOf": "2026-07-31",
+  "asOf": "2026-08-01",
   "source": "SEC EDGAR, recent filings",
   "items": [
     {
@@ -34,7 +34,23 @@
       "grave": false,
       "accn": "0001628280-26-050134",
       "url": "https://www.sec.gov/Archives/edgar/data/1800/000162828026050134/abt-20260630.htm",
-      "performance": null
+      "performance": {
+        "period": "2026-06-30",
+        "basis": "quarter",
+        "rev": {
+          "yoy": 13,
+          "cur": 12593000000,
+          "prior": 11142000000
+        },
+        "oi": {
+          "yoy": -17.5,
+          "cur": 1693000000,
+          "prior": 2052000000
+        },
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
     },
     {
       "ticker": "ACGL",
@@ -89,7 +105,23 @@
       "grave": false,
       "accn": "0001193125-26-321076",
       "url": "https://www.sec.gov/Archives/edgar/data/1520697/000119312526321076/achc-20260630.htm",
-      "performance": null
+      "performance": {
+        "period": "2026-06-30",
+        "basis": "quarter",
+        "rev": {
+          "yoy": -0.4,
+          "cur": 865839000,
+          "prior": 869232000
+        },
+        "oi": {
+          "yoy": -56,
+          "cur": 22007000,
+          "prior": 50003000
+        },
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
     },
     {
       "ticker": "ACI",
@@ -198,7 +230,23 @@
       "grave": false,
       "accn": "0001047127-26-000046",
       "url": "https://www.sec.gov/Archives/edgar/data/1047127/000104712726000046/amkr-20260630.htm",
-      "performance": null
+      "performance": {
+        "period": "2026-06-30",
+        "basis": "quarter",
+        "rev": {
+          "yoy": 25.6,
+          "cur": 1897965000,
+          "prior": 1511392000
+        },
+        "oi": {
+          "yoy": 117.3,
+          "cur": 199854000,
+          "prior": 91967000
+        },
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
     },
     {
       "ticker": "AMT",
@@ -209,7 +257,23 @@
       "grave": false,
       "accn": "0001053507-26-000133",
       "url": "https://www.sec.gov/Archives/edgar/data/1053507/000105350726000133/amt-20260630.htm",
-      "performance": null
+      "performance": {
+        "period": "2026-06-30",
+        "basis": "quarter",
+        "rev": {
+          "yoy": 6.5,
+          "cur": 2538000000,
+          "prior": 2383200000
+        },
+        "oi": {
+          "yoy": 5.9,
+          "cur": 1268800000,
+          "prior": 1197700000
+        },
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
     },
     {
       "ticker": "AMT",
@@ -310,9 +374,9 @@
           "cur": 133800000,
           "prior": 123200000
         },
-        "driver": "Consolidated net sales for the first six months of 2026 increased 9.2% over the prior-year period due to higher volumes of $47 million and favorable AUV of $27 million.",
-        "driverLine": "revenue",
-        "check": "dollar"
+        "driver": null,
+        "driverLine": null,
+        "check": null
       }
     },
     {
@@ -335,7 +399,23 @@
       "grave": false,
       "accn": "0001214816-26-000203",
       "url": "https://www.sec.gov/Archives/edgar/data/1214816/000121481626000203/axs-20260630.htm",
-      "performance": null
+      "performance": {
+        "period": "2026-06-30",
+        "basis": "quarter",
+        "rev": {
+          "yoy": 7.4,
+          "cur": 1752914000,
+          "prior": 1632858000
+        },
+        "oi": {
+          "yoy": 13.6,
+          "cur": 336337000,
+          "prior": 296143000
+        },
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
     },
     {
       "ticker": "AXS",
@@ -402,7 +482,19 @@
       "grave": false,
       "accn": "0000790816-26-000029",
       "url": "https://www.sec.gov/Archives/edgar/data/790816/000079081626000029/bdn-20260630.htm",
-      "performance": null
+      "performance": {
+        "period": "2026-06-30",
+        "basis": "quarter",
+        "rev": {
+          "yoy": 7.8,
+          "cur": 119868000,
+          "prior": 111220000
+        },
+        "oi": null,
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
     },
     {
       "ticker": "BE",
@@ -413,7 +505,19 @@
       "grave": false,
       "accn": "0001628280-26-050247",
       "url": "https://www.sec.gov/Archives/edgar/data/1664703/000162828026050247/be-20260630.htm",
-      "performance": null
+      "performance": {
+        "period": "2026-06-30",
+        "basis": "quarter",
+        "rev": {
+          "yoy": 167.7,
+          "cur": 1060746000,
+          "prior": 396256000
+        },
+        "oi": null,
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
     },
     {
       "ticker": "BE",
@@ -440,9 +544,9 @@
         "basis": "quarter",
         "rev": null,
         "oi": {
-          "yoy": 3.7,
-          "cur": 149360000,
-          "prior": 144028000
+          "yoy": 3.6,
+          "cur": 154629000,
+          "prior": 149297000
         },
         "driver": null,
         "driverLine": null,
@@ -557,7 +661,23 @@
       "grave": false,
       "accn": "0001783180-26-000032",
       "url": "https://www.sec.gov/Archives/edgar/data/1783180/000178318026000032/carr-20260630.htm",
-      "performance": null
+      "performance": {
+        "period": "2026-06-30",
+        "basis": "quarter",
+        "rev": {
+          "yoy": 3.9,
+          "cur": 6351000000,
+          "prior": 6113000000
+        },
+        "oi": {
+          "yoy": -8.6,
+          "cur": 825000000,
+          "prior": 903000000
+        },
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
     },
     {
       "ticker": "CARR",
@@ -579,7 +699,23 @@
       "grave": false,
       "accn": "0000896159-26-000017",
       "url": "https://www.sec.gov/Archives/edgar/data/896159/000089615926000017/cb-20260630.htm",
-      "performance": null
+      "performance": {
+        "period": "2026-06-30",
+        "basis": "quarter",
+        "rev": {
+          "yoy": 6.6,
+          "cur": 15816000000,
+          "prior": 14836000000
+        },
+        "oi": {
+          "yoy": -1.8,
+          "cur": 3796000000,
+          "prior": 3866000000
+        },
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
     },
     {
       "ticker": "CBOE",
@@ -897,7 +1033,23 @@
       "grave": false,
       "accn": "0001130310-26-000041",
       "url": "https://www.sec.gov/Archives/edgar/data/1130310/000113031026000041/cnp-20260630.htm",
-      "performance": null
+      "performance": {
+        "period": "2026-06-30",
+        "basis": "quarter",
+        "rev": {
+          "yoy": 10.7,
+          "cur": 2152000000,
+          "prior": 1944000000
+        },
+        "oi": {
+          "yoy": 28.1,
+          "cur": 534000000,
+          "prior": 417000000
+        },
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
     },
     {
       "ticker": "COF",
@@ -908,7 +1060,19 @@
       "grave": false,
       "accn": "0000927628-26-000089",
       "url": "https://www.sec.gov/Archives/edgar/data/927628/000092762826000089/cof-20260630.htm",
-      "performance": null
+      "performance": {
+        "period": "2026-06-30",
+        "basis": "quarter",
+        "rev": {
+          "yoy": 26.9,
+          "cur": 15850000000,
+          "prior": 12492000000
+        },
+        "oi": null,
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
     },
     {
       "ticker": "CORZ",
@@ -1098,7 +1262,19 @@
       "grave": false,
       "accn": "0001104659-26-087549",
       "url": "https://www.sec.gov/Archives/edgar/data/23795/000110465926087549/cto-20260630x10q.htm",
-      "performance": null
+      "performance": {
+        "period": "2026-06-30",
+        "basis": "quarter",
+        "rev": {
+          "yoy": 11.3,
+          "cur": 37136000,
+          "prior": 33375000
+        },
+        "oi": null,
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
     },
     {
       "ticker": "CTO",
@@ -1120,7 +1296,23 @@
       "grave": false,
       "accn": "0001193125-26-320492",
       "url": "https://www.sec.gov/Archives/edgar/data/26058/000119312526320492/cts-20260630.htm",
-      "performance": null
+      "performance": {
+        "period": "2026-06-30",
+        "basis": "quarter",
+        "rev": {
+          "yoy": 7,
+          "cur": 144780000,
+          "prior": 135309000
+        },
+        "oi": {
+          "yoy": 17.9,
+          "cur": 26801000,
+          "prior": 22731000
+        },
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
     },
     {
       "ticker": "CTS",
@@ -1186,7 +1378,23 @@
       "grave": false,
       "accn": "0001590895-26-000028",
       "url": "https://www.sec.gov/Archives/edgar/data/1590895/000159089526000028/czr-20260630.htm",
-      "performance": null
+      "performance": {
+        "period": "2026-06-30",
+        "basis": "quarter",
+        "rev": {
+          "yoy": 3,
+          "cur": 2993000000,
+          "prior": 2907000000
+        },
+        "oi": {
+          "yoy": -2.5,
+          "cur": 513000000,
+          "prior": 526000000
+        },
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
     },
     {
       "ticker": "CZR",
@@ -1263,7 +1471,23 @@
       "grave": false,
       "accn": "0000936340-26-000146",
       "url": "https://www.sec.gov/Archives/edgar/data/936340/000093634026000146/dte-20260630.htm",
-      "performance": null
+      "performance": {
+        "period": "2026-06-30",
+        "basis": "quarter",
+        "rev": {
+          "yoy": -1.5,
+          "cur": 3369000000,
+          "prior": 3419000000
+        },
+        "oi": {
+          "yoy": 7.3,
+          "cur": 458000000,
+          "prior": 427000000
+        },
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
     },
     {
       "ticker": "DTB",
@@ -1285,7 +1509,23 @@
       "grave": false,
       "accn": "0000936340-26-000146",
       "url": "https://www.sec.gov/Archives/edgar/data/936340/000093634026000146/dte-20260630.htm",
-      "performance": null
+      "performance": {
+        "period": "2026-06-30",
+        "basis": "quarter",
+        "rev": {
+          "yoy": -1.5,
+          "cur": 3369000000,
+          "prior": 3419000000
+        },
+        "oi": {
+          "yoy": 7.3,
+          "cur": 458000000,
+          "prior": 427000000
+        },
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
     },
     {
       "ticker": "DTE",
@@ -1307,7 +1547,23 @@
       "grave": false,
       "accn": "0000936340-26-000146",
       "url": "https://www.sec.gov/Archives/edgar/data/936340/000093634026000146/dte-20260630.htm",
-      "performance": null
+      "performance": {
+        "period": "2026-06-30",
+        "basis": "quarter",
+        "rev": {
+          "yoy": -1.5,
+          "cur": 3369000000,
+          "prior": 3419000000
+        },
+        "oi": {
+          "yoy": 7.3,
+          "cur": 458000000,
+          "prior": 427000000
+        },
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
     },
     {
       "ticker": "DTG",
@@ -1329,7 +1585,23 @@
       "grave": false,
       "accn": "0000936340-26-000146",
       "url": "https://www.sec.gov/Archives/edgar/data/936340/000093634026000146/dte-20260630.htm",
-      "performance": null
+      "performance": {
+        "period": "2026-06-30",
+        "basis": "quarter",
+        "rev": {
+          "yoy": -1.5,
+          "cur": 3369000000,
+          "prior": 3419000000
+        },
+        "oi": {
+          "yoy": 7.3,
+          "cur": 458000000,
+          "prior": 427000000
+        },
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
     },
     {
       "ticker": "DTW",
@@ -1395,7 +1667,23 @@
       "grave": false,
       "accn": "0001628280-26-050244",
       "url": "https://www.sec.gov/Archives/edgar/data/895417/000162828026050244/els-20260630.htm",
-      "performance": null
+      "performance": {
+        "period": "2026-06-30",
+        "basis": "quarter",
+        "rev": {
+          "yoy": 5.5,
+          "cur": 330430000,
+          "prior": 313287000
+        },
+        "oi": {
+          "yoy": 18,
+          "cur": 99357000,
+          "prior": 84223000
+        },
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
     },
     {
       "ticker": "ELS",
@@ -1417,7 +1705,23 @@
       "grave": false,
       "accn": "0001463101-26-000081",
       "url": "https://www.sec.gov/Archives/edgar/data/1463101/000146310126000081/enph-20260630.htm",
-      "performance": null
+      "performance": {
+        "period": "2026-06-30",
+        "basis": "quarter",
+        "rev": {
+          "yoy": -19.6,
+          "cur": 291854000,
+          "prior": 363153000
+        },
+        "oi": {
+          "yoy": 39.2,
+          "cur": 51519000,
+          "prior": 37007000
+        },
+        "driver": "Net revenues in the United States were $460.8 million in the six months ended June 30, 2026, as compared to $534.6 million in the same period in 2025, a decrease of $73.8 million, or 14%, primarily due to the expiration of the federal residential clean energy tax credit under Section 25D of the Internal Revenue Code.",
+        "driverLine": "revenue",
+        "check": "dollar"
+      }
     },
     {
       "ticker": "ENPH",
@@ -1450,7 +1754,23 @@
       "grave": false,
       "accn": "0001590714-26-000065",
       "url": "https://www.sec.gov/Archives/edgar/data/1590714/000159071426000065/esi-20260630.htm",
-      "performance": null
+      "performance": {
+        "period": "2026-06-30",
+        "basis": "quarter",
+        "rev": {
+          "yoy": 56.4,
+          "cur": 977900000,
+          "prior": 625200000
+        },
+        "oi": {
+          "yoy": 20.6,
+          "cur": 113700000,
+          "prior": 94300000
+        },
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
     },
     {
       "ticker": "EXE",
@@ -1461,7 +1781,23 @@
       "grave": false,
       "accn": "0000895126-26-000047",
       "url": "https://www.sec.gov/Archives/edgar/data/895126/000089512626000047/exe-20260630.htm",
-      "performance": null
+      "performance": {
+        "period": "2026-06-30",
+        "basis": "quarter",
+        "rev": {
+          "yoy": -19.8,
+          "cur": 2960000000,
+          "prior": 3690000000
+        },
+        "oi": {
+          "yoy": -47.9,
+          "cur": 661000000,
+          "prior": 1269000000
+        },
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
     },
     {
       "ticker": "EXE",
@@ -1483,7 +1819,23 @@
       "grave": false,
       "accn": "0001297989-26-000023",
       "url": "https://www.sec.gov/Archives/edgar/data/1297989/000129798926000023/exls-20260630.htm",
-      "performance": null
+      "performance": {
+        "period": "2026-06-30",
+        "basis": "quarter",
+        "rev": {
+          "yoy": 15.6,
+          "cur": 594763000,
+          "prior": 514460000
+        },
+        "oi": {
+          "yoy": 7.6,
+          "cur": 87295000,
+          "prior": 81138000
+        },
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
     },
     {
       "ticker": "EXLS",
@@ -1549,7 +1901,23 @@
       "grave": false,
       "accn": "0001031296-26-000123",
       "url": "https://www.sec.gov/Archives/edgar/data/1031296/000103129626000123/fe-20260630.htm",
-      "performance": null
+      "performance": {
+        "period": "2026-06-30",
+        "basis": "quarter",
+        "rev": {
+          "yoy": 8.8,
+          "cur": 3678000000,
+          "prior": 3380000000
+        },
+        "oi": {
+          "yoy": 4.8,
+          "cur": 677000000,
+          "prior": 646000000
+        },
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
     },
     {
       "ticker": "FE",
@@ -1651,28 +2019,6 @@
       "performance": null
     },
     {
-      "ticker": "GRCE",
-      "name": "Grace Therapeutics Inc.",
-      "form": "DEF 14A",
-      "date": "2026-07-28",
-      "label": "Proxy statement",
-      "grave": false,
-      "accn": "0001140361-26-029889",
-      "url": "https://www.sec.gov/Archives/edgar/data/1444192/000114036126029889/ny20076473x1_def14a.htm",
-      "performance": null
-    },
-    {
-      "ticker": "GRCE",
-      "name": "Grace Therapeutics Inc.",
-      "form": "8-K",
-      "date": "2026-07-28",
-      "label": "Other event",
-      "grave": false,
-      "accn": "0001140361-26-029837",
-      "url": "https://www.sec.gov/Archives/edgar/data/1444192/000114036126029837/ef20078866_8k.htm",
-      "performance": null
-    },
-    {
       "ticker": "HAE",
       "name": "Haemonetics",
       "form": "8-K",
@@ -1692,7 +2038,19 @@
       "grave": false,
       "accn": "0000049196-26-000066",
       "url": "https://www.sec.gov/Archives/edgar/data/49196/000004919626000066/hban-20260630.htm",
-      "performance": null
+      "performance": {
+        "period": "2026-06-30",
+        "basis": "quarter",
+        "rev": null,
+        "oi": {
+          "yoy": 29.1,
+          "cur": 2222000000,
+          "prior": 1721000000
+        },
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
     },
     {
       "ticker": "HBANL",
@@ -1703,7 +2061,19 @@
       "grave": false,
       "accn": "0000049196-26-000066",
       "url": "https://www.sec.gov/Archives/edgar/data/49196/000004919626000066/hban-20260630.htm",
-      "performance": null
+      "performance": {
+        "period": "2026-06-30",
+        "basis": "quarter",
+        "rev": null,
+        "oi": {
+          "yoy": 29.1,
+          "cur": 2222000000,
+          "prior": 1721000000
+        },
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
     },
     {
       "ticker": "HBANM",
@@ -1714,7 +2084,19 @@
       "grave": false,
       "accn": "0000049196-26-000066",
       "url": "https://www.sec.gov/Archives/edgar/data/49196/000004919626000066/hban-20260630.htm",
-      "performance": null
+      "performance": {
+        "period": "2026-06-30",
+        "basis": "quarter",
+        "rev": null,
+        "oi": {
+          "yoy": 29.1,
+          "cur": 2222000000,
+          "prior": 1721000000
+        },
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
     },
     {
       "ticker": "HBANP",
@@ -1725,7 +2107,19 @@
       "grave": false,
       "accn": "0000049196-26-000066",
       "url": "https://www.sec.gov/Archives/edgar/data/49196/000004919626000066/hban-20260630.htm",
-      "performance": null
+      "performance": {
+        "period": "2026-06-30",
+        "basis": "quarter",
+        "rev": null,
+        "oi": {
+          "yoy": 29.1,
+          "cur": 2222000000,
+          "prior": 1721000000
+        },
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
     },
     {
       "ticker": "HBANZ",
@@ -1736,7 +2130,19 @@
       "grave": false,
       "accn": "0000049196-26-000066",
       "url": "https://www.sec.gov/Archives/edgar/data/49196/000004919626000066/hban-20260630.htm",
-      "performance": null
+      "performance": {
+        "period": "2026-06-30",
+        "basis": "quarter",
+        "rev": null,
+        "oi": {
+          "yoy": 29.1,
+          "cur": 2222000000,
+          "prior": 1721000000
+        },
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
     },
     {
       "ticker": "HCA",
@@ -1747,7 +2153,23 @@
       "grave": false,
       "accn": "0001193125-26-321077",
       "url": "https://www.sec.gov/Archives/edgar/data/860730/000119312526321077/hca-20260630.htm",
-      "performance": null
+      "performance": {
+        "period": "2026-06-30",
+        "basis": "quarter",
+        "rev": {
+          "yoy": 8.7,
+          "cur": 20230000000,
+          "prior": 18605000000
+        },
+        "oi": {
+          "yoy": 3.3,
+          "cur": 2494000000,
+          "prior": 2415000000
+        },
+        "driver": "Revenues increased 8.7% on a consolidated basis and 9.3% on a same facility basis for the quarter ended June 30, 2026, compared to the quarter ended June 30, 2025. The increase in consolidated revenues can be primarily attributed to the combined impact of a 6.0% increase in revenue per equivalent admission and a 2.6% increase in equivalent admissions.",
+        "driverLine": "revenue",
+        "check": "pct"
+      }
     },
     {
       "ticker": "HIW",
@@ -1758,7 +2180,23 @@
       "grave": false,
       "accn": "0000921082-26-000045",
       "url": "https://www.sec.gov/Archives/edgar/data/921082/000092108226000045/hiw-20260630.htm",
-      "performance": null
+      "performance": {
+        "period": "2026-06-30",
+        "basis": "quarter",
+        "rev": {
+          "yoy": -4.8,
+          "cur": 211500000,
+          "prior": 222100000
+        },
+        "oi": {
+          "yoy": 6.8,
+          "cur": 146224000,
+          "prior": 136945000
+        },
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
     },
     {
       "ticker": "HLT",
@@ -1852,7 +2290,23 @@
       "grave": false,
       "accn": "0001628280-26-050198",
       "url": "https://www.sec.gov/Archives/edgar/data/766829/000162828026050198/hto-20260630.htm",
-      "performance": null
+      "performance": {
+        "period": "2026-06-30",
+        "basis": "quarter",
+        "rev": {
+          "yoy": 6.2,
+          "cur": 210474000,
+          "prior": 198255000
+        },
+        "oi": {
+          "yoy": -2.5,
+          "cur": 42754000,
+          "prior": 43865000
+        },
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
     },
     {
       "ticker": "HUBB",
@@ -1874,7 +2328,23 @@
       "grave": false,
       "accn": "0001628280-26-050176",
       "url": "https://www.sec.gov/Archives/edgar/data/1289848/000162828026050176/hurn-20260630.htm",
-      "performance": null
+      "performance": {
+        "period": "2026-06-30",
+        "basis": "quarter",
+        "rev": {
+          "yoy": 15.4,
+          "cur": 475042000,
+          "prior": 411755000
+        },
+        "oi": {
+          "yoy": 10.1,
+          "cur": 50248000,
+          "prior": 45654000
+        },
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
     },
     {
       "ticker": "HURN",
@@ -1888,28 +2358,6 @@
       "performance": null
     },
     {
-      "ticker": "IMSR",
-      "name": "Terrestrial Energy Inc. Common Stock",
-      "form": "8-K",
-      "date": "2026-07-28",
-      "label": "Executive or board change",
-      "grave": false,
-      "accn": "0002019804-26-000018",
-      "url": "https://www.sec.gov/Archives/edgar/data/2019804/000201980426000018/tmb-20260723x8k.htm",
-      "performance": null
-    },
-    {
-      "ticker": "IMSRW",
-      "name": "Terrestrial Energy Inc.",
-      "form": "8-K",
-      "date": "2026-07-28",
-      "label": "Executive or board change",
-      "grave": false,
-      "accn": "0002019804-26-000018",
-      "url": "https://www.sec.gov/Archives/edgar/data/2019804/000201980426000018/tmb-20260723x8k.htm",
-      "performance": null
-    },
-    {
       "ticker": "INCY",
       "name": "Incyte",
       "form": "10-Q",
@@ -1918,7 +2366,23 @@
       "grave": false,
       "accn": "0000879169-26-000056",
       "url": "https://www.sec.gov/Archives/edgar/data/879169/000087916926000056/incy-20260630.htm",
-      "performance": null
+      "performance": {
+        "period": "2026-06-30",
+        "basis": "quarter",
+        "rev": {
+          "yoy": 37.7,
+          "cur": 1674039000,
+          "prior": 1215529000
+        },
+        "oi": {
+          "yoy": 31.6,
+          "cur": 697898000,
+          "prior": 530314000
+        },
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
     },
     {
       "ticker": "INCY",
@@ -1962,7 +2426,23 @@
       "grave": false,
       "accn": "0001628280-26-050211",
       "url": "https://www.sec.gov/Archives/edgar/data/1478242/000162828026050211/iqv-20260630.htm",
-      "performance": null
+      "performance": {
+        "period": "2026-06-30",
+        "basis": "quarter",
+        "rev": {
+          "yoy": 8.7,
+          "cur": 4368000000,
+          "prior": 4017000000
+        },
+        "oi": {
+          "yoy": 0,
+          "cur": 506000000,
+          "prior": 506000000
+        },
+        "driver": "Revenues Research & Development Solutions’ revenues were $2,575 million for the second quarter of 2026, an increase of $209 million, or 8.8%, over the same period in 2025. This increase was comprised of constant currency revenue growth of approximately $204 million, or 8.6%, reflecting revenue growth primarily in the Europe and Africa region, and to a lesser extent in the Asia-Pacific and Americas regions.",
+        "driverLine": "revenue",
+        "check": "pct"
+      }
     },
     {
       "ticker": "IQV",
@@ -2137,7 +2617,23 @@
       "grave": false,
       "accn": "0001587523-26-000030",
       "url": "https://www.sec.gov/Archives/edgar/data/1587523/000158752326000030/kn-20260630.htm",
-      "performance": null
+      "performance": {
+        "period": "2026-06-30",
+        "basis": "quarter",
+        "rev": {
+          "yoy": 14.3,
+          "cur": 166800000,
+          "prior": 145900000
+        },
+        "oi": {
+          "yoy": 68,
+          "cur": 24700000,
+          "prior": 14700000
+        },
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
     },
     {
       "ticker": "KNSA",
@@ -2148,7 +2644,23 @@
       "grave": false,
       "accn": "0001104659-26-087545",
       "url": "https://www.sec.gov/Archives/edgar/data/1730430/000110465926087545/knsa-20260630x10q.htm",
-      "performance": null
+      "performance": {
+        "period": "2026-06-30",
+        "basis": "quarter",
+        "rev": {
+          "yoy": 55.4,
+          "cur": 243600000,
+          "prior": 156797000
+        },
+        "oi": {
+          "yoy": 34.9,
+          "cur": 27194000,
+          "prior": 20160000
+        },
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
     },
     {
       "ticker": "KNSA",
@@ -2181,7 +2693,19 @@
       "grave": false,
       "accn": "0001628280-26-050215",
       "url": "https://www.sec.gov/Archives/edgar/data/1025996/000162828026050215/krc-20260630.htm",
-      "performance": null
+      "performance": {
+        "period": "2026-06-30",
+        "basis": "quarter",
+        "rev": {
+          "yoy": -5.9,
+          "cur": 268321000,
+          "prior": 285071000
+        },
+        "oi": null,
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
     },
     {
       "ticker": "LAB",
@@ -2203,7 +2727,23 @@
       "grave": false,
       "accn": "0001311370-26-000022",
       "url": "https://www.sec.gov/Archives/edgar/data/1311370/000131137026000022/laz-20260630.htm",
-      "performance": null
+      "performance": {
+        "period": "2026-06-30",
+        "basis": "quarter",
+        "rev": {
+          "yoy": 1.6,
+          "cur": 830200000,
+          "prior": 817160000
+        },
+        "oi": {
+          "yoy": -59.6,
+          "cur": 37603000,
+          "prior": 93081000
+        },
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
     },
     {
       "ticker": "LBTYA",
@@ -2368,7 +2908,23 @@
       "grave": false,
       "accn": "0001104659-26-087556",
       "url": "https://www.sec.gov/Archives/edgar/data/907242/000110465926087556/mcri-20260630x10q.htm",
-      "performance": null
+      "performance": {
+        "period": "2026-06-30",
+        "basis": "quarter",
+        "rev": {
+          "yoy": 4.2,
+          "cur": 142597000,
+          "prior": 136914000
+        },
+        "oi": {
+          "yoy": 10.7,
+          "cur": 38623000,
+          "prior": 34899000
+        },
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
     },
     {
       "ticker": "MDLZ",
@@ -2379,7 +2935,23 @@
       "grave": false,
       "accn": "0001628280-26-050179",
       "url": "https://www.sec.gov/Archives/edgar/data/1103982/000162828026050179/mdlz-20260630.htm",
-      "performance": null
+      "performance": {
+        "period": "2026-06-30",
+        "basis": "quarter",
+        "rev": {
+          "yoy": 4.1,
+          "cur": 9355000000,
+          "prior": 8984000000
+        },
+        "oi": {
+          "yoy": 66,
+          "cur": 1946000000,
+          "prior": 1172000000
+        },
+        "driver": "Net revenues increase of 4.1%, driven by Organic Net Revenue growth of 2.2% and favorable currency-related items, partially offset by lapping prior year net revenue from a divestiture.",
+        "driverLine": "revenue",
+        "check": "pct"
+      }
     },
     {
       "ticker": "MDLZ",
@@ -2505,7 +3077,19 @@
       "grave": false,
       "accn": "0001077183-26-000059",
       "url": "https://www.sec.gov/Archives/edgar/data/1077183/000107718326000059/neo-20260630.htm",
-      "performance": null
+      "performance": {
+        "period": "2026-06-30",
+        "basis": "quarter",
+        "rev": {
+          "yoy": 11.2,
+          "cur": 201656000,
+          "prior": 181330000
+        },
+        "oi": null,
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
     },
     {
       "ticker": "NEO",
@@ -2593,7 +3177,23 @@
       "grave": false,
       "accn": "0001413447-26-000045",
       "url": "https://www.sec.gov/Archives/edgar/data/1413447/000141344726000045/nxpi-20260628.htm",
-      "performance": null
+      "performance": {
+        "period": "2026-06-28",
+        "basis": "quarter",
+        "rev": {
+          "yoy": 19.5,
+          "cur": 3496000000,
+          "prior": 2926000000
+        },
+        "oi": {
+          "yoy": 55.9,
+          "cur": 1071000000,
+          "prior": 687000000
+        },
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
     },
     {
       "ticker": "NXPI",
@@ -2659,7 +3259,23 @@
       "grave": false,
       "accn": "0001193125-26-320490",
       "url": "https://www.sec.gov/Archives/edgar/data/775158/000119312526320490/osk-20260630.htm",
-      "performance": null
+      "performance": {
+        "period": "2026-06-30",
+        "basis": "quarter",
+        "rev": {
+          "yoy": 6.7,
+          "cur": 2915100000,
+          "prior": 2732100000
+        },
+        "oi": {
+          "yoy": -16.6,
+          "cur": 243200000,
+          "prior": 291700000
+        },
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
     },
     {
       "ticker": "OSK",
@@ -2714,7 +3330,23 @@
       "grave": false,
       "accn": "0001042776-26-000063",
       "url": "https://www.sec.gov/Archives/edgar/data/1042776/000104277626000063/pdm-20260630.htm",
-      "performance": null
+      "performance": {
+        "period": "2026-06-30",
+        "basis": "quarter",
+        "rev": {
+          "yoy": 2.5,
+          "cur": 137265000,
+          "prior": 133954000
+        },
+        "oi": {
+          "yoy": -8.2,
+          "cur": 13730000,
+          "prior": 14953000
+        },
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
     },
     {
       "ticker": "PII",
@@ -2725,7 +3357,19 @@
       "grave": false,
       "accn": "0001628280-26-050104",
       "url": "https://www.sec.gov/Archives/edgar/data/931015/000162828026050104/pii-20260630.htm",
-      "performance": null
+      "performance": {
+        "period": "2026-06-30",
+        "basis": "quarter",
+        "rev": {
+          "yoy": 9.2,
+          "cur": 2022800000,
+          "prior": 1852700000
+        },
+        "oi": null,
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
     },
     {
       "ticker": "PII",
@@ -2769,7 +3413,23 @@
       "grave": false,
       "accn": "0000077360-26-000045",
       "url": "https://www.sec.gov/Archives/edgar/data/77360/000007736026000045/pnr-20260630.htm",
-      "performance": null
+      "performance": {
+        "period": "2026-06-30",
+        "basis": "quarter",
+        "rev": {
+          "yoy": -17,
+          "cur": 932600000,
+          "prior": 1123100000
+        },
+        "oi": {
+          "yoy": -23.5,
+          "cur": 166500000,
+          "prior": 217700000
+        },
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
     },
     {
       "ticker": "PNR",
@@ -2802,7 +3462,23 @@
       "grave": false,
       "accn": "0001633917-26-000082",
       "url": "https://www.sec.gov/Archives/edgar/data/1633917/000163391726000082/pypl-20260630.htm",
-      "performance": null
+      "performance": {
+        "period": "2026-06-30",
+        "basis": "quarter",
+        "rev": {
+          "yoy": 4.8,
+          "cur": 8682000000,
+          "prior": 8288000000
+        },
+        "oi": {
+          "yoy": -5.1,
+          "cur": 1427000000,
+          "prior": 1504000000
+        },
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
     },
     {
       "ticker": "PYPL",
@@ -2824,7 +3500,23 @@
       "grave": false,
       "accn": "0001628280-26-050166",
       "url": "https://www.sec.gov/Archives/edgar/data/1604778/000162828026050166/rfmd-20260627.htm",
-      "performance": null
+      "performance": {
+        "period": "2026-06-27",
+        "basis": "quarter",
+        "rev": {
+          "yoy": -4.2,
+          "cur": 784795000,
+          "prior": 818778000
+        },
+        "oi": {
+          "yoy": 221.6,
+          "cur": 96770000,
+          "prior": 30086000
+        },
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
     },
     {
       "ticker": "QRVO",
@@ -2868,7 +3560,23 @@
       "grave": false,
       "accn": "0000884887-26-000038",
       "url": "https://www.sec.gov/Archives/edgar/data/884887/000088488726000038/rcl-20260630.htm",
-      "performance": null
+      "performance": {
+        "period": "2026-06-30",
+        "basis": "quarter",
+        "rev": {
+          "yoy": 6.5,
+          "cur": 4832000000,
+          "prior": 4538000000
+        },
+        "oi": {
+          "yoy": -1.7,
+          "cur": 1307000000,
+          "prior": 1329000000
+        },
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
     },
     {
       "ticker": "RCL",
@@ -2942,17 +3650,6 @@
       "performance": null
     },
     {
-      "ticker": "RLMD",
-      "name": "Relmada Therapeutics Inc.",
-      "form": "8-K",
-      "date": "2026-07-28",
-      "label": "Reg FD disclosure",
-      "grave": false,
-      "accn": "0001213900-26-082007",
-      "url": "https://www.sec.gov/Archives/edgar/data/1553643/000121390026082007/ea0299449-8k_relmada.htm",
-      "performance": null
-    },
-    {
       "ticker": "RMBS",
       "name": "Rambus",
       "form": "10-Q",
@@ -2961,7 +3658,23 @@
       "grave": false,
       "accn": "0001193125-26-321000",
       "url": "https://www.sec.gov/Archives/edgar/data/917273/000119312526321000/rmbs-20260630.htm",
-      "performance": null
+      "performance": {
+        "period": "2026-06-30",
+        "basis": "quarter",
+        "rev": {
+          "yoy": 20.4,
+          "cur": 207385000,
+          "prior": 172209000
+        },
+        "oi": {
+          "yoy": 15.5,
+          "cur": 72731000,
+          "prior": 62993000
+        },
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
     },
     {
       "ticker": "RNGR",
@@ -2983,7 +3696,23 @@
       "grave": false,
       "accn": "0001628280-26-050161",
       "url": "https://www.sec.gov/Archives/edgar/data/1699039/000162828026050161/rngr-20260630.htm",
-      "performance": null
+      "performance": {
+        "period": "2026-06-30",
+        "basis": "quarter",
+        "rev": {
+          "yoy": 25.5,
+          "cur": 176500000,
+          "prior": 140600000
+        },
+        "oi": {
+          "yoy": 37.2,
+          "cur": 11800000,
+          "prior": 8600000
+        },
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
     },
     {
       "ticker": "RNST",
@@ -3027,7 +3756,23 @@
       "grave": false,
       "accn": "0001104659-26-087528",
       "url": "https://www.sec.gov/Archives/edgar/data/861884/000110465926087528/rs-20260630x10q.htm",
-      "performance": null
+      "performance": {
+        "period": "2026-06-30",
+        "basis": "quarter",
+        "rev": {
+          "yoy": 26.5,
+          "cur": 4630000000,
+          "prior": 3659800000
+        },
+        "oi": {
+          "yoy": 41.4,
+          "cur": 441600000,
+          "prior": 312200000
+        },
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
     },
     {
       "ticker": "RUSHA",
@@ -3186,7 +3931,23 @@
       "grave": false,
       "accn": "0001628280-26-050198",
       "url": "https://www.sec.gov/Archives/edgar/data/766829/000162828026050198/hto-20260630.htm",
-      "performance": null
+      "performance": {
+        "period": "2026-06-30",
+        "basis": "quarter",
+        "rev": {
+          "yoy": 6.2,
+          "cur": 210474000,
+          "prior": 198255000
+        },
+        "oi": {
+          "yoy": -2.5,
+          "cur": 42754000,
+          "prior": 43865000
+        },
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
     },
     {
       "ticker": "SKYT",
@@ -3219,7 +3980,23 @@
       "grave": false,
       "accn": "0000091767-26-000038",
       "url": "https://www.sec.gov/Archives/edgar/data/91767/000009176726000038/son-20260628.htm",
-      "performance": null
+      "performance": {
+        "period": "2026-06-28",
+        "basis": "quarter",
+        "rev": {
+          "yoy": -1.3,
+          "cur": 1885485000,
+          "prior": 1910441000
+        },
+        "oi": {
+          "yoy": 9.8,
+          "cur": 192837000,
+          "prior": 175667000
+        },
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
     },
     {
       "ticker": "SPGI",
@@ -3230,7 +4007,23 @@
       "grave": false,
       "accn": "0000064040-26-000045",
       "url": "https://www.sec.gov/Archives/edgar/data/64040/000006404026000045/spgi-20260630.htm",
-      "performance": null
+      "performance": {
+        "period": "2026-06-30",
+        "basis": "quarter",
+        "rev": {
+          "yoy": 10.4,
+          "cur": 4146000000,
+          "prior": 3755000000
+        },
+        "oi": {
+          "yoy": 16.8,
+          "cur": 1812000000,
+          "prior": 1551000000
+        },
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
     },
     {
       "ticker": "SPGI",
@@ -3252,7 +4045,23 @@
       "grave": false,
       "accn": "0001479094-26-000026",
       "url": "https://www.sec.gov/Archives/edgar/data/1479094/000147909426000026/stag-20260630.htm",
-      "performance": null
+      "performance": {
+        "period": "2026-06-30",
+        "basis": "quarter",
+        "rev": {
+          "yoy": 7.8,
+          "cur": 223528000,
+          "prior": 207438000
+        },
+        "oi": {
+          "yoy": 4.3,
+          "cur": 82256000,
+          "prior": 78831000
+        },
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
     },
     {
       "ticker": "STAG",
@@ -3323,7 +4132,23 @@
       "grave": false,
       "accn": "0000004127-26-000049",
       "url": "https://www.sec.gov/Archives/edgar/data/4127/000000412726000049/swks-20260703.htm",
-      "performance": null
+      "performance": {
+        "period": "2026-07-03",
+        "basis": "quarter",
+        "rev": {
+          "yoy": -3.1,
+          "cur": 934800000,
+          "prior": 965000000
+        },
+        "oi": {
+          "yoy": -56.1,
+          "cur": 48500000,
+          "prior": 110600000
+        },
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
     },
     {
       "ticker": "SWKS",
@@ -3422,7 +4247,19 @@
       "grave": false,
       "accn": "0001437749-26-024698",
       "url": "https://www.sec.gov/Archives/edgar/data/1731348/000143774926024698/tlry20260531_10k.htm",
-      "performance": null
+      "performance": {
+        "period": "2026-05-31",
+        "basis": "fy",
+        "rev": {
+          "yoy": 11.5,
+          "cur": 915454000,
+          "prior": 821309000
+        },
+        "oi": null,
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
     },
     {
       "ticker": "TLRY",
@@ -3477,7 +4314,23 @@
       "grave": false,
       "accn": "0001630472-26-000026",
       "url": "https://www.sec.gov/Archives/edgar/data/1630472/000163047226000026/trtx-20260630.htm",
-      "performance": null
+      "performance": {
+        "period": "2026-06-30",
+        "basis": "quarter",
+        "rev": {
+          "yoy": -4.5,
+          "cur": 7844000,
+          "prior": 8215000
+        },
+        "oi": {
+          "yoy": -4,
+          "cur": 63620000,
+          "prior": 66283000
+        },
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
     },
     {
       "ticker": "TRU",
@@ -3488,7 +4341,23 @@
       "grave": false,
       "accn": "0001552033-26-000047",
       "url": "https://www.sec.gov/Archives/edgar/data/1552033/000155203326000047/tru-20260630.htm",
-      "performance": null
+      "performance": {
+        "period": "2026-06-30",
+        "basis": "quarter",
+        "rev": {
+          "yoy": 14.9,
+          "cur": 1309600000,
+          "prior": 1139700000
+        },
+        "oi": {
+          "yoy": 34.2,
+          "cur": 258000000,
+          "prior": 192200000
+        },
+        "driver": "Revenue For the three and six months ended June 30, 2026 revenue increased $169.9 million, or 14.9%, and $319.8 million, or 14.3%, respectively, compared with the same periods in 2025, due to growth in both segments and revenue from recent acquisitions, which contributed 4.9% and 3.6% of the growth in each respective period.",
+        "driverLine": "revenue",
+        "check": "pct"
+      }
     },
     {
       "ticker": "TRU",
@@ -3548,7 +4417,23 @@
       "grave": false,
       "accn": "0000074208-26-000073",
       "url": "https://www.sec.gov/Archives/edgar/data/74208/000007420826000073/udr-20260630x10q.htm",
-      "performance": null
+      "performance": {
+        "period": "2026-06-30",
+        "basis": "quarter",
+        "rev": {
+          "yoy": 0,
+          "cur": 422933000,
+          "prior": 423001000
+        },
+        "oi": {
+          "yoy": 49.7,
+          "cur": 115857000,
+          "prior": 77389000
+        },
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
     },
     {
       "ticker": "UHS",
@@ -3811,7 +4696,19 @@
       "grave": false,
       "accn": "0000766704-26-000030",
       "url": "https://www.sec.gov/Archives/edgar/data/766704/000076670426000030/well-20260630.htm",
-      "performance": null
+      "performance": {
+        "period": "2026-06-30",
+        "basis": "quarter",
+        "rev": {
+          "yoy": -4.8,
+          "cur": 459740000,
+          "prior": 483040000
+        },
+        "oi": null,
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
     },
     {
       "ticker": "WEN",
@@ -3844,7 +4741,23 @@
       "grave": false,
       "accn": "0000072971-26-000302",
       "url": "https://www.sec.gov/Archives/edgar/data/72971/000007297126000302/wfc-20260630.htm",
-      "performance": null
+      "performance": {
+        "period": "2026-06-30",
+        "basis": "quarter",
+        "rev": {
+          "yoy": 8.6,
+          "cur": 22622000000,
+          "prior": 20822000000
+        },
+        "oi": {
+          "yoy": 17.2,
+          "cur": 18776000000,
+          "prior": 16022000000
+        },
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
     },
     {
       "ticker": "WM",
@@ -3877,7 +4790,23 @@
       "grave": false,
       "accn": "0001603145-26-000032",
       "url": "https://www.sec.gov/Archives/edgar/data/1603145/000160314526000032/xplr-20260630.htm",
-      "performance": null
+      "performance": {
+        "period": "2026-06-30",
+        "basis": "quarter",
+        "rev": {
+          "yoy": 6.1,
+          "cur": 363000000,
+          "prior": 342000000
+        },
+        "oi": {
+          "yoy": -33.3,
+          "cur": 60000000,
+          "prior": 90000000
+        },
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
     },
     {
       "ticker": "XIFR",
@@ -3970,7 +4899,23 @@
       "grave": false,
       "accn": "0001628280-26-050162",
       "url": "https://www.sec.gov/Archives/edgar/data/1439288/000162828026050162/zws-20260630.htm",
-      "performance": null
+      "performance": {
+        "period": "2026-06-30",
+        "basis": "quarter",
+        "rev": {
+          "yoy": 10.5,
+          "cur": 491000000,
+          "prior": 444500000
+        },
+        "oi": {
+          "yoy": 96.3,
+          "cur": 152300000,
+          "prior": 77600000
+        },
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
     },
     {
       "ticker": "ZWS",
