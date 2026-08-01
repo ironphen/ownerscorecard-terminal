@@ -185,6 +185,19 @@ const LEAKED = /public accounting firm|registered with the pcaob|\bstudio lot\b|
 // the segment mix or the computed phrase. Measured against every stored lede: matches only genuine
 // headings, no real description.
 const ALLCAPS_HEADING = /^[A-Z0-9][A-Z0-9 ,&'’.\/-]{17,}/;
+// The GLUED HEADING, title-cased rather than all-caps, so the guard above cannot see it: the
+// extractor joins the registrant's name to the section heading that follows it and then to the
+// first sentence underneath, and the result opens a company page describing the wrong thing
+// entirely. Texas Pacific Land shipped "Texas Pacific Land market Conditions Average West Texas
+// Intermediate oil prices for the year ended December 31, 2025 were down approximately 15%..." —
+// a page about a land-and-royalty business opening on the price of oil.
+//
+// The tell is a closed vocabulary, not a shape: these are the standard 10-K section headings, and
+// a sentence that genuinely describes what a company does never contains one. Kept deliberately
+// small and literal for that reason — "Results of Operations" cannot appear in a description of a
+// business, while a shape rule (lowercase word followed by two capitalised words) would convict
+// "…serves the Gulf Coast Region and…" and every other legitimate proper noun.
+const GLUED_HEADING = /\b(market conditions|results of operations|recent developments|executive overview|business overview|critical accounting|liquidity and capital|quantitative and qualitative|management['’]s discussion|forward[- ]looking statements|table of contents)\b/i;
 // A competition list ("Our competitors include banks, thrifts…") or an operating-process sentence
 // ("We normally purchase our feedstocks weeks before…") that the extraction took for a description.
 // Render-time twin of the fetch scorer's BIZ_NOTDESC, so a name already carrying one of these in
@@ -263,7 +276,7 @@ export function truncationArtifact(s) {
 const BENEFIT_SPEAK = /\b(programs?|initiatives?|approach|model|platform)\b[^.]{0,60}\b(provides?|delivers?|offers?)\s+(significant\s+)?(benefits?|advantages?|value)\b|\bprovides? benefits? (for|to)\b/i;
 export function weakLede(s) {
   if (!s || typeof s !== "string") return true;
-  return /^we have entered\b/i.test(s) || WEAK_LEDE.test(s) || ALLCAPS_HEADING.test(s) || NOT_DESC.test(s) || PRODUCT_REF.test(s) ||
+  return /^we have entered\b/i.test(s) || WEAK_LEDE.test(s) || ALLCAPS_HEADING.test(s) || GLUED_HEADING.test(s) || NOT_DESC.test(s) || PRODUCT_REF.test(s) ||
     /\bvarious (facilities|services|agreements|arrangements)\b/i.test(s) || NOT_A_DESCRIPTION.test(s) || LEAKED.test(s) || BENEFIT_SPEAK.test(s) ||
     SEGMENT_SUBJECT.test(s) || PRODUCT_LINE.test(s) || truncationArtifact(s);
 }

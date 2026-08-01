@@ -97,5 +97,24 @@ check("a scene-setting opener ('Under the X brands, the company sells...') is NO
 check("a stranded relative preposition ('...the world we live in.') is NOT truncated",
   !truncationArtifact("MillerKnoll is a collective of dynamic brands that comes together to design the world we live in."));
 
+// ---- weakLede: the GLUED HEADING, title-cased so ALLCAPS_HEADING cannot see it ----
+// The extractor joins the registrant's name to the section heading beneath it and then to the
+// first sentence under that, opening a company page on the wrong subject entirely. Texas Pacific
+// Land, a land-and-royalty business, opened on the price of oil. Measured pool-wide: 26 of 2,890
+// stored ledes carry one of these headings and every one of the 26 is MD&A prose, forward-looking
+// boilerplate or heading glue — none is a description, so the fallback is always the better read.
+check("TPL: the registrant name glued to 'market Conditions' is not a description",
+  weakLede("Texas Pacific Land market Conditions Average West Texas Intermediate oil prices for the year ended December 31, 2025 were down approximately 15% compared to average WTI oil prices during the prior year."));
+check("LNC: the same glue in another filer's clothes dies too",
+  weakLede("Lincoln National market conditions greatly influence the ultimate capital required due to its effect on the valuation of our reserves."));
+check("an MD&A results-of-operations sentence is not a description",
+  weakLede("Our results of operations are affected by levels of interest rates, the expansion or retraction of the capital markets, and general economic conditions."));
+// The guard is a closed vocabulary of section headings precisely so it cannot convict a real
+// description that happens to carry a proper noun or a market reference.
+check("a genuine description mentioning its markets survives",
+  !weakLede("The company designs and manufactures analog semiconductors for the industrial and automotive markets, selling through a direct sales force in 30 countries."));
+check("a genuine description naming a region survives",
+  !weakLede("Cheniere Energy is an energy infrastructure company that provides liquefied natural gas to integrated energy companies, utilities and energy trading companies worldwide."));
+
 console.log(`\n${pass} passed, ${fail} failed`);
 if (fail) process.exit(1);
