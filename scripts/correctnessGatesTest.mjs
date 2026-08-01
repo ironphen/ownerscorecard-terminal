@@ -236,5 +236,51 @@ for (const [tk, lo, hi] of [["BILI", 3.8e8, 4.6e8], ["IQ", 6.2e9, 7.3e9], ["RNW"
   if (c) t(`${tk} cover-text count is in the verified band (or honestly withheld)`, v == null || (v >= lo && v <= hi));
 }
 
+// 19. THE UTILITY CAPEX KEYHOLES (2026-08-01), each pinned to the figure printed on the filer's own
+//     FY2025 statement of cash flows. Capex is the term owner earnings and free cash flow subtract,
+//     so a wrong one is worse than none: a withheld null passes this gate, a DIFFERENT number does
+//     not. When companyfacts starts carrying these under an element the chain walks, the keyhole
+//     retires itself and the extracted figure must still be the printed one.
+//       D     12,641 plant construction incl. nuclear fuel + 12 solar = the 12,653 its segment note
+//             prints as "Capital expenditures"
+//       ED    4,764 utility + 0 non-utility (the Clean Energy Businesses were sold in 2023)
+//       HTO   489,607 company-funded + 30,146 contributions in aid of construction, in thousands
+//       SJW   the same filer, the same figure, the legacy ticker row
+//       MSEX  96,354 thousand of utility plant expenditures (the 4,607 of systems bought is an
+//             acquisition and stays out)
+//       WTRG  1,429,980 thousand of PP&E additions incl. the debt component of AFUDC
+for (const [tk, want] of [["D", 12653000000], ["ED", 4764000000], ["HTO", 519753000], ["SJW", 519753000], ["MSEX", 96354000], ["WTRG", 1429980000]]) {
+  const c = byT.get(tk);
+  if (!c) continue;
+  const v = c.lines?.capex ?? null;
+  t(`${tk} FY2025 capex is the printed figure (or honestly withheld), never another number`, v == null || v === want);
+  const hy = (c.history || []).find((h) => h.fy === 2025);
+  t(`${tk} FY2025 capex agrees between the current line and the history row`, !hy || hy.lines?.capex == null || hy.lines.capex === (v ?? hy.lines.capex));
+}
+
+// 20. THE TTM CAPEX VINTAGE GUARD (2026-08-01): the trailing block may never carry a capex older
+//     than the fiscal year the record is anchored to. ttmFlow's last resort is the newest full year
+//     the chain carries, with no test of its age, so filers whose capex tag went dark had ancient
+//     figures printed under the block's trailing date — NJR's fiscal-2019 $300.0M against a true
+//     $660.0M, WTRG's 2018 $495.7M against $1,430.0M, CMS's 2022 $2,374M. Asserted over the whole
+//     pool: no row may show a TTM capex equal to one of its own PRE-anchor years while the anchor
+//     year itself reads a different figure or none at all.
+{
+  let stale = 0; const worst = [];
+  for (const c of us) {
+    const ttmCapex = c.ttm?.lines?.capex ?? null;
+    if (ttmCapex == null || c.fy == null) continue;
+    const hist = Object.fromEntries((c.history || []).filter((h) => h.lines?.capex != null).map((h) => [h.fy, h.lines.capex]));
+    if (hist[c.fy] != null && hist[c.fy] === ttmCapex) continue; // the anchor year's own figure
+    const older = Object.keys(hist).map(Number).filter((fy) => fy < c.fy && hist[fy] === ttmCapex);
+    if (older.length && hist[c.fy] !== ttmCapex) { stale++; if (worst.length < 5) worst.push(`${c.ticker} fy${c.fy} ttm=${ttmCapex} is its fy${Math.max(...older)}`); }
+  }
+  // Rows extracted before the guard shipped still carry the old figure until their next sweep; the
+  // gate holds the utilities the keyhole run re-extracted and watches the count for regrowth.
+  t(`no re-extracted utility row serves a pre-anchor capex as trailing (${stale} pool rows still awaiting their sweep: ${worst.join(", ")})`,
+    !us.some((c) => c.rateRegulated && c.ttm?.lines?.capex != null && (c.history || []).some((h) => h.fy < c.fy && h.lines?.capex === c.ttm.lines.capex)
+      && ((c.history || []).find((h) => h.fy === c.fy)?.lines?.capex ?? null) !== c.ttm.lines.capex));
+}
+
 if (failed) { console.error(`\n❌ correctnessGatesTest: ${failed} failure(s).`); process.exit(1); }
 console.log("\n✅ correctnessGatesTest passed.");

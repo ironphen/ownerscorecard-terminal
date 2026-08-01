@@ -140,6 +140,18 @@ const CONCEPTS = {
     "PaymentsToAcquireMachineryAndEquipment",
     "PaymentsToAcquireOtherPropertyPlantAndEquipment",
   ],
+  // NO FURTHER CAPEX RUNG IS ADMISSIBLE, and the reason is worth keeping (2026-08-01). Five more
+  // elements each carry the whole printed capital-expenditure line at some real filer —
+  // Essential Utilities tags its $1.43B of plant additions as PaymentsToAcquireBuildings, Middlesex
+  // Water and H2O America use the segment-note additions element, Dominion the net productive-assets
+  // element, Con Edison PaymentsForConstructionInProcess — and every one of them is a mere COMPONENT
+  // at other filers. Measured over the whole EDGAR frame for CY2024: PaymentsToAcquireBuildings
+  // agrees with the standard chain at 0 of the 9 filers reporting both (Live Nation's buildings line
+  // is $20M against $647M of capex), PaymentsForConstructionInProcess at 1 of 17 (Southwest's $26M
+  // against $2,054M), the segment-note element at 37 of 48, PropertyPlantAndEquipmentAdditions at 33
+  // of 88. Walking any of them blind buys a handful of true figures with a long tail of false ones.
+  // See the capex keyhole below for what was shipped instead, and why even a per-filer
+  // overlap-agreement gate was refused.
   longTermDebt: ["LongTermDebtNoncurrent", "LongTermDebt"],
   currentDebt: ["LongTermDebtCurrent", "DebtCurrent"],
   // Aggregate total-debt tags for filers whose borrowings sit outside the standard
@@ -1957,6 +1969,97 @@ async function main() {
         }
       }
     }
+    // ---- CAPEX: the named keyhole (the utilities capex gap, 2026-08-01) ----
+    // Capex is the second term of owner earnings, so a wrong figure is worse here than anywhere
+    // else on the record and worse than no figure at all. Sixteen rate-regulated rows carried NO
+    // capex at their anchor year because the standard chain went dark: some filers moved the line
+    // to an element the chain does not walk, others tag it only under a dimension or an extension
+    // namespace that the companyfacts API drops wholesale. What follows recovers only what the
+    // filer's own payload can prove, and every value admitted was first read off the printed
+    // cash-flow statement in the filing itself. The four filers the payload cannot reach at all —
+    // CMS, DTE, NEE and NJR — stay honestly dark; their figures live only on dimensioned or
+    // extension-namespace facts and belong to scripts/fetchDimensional.mjs, not here.
+    // THE PER-FILER CAPEX CONCEPT. A named filer whose ladder provably walks to the wrong line,
+    // where no reordering can fix it generally. American Electric Power tags no
+    // PaymentsToAcquirePropertyPlantAndEquipment at all, so the chain falls through to
+    // PaymentsToAcquireProductiveAssets — which for this filer is "Acquisitions of Generation
+    // Facilities", a lumpy purchase of other people's plants (absent, absent, 155, 399, 3,453)
+    // — while its own capital programme, "Construction Expenditures", runs steadily beneath
+    // PaymentsForConstructionInProcess (5,660 / 6,672 / 7,378 / 7,631 / 8,453). Shipped, that put
+    // $155M of capital spending against a $7.4B programme in 2023 and showed a utility in the
+    // middle of a build-out generating +$3.5B of owner earnings, when the truth is negative.
+    //
+    // The concept cannot be promoted globally, or even across the utilities: Con Edison and
+    // Southwest Gas both tag it as a PART of their spend, so promoting it regresses them (ED 2016:
+    // 5,235 → 2,835). Hence a named filer, not a rung.
+    //
+    // Corroborated in AEP's own FY2025 investing section: construction 8,453 + generation-facility
+    // purchases 3,453 = 11,906 against a net investing outflow of 11,939 — two separate real
+    // lines, and only the first is the company building its own plant. The second stays visible on
+    // the Investing cash flow row rather than being folded into capital spending.
+    const CAPEX_CONCEPT = { AEP: ["PaymentsForConstructionInProcess"] };
+    const capexBy = annualByYear(facts, CAPEX_CONCEPT[ticker.toUpperCase()] || CONCEPTS.capex);
+    // A PER-FILER OVERLAP GATE WAS TRIED FIRST AND REFUTED, which is why what follows is a keyhole
+    // and not a general fill. The OGS revenue gate's shape — an alternative element may fill the
+    // years the chain lacks wherever the two agree TO THE FILED DOLLAR in every year both report —
+    // was run over the pool: 31 filers gained 208 filer-years and no existing value moved. But Con
+    // Edison passes that gate and fails the truth. Its segment-note additions element equals the
+    // standard chain exactly in 2021 and 2022 ($3,964M and $4,465M), then parts company with it:
+    // the element is ACCRUAL additions, and Con Edison's own printed cash capex for 2023-2025 is
+    // $4,494M, $4,771M and $4,764M against the element's $4,509M, $4,728M and $4,996M. Two years of
+    // exact coincidence during a tag handoff is not proof that two elements are one line, and there
+    // is no structural mark separating that case from Essential Utilities', where the same two-year
+    // overlap does mean a rename. A gate a printed statement refutes is not a gate.
+    //
+    // THE CAPEX KEYHOLE (named targets, 2026-08-01). Five filers whose printed capital expenditure
+    // sits in companyfacts under an element no chain may walk, each read off the filing's own
+    // statement of cash flows and filled for ONE year, and only while the payload still testifies —
+    // a refiling or a change of element retires the entry with no human in the loop.
+    //
+    //   ED    Con Edison prints "Utility capital expenditures (4,764)" and, on the next line,
+    //         "Non-utility capital expenditures 0": the Clean Energy Businesses were sold in 2023,
+    //         so for FY2025 alone the utility line IS the total. The utility leg is the us-gaap
+    //         element below; the non-utility leg is an ed: extension the API never carries, which
+    //         is why only the year that leg reads exactly zero can be filled.
+    //   D     Dominion's face lines, "Plant construction and other property additions (including
+    //         nuclear fuel) (12,641)" and "Acquisition of solar development projects (12)", sum to
+    //         $12,653M — precisely the undimensioned total its own segment note prints as "Capital
+    //         expenditures" (10,548 + 1,174 + 831 + 101 − 1). The face lines are d: extensions; the
+    //         segment total is the us-gaap element below, and the two agree to the dollar.
+    //   HTO   H2O America (SJW Group) prints "Additions to utility plant: Company-funded (489,607)"
+    //   SJW   and "Contributions in aid of construction (30,146)", both hto: extensions, summing to
+    //         $519,753 thousand — the exact undimensioned segment-note figure below. Its capex has
+    //         never once been carried by the standard chain. One CIK, two ticker rows, one entry
+    //         each.
+    //   MSEX  Middlesex Water prints "Utility Plant Expenditures, Including AFUDC-Debt of $641 in
+    //         2025 (96,354)" as a msex: extension; the segment-note element below carries the same
+    //         $96,354 thousand. The $4,607 thousand of water systems bought that year is an
+    //         acquisition and is correctly outside it.
+    //   WTRG  Essential Utilities prints "Property, plant and equipment additions, including the
+    //         debt component of allowance for funds used during construction (1,429,980)" and tags
+    //         that whole line PaymentsToAcquireBuildings, as it has since 2017. Utility-system
+    //         acquisitions ($57,004 thousand) sit on their own line and stay out.
+    const CAPEX_KEYHOLE = {
+      ED: { fy: 2025, end: "2025-12-31", filed: "2026-02-19", val: 4764000000,
+        test: () => annualByYear(facts, ["PaymentsForConstructionInProcess"])["2025"]?.val === 4764000000 },
+      D: { fy: 2025, end: "2025-12-31", filed: "2026-02-23", val: 12653000000,
+        test: () => annualByYear(facts, ["PaymentsForProceedsFromProductiveAssets"])["2025"]?.val === 12653000000 },
+      HTO: { fy: 2025, end: "2025-12-31", filed: "2026-02-26", val: 519753000,
+        test: () => annualByYear(facts, ["SegmentExpenditureAdditionToLongLivedAssets"])["2025"]?.val === 519753000 },
+      SJW: { fy: 2025, end: "2025-12-31", filed: "2026-02-26", val: 519753000,
+        test: () => annualByYear(facts, ["SegmentExpenditureAdditionToLongLivedAssets"])["2025"]?.val === 519753000 },
+      MSEX: { fy: 2025, end: "2025-12-31", filed: "2026-02-19", val: 96354000,
+        test: () => annualByYear(facts, ["SegmentExpenditureAdditionToLongLivedAssets"])["2025"]?.val === 96354000 },
+      WTRG: { fy: 2025, end: "2025-12-31", filed: "2026-02-26", val: 1429980000,
+        test: () => annualByYear(facts, ["PaymentsToAcquireBuildings"])["2025"]?.val === 1429980000 },
+    };
+    {
+      const kh = CAPEX_KEYHOLE[ticker.toUpperCase()];
+      if (kh && capexBy[kh.fy]?.val == null && kh.test()) {
+        capexBy[kh.fy] = { val: kh.val, end: kh.end, filed: kh.filed, form: "10-K" };
+        console.warn(`  ! ${ticker} capex ${kh.fy}: filled from the named keyhole (${kh.val}) — verified against the filing's own printed statement of cash flows; retires itself when the payload heals`);
+      }
+    }
     // Up to ~10 years of history for the durability strips.
     const ha = {
       revenue: valuesByYear(revAnnualBy),
@@ -1968,7 +2071,7 @@ async function main() {
       netIncome: collectAnnual(facts, CONCEPTS.netIncome),
       cashFromOps: collectAnnual(facts, CONCEPTS.cashFromOps),
       cashWalk: cashWalkByYear(facts),
-      capex: collectAnnual(facts, CONCEPTS.capex),
+      capex: valuesByYear(capexBy),
       costOfRevenue: valuesByYear(corByYear(facts)),
       depreciation: collectAnnual(facts, CONCEPTS.depreciation),
       dividendsPaid: valuesByYear(dividendsBy),
@@ -2244,7 +2347,24 @@ async function main() {
             netIncome: tf(CONCEPTS.netIncome),
             incomeTaxExpense: tf(CONCEPTS.incomeTaxExpense),
             cashFromOps: tf(CONCEPTS.cashFromOps),
-            capex: tf(CONCEPTS.capex),
+            // THE TTM CAPEX VINTAGE GUARD (2026-08-01). ttmFlow's last resort is the newest full
+            // year the chain carries, with no test that the year is anywhere near the trailing
+            // window — so a filer whose capex tag went dark years ago had an ancient figure printed
+            // under the block's single trailing date. New Jersey Resources' fiscal-2019 capex of
+            // $300.0M was serving as trailing-twelve-months against a true fiscal-2025 figure of
+            // $660.0M, Essential Utilities' 2018 $495.7M against $1,430.0M, Con Edison's 2022
+            // $4,465M, CMS's 2022 $2,374M. That is the stranded-tag class the revenue stitch
+            // already refuses at the block level, and it is worse on capex, which owner earnings
+            // and free cash flow subtract. A stitch older than the fiscal year the record is
+            // anchored to is not trailing anything: the record's own anchor-year capex stands in
+            // its place, and where there is none the cell goes honestly dark.
+            capex: (() => {
+              const e = ttmFlow(facts, CAPEX_CONCEPT[ticker.toUpperCase()] || CONCEPTS.capex);
+              const anchorYearCapex = anchor?.fy != null ? (ha.capex[anchor.fy] ?? null) : null;
+              if (!e) return anchorYearCapex;
+              if (anchor?.end && new Date(e.asOf).getTime() < new Date(anchor.end).getTime() - 14 * 86400000) return anchorYearCapex;
+              return e.val;
+            })(),
             costOfRevenue: tf(CONCEPTS.costOfRevenue),
             depreciation: tf(CONCEPTS.depreciation),
             stockBasedComp: tf(CONCEPTS.stockBasedComp),
@@ -2404,7 +2524,11 @@ async function main() {
         fxEffect: anchor?.fy != null ? (ha.cashWalk[anchor.fy]?.fx ?? null) : null,
         deltaCash: anchor?.fy != null ? (ha.cashWalk[anchor.fy]?.delta ?? null) : null,
         depreciation: pick(CONCEPTS.depreciation),
-        capex: pick(CONCEPTS.capex),
+        // The chain's own current figure stands wherever it exists; only where it is absent or
+        // stranded does the record's filled series (the corroborated fill and the keyhole above)
+        // supply the anchor year. Written this way round so no filer whose chain already reads a
+        // capex can have that figure moved by either mechanism.
+        capex: pick(CAPEX_CONCEPT[ticker.toUpperCase()] || CONCEPTS.capex) ?? (anchor?.fy != null ? (ha.capex[anchor.fy] ?? null) : null),
         incomeTaxExpense: pick(CONCEPTS.incomeTaxExpense),
         pretaxIncome: anchor?.fy != null ? (ha.pretaxIncome?.[anchor.fy] ?? null) : null,
         costOfRevenue: (() => {
