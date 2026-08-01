@@ -48,6 +48,12 @@ const { id = "top", label, sub = "", links = [] } = Astro.props;
 
 <script is:inline>
   (function () {
+    // The bar sits at the TOP of the page now (it moved here with the extraction), so this
+    // script executes before the act sections exist in the DOM — run at its old position the
+    // self-pruning below saw a fully parsed page, run here it found no targets and removed
+    // every tab (the live defect of 2026-07-31: the bar shipped as an empty shell). Defer the
+    // whole routine to DOMContentLoaded so it sees the page the way it used to.
+    const init = () => {
     const bar = document.querySelector(".cbar");
     if (!bar) return;
     const nav = bar.querySelector(".secnav");
@@ -82,5 +88,8 @@ const { id = "top", label, sub = "", links = [] } = Astro.props;
       });
     }, { rootMargin: "-15% 0px -75% 0px", threshold: 0 });
     targets.forEach((t) => obs.observe(t));
+    };
+    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
+    else init();
   })();
 </script>

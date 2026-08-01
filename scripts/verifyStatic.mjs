@@ -146,6 +146,18 @@ walk(DIST, (p) => {
     if (html.includes(m)) { contentFails.push(`${p}: mojibake ${JSON.stringify(m)} — a double-encoded paste or template mis-encoding`); break; }
   }
   if (isCompanyPage(p)) {
+    // The self-pruning-bar tripwire (2026-07-31): the section bar's inline script removes any
+    // tab whose target section is absent — and when the bar moved to the top of the page in a
+    // component, the script ran BEFORE the sections were parsed and pruned every tab at runtime
+    // while the static HTML still grepped clean. Static analysis can't run the script, but it
+    // can hold the invariant that makes it safe: a page carrying the bar must defer the prune
+    // past DOM parse.
+    if (html.includes('class="cbar"') || html.includes('class="cbar ')) {
+      const scriptStart = html.indexOf('querySelector(".cbar")');
+      const scriptZone = scriptStart >= 0 ? html.slice(Math.max(0, scriptStart - 2000), scriptStart + 4000) : "";
+      if (scriptStart >= 0 && !scriptZone.includes("DOMContentLoaded"))
+        contentFails.push(`${p}: the section bar's script is not deferred past DOM parse — its self-pruning removes every tab at runtime`);
+    }
     let computed = html;
     for (const re of VERBATIM_BLOCKS) computed = computed.replace(re, "");
     const abs = computed.match(ABSURD_MONEY);
