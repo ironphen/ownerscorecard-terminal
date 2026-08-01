@@ -977,6 +977,13 @@ async function getFiling(cik, f, totalDebtMillions = null, devTarget = null, dep
   if (utilTarget && fy && f.form === "10-K") {
     try { utilRead = utilityRegRead({ mdnaText: mdna, fullText: text, fy }); } catch { utilRead = null; }
   }
+  // The utilities rate-case list (Build 12): the same scope and the same rateRegulated
+  // membership as Build 10, its own splitter and its own glued-heading label parse. Quote-only,
+  // current filing only; a filer with no qualifying case may still carry its regime sentence.
+  let rateRead = null;
+  if (utilTarget && fy && f.form === "10-K") {
+    try { rateRead = rateCaseRead({ mdnaText: mdna, fullText: text, fy }); } catch { rateRead = null; }
+  }
   // The managed-care MLR cost-trend read (Build 11): MD&A sentences only (the doc's scope),
   // run only when the caller supplied the desk's computed MLR for THIS filing's fiscal year —
   // no computed MLR, no lane (Alignment and Trupanion never even scan).
@@ -984,7 +991,7 @@ async function getFiling(cik, f, totalDebtMillions = null, devTarget = null, dep
   if (mcTarget && mcTarget.mlr != null && fy && f.form === "10-K") {
     try { mcRead = mlrCostTrendRead({ mdnaText: mdna, fy, mlr: mcTarget.mlr, mlrPrior: mcTarget.mlrPrior }); } catch { mcRead = null; }
   }
-  return { url, business: { ...metrics(business), lead: leadSentences(bizLeadText(business, f.form)), head: business.slice(0, 800) }, mdna: { ...md, lead: leadSentences(mdna), candor: candorSignals(mdna, md.sents) }, risk: metrics(risk), reportDate: f.reportDate, debtMaturity, reserveRead, uninsuredRead, swRead, ogRead, reitRead, utilRead, mcRead };
+  return { url, business: { ...metrics(business), lead: leadSentences(bizLeadText(business, f.form)), head: business.slice(0, 800) }, mdna: { ...md, lead: leadSentences(mdna), candor: candorSignals(mdna, md.sents) }, risk: metrics(risk), reportDate: f.reportDate, debtMaturity, reserveRead, uninsuredRead, swRead, ogRead, reitRead, utilRead, rateRead, mcRead };
 }
 
 // ---- executive pay (proxy statement / DEF 14A) ----
@@ -3139,6 +3146,455 @@ function mlrCostTrendRead({ mdnaText = "", fy, mlr, mlrPrior }) {
   return { fy, tier: "direction", sentence: w.s, dir: w.dir === "up" ? "rose" : "fell", ...(stated.delta ? { stated } : {}), computed };
 }
 
+// ---- Utilities: rate cases on the record — requested vs granted (Build 12 of the qualitative
+// survey, 2026-07-31; docs/qualitative-desks-survey.md §Utilities P2, the survey's largest and
+// last build, deliberately sequenced after Builds 3 and 10 proved the window scoper and the
+// weld on utilities text) ----
+//
+// For a rate-regulated utility the price is not set in a market; it is granted, case by case,
+// by a named commission. This lane ships that record ALWAYS AS A LIST of the filer's own
+// sentences — what was asked for and what was granted — with every rendered figure a verbatim
+// substring of its quote. QUOTE-ONLY, like Build 10: the lane never computes, totals, sums
+// jurisdictions, or restates a number, and it never states a case's STATUS. A status field was
+// REFUSED by the survey on measured staleness (FY2025 10-Ks narrate timing already past at
+// read time: XEL's "A SDPUC decision is expected in the first half of 2026"), so a row says
+// what the filer said and when, and nothing about what happens next.
+//
+// THE NEW PARSING THIS BUILD CARRIES — glued-heading case labels. A rate-case disclosure opens
+// with its own case heading welded onto the first sentence by the HTML flattener: PNW's
+// "Regulatory Matters ACC General Retail Rate Cases 2025 Rate Case On June 13, 2025, APS filed
+// …", XEL's "Pending and Recently Concluded Regulatory Proceedings 2025 Minnesota Natural Gas
+// Rate Case — In October 2025, NSP-Minnesota filed …", EIX's "66 Table of Contents Regulatory
+// Proceedings 2025 General Rate Case In September 2025, the CPUC approved …". Build 10's
+// stripRegHeading throws such a run away; here it is EVIDENCE. The head is split off the
+// quote, its trailing case label is parsed out as the row's name, and it also opens a case
+// BLOCK: the two or three sentences that follow belong to the same proceeding and inherit both
+// the label and the subject token (measured-necessary — XEL narrates the Wisconsin grant two
+// sentences below its heading and never repeats the words "rate case"). The label parse FAILS
+// CLOSED: no parsable case label, and the row is named by the commission acronym in its own
+// quote; neither, and the row does not ship.
+//
+// THE GATES (the doc's, verbatim in intent):
+//   SUBJECT — /general rate (case|review|application)|base rate (case|proceeding|application)|
+//     rate case|rate review|\bGRC\b/ in the piece or its case-block opener. The GRC acronym is
+//     load-bearing, and it is the survey's own finding: EIX narrates only as "2025 GRC".
+//   DATE — the sentence's own action date (the FIRST year in the quote) must fall in
+//     {fy-1, fy, fy+1}. This is what retires a superseded case: XEL's "In July 2023, the MPUC
+//     approved a three-year rate increase of approximately $332 million for 2022-2024" carries
+//     2024 inside it and would survive a loosest-year test, and it is stale.
+//   ACTOR — a named rate commission (Build 10's REG_ACTOR, which excludes the SEC/FTC/CFTC and
+//     the European Commission) in the quote or the immediately prior sentence.
+//   FIGURES — at least one chip. Every chip is a verbatim substring of the quote, taken by role:
+//     the amount the request or the order acts on, the increase percent, the allowed ROE, the
+//     rate base. A dollar the lane cannot attribute to a role is never chipped (the sentence
+//     still carries it, in the filer's own words).
+//   ROE BOUNDS 8.0–13.0 — the desk's measured guard. The utilities desk REFUSED an allowed-ROE
+//     column outright because the same concept verifiably carries equity RATIOS (0.537) beside
+//     genuine 9–10% returns; here the bound is a CHIP gate, not a row gate: an out-of-band
+//     figure is never labelled a return on equity, and the row's dollar — which is true — still
+//     stands. AWK's "an equity component of 49.00%" and PNW's "4.39%" effective fair value rate
+//     of return both die on it.
+//   VERB CLASS — "granted" requires a commission-subject grant verb; it FAILS CLOSED to
+//     "requested", so a pending application can never render as a decided outcome.
+// Gravest dollars first, Jaccard dedupe (the combined-registrant swap), cap 6 — a list, because
+// a utility of any size is several proceedings at once and one row would be a chosen one.
+//
+// WITHHOLD: a rate-regulated filer with no qualifying case does not go silent if it says why.
+// The lane quotes the filer's OWN regime sentence — the sentence describing how its rates get
+// set when they are not set case by case. Measured: HE ("The PBR Framework implemented a
+// five-year multi-year rate period (MRP), during which there will be no general rate case
+// applications."), ATO (formula rate mechanisms refreshing rates annually "without filing a
+// formal rate case"), WMB (a FERC pipeline settling its Transco case with no figure disclosed).
+const RC_NOTE_HEADS = /Regulatory\s+(?:Matters|Environment|Proceedings)|Rate\s+(?:Matters|Proceedings|Cases?|Review)|Pending\s+and\s+Recently\s+Concluded/i;
+const RC_SUBJECT = /general\s+rate\s+(?:case|review|application)|base\s+rate\s+(?:case|proceeding|application)|rate\s+cases?\b|rate\s+review|\bGRC\b/i;
+// Page furniture the flattener glues to the head of a piece (the mcSentences precedent).
+const RC_FURNITURE = [/^\d{1,4}\s+Table\s+of\s+Contents\s+/i, /^Form\s+10-K\s*\|\s*\d{1,4}\s+/i, /^(?:(?:19|20)\d{2}\s+)+(?=[A-Z“"$])/];
+// The body open a glued heading sits in front of. Case-SENSITIVE by design: a mid-sentence
+// "…filed the general rate case on March 31, 2023, and on February 14, 2024, the IURC…" opens
+// with lowercase "on" and must never be read as a heading boundary.
+const RC_BODY_OPEN = /\b(?:In|On|During|Effective|Beginning|Following|Pursuant)\s+(?:January|February|March|April|May|June|July|August|September|October|November|December|the\s|its\s|a\s|an\s|early|late|mid|(?:19|20)\d{2})/;
+// The case-label tail, and the section nouns that bound a label on its left. "Cases" and
+// "Case" are stop words themselves, so a run of stacked headings ("…General Retail Rate Cases
+// 2025 Rate Case") yields the innermost case, never the shelf it sits on.
+const RC_LABEL_TAIL = /\b(?:General\s+)?Rate\s+(?:Cases?|Reviews?|Proceedings?)\b|\bGRCs?\b/g;
+const RC_LABEL_STOP = /^(?:Regulatory|Regulation|Regulations|Proceedings?|Matters?|Overview|Overviews|Pending|Recently|Concluded|Table|Contents|Item|Items|Note|Notes|Combined|Consolidated|Financial|Statements|Summary|Filings?|Activity|Activities|Cases?|Reviews?|Other|Recent|Current|Update|Updates|Discussion|Analysis|Management|Business|Company|Item\d*)$/;
+// Word-shaped tokens a label may absorb walking left; the lowercase connectors are traversable
+// but may never START a label ("Wisconsin Electric and Natural Gas Rate Case").
+const RC_LABEL_WORD = /^(?:(?:19|20)\d{2}|[A-Z][A-Za-z0-9&.'’\-\/]*)$/;
+const RC_LABEL_LINK = /^(?:and|of|the|for|in|to|or|&)$/;
+// The acronym the label falls closed to. Build 10's REG_ACTOR remains the ACTOR gate (never
+// weakened, never widened); this narrower set exists only to name a row, and it must produce a
+// literal substring of the quote.
+// then, where the filer's house style spells it out instead, the titled commission itself.
+// Measured-necessary: Southern writes "the Illinois Commission" throughout where Wisconsin
+// Energy writes "the ICC" for the same regulator, and an acronym-only fallback would take
+// Nicor's January 2026 general base rate case off the record for a typographic habit.
+const RC_ACRONYM = /\b(?:[A-Z]{2,4}P[SU]C|CPUC|FERC|NMPRC|SDPUC|NDPSC|MoPSC|WVPSC|PSCW|PUCO|PUCT|IURC|NCUC|KPSC|OPUC|WUTC|LPSC|MPSC|APSC|MPUC|ICC|SCC|ACC|KCC|RRC|OCC|PUC|PSC)\b/;
+const RC_COMMISSION_NAME = /\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2}\s+(?:Commission|Public\s+Service\s+Commission)\b/;
+// An accounting-line variance is not a proceeding, however often it names one as its cause:
+// UNITIL's "Depreciation and Amortization expense increased $12.6 million in 2025 … reflecting
+// higher depreciation rates from recent base rate cases" is the income statement talking.
+const RC_VARIANCE = /\b(?:expenses?|revenues?|income|earnings|costs?|margin)\b[^.;]{0,30}?\b(?:increased|decreased)\s+(?:by\s+)?\$/i;
+// A commission-subject grant. Fails closed: no match, and the row renders as a request.
+// The ILLUSTRATIVE FRAME: a hypothetical reaching for a real case as its example. "For instance"
+// after a no-assurance paragraph is a risk factor, not the regulatory record (CenterPoint's Item
+// 1A, whose recited case had a DECREASE awarded and shipped it beside the ask).
+const RC_ILLUSTRATION = /^(?:For (?:instance|example)|By way of (?:example|illustration)|As an example)\b/i;
+const RC_NO_ASSURANCE = /\b(?:can|could) make no assurance\b|\bno assurance (?:can|that)\b|\bmay not (?:result in|be granted)\b/i;
+// A sentence narrating BOTH an increase and a decrease cannot be chipped under one set of labels:
+// the reader would meet two identically-labelled amounts meaning opposite things. Silence instead.
+const RC_BOTH_DIRECTIONS = /\bincreases?\b[\s\S]{0,200}?\bdecreases?\b|\bdecreases?\b[\s\S]{0,200}?\bincreases?\b/i;
+// A multi-year award list carries more values than one row can label — Build 7's parallel-structure
+// law in this lane's clothes: "$41 million, $113 million, and $25 million ... in 2024, 2025, and
+// 2026, respectively" cannot ship as one figure with three fifths dropped unlabelled (Exelon).
+const RC_PARALLEL_LIST = /\$[\d,.]+\s*(?:million|billion)[\s\S]{0,180}?\brespectively\b/i;
+const RC_GRANT_VERB = /\b(?:approved|authorized|granted|awarded|adopted|issued|ordered|accepted)\b/i;
+const RC_GRANT_NOUN = /\b(?:order|decision|approval|settlement)\b[^.;]{0,70}?\b(?:approved|authorized|granted|adopted|issued)\b/i;
+// Anaphoric opens that ship only as the contiguous span with their own prior sentence — the
+// Build 10 rule, extended by the shape this corpus adds: AWK's granted row opens "The general
+// rate case order approved an increase of $105 million…" and carries neither date nor actor.
+const RC_GLUE_LEAD = /^(?:The\s+(?:general\s+)?rate\s+(?:case|review)\s+(?:order|decision)|The\s+(?:final\s+)?(?:order|decision|approval|settlement)\b|This|These|Such|It\b|As\s+a\s+result|In\s+the\s+(?:order|decision))/;
+// Forward frames and the flattened-table debris guard (ATO discloses its whole rate-case
+// record as a thousands-denominated table, which must never be quoted as a sentence).
+const RC_FORWARD = /\bis\s+expected\b|\bare\s+expected\b|\bwe\s+expect\b|\banticipat(?:e|es|ed)\b|\bwould\s+(?:result|be|increase|allow)\b|\bif\s+approved\b|\bmay\s+(?:be|result|file)\b|\bcannot\s+predict\b/i;
+const RC_TABLE = /\b(19|20)\d{2}\s+(19|20)\d{2}\b|\(in\s+(?:thousands|millions)|\(Millions\s+of\s+Dollars\)|following\s+tables?\b|tables?\s+(?:below|above)\b|\d\s?%\s+\d[\d,.]*\s?%|Table\s+of\s+Contents|\$\s?\d{1,3}\s+(?:January|February|March|April|May|June|July|August|September|October|November|December)\b/i;
+// A flattened regulatory-mechanism TABLE reads as a sentence and carries real dollars. The tell
+// the corpus gives is a run of bare month-year cells: CenterPoint's "…(IURC) CSIA $ 9 April
+// 2025 August 2025 July 2025 Requested an increase of $94.9 million to rate base…" packs three,
+// while the densest genuine sentence in the sample (AWK's Illinois span) carries two full dates.
+const RC_MONTH_YEAR = /\b(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+(?:19|20)\d{2}\b/g;
+// Advocacy is not the record: intervenor and commission-STAFF testimony, recommendations and
+// challenges argue about a case, they do not make it. Build 10 refused the same class on the
+// disallowance lane (AEP's remand testimony "supporting a reduction… of at least $179 million").
+const RC_ADVOCACY = /\btestimony\b|\bintervenors?\b[^.;]{0,40}?\b(?:testimony|recommend\w*|challeng\w*|oppos\w*|propos\w*|argu\w*)|\bstaff\b[^.;]{0,40}?\b(?:filed|report|recommend\w*|propos\w*|position)|\brecommend(?:ed|ing|s)?\b|\bchalleng\w+\b|\bcontested\s+by\b|\bwitness(?:es)?\b/i;
+// A definitional frame is the glossary, not the year's proceeding (ATO: "A rate case is a
+// formal request from Atmos Energy to a regulatory authority to increase rates…"). Deliberately
+// WITHOUT a "represents" clause: the corpus's canonical increase-percent idiom is "…$579.5
+// million, which represents a 13.99% net increase" (PNW), and a represents-guard would kill the
+// doc's own pinned sentence — measured, not assumed.
+const RC_DEFN = /\bis\s+a\s+formal\s+request\b|\bare\s+intended\s+to\b|\bis\s+defined\s+as\b|\bmeans\b|\ballows?\s+us\s+to\b|\bprovide\s+a\s+method\b/i;
+
+// The lane's own splitter (local by design — the devSentences / mcSentences / regPieces
+// precedent): it keeps the RAW piece so the glued head is still readable, strips the page
+// furniture, then splits head from body.
+function rcSentences(text) {
+  if (!text) return [];
+  const out = [];
+  // The abbreviation guard is this lane's own: rate-case sentences are dense with effective
+  // dates, and XEL writes them "effective Jan. 1, 2025" — the shared splitter cuts after "Jan."
+  // because a digit follows, and ships a sentence that ends mid-date. A truncated quote is a
+  // misquote, so the abbreviations that actually occur here never end a sentence.
+  const raws = String(text)
+    .split(/(?<!\b(?:Jan|Feb|Mar|Apr|Jun|Jul|Aug|Sept?|Oct|Nov|Dec|No|Nos|Inc|Corp|Co|Ltd|Mr|Mrs|Ms|Dr|St|Art|Sec|Fig|approx)\.)(?<=[.!?]["”’']?)\s+(?=[A-Z(“"$0-9]|i[A-Z])/)
+    .map((s) => s.replace(/\s+/g, " ").trim());
+  for (const r0 of raws) {
+    let raw = r0;
+    for (const f of RC_FURNITURE) raw = raw.replace(f, "");
+    raw = raw.trim();
+    let head = "", body = raw;
+    const m = raw.match(RC_BODY_OPEN);
+    // A head is only ever split off when it is a RATE-CASE heading: the run before the body
+    // open must carry the subject token, be free of sentence punctuation, and stay short.
+    if (m && m.index > 0 && m.index <= 130) {
+      const cand = raw.slice(0, m.index);
+      if (RC_SUBJECT.test(cand) && !/[.;:!?]/.test(cand) && cand.trim().split(/\s+/).length <= 14) {
+        head = cand.replace(/\s*[—–-]\s*$/, "").trim();
+        body = raw.slice(m.index).trim();
+      }
+    }
+    out.push({ raw, head, body });
+  }
+  return out;
+}
+
+// Prose test, this lane's own. Looser than regProse on the digit ratio (a rate-case sentence
+// is figures by construction: XEL's Wisconsin grant runs 26% digits) and on the opening
+// character (the head may be stripped, leaving a date-led body), tighter on nothing.
+function rcProse(s) {
+  if (!s || s.length < 55 || s.length > 620) return false;
+  if (!/^[A-Z“"(]/.test(s)) return false;
+  const digits = (s.match(/\d/g) || []).length;
+  const letters = (s.match(/[a-zA-Z]/g) || []).length;
+  return letters >= 55 && digits / (digits + letters) <= 0.42;
+}
+
+// The glued-heading case label. Walks LEFT from the last case-label tail in the head, over at
+// most five word-shaped tokens, stopping at a section noun or a previous case tail. Returned
+// by INDEX, so the label is guaranteed to be the head's own characters.
+function rcLabelFrom(head) {
+  if (!head) return null;
+  const tails = [...head.matchAll(RC_LABEL_TAIL)];
+  if (!tails.length) return null;
+  const t = tails[tails.length - 1];
+  const before = head.slice(0, t.index);
+  const toks = [...before.matchAll(/\S+/g)];
+  let start = -1, taken = 0;
+  // Six leading tokens: measured on the longest real case name in the sample, Duke's "Duke
+  // Energy Kentucky 2024 Electric Base Rate Case" — a five-token walk beheads it to "Energy
+  // Kentucky…", and a beheaded name is the hero-lede defect this survey already fixed once.
+  for (let i = toks.length - 1; i >= 0 && taken < 6; i--) {
+    const w = toks[i][0];
+    if (RC_LABEL_LINK.test(w)) { if (start < 0) break; taken++; continue; }
+    if (!RC_LABEL_WORD.test(w) || RC_LABEL_STOP.test(w)) break;
+    start = toks[i].index;
+    taken++;
+  }
+  if (start < 0) return null; // no qualifier: fail closed to the commission acronym
+  const label = head.slice(start, t.index + t[0].length).replace(/\s+/g, " ").trim();
+  return label.length >= 6 && label.length <= 80 ? label : null;
+}
+
+// Figures by ROLE, each a literal substring of the quote. The lookbehind window never crosses a
+// sentence boundary or another dollar sign, so an excluded surcharge ("…increase of $105
+// million in annualized … revenues, excluding previously recovered infrastructure surcharges of
+// $5 million") and a parenthesised tranche ("$126 million … ($68 million in 2026…)") are read
+// for what they are and left unchipped.
+function rcFigures(s) {
+  const figs = [];
+  const seen = new Set();
+  const push = (text, role) => { const k = role + "|" + text; if (!seen.has(k) && s.includes(text)) { seen.add(k); figs.push({ text, role }); } };
+  for (const m of s.matchAll(/\$\s?[\d,]+(?:\.\d+)?\s*(?:million|billion)/gi)) {
+    const back = s.slice(Math.max(0, m.index - 110), m.index);
+    // Forward window too: the corpus writes the noun on either side of the figure — "an
+    // increase of $105 million" (AWK) and "a net $251 million annual increase" (AEP). Neither
+    // window may cross a sentence break or another dollar sign, which is what leaves an
+    // excluded surcharge and a parenthesised tranche unchipped.
+    const fwd = s.slice(m.index + m[0].length, m.index + m[0].length + 60);
+    if (/rate\s+base[^.;$]{0,25}$/i.test(back)) push(m[0], "rateBase");
+    else if (/revenue\s+requirement[^.;$]{0,25}$/i.test(back)) push(m[0], "requirement");
+    else if (/\b(?:increase|decrease|deficiency)[^.;$]{0,60}$/i.test(back)) push(m[0], "amount");
+    // The forward form must reach an increase that is ABOUT rates: "a $251 million annual
+    // increase in base rates" chips, "a $29 million increase in a regulatory liability" (Duke's
+    // post-retirement entry, sitting inside a rate-case block) does not.
+    else if (/^[^.;$]{0,40}?\b(?:annual|annualized|net|base\s+rate|rate|revenue)\b[^.;$]{0,30}?\b(?:increase|decrease)\b/i.test(fwd)) push(m[0], "amount");
+    else if (/\b(?:seeking|seeks|sought|requesting|requested|approved|authorized|granted|approving|authorizing)[^.;$]{0,80}$/i.test(back)) push(m[0], "amount");
+  }
+  // The increase percent: the filer's own parenthesised share beside the amount it just stated,
+  // or the "which represents a 13.99 % net increase" clause. Never a bare percent — and always
+  // the filer's own characters, spacing included, because the flattener writes both "13.99%"
+  // (PNW's MD&A) and "13.99 %" (the same sentence in PNW's notes).
+  const amt = figs.find((f) => f.role === "amount");
+  if (amt) {
+    const at = s.indexOf(amt.text) + amt.text.length;
+    const par = s.slice(at, at + 8).match(/^\s*\(\s*(\d{1,3}(?:\.\d+)?\s?%)/);
+    if (par) push(par[1], "pct");
+  }
+  const rep = s.match(/represents?\s+(?:a|an)\s+(\d{1,3}(?:\.\d+)?\s?%)/i);
+  if (rep && /\b(?:increase|decrease)\b/i.test(s.slice(s.indexOf(rep[0]), s.indexOf(rep[0]) + rep[0].length + 40))) push(rep[1], "pct");
+  // The allowed ROE, bounded 8.0–13.0 — the desk's measured guard against an equity RATIO or a
+  // fair-value rate of return wearing the ROE label. Both orders the corpus writes it in.
+  for (const re of [/(?:\bROE\b|returns?\s+on\s+(?:common\s+)?equity)\s*(?:of|at|:)?\s*(?:approximately\s+)?(\d{1,2}(?:\.\d+)?\s?%)/gi,
+    /(\d{1,2}(?:\.\d+)?\s?%)\s+(?:\bROE\b|return\s+on\s+(?:common\s+)?equity)/gi]) {
+    for (const m of s.matchAll(re)) {
+      const v = parseFloat(m[1]);
+      if (v >= 8.0 && v <= 13.0) push(m[1], "roe");
+    }
+  }
+  return figs.slice(0, 4);
+}
+
+// The action date: the FIRST year in the quote. A sentence that opens on its own act's date is
+// this corpus's universal shape, and reading the first year is what retires a superseded case.
+function rcYearOk(s, fy) {
+  const m = String(s).match(/\b(19|20)\d{2}\b/);
+  if (!m) return false;
+  const y = parseInt(m[0], 10);
+  return y >= fy - 1 && y <= fy + 1;
+}
+
+// One candidate pool: the MD&A first (so a filer that narrates a case in both places ships the
+// MD&A's own wording), then every Regulatory/Rate Matters/Pending Proceedings window. Case
+// blocks are computed per zone: a piece whose head parses a label opens one, and the three
+// pieces that follow inherit its label and its subject token.
+function rcZones(mdnaText, fullText) {
+  const pools = [];
+  const seen = new Set();
+  const addZone = (text) => {
+    const ss = rcSentences(text);
+    if (!ss.length) return;
+    const zone = [];
+    let block = null, blockAt = -1;
+    for (let i = 0; i < ss.length; i++) {
+      const { raw, head, body } = ss[i];
+      const lab = rcLabelFrom(head);
+      if (lab) { block = { label: lab, head }; blockAt = i; }
+      // An inherited label must travel with the heading it came from, so the render-time
+      // re-check can still find it: a piece that carries a heading of its own but no parsable
+      // case name would otherwise be handed the block's label beside its own heading.
+      const inherited = !lab && !!block && i - blockAt <= 3;
+      const k = body.toLowerCase().slice(0, 160);
+      const prose = rcProse(body);
+      const dup = prose && seen.has(k);
+      if (prose && !dup) seen.add(k);
+      zone.push({
+        raw, head, body, prose, dup,
+        prior: i > 0 ? ss[i - 1].body : "",
+        label: lab || (inherited ? block.label : null),
+        heading: lab ? head : inherited ? block.head : "",
+        // The subject rung: the token in the sentence's OWN words, or membership in a case
+        // block whose heading parsed a real case name. A heading that carries the token but no
+        // parsable label confers nothing — measured-necessary: EIX's "GRC Wildfire Mitigation
+        // Memorandum Account Balances In June 2025, the CPUC issued a final decision that
+        // authorized recovery of $291 million…" is a memorandum-account recovery, not the rate
+        // case, and it would otherwise render as one. The parse fails closed here too.
+        subject: RC_SUBJECT.test(body) || !!lab || inherited,
+      });
+    }
+    pools.push(zone);
+  };
+  addZone(mdnaText);
+  for (const win of noteWindows(fullText, RC_NOTE_HEADS)) addZone(win);
+  return pools;
+}
+
+function utilityRateCases(zones, fy) {
+  const hits = [];
+  let seq = 0;
+  for (const zone of zones) {
+    for (let i = 0; i < zone.length; i++) {
+      const z = zone[i];
+      seq++;
+      if (z.dup || !z.prose) continue;
+      if (!z.subject) continue;
+      if (RC_TABLE.test(z.body) || RC_DEFN.test(z.body) || HYPO.test(z.body) || RC_FORWARD.test(z.body)) continue;
+      if (RC_ADVOCACY.test(z.body) || RC_VARIANCE.test(z.body)) continue;
+      if ((z.body.match(RC_MONTH_YEAR) || []).length >= 3) continue;
+      // The anaphoric open ships only as the contiguous span with its own prior sentence.
+      let quote = z.body;
+      if (RC_GLUE_LEAD.test(z.body)) {
+        const p = z.prior;
+        if (!regGlueOk(p) || RC_TABLE.test(p) || HYPO.test(p) || (p + " " + z.body).length > 800) continue;
+        quote = p + " " + z.body;
+      }
+      // The guards run again on the SPAN, so a glued prior can never smuggle in the debris the
+      // body was cleared of.
+      if (RC_TABLE.test(quote) || RC_ADVOCACY.test(quote) || RC_VARIANCE.test(quote)) continue;
+      // THE ILLUSTRATION. A risk factor arguing that proceedings MAY go badly, and then reaching
+      // for a past case to show what that looks like, is not the regulatory record — it is the
+      // filer's own hypothetical wearing a real docket's clothes. CenterPoint's only row came
+      // from exactly there: an Item 1A paragraph opening "The Registrants can make no assurance
+      // that ... base rate proceedings will result in requested or favorable adjustments", whose
+      // next sentence opens "For instance," and recites a case whose award was a DECREASE. The
+      // window scoper cannot see the difference (measured: Build 10's heads, Build 12's, and the
+      // doc-strict set all admit it, the last through CenterPoint's own cross-reference), so the
+      // refusal is made on the frame, where the difference actually lives.
+      if (RC_ILLUSTRATION.test(quote) || RC_NO_ASSURANCE.test(z.prior || "")) continue;
+      if (RC_BOTH_DIRECTIONS.test(quote) || RC_PARALLEL_LIST.test(quote)) continue;
+      if (!rcYearOk(quote, fy)) continue;
+      // Build 10's actor rung, required of any row the filer has NOT already named: a sentence
+      // with no case heading over it must name its own commission (in itself or its immediate
+      // prior) or it is not on the regulatory record. A heading-labelled row is exempt because
+      // the filer has already told us which proceeding it is — measured: XEL's "In October
+      // 2025, NSP-Minnesota filed a natural gas rate case in Minnesota, seeking a total revenue
+      // increase of $63 million (8.2%)" names the MPUC only two sentences later.
+      if (!z.label && !(regHasActor(quote) || regHasActor(z.prior))) continue;
+      const figures = rcFigures(quote);
+      if (!figures.length) continue;
+      // The label: the glued heading's case name, else the commission as this quote's own
+      // characters — the acronym first, its spelled-out title second. Neither, and the row does
+      // not ship: the parse fails closed, never to a guess.
+      const acr = (quote.match(RC_ACRONYM) || [])[0] || (quote.match(RC_COMMISSION_NAME) || [])[0] || null;
+      const label = z.label || acr;
+      if (!label) continue;
+      const heading = z.label ? z.heading : "";
+      if (!(quote.includes(label) || (heading && heading.includes(label)))) continue;
+      // The verb class, FAILING CLOSED to "requested": the commission must be the subject of a
+      // grant verb within reach. REG_ACTOR is parenthesised before concatenation — its source
+      // carries top-level alternations, so an unwrapped splice would bind the verb clause to the
+      // last alternative alone and every row would read "granted".
+      const actorFirst = new RegExp("(?:" + REG_ACTOR.source + "|" + RC_ACRONYM.source + "|" + RC_COMMISSION_NAME.source + ")[^.;]{0,90}?" + RC_GRANT_VERB.source, "i");
+      const kind = actorFirst.test(quote.replace(REG_ACTOR_NOT, " ")) || RC_GRANT_NOUN.test(quote) ? "granted" : "requested";
+      // FAILING CLOSED MUST NOT MEAN ASSERTING THE OTHER THING. The doc's rule — an unresolved
+      // verb class falls to "requested" — is right for a sentence carrying no grant signal at all,
+      // where a filer narrating its own case has plainly requested something. It is NOT right for a
+      // sentence that says "approved" in the filer's own words and merely fails the actor-first
+      // test because the commission is named after the verb: the page renders the class as
+      // "requested by the filer", so shipping that is a false statement about the regulatory
+      // record, not a conservative one. Exelon surfaced it — "PECO's approved annual electric
+      // revenue requirement increase of 54 million" would have rendered as a request. Where the
+      // filer says granted and the gate cannot prove who granted it, the row says nothing.
+      if (kind === "requested" && RC_GRANT_VERB.test(quote)) continue;
+      const rank = Math.max(0, ...figures.filter((f) => f.role === "amount" || f.role === "requirement").map((f) => rcDollarValue(f.text)));
+      hits.push({ label, kind, quote, figures, ...(heading ? { heading } : {}), rank, seq });
+    }
+  }
+  // Gravest dollars first, then the combined-registrant Jaccard pass and substring absorption.
+  return rcCapRows(hits, 6).map(({ label, kind, quote, figures, heading }) => {
+    // The weld law, asserted at write time: every rendered figure, and the row's own name, are
+    // the filer's own characters.
+    weld(quote, figures.map((f) => ({ text: f.text, kind: "verbatim" })));
+    weld(quote.includes(label) ? quote : heading, [{ text: label, kind: "verbatim" }]);
+    return { label, kind, quote, figures, ...(heading ? { heading } : {}) };
+  });
+}
+
+const rcDollarValue = (t) => {
+  const m = String(t).match(/([\d,]+(?:\.\d+)?)\s*(million|billion)/i);
+  return m ? parseFloat(m[1].replace(/,/g, "")) * (/billion/i.test(m[2]) ? 1e9 : 1e6) : 0;
+};
+
+// Gravest dollars first, then the Jaccard pass and substring absorption — Build 10's regCapRows
+// with ONE difference this lane needs: the rank tie-break is the sentence's own POSITION, not
+// its length. A utility narrates the same case twice, once in the MD&A and once in the notes,
+// and the note copy is the longer of the two only because it repeats the docket alias ("…with
+// the ACC (the "2025 Rate Case") seeking…"). Position keeps the MD&A's plainer wording, which
+// is the sentence the survey pinned. regCapRows itself is untouched; Build 10 keeps its rule.
+function rcCapRows(hits, cap = 6) {
+  hits.sort((a, b) => b.rank - a.rank || a.seq - b.seq);
+  const kept = jaccardDedupe(hits.map((h) => h.quote));
+  const out = [];
+  for (const r of hits) {
+    if (!kept.includes(r.quote)) continue;
+    if (out.some((o) => o.quote.includes(r.quote) || r.quote.includes(o.quote))) continue;
+    out.push(r);
+  }
+  return out.slice(0, cap);
+}
+
+// The regime sentence: how this filer's rates get set when they are not set case by case. Only
+// ever reached when the case list is empty — an explanation of silence, never a substitute for
+// a case. The vocabulary is measured on the three withholding filers, not decorative.
+// Only the forms that explain an ABSENT case qualify. A sentence that merely mentions a formula
+// rate plan is not an explanation of silence — measured: ETR's "The electric formula rate plan
+// decrease implemented was $19.2 million." and UTL's list of what a filing contains would both
+// pass a looser vocabulary, and neither says why no case is on the record. A regime quote may
+// carry no dollar at all: this lane verified none, so it renders none.
+const RC_REGIME = /\bno\s+general\s+rate\s+case\b|\bwithout\s+filing\s+(?:a\s+)?(?:formal\s+)?rate\s+case\b|\bin\s+lieu\s+of\s+(?:a\s+)?(?:general\s+)?rate\s+case\b|\beliminate\s+the\s+need\s+for\s+a\s+general\s+rate\s+case\b|\bsettle\s+all\s+aspects\s+of\s+the\s+rate\s+case\b/i;
+// A Title-Case section heading glued to a regime sentence, stripped only where the run is
+// followed by a subordinating connective and a lowercase word — Atmos's "Annual Formula Rate
+// Mechanisms As an instrument to reduce regulatory lag, …". The connective test is what keeps
+// the strip off a real sentence: Hawaiian Electric's "The PBR Framework implemented a five-year
+// multi-year rate period…" opens with three capitalised words and must not lose them.
+const RC_REGIME_HEAD = /^(?:[A-Z][A-Za-z&'’\-]*\s+){2,6}(?=(?:As|In|On|Under|During|Because|While|Although|Through)\s+[a-z])/;
+
+function utilityRateRegime(zones) {
+  const hits = [];
+  for (const zone of zones) {
+    for (const z of zone) {
+      if (z.dup || !z.prose) continue;
+      if (!RC_REGIME.test(z.body)) continue;
+      if (/\$/.test(z.body)) continue;
+      if (RC_TABLE.test(z.body) || HYPO.test(z.body) || RC_FORWARD.test(z.body) || RC_ADVOCACY.test(z.body)) continue;
+      if (RC_GLUE_LEAD.test(z.body)) continue; // an anaphoric fragment explains nothing on its own
+      hits.push({ quote: z.body.replace(RC_REGIME_HEAD, "").trim() });
+    }
+  }
+  if (!hits.length) return null;
+  // The shortest qualifying statement: the regime sentence is a definition of the regime, and
+  // the longest match in this corpus is always a clause of procedural detail wrapped around it.
+  hits.sort((a, b) => a.quote.length - b.quote.length);
+  return { quote: hits[0].quote };
+}
+
+function rateCaseRead({ mdnaText = "", fullText = "", fy }) {
+  if (!fy) return null;
+  const zones = rcZones(mdnaText, fullText);
+  const cases = utilityRateCases(zones, fy);
+  if (cases.length) return { fy, cases };
+  const regime = utilityRateRegime(zones);
+  return regime ? { fy, cases: [], withheld: regime } : null;
+}
+
 async function main() {
   // Carry-over: start from the existing file, so a partial run (a ticker limit, or a pool that comes
   // up empty) never wipes good entries — fresh results overlay, and names no longer in either
@@ -3366,6 +3822,12 @@ async function main() {
         // the filer's own sentences, every dollar a verbatim substring, quote-only — the lane
         // never computes. Absent means zero incidence — silence over filler.
         ...(cur.utilRead ? { utilityReg: cur.utilRead } : {}),
+        // The utilities rate-case list (Build 12): what the commission was asked for and what
+        // it granted, ALWAYS a list, in the filer's own sentences, every chip a verbatim
+        // substring, no status field. Absent means the filer carries neither a qualifying case
+        // nor a regime sentence — silence over filler; `withheld` carries the regime sentence
+        // where the filer explains why rates are not set case by case.
+        ...(cur.rateRead ? { rateCases: cur.rateRead } : {}),
         // The managed-care MLR cost-trend read (Build 11): the filer's own cost-trend
         // sentence tiered against the desk's computed medical loss ratio — a level badge only
         // at the sentence's own declared precision, direction-only beneath it, segment
@@ -3394,7 +3856,7 @@ async function main() {
 }
 
 // Exported for the offline logic test; only hit EDGAR when run directly.
-export { ownerFlags, FLAG_THEMES, sentences, isProse, diff, extractPayRatio, extractInsiderOwnership, extractInsiderGroup, htmlToText, section, fetchText, businessDescription, candorSignals, businessBrief, buffettRead, BIZ_HUMANCAP, BIZ_LINEAGE, BIZ_ASPIRATIONAL, BRIEF_ORPHAN, PROMO, smellsLikeRisk, fortyFSections, folderDocs, extractSections, MW_DECLARED, MW_ABSENT, MW_OTHER_ENTITY, RESTATED, RESTATED_CONTRACT, INTEGRITY_FUTURE, ADMIT, NOT_ADMIT, BLAME_OTHERS, reserveDevelopmentRead, devSentences, uninsuredDepositsRead, uninsSentences, softwareRetentionRead, customerLadderRead, softwareKpiRead, softwareKpiAssemble, swSentences, swCounts, reserveEngineerRead, ogCriticalTopics, ogSentences, reitLeasingRead, reitSpreadRead, reitOccupancyRead, reitSentences, utilityRegRead, utilityDisallowances, utilitySecuritization, regZones, regPieces, mlrCostTrendRead, mcSentences };
+export { RC_ILLUSTRATION, RC_NO_ASSURANCE, RC_BOTH_DIRECTIONS, RC_PARALLEL_LIST, RC_GRANT_VERB, ownerFlags, FLAG_THEMES, sentences, isProse, diff, extractPayRatio, extractInsiderOwnership, extractInsiderGroup, htmlToText, section, fetchText, businessDescription, candorSignals, businessBrief, buffettRead, BIZ_HUMANCAP, BIZ_LINEAGE, BIZ_ASPIRATIONAL, BRIEF_ORPHAN, PROMO, smellsLikeRisk, fortyFSections, folderDocs, extractSections, MW_DECLARED, MW_ABSENT, MW_OTHER_ENTITY, RESTATED, RESTATED_CONTRACT, INTEGRITY_FUTURE, ADMIT, NOT_ADMIT, BLAME_OTHERS, reserveDevelopmentRead, devSentences, uninsuredDepositsRead, uninsSentences, softwareRetentionRead, customerLadderRead, softwareKpiRead, softwareKpiAssemble, swSentences, swCounts, reserveEngineerRead, ogCriticalTopics, ogSentences, reitLeasingRead, reitSpreadRead, reitOccupancyRead, reitSentences, utilityRegRead, utilityDisallowances, utilitySecuritization, regZones, regPieces, mlrCostTrendRead, mcSentences, rateCaseRead, rcSentences, rcLabelFrom, rcFigures, rcZones, utilityRateCases, utilityRateRegime };
 
 if (import.meta.url === pathToFileURL(process.argv[1] || "").href) {
   main().catch((e) => { console.error(`\n❌ ${e.message}\n`); process.exit(1); });

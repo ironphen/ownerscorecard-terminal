@@ -1,0 +1,125 @@
+---
+// Utilities: rate cases on the record — requested vs granted (qualitative survey Build 12;
+// docs/qualitative-desks-survey.md §Utilities P2). QUOTE-ONLY: every figure the reader sees is
+// a verbatim substring of the filed sentence beside it, and the lane never computes, totals or
+// restates a number. ALWAYS A LIST — a utility of any size is several proceedings at once, and
+// a single row would be a chosen one. NO STATUS FIELD: the survey refused pending/decided/
+// expected on measured staleness, so a row says what the filer said and when, and nothing about
+// what happens next.
+//
+// Placement: the utility PRICING slot, immediately after the scorecard, where a non-financial
+// company's pricing read renders (moatReport → pricingReconciliation) and a rate-regulated one
+// has none — the utilities desk measured zero of sixty issuers firing on pricing power, because
+// tariffed rates mean competitive-pricing language does not exist in these filings. What sets a
+// utility's price is a commission, case by case, and this is that record. Build 10's
+// disallowance ledger continues further down the act, beside the debt ladder.
+//
+// The substring identity is asserted at extraction time and RE-CHECKED here (the Build 9/10
+// precedent), so a record that drifts from its quote retires rather than render. Utilities only,
+// on the rateRegulated flag — the desk's own tag census, never SIC.
+import language from "../data/language.json";
+
+const { company } = Astro.props;
+const rec = company?.rateRegulated ? (language?.companies?.[company?.ticker] || null) : null;
+const rc = rec?.rateCases || null;
+
+// Render-time weld re-check: a figure that is not the quote's own characters, or a case name
+// that is neither the quote's nor its heading's, retires the row.
+const ok = (r) =>
+  r?.quote &&
+  (r.figures || []).length > 0 &&
+  (r.figures || []).every((f) => f?.text && r.quote.includes(f.text)) &&
+  r.label &&
+  (r.quote.includes(r.label) || (r.heading && r.heading.includes(r.label)));
+const cases = (rc?.cases || []).filter(ok);
+const withheld = !cases.length && rc?.withheld?.quote ? rc.withheld : null;
+const show = cases.length || withheld;
+
+const roleLabel = { requirement: "revenue requirement", roe: "return on equity", rateBase: "rate base", pct: "percent" };
+const kindLabel = (k) => (k === "granted" ? "granted by the commission" : "requested by the filer");
+---
+
+{show ? (
+  <section class="rcase">
+    <div class="head">
+      <h3 class="secTitle">Rate cases, in the filing&rsquo;s words</h3>
+      <div class="hmeta">
+        {rc.fy ? <span class="asof">FY{rc.fy} 10-K</span> : null}
+        {rec?.sourceUrl ? <a class="src" href={rec.sourceUrl} target="_blank" rel="noopener">the filing, SEC EDGAR &rarr;</a> : null}
+      </div>
+    </div>
+    <p class="intro">
+      A regulated utility does not set its own price. It asks a commission for one, case by case, and the commission
+      grants some part of it. Below are the proceedings this filing puts on the record, quoted verbatim, largest
+      dollars first. Nothing here is computed; every figure is the filer&rsquo;s own sentence.
+    </p>
+
+    {cases.length ? (
+      <ul class="rows">
+        {cases.map((r) => (
+          <li class="row">
+            <div class="rhead">
+              <span class="case">{r.label}</span>
+              <span class={`tag ${r.kind}`}>{kindLabel(r.kind)}</span>
+            </div>
+            <div class="chips">
+              {r.figures.map((f) => (
+                <span class="chip">
+                  {roleLabel[f.role] ? <span class="role">{roleLabel[f.role]}</span> : null}
+                  <span class="fig">{f.text}</span>
+                </span>
+              ))}
+            </div>
+            <blockquote class="q">&ldquo;{r.quote}&rdquo;</blockquote>
+          </li>
+        ))}
+      </ul>
+    ) : null}
+
+    {withheld ? (
+      <div class="withheld">
+        <p class="lab">No rate case on this record, and the filer says why</p>
+        <blockquote class="q">&ldquo;{withheld.quote}&rdquo;</blockquote>
+      </div>
+    ) : null}
+
+    <p class="foot">
+      Sentences from the Regulatory Matters and Pending Proceedings disclosures and the MD&amp;A of the latest 10-K,
+      largest dollars first, at most six. &ldquo;Granted&rdquo; marks a sentence in which the commission itself is the
+      subject of the approving verb; everything else renders as a request, never as a decided outcome. A return on
+      equity is shown only where the filer states one between 8 and 13 percent &mdash; the same figure in these
+      filings also carries equity ratios and fair-value returns, and a number that must be interpreted before it can
+      be believed is not shown at all. Nothing here says whether a case is still pending: filings state timings that
+      are already past by the time they are read.
+    </p>
+  </section>
+) : null}
+
+<style>
+  .rcase { margin: 24px 0; }
+  .head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; border-bottom: 1px solid var(--rule-strong); padding-bottom: 6px; }
+  .secTitle { margin: 0; }
+  .hmeta { display: inline-flex; align-items: baseline; gap: 12px; flex-wrap: wrap; justify-content: flex-end; }
+  .asof { font-size: 11.5px; letter-spacing: 0.03em; text-transform: uppercase; color: var(--muted); flex: 0 0 auto; }
+  .src { font-size: 12px; color: var(--accent); flex: 0 0 auto; }
+  .intro { font-family: var(--serif); font-style: italic; font-size: 13.5px; color: var(--muted); margin: 9px 0 0; max-width: 74ch; line-height: 1.6; }
+
+  .rows { list-style: none; margin: 16px 0 0; padding: 0; display: grid; gap: 16px; }
+  .row { border-left: 2px solid var(--rule-strong); padding: 2px 0 2px 12px; }
+  .rhead { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+  .case { font-family: var(--sans); font-size: 12.5px; font-weight: 700; color: var(--ink); }
+  .tag { font-family: var(--sans); font-size: 10.5px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+  .tag.granted { color: var(--accent); }
+
+  .chips { display: flex; align-items: stretch; gap: 8px; flex-wrap: wrap; margin: 6px 0 0; }
+  .chip { display: inline-flex; flex-direction: column; gap: 1px; border: 1px solid var(--rule-strong); padding: 2px 7px; }
+  .role { font-family: var(--sans); font-size: 9.5px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); }
+  .fig { font-family: var(--sans); font-size: 12.5px; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+  .q { font-family: var(--serif); font-style: italic; font-size: 14px; line-height: 1.6; color: var(--ink-soft); margin: 7px 0 0; max-width: 78ch; }
+
+  .withheld { margin: 16px 0 0; border-left: 2px solid var(--rule-strong); padding: 2px 0 2px 12px; }
+  .lab { font-family: var(--sans); font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); margin: 0; }
+
+  .foot { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--rule-strong); margin-top: 16px; padding-top: 10px; max-width: 78ch; }
+</style>

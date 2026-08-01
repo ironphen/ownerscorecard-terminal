@@ -14,6 +14,7 @@ import {
   ADMIT, NOT_ADMIT, BLAME_OTHERS,
   businessDescription, extractSections, htmlToText,
   reserveDevelopmentRead,
+  RC_ILLUSTRATION, RC_NO_ASSURANCE, RC_BOTH_DIRECTIONS, RC_PARALLEL_LIST, RC_GRANT_VERB,
   ownerFlags, buffettRead,
   uninsuredDepositsRead,
   softwareRetentionRead, customerLadderRead, softwareKpiRead, softwareKpiAssemble,
@@ -21,6 +22,7 @@ import {
   reitLeasingRead,
   utilityRegRead,
   mlrCostTrendRead,
+  rateCaseRead,
 } from "./fetchFilings.mjs";
 import { mlrTrendTie } from "../src/lib/managedCare.mjs";
 
@@ -1214,6 +1216,231 @@ ok("noteWindow: the LAST heading occurrence wins (TOC echoes don't)",
     ok("render tie: a stale fiscal year retires the quote",
       mlrTrendTie({ ...company, fy: 2026 }, rec) === null);
   }
+}
+
+// ---------------- BUILD 12 — utilities rate cases, requested vs granted (U P2, the survey's
+// largest and last build; docs/qualitative-desks-survey.md SECTION 3). Every filing sentence
+// below is VERBATIM from the named FY2025 10-K as the lane's own splitter flattens it (fetched
+// and measured 2026-08-01 on the doc's 14 utility filings, then reproduced end-to-end through
+// scripts/fetchFilings.mjs with ONLY_TICKERS). The laws under test: EVERY CHIP a verbatim
+// substring of its quote; ROE BOUNDS 8.0–13.0 as a chip gate, so an equity ratio or a
+// fair-value return never wears the ROE label; the ACTION DATE (the quote's first year) inside
+// {fy-1, fy, fy+1}, which is what retires a superseded case; ALWAYS A LIST and never a status
+// field; the GLUED-HEADING case label, this build's new parsing, walked out of the heading by
+// index and FAILING CLOSED to the commission named in the quote — and to nothing, which ships
+// no row at all; the verb class failing closed to "requested"; advocacy, flattened tables and
+// accounting variances refused. ----------------
+
+{
+  const rc = (mdnaText, fy = 2025) => rateCaseRead({ mdnaText, fullText: "", fy });
+  const cases = (mdnaText, fy = 2025) => rc(mdnaText, fy)?.cases || [];
+  const one = (mdnaText, fy = 2025) => cases(mdnaText, fy)[0] || null;
+  const chip = (r, role) => (r?.figures || []).find((f) => f.role === role)?.text ?? null;
+
+  // --- PNW, the doc's pinned FILED shape, exactly as it stands in the MD&A: the case heading
+  // "Regulatory Overview 2025 Rate Case" is glued to the sentence, split off the quote, and its
+  // trailing case name becomes the row's label.
+  const pnw = "Regulatory Overview 2025 Rate Case On June 13, 2025, APS filed an application with the ACC seeking a net base rate increase of $579.5 million, which represents a 13.99% net increase.";
+  const pnwSentence = "On June 13, 2025, APS filed an application with the ACC seeking a net base rate increase of $579.5 million, which represents a 13.99% net increase.";
+  {
+    const r = one(pnw);
+    ok("PNW: the doc's pinned sentence ships with $579.5 million and 13.99%, glued heading stripped from the quote",
+      !!r && r.quote === pnwSentence && chip(r, "amount") === "$579.5 million" && chip(r, "pct") === "13.99%");
+    ok("PNW: the glued heading yields the case label '2025 Rate Case'",
+      !!r && r.label === "2025 Rate Case" && r.heading === "Regulatory Overview 2025 Rate Case");
+    ok("PNW: an application is a REQUEST — the verb class fails closed, never 'granted'",
+      !!r && r.kind === "requested");
+    ok("PNW: every chip is a literal substring of the shipped quote (the weld law, re-checked)",
+      !!r && r.figures.every((f) => r.quote.includes(f.text)));
+    ok("PNW: the record is ALWAYS A LIST and carries no status field",
+      (() => { const rec = rc(pnw); return !!rec && Array.isArray(rec.cases) && !("status" in rec) && rec.cases.every((c) => !("status" in c)); })());
+  }
+  ok("PNW red-team: the same case narrated in a stale year dies on the action date",
+    cases(pnw, 2028).length === 0);
+  // The notes carry the identical sentence with the docket alias and the flattener's spacing.
+  // Both are the filer's own characters; position decides, so the MD&A's plainer wording wins.
+  const pnwNote = "Regulatory Matters ACC General Retail Rate Cases 2025 Rate Case On June 13, 2025, APS filed an application with the ACC (the \"2025 Rate Case\") seeking a net base rate increase of $ 579.5 million, which represents a 13.99 % net increase.";
+  ok("PNW: the notes' copy chips the filer's own spacing — '$ 579.5 million' and '13.99 %', never a reconstruction",
+    (() => { const r = one(pnwNote); return !!r && chip(r, "amount") === "$ 579.5 million" && chip(r, "pct") === "13.99 %" && r.quote.includes("$ 579.5 million"); })());
+  ok("PNW: MD&A and notes together ship ONE row, the MD&A's wording (position breaks the rank tie)",
+    (() => { const c = cases(`${pnw} ${pnwNote}`); return c.length === 1 && c[0].quote === pnwSentence; })());
+
+  // --- AWK, the doc's pinned GRANTED shape: 105 / 9.84 / 2.2B. The granted sentence opens
+  // anaphorically ("The general rate case order …") and carries neither a date nor a commission
+  // of its own, so it ships only as the contiguous span with its own prior sentence — and the
+  // label falls closed to the acronym that sentence names.
+  const awkPrior = "On December 5, 2024, the Illinois Commerce Commission (the \"ICC\") issued a final order approving the adjustment of base rates requested in a rate case originally filed on January 25, 2024, by the Company's Illinois subsidiary.";
+  const awkGrant = "The general rate case order approved an increase of $105 million in annualized water and wastewater system revenues, excluding previously recovered infrastructure surcharges of $5 million, based on an authorized return on equity of 9.84%, authorized rate base of $2.2 billion, and a capital structure with an equity component of 49.00% and a debt component of 51.00%.";
+  {
+    const r = one(`${awkPrior} ${awkGrant}`);
+    ok("AWK: the doc's pin — $105 million, 9.84% ROE and $2.2 billion rate base, one span, three roles",
+      !!r && chip(r, "amount") === "$105 million" && chip(r, "roe") === "9.84%" && chip(r, "rateBase") === "$2.2 billion");
+    ok("AWK: the span is the anaphoric sentence glued to its own prior, and the label falls closed to 'ICC'",
+      !!r && r.quote === `${awkPrior} ${awkGrant}` && r.label === "ICC" && r.kind === "granted");
+    ok("AWK: the excluded $5 million surcharge is never chipped — the role windows do not cross another dollar",
+      !!r && !r.figures.some((f) => f.text === "$5 million"));
+    ok("AWK: the ROE bound holds — the 49.00% equity component and the 51.00% debt component are not returns on equity",
+      !!r && !r.figures.some((f) => f.role === "roe" && f.text !== "9.84%"));
+  }
+  ok("AWK red-team: the granted sentence ALONE, with no date and no commission, ships nothing",
+    cases(awkGrant).length === 0);
+
+  // --- XEL, the doc's pin: BOTH FORMS. The requested one names its own commission; the granted
+  // one is two sentences below its heading and never repeats the words "rate case", so it rides
+  // the case block — the measured reason the block exists.
+  const xelFiled = "Pending and Recently Concluded Regulatory Proceedings 2025 Colorado Electric Rate Case In November 2025, PSCo filed an electric rate case with the CPUC seeking an increase in revenue of $356 million (9.9%) ($526 million inclusive of rider roll-ins).";
+  const xelBlock = "Wisconsin Electric and Natural Gas Rate Case In March 2025, NSP-Wisconsin filed a request with the PSCW for a multi-year electric and natural gas rate increase. Both the electric and natural gas rate requests were based on forward-looking 2026 and 2027 test years, with a 10.0% ROE and an equity ratio of 53.5%. In December 2025, the PSCW issued final written approval on NSP-Wisconsin's request, with a final rate increase of $126 million for the electric utility ($68 million in 2026, with an incremental $58 million in 2027) and $22 million for the natural gas utility ($18 million in 2026, with an incremental $4 million in 2027), based on a ROE of 9.8% and an equity ratio of 52.5%.";
+  {
+    const r = one(xelFiled);
+    ok("XEL, form one — REQUESTED: $356 million with the filer's own parenthesised 9.9%",
+      !!r && r.kind === "requested" && chip(r, "amount") === "$356 million" && chip(r, "pct") === "9.9%");
+    ok("XEL: the parenthesised tranche '($526 million inclusive of rider roll-ins)' is never chipped",
+      !!r && !r.figures.some((f) => f.text === "$526 million"));
+    ok("XEL: the label walks the whole heading run, stopping at the section noun",
+      !!r && r.label === "2025 Colorado Electric Rate Case");
+  }
+  {
+    const c = cases(xelBlock);
+    const g = c.find((x) => x.kind === "granted");
+    ok("XEL, form two — GRANTED, reached only through the case block: $126 million at a 9.8% ROE",
+      !!g && chip(g, "amount") === "$126 million" && chip(g, "roe") === "9.8%" && g.label === "Wisconsin Electric and Natural Gas Rate Case");
+    ok("XEL: the block label absorbs its lowercase connective — 'Wisconsin Electric and Natural Gas Rate Case', not 'Natural Gas Rate Case'",
+      !!g && g.heading.includes(g.label));
+    ok("XEL: the 52.5% equity ratio inside the granted sentence is not a return on equity",
+      !!g && !g.figures.some((f) => f.role === "roe" && f.text === "52.5%"));
+  }
+  // The stale-case kill, measured: this order is a 2023 act whose sentence carries 2024 inside
+  // it, so a loosest-year test would keep it and a first-year test retires it.
+  ok("XEL: the July 2023 MPUC order dies on the action date though '2022-2024' sits inside the sentence",
+    cases("Minnesota Electric Rate Case In July 2023, the MPUC approved a three-year rate increase of approximately $332 million for 2022-2024, based on a ROE of 9.25% and an equity ratio of 52.5%.").length === 0);
+  // The splitter's abbreviation guard: an effective date must not end a sentence.
+  ok("XEL: 'effective Jan. 1, 2025' does not cut the quote — a truncated quote is a misquote",
+    (() => { const r = one("Minnesota Electric Rate Case In December 2024, the MPUC approved interim rates of $192 million, effective Jan. 1, 2025."); return !!r && r.quote.endsWith("effective Jan. 1, 2025.") && r.kind === "granted"; })());
+
+  // --- EIX, the doc's pin: reachable on the GRC token. The note window's own heading names the
+  // proceeding and the sentence names it again as "2025 GRC".
+  const eix = "66 Table of Contents Regulatory Proceedings 2025 General Rate Case In September 2025, the CPUC approved a final decision in SCE's 2025 GRC, authorized a base rate revenue requirement of $ 9.7 billion for 2025, an increase of $ 1.1 billion over the revenue requirement authorized for 2024.";
+  {
+    const r = one(eix);
+    ok("EIX: the 2025 GRC decision ships as GRANTED, page furniture stripped, heading label parsed",
+      !!r && r.kind === "granted" && r.label === "2025 General Rate Case" && r.quote.startsWith("In September 2025, the CPUC approved"));
+    ok("EIX: the revenue requirement and the increase carry different roles — $ 9.7 billion is a level, $ 1.1 billion is the change",
+      !!r && chip(r, "requirement") === "$ 9.7 billion" && chip(r, "amount") === "$ 1.1 billion");
+  }
+  // The GRC token's other job: EIX's MD&A narrates the case only by the acronym, and that
+  // sentence carries no figure, so it is reached and then correctly ships nothing.
+  ok("EIX: the GRC-only MD&A sentence carries no figure and ships nothing — reached, then refused",
+    cases("The increase in SCE's core earnings in 2025 was primarily due to higher revenue from the 2025 GRC final decision and a benefit to interest expense related to cost recoveries authorized under the TKM and Woolsey Settlement Agreements.").length === 0);
+  // The heading that carries the token but parses no case name confers nothing — measured on
+  // EIX's memorandum-account recovery, which would otherwise render as a rate case.
+  ok("EIX: 'GRC Wildfire Mitigation Memorandum Account Balances' is not a case name, so its recovery decision is not a rate case",
+    cases("GRC Wildfire Mitigation Memorandum Account Balances In June 2025, the CPUC issued a final decision that authorized recovery of $291 million in operations and maintenance expenses and $99 million in capital expenditures.").length === 0);
+
+  // --- SO: the label falls closed past the acronym to the commission's spelled-out title,
+  // because Southern's house style never writes "ICC". Measured, and the reason the fallback has
+  // two rungs rather than one.
+  ok("SO: Nicor's January 2026 general base rate case ships, labelled 'Illinois Commission'",
+    (() => { const r = one("On January 9, 2026, Nicor Gas filed a general base rate case with the Illinois Commission requesting a $221 million increase in annual base rate revenues."); return !!r && r.label === "Illinois Commission" && chip(r, "amount") === "$221 million" && r.kind === "requested"; })());
+  ok("SO: a rate-case sentence naming no commission at all and carrying no heading ships nothing — the label fails closed to nothing",
+    cases("In 2025 the company filed a general rate case seeking a $221 million increase in annual base rate revenues.").length === 0);
+
+  // --- AEP: the request/grant pair for one case, and the advocacy kill.
+  ok("AEP: the West Virginia request ships $ 251 million at a 10.8 % ROE, label from the page-numbered heading",
+    (() => { const r = one("202 2024 West Virginia Base Rate Case In November 2024, APCo and WPCo (the Companies) filed a request with the WVPSC for a net $ 251 million annual increase in base rates based upon a proposed 10.8 % ROE and a proposed capital structure of 52 % debt and 48 % common equity."); return !!r && r.label === "2024 West Virginia Base Rate Case" && chip(r, "amount") === "$ 251 million" && chip(r, "roe") === "10.8 %"; })());
+  ok("AEP: intervenor and staff TESTIMONY is advocacy about a case, never the case",
+    cases("2025 ETT Base Rate Case In April and May 2025, respectively, intervenors and PUCT staff submitted testimony challenging components of the proposed rate increase including up to $ 37 million related to increased depreciation rates and $ 32 million related to the proposed ROE and capital structure.").length === 0);
+  ok("AEP: a commission STAFF recommendation is not a decision",
+    cases("Ohio Base Rate Case In October 2025, the PUCO staff filed its required report recommending a net annual decrease in distribution base rates ranging from $ 12 million to $ 28 million, based upon an ROE range of 9.33 % to 9.84 %.").length === 0);
+
+  // --- DUK: the settlement its own commission has not yet approved stays a REQUEST, and an
+  // accounting entry inside a rate-case block is not the case's money.
+  ok("DUK: a filed settlement ships as REQUESTED — the verb class fails closed even at $ 40 million and a 9.99 % ROE",
+    (() => { const r = one("South Carolina Rate Case On October 27, 2025, Duke Energy Progress filed a comprehensive settlement with the South Carolina Office of Regulatory Staff and other intervenors in the case resolving all revenue requirement issues in the base rate proceeding. The settlement included an annual net increase in electric rates of approximately $ 40 million including the flow back of PTC benefits to customers, an ROE of 9.99 % and an equity ratio of 52.4 %."); return !!r && r.kind === "requested" && chip(r, "amount") === "$ 40 million" && chip(r, "roe") === "9.99 %"; })());
+  ok("DUK: a $ 29 million regulatory-liability entry sitting inside the rate-case block is not a rate change",
+    cases("Indiana Rate Case An order for the rate case was issued by the IURC on January 29, 2025. In connection with this rate case, a $ 29 million increase in a regulatory liability associated with certain employee post-retirement benefits was recorded in December 2024.")
+      .every((r) => !r.figures.some((f) => f.text === "$ 29 million")));
+
+  // --- CNP / UTL: the two debris classes the sample carries.
+  ok("CNP: the flattened regulatory-mechanism table is debris, not a proceeding",
+    cases("CenterPoint Energy and CERC - Indiana North - Gas (IURC) CSIA $ 9 April 2025 August 2025 July 2025 Requested an increase of $94.9 million to rate base, which reflects an approximately $8.6 million annual increase in current revenues, of which 80% is included in the mechanism and 20% is deferred until the next rate case.").length === 0);
+  ok("UTL: an income-statement variance that merely names rate cases as its cause is not a rate case",
+    cases("Depreciation and Amortization expense increased $12.6 million in 2025 compared to 2024, reflecting higher depreciation rates from recent base rate cases, additional depreciation associated with higher levels of utility plant in service and higher amortization of other deferred costs.").length === 0);
+
+  // --- The ROE bound, both directions, on a constructed pair whose only difference is the
+  // stated return. The desk refused an allowed-ROE column outright because the same figure
+  // carries equity ratios; here the bound keeps the label off anything outside 8.0–13.0.
+  const roeShape = (v) => `Kentucky Base Rate Case In August 2025, KPCo filed a request with the KPSC for a $ 96 million net annual increase in base rates based upon a proposed ${v} ROE and a proposed capital structure of 53.9 % debt and 46.1 % common equity.`;
+  ok("ROE bound: 10 % is inside 8.0–13.0 and ships as a return on equity",
+    chip(one(roeShape("10 %")), "roe") === "10 %");
+  ok("ROE bound: 53.7 % is an equity ratio wearing the words, never chipped — and the row's true dollar still stands",
+    (() => { const r = one(roeShape("53.7 %")); return !!r && chip(r, "roe") === null && chip(r, "amount") === "$ 96 million"; })());
+  ok("ROE bound: 4.39 % is a fair-value rate of return, below the band, never chipped",
+    chip(one(roeShape("4.39 %")), "roe") === null);
+
+  // --- The withholds, quoting the filer's own regime sentence. A regime quote carries no
+  // dollar at all: this lane verified none, so it renders none.
+  {
+    const he = rc("The PBR Framework implemented a five-year multi-year rate period (MRP), during which there will be no general rate case applications.");
+    ok("HE: the PBR regime sentence is the withhold, and the case list is still a list",
+      !!he && Array.isArray(he.cases) && he.cases.length === 0 && he.withheld.quote === "The PBR Framework implemented a five-year multi-year rate period (MRP), during which there will be no general rate case applications.");
+    ok("HE: the regime quote keeps its own opening words — the heading strip may not behead a real sentence",
+      he.withheld.quote.startsWith("The PBR Framework implemented"));
+  }
+  ok("ATO: the formula-rate-mechanism sentence is the withhold, its glued section heading stripped",
+    (() => { const r = rc("Annual Formula Rate Mechanisms As an instrument to reduce regulatory lag, formula rate mechanisms allow us to refresh our rates on an annual basis without filing a formal rate case."); return !!r && r.withheld?.quote === "As an instrument to reduce regulatory lag, formula rate mechanisms allow us to refresh our rates on an annual basis without filing a formal rate case."; })());
+  ok("WMB: a FERC pipeline that settled its case without a disclosed figure withholds on its own settlement sentence",
+    (() => { const r = rc("During the third quarter of 2025, Transco reached an agreement in principle with its customers and the other participants to settle all aspects of the rate case and has accrued a related liability for rate refunds."); return !!r && r.cases.length === 0 && /settle all aspects of the rate case/.test(r.withheld.quote); })());
+  ok("the withhold never carries an unverified figure: ETR's '$19.2 million' formula-rate sentence is not a regime quote",
+    rc("The electric formula rate plan decrease implemented was $19.2 million.") === null);
+  ok("a real case outranks the regime sentence — the withhold is only ever an explanation of silence",
+    (() => { const r = rc(`${pnw} The PBR Framework implemented a five-year multi-year rate period (MRP), during which there will be no general rate case applications.`); return !!r && r.cases.length === 1 && !r.withheld; })());
+
+  // --- Controls. The lane is rateRegulated-gated besides, but the shapes must score zero on
+  // their own: a bank's rate language, a REIT's, and a filer with nothing to say.
+  ok("JPM-shape: 'the interest rate case' vocabulary of a bank scores zero — there is no commission and no case name",
+    cases("The Firm's net interest income increased $2.4 billion in 2025, reflecting the impact of higher rates across the balance sheet.").length === 0);
+  ok("PLD-shape: a landlord's rent change is not a rate case",
+    cases("Net effective rent change on rollover was 52.9% for the year ended December 31, 2025, driven by market rent growth across our global portfolio.").length === 0);
+  ok("zero incidence is silence: a utility with no case and no regime sentence returns nothing at all",
+    rc("Operating revenues increased in 2025 primarily due to rate base growth and favorable weather across our service territories.") === null);
+}
+
+
+// ---------------- BUILD 12 REVIEW FIXES (2026-08-01) ----------------
+// Found by the build's own adversarial verifier, which returned DO-NOT-SHIP on the first of these.
+// CenterPoint's ONLY rate-case row came from an Item 1A risk factor: a no-assurance paragraph
+// followed by "For instance," reciting a real docket whose award was a DECREASE — shipped beside
+// the ask under identical labels. The window scoper cannot tell that sentence from the record
+// (all three candidate head sets admit it), so the refusal is made on the frame instead.
+{
+  ok("the illustrative frame is refused — a risk factor's example is not the record",
+    RC_ILLUSTRATION.test("For instance, in the PUCT proceeding the approved revenue requirement was $47 million lower than requested."));
+  ok("its no-assurance prior is recognised as the frame it is",
+    RC_NO_ASSURANCE.test("The Registrants can make no assurance that pending or future base rate proceedings will result in requested or favorable adjustments."));
+  ok("a plain dated case sentence is NOT an illustration",
+    !RC_ILLUSTRATION.test("In September 2025, the CPUC approved a revenue requirement of $ 9.7 billion for the 2025 General Rate Case."));
+
+  // Two identically-labelled amounts meaning opposite things is the direction-inversion class the
+  // survey files as wrong. Neither ships; the sentence goes silent.
+  ok("an increase-and-decrease sentence cannot be chipped under one set of labels",
+    RC_BOTH_DIRECTIONS.test("The commission approved an annual revenue requirement decrease of $47 million against the requested increase of $60 million."));
+  ok("a single-direction sentence is untouched",
+    !RC_BOTH_DIRECTIONS.test("The commission approved an annual revenue requirement increase of $105 million with a 9.84% return on equity."));
+
+  // Build 7's parallel-structure law in this lane's clothes: a multi-year award list carries more
+  // values than one row can label, and shipping one with the rest dropped is filler (Exelon).
+  ok("a multi-year 'respectively' award list is refused rather than part-chipped",
+    RC_PARALLEL_LIST.test("The MDSPC awarded electric revenue requirement increases of $41 million, $113 million, and $25 million in 2024, 2025, and 2026, respectively."));
+  ok("a single-value sentence is not a parallel list",
+    !RC_PARALLEL_LIST.test("The MDSPC awarded an electric revenue requirement increase of $41 million with an approved ROE of 9.50%."));
+
+  // Failing closed must not mean asserting the other thing: the page renders the class as
+  // "requested by the filer", so a sentence saying "approved" that merely fails the actor-first
+  // test must go silent rather than ship a false status (Exelon's PECO sentence).
+  ok("'awarded' is a grant verb (it was missing, and understated every DCPSC award)",
+    RC_GRANT_VERB.test("The DCPSC awarded Pepco an electric revenue requirement increase of $99 million."));
+  ok("a grant verb is present in the shape that must refuse rather than read as a request",
+    RC_GRANT_VERB.test("PECO's approved annual electric revenue requirement increase of $ 354 million is partially offset by a one-time credit."));
 }
 
 console.log(`\nlanguageGatesTest: ${pass} passed, ${fail} failed`);

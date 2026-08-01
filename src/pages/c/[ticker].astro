@@ -21,6 +21,7 @@ import CompareLink from "../../components/CompareLink.astro";
 import OwnerEarningsBridge from "../../components/OwnerEarningsBridge.astro";
 import DebtMaturity from "../../components/DebtMaturity.astro";
 import UtilityRegulatory from "../../components/UtilityRegulatory.astro";
+import UtilityRateCases from "../../components/UtilityRateCases.astro";
 import Drivers from "../../components/Drivers.astro";
 import LeaseObligations from "../../components/LeaseObligations.astro";
 import Acquisitions from "../../components/Acquisitions.astro";
@@ -340,6 +341,13 @@ const ogImageAlt = ogImage ? `${name} (${ticker}): the owner's record at a glanc
     <section id="act-quality" class="actGroup">
       <ActHeader n="III" title="Quality &amp; stewardship" lede="Returns, the balance sheet, capital allocation, and pay." />
       <div id="sec-scorecard" class="sec"><Scorecard company={fund} sample={fundamentals.sample} peers={peerResult.peers} /></div>
+      {/* The utilities rate-case list (qualitative Build 12): the PRICING slot. A non-financial
+          company's pricing read renders just above, inside the scorecard's moat report; a
+          rate-regulated one has none, because tariffed rates mean competitive-pricing language
+          does not exist in these filings (measured: zero of sixty issuers). What sets a utility's
+          price is a commission, case by case, and this is that record — requested against
+          granted, quote-only. Renders nothing for non-utilities. */}
+      <div id="sec-ratecases" class="sec"><UtilityRateCases company={fund} /></div>
       <div id="sec-current" class="sec"><CurrentPosition company={fund} /></div>
       <div id="sec-debt" class="sec"><DebtMaturity company={fund} /></div>
       {/* The utilities disallowance ledger + securitization keyhole (qualitative Build 10):
