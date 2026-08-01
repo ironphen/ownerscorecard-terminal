@@ -26,3 +26,14 @@ jobs:
           body=$(curl -s --max-time 30 "https://ownerscorecard-terminal.ryanreinsant.workers.dev/api/health")
           echo "$body"
           echo "$body" | grep -q '"ok":true' || { echo "::error::health check failed"; exit 1; }
+      # Answering is not the same as being CURRENT: a deploy that stopped months ago still
+      # returns 200 on every path it ever had, so the probe above cannot see a frozen pipeline.
+      # This compares the stamps the live site renders against the ones committed in this repo —
+      # the only assertion in the pipeline with a reader on one side of it (2026-07-31: a failed
+      # curl was read as a stale site and three red CI runs as blocked deploys; both readings
+      # were wrong and neither was checkable).
+      - uses: actions/checkout@v4
+      - name: The live site serves the vintage we committed
+        run: node scripts/verifyLive.mjs
+        env:
+          LIVE_ORIGIN: https://ownerscorecard-terminal.ryanreinsant.workers.dev

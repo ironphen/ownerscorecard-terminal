@@ -40,3 +40,23 @@ jobs:
             echo "::error::Last successful DB backup is ${age_days} days old (>9) — the weekly backup has stopped"
             exit 1
           fi
+      # CI is a test gate that does not gate anything: Cloudflare builds from the repo on its own,
+      # so a red suite reaches readers unannounced — it did three times on 2026-07-31, over a
+      # golden fixture left stale by a legitimate data refresh, while local reads called it green.
+      # The suite is deliberately NOT made a deploy blocker (a stale fixture must never freeze
+      # fresh filings), so the alarm is made loud instead: asserted here, where a miss emails the
+      # owner daily, that the newest CI run on main passed.
+      - name: Assert the newest CI run on main is green
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          concl=$(gh run list --workflow=ci.yml --branch=main --status=completed --limit 1 --json conclusion --jq '.[0].conclusion' 2>/dev/null || echo "")
+          if [ -z "$concl" ] || [ "$concl" = "null" ]; then
+            echo "::error::No completed CI run found on main — the test gate is not reporting"
+            exit 1
+          fi
+          echo "Newest completed CI run on main: $concl"
+          if [ "$concl" != "success" ]; then
+            echo "::error::The newest CI run on main concluded '$concl' — the suite is red and the site is deploying anyway"
+            exit 1
+          fi
