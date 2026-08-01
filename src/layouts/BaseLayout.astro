@@ -377,6 +377,28 @@ const jsonLdBlocks = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
         }
       }
     </style>
+
+    {/* Reader measurement, on the only terms this publication can accept. The site self-hosts its
+        fonts precisely so no third party sees a reader's IP, and that rule is not being relaxed
+        here: Cloudflare already terminates TLS for every request to this domain, so its analytics
+        beacon reveals to Cloudflare nothing Cloudflare does not already serve. What it adds is a
+        cookieless, PII-free count — no cross-site identifier, no consent banner, nothing sold —
+        which is the only kind of measurement a publication that refuses to sell its readers can
+        run at all. It exists to answer one question the venture plan cannot be decided without:
+        which records and which notes are actually read (the phase-2 gate names a number of
+        engaged readers, and a number nobody counts is not a gate).
+
+        The token is public by construction — it ships in the page source of every site using it —
+        but it lives in the build environment rather than the repo so a local or preview build
+        never reports as production traffic. Set PUBLIC_CF_BEACON in the Cloudflare Workers Builds
+        environment; absent it, this renders nothing at all. */}
+    {import.meta.env.PROD && import.meta.env.PUBLIC_CF_BEACON ? (
+      <script
+        defer
+        src="https://static.cloudflareinsights.com/beacon.min.js"
+        data-cf-beacon={JSON.stringify({ token: import.meta.env.PUBLIC_CF_BEACON })}
+      />
+    ) : null}
   </head>
 
   <body data-print-asof={refreshed ? ` · records as of ${refreshed}` : ""}>
