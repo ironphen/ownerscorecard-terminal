@@ -63,6 +63,42 @@ const dailyLeg = (file, maxDays, why) => {
 console.log("\nDaily legs (own calendar, independent of the freshest pool):");
 dailyLeg("wire.json", 2, "the filing wire commits every weekday; a longer gap means its workflow is failing or its commit step is blocked, and the site is serving a stale wire under a daily promise");
 
+// ---- the monthly leg: the qualitative layer, read per ENTRY rather than per file ----
+// The stamp at the top of language.json moves whenever ANY run writes it, including a run of a
+// dozen tickers, so it cannot tell a full heal from a touch. What matters is the OLDEST entry:
+// the qualitative extractor only improves companies it actually re-visits, and the monthly full
+// pass is the only thing that visits everyone.
+//
+// On 2026-08-01 that pass ran fetch:filings successfully for over three hours, passed every audit,
+// then failed an unrelated test and skipped its commit. Hours of work were discarded, nothing
+// downstream noticed, and entries stayed frozen at whatever the last landed pass produced —
+// Berkshire's business description sat nine words long, extracted before a fix that had already
+// shipped. Every check in this file stayed green throughout, because the daily wire kept running.
+//
+// 45 days is the line: the cron is monthly, so a healthy pool reads at most ~31 days plus slack
+// for a long run and one retry. Two missed months cannot hide.
+const MAX_LANG_DAYS = Number(process.env.MAX_LANG_DAYS || 45);
+const lang = read("language.json");
+if (lang?.companies) {
+  const entries = Object.values(lang.companies);
+  const stamped = entries.filter((e) => typeof e?.builtAt === "string" && /^\d{4}-\d{2}-\d{2}/.test(e.builtAt));
+  const unstamped = entries.length - stamped.length;
+  if (!stamped.length) {
+    problems.push(`language.json: ${entries.length} entries and not one builtAt stamp — the qualitative layer predates the stamp, so a heal that never lands cannot be detected`);
+  } else {
+    const oldest = stamped.map((e) => e.builtAt.slice(0, 10)).sort()[0];
+    const age = ageDays(oldest);
+    console.log(`  ${"language.json (entries)".padEnd(26)} oldest extraction ${oldest}  (${age}d ago)  [monthly leg, max ${MAX_LANG_DAYS}d]`);
+    if (age > MAX_LANG_DAYS) {
+      problems.push(`the oldest language entry was extracted ${age} days ago (> ${MAX_LANG_DAYS}) — the monthly full re-extraction has not landed, so every extractor fix since is reaching only the companies that happened to file`);
+    }
+    // A pass that dies halfway leaves most of the pool unstamped while the rest looks current.
+    if (unstamped > entries.length * 0.05) {
+      problems.push(`${unstamped} of ${entries.length} language entries carry no builtAt stamp — the last full pass did not finish`);
+    }
+  }
+}
+
 // ---- rates legs: the valuation's bond anchor and every ADR/JP translation's USD basis ----
 // Each leg of fetchRates fails soft and carries its prior value forever, so a permanently
 // broken source (URL change, key requirement) freezes a leg silently while the wire keeps the

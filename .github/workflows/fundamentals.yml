@@ -248,6 +248,20 @@ jobs:
       - name: Test against the fresh data
         if: ${{ github.event.inputs.debug == '' }}
         run: npm test
+      # The gate above is correct — data that breaks the product must not land — but a red test
+      # also DESTROYS the refresh, and the refresh is hours of SEC fetching. On 2026-08-01 the
+      # monthly pass computed the whole pool in 3h24m, passed every audit, failed one test pinned
+      # to live data, and skipped the commit; the work was gone and the qualitative layer stayed
+      # frozen for weeks. Keep the computed data as an artifact whenever the run fails, so the fix
+      # is "download and commit" rather than "recompute overnight and hope".
+      - name: Preserve the computed data when the run fails
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: data-refresh-${{ github.run_id }}
+          path: src/data/*.json
+          retention-days: 14
+          if-no-files-found: warn
       - name: Commit if changed
         if: ${{ github.event.inputs.debug == '' }}
         run: |

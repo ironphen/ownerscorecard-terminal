@@ -297,7 +297,10 @@ const MARKET_NOT_COMPANY = /\b(?:are|is) capturing a growing share of\b/i;
 // than by keyword: a Title-Case run handing off to a fresh capitalised subject ("Commercial Banking
 // Products and Services We strive to meet…", "Medical Devices for Neurosurgical Application The
 // first foundational component…"). GLUED_HEADING above only knows the named 10-K headings.
-const GLUED_HEADING_RUN = /^(?:[A-Z][a-z]+|for|of|and|the|&)(?:\s+(?:[A-Z][a-z]+|for|of|and|the|&)){2,7}\s+(?=(?:The|We|Our)\s+[a-z])/;
+// The possessive matters: a heading built on the company's own name carries one, and without it
+// in the character class the run breaks at the apostrophe and the gate misses ("Edwards
+// Lifesciences' Product and Technology Offerings The following discussion summarizes…").
+const GLUED_HEADING_RUN = /^(?:[A-Z][a-z]+(?:['’]s?)?|for|of|and|the|&)(?:\s+(?:[A-Z][a-z]+(?:['’]s?)?|for|of|and|the|&)){2,7}\s+(?=(?:The|We|Our)\s+[a-z])/;
 // A sentence never opens on a capitalised preposition. When one does, the real opening was clipped
 // and what survives is the tail of a heading ("Of Bancorp Overview Cathay General Bancorp is…",
 // "In General NVE Corporation…").

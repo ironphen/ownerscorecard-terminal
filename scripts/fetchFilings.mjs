@@ -3870,6 +3870,15 @@ async function main() {
         fy: cur.reportDate?.slice(0, 4) || null,
         priorFy: prior?.reportDate?.slice(0, 4) || null,
         sourceUrl: cur.url,
+        // WHEN THIS ENTRY WAS EXTRACTED, not when the filing was made. Without it there is no way
+        // to ask which entries an extractor improvement has actually reached. Every qualitative
+        // build lands its fix for the tickers that build re-ran, and everyone else waits for the
+        // monthly full pass — which on 2026-08-01 computed the whole pool over three hours, failed
+        // an unrelated test, skipped its commit, and threw the lot away with nothing to show that
+        // it had. Berkshire's description sat nine words long for weeks as a result. This stamp is
+        // what lets checkFreshness alarm on a heal that never landed, and what makes
+        // "re-extract everything older than N days" a query rather than a guess.
+        builtAt: new Date().toISOString().slice(0, 10),
         // Item 1 Business leads, MD&A Overview follows as a fallback: businessDescription scores every
         // candidate and picks the strongest, falling back to the computed industry phrase when none is
         // a real description, so keeping the Overview as a backup only helps a thin Item 1.
