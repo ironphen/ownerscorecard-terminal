@@ -40,6 +40,14 @@ const DESK_LINES = new Set([...INSURANCE_LINE_NAMES, ...BANK_LINE_NAMES, ...SOFT
 // avoid core overlap; income lines that exist undimensioned are excluded from it).
 let DIMENSIONAL = {};
 try { DIMENSIONAL = JSON.parse(fs.readFileSync(path.join(process.cwd(), "src", "data", "dimensional.json"), "utf8")).companies || {}; } catch {}
+// The merge above is a SPREAD, and a spread lands last: for any line the record also builds by
+// hand, "fills what Tier-1 left null" is a promise the code cannot keep by ordering alone. Lines
+// named here are read from DIMENSIONAL at their own site, under their own never-override guard,
+// and skipped by the spread. Capex is the first and the reason the exception exists — it is the
+// second term of owner earnings, the record's most consequential subtraction, and the Tier-1
+// fetcher already refuses to let its own keyhole and its own corroborated fill move a figure the
+// chain read. Tier-2 gets no larger licence than they have.
+const DIM_ROUTED_EARLIER = new Set(["capex"]);
 
 const UA =
   process.env.SEC_USER_AGENT ||
@@ -1999,6 +2007,31 @@ async function main() {
     // the Investing cash flow row rather than being folded into capital spending.
     const CAPEX_CONCEPT = { AEP: ["PaymentsForConstructionInProcess"] };
     const capexBy = annualByYear(facts, CAPEX_CONCEPT[ticker.toUpperCase()] || CONCEPTS.capex);
+    // A PART OF THE LINE, WEARING THE WHOLE LINE'S TAG. New Jersey Resources prints its capital
+    // spending as separate rows — "Utility plant", "Solar equipment", "Storage and transportation
+    // and other" — and in its older filings tagged ONLY the utility-plant row with the standard
+    // element. companyfacts therefore serves a number that looks like total capex and is one leg
+    // of it: FY2016-2019 read 176.1 / 144.1 / 206.9 / 300.0 against printed totals of 325.1 /
+    // 293.5 / 330.3 / 457.9, understated by 34-51%. Because this filer fails the revenueGrowing
+    // test, maintenance capex is the whole figure, so the error passed straight into owner
+    // earnings — FY2017 showed +$103.9M where the printed total gives −$45.5M, a sign flip.
+    //
+    // The dimensional fill (Tier-2) now reads the complete set of rows from FY2022 forward. That
+    // is what makes these four years intolerable rather than merely old: a correct total-basis
+    // series welded onto a partial-basis one in a single durability strip shows capex leaping
+    // $300M to $559M when the real step was $486M to $559M. The years are withheld rather than
+    // corrected because the printed totals above have been read by one reviewer and not yet
+    // verified against the filings here; a dash states what is true today, and the correction can
+    // ship the moment the older filings are read directly.
+    if (ticker.toUpperCase() === "NJR") {
+      for (const fy of Object.keys(capexBy)) {
+        if (Number(fy) <= 2019 && capexBy[fy]?.val != null) {
+          const printed = { 2016: "325.1", 2017: "293.5", 2018: "330.3", 2019: "457.9" }[fy];
+          console.warn(`  ! NJR capex ${fy}: withheld — the standard tag carries only the utility-plant row, not the filer's whole capital-spending line${printed ? ` (${(capexBy[fy].val / 1e6).toFixed(1)}M against a printed total of ${printed}M)` : ` (${(capexBy[fy].val / 1e6).toFixed(1)}M; this year's printed total is unmapped, and the same tagging pattern holds)`}`);
+          delete capexBy[fy];
+        }
+      }
+    }
     // A PER-FILER OVERLAP GATE WAS TRIED FIRST AND REFUTED, which is why what follows is a keyhole
     // and not a general fill. The OGS revenue gate's shape — an alternative element may fill the
     // years the chain lacks wherever the two agree TO THE FILED DOLLAR in every year both report —
@@ -2058,6 +2091,31 @@ async function main() {
       if (kh && capexBy[kh.fy]?.val == null && kh.test()) {
         capexBy[kh.fy] = { val: kh.val, end: kh.end, filed: kh.filed, form: "10-K" };
         console.warn(`  ! ${ticker} capex ${kh.fy}: filled from the named keyhole (${kh.val}) — verified against the filing's own printed statement of cash flows; retires itself when the payload heals`);
+      }
+    }
+    // ---- CAPEX: the Tier-2 dimensional read (CMS, DTE, NEE, NJR; 2026-08-03) ----
+    // Four rate-regulated filers print a capital-expenditure line the companyfacts API cannot serve
+    // at all — two tag the standard element only under a property-type dimension, which the API
+    // strips, and two carry their face lines on extension elements, which the API drops. Those
+    // figures come from the filings' own inline XBRL (scripts/fetchDimensional.mjs), behind that
+    // file's member census and capex double identity.
+    //
+    // Merged HERE and not through the generic dimensional spread further down, and the distinction
+    // is the whole point: the spread lands last and would overwrite a figure the chain already
+    // read. Capex must never be moved that way. This fills a year the chain left null and nothing
+    // else, which is the same promise the keyhole above makes and the same promise the current
+    // figures make at the bottom of this file.
+    {
+      const dimCapex = DIMENSIONAL[ticker.toUpperCase()]?.capex;
+      if (dimCapex) {
+        for (const [fy, val] of Object.entries(dimCapex)) {
+          if (val == null || capexBy[fy]?.val != null) continue;
+          // No end or filed date is invented: the Tier-2 file keeps a fiscal year, not a period
+          // end, and only the value is read from this map. New Jersey Resources closes in
+          // September, so a fabricated December 31 would be a false fact for the sake of shape.
+          capexBy[fy] = { val, end: null, filed: null, form: "10-K" };
+          console.warn(`  ! ${ticker} capex ${fy}: filled from the filing's own inline XBRL (${val}) — the API serves no capex for this filer; components tie the printed statement of cash flows`);
+        }
       }
     }
     // Up to ~10 years of history for the durability strips.
@@ -2220,7 +2278,7 @@ async function main() {
         for (const [line, series] of Object.entries(src.flows)) if (series[fy] != null) o[line] = series[fy];
         for (const [line, series] of Object.entries(src.instants)) if (series[fy] != null) o[line] = series[fy];
       }
-      if (dims) for (const [line, series] of Object.entries(dims)) if (series[fy] != null && o[line] == null) o[line] = series[fy];
+      if (dims) for (const [line, series] of Object.entries(dims)) if (!DIM_ROUTED_EARLIER.has(line) && series[fy] != null && o[line] == null) o[line] = series[fy];
       return o;
     };
     const insLatest = () => {
@@ -2241,7 +2299,7 @@ async function main() {
         for (const [line, series] of Object.entries(src.flows)) { const v = latestOf(series); if (v != null) o[line] = v; }
         for (const [line, series] of Object.entries(src.instants)) { const v = latestOf(series); if (v != null) o[line] = v; }
       }
-      if (dims) for (const [line, series] of Object.entries(dims)) { if (o[line] != null) continue; const v = latestOf(series); if (v != null) o[line] = v; }
+      if (dims) for (const [line, series] of Object.entries(dims)) { if (DIM_ROUTED_EARLIER.has(line) || o[line] != null) continue; const v = latestOf(series); if (v != null) o[line] = v; }
       // The F2 fill extends the current-lines claims figure too (the spread lands after the core
       // pick, so an overlap-verified rollforward value replaces a dark or stale one).
       if (ins && claimsFillUsed) { const v = latestOf(ha.claimsIncurred); if (v != null) o.claimsIncurred = v; }
