@@ -21,7 +21,7 @@
 // A deploy in flight is not a failure: a cron can commit minutes before this runs, so the live
 // side is allowed to sit one day behind the committed side. Two days behind is a stopped
 // pipeline, and that is what this exits non-zero for.
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 
 const ORIGIN = (process.env.LIVE_ORIGIN || "https://ownerscorecard-terminal.ryanreinsant.workers.dev").replace(/\/$/, "");
 const GRACE_DAYS = Number(process.env.LIVE_GRACE_DAYS || 1);
@@ -74,6 +74,43 @@ try {
     if (behind > GRACE_DAYS) fails.push(`the live data floor is ${behind} days behind the committed floor (${live} vs ${floorCommitted}) — the deployed build predates the committed pools`);
   }
 } catch (err) { fails.push(`/c/KO: ${err.message}`); }
+
+// 3. The newest published note is actually reachable. The two stamps above prove the DATA the site
+// serves is current; neither knows whether a note reached readers at all. For a publication whose
+// product is the note, a publish that builds clean and then silently fails to deploy is the worst
+// failure available, and nothing in this pipeline was watching for it.
+//
+// Self-updating, no marker to maintain: read the articles directory, take the newest non-draft, and
+// fetch its page. Notes dated today are skipped — a piece published minutes before this runs would
+// 404 for deploy lag rather than for any fault — so the assertion lands from the following day, which
+// is exactly when a genuinely undeployed note stops being explicable.
+try {
+  const dir = new URL("../src/content/articles/", import.meta.url);
+  const today = new Date().toISOString().slice(0, 10);
+  const notes = readdirSync(dir)
+    .filter((f) => f.endsWith(".mdx"))
+    .map((f) => {
+      const raw = readFileSync(new URL(f, dir), "utf8").slice(0, 1200);
+      return {
+        slug: f.replace(/\.mdx$/, ""),
+        date: raw.match(/^date:\s*(\d{4}-\d{2}-\d{2})/m)?.[1] || null,
+        draft: /^draft:\s*true/m.test(raw),
+        title: raw.match(/^title:\s*"(.*)"/m)?.[1] || null,
+      };
+    })
+    .filter((n) => n.date && !n.draft && n.date < today)
+    .sort((a, b) => (a.date < b.date ? 1 : -1));
+  if (!notes.length) note("notes: none published before today to check");
+  else {
+    const n = notes[0];
+    const html = await page(`/notes/${n.slug}`);
+    // A 200 that renders the wrong thing is still a failure: the note's own title must be on it.
+    const marker = (n.title || "").split(",")[0].slice(0, 40);
+    const carries = marker.length > 8 ? html.includes(marker) : true;
+    note(`newest note: /notes/${n.slug} (${n.date}) reachable, ${html.length} bytes`);
+    if (!carries) fails.push(`/notes/${n.slug} answers but does not carry its own title — the page rendered wrong`);
+  }
+} catch (err) { fails.push(`newest published note: ${err.message} — a note that built clean has not reached readers`); }
 
 if (fails.length) {
   console.error(`\nverifyLive: FAIL — ${fails.length} check(s) against ${ORIGIN}:`);
