@@ -365,7 +365,12 @@ const BIZ_SKIP = /(was|were)\s+incorporated|incorporated\s+(under|in)\b|reincorp
 // A weak subject: the sentence is about employees, customers or a side note, not the
 // company itself, so it is not a description of the business.
 const BIZ_WEAK = /^(we also\b|when\s+we\b|founded\b|established\b|originally\b|since (our|its|we)\b|our (mission|vision|strateg|purpose|goals?|values|history|story|customers?|employees?|people|associates|team|more than|over\s|approximately|roughly|nearly)|our\b[^.]{0,40}\b(purpose|mission|vision)\b[^.]{0,120}\bis\s+to\b|we have (sharpened|built|been developing|also been|grown|expanded)|we strive|we seek\b|we aim\b|we (encounter|rely|depend|compete|consistently|correctly|pursue|understand|assess|estimate|disposed)\b|we have (entered|received)\b|[a-z][\w& .,'-]{0,38}'s\s+(vision|mission|purpose)\s+is\s+to\b|[a-z][\w& .,'-]{0,38}\b(strives?|aims?)\s+to\b|[a-z][\w& .,'-]{0,38}\bbelieves\b|[a-z][\w& .,'-]{0,30}'s\s+growth\b|[a-z][\w& .,'-]{0,30}\balso has\b)/i;
-const HEAD_TOKEN = /^(item\s*1[ab]?\b\.?|part\s*i+\b\.?|general development of (the )?business|executive overview|business overview|company overview|about us|our company|our business|the company|introduction|business|general|overview)\s*[:.\-–—]?\s+/i;
+// The separator needs no trailing space after a TYPOGRAPHIC dash, colon or period — Bloom Energy's
+// section opens "ITEM 1—BUSINESS Overview Description of…" with the em-dash glued on both sides,
+// and requiring \s+ after it left the whole heading stack unstripped (the lede then opened on the
+// heading and was refused). The ASCII hyphen still requires the space: without it, "Business-
+// oriented" or "General-purpose" at sentence start would lose their first half.
+const HEAD_TOKEN = /^(item\s*1[ab]?\b\.?|part\s*i+\b\.?|general development of (the )?business|executive overview|business overview|company overview|about us|our company|our business|the company|introduction|business|general|overview)\s*(?:[:.–—]\s*|-\s+|\s+)/i;
 // A broken sentence fragment, not a description: a cross-reference ("found in Items 1 and 2"), or a
 // lead verb jammed into a preposition by bad splitting ("We provide, found in…", "We operate and in
 // the U.S. as a whole"). KMI and WAL slipped a mangled hero through on these; reject them.

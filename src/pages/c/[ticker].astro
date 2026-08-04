@@ -30,7 +30,8 @@ import Cite from "../../components/Cite.astro";
 import language from "../../data/language.json";
 import segmentsData from "../../data/segments.json";
 import { classify } from "../../lib/archetype.mjs";
-import { businessPhrase, weakLede, pickNote } from "../../lib/business.mjs";
+import { businessPhrase, weakLede, refusedLede, pickNote } from "../../lib/business.mjs";
+import ledeRefusals from "../../data/ledeRefusals.json";
 import { compositionSentence } from "../../lib/segments.mjs";
 import { selectPeers } from "../../lib/peers.mjs";
 import notes from "../../data/notes.json";
@@ -109,7 +110,7 @@ const note = fund ? pickNote(notes, ticker) : null;
 const rawBiz = language?.companies?.[ticker]?.business || null;
 const seg = fund ? segmentsData?.companies?.[ticker] : null;
 const bizLine = fund
-  ? (note?.whatItIs || (rawBiz && !weakLede(rawBiz) ? rawBiz : (compositionSentence(seg) || businessPhrase(fund))))
+  ? (note?.whatItIs || (rawBiz && !weakLede(rawBiz) && !refusedLede(ledeRefusals, ticker, rawBiz) ? rawBiz : (compositionSentence(seg) || businessPhrase(fund))))
   : rawBiz;
 // The company's own "in brief": up to two more verbatim sentences naming what it sells, kept
 // distinct from the lede by the detector (businessBrief). Sits under the lede so the whole opening

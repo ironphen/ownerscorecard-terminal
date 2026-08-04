@@ -16,6 +16,7 @@ import segmentsData from "../data/segments.json";
 import notes from "../data/notes.json";
 import { entryFacts } from "../lib/entryBlock.mjs";
 import { pickNote } from "../lib/business.mjs";
+import ledeRefusals from "../data/ledeRefusals.json";
 
 // company: the fundamentals record. n: this entry's number in the Manual's run (enables the
 // resume-marker data attributes). market: "jp" routes to /jp/, everything else to /c/.
@@ -26,6 +27,7 @@ const facts = entryFacts(company, {
   lang: language?.companies?.[tk] || null,
   seg: segmentsData?.companies?.[tk] || null,
   note: pickNote(notes, tk),
+  refusals: ledeRefusals,
 });
 const href = market === "jp" ? `/jp/${tk}` : `/c/${tk}`;
 
