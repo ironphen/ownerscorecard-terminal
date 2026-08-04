@@ -60,6 +60,13 @@ function htmlToText(html) {
   return html
     .replace(/<script[\s\S]*?<\/script>/gi, " ")
     .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    // The inline-XBRL header: contexts, units and hidden facts, invisible to a human reader by
+    // definition. Tag-stripping it instead leaves a wall of taxonomy URLs and GUIDs at the head
+    // of the text — Lincoln National's ran 938KB of raw HTML and became the first ~200,000
+    // characters of "text", a fifth of the document, before the first real word. Harmless to
+    // filers without the block; on filers with it, the anchors search prose again.
+    .replace(/<ix:header[\s\S]*?<\/ix:header>/gi, " ")
+    .replace(/<ix:hidden[\s\S]*?<\/ix:hidden>/gi, " ")
     // Letter-spaced headings arrive as ADJACENT inline elements with no whitespace between
     // ("<span>B</span><span>USINESS</span>" becomes "B USINESS" once tags turn to spaces) —
     // Microsoft's whole 10-K is set that way, its Item anchors never matched, and every
@@ -117,7 +124,15 @@ function cleanQuote(s) {
 // digits not glued to a letter, so an opener that starts "3M Company …" is kept.
 const PAGE_AFTER = /^[\s.·•…_-]*\d+(?![0-9A-Za-z])/;
 const START_XREF_AFTER = /^["'”’\s.,;]*\b(above|below|herein|hereof|elsewhere|and\s+notes?\b|and\s+["'“]?(?:item|part)\b|beginning\s+on\s+page|of\s+this\s+(?:report|form|annual|filing|document)|information\s+required\s+by)/i;
-const START_QUOTE_BEFORE = /["'“]\s*$/;
+// ADJACENT only: a citation's opening quote hugs the heading it cites (see "Item 1. Business" —
+// no space between the quote and Item). A quote followed by whitespace is the CLOSING quote of
+// the previous sentence, and the heading after it is real: Lincoln National's one true "Item 1.
+// Business" sits right after «…Part II Item 8. Financial Statements and Supplementary Data." »
+// and the loose \s* read that closing quote as a citation — the Business section extracted empty
+// and the page fell back, while the same guard on END headings let the MD&A run 62,830 words past
+// its true end. Citations phrased with a verb ("see", "described in") stay guarded by XREF_BEFORE
+// regardless of quote spacing.
+const START_QUOTE_BEFORE = /["'“]$/;
 // "…read in conjunction with the description appearing in Item 1 … and Item 8 Financial
 // Statements…" (TD SYNNEX) taught the guard its conjunctions: a heading is never preceded by
 // a running clause's "and/with", and mid-prose references usually are.
@@ -129,7 +144,12 @@ const XREF_BEFORE = /\b(see|under|within|refer(?:ence|red)?|described|discussed|
 // the before-context and re-testing the same guards catches the cited form without touching a
 // genuine "PART I" page banner, which has no see/quote context in front of it.
 const stripPart = (ctx) => ctx.replace(/["'“]?\s*part\s+[ivx]+\b[\s,.:]*$/i, "");
+// SECTION_DEBUG=1 traces every start-anchor match with the guard that killed it (or the end it
+// found), then each candidate's validate verdict — the table that turns "the section came back
+// empty" from a guessing game into a lookup. Diagnostic only; silent unless the env var is set.
 function section(text, startRe, endRes, validate, minSpan = 40) {
+  const DBG = !!process.env.SECTION_DEBUG;
+  const trace = (s) => { if (DBG) console.error(`    [section ${String(startRe).slice(0, 34)}…] ${s}`); };
   const cands = [];
   let m;
   const re = new RegExp(startRe, "gi");
@@ -140,8 +160,9 @@ function section(text, startRe, endRes, validate, minSpan = 40) {
     // "as noted under" / "described in" — the same test the end headings get; Scholastic's only
     // in-body "Item 1. Business" was "as noted under Item 1. Business" inside its Risk Factors).
     const beforeCtx = stripPart(text.slice(Math.max(0, from - 44), from));
-    if (PAGE_AFTER.test(after) || START_XREF_AFTER.test(after) || START_QUOTE_BEFORE.test(beforeCtx) ||
-        XREF_BEFORE.test(beforeCtx)) continue;
+    const guard = PAGE_AFTER.test(after) ? "PAGE_AFTER" : START_XREF_AFTER.test(after) ? "START_XREF_AFTER"
+      : START_QUOTE_BEFORE.test(beforeCtx) ? "START_QUOTE_BEFORE" : XREF_BEFORE.test(beforeCtx) ? "XREF_BEFORE" : null;
+    if (guard) { trace(`start @${from} KILLED by ${guard}  before=${JSON.stringify(beforeCtx.slice(-24))} after=${JSON.stringify(after.slice(0, 18))}`); continue; }
     let to = text.length;
     for (const er of endRes) {
       const e = new RegExp(er, "gi");
@@ -159,6 +180,7 @@ function section(text, startRe, endRes, validate, minSpan = 40) {
       if (em && em.index < to) to = em.index;
     }
     const chunk = text.slice(from, to);
+    trace(`start @${from} ACCEPTED, end @${to === text.length ? "EOF" : to}, chunk ${chunk.split(/\s+/).length}w`);
     if (chunk) cands.push(chunk);
   }
   // Longest candidate wins — unless a validator says its CONTENT is wrong. A running page header
@@ -168,7 +190,9 @@ function section(text, startRe, endRes, validate, minSpan = 40) {
   // where a poisoned one ships risk text as the company's own description.
   cands.sort((a, b) => b.length - a.length);
   if (!validate) return cands[0] || "";
-  return cands.find(validate) || "";
+  const pick = cands.find(validate) || "";
+  if (DBG && cands.length && !pick) trace(`ALL ${cands.length} candidate(s) FAILED validate; longest head=${JSON.stringify(cands[0].slice(0, 90))}`);
+  return pick;
 }
 
 // Risk-Factors prose has an unmistakable construction density ("could adversely affect", "no
@@ -862,14 +886,47 @@ function businessFallback(text, riskStartRe) {
 // so every candidate runs the identical ladder.
 function extractSections(text, form) {
   const a = SECTION_ANCHORS[form] || SECTION_ANCHORS["10-K"];
+  // The overrun test runs as a VALIDATOR, not a post-hoc blank: a failed end anchor seeds a giant
+  // chunk that beats the correctly bounded candidate in the longest-wins sort, and blanking the
+  // winner afterwards discards the good runner-up with it — Lincoln National's real 21,071-word
+  // risk section lost to a statements-spanning giant exactly that way. As a validator, the giant
+  // fails and section() falls to the next candidate. The overrun's signature: over a third of the
+  // document AND a digit-dense tail (a failed anchor runs into financial tables; a real section
+  // ends in prose) — the tail test because a THIN document (Progressive incorporates its MD&A and
+  // statements by reference) makes a correct section large by share. Outright statement-spans
+  // fail on size alone.
+  const docW = wordsOf(text);
+  const notOverrun = (chunk) => {
+    const w = wordsOf(chunk);
+    if (!(docW > 0) || w / docW <= 0.35) return true;
+    if (w > 40000) return false;
+    const tail = chunk.slice(-3000);
+    const digits = (tail.match(/\d/g) || []).length;
+    const letters = (tail.match(/[a-z]/gi) || []).length || 1;
+    return digits / (digits + letters) <= 0.15;
+  };
+  // The MD&A needs its own overrun signature. The digit-dense-tail test that separates a real
+  // RISK section from an overrun reads a bank's true MD&A as overrun too — Bank of America's
+  // legitimately ends in credit-allowance tables, and the tail test collapsed its 59,640 words to
+  // a 3,418-word fragment. What a true MD&A never contains is the auditor's report heading: that
+  // follows Item 8, so its presence means the chunk swallowed the financial statements (Lincoln
+  // National's 62,830-word "MD&A" carried it; the validator then falls to its bounded 31,006-word
+  // candidate).
+  const AUDIT_REPORT = /report\s+of\s+independent\s+registered\s+public\s+accounting\s+firm/i;
+  const mdnaBounded = (chunk) => {
+    const w = wordsOf(chunk);
+    if (!(docW > 0) || w / docW <= 0.35) return true;
+    if (w > 70000) return false;
+    return !AUDIT_REPORT.test(chunk);
+  };
   let business = section(text, a.business[0], a.business[1], (chunk) => !smellsLikeRisk(chunk));
-  let mdna = section(text, a.mdna[0], a.mdna[1]);
-  let risk = section(text, a.risk[0], a.risk[1]);
+  let mdna = section(text, a.mdna[0], a.mdna[1], mdnaBounded);
+  let risk = section(text, a.risk[0], a.risk[1], notOverrun);
   // Bare-title fallbacks, only where the item anchors found (almost) nothing — those names
   // ship an empty section today, so the fallback can only add, never displace.
   if (form === "10-K") {
     if (wordsOf(mdna) < 200) { const fb = section(text, FALLBACK_10K.mdna[0], FALLBACK_10K.mdna[1], headIsProse, 1500); if (wordsOf(fb) > wordsOf(mdna)) mdna = fb; }
-    if (wordsOf(risk) < 200) { const fb = section(text, FALLBACK_10K.risk[0], FALLBACK_10K.risk[1], headIsProse, 1500); if (wordsOf(fb) > wordsOf(risk)) risk = fb; }
+    if (wordsOf(risk) < 200) { const fb = section(text, FALLBACK_10K.risk[0], FALLBACK_10K.risk[1], (c) => headIsProse(c) && notOverrun(c), 1500); if (wordsOf(fb) > wordsOf(risk)) risk = fb; }
     if (wordsOf(business) < 200) { const fb = businessFallback(text, FALLBACK_10K.risk[0]); if (wordsOf(fb) > wordsOf(business)) business = fb; }
   }
   // Build 2 sanity gates (qualitative survey, 2026-07-31): every failure below goes to WITHHELD,
@@ -879,12 +936,7 @@ function extractSections(text, form) {
   // Item 7 is ~250 words of cross-reference, and candor densities computed on it shipped as if
   // they were measurement. An empty section is the honest zero — candor withholds with it.
   if (wordsOf(mdna) < 500 && /incorporated\s+(?:herein\s+)?by\s+reference/i.test(mdna)) mdna = "";
-  // A "risk section" that is a third of the whole document is a failed END anchor wearing a
-  // section's name: JPMorgan's read 126,947 words — sixty percent of the filing — and reached the
-  // statement notes; UVE's ran into its loss triangle; Diamondback's overran into Note 9. Flags
-  // and the AI read then draw from the sections that ARE bounded.
-  const docW = wordsOf(text);
-  if (docW > 0 && wordsOf(risk) / docW > 0.35) risk = "";
+  // (The overrun cap lives in notOverrun above, as the risk captures' validator — see there.)
   // Oil & gas 10-Ks open Item 1 with a defined-terms glossary ('"Bbl" means one stock tank
   // barrel…'); Diamondback's hero lede was its glossary. When a glossary heading sits at the
   // section's head, the business prose starts after the last definitional line.
