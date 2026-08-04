@@ -41,6 +41,28 @@ if (freshest > MAX_FRESH_DAYS) {
   problems.push(`STALE: the freshest pool is ${freshest} days old (> ${MAX_FRESH_DAYS}) — the data pipeline appears to have stopped. Check the Fundamentals and Filing Wire workflows.`);
 }
 
+// ---- the daily legs, each on its own calendar ----
+// The freshest-pool test above is coarse BY DESIGN and cannot see one file stalling while the
+// others keep running. That blind spot cost three days of stale wire in August 2026: the filing
+// wire stopped committing on the 1st (a golden test pinned to live data broke when a filer
+// reported, and the wire cron runs the suite BEFORE its commit step), while the fundamentals
+// sweep kept refreshing normally — so the freshest stamp stayed young and this check stayed
+// green while readers were served a three-day-old wire under a masthead that says "refreshed
+// daily". The highest-cadence promise on the site gets its own threshold.
+//
+// Two days is the right line, not six: the wire runs weekdays and rewrites its as-of stamp on
+// every run, so a healthy pipeline reads 0 days old every weekday afternoon. Two tolerates the
+// Friday-to-Sunday gap and still fires on the Monday a run fails, rather than the Tuesday.
+const dailyLeg = (file, maxDays, why) => {
+  const s = stamps.find((x) => x.f === file);
+  if (!s) { problems.push(`${file}: no as-of stamp — ${why}`); return; }
+  const a = ageDays(s.asOf);
+  console.log(`  ${file.padEnd(26)} as of ${s.asOf}  (${a}d ago)  [daily leg, max ${maxDays}d]`);
+  if (a > maxDays) problems.push(`${file} is ${a} days old (> ${maxDays}) — ${why}`);
+};
+console.log("\nDaily legs (own calendar, independent of the freshest pool):");
+dailyLeg("wire.json", 2, "the filing wire commits every weekday; a longer gap means its workflow is failing or its commit step is blocked, and the site is serving a stale wire under a daily promise");
+
 // ---- rates legs: the valuation's bond anchor and every ADR/JP translation's USD basis ----
 // Each leg of fetchRates fails soft and carries its prior value forever, so a permanently
 // broken source (URL change, key requirement) freezes a leg silently while the wire keeps the

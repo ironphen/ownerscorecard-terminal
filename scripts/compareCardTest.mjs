@@ -20,6 +20,17 @@ const language = JSON.parse(fs.readFileSync(path.join(dataDir, "language.json"),
 const all = [...us, ...adr, ...jp];
 const byTicker = (t) => all.find((c) => String(c.ticker).toUpperCase() === t);
 
+// THE GOLDEN SECTION RUNS ON FROZEN INPUTS, NOT THE LIVE POOL. It exists to prove one thing: that
+// valuationModel() still reproduces the company page's construction. Pinning expected OUTPUTS while
+// reading LIVE inputs made it a calendar bomb instead — every time a pinned filer reported, the
+// arithmetic changed, the equality broke, and because the wire cron runs the suite BEFORE its
+// commit step, a routine quarterly filing took the daily filing wire off the air. It happened twice
+// in four days (AAPL 2026-07-31, PGR 2026-08-04, the second costing three days of wire staleness).
+// Frozen inputs make the test say what it always meant: the MATH has not moved. Real breakage still
+// surfaces below, where buildCompareCard runs across the live universe.
+const frozen = JSON.parse(fs.readFileSync(path.join(process.cwd(), "scripts", "fixtures", "valuationGolden.json"), "utf8")).companies;
+const goldenInput = (t) => frozen[t] || null;
+
 let failures = 0;
 const fail = (msg) => { console.error(`  ✗ ${msg}`); failures++; };
 const ok = (msg) => console.log(`  ✓ ${msg}`);
@@ -70,7 +81,7 @@ const approx = (a, b) => {
 
 console.log("valuationModel reproduces the company-page valuation:");
 for (const [ticker, exp] of Object.entries(GOLDEN)) {
-  const c = byTicker(ticker);
+  const c = goldenInput(ticker);
   if (!c) { fail(`${ticker}: not found in any pool`); continue; }
   const vm = valuationModel(c);
   let bad = [];
