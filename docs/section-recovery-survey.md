@@ -14,7 +14,20 @@ The wrapper hypothesis (HON, the 20-F cohort) died on evidence: Honeywell's 5.1M
 full body sections behind bare-caps headings; its only item-numbered headings are a tail index,
 correctly killed — the REAL headings die to a case-insensitivity bug (below).
 
-## BUILD 1 — guard corrections (pure code, two regexes, biggest reach)
+## BUILD 1 — guard corrections — SHIPPED 8da44d6 (2026-08-04)
+
+Landed as pageRefAfter (subsection-marker + "Page N" + footer-vs-TOC discrimination) plus the
+"Table of Contents" banner stripped in extractSections BEFORE anchoring. Recovered on the real
+pipeline: INTC mdna 1→7,698, AMX mdna 47→24,416 + risk 9→33,510, BHP mdna 49→20,099, PBR risk
+1→19,941, DBD risk 1→8,460; HON re-entered the pool. TWO LESSONS BOUGHT WITH MEASUREMENT:
+(1) the 1b guard-relocation below was implemented and REVERTED — a uniform code-side prose test
+over-kills starts the per-alternation lookbehind never guarded (BABA biz 46,678→3,824) and skips
+legitimate ENDS (JPM mdna −14,000 words); the banner strip solves the caps problem without
+touching guard semantics. (2) Probe-based measurement lies for ADRs: probes read only the primary
+document and miss the sibling-document rescue — measure through fetchFilings itself
+(ONLY_TICKERS), and detect form with /20-?f/i (AMX's doc is "_20f.htm", hyphenless).
+
+## BUILD 1 (original plan, kept for the record)
 
 1a. PAGE_AFTER kills a real heading when a SUBSECTION NUMBER follows it. BHP: "5. Financial
 review **5.1** Group overview…" — "5.1" reads as a page number (both schemas die identically:
