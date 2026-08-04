@@ -123,6 +123,31 @@ function cleanQuote(s) {
 // business prose and is not quoted; skip the rest, so a real heading bounds the section. A page number is
 // digits not glued to a letter, so an opener that starts "3M Company …" is kept.
 const PAGE_AFTER = /^[\s.·•…_-]*\d+(?![0-9A-Za-z])/;
+// PAGE_AFTER alone misread three shapes, each measured on a real filer (section-recovery survey,
+// 2026-08-04). A SUBSECTION number after a heading is not a page number: BHP's "5. Financial
+// review 5.1 Group overview…" and Petrobras's "Risk Factors 1) Risks related to our company…"
+// both died as TOC rows. "Page 3" spelled out IS one: McDonald's back-matter cross-reference
+// index ("Item 1 Business Page 3") survived the digit test and shipped as the section. And a
+// page-break banner can glue between a real heading and its prose — América Móvil's "RISK
+// FACTORS 29 Table of Contents RISKS RELATING TO…" — so the banner is stripped and the test
+// re-run on what follows: after a REAL TOC row another title-and-number row follows, not prose,
+// so it still dies.
+const PAGE_WORD_AFTER = /^[\s.·•…_-]*page\s+\d+/i;
+const SUBSECTION_AFTER = /^[\s.·•…_-]*\d+(?:\.\d+|\))/;
+const PAGEBREAK_BANNER = /^\s*\d+\s+table\s+of\s+contents\s+/i;
+function pageRefAfter(after) {
+  const t = after.replace(PAGEBREAK_BANNER, "");
+  if (SUBSECTION_AFTER.test(t)) return false;
+  if (PAGE_WORD_AFTER.test(t)) return true;
+  if (!PAGE_AFTER.test(t)) return false;
+  // A digit after the heading is a TOC row's page number OR an orphaned page-break footer glued
+  // between the heading and its own prose (América Móvil: "RISK FACTORS 29 RISKS RELATING TO OUR
+  // OPERATIONS Competition…" once the banner strip removes "Table of Contents"). The tell: a TOC
+  // row is followed by ANOTHER page number within a title's width, a footer by digit-free prose.
+  // Long-titled TOC rows can slip this net; they then lose the longest-candidate contest anyway.
+  const afterNum = t.replace(/^[\s.·•…_-]*\d+\s*/, "");
+  return /\d/.test(afterNum.slice(0, 40));
+}
 const START_XREF_AFTER = /^["'”’\s.,;]*\b(above|below|herein|hereof|elsewhere|and\s+notes?\b|and\s+["'“]?(?:item|part)\b|beginning\s+on\s+page|of\s+this\s+(?:report|form|annual|filing|document)|information\s+required\s+by)/i;
 // ADJACENT only: a citation's opening quote hugs the heading it cites (see "Item 1. Business" —
 // no space between the quote and Item). A quote followed by whitespace is the CLOSING quote of
@@ -154,13 +179,17 @@ function section(text, startRe, endRes, validate, minSpan = 40) {
   let m;
   const re = new RegExp(startRe, "gi");
   while ((m = re.exec(text)) !== null) {
+    // after is read at two widths: 30 chars for the cross-reference tests, 60 for the page-number
+    // test, whose page-break-banner strip ("29 Table of Contents ") consumes up to ~24 before the
+    // real test runs.
     const from = m.index, afterHead = from + m[0].length, after = text.slice(afterHead, afterHead + 30);
+    const after60 = text.slice(afterHead, afterHead + 60);
     // Not the section start: a TOC row or running header (a page number follows), or a cross-reference to
     // the heading (quoted, followed by "above" / "of this report" / "and Note", or PRECEDED by "see" /
     // "as noted under" / "described in" — the same test the end headings get; Scholastic's only
     // in-body "Item 1. Business" was "as noted under Item 1. Business" inside its Risk Factors).
     const beforeCtx = stripPart(text.slice(Math.max(0, from - 44), from));
-    const guard = PAGE_AFTER.test(after) ? "PAGE_AFTER" : START_XREF_AFTER.test(after) ? "START_XREF_AFTER"
+    const guard = pageRefAfter(after60) ? "PAGE_AFTER" : START_XREF_AFTER.test(after) ? "START_XREF_AFTER"
       : START_QUOTE_BEFORE.test(beforeCtx) ? "START_QUOTE_BEFORE" : XREF_BEFORE.test(beforeCtx) ? "XREF_BEFORE" : null;
     if (guard) { trace(`start @${from} KILLED by ${guard}  before=${JSON.stringify(beforeCtx.slice(-24))} after=${JSON.stringify(after.slice(0, 18))}`); continue; }
     let to = text.length;
@@ -816,6 +845,13 @@ const SEP0 = "[\\s.|:–—-]*";
 // before. Stated negatively rather than as a required boundary, because real headings carry
 // all kinds of prefixes — page numbers, running headers, a company name ("The Progressive
 // Corporation and Subsidiaries Management's Discussion…"), a prior heading in Title Case.
+// NOTE (Build 1, 2026-08-04): moving this lookbehind into a uniform code guard was tried and
+// REVERTED — the original applies only to the alternations that carry it, and a uniform guard
+// over-killed unguarded bare-title starts (Alibaba's business fell 46,678→3,824 words) and
+// skipped legitimate END headings (JPMorgan's MD&A lost 14,000 words). The ALL-CAPS running-head
+// problem this was meant to solve ("TABLE OF CONTENTS" reading as prose under /i) is solved in
+// text normalization instead: the banner is stripped before anchoring (see extractSections), so
+// the lookbehind never sees it.
 const HEAD_BEFORE = `(?<!\\b[a-z][a-z']{0,24}\\s{1,2})(?<![,;]\\s{0,2})`;
 const SECTION_ANCHORS = {
   "10-K": {
@@ -877,7 +913,7 @@ function businessFallback(text, riskStartRe) {
   re.lastIndex = tocEnd;
   let end = -1;
   while ((m = re.exec(text)) !== null) {
-    if (PAGE_AFTER.test(text.slice(m.index + m[0].length, m.index + m[0].length + 30))) continue;
+    if (pageRefAfter(text.slice(m.index + m[0].length, m.index + m[0].length + 60))) continue;
     if (XREF_BEFORE.test(text.slice(Math.max(0, m.index - 28), m.index))) continue;
     end = m.index; break;
   }
@@ -890,6 +926,16 @@ function businessFallback(text, riskStartRe) {
 // bare-title fallbacks (10-K only). Shared by the primary document and any rescue document,
 // so every candidate runs the identical ladder.
 function extractSections(text, form) {
+  // Strip the page-break banner BEFORE anchoring. Filers stamp "Table of Contents" (often with
+  // the page number) at every page break, and the flattened text then glues it between a
+  // section's last sentence and the next real heading. Under the anchors' /i flag the banner
+  // reads as a preceding prose word, so HEAD_BEFORE killed Honeywell's bare-caps body headings
+  // and Intel's real "Management's Discussion and Analysis" — silently, everywhere. Removing the
+  // banner (rather than weakening the guard, which was tried and over-killed Alibaba and
+  // JPMorgan) fixes the anchoring AND stops the phrase polluting extracted quotes. The page
+  // number that travels with the banner is kept: standing alone it is exactly what PAGE_AFTER
+  // needs to keep killing genuine TOC rows.
+  text = text.replace(/\s+table\s+of\s+contents\s+/gi, " ");
   const a = SECTION_ANCHORS[form] || SECTION_ANCHORS["10-K"];
   // The overrun test runs as a VALIDATOR, not a post-hoc blank: a failed end anchor seeds a giant
   // chunk that beats the correctly bounded candidate in the longest-wins sort, and blanking the
