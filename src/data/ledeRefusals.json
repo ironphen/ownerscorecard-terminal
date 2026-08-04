@@ -583,9 +583,9 @@
    "reason": "Verified: 'Properties. 2 Significant Markets and Tenants Top Five Markets... Chattanooga, TN 6.7 % St.' — glued headings, stray page number, and table debris cut off mid-word. Severe artifact."
   },
   "CBNK": {
-   "lede": "We operate, all of which are difficult to predict and many of which are beyond our control.",
-   "defect": "risk-factor-fragment",
-   "reason": "Verified: 'We operate, all of which are difficult to predict and many of which are beyond our control.' — a risk-factor sentence with its middle torn out. Broken fragment."
+   "lede": "Our Commercial Banking division's commercial loan officers and commercial real estate loan officers provide C&I, commercial real estate, including lender finance loans, and construction lending solutions to business clients in Capital Bank's operating markets.",
+   "defect": "segment",
+   "reason": "Verified: subject is the Commercial Banking division's loan officers, a segment, not Capital Bancorp Inc. as a whole. Segment-not-company; flag upheld."
   },
   "CCBG": {
    "lede": "Capital City Bank CCB is a Florida-chartered full-service bank engaged in the commercial and retail banking business.",
@@ -1888,9 +1888,9 @@
    "reason": "Verified: defines the company purely by negation ('is not, and will not be, the owner or operator... has no input') — risk-caveat boilerplate as an opening self-description. Flag stands."
   },
   "VOXR": {
-   "lede": "Vox cannot provide assurance that the realized royalty and net precious metal receipts for 2026 will be in the updated range set forth above.",
-   "defect": "forward-caution",
-   "reason": "Verified: 'Vox cannot provide assurance that the realized royalty... will be in the updated range' is cautionary guidance language. Flag stands."
+   "lede": "Vox Royalty Corp. market events and conditions, including the disruptions in the international credit markets and other financial systems, along with falling currency prices expressed in United States dollars can result in commodity prices remaining volatile.",
+   "defect": "glued heading + market description",
+   "reason": "Verified: company name glued onto a risk-factor sentence about credit markets and commodity-price volatility; describes market conditions, not the royalty company. Artifact + market-not-company; flag upheld."
   },
   "CFLT": {
    "lede": "Our open source roots are a key driver of our go-to-market success.",
@@ -3626,6 +3626,76 @@
    "lede": "HUHUTECH is a company incorporated outside the PRC.",
    "defect": "legal-boilerplate",
    "reason": "Confirmed PRC-regulatory boilerplate: 'incorporated outside the PRC' risk-disclosure fragment with no business content."
+  },
+  "MLI": {
+   "lede": "Mueller manufactures copper-based joining products that are sold worldwide.",
+   "defect": "product-line",
+   "reason": "Verified: 'copper-based joining products' names one product family; Mueller Industries is a diversified industrial manufacturer, so the whole company is misrepresented as a fittings maker. Product-line-not-company; flag upheld."
+  },
+  "MTG": {
+   "lede": "MGIC's estimated market share within the PMI industry is shown in the table below.",
+   "defect": "table-reference artifact",
+   "reason": "Verified: 'is shown in the table below' is a pointer to an absent table, not a description of what MGIC is or does. Artifact; flag upheld."
+  },
+  "CBAT": {
+   "lede": "We are a holding company, we rely on dividends paid to us by our subsidiaries in the PRC through our Hong Kong subsidiaries, BAK Asia, BAK Investments and Hong Kong Hitrans.",
+   "defect": "legal/structure boilerplate",
+   "reason": "Verified: holding-company dividend-reliance PRC structure language (with a comma splice), not a description of the lithium battery business. Legal/structure boilerplate; flag upheld."
+  },
+  "CDRO": {
+   "lede": "Codere Group in July 2023 and currently serves as the Chairman of the Codere Online Board and Chairman of the Codere Group's board of directors.",
+   "defect": "parser artifact / wrong subject",
+   "reason": "Verified: mid-sentence fragment from a director biography describing a person's board roles, not the company. Parser artifact / wrong subject; flag upheld."
+  },
+  "RDWR": {
+   "lede": "Our Solutions\" under the captions \"Recent Solution Offering Activities\" and \"Recent Partnerships Activities.\"",
+   "defect": "parser artifact",
+   "reason": "Verified: broken cross-reference fragment beginning with a stray quotation mark ('Our Solutions\" under the captions...'); not a sentence about Radware at all. Artifact; flag upheld."
+  },
+  "TEN": {
+   "lede": "Tsakos Energy Management provides us with strategic advisory, financial, accounting, and administrative services, while subcontracting the commercial and technical management of our business to TST.",
+   "defect": "wrong entity",
+   "reason": "Verified: subject is Tsakos Energy Management, the external manager, and its services subcontracted to TST; says nothing about what Tsakos Energy Navigation, a tanker owner, is. Wrong entity; flag upheld."
+  },
+  "WAVE": {
+   "lede": "We are an emerging growth company, as defined in Section 2 of the Securities Act, as implemented under the JOBS Act.",
+   "defect": "legal boilerplate",
+   "reason": "Verified: JOBS Act emerging-growth-company status sentence, securities-law boilerplate, not a description of the wave-energy business. Flag upheld."
+  },
+  "WIX": {
+   "lede": "Wix Studio is a unified website development platform that enables the creation of advanced websites at scale.",
+   "defect": "product, not company",
+   "reason": "Verified: defines Wix Studio, one product, as the subject; the filer is Wix.com Ltd. and a reader could take the product name for the company. Product-not-company; flag upheld."
+  },
+  "LGO": {
+   "lede": "We are one of the world's preferred vanadium companies focused on the production of vanadium pentoxide at our Marac s Menchen Project located in Bahia, Brazil, being the Company's sole material project for the purposes of NI 43-101.",
+   "defect": "garbled text",
+   "reason": "Verified: visible mojibake 'Marac s Menchen' (should be Maracas Menchen) corrupts a proper noun in an otherwise fine lede; house doctrine holds garbled worse than no line. Flag upheld."
+  },
+  "BTG": {
+   "lede": "The Registrant is an emerging growth company as defined in Rule 12b-2 of the Exchange Act.",
+   "defect": "cover-page boilerplate",
+   "reason": "Verified: Rule 12b-2 emerging-growth-company checkbox boilerplate, not a description of the gold miner. Flag upheld."
+  },
+  "BWLP": {
+   "lede": "BW LPG launched Product Services to offer customers a fully integrated product delivery service.",
+   "defect": "single event / segment",
+   "reason": "Verified: reports the dated launch of the Product Services offering, one initiative, not what BW LPG the LPG shipping company is. Single event / segment; flag upheld."
+  },
+  "CMBT": {
+   "lede": "CMB.TECH also works on developing hydrogen-powered industrial applications like trucks, locomotives and straddle carriers. 29 CMB.TECH can offer hydrogen and ammonia fuel to its customers, either through its own production or by sourcing it from third party producers.",
+   "defect": "parser artifact",
+   "reason": "Verified: starts mid-passage with 'also', has stray page number '29' glued between sentences, and covers only the hydrogen sideline. Parser artifact; flag upheld."
+  },
+  "FLNG": {
+   "lede": "Flex Constellation was re-delivered from the existing time charter contract and was employed in the spot market.",
+   "defect": "single event / vessel",
+   "reason": "Verified: one vessel's charter redelivery and spot employment, a dated event about the Flex Constellation, not what FLEX LNG the company is. Flag upheld."
+  },
+  "TRI": {
+   "lede": "The Registrant is an emerging growth company as defined in Rule 12b-2 of the Exchange Act.",
+   "defect": "boilerplate + factually wrong",
+   "reason": "Verified: Rule 12b-2 emerging-growth-company checkbox text; non-descriptive and factually absurd for Thomson Reuters. Flag upheld."
   }
  }
 }
