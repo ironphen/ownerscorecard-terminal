@@ -594,8 +594,14 @@ function businessDescription(sents, name, ticker) {
         const w0 = nameSeq[0].replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
         const hay = s.slice(base, base + 120);
         const hits = [...hay.matchAll(new RegExp(`\\b${w0}\\b`, "gi"))].map((m) => m.index);
-        if (hits.length >= 2 && hits[0] === 0 &&
-            hay.slice(0, hits[1]).split(/\s+/).filter(Boolean).length <= nameSeq.length + 1) at = base + hits[1];
+        // The header need not sit at position zero: a one- or two-word scrap can precede it
+        // ("Of Portillo's Portillo's serves iconic Chicago street food", "To Vinci Compass Vinci
+        // Compass is the premier partner"), and jumping to the second occurrence recovers a real
+        // description where refusing the line would have lost it. Both bounds stay tight — a
+        // couple of words before the first hit, and no prose between the two.
+        const leadWords = hits.length ? hay.slice(0, hits[0]).split(/\s+/).filter(Boolean).length : 99;
+        if (hits.length >= 2 && leadWords <= 2 &&
+            hay.slice(hits[0], hits[1]).split(/\s+/).filter(Boolean).length <= nameSeq.length + 1) at = base + hits[1];
       }
       if (at > 0) s = s.slice(at).trim();
     }

@@ -274,11 +274,44 @@ export function truncationArtifact(s) {
 // advantages or value describes nothing the company does; the computed phrase is the better
 // opener. Measured against every stored lede before shipping: matches only marketing lines.
 const BENEFIT_SPEAK = /\b(programs?|initiatives?|approach|model|platform)\b[^.]{0,60}\b(provides?|delivers?|offers?)\s+(significant\s+)?(benefits?|advantages?|value)\b|\bprovides? benefits? (for|to)\b/i;
+// What the company WANTS to be, not what it IS. A page that opens on "Our objective is to be the
+// preferred and one of the most recognized brands in our core market" has told the reader nothing
+// and vouched for a claim the filing cannot support. The same applies to a strategy ("We have
+// evolved our strategy to focus more closely around the consumer"), a capability boast ("We are
+// able to significantly reduce the time from concept to orbit") and a promise about what a product
+// might one day do ("...have the potential to reshape the standard of care"). Present, never
+// pronounce: the computed industry phrase is the honest opener.
+const ASPIRATION = /^(?:our (?:objective|mission|vision|goal|aim|purpose|core operating principle|guiding principle)s?\b|we (?:aspire|strive|seek|aim|endeavou?r|prioriti[sz]e)\b)/i;
+const STRATEGY_NOT_BUSINESS = /^we (?:have evolved|strategically focus|are focused on (?:executing|delivering) our strateg)/i;
+const CAPABILITY_BOAST = /^we are able to\b/i;
+const POTENTIAL_CLAIM = /\b(?:have|has) the potential to reshape\b|\bseeks to establish industry-leading\b/i;
+// A single dated event or transaction is news, not a description of the business: "In October 2001,
+// Arch Capital launched an underwriting initiative", "We launched our Durable Medical Equipment
+// business in September 2018 by acquiring two businesses", "Tango is the sponsor of the trial and
+// Erasca is supplying ERAS-0015 at no cost."
+const EVENT_OR_TRIAL = /^we launched\b|\bis the sponsor of the (?:trial|study)\b/i;
+// The MARKET, not the filer: "OLED displays are capturing a growing share of the display market"
+// describes an industry trend and leaves the reader no wiser about Universal Display.
+const MARKET_NOT_COMPANY = /\b(?:are|is) capturing a growing share of\b/i;
+// A heading the flattener glued onto the sentence that follows it, detected structurally rather
+// than by keyword: a Title-Case run handing off to a fresh capitalised subject ("Commercial Banking
+// Products and Services We strive to meet…", "Medical Devices for Neurosurgical Application The
+// first foundational component…"). GLUED_HEADING above only knows the named 10-K headings.
+const GLUED_HEADING_RUN = /^(?:[A-Z][a-z]+|for|of|and|the|&)(?:\s+(?:[A-Z][a-z]+|for|of|and|the|&)){2,7}\s+(?=(?:The|We|Our)\s+[a-z])/;
+// A sentence never opens on a capitalised preposition. When one does, the real opening was clipped
+// and what survives is the tail of a heading ("Of Bancorp Overview Cathay General Bancorp is…",
+// "In General NVE Corporation…").
+const OPENS_ON_PREPOSITION = /^(?:Of|In|To|For|With|From|By|At|On)\s+[A-Z]/;
+// Two independent clauses spliced by a comma, the second a statement of belief rather than fact.
+const RUN_ON_BELIEF = /,\s+we continue to believe\b/i;
 export function weakLede(s) {
   if (!s || typeof s !== "string") return true;
   return /^we have entered\b/i.test(s) || WEAK_LEDE.test(s) || ALLCAPS_HEADING.test(s) || GLUED_HEADING.test(s) || NOT_DESC.test(s) || PRODUCT_REF.test(s) ||
     /\bvarious (facilities|services|agreements|arrangements)\b/i.test(s) || NOT_A_DESCRIPTION.test(s) || LEAKED.test(s) || BENEFIT_SPEAK.test(s) ||
-    SEGMENT_SUBJECT.test(s) || PRODUCT_LINE.test(s) || truncationArtifact(s);
+    SEGMENT_SUBJECT.test(s) || PRODUCT_LINE.test(s) || truncationArtifact(s) ||
+    ASPIRATION.test(s) || STRATEGY_NOT_BUSINESS.test(s) || CAPABILITY_BOAST.test(s) || POTENTIAL_CLAIM.test(s) ||
+    EVENT_OR_TRIAL.test(s) || MARKET_NOT_COMPANY.test(s) || GLUED_HEADING_RUN.test(s) ||
+    OPENS_ON_PREPOSITION.test(s) || RUN_ON_BELIEF.test(s);
 }
 
 // A reviewed, model-drafted note (src/data/notes.json, governed by
