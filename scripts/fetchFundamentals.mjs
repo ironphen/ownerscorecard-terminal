@@ -2023,11 +2023,37 @@ async function main() {
     // corrected because the printed totals above have been read by one reviewer and not yet
     // verified against the filings here; a dash states what is true today, and the correction can
     // ship the moment the older filings are read directly.
+    //
+    // The four years inside the rendered record are CORRECTED rather than withheld, each read off
+    // the filing's own statement of cash flows here and reconstructed to the filer's printed
+    // investing total: FY2019 ties to the dollar (−300,031 −157,828 −23,100 −40,195 −4,102 +2,428
+    // +205,745 +34,484 = −282,599 printed) and FY2018 to the printed "$373.1 million". Capital
+    // spending is the filer's three expenditure rows — utility plant, solar and wind equipment,
+    // and midstream and other. Cost of removal is excluded (retiring plant is charged against
+    // accumulated depreciation, and the Tier-2 fill for 2022-2025 excludes it identically), as are
+    // equity-investee investments and the FY2017 contract acquisition.
+    //
+    // The midstream row is why these are corrected here and were not taken on trust: a first
+    // reading of these filings omitted it and produced 325.1 / 293.5 / 330.3 / 457.9, four numbers
+    // that are wrong in the same direction as the ones they would have replaced.
+    //
+    // Each year self-retires: the correction applies only while the standard tag still carries the
+    // utility-plant row alone. A re-tagged filing fails the test and the chain's own value stands.
+    const NJR_CAPEX = {
+      2016: { total: 327026000, partial: 176067000 },
+      2017: { total: 295940000, partial: 144106000 },
+      2018: { total: 336945000, partial: 206880000 },
+      2019: { total: 480959000, partial: 300031000 },
+    };
     if (ticker.toUpperCase() === "NJR") {
       for (const fy of Object.keys(capexBy)) {
-        if (Number(fy) <= 2019 && capexBy[fy]?.val != null) {
-          const printed = { 2016: "325.1", 2017: "293.5", 2018: "330.3", 2019: "457.9" }[fy];
-          console.warn(`  ! NJR capex ${fy}: withheld — the standard tag carries only the utility-plant row, not the filer's whole capital-spending line${printed ? ` (${(capexBy[fy].val / 1e6).toFixed(1)}M against a printed total of ${printed}M)` : ` (${(capexBy[fy].val / 1e6).toFixed(1)}M; this year's printed total is unmapped, and the same tagging pattern holds)`}`);
+        if (Number(fy) > 2019 || capexBy[fy]?.val == null) continue;
+        const fix = NJR_CAPEX[fy];
+        if (fix && capexBy[fy].val === fix.partial) {
+          console.warn(`  ! NJR capex ${fy}: corrected to the filer's whole capital-spending line (${(fix.partial / 1e6).toFixed(1)}M utility plant alone → ${(fix.total / 1e6).toFixed(1)}M incl. solar/wind and midstream), verified against the printed statement of cash flows`);
+          capexBy[fy] = { ...capexBy[fy], val: fix.total };
+        } else if (!fix) {
+          console.warn(`  ! NJR capex ${fy}: withheld — the standard tag carries only the utility-plant row and this year's printed total is unmapped (${(capexBy[fy].val / 1e6).toFixed(1)}M)`);
           delete capexBy[fy];
         }
       }
