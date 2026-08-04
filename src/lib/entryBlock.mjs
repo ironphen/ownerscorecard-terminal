@@ -12,7 +12,7 @@
 // the same companies again.
 import { capitalHistory } from "./capital.mjs";
 import { cashPosition, fmtMoney, currencySymbol, ownerEarningsAbs } from "./fundamentals.mjs";
-import { businessPhrase, weakLede, refusedLede } from "./business.mjs";
+import { businessPhrase, weakLede, approvedLede } from "./business.mjs";
 import { compositionSentence } from "./segments.mjs";
 import { classify } from "./archetype.mjs";
 
@@ -57,9 +57,9 @@ function retainedSentence(cap, cur) {
 
 const _cache = new WeakMap();
 
-// extras: { lang, seg, note, refusals } — the company's language.json entry, segments.json entry,
-// a reviewed note (already passed through pickNote), and the lede-refusal registry
-// (ledeRefusals.json, passed whole). All optional.
+// extras: { lang, seg, note, audit } — the company's language.json entry, segments.json entry,
+// a reviewed note (already passed through pickNote), and the lede-audit ledger (ledeAudit.json,
+// passed whole; without it no filing lede renders — withhold-until-verified). All optional.
 export function entryFacts(company, extras = {}) {
   const hit = _cache.get(company);
   if (hit) return hit;
@@ -75,7 +75,7 @@ export function entryFacts(company, extras = {}) {
   const rawBiz = extras.lang?.business || null;
   const lede =
     extras.note?.whatItIs ||
-    (rawBiz && !weakLede(rawBiz) && !refusedLede(extras.refusals, ticker, rawBiz)
+    (rawBiz && !weakLede(rawBiz) && approvedLede(extras.audit, ticker, rawBiz)
       ? rawBiz
       : compositionSentence(extras.seg) || safe(businessPhrase, company)) ||
     null;

@@ -307,20 +307,23 @@ const GLUED_HEADING_RUN = /^(?:[A-Z][a-z]+(?:['’]s?)?|for|of|and|the|&)(?:\s+(
 const OPENS_ON_PREPOSITION = /^(?:Of|In|To|For|With|From|By|At|On)\s+[A-Z]/;
 // Two independent clauses spliced by a comma, the second a statement of belief rather than fact.
 const RUN_ON_BELIEF = /,\s+we continue to believe\b/i;
-// The refusal registry: the judgment layer's verdicts, applied render-side. weakLede above knows
-// SHAPES; the registry knows NAMES — 725 ledes a full-pool audit (every flag adversarially
-// verified) found unfit in ways no pattern generalizes: a segment described as the company, a
-// predecessor's business under a post-merger ticker (REalloys rendering BlackBoxStocks' options
-// scanner), an accounting-policy sentence wearing the hero slot. An entry refuses EXACTLY the
-// recorded string for that ticker, so the moment a re-extraction produces different text the
-// entry stops matching and retires itself — the keyhole pattern, applied to prose. Data-injected
-// like pickNote (the caller passes ledeRefusals.json in) so this lib stays runnable under plain
-// node. Raw data is never touched: the refused lede stays in language.json, only the page falls
-// back to the computed phrase.
-export function refusedLede(refusals, ticker, s) {
-  if (!refusals || !s) return false;
-  const r = refusals.companies?.[String(ticker || "").toUpperCase()];
-  return !!(r && r.lede === s);
+// The audit ledger: the judgment layer's verdicts, applied render-side. weakLede above knows
+// SHAPES; the ledger knows NAMES — a full-pool audit (every flag adversarially verified) found
+// a quarter of rendering ledes unfit in ways no pattern generalizes: a segment described as the
+// company, a predecessor's business under a post-merger ticker (REalloys rendering
+// BlackBoxStocks' options scanner), an accounting-policy sentence wearing the hero slot.
+//
+// WITHHOLD-UNTIL-VERIFIED (owner-ratified 2026-08-04): a lede renders ONLY when its exact
+// (ticker, text) pair carries verdict "approved" in the ledger. Text a re-extraction changes
+// matches nothing and is withheld — the page opens on the computed phrase — until the next
+// audit passes it. The incremental audit that motivated the ruling found 16 of 26 changed
+// ledes defective; a correct generic phrase beats an unexamined sentence. Data-injected like
+// pickNote (the caller passes ledeAudit.json in) so this lib stays runnable under plain node.
+// Raw data is never touched: language.json keeps every extracted lede regardless of verdict.
+export function approvedLede(auditLedger, ticker, s) {
+  if (!auditLedger || !s) return false;
+  const e = auditLedger.companies?.[String(ticker || "").toUpperCase()];
+  return !!(e && e.verdict === "approved" && e.lede === s);
 }
 export function weakLede(s) {
   if (!s || typeof s !== "string") return true;

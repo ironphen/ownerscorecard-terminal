@@ -18,8 +18,8 @@ import { insurerQuality } from "../lib/insurers.mjs";
 import { feeQuality } from "../lib/feeFinancials.mjs";
 import { managedCareQuality } from "../lib/managedCare.mjs";
 import { financialKind, financialSubtype } from "../lib/archetype.mjs";
-import { businessLever, businessPhrase, industryLensClause, weakLede, refusedLede, pickNote, cleanOwnerFlags, customerConcentration } from "../lib/business.mjs";
-import ledeRefusals from "../data/ledeRefusals.json";
+import { businessLever, businessPhrase, industryLensClause, weakLede, approvedLede, pickNote, cleanOwnerFlags, customerConcentration } from "../lib/business.mjs";
+import ledeAudit from "../data/ledeAudit.json";
 import { needleReport } from "../lib/needle.mjs";
 import notes from "../data/notes.json";
 
@@ -88,7 +88,7 @@ const composition = compositionSentence(seg) || "";
 // is on the filing's words (or a reviewed note), the brief adds the mix; when the hero is on the mix,
 // the brief adds the industry lens; when the hero is already down to the computed phrase, the brief
 // has nothing left to add and the row drops — rather than printing the same phrase twice in 200px.
-const heroVerbatim = !!(L?.business && !weakLede(L?.business) && !refusedLede(ledeRefusals, company.ticker, L?.business));
+const heroVerbatim = !!(L?.business && !weakLede(L?.business) && approvedLede(ledeAudit, company.ticker, L?.business));
 const whatItIs = note
   ? (composition || null)
   : heroVerbatim
