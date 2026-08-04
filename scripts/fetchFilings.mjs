@@ -94,7 +94,12 @@ function cleanQuote(s) {
     ""
   );
   // A heading with a glued stray quote: 'Risk Factors " Our business…' → 'Our business…'
-  s = s.replace(/^(?:[A-Z][A-Za-z&\-]+)(?:\s+[A-Z][A-Za-z&\-]+){0,3}\s*["'"]\s*(?=[A-Z])/, "");
+  // The apostrophe must be SEPARATED to count as stray. Glued to the preceding letter it belongs
+  // to the company: this rule read "Lands' End is a leading digital retailer" as the heading
+  // "Lands" plus a stray quote and shipped "End is a classic American lifestyle brand", and did
+  // the same to O'Reilly ("Reilly is one of the largest specialty retailers"). Double quotes keep
+  // the looser spacing — they are never part of a name.
+  s = s.replace(/^(?:[A-Z][A-Za-z&\-]+)(?:\s+[A-Z][A-Za-z&\-]+){0,3}(?:\s*["“”]|\s+['’])\s*(?=[A-Z])/, "");
   s = s.replace(/^["'"\s]+/, "");
   return s.trim();
 }
@@ -450,6 +455,15 @@ function businessDescription(sents, name, ticker) {
   // phrase "United States" elsewhere in the filing, which would pass off a stray line as
   // the company's own description.
   const GENERIC_NAME = new Set(["united", "american", "general", "national", "standard", "first", "global", "international", "pacific", "atlantic", "continental", "federal", "central", "western", "eastern", "northern", "southern", "new"]);
+  // The name in ORDER, generics kept — so the heading stripper can ask "is this token the
+  // company's own first word, followed by its second?" rather than "is it a heading word?".
+  const nameSeq = (name || "").toLowerCase().replace(/[^a-z0-9\s]/g, " ").split(/\s+/).filter(Boolean);
+  // …and the same name with every separator removed, for matching against however the FILING
+  // spells it. Legal suffixes are dropped from the tail only, so "American Express Company"
+  // still matches a filed "American Express".
+  const nameSolid = nameSeq
+    .filter((w, i, a) => !(i >= a.length - 2 && ["inc", "incorporated", "corp", "corporation", "company", "companies", "ltd", "plc", "llc", "lp", "co", "sa", "nv", "ag"].includes(w)))
+    .join("");
   const distinctive = nameWords.filter((w) => !GENERIC_NAME.has(w));
   if (distinctive.length) nameWords = distinctive;
   const cands = [];
@@ -459,7 +473,23 @@ function businessDescription(sents, name, ticker) {
   for (let i = 0; i < slice.length; i++) {
     let s = cleanQuote(String(slice[i] || ""));
     let prev;
-    do { prev = s; s = s.replace(HEAD_TOKEN, "").trim(); } while (s !== prev); // strip stacked headings
+    // Strip stacked headings — but never strip the company's own first word. HEAD_TOKEN counts
+    // "general", "business", "overview", "introduction" and "the company" as headings, which is
+    // right until the filer is named General Electric, General Mills, General Motors or General
+    // Dynamics: the name's first word was peeled off as a heading and the page opened "Electric is
+    // a high-tech industrial company". The token is only a heading when what FOLLOWS it is not the
+    // rest of the name, so "General Overview General Mills is…" still strips both headings and
+    // stops at the name.
+    do {
+      prev = s;
+      const hm = s.match(HEAD_TOKEN);
+      if (!hm) break;
+      const tok = hm[1].toLowerCase().replace(/[^a-z0-9]/g, "");
+      const rest = s.slice(hm[0].length);
+      if (nameSeq.length > 1 && tok === nameSeq[0] &&
+          new RegExp(`^${nameSeq[1].replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i").test(rest.replace(/^[^A-Za-z0-9]+/, ""))) break;
+      s = rest.trim();
+    } while (s !== prev);
     // Clean the sentence BEFORE judging it, so a long parenthetical, a hedge, or a preamble
     // can't push the real description past the length cap or trip the skip checks. Order
     // matters: strip the noise, re-anchor at the company's name when it hides behind a
@@ -517,6 +547,56 @@ function businessDescription(sents, name, ticker) {
               (headingish.test(prefix) || (prefix.trim().length < 42 && !prefix.includes(",")))) at = m.index;
         }
       }
+      // LAND ON THE START OF THE NAME, NOT ON THE WORD THAT MATCHED — applies to both jumps above.
+      // nameWords deliberately drops generic leading words ("American", "United", "General", and
+      // "B&G", which tokenises to b/g) so that a stray "United States" cannot pass itself off as
+      // United Therapeutics. Correct, but it means a subject match INSIDE a real name lands on the
+      // second word, and the jump then ate the first: American Express opened "Express is a global
+      // payments and premium lifestyle brand", B&G Foods opened "Foods manufactures, sells and
+      // distributes", AvalonBay opened "Communities in our selected markets". 152 pages pool-wide,
+      // and branch (a) fired even with no heading present at all, because a name whose first word
+      // is generic never "starts with the subject". Walk back over any words of the REGISTERED name
+      // immediately preceding the jump target, so a genuine heading is still jumped ("Overview
+      // American Express is…" → "American Express is…") while the name itself never is.
+      // Matched against the name as ONE normalised string rather than word by word, because the
+      // filing's spelling and the registered name's tokens do not line up: "BJ's Wholesale"
+      // tokenises to bj/s/wholesale while the filing writes "BJ's" (→ bjs), and "B&G Foods"
+      // tokenises to b/g/foods against a filed "B&G" (→ bg). Accumulating right-to-left and
+      // asking "is this still a prefix of the name?" handles both, and stops dead at the first
+      // word that is not part of the name.
+      if (at > 0 && nameSolid) {
+        const pre = s.slice(0, at).split(/(\s+)/); // keep separators so the index arithmetic stays exact
+        let back = 0, acc = "";
+        for (let j = pre.length - 1; j >= 0; j--) {
+          const tok = pre[j];
+          if (tok === "") continue;                                  // split's trailing empty piece
+          if (/^\s+$/.test(tok)) { back += tok.length; continue; }
+          const norm = tok.toLowerCase().replace(/[^a-z0-9]/g, "");
+          if (!norm || !nameSolid.startsWith(norm + acc)) break;
+          acc = norm + acc;
+          back += tok.length;
+        }
+        at -= back;
+        if (at <= 0) at = -1; // the whole prefix was the name: there was nothing to jump
+      }
+      // A RUNNING PAGE HEADER THAT IS THE NAME ITSELF. Air Products sets "Air Products" as a
+      // header immediately before "Air Products and Chemicals, Inc. is a world-leading industrial
+      // gases company", so the walk-back above reads the header as the start of the name and glues
+      // the name on twice. When the name's first word opens the text and occurs again within a
+      // short span containing no prose between the two, the SECOND one is where the sentence
+      // really starts. The word-count test keeps a genuine repetition ("Air Products and
+      // Chemicals, Inc. is a leading supplier of air separation plants") from tripping it.
+      if (nameSeq.length) {
+        // Anchor PAST any leading space the jump left behind, or the "starts with the name"
+        // test below never fires (Air Products landed at a space, one character early).
+        const from = at > 0 ? at : 0;
+        const base = from + (s.slice(from).match(/^\s*/)[0] || "").length;
+        const w0 = nameSeq[0].replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        const hay = s.slice(base, base + 120);
+        const hits = [...hay.matchAll(new RegExp(`\\b${w0}\\b`, "gi"))].map((m) => m.index);
+        if (hits.length >= 2 && hits[0] === 0 &&
+            hay.slice(0, hits[1]).split(/\s+/).filter(Boolean).length <= nameSeq.length + 1) at = base + hits[1];
+      }
       if (at > 0) s = s.slice(at).trim();
     }
     if (LEAD_VERB.test(s) && name) s = `${name.trim()} ${s.charAt(0).toLowerCase()}${s.slice(1)}`; // restore a subject split off entirely
@@ -538,6 +618,31 @@ function businessDescription(sents, name, ticker) {
     if (s.length < 34 || s.length > 340) continue;
     if (!/[.!?]["'”’)]?$/.test(s)) continue; // a complete sentence, not a clipped fragment
     if (isHeadingCase(s)) continue;          // a Title-Case heading the splitter glued a period onto
+    // THE NAME WAS CLIPPED: the sentence opens on a LATER word of the registered name, so whatever
+    // follows, the company is misnamed. Measured at 122 rendering pages: "End is a classic American
+    // lifestyle brand" (Lands' End), "III is a global leader in fashion" (G-III), "Wave is the
+    // world's first company" (D-Wave), "Communities in our selected markets" (AvalonBay). The jump
+    // repairs above catch these where the missing words are still in the sentence; this catches the
+    // rest, where the section boundary or the splitter removed them upstream and there is nothing
+    // left to walk back to. Rejecting here rather than at render time is deliberate — the scorer
+    // moves on to the next candidate, so the company can still get a real description instead of
+    // dropping to the computed industry phrase. It costs the handful of filers whose short name is
+    // genuinely a later word ("Hershey" of The Hershey Company, "Schwab" of Charles Schwab), and a
+    // correct generic phrase beats a confidently wrong name.
+    if (nameSeq.length > 1) {
+      // A leading article is not part of the name for this purpose: "The Procter & Gamble Company"
+      // begins at Procter, so a correct "Procter & Gamble is a consumer goods company" must not
+      // read as clipped.
+      const seq = nameSeq[0] === "the" ? nameSeq.slice(1) : nameSeq;
+      const w0 = s.toLowerCase().replace(/[^a-z0-9\s]/g, " ").split(/\s+/).filter(Boolean)[0];
+      const NAME_STOP = new Set(["the", "a", "an", "of", "and", "inc", "corp", "corporation", "company", "companies", "co", "ltd", "plc", "llc", "lp", "group", "holdings", "holding"]);
+      // A TAGLINE, not a clipped name: "Fitness for everyone We are one of the largest franchisors"
+      // opens on a name word but then starts a fresh clause with a capitalised subject, and the
+      // description survives intact. A clipped name never does that — "Communities in our selected
+      // markets, we maintain regional offices" runs straight on into a comma clause.
+      const taglineThenSubject = /[a-z]\s+(?:We|Our)\s+[a-z]/.test(s);
+      if (w0 && !NAME_STOP.has(w0) && seq.indexOf(w0) > 0 && !taglineThenSubject) continue;
+    }
     if (BIZ_SKIP.test(s) || BIZ_WEAK.test(s) || BIZ_FRAGMENT.test(s) || BIZ_RESULTS.test(s) || BIZ_NOTDESC.test(s) || BIZ_PRODUCTREF.test(s) || BIZ_XREF.test(s)) continue;
     if (BIZ_HUMANCAP.test(sFull) || BIZ_LINEAGE.test(sFull)) continue; // test the PRE-jump text too
     if (BIZ_RECITAL.test(s) && !(BIZ_DOING.test(s) && BIZ_RICH.test(s))) continue;
