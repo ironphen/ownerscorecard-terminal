@@ -11,7 +11,17 @@ import { buildUtilityScorecard } from "../lib/utilities.mjs";
 import { moatReport } from "../lib/durability.mjs";
 import { grahamTests } from "../lib/graham.mjs";
 import { financialKind, financialSubtype } from "../lib/archetype.mjs";
+import { secondaryListingsCached } from "../lib/listings.mjs";
+import adrFundamentalsForListings from "../data/fundamentals.adr.json";
 import language from "../data/language.json";
+
+// The claim-on-a-business detection, same mechanism as the bench's no-preferred ruling: a
+// preferred series or baby bond shares its CIK with the common stock. Frozen at module scope so
+// the listings memo keys one stable array across all pages. US + ADR pools suffice here — the
+// check being suppressed only renders on bank pages, and every bank preferred series lives in
+// those two pools.
+const SCORECARD_LISTING_POOL = [...(fundamentals.companies || []), ...(adrFundamentalsForListings.companies || [])];
+const SCORECARD_POOL_TICKERS = new Set(SCORECARD_LISTING_POOL.map((c) => String(c?.ticker || "").toUpperCase()));
 import Term from "./Term.astro";
 
 const { company, sample = false, peers: peersProp } = Astro.props;
@@ -35,12 +45,23 @@ const isFin = !!fk;
 // credit, the regulatory ledger — instead of the industrial quality checks a commission-capped
 // return would flunk by design. Graham's tests still run below: his 1972 utility substitution
 // lives inside grahamTests itself.
+// Two signals, because the CIK-grouping helper has a documented known limitation: where an
+// issuer's common stock is not in the pool at all, its preferred series looks like the primary
+// listing (FGBIP — First Guaranty's common FGBI is absent — was exactly the survey's example
+// cell). The row's own primaryTicker field carries the SEC registered-securities order; when it
+// names a DIFFERENT ticker that the pool does not hold, this row is a claim on an absent
+// business. A dual-class common (BRK-B) is untouched: its sibling is in the pool.
+const _tk = String(company?.ticker || "").toUpperCase();
+const _primary = String(company?.primaryTicker || "").toUpperCase();
+const _poolTickers = secondaryListingsCached(SCORECARD_LISTING_POOL); // memoized set of secondaries
+const isSecondaryListing = _poolTickers.has(_tk) ||
+  (!!_primary && _primary !== _tk && !SCORECARD_POOL_TICKERS.has(_primary));
 const { sections } =
   fk === "reit" ? buildReitScorecard(company)
   : fk === "insurer" ? buildInsurerScorecard(company, financialSubtype(company))
   : fk === "managedCare" ? buildManagedCareScorecard(company)
   : fk === "fee" ? buildFeeScorecard(company, financialSubtype(company))
-  : fk === "bank" ? buildFinancialScorecard(company, financialSubtype(company))
+  : fk === "bank" ? buildFinancialScorecard(company, financialSubtype(company), { marksSuppressed: isSecondaryListing })
   : company.rateRegulated ? buildUtilityScorecard(company)
   : buildScorecard(company);
 // The filing's own pricing words, threaded into the moat report so the margin/pricing-power line

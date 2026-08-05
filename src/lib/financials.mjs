@@ -79,7 +79,12 @@ export function provisionRate(L) {
 
 // The financials archetype is best judged on these. Returns the same shape the
 // industrial scorecard uses, so the page renders it through the same component.
-export function buildFinancialScorecard(company, subtype = "bank") {
+// opts.marksSuppressed: a preferred series, baby bond or warrant shares the registrant's record,
+// and the HTM marks check on such a page reads as a solvency verdict on a CLAIM, not a business —
+// FGBIP was one of the eleven scariest cells in the survey's census, on a preferred-series page
+// the no-bench ruling already covers. The caller (Scorecard.astro) detects secondary listings the
+// same way the bench does and suppresses the check; the common-stock page carries it.
+export function buildFinancialScorecard(company, subtype = "bank", { marksSuppressed = false } = {}) {
   const $ = (v) => fmtMoney(v, company?.currency || "USD");
   const L = company?.lines || {};
   const none = (title, note, concept = null) => ({ title, concept, value: "—", formula: "", tone: "none", label: "Not enough data", note });
@@ -269,24 +274,71 @@ export function buildFinancialScorecard(company, subtype = "bank") {
   // A bank that genuinely holds nothing to maturity has nothing to say here, which is what silence is
   // for.
   const htmGap = L.htmAmortizedCost > 0 && L.htmFairValue != null ? L.htmAmortizedCost - L.htmFairValue : null;
-  const htmShare = htmGap != null && te > 0 ? htmGap / te : null;
+  // THE DENOMINATOR LADDER (solvency-sight Build 3, 2026-08-05): the percentage's denominator is
+  // stated per bank, never assumed. The survey measured both error directions living in one
+  // column: WFC printed against "tangible equity" with its intangibles line untagged (equity less
+  // goodwill only), while banks with a preferred stack printed a common-shareholder ratio with
+  // preferred never deducted. Missing is not zero — a bank with no intangibleAssets tag may
+  // genuinely have none or may not have tagged it, and the data cannot distinguish — so the
+  // ladder names exactly what was subtracted and nothing is backfilled:
+  //   goodwill + intangibles tagged, preferred tagged  → "tangible common equity"
+  //   goodwill + intangibles tagged, no preferred line → "tangible equity (preferred not deducted)"
+  //   goodwill only                                    → "equity less goodwill"
+  //   neither tagged                                   → "stated equity"
+  const pref = L.preferredEquity;
+  let denom = null, basisLabel = null;
+  if (L.stockholdersEquity != null) {
+    if (L.goodwill != null && L.intangibleAssets != null) {
+      const tang = L.stockholdersEquity - L.goodwill - L.intangibleAssets;
+      if (pref != null) { denom = tang - pref; basisLabel = "tangible common equity"; }
+      else { denom = tang; basisLabel = "tangible equity (preferred not deducted)"; }
+    } else if (L.goodwill != null) {
+      denom = L.stockholdersEquity - L.goodwill;
+      basisLabel = "equity less goodwill (intangibles not separately tagged)";
+    } else {
+      denom = L.stockholdersEquity;
+      basisLabel = "stated equity";
+    }
+  }
+  const htmShare = htmGap != null && denom > 0 ? htmGap / denom : null;
+  // The record leg: the widest year on record and what has accreted back since — the measured
+  // answer to "does it heal?" (it does, slowly; ~26% of BAC's FY2022 gap in three years). Only
+  // where history carries the pair for 2+ years and the widest year is not the current one.
+  let recordLeg = "";
+  {
+    const hist = (company?.history || [])
+      .filter((h) => h?.lines?.htmAmortizedCost > 0 && h?.lines?.htmFairValue != null)
+      .map((h) => ({ fy: h.fy, gap: h.lines.htmAmortizedCost - h.lines.htmFairValue }));
+    if (hist.length >= 2 && htmGap != null) {
+      const widest = hist.reduce((a, b) => (b.gap > a.gap ? b : a));
+      if (widest.gap > htmGap && String(widest.fy) !== String(company?.fy)) {
+        recordLeg = ` · widest on record FY${widest.fy}: ${$(widest.gap)} (${pc((widest.gap - htmGap) / widest.gap, 0)} accreted back since)`;
+      }
+    }
+  }
+  // Tone and label discipline (the kill lane's conviction): "Severe if realized" was a verdict on
+  // a conditional whose realized base rate inside the pool is zero BY CONSTRUCTION — of 48 banks
+  // the old tiers painted warn/bad at FY2022, one lost ≥10% of deposits the next year and none
+  // failed, because failed banks deregister and leave the pool. The measured figure is the
+  // record; the harshest word never prints. Labels stay conditional ("…if realized") and the top
+  // band caps at warn.
   const marksCheck = htmShare == null
     ? null
     : {
       title: "Held-to-maturity marks",
       concept: "net-debt",
-      value: htmGap <= 0 ? "No loss" : pc(htmShare),
-      formula: `HTM at cost ${$(L.htmAmortizedCost)} − fair value ${$(L.htmFairValue)} = ${$(htmGap)}${htmGap > 0 ? `, against tangible equity ${$(te)}` : ""}`,
-      tone: htmShare <= 0.05 ? "good" : htmShare <= 0.15 ? "ok" : htmShare <= 0.3 ? "warn" : "bad",
-      label: htmShare <= 0.05 ? "Marks are small" : htmShare <= 0.15 ? "Manageable" : htmShare <= 0.3 ? "A real dent if realized" : "Severe if realized",
-      note: "Bonds held to maturity are carried at cost, so rate rises open a gap between the books and reality that only shows in this disclosure. The gap never hits earnings if the bank can hold on — which is precisely why the reader checks whether it could be forced to sell: the 2023 bank failures were this number meeting deposit flight.",
+      value: htmGap <= 0 ? "No loss — fair value above cost" : pc(htmShare),
+      formula: `Pre-tax, as filed for FY${company?.fy ?? "—"}: HTM at cost ${$(L.htmAmortizedCost)} − fair value ${$(L.htmFairValue)} = ${$(htmGap)}${htmGap > 0 ? `, against ${basisLabel} ${$(denom)}` : ""}${recordLeg}`,
+      tone: htmShare <= 0.05 ? "good" : htmShare <= 0.15 ? "ok" : "warn",
+      label: htmShare <= 0.05 ? "Marks are small" : htmShare <= 0.15 ? "Manageable" : htmShare <= 0.3 ? "A real dent if realized" : "Large if ever realized",
+      note: "Bonds held to maturity are carried at cost, so rate rises open a gap that only shows in this disclosure. Stated equity already carries every available-for-sale mark through accumulated other comprehensive income; the held-to-maturity book's gap sits outside equity, which is why it is read here. The figure is pre-tax as the filer states it — the true after-tax dent depends on a deferred-tax position the record does not carry. The gap never hits earnings if the bank can hold on, which is precisely why the reader checks whether it could be forced to sell: the 2023 bank failures were this number meeting deposit flight.",
     };
 
   return {
     sections: [
       { heading: "Is it a good business?", checks: [roeCheck, rotceCheck, effCheck] },
       { heading: "Is it sound?", checks: [capCheck, fundCheck, provCheck] },
-      ...(isMReit ? [] : [{ heading: "The franchise and the credit cycle", checks: [franchiseCheck, creditCheck, ...(marksCheck ? [marksCheck] : [])] }]),
+      ...(isMReit ? [] : [{ heading: "The franchise and the credit cycle", checks: [franchiseCheck, creditCheck, ...(marksCheck && !marksSuppressed ? [marksCheck] : [])] }]),
     ],
   };
 }
