@@ -832,7 +832,23 @@
       "grave": false,
       "accn": "0001486957-26-000042",
       "url": "https://www.sec.gov/Archives/edgar/data/1486957/000148695726000042/bwxt_63026x10qdocument.htm",
-      "performance": null
+      "performance": {
+        "period": "2026-06-30",
+        "basis": "quarter",
+        "rev": {
+          "yoy": 18,
+          "cur": 901625000,
+          "prior": 764039000
+        },
+        "oi": {
+          "yoy": 11.4,
+          "cur": 114136000,
+          "prior": 102424000
+        },
+        "driver": "Consolidated operating income increased $11.7 million to $114.1 million in the three months ended June 30, 2026 compared to $102.4 million for the corresponding period of 2025 due to an increase in our Commercial Operations segment of $17.5 million, partially offset by a decrease in our Government Operations segment of $3.7 million and an increase in Unallocated Corporate expenses of $2.0 million when compared to the corresponding period in the prior year.",
+        "driverLine": "operatingIncome",
+        "check": "dollar"
+      }
     },
     {
       "ticker": "BWXT",
