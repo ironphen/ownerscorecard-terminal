@@ -60,6 +60,20 @@ if (unins && String(unins.fy) === String(company.fy)) {
   }
 }
 
+// 0a-bis. The float, in the filer's own words (solvency-sight Build 1b, 2026-08-05). Exactly one
+// flagship insurer states its float in a sentence — Berkshire, whose components never extract and
+// whose computed float was retired as wrong by 10x (Build 1). The weld is that sentence, verbatim,
+// fy-gated at extraction AND here against the live record (the devTie precedent), so a stale quote
+// can never sit under a fresh page. No arithmetic touches it: the figure IS the quote.
+const sfl = L?.statedFloat;
+if (sfl?.quote && String(sfl.fy) === String(company.fy)) {
+  items.push({
+    q: "How large is the float, in the filer's own words?",
+    fig: `stated in the FY${sfl.fy} annual report`,
+    quote: sfl.quote,
+  });
+}
+
 // 0b. Who stands behind the reserves (O&G — Build 8 of the qualitative survey, 2026-07-31):
 // the Reg S-K Item 1202 attribution, the owner's question a producer's whole record hangs on —
 // every reserve figure on the page is an estimate, and this names whose. Three shapes, all

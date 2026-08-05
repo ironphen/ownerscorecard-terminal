@@ -1443,5 +1443,27 @@ ok("noteWindow: the LAST heading occurrence wins (TOC echoes don't)",
     RC_GRANT_VERB.test("PECO's approved annual electric revenue requirement increase of $ 354 million is partially offset by a one-time credit."));
 }
 
+// LANE — the stated-float weld (solvency-sight Build 1b). One flagship insurer states its float;
+// the gates must carry exactly that sentence and refuse every look-alike.
+{
+  const { statedFloatRead } = await import("./fetchFilings.mjs");
+  const BRK_SERIES = "Float was approximately $176 billion at December 31, 2025, $171 billion at December 31, 2024 and $169 billion at December 31, 2023.";
+  const BRK_GROWTH = "On a consolidated basis, float has increased from approximately $138 billion at the end of 2020 to approximately $176 billion at the end of 2025.";
+  const doc = `Insurance underwriting generated earnings. ${BRK_GROWTH} We discuss reserves elsewhere. ${BRK_SERIES} Other text follows.`;
+  const r = statedFloatRead({ fullText: doc, fy: 2025 });
+  ok("the Berkshire series sentence welds, verbatim", r?.quote === BRK_SERIES);
+  ok("the growth sentence (opens on 2020) is passed over for the one that opens on the filing year",
+    r?.quote !== BRK_GROWTH);
+  ok("a wrong-year filing welds nothing (the fy gate)", statedFloatRead({ fullText: doc, fy: 2022 }) === null);
+  ok("the cover page's 'public float' never welds",
+    statedFloatRead({ fullText: "The aggregate public float of the registrant was $3.2 billion at June 30, 2025.", fy: 2025 }) === null);
+  ok("'free float' never welds",
+    statedFloatRead({ fullText: "The company's free float was $12 billion at December 31, 2025.", fy: 2025 }) === null);
+  ok("float without a dollar figure welds nothing",
+    statedFloatRead({ fullText: "Our float grew substantially during 2025 and remains a source of strength.", fy: 2025 }) === null);
+  ok("a dollar figure without the word float welds nothing",
+    statedFloatRead({ fullText: "Reserves were approximately $176 billion at December 31, 2025.", fy: 2025 }) === null);
+}
+
 console.log(`\nlanguageGatesTest: ${pass} passed, ${fail} failed`);
 if (fail) process.exit(1);

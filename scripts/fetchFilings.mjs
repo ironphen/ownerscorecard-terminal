@@ -1083,7 +1083,7 @@ function bizLeadText(business, form) {
   return m > 200 ? business.slice(m) : business;
 }
 
-async function getFiling(cik, f, totalDebtMillions = null, devTarget = null, depTarget = null, swTarget = false, ogTarget = false, reitTarget = false, utilTarget = false, mcTarget = null) {
+async function getFiling(cik, f, totalDebtMillions = null, devTarget = null, depTarget = null, swTarget = false, ogTarget = false, reitTarget = false, utilTarget = false, mcTarget = null, floatTarget = false) {
   const accnNoDash = f.accn.replace(/-/g, "");
   const base = `https://www.sec.gov/Archives/edgar/data/${Number(cik)}/${accnNoDash}`;
   let url = `${base}/${f.doc}`;
@@ -1153,6 +1153,19 @@ async function getFiling(cik, f, totalDebtMillions = null, devTarget = null, dep
   if (depTarget && depTarget.deposits > 0 && fy) {
     try { uninsuredRead = uninsuredDepositsRead({ mdnaText: mdna, fullText: text, fy, deposits: depTarget.deposits }); } catch { uninsuredRead = null; }
   }
+  // The stated-float lane (solvency-sight Build 1b, 2026-08-05): where an insurer STATES its
+  // float in a sentence, the filer's own words carry the read — measured across 16 flagship
+  // insurers, exactly one does: Berkshire, whose 10-K states a three-year series ("Float was
+  // approximately $176 billion at December 31, 2025, $171 billion…") on the one book whose
+  // components never extract (Build 1's carve-out). The formula's $17.9B is dead; this is the
+  // page's honest replacement — Buffett's number, verbatim, or nothing. Caller-scoped to
+  // insurer SICs; the sentence must name the filing's own fiscal year (the rate-case date
+  // discipline) and carry a dollar float; "public float" (the share-count concept on every
+  // 10-K cover) and float-free sentences never weld.
+  let statedFloat = null;
+  if (floatTarget && fy) {
+    try { statedFloat = statedFloatRead({ fullText: text, fy }); } catch { statedFloat = null; }
+  }
   // The software NRR + customer-ladder lanes (Build 7): pure substring lanes over the filing's
   // own MD&A and Business text, run for BOTH filings when the caller flags a software name —
   // the prior filing's gated record is the corroboration and tripwire counterparty.
@@ -1205,7 +1218,7 @@ async function getFiling(cik, f, totalDebtMillions = null, devTarget = null, dep
   if (mcTarget && mcTarget.mlr != null && fy && f.form === "10-K") {
     try { mcRead = mlrCostTrendRead({ mdnaText: mdna, fy, mlr: mcTarget.mlr, mlrPrior: mcTarget.mlrPrior }); } catch { mcRead = null; }
   }
-  return { url, business: { ...metrics(business), lead: leadSentences(bizLeadText(business, f.form)), head: business.slice(0, 800) }, mdna: { ...md, lead: leadSentences(mdna), candor: candorSignals(mdna, md.sents) }, risk: metrics(risk), reportDate: f.reportDate, debtMaturity, reserveRead, uninsuredRead, swRead, ogRead, reitRead, utilRead, rateRead, mcRead };
+  return { url, business: { ...metrics(business), lead: leadSentences(bizLeadText(business, f.form)), head: business.slice(0, 800) }, mdna: { ...md, lead: leadSentences(mdna), candor: candorSignals(mdna, md.sents) }, risk: metrics(risk), reportDate: f.reportDate, debtMaturity, reserveRead, uninsuredRead, statedFloat, swRead, ogRead, reitRead, utilRead, rateRead, mcRead };
 }
 
 // ---- executive pay (proxy statement / DEF 14A) ----
@@ -3616,6 +3629,46 @@ function rcYearOk(s, fy) {
   return y >= fy - 1 && y <= fy + 1;
 }
 
+// The stated-float weld (solvency-sight Build 1b): the sentence where an insurer states its own
+// float in dollars. Measured before building: of 16 flagship insurers, exactly ONE states it —
+// Berkshire ("Float was approximately $176 billion at December 31, 2025, $171 billion at
+// December 31, 2024 and $169 billion at December 31, 2023.") — because float is Buffett's word;
+// the rest never narrate it. So this is a named keyhole, not a broad lane, and its gates are
+// strict: the word "float" with a dollar-billion/million figure in one sentence; "public float"
+// and "free float" (the share-count concept on every 10-K cover) never weld; the sentence must
+// name the filing's OWN fiscal year, and its FIRST year must be that year (the rate-case
+// first-year discipline — Berkshire's 2020-to-2025 growth sentence opens on 2020 and is
+// correctly passed over for the series sentence that opens on the filing year).
+function statedFloatRead({ fullText, fy }) {
+  if (!fullText || !fy) return null;
+  const shapes = [
+    /[^.!?]*\bfloat\b[^.!?]{0,160}\$\s?\d[\d.,]*\s*(?:billion|million)[^.!?]*[.!?]/gi,
+    /[^.!?]*\$\s?\d[\d.,]*\s*(?:billion|million)[^.!?]{0,120}\bfloat\b[^.!?]*[.!?]/gi,
+  ];
+  const seen = new Set();
+  const cands = [];
+  for (const re of shapes) {
+    let m;
+    while ((m = re.exec(fullText)) !== null && cands.length < 12) {
+      const s = cleanQuote(m[0].trim());
+      if (s.length < 40 || s.length > 320) continue;
+      if (/\bpublic float\b|\bfree float\b|\bfloating\b/i.test(s)) continue;
+      if (!new RegExp(`\\b${fy}\\b`).test(s)) continue;
+      const k = s.toLowerCase().slice(0, 120);
+      if (seen.has(k)) continue;
+      seen.add(k);
+      cands.push(s);
+    }
+  }
+  if (!cands.length) return null;
+  const opensOnFy = cands.filter((s) => {
+    const first = s.match(/\b(19|20)\d{2}\b/);
+    return first && parseInt(first[0], 10) === fy;
+  });
+  const quote = (opensOnFy[0] ?? null);
+  return quote ? { quote, fy } : null;
+}
+
 // One candidate pool: the MD&A first (so a filer that narrates a case in both places ships the
 // MD&A's own wording), then every Regulatory/Rate Matters/Pending Proceedings window. Case
 // blocks are computed per zone: a piece whose head parses a label opens one, and the three
@@ -3887,6 +3940,8 @@ async function main() {
     // The REIT desk's scope (Build 9): the ARCHETYPE gate, never SIC alone (the Build 4
     // precedent) — equity REITs as the pipeline classifies them, US 10-K filers only.
     const reitTarget = !isAdr && devKind === "reit";
+    // The stated-float weld's scope (solvency-sight Build 1b): insurer SICs, managed care excluded.
+    const floatTarget = sicSw >= 6311 && sicSw <= 6399 && sicSw !== 6324;
     // The utilities desk's scope (Build 10): the rateRegulated flag — the desk's own tag
     // census on the record (utilitiesLines' ≥5-concept gate), never SIC alone. 73 filers.
     const utilTarget = !isAdr && !!c.rateRegulated;
@@ -3906,7 +3961,7 @@ async function main() {
     let cur, prior;
     try {
       await sleep(THROTTLE);
-      cur = await getFiling(c.cik, filings[0], totalDebtMillions, devTarget, depTarget, swTarget, ogTarget, reitTarget, utilTarget, mcTarget);
+      cur = await getFiling(c.cik, filings[0], totalDebtMillions, devTarget, depTarget, swTarget, ogTarget, reitTarget, utilTarget, mcTarget, floatTarget);
       if (filings[1]) { await sleep(THROTTLE); prior = await getFiling(c.cik, filings[1], null, null, null, swTarget); }
     } catch (e) { console.warn(`  ! ${tk}: filing ${e.message}`); continue; }
 
@@ -4024,6 +4079,8 @@ async function main() {
         // sentence, or a stated withhold with its reason. Absent means the lane found no
         // level statement that passed the gates — silence over filler.
         ...(cur.uninsuredRead ? { uninsuredDeposits: cur.uninsuredRead } : {}),
+        // The stated-float weld (Build 1b): the filer's own float sentence, fy-gated at extraction.
+        ...(cur.statedFloat ? { statedFloat: { ...cur.statedFloat, sourceUrl: cur.url } } : {}),
         // The software NRR + customer-ladder read (Build 7): the filer's own retention and
         // customer-count sentences with their figures as verbatim substrings, prior-year
         // corroborated across filings, plus the KPI discontinuity tripwire. Absent means
@@ -4079,7 +4136,7 @@ async function main() {
 }
 
 // Exported for the offline logic test; only hit EDGAR when run directly.
-export { RC_ILLUSTRATION, RC_NO_ASSURANCE, RC_BOTH_DIRECTIONS, RC_PARALLEL_LIST, RC_GRANT_VERB, ownerFlags, FLAG_THEMES, sentences, isProse, diff, extractPayRatio, extractInsiderOwnership, extractInsiderGroup, htmlToText, section, fetchText, businessDescription, candorSignals, businessBrief, buffettRead, BIZ_HUMANCAP, BIZ_LINEAGE, BIZ_ASPIRATIONAL, BRIEF_ORPHAN, PROMO, smellsLikeRisk, fortyFSections, folderDocs, extractSections, MW_DECLARED, MW_ABSENT, MW_OTHER_ENTITY, RESTATED, RESTATED_CONTRACT, INTEGRITY_FUTURE, ADMIT, NOT_ADMIT, BLAME_OTHERS, reserveDevelopmentRead, devSentences, uninsuredDepositsRead, uninsSentences, softwareRetentionRead, customerLadderRead, softwareKpiRead, softwareKpiAssemble, swSentences, swCounts, reserveEngineerRead, ogCriticalTopics, ogSentences, reitLeasingRead, reitSpreadRead, reitOccupancyRead, reitSentences, utilityRegRead, utilityDisallowances, utilitySecuritization, regZones, regPieces, mlrCostTrendRead, mcSentences, rateCaseRead, rcSentences, rcLabelFrom, rcFigures, rcZones, utilityRateCases, utilityRateRegime };
+export { statedFloatRead, RC_ILLUSTRATION, RC_NO_ASSURANCE, RC_BOTH_DIRECTIONS, RC_PARALLEL_LIST, RC_GRANT_VERB, ownerFlags, FLAG_THEMES, sentences, isProse, diff, extractPayRatio, extractInsiderOwnership, extractInsiderGroup, htmlToText, section, fetchText, businessDescription, candorSignals, businessBrief, buffettRead, BIZ_HUMANCAP, BIZ_LINEAGE, BIZ_ASPIRATIONAL, BRIEF_ORPHAN, PROMO, smellsLikeRisk, fortyFSections, folderDocs, extractSections, MW_DECLARED, MW_ABSENT, MW_OTHER_ENTITY, RESTATED, RESTATED_CONTRACT, INTEGRITY_FUTURE, ADMIT, NOT_ADMIT, BLAME_OTHERS, reserveDevelopmentRead, devSentences, uninsuredDepositsRead, uninsSentences, softwareRetentionRead, customerLadderRead, softwareKpiRead, softwareKpiAssemble, swSentences, swCounts, reserveEngineerRead, ogCriticalTopics, ogSentences, reitLeasingRead, reitSpreadRead, reitOccupancyRead, reitSentences, utilityRegRead, utilityDisallowances, utilitySecuritization, regZones, regPieces, mlrCostTrendRead, mcSentences, rateCaseRead, rcSentences, rcLabelFrom, rcFigures, rcZones, utilityRateCases, utilityRateRegime };
 
 if (import.meta.url === pathToFileURL(process.argv[1] || "").href) {
   main().catch((e) => { console.error(`\n❌ ${e.message}\n`); process.exit(1); });
