@@ -1,5 +1,5 @@
 {
- "asOf": "2026-08-04",
+ "asOf": "2026-08-05",
  "source": "The judgment audits' verdict ledger (withhold-until-verified, owner-ratified 2026-08-04): a lede renders ONLY when its exact text carries verdict approved here. Text changed by a re-extraction matches nothing and is withheld — the page opens on the computed phrase — until the next audit passes it. Regenerate by running the audit workflows; never hand-edit a lede string.",
  "companies": {
   "A": {
@@ -633,11 +633,9 @@
    "auditedAt": "2026-08-04"
   },
   "AMC": {
-   "lede": "We expect, from time to time, to continue to seek to retire or purchase our outstanding debt through cash purchases and/or exchanges for equity or debt, in open-market purchases, privately negotiated transactions or otherwise.",
-   "verdict": "refused",
-   "defect": "financing-boilerplate",
-   "reason": "Verified: 'We expect, from time to time, to continue to seek to retire or purchase our outstanding debt...' — forward-looking liquidity boilerplate, not what AMC is. Uphold.",
-   "auditedAt": "2026-08-04"
+   "lede": "We are the world's largest theatrical exhibition company and an industry leader in innovation and operational excellence.",
+   "verdict": "approved",
+   "auditedAt": "2026-08-05"
   },
   "AMCX": {
    "lede": "Through our AMC Studios in-house studio, production and distribution operation, we own and control a significant portion of the original scripted series that we deliver to viewers on our linear and streaming platforms.",
@@ -783,11 +781,9 @@
    "auditedAt": "2026-08-04"
   },
   "AORT": {
-   "lede": "Artivion Inc. markets, Products, Services, and Competition Our medical devices and preservation services are primarily used by cardiac and vascular surgeons to treat patients with aortic disease, including heart valve disease, aortic aneurysms and dissections, and, to a lesser extent, other conditions in cardiac and vascular surgery.",
-   "verdict": "refused",
-   "defect": "glued-heading",
-   "reason": "Verified: 'Artivion Inc. markets, Products, Services, and Competition Our medical devices...' — a 'Markets, Products, Services, and Competition' heading glued into the sentence. Visible artifact, uphold.",
-   "auditedAt": "2026-08-04"
+   "lede": "Artivion is committed to partnering with surgeons and cardiologists to deliver innovative technologies of unsurpassed quality that restore the health of patients with aortic disease.",
+   "verdict": "approved",
+   "auditedAt": "2026-08-05"
   },
   "AOS": {
    "lede": "We are the largest manufacturer and marketer of water heaters in North America with a leading share in both the residential and commercial portions of the market.",
@@ -901,11 +897,11 @@
    "auditedAt": "2026-08-04"
   },
   "ARES": {
-   "lede": "Our rigorous, credit-oriented investment approach across each of our investment groups is a key contributor to our strong investment performance and ability to expand our product offering.",
+   "lede": "We utilize our collective market and company knowledge, proprietary internal industry and company research, third-party information and financial modeling to drive fundamental credit analysis and investment selection.",
    "verdict": "refused",
-   "defect": "strategy-not-description",
-   "reason": "Verified: subject is 'Our rigorous, credit-oriented investment approach... is a key contributor to our strong investment performance' — a self-assessment of strategy, not a statement of what Ares is. Consistent with the other strategy-sentence upholds. Uphold.",
-   "auditedAt": "2026-08-04"
+   "defect": "segment/process, not the company",
+   "reason": "UPHOLD. Investment-process methodology sentence scoped to credit analysis (Credit Group section). Says nothing about Ares being a diversified alternative asset manager; process, not identity.",
+   "auditedAt": "2026-08-05"
   },
   "ARHS": {
    "lede": "Arhaus Inc. is a premium home furnishings brand built on a simple idea: furniture and d cor should be responsibly sourced, lovingly made, and built to last.",
@@ -1319,11 +1315,11 @@
    "auditedAt": "2026-08-04"
   },
   "BAND": {
-   "lede": "Bandwidth's go-to-market strategy is designed around the global shift from on-premises based technology to cloud-based communications.",
+   "lede": "Bandwidth Communications Cloud in its own unique way, and we have designed three key market offerings to power digital communications transformation.",
    "verdict": "refused",
-   "defect": "strategy-not-description",
-   "reason": "Verified: subject is 'Bandwidth's go-to-market strategy' — a strategy sentence about a market shift; never states what Bandwidth is or does. Strategy-not-description, uphold.",
-   "auditedAt": "2026-08-04"
+   "defect": "parser artifact",
+   "reason": "UPHOLD. Verified mid-sentence start: 'Bandwidth Communications Cloud in its own unique way, and we have designed...' — opening clause missing, broken grammar. Parser artifact.",
+   "auditedAt": "2026-08-05"
   },
   "BANF": {
    "lede": "BancFirst's primary lending activity is the financing of business and industry in its market areas.",
@@ -1396,9 +1392,11 @@
    "auditedAt": "2026-08-04"
   },
   "BCAL": {
-   "lede": "We have kept a steady focus on our solution-driven, relationship-based approach to banking, providing clients accessibility to decision makers and enhancing value through strong client partnerships.",
-   "verdict": "approved",
-   "auditedAt": "2026-08-04"
+   "lede": "California markets, with a focus on relationship-based commercial banking, including locations in West Los Angeles, the San Fernando Valley and Ventura.",
+   "verdict": "refused",
+   "defect": "parser artifact",
+   "reason": "UPHOLD. Verified clipped opening: 'California markets, with a focus on...' — subject and verb cut off. Parser artifact.",
+   "auditedAt": "2026-08-05"
   },
   "BCC": {
    "lede": "Boise Cascade is one of the largest U.S. wholesale distributors of building materials and a leading manufacturer of engineered wood products and plywood in North America.",
@@ -3122,11 +3120,11 @@
    "auditedAt": "2026-08-04"
   },
   "CWT": {
-   "lede": "California Water Service Group is a holding company with seven operating subsidiaries: Cal Water, Washington Water Service Company, New Mexico Water Service Company, Hawaii Water Service Company, Inc.",
+   "lede": "Utility Services holds non-utility property and provides non-regulated services to private companies and municipalities outside of California.",
    "verdict": "refused",
-   "defect": "truncated-list",
-   "reason": "Verified: promises 'seven operating subsidiaries:' then names only four, truncated at 'Hawaii Water Service Company, Inc.' — splitter broke on 'Inc.'",
-   "auditedAt": "2026-08-04"
+   "defect": "subsidiary, not the company",
+   "reason": "UPHOLD. Describes 'Utility Services,' a minor non-regulated subsidiary outside California, not California Water Service's regulated water utility. Wrong entity scope.",
+   "auditedAt": "2026-08-05"
   },
   "CXM": {
    "lede": "We Are Sprinklr provides a Unified Customer Experience Management platform that helps organizations manage customer interactions across channels and teams.",
@@ -3914,11 +3912,11 @@
    "auditedAt": "2026-08-04"
   },
   "ET": {
-   "lede": "Energy Transfer distributes its available cash remaining after satisfaction of the aforementioned cash requirements to its Unitholders on a quarterly basis.",
+   "lede": "Our vast interstate natural gas network spans the United States from Florida to California and Texas to Michigan, offering a comprehensive array of pipeline and storage services.",
    "verdict": "refused",
-   "defect": "distribution-policy",
-   "reason": "Verified: distribution-policy boilerplate with a dangling 'aforementioned cash requirements'; not a description of the pipeline business.",
-   "auditedAt": "2026-08-04"
+   "defect": "segment, not the company",
+   "reason": "UPHOLD. Describes only the interstate natural gas network; Energy Transfer spans intrastate gas, NGLs, crude, refined products, plus SUN/USAC. Segment presented as the whole.",
+   "auditedAt": "2026-08-05"
   },
   "ETD": {
    "lede": "Ethan Allen is a leading interior design company, manufacturer and retailer in the home furnishings marketplace.",
@@ -4220,9 +4218,11 @@
    "auditedAt": "2026-08-04"
   },
   "FIG": {
-   "lede": "Figma is a connected platform where teams can ideate, explore, and align on decisions together.",
-   "verdict": "approved",
-   "auditedAt": "2026-08-04"
+   "lede": "Figma Inc. design is what attracts and wins user loyalty, especially as digital interfaces become the primary way businesses engage with their customers.",
+   "verdict": "refused",
+   "defect": "parser artifact",
+   "reason": "UPHOLD. Verified glued artifact: 'Figma Inc. design is what attracts and wins user loyalty' — company name welded onto a general market-belief clause, broken grammar.",
+   "auditedAt": "2026-08-05"
   },
   "FIGS": {
    "lede": "We are a founder-led, direct-to-consumer healthcare apparel and lifestyle brand that seeks to celebrate, empower and serve current and future generations of healthcare professionals.",
@@ -4731,18 +4731,18 @@
    "auditedAt": "2026-08-04"
   },
   "GLIBA": {
-   "lede": "I- On November 25, 2025, GCI Liberty distributed subscription rights to purchase shares of GLIBK to holders of GLIBA, GLIBB, and GLIBK in connection with a rights offering that commenced on November 26, 2025.",
+   "lede": "I-2 On November 25, 2025, GCI Liberty distributed subscription rights to purchase shares of GLIBK to holders of GLIBA, GLIBB, and GLIBK in connection with a rights offering that commenced on November 26, 2025.",
    "verdict": "refused",
-   "defect": "news-event",
-   "reason": "Verified: 'I- On November 25, 2025, GCI Liberty distributed subscription rights...' is a dated rights-offering event with a stray 'I-' artifact prefix. News event, not identity.",
-   "auditedAt": "2026-08-04"
+   "defect": "parser artifact + dated event",
+   "reason": "UPHOLD. Opens with stray page label 'I-2' and describes a single dated rights-offering transaction, not what GCI Liberty is. Artifact plus dated event.",
+   "auditedAt": "2026-08-05"
   },
   "GLIBK": {
-   "lede": "I- On November 25, 2025, GCI Liberty distributed subscription rights to purchase shares of GLIBK to holders of GLIBA, GLIBB, and GLIBK in connection with a rights offering that commenced on November 26, 2025.",
+   "lede": "I-2 On November 25, 2025, GCI Liberty distributed subscription rights to purchase shares of GLIBK to holders of GLIBA, GLIBB, and GLIBK in connection with a rights offering that commenced on November 26, 2025.",
    "verdict": "refused",
-   "defect": "news-event",
-   "reason": "Verified: duplicate of 863 — dated rights-offering event plus stray 'I-' prefix. Same uphold.",
-   "auditedAt": "2026-08-04"
+   "defect": "parser artifact + dated event",
+   "reason": "UPHOLD. Identical to GLIBA: stray 'I-2' page label plus a one-time rights-offering event instead of a company description.",
+   "auditedAt": "2026-08-05"
   },
   "GLP": {
    "lede": "We are one of the largest independent owners, suppliers and operators of gasoline stations and convenience stores, primarily in Massachusetts, Maine, Connecticut, Vermont, New Hampshire, Rhode Island, New York, New Jersey and Pennsylvania and Maryland and Virginia.",
@@ -5087,9 +5087,11 @@
    "auditedAt": "2026-08-04"
   },
   "HCSG": {
-   "lede": "We are the largest provider of housekeeping, laundry and dietary management services to the long-term care industry in the United States.",
-   "verdict": "approved",
-   "auditedAt": "2026-08-04"
+   "lede": "We are the largest provider of housekeeping, laundry and dietary management services to the long-term care industry in the United States. 18 We provide services primarily pursuant to full-service agreements with our customers.",
+   "verdict": "refused",
+   "defect": "stray page number",
+   "reason": "UPHOLD. Verified stray page number glued mid-text: '...United States. 18 We provide...'. Doctrine lists stray page numbers as parser artifacts; garbled is worse than no line.",
+   "auditedAt": "2026-08-05"
   },
   "HD": {
    "lede": "Home Depot, Inc. is the world's largest home improvement retailer based on net sales for fiscal 2025.",
@@ -5457,11 +5459,9 @@
    "auditedAt": "2026-08-04"
   },
   "IBRX": {
-   "lede": "ImmunityBio Care, ANKTIVA, ThAnktiva, haNK, taNK, ceNK, NK-92, Nant Cancer Vaccine, BioShield, NANT 001, NANT XL, NANT 001 and Design, QUILT, Outsmart Your Disease, Smart Therapies for Difficult Diseases, NantKwest, VivaBioCell, and Infacell are trademarks or registered trademarks of ImmunityBio, Inc., its subsidiaries and affiliates.",
-   "verdict": "refused",
-   "defect": "trademark-list",
-   "reason": "Verified: pure trademark/defined-terms list ('ANKTIVA, ThAnktiva, haNK, taNK... are trademarks or registered trademarks'). Artifact.",
-   "auditedAt": "2026-08-04"
+   "lede": "ImmunityBio Inc. is a biotechnology company focused on innovating, developing, and commercializing next-generation immunotherapies designed to activate the patient's immune system and deliver durable protection against cancer and infectious diseases.",
+   "verdict": "approved",
+   "auditedAt": "2026-08-05"
   },
   "IBTA": {
    "lede": "We source digital promotions from our clients, which are primarily consumer packaged goods brands, and distribute these promotions to consumers via our network of publishers, which is enabled by our technology platform.",
@@ -5847,9 +5847,9 @@
    "auditedAt": "2026-08-04"
   },
   "JCAP": {
-   "lede": "We provide debt recovery solutions and other related services across a broad range of consumer receivables, including credit card, secured and unsecured automotive, telecom and utilities, and other receivables.",
+   "lede": "Jefferson Capital, Inc. is a Delaware corporation headquartered in Minneapolis, Minnesota.",
    "verdict": "approved",
-   "auditedAt": "2026-08-04"
+   "auditedAt": "2026-08-05"
   },
   "JCI": {
    "lede": "Johnson Controls International plc, headquartered in Cork, Ireland, is a global leader in smart, healthy and sustainable buildings, serving a wide range of customers around the globe.",
@@ -6352,9 +6352,9 @@
    "auditedAt": "2026-08-04"
   },
   "LIFE": {
-   "lede": "Ethos is a technology company transforming the life insurance industry.",
+   "lede": "Our platform is designed to enable agents to sell more policies and get paid quickly across a broad portfolio of products.",
    "verdict": "approved",
-   "auditedAt": "2026-08-04"
+   "auditedAt": "2026-08-05"
   },
   "LII": {
    "lede": "We are a global leader in energy-efficient climate-control solutions.",
@@ -6723,11 +6723,9 @@
    "auditedAt": "2026-08-04"
   },
   "MASI": {
-   "lede": "The Masimo Hospital Automation Platform facilitates data integration, connectivity and interoperability through solutions like Patient SafetyNet , Iris , iSirona , Replica and UniView to facilitate more efficient clinical workflows and to help clinicians provide the best possible care, both in-person and remotely.",
-   "verdict": "refused",
-   "defect": "product-not-company",
-   "reason": "Verified: entire sentence describes the Masimo Hospital Automation Platform product line (Patient SafetyNet, Iris, iSirona...), never Masimo the medical-device company. Product-not-company.",
-   "auditedAt": "2026-08-04"
+   "lede": "Our healthcare business develops, manufactures and markets a variety of noninvasive patient monitoring technologies, hospital automation and connectivity solutions, and remote monitoring devices.",
+   "verdict": "approved",
+   "auditedAt": "2026-08-05"
   },
   "MAT": {
    "lede": "Mattel is a leading global play and family entertainment company and owner of one of the most iconic brand portfolios in the world.",
@@ -7293,9 +7291,11 @@
    "auditedAt": "2026-08-04"
   },
   "MTRX": {
-   "lede": "We provide engineering, fabrication, construction, and maintenance services to support critical energy infrastructure and industrial markets.",
-   "verdict": "approved",
-   "auditedAt": "2026-08-04"
+   "lede": "Matrix Service Company deliver By scaling revenue and enhancing operational efficiency, we are building a resilient platform designed to generate consistent performance and long-term value for our shareholders.",
+   "verdict": "refused",
+   "defect": "parser artifact + aspiration",
+   "reason": "UPHOLD. Verified glued fragment with broken grammar ('Matrix Service Company deliver By scaling revenue...') followed by forward-looking platform aspiration. Artifact plus aspiration.",
+   "auditedAt": "2026-08-05"
   },
   "MTSI": {
    "lede": "We design, develop and manufacture differentiated semiconductor products and solutions for the Industrial and Defense, Data Center and Telecommunications industries for customers who demand high performance, quality and reliability.",
@@ -7440,11 +7440,9 @@
    "auditedAt": "2026-08-04"
   },
   "NCNO": {
-   "lede": "NCino Platform Works nCino offers a trusted platform of best-in-class, intelligent solutions that unites people and data to help FIs enhance strategic decision-making, improve risk management, and elevate customer satisfaction.",
-   "verdict": "refused",
-   "defect": "glued-heading",
-   "reason": "Verified: 'NCino Platform Works nCino offers a trusted platform...' glues a section heading onto the sentence, doubling the company name with broken capitalization. Artifact.",
-   "auditedAt": "2026-08-04"
+   "lede": "The nCino Platform combines industry, customer, and process data with advanced analytics and AI—including explainable AI, predictive capabilities, and generative AI—to deliver intelligent solutions that drive real business outcomes.",
+   "verdict": "approved",
+   "auditedAt": "2026-08-05"
   },
   "NDAQ": {
    "lede": "Nasdaq is a leading technology platform that powers the world's economies.",
@@ -7717,11 +7715,11 @@
    "auditedAt": "2026-08-04"
   },
   "NRC": {
-   "lede": "We have achieved a market leadership position through our nearly 45 years of industry innovation and experience, as well as our long-term, recurring revenue relationships with many of the healthcare industry's largest organizations.",
+   "lede": "We are a Delaware corporation headquartered in Lincoln, Nebraska. 2 Human Understanding Solutions Healthcare experiences are human experiences.",
    "verdict": "refused",
-   "defect": "no-business-description",
-   "reason": "Verified: 'We have achieved a market leadership position through... 45 years of industry innovation' names no product or service — leadership in an unnamed market. Not promotional-tone-on-a-description; there is no description.",
-   "auditedAt": "2026-08-04"
+   "defect": "parser artifact",
+   "reason": "UPHOLD. State-of-incorporation boilerplate, then stray '2', glued heading 'Human Understanding Solutions', and a market platitude. Artifact; no company description.",
+   "auditedAt": "2026-08-05"
   },
   "NRDS": {
    "lede": "NerdWallet Inc. provides consumers and small and mid-sized businesses with trusted guidance across a broad range of finance topics through a digital platform that integrates independent editorial content, comparison tools, data-driven product marketplaces, and access to regulated financial services offered through our subsidiaries.",
@@ -8406,11 +8404,11 @@
    "auditedAt": "2026-08-04"
   },
   "PCTY": {
-   "lede": "Our software solutions provide the following key benefits to our clients: Single Platform with Flexible Data The foundation of our platform is a single employee system of record and end-to-end capabilities to support the employee lifecycle, ensuring efficiency and compliance from recruitment to retirement.",
+   "lede": "We market and sell our products through our direct sales force.",
    "verdict": "refused",
-   "defect": "glued-heading",
-   "reason": "Verified: '...key benefits to our clients: Single Platform with Flexible Data The foundation of our platform is...' — heading welded mid-sentence. Parser artifact.",
-   "auditedAt": "2026-08-04"
+   "defect": "non-descriptive channel sentence",
+   "reason": "UPHOLD. A sales-channel sentence with zero identity content — never says what Paylocity makes or does. The bland industry fallback is strictly more informative, so the lede fails the bar.",
+   "auditedAt": "2026-08-05"
   },
   "PDFS": {
    "lede": "We provide comprehensive data solutions designed to empower organizations across the semiconductor and electronics ecosystems to improve the yield and quality of their products and operational efficiency for increased profitability.",
@@ -8597,11 +8595,9 @@
    "auditedAt": "2026-08-04"
   },
   "PKBK": {
-   "lede": "Parke Bancorp Inc. market Area Substantially all of the Bank's business is with customers in its market areas of Southern New Jersey, the Philadelphia area of Pennsylvania, and New York, New York.",
-   "verdict": "refused",
-   "defect": "glued-heading",
-   "reason": "Verified: 'Parke Bancorp Inc. market Area Substantially all of the Bank's business is...' — name glued to a 'Market Area' heading. Parser artifact.",
-   "auditedAt": "2026-08-04"
+   "lede": "The Bank is a full-service commercial bank and is chartered by the New Jersey Department of Banking and insured by the Federal Deposit Insurance Corporation.",
+   "verdict": "approved",
+   "auditedAt": "2026-08-05"
   },
   "PKE": {
    "lede": "Park is the exclusive North American distributor of ArianeGroup's RAYCARB C2B NG proprietary product.",
@@ -8655,11 +8651,11 @@
    "auditedAt": "2026-08-04"
   },
   "PLSE": {
-   "lede": "We expect to pursue more clinical evidenced-based milestones in connection with the limited market release of our percutaneous electrodes.",
+   "lede": "We expect to pursue more clinical evidenced-based milestones in connection with the limited market release of our percutaneous electrodes. 6 Our Cardiac Surgical Program Atrial fibrillation is a type of heart arrythmia, or irregular heartbeat, caused by faulty electrical signals in the heart.",
    "verdict": "refused",
-   "defect": "forward-plan",
-   "reason": "Verified: 'We expect to pursue more clinical evidenced-based milestones...' — forward plan about one product's limited market release; the company is never described.",
-   "auditedAt": "2026-08-04"
+   "defect": "forward plan + parser artifact",
+   "reason": "UPHOLD. Forward-looking clinical-milestone expectation, then stray '6', glued heading 'Our Cardiac Surgical Program', and a definition of atrial fibrillation. Aspiration plus artifact.",
+   "auditedAt": "2026-08-05"
   },
   "PLTR": {
    "lede": "Our software platforms provide the critical infrastructure needed to integrate our customers' data and operations and run their software in virtually any environment.",
@@ -9194,11 +9190,11 @@
    "auditedAt": "2026-08-04"
   },
   "REYN": {
-   "lede": "These factors generate consumer loyalty, which affords us the opportunity to develop and launch new products that expand usage occasions and transition our portfolio into adjacent categories.",
+   "lede": "Reynolds Cooking & Baking segment, we sell both branded and store brand aluminum foil, disposable aluminum pans, parchment paper, freezer paper, wax paper, butcher paper, plastic wrap, baking cups, oven bags and slow cooker liners.",
    "verdict": "refused",
-   "defect": "dangling-referent",
-   "reason": "Verified: opens 'These factors generate consumer loyalty...' — unresolved antecedent, mid-passage strategy prose; the business is never described.",
-   "auditedAt": "2026-08-04"
+   "defect": "segment + mid-sentence start",
+   "reason": "UPHOLD. Verified clipped segment sentence: 'Reynolds Cooking & Baking segment, we sell...' — mid-sentence start describing one segment of Reynolds Consumer Products.",
+   "auditedAt": "2026-08-05"
   },
   "REZI": {
    "lede": "We are a global manufacturer, developer, and distributor of technology-driven sensing and controls products and solutions that help homeowners and businesses stay connected and in control of their comfort, security, energy use, and smart living.",
@@ -9794,9 +9790,9 @@
    "auditedAt": "2026-08-04"
   },
   "SEZL": {
-   "lede": "Sezzle Platform offers a payments solution for consumers that instantly extends credit at the point-of-sale, allowing consumers to purchase and receive the ordered merchandise at the time of sale while paying in installments over time.",
+   "lede": "Our platform addresses the shortcomings in legacy payment offerings consumers face by providing a flexible, secure, omnichannel alternative with the structural benefit of \"creditizing\" traditional debit products.",
    "verdict": "approved",
-   "auditedAt": "2026-08-04"
+   "auditedAt": "2026-08-05"
   },
   "SF": {
    "lede": "We operate in the following segments: Global Wealth Management, Institutional Group, and Other.",
@@ -10406,9 +10402,9 @@
    "auditedAt": "2026-08-04"
   },
   "STX": {
-   "lede": "We are a leading provider of data storage technology and infrastructure solutions that enable enterprises and end users to confidently store and unlock the value of their data.",
+   "lede": "Seagate is a leading provider of mass-capacity data storage, accelerating the world's ability to harness the full value of data.",
    "verdict": "approved",
-   "auditedAt": "2026-08-04"
+   "auditedAt": "2026-08-05"
   },
   "STZ": {
    "lede": "We continued to strengthen our leadership position in the U.S. beer market as the #1 dollar share gainer in the overall U.S. beer market, and the #2 dollar share gainer in the high-end.",
@@ -10423,9 +10419,11 @@
    "auditedAt": "2026-08-04"
   },
   "SUN": {
-   "lede": "Our fuel distribution operations distribute over 15 billion gallons annually to approximately 11,000 Sunoco and partner branded locations, as well as independent dealers and commercial customers.",
-   "verdict": "approved",
-   "auditedAt": "2026-08-04"
+   "lede": "Our fuel distribution operations distribute over 15 billion gallons annually to approximately 11,000 Sunoco and partner branded locations, as well as independent dealers and commercial customers. 5 Index to Financial Statements The following simplified diagram depicts our organizational structure as of February 13, 2026.",
+   "verdict": "refused",
+   "defect": "parser artifact",
+   "reason": "UPHOLD. Good first sentence is followed by stray '5', glued 'Index to Financial Statements' heading, and a pointer to an organizational diagram. Parser artifact garbles the line.",
+   "auditedAt": "2026-08-05"
   },
   "SUNB": {
    "lede": "Sunbelt Rentals is the second largest equipment rental business in North America and the largest equipment rental company in the United Kingdom, in each case, by rental revenue.",
@@ -10548,9 +10546,11 @@
    "auditedAt": "2026-08-04"
   },
   "TASK": {
-   "lede": "TaskUs provides a suite of services to our clients that need assistance designing their customer experience programs and optimizing their operating environments, including Digital CX strategy, operational excellence and technology assessment and recommendations.",
-   "verdict": "approved",
-   "auditedAt": "2026-08-04"
+   "lede": "TaskUs provides the curricula, training processes, e-Learning systems, and programs that enable global brands to scale operations, make impactful decisions, build smarter process flows and create high-performing teams.",
+   "verdict": "refused",
+   "defect": "misleading emphasis",
+   "reason": "UPHOLD. Foregrounds curricula, training processes, and e-Learning systems; a careful reader would take TaskUs for a corporate-training vendor, not a digital outsourced CX/content-moderation provider. Misleading.",
+   "auditedAt": "2026-08-05"
   },
   "TBB": {
    "lede": "We are a leading provider of telecommunications and technology services globally.",
@@ -11330,9 +11330,9 @@
    "auditedAt": "2026-08-04"
   },
   "USAC": {
-   "lede": "We are one of the largest independent providers of natural gas compression services in the U.S. in terms of total compression fleet horsepower.",
+   "lede": "We provide compression services to our customers primarily in connection with infrastructure applications, including both allowing for the processing and transportation of natural gas through the domestic pipeline system and enhancing crude oil production through artificial lift processes.",
    "verdict": "approved",
-   "auditedAt": "2026-08-04"
+   "auditedAt": "2026-08-05"
   },
   "USB": {
    "lede": "U.S. Bancorp provides a full range of financial services, including lending and depository services, cash management, capital markets, and trust and investment management services.",
@@ -11453,11 +11453,11 @@
    "auditedAt": "2026-08-04"
   },
   "VECO": {
-   "lede": "Veeco Instruments Inc. markets Description Applicable Veeco Technologies Semiconductor The Semiconductor market refers to process steps in logic and memory applications where silicon wafers are processed.",
+   "lede": "Veeco technologies. 5 Markets Description Applicable Veeco Technologies Semiconductor The Semiconductor market refers to process steps in logic and memory applications where silicon wafers are processed.",
    "verdict": "refused",
-   "defect": "glued-heading",
-   "reason": "Verified: 'markets Description Applicable Veeco Technologies Semiconductor The Semiconductor market refers to...' — glued table headings, garbled. Artifact stands.",
-   "auditedAt": "2026-08-04"
+   "defect": "parser artifact",
+   "reason": "UPHOLD. Verified garble: 'Veeco technologies. 5 Markets Description Applicable Veeco Technologies Semiconductor...' — glued table headers plus a market definition. Parser artifact.",
+   "auditedAt": "2026-08-05"
   },
   "VEEV": {
    "lede": "Veeva is the leading provider of industry cloud solutions for the global life sciences industry.",
@@ -11820,11 +11820,11 @@
    "auditedAt": "2026-08-04"
   },
   "WEC": {
-   "lede": "WE generates and distributes electric energy to customers located in southeastern Wisconsin, east central Wisconsin, and northern Wisconsin.",
+   "lede": "UMERC generates and distributes electric energy to customers, including one iron ore mine owned by Tilden, located in the Upper Peninsula of Michigan.",
    "verdict": "refused",
-   "defect": "subsidiary-slice-not-company",
-   "reason": "Verified: 'WE generates and distributes electric energy to customers located in southeastern Wisconsin...' — 'WE' is the Wisconsin Electric subsidiary abbreviation and reads as a typo; describes one subsidiary's territory, not WEC Energy Group's multi-state holdings. Stands.",
-   "auditedAt": "2026-08-04"
+   "defect": "subsidiary, not the company",
+   "reason": "UPHOLD. Describes UMERC, a small Michigan subsidiary serving one iron ore mine, not WEC Energy Group. Subsidiary presented as the company.",
+   "auditedAt": "2026-08-05"
   },
   "WELL": {
    "lede": "Our properties include stand-alone properties that provide one level of service, combination properties that provide multiple levels of service and communities or campuses that provide a wide range of services.",
@@ -12076,18 +12076,16 @@
    "auditedAt": "2026-08-04"
   },
   "WT": {
-   "lede": "WisdomTree Products We offer products covering equity, commodities, fixed income, leveraged-and-inverse, cryptocurrency, currency, alternatives, and private assets.",
-   "verdict": "refused",
-   "defect": "glued-heading",
-   "reason": "Confirmed glued heading: 'WisdomTree Products' welded onto 'We offer products covering...'; visible parser artifact.",
-   "auditedAt": "2026-08-04"
+   "lede": "We are a global financial innovator, offering a diverse suite of ETPs, models and solutions, private market investments and digital asset-related products.",
+   "verdict": "approved",
+   "auditedAt": "2026-08-05"
   },
   "WTBA": {
-   "lede": "West Bancorporation, Inc. and Subsidiary The Company currently operates in the following markets: central Iowa, which is generally the greater Des Moines metropolitan area; eastern Iowa, which includes the area surrounding Iowa City and Coralville; and southern Minnesota, which includes the cities of Rochester, Owatonna, Mankato and St.",
+   "lede": "West Bank provides full-service community banking and trust services to customers located primarily in the following metropolitan areas: Des Moines, Coralville and Iowa City, Iowa, and Rochester, Owatonna, Mankato and St.",
    "verdict": "refused",
-   "defect": "glued-heading",
-   "reason": "Confirmed: title glue 'West Bancorporation, Inc. and Subsidiary The Company...' plus truncation at the abbreviation 'Mankato and St.'",
-   "auditedAt": "2026-08-04"
+   "defect": "truncated sentence",
+   "reason": "UPHOLD. Verified visible truncation: sentence ends dangling at 'Mankato and St.' — splitter cut on the period in 'St. Cloud'. Broken ending embarrasses the page.",
+   "auditedAt": "2026-08-05"
   },
   "WTFC": {
    "lede": "Our banks also offer home equity, consumer, and real estate loans, safe deposit facilities, ATMs, online and mobile banking and other innovative and traditional services specially tailored to meet the needs of customers in their market areas.",
@@ -12623,11 +12621,9 @@
    "auditedAt": "2026-08-04"
   },
   "AUNA": {
-   "lede": "Auna Way Our mission is to lead the transformation of healthcare throughout SSLA by expanding access to millions of Latin Americans and delivering high-quality, value-based, high-complexity, and affordable care, providing lifelong engagement for our population through both digital and physical channels.",
-   "verdict": "refused",
-   "defect": "glued-heading",
-   "reason": "Confirmed glued heading 'Auna Way' welded to a mission statement; aspiration, not fact.",
-   "auditedAt": "2026-08-04"
+   "lede": "Our model offers an accessible and integrated healthcare experience to a broad segment of the population in the markets we serve.",
+   "verdict": "approved",
+   "auditedAt": "2026-08-05"
   },
   "AUTL": {
    "lede": "We are an early commercial-stage biopharmaceutical company developing, manufacturing and delivering next-generation T cell therapies and candidates for the treatment of cancer and autoimmune diseases.",
@@ -13011,11 +13007,11 @@
    "auditedAt": "2026-08-04"
   },
   "CWCO": {
-   "lede": "Consists of water treatment plants for which we are the \"Certified Operator in Responsible Charge\" under operations and maintenance and other service agreements.",
+   "lede": "Consists of water treatment plants for which we are the \"Certified Operator in Responsible Charge\" under operations and maintenance and other service agreements. 4 Strategy We are a comprehensive water solutions company that serves a variety of customers through multiple product and service offerings.",
    "verdict": "refused",
-   "defect": "mid-sentence-fragment",
-   "reason": "Confirmed subjectless table/footnote fragment starting 'Consists of water treatment plants...'",
-   "auditedAt": "2026-08-04"
+   "defect": "parser artifact",
+   "reason": "UPHOLD. Subjectless fragment ('Consists of water treatment plants...'), then stray '4' and glued 'Strategy' heading before the real description. Parser artifact.",
+   "auditedAt": "2026-08-05"
   },
   "CX": {
    "lede": "We produce these products, we do so primarily for internal consumption and consequently have fairly insignificant third-party sales.",
@@ -13083,11 +13079,11 @@
    "auditedAt": "2026-08-04"
   },
   "ECX": {
-   "lede": "We collaborate with Qualcomm to offer flexible SoC portfolios for global markets.",
+   "lede": "We are one of the few players in the industry who can achieve full-stack capability from silicon to cloud, currently serving 18 global and local OEMs across 28 brands. 53 Venado Series Platform The Venado series is a cost-efficient intelligent cockpit computing platform designed to support a range of advanced digital cockpit functions.",
    "verdict": "refused",
-   "defect": "partnership-detail",
-   "reason": "Confirmed: single Qualcomm collaboration presented as identity; not what ECARX as a company is or does.",
-   "auditedAt": "2026-08-04"
+   "defect": "parser artifact",
+   "reason": "UPHOLD. Decent first sentence is garbled by stray '53' and glued 'Venado Series Platform' heading with a product-line description. Parser artifact.",
+   "auditedAt": "2026-08-05"
   },
   "EDU": {
    "lede": "We provide a wide variety of educational programs, services and products.",
@@ -13095,11 +13091,11 @@
    "auditedAt": "2026-08-04"
   },
   "ELPC": {
-   "lede": "Companhia Paranaense de Energia (COPEL) offer innovative and digital services and products.",
+   "lede": "Companhia Paranaense de Energia (COPEL) offer innovative and digital services and products. | | Form 20-F 2026_FY25 | COPEL and Subsidiaries | 20 COMPANHIA PARANAENSE DE ENERGIA COPEL and Subsidiaries Expand and disseminate ESG best practices.",
    "verdict": "refused",
-   "defect": "broken-grammar",
-   "reason": "Confirmed splice: 'Companhia Paranaense de Energia (COPEL) offer' agreement break, and the claim is content-free for an electric utility.",
-   "auditedAt": "2026-08-04"
+   "defect": "parser artifact",
+   "reason": "UPHOLD. Broken grammar ('COPEL offer...'), pipe-delimited table debris '| | Form 20-F 2026_FY25 |...', and a glued ESG fragment. Severe parser artifact.",
+   "auditedAt": "2026-08-05"
   },
   "ELVR": {
    "lede": "Elevra is among the largest hard rock lithium producers in North America based on the combined life-of-the-mine spodumene concentrate capacity, with an advantaged access to U.S. end markets.",
@@ -13244,18 +13240,18 @@
    "auditedAt": "2026-08-04"
   },
   "GRAB": {
-   "lede": "We operate our deliveries business currently do not require a delivery license for the delivery-partners on our platform or license for delivery platform operators.",
+   "lede": "Grab\" is a household name in the markets in which we operate that is synonymous with our offerings.",
    "verdict": "refused",
-   "defect": "broken-grammar",
-   "reason": "Confirmed garbled splice: 'We operate our deliveries business currently do not require a delivery license' is broken grammar from a licensing disclosure.",
-   "auditedAt": "2026-08-04"
+   "defect": "parser artifact + brand-recognition claim",
+   "reason": "UPHOLD. Leading stray quote mark ('Grab\" is...') plus a brand-familiarity claim that never says what the company does. Artifact and non-description.",
+   "auditedAt": "2026-08-05"
   },
   "GRABW": {
-   "lede": "We operate our deliveries business currently do not require a delivery license for the delivery-partners on our platform or license for delivery platform operators.",
+   "lede": "Grab\" is a household name in the markets in which we operate that is synonymous with our offerings.",
    "verdict": "refused",
-   "defect": "broken-grammar",
-   "reason": "Same as GRAB: garbled regulatory splice with broken grammar.",
-   "auditedAt": "2026-08-04"
+   "defect": "parser artifact + brand-recognition claim",
+   "reason": "UPHOLD. Identical to GRAB: stray quote-mark artifact and a household-name claim rather than a business description.",
+   "auditedAt": "2026-08-05"
   },
   "GRAN": {
    "lede": "Grande Capital is a licensed corporation under the SFO to engage in Type 1 and Type 6 regulated activities in Hong Kong.",
@@ -13992,9 +13988,11 @@
    "auditedAt": "2026-08-04"
   },
   "RBA": {
-   "lede": "Our marketplace brands include Ritchie Bros., the world's largest auctioneer of commercial assets and vehicles offering online bidding, and IAA, a leading global digital marketplace connecting vehicle buyers and sellers.",
-   "verdict": "approved",
-   "auditedAt": "2026-08-04"
+   "lede": "RB Global, Inc. 4 Competition We encounter different competitors by region, sector, and service across the entire suite of solutions we offer to our partners and customers.",
+   "verdict": "refused",
+   "defect": "parser artifact",
+   "reason": "UPHOLD. Company name glued to stray '4' and 'Competition' heading, followed by a sentence about competitors, not what RB Global does. Parser artifact.",
+   "auditedAt": "2026-08-05"
   },
   "RCT": {
    "lede": "We have developed and operate the RedAI infrastructure and associated products, facilitating the trading of everyday consumer supplies of FMCG products across business supply chains in Nigeria, South Africa, Argentina, Brazil and through joint ventures in T rkiye and Saudi Arabia.",
@@ -14094,18 +14092,18 @@
    "auditedAt": "2026-08-04"
   },
   "SHMD": {
-   "lede": "SCHMID has an established customer and manufacturing footprint in these markets and proven delivery capability in these markets which we believe provide a competitive advantage as customers reactivate projects and initiate new ones.",
+   "lede": "Our forecast for our order intake is based on three reinforcing growth factors that position SCHMID in its growing global target market: First, the continued expansion of Advanced Packaging, IC-Substrate and HDI-PCB capacity across Asia is driving sustained demand for SCHMID's production equipment.",
    "verdict": "refused",
-   "defect": "strategy-not-description",
-   "reason": "Verified: dangling 'in these markets' with no antecedent; competitive-advantage strategy that never says what SCHMID does.",
-   "auditedAt": "2026-08-04"
+   "defect": "forecast/strategy, not fact",
+   "reason": "UPHOLD. Opens with an order-intake forecast rationale — forward-looking market commentary, not a statement of what SCHMID is.",
+   "auditedAt": "2026-08-05"
   },
   "SHMDW": {
-   "lede": "SCHMID has an established customer and manufacturing footprint in these markets and proven delivery capability in these markets which we believe provide a competitive advantage as customers reactivate projects and initiate new ones.",
+   "lede": "Our forecast for our order intake is based on three reinforcing growth factors that position SCHMID in its growing global target market: First, the continued expansion of Advanced Packaging, IC-Substrate and HDI-PCB capacity across Asia is driving sustained demand for SCHMID's production equipment.",
    "verdict": "refused",
-   "defect": "strategy-not-description",
-   "reason": "Verified: identical dangling 'these markets' strategy sentence as 2574.",
-   "auditedAt": "2026-08-04"
+   "defect": "forecast/strategy, not fact",
+   "reason": "UPHOLD. Identical to SHMD: forward-looking order-intake forecast instead of a company description.",
+   "auditedAt": "2026-08-05"
   },
   "SID": {
    "lede": "Our subsidiary SWT is a long steel producer in Germany with annual production capacity of approximately 1.1 million tons of steel profiles, strengthening our steel products mix and geographical diversification.",
@@ -15864,9 +15862,11 @@
    "auditedAt": "2026-08-04"
   },
   "ISSC": {
-   "lede": "We operate in one business segment that designs, develops, manufactures, sells and services avionics products and systems for retrofit applications and Original Equipment Manufacturers.",
-   "verdict": "approved",
-   "auditedAt": "2026-08-04"
+   "lede": "Currently, we support multiple OEM platforms, including those with the Boeing Company, Eclipse Aerospace, Lockheed Martin, and Pilatus Aircraft. 5 Products We manufacture, market, and sell a wide range of high-value, advanced avionics solutions for commercial air transport, business aviation, and military customers.",
+   "verdict": "refused",
+   "defect": "stray page number + glued heading",
+   "reason": "UPHOLD. Verified stray '5' and glued 'Products' heading mid-line ('...Pilatus Aircraft. 5 Products We manufacture...'), and the opening clause is a mid-discussion lift. Parser artifact.",
+   "auditedAt": "2026-08-05"
   },
   "JBT": {
    "lede": "We are a leading and diversified global technology solutions and service provider to high-value segments of the food and beverage industry.",
@@ -15956,11 +15956,9 @@
    "auditedAt": "2026-08-04"
   },
   "ASC": {
-   "lede": "Our fuel-efficient operations are designed to enhance our operating performance and provide value-added service to our customers.",
-   "verdict": "refused",
-   "defect": "strategy-not-description",
-   "reason": "Verified: 'Our fuel-efficient operations are designed to enhance our operating performance' never states Ardmore is a tanker shipping company. Flag stands.",
-   "auditedAt": "2026-08-04"
+   "lede": "We are an integrated shipping company.",
+   "verdict": "approved",
+   "auditedAt": "2026-08-05"
   },
   "BBUC": {
    "lede": "The business continues to execute on a strong pipeline of new commercial opportunities including the full roll-out of its U.K. digital service offering early this year.",
@@ -16098,9 +16096,9 @@
    "auditedAt": "2026-08-04"
   },
   "SGHC": {
-   "lede": "Our global online sports betting and casino gaming services are delivered to customers by way of two primary product offerings: Betway , a single-brand premier online sports betting and casino offering, and Spin , a multi-brand online casino offering.",
+   "lede": "We are a global online sports betting and gaming operator with a mission to responsibly provide first-class entertainment to the worldwide online betting and gaming community.",
    "verdict": "approved",
-   "auditedAt": "2026-08-04"
+   "auditedAt": "2026-08-05"
   },
   "SII": {
    "lede": "Sprott Active Metal Miners ETF, an active ETF leveraging Sprott's specialized metals and mining leadership to invest in companies across the industry lifecycle.",
@@ -16232,6 +16230,63 @@
    "defect": "strategy-not-description",
    "reason": "Portfolio-assessment and acquisition strategy; never states what Honeywell is or does. Audit wf_5c173a8f, upheld by adversarial verify.",
    "auditedAt": "2026-08-04"
+  },
+  "CNA": {
+   "lede": "Our share of these involuntary risks is mandatory and generally a function of our respective share of the voluntary market by line of insurance in each state.",
+   "verdict": "refused",
+   "defect": "regulatory-policy sentence",
+   "reason": "UPHOLD. Regulatory sentence about mandatory involuntary-market participation with a dangling antecedent ('these involuntary risks'). Not a description of CNA Financial.",
+   "auditedAt": "2026-08-05"
+  },
+  "DBRG": {
+   "lede": "DigitalBridge Credit is our credit strategy that delivers credit solutions to corporate borrowers in the digital infrastructure sector globally through credit financing products, ranging from first and second lien term loans, and mezzanine debt to preferred equity.",
+   "verdict": "refused",
+   "defect": "product line, not the company",
+   "reason": "UPHOLD. Describes 'DigitalBridge Credit,' a single credit strategy, not DigitalBridge Group the digital-infrastructure investment manager. Product line, not company.",
+   "auditedAt": "2026-08-05"
+  },
+  "RYAM": {
+   "lede": "We can shift our cellulose manufacturing assets from cellulose specialties production to cellulose commodity fluff and viscose production.",
+   "verdict": "approved",
+   "auditedAt": "2026-08-05"
+  },
+  "BBAR": {
+   "lede": "We need to strengthen our empathy to listen, understand and deliver a consistently outstanding service to our clients, and implement new technologies, led by artificial intelligence, to anticipate our clients' needs and offer personalized solutions.",
+   "verdict": "refused",
+   "defect": "aspiration, not fact",
+   "reason": "UPHOLD. 'We need to strengthen our empathy to listen...' is pure strategic aspiration with no statement of what the bank is. Embarrassing as an opening line.",
+   "auditedAt": "2026-08-05"
+  },
+  "KEEL": {
+   "lede": "We have a portfolio of assets that include owned and operated power generation facilities with collocated Bitcoin Mining data centers, established grid interconnections within the wholesale electricity market administered by PJM Interconnection in Pennsylvania, and 100% renewable hydroelectric capacity in Canada and Washington state.",
+   "verdict": "approved",
+   "auditedAt": "2026-08-05"
+  },
+  "PRE": {
+   "lede": "The Group applies consistent valuation methodologies based on market-observable data where available, though these assessments involve inherent estimation.",
+   "verdict": "refused",
+   "defect": "accounting-policy sentence",
+   "reason": "UPHOLD. Fair-value accounting-policy sentence about valuation methodologies and estimation. Nothing about Prenetics the company.",
+   "auditedAt": "2026-08-05"
+  },
+  "TU": {
+   "lede": "Our innovative technology is expected to enhance reliability and uptime and increase operational efficiency by providing real-time visibility on at least 60,000 of FLO's chargers in Canada and the U.S., including the new FLO ultra-fast charger.",
+   "verdict": "refused",
+   "defect": "forward-looking single deal",
+   "reason": "UPHOLD. Forward-looking expectation about a specific arrangement on FLO's EV chargers — a prospective deal, not what Telus, a telecom, is or does.",
+   "auditedAt": "2026-08-05"
+  },
+  "DSGX": {
+   "lede": "Our pricing model provides our customers with flexibility in purchasing our solutions either on a subscription, transactional, or perpetual license basis.",
+   "verdict": "refused",
+   "defect": "pricing-terms sentence, not identity",
+   "reason": "UPHOLD. Pricing/licensing-terms sentence with no indication Descartes makes logistics software; zero identity content, so the bland fallback is strictly more informative.",
+   "auditedAt": "2026-08-05"
+  },
+  "NFGC": {
+   "lede": "New Found Gold is an emerging Canadian gold producer with assets in the Province of Newfoundland and Labrador.",
+   "verdict": "approved",
+   "auditedAt": "2026-08-05"
   }
  }
 }
