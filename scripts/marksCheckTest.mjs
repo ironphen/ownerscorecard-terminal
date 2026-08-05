@@ -78,5 +78,26 @@ const bank = (lines, extra = {}) => ({ ticker: "TEST", fy: 2025, currency: "USD"
   t("the note states pre-tax and why no after-tax is derived", m.note.includes("pre-tax"), undefined);
 }
 
+// THE FUNDING LEG ON THE SAME CARD (Build 4): four explicit states, fiscal-year-tied, and the
+// rung-b discipline — every number is XBRL or a quotation, never arithmetic on welded prose.
+{
+  const marked = { htmAmortizedCost: 20e9, htmFairValue: 12e9, stockholdersEquity: 30e9, deposits: 50e9, noninterestBearingDeposits: 13e9 };
+  const shown = marksOf(bank(marked), { weld: { fy: 2025, withheld: false, check: "pct", computedPct: "20.45", sentence: "…" } });
+  t("a checked weld percentage joins the card", shown.note.includes("about 20.45% of deposits uninsured"), undefined);
+  const verbatim = marksOf(bank(marked), { weld: { fy: 2025, withheld: false, sentence: "Uninsured deposits were…" } });
+  t("a verbatim-only weld points at the owner's read", verbatim.note.includes("in its own words"), undefined);
+  const netted = marksOf(bank(marked), { weld: { fy: 2025, withheld: true, reason: "netted basis" } });
+  t("a netted-basis withhold says so AND carries the NIB share the record does hold",
+    netted.note.includes("netted basis") && netted.note.includes("noninterest-bearing deposits are 26%"), undefined);
+  const bare = marksOf(bank(marked));
+  t("no weld at all → the NIB franchise leg stands alone", bare.note.includes("no stated uninsured figure") && bare.note.includes("26%"), undefined);
+  const stale = marksOf(bank(marked), { weld: { fy: 2023, withheld: false, check: "pct", computedPct: "31" } });
+  t("a stale-year weld never joins the card (fiscal-year tie)", !stale.note.includes("31%"), undefined);
+  const withFact = marksOf(bank(marked), { poolFact: "Measured across every US bank: none carries both." });
+  t("the pool fact joins only the warn-band cards", withFact.note.includes("none carries both"), undefined);
+  const smallMark = marksOf(bank({ ...marked, htmFairValue: 19e9 }), { poolFact: "Measured across every US bank: none carries both." });
+  t("a small mark carries no pool sentence", !smallMark.note.includes("none carries both"), undefined);
+}
+
 if (failed) { console.error(`\n❌ marksCheckTest: ${failed} failure(s).`); process.exit(1); }
 console.log("\n✅ marksCheckTest passed.");

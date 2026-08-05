@@ -22,6 +22,30 @@ import language from "../data/language.json";
 // those two pools.
 const SCORECARD_LISTING_POOL = [...(fundamentals.companies || []), ...(adrFundamentalsForListings.companies || [])];
 const SCORECARD_POOL_TICKERS = new Set(SCORECARD_LISTING_POOL.map((c) => String(c?.ticker || "").toUpperCase()));
+
+// The pool-level fact for the marks card (solvency-sight Build 4), MEASURED at build time, never
+// hardcoded: how many US banks today carry a mark above 30% of the tangible-basis equity shown,
+// how many state an uninsured share above 40%, and how many carry both — the configuration that
+// failed in 2023. The empty intersection is the ex-ante answer readers cannot get after the fact,
+// because failed banks leave the record. Same zero-fill tangible basis as the quick census; the
+// per-page card states its own exact basis.
+const POOL_MARKS_FACT = (() => {
+  let marked = 0, unins = 0, both = 0;
+  for (const c of fundamentals.companies || []) {
+    const s = Number(c.sic) || 0;
+    if (s < 6020 || s > 6199) continue;
+    const Lc = c.lines || {};
+    const te = Lc.stockholdersEquity != null ? Lc.stockholdersEquity - (Lc.goodwill || 0) - (Lc.intangibleAssets || 0) : null;
+    const gap = Lc.htmAmortizedCost > 0 && Lc.htmFairValue != null ? Lc.htmAmortizedCost - Lc.htmFairValue : null;
+    const share = gap != null && te > 0 ? gap / te : null;
+    const u = language?.companies?.[String(c.ticker).toUpperCase()]?.uninsuredDeposits;
+    const pct = u && !u.withheld && u.computedPct != null ? Number(u.computedPct) : null;
+    if (share != null && share >= 0.30) marked++;
+    if (pct != null && pct >= 40) unins++;
+    if (share != null && share >= 0.30 && pct != null && pct >= 40) both++;
+  }
+  return `Measured across every US bank on the record today: ${marked} carry a mark above 30% of tangible-basis equity, ${unins} state an uninsured share above 40%, and ${both === 0 ? "none carries both" : `${both} carry both`} — the configuration that failed in 2023.`;
+})();
 import Term from "./Term.astro";
 
 const { company, sample = false, peers: peersProp } = Astro.props;
@@ -61,7 +85,11 @@ const { sections } =
   : fk === "insurer" ? buildInsurerScorecard(company, financialSubtype(company))
   : fk === "managedCare" ? buildManagedCareScorecard(company)
   : fk === "fee" ? buildFeeScorecard(company, financialSubtype(company))
-  : fk === "bank" ? buildFinancialScorecard(company, financialSubtype(company), { marksSuppressed: isSecondaryListing })
+  : fk === "bank" ? buildFinancialScorecard(company, financialSubtype(company), {
+      marksSuppressed: isSecondaryListing,
+      weld: language?.companies?.[String(company?.ticker || "").toUpperCase()]?.uninsuredDeposits ?? null,
+      poolFact: POOL_MARKS_FACT,
+    })
   : company.rateRegulated ? buildUtilityScorecard(company)
   : buildScorecard(company);
 // The filing's own pricing words, threaded into the moat report so the margin/pricing-power line

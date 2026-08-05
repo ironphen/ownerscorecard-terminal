@@ -84,7 +84,11 @@ export function provisionRate(L) {
 // FGBIP was one of the eleven scariest cells in the survey's census, on a preferred-series page
 // the no-bench ruling already covers. The caller (Scorecard.astro) detects secondary listings the
 // same way the bench does and suppresses the check; the common-stock page carries it.
-export function buildFinancialScorecard(company, subtype = "bank", { marksSuppressed = false } = {}) {
+// opts.weld: the company's uninsured-deposits language read (language.json, Build 6 of the
+// qualitative survey), injected pickNote-style so this lib stays plain-node runnable. opts.poolFact:
+// the build-time measured sentence about how many banks in the whole pool carry the dangerous
+// pairing (computed in Scorecard.astro, never hardcoded — it drifts with the data).
+export function buildFinancialScorecard(company, subtype = "bank", { marksSuppressed = false, weld = null, poolFact = null } = {}) {
   const $ = (v) => fmtMoney(v, company?.currency || "USD");
   const L = company?.lines || {};
   const none = (title, note, concept = null) => ({ title, concept, value: "—", formula: "", tone: "none", label: "Not enough data", note });
@@ -322,6 +326,29 @@ export function buildFinancialScorecard(company, subtype = "bank", { marksSuppre
   // failed, because failed banks deregister and leave the pool. The measured figure is the
   // record; the harshest word never prints. Labels stay conditional ("…if realized") and the top
   // band caps at warn.
+  // THE FUNDING LEG, ON THE SAME CARD (solvency-sight Build 4): the 2023 failures were this mark
+  // MEETING deposit flight, yet the two legs lived in different components with no linkage — the
+  // survey found only 3 of the 11 scariest mark cells carried a visible uninsured read, and BAC,
+  // the largest mark, none. The leg's state is now explicit in one of four shapes: the filer's
+  // checked percentage; the filer's own words (quoted in the owner's read); withheld on a netted
+  // basis the record cannot verify — with the noninterest-bearing share, which the record DOES
+  // carry, as the honest franchise leg; or no stated figure at all. Prose-welded numbers still
+  // never feed arithmetic (the rung-b ruling): every number here is either XBRL or a quotation.
+  const weldTies = weld && String(weld.fy) === String(company?.fy) ? weld : null;
+  const nibOfDeposits = L.noninterestBearingDeposits != null && L.deposits > 0 ? L.noninterestBearingDeposits / L.deposits : null;
+  let fundingLeg = "";
+  if (htmGap != null && htmGap > 0) {
+    if (weldTies && !weldTies.withheld && weldTies.check === "pct" && weldTies.computedPct != null) {
+      fundingLeg = ` The funding leg beside it: the filer states about ${weldTies.computedPct}% of deposits uninsured, checked against the deposits line the record carries.`;
+    } else if (weldTies && !weldTies.withheld && weldTies.sentence) {
+      fundingLeg = " The funding leg beside it: the filer states its uninsured deposits in its own words, quoted in the owner's read on this page.";
+    } else if (weldTies && weldTies.withheld) {
+      fundingLeg = ` The funding leg: the filer states uninsured deposits only on a netted basis the record cannot verify — withheld rather than shown unchecked${nibOfDeposits != null ? `; the record's own franchise leg: noninterest-bearing deposits are ${pc(nibOfDeposits)} of the base` : ""}.`;
+    } else if (nibOfDeposits != null) {
+      fundingLeg = ` The record carries no stated uninsured figure for this filer; its franchise leg: noninterest-bearing deposits, ${pc(nibOfDeposits)} of the base.`;
+    }
+  }
+  const poolLeg = htmShare != null && htmShare > 0.15 && poolFact ? ` ${poolFact}` : "";
   const marksCheck = htmShare == null
     ? null
     : {
@@ -331,7 +358,7 @@ export function buildFinancialScorecard(company, subtype = "bank", { marksSuppre
       formula: `Pre-tax, as filed for FY${company?.fy ?? "—"}: HTM at cost ${$(L.htmAmortizedCost)} − fair value ${$(L.htmFairValue)} = ${$(htmGap)}${htmGap > 0 ? `, against ${basisLabel} ${$(denom)}` : ""}${recordLeg}`,
       tone: htmShare <= 0.05 ? "good" : htmShare <= 0.15 ? "ok" : "warn",
       label: htmShare <= 0.05 ? "Marks are small" : htmShare <= 0.15 ? "Manageable" : htmShare <= 0.3 ? "A real dent if realized" : "Large if ever realized",
-      note: "Bonds held to maturity are carried at cost, so rate rises open a gap that only shows in this disclosure. Stated equity already carries every available-for-sale mark through accumulated other comprehensive income; the held-to-maturity book's gap sits outside equity, which is why it is read here. The figure is pre-tax as the filer states it — the true after-tax dent depends on a deferred-tax position the record does not carry. The gap never hits earnings if the bank can hold on, which is precisely why the reader checks whether it could be forced to sell: the 2023 bank failures were this number meeting deposit flight.",
+      note: `Bonds held to maturity are carried at cost, so rate rises open a gap that only shows in this disclosure. Stated equity already carries every available-for-sale mark through accumulated other comprehensive income; the held-to-maturity book's gap sits outside equity, which is why it is read here. The figure is pre-tax as the filer states it — the true after-tax dent depends on a deferred-tax position the record does not carry. The gap never hits earnings if the bank can hold on, which is precisely why the reader checks whether it could be forced to sell: the 2023 bank failures were this number meeting deposit flight.${fundingLeg}${poolLeg}`,
     };
 
   return {
