@@ -49,11 +49,11 @@ disagreement — Berkshire's page must show Buffett's number or nothing. Fix the
 reserves (13 of 14 measured names have a net leg) with the direction note conditional.
 Canaries: BRK-B never prints $17.9B; HIG never prints $4.8B; PGR/TRV/CB unchanged to the dollar.
 
-**Build 2 — the fourth HTM tag generation** in banksLines.mjs stitch + bank-pool heal. Restores
+**Build 2 — SHIPPED 409fe85+f78f114** (187 banks carry the pair; C $10.3B/USB $9.1B told; seam gate needs ≥2 contested years). Original: **the fourth HTM tag generation** in banksLines.mjs stitch + bank-pool heal. Restores
 the cost leg for ~39 rows / 33 CIKs incl. C ($10.3B) and USB ($9.1B). Zero formula risk.
 Register any new line in BANK_LINE_NAMES or carry-over resurrects stale values.
 
-**Build 3 — the HTM check made honest.** Signed heading ("HTM: amortized cost − fair value" —
+**Build 3 — SHIPPED 9614e7e** (pre-tax prefix, denominator ladder 62/58/30/14, tones capped, record leg, FGBIP suppressed, marksCheckTest 15 pins). Original: **the HTM check made honest.** Signed heading ("HTM: amortized cost − fair value" —
 10 banks carry gains); pre-tax stated in the formula line; denominator basis stated per bank
 ("tangible common" only where preferred is present and netted; tangible column WITHHELD where
 intangibles are untagged — missing is not zero, no backfill); strike the verdict tones
@@ -70,7 +70,7 @@ REFUSED_ON_BENCH with digits); the sector table. SIC hygiene: exclude 6199 whole
 rows), admit the brokers that carry the disclosure (SCHW's $126B book is the 2023 canon), CIK
 dedupe (288 issuers, not 337 rows).
 
-**Build 4 — the SVB read on one card.** Mark/TE beside the deposit-franchise leg with its state
+**Build 4 — SHIPPED 8a5e1c4** (4 funding states fy-tied; pool fact measured at build: none carries both). Original: **the SVB read on one card.** Mark/TE beside the deposit-franchise leg with its state
 explicit: shown uninsured % (weld), the filer's verbatim sentence, "withheld: netted basis"
 (BAC's state today), or "no HTM book." Where the weld is withheld, the noninterest-bearing
 deposit share from lines is the honest franchise leg. The measured fact that ZERO pool banks
@@ -78,10 +78,10 @@ today combine a ≥30% mark with ≥40% uninsured funding is itself the product 
 complete denominator, printed. Prose-welded numbers still never feed arithmetic (rung-b ruling
 stands until a basis-divergence study).
 
-**Build 5 — cost of float on the two-year average** (the letters' denominator), point-in-time
+**Build 5 — SHIPPED 873d70b** (29/29 rows averaged; PGR ÷ two-year average float $44.4B). Original: **cost of float on the two-year average** (the letters' denominator), point-in-time
 kept only as a labeled fallback. Both legs same fiscal year, per the existing priorCof rule.
 
-**Build 6 — the through-cycle records (the genuinely new artifact).** Float growth and average
+**Build 6 — SHIPPED 3df273c** (TenYear float row on full arithmetic, one basis per row, fuller-record-wins; cost-of-float row per year on the average; PGR $11.7B→$47.1B at −8.2%…−19.8%; HIG ten-year gross record recovered). Original: **the through-cycle records (the genuinely new artifact).** Float growth and average
 cost of float across the record: computable for 62 issuers with NO new extraction (5-yr for 44).
 Two tables, never one: underwriting float (with combined ratio alongside) and spread float
 (with crediting spread) — the category-error kill survives against any single sortable column.
