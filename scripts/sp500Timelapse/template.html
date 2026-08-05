@@ -1,0 +1,397 @@
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>What sits at the top of the S&P 500</title>
+<style>
+  /*__FONTS__*/
+
+  :root {
+    --paper: #fcfcfa;
+    --paper-2: #f6f5f1;
+    --rule: #e4e3dd;
+    --ink: #18191d;
+    --muted: #5b616c;
+    --faint: #8b909a;
+    --navy: #1b3b6f;
+    --serif: "Fraunces", Georgia, "Times New Roman", serif;
+    --sans: "Inter", system-ui, -apple-system, sans-serif;
+  }
+
+  /* The stage is a printed sheet and stays paper in either theme — inverting
+     it would break the identity it shares with the video. Only the surround,
+     the light table the sheet sits on, follows the viewer. */
+  :root { --surround: #e8e7e1; }
+  @media (prefers-color-scheme: dark) { :root { --surround: #1a1b1f; } }
+  :root[data-theme="dark"] { --surround: #1a1b1f; }
+  :root[data-theme="light"] { --surround: #e8e7e1; }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--surround); }
+  body { font-family: var(--sans); color: var(--ink); }
+
+  /* The stage is a fixed 1920x1080 canvas, scaled to fit whatever it is
+     dropped into. The video renderer screenshots it at 1:1. */
+  #fit { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+  #stage {
+    width: 1920px; height: 1080px; flex: none;
+    background: var(--paper); position: relative; overflow: hidden;
+    transform-origin: center center;
+  }
+  body.render #fit { min-height: 0; }
+  body.render, body.render html { background: var(--paper); }
+
+  /* ---- masthead ---- */
+  .head { position: absolute; left: 72px; top: 56px; right: 72px; }
+  .kicker {
+    font-size: 17px; letter-spacing: .18em; text-transform: uppercase;
+    color: var(--faint); font-weight: 600;
+  }
+  .title {
+    font-family: var(--serif); font-size: 52px; font-weight: 600;
+    letter-spacing: -.015em; margin-top: 10px; line-height: 1.05;
+  }
+  .rule { position: absolute; left: 72px; right: 72px; top: 186px; height: 1px; background: var(--rule); }
+
+  /* ---- left rail ---- */
+  .rail { position: absolute; left: 72px; top: 230px; width: 470px; }
+  .year {
+    font-family: var(--serif); font-size: 168px; font-weight: 600;
+    line-height: .9; letter-spacing: -.04em; font-variant-numeric: tabular-nums;
+  }
+  .note {
+    font-family: var(--serif); font-size: 25px; line-height: 1.42; color: var(--ink);
+    margin-top: 26px; min-height: 140px;
+  }
+
+  .stat { margin-top: 26px; padding-top: 20px; border-top: 1px solid var(--rule); }
+  .stat-label {
+    font-size: 14px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--faint); font-weight: 600;
+  }
+  .stat-value {
+    font-family: var(--serif); font-size: 44px; font-weight: 600; margin-top: 6px;
+    font-variant-numeric: tabular-nums; letter-spacing: -.02em;
+  }
+  .stat-value small { font-size: 22px; color: var(--muted); font-weight: 500; }
+  .stat-sub { font-size: 16px; color: var(--muted); margin-top: 4px; line-height: 1.35; }
+
+  /* the mix bar: sector composition of the top ten */
+  .mix { display: flex; height: 16px; margin-top: 10px; border-radius: 2px; overflow: hidden; background: var(--paper-2); }
+  .mix i { display: block; height: 100%; }
+
+  /* ---- the ranked table ---- */
+  .board { position: absolute; left: 596px; top: 224px; right: 72px; height: 790px; }
+  .row { position: absolute; left: 0; right: 0; height: 62px; will-change: transform, opacity; }
+  .rank {
+    position: absolute; left: 0; top: 20px; width: 42px; text-align: right;
+    font-size: 20px; color: var(--faint); font-variant-numeric: tabular-nums; font-weight: 600;
+  }
+  .bar {
+    position: absolute; left: 62px; top: 8px; height: 44px; border-radius: 2px;
+    display: flex; align-items: center; padding-left: 16px; min-width: 4px;
+  }
+  .bar b {
+    font-family: var(--serif); font-size: 26px; font-weight: 600; color: #fff;
+    white-space: nowrap; letter-spacing: -.005em;
+  }
+  /* When a bar is too short to hold its own name, the label sits outside it. */
+  .bar.outside b { color: var(--ink); position: absolute; left: calc(100% + 14px); }
+  .meta {
+    position: absolute; top: 16px; font-size: 17px; color: var(--muted); white-space: nowrap;
+  }
+  .meta em { font-style: normal; color: var(--faint); }
+  .wt { font-variant-numeric: tabular-nums; color: var(--ink); font-weight: 600; }
+
+  /* ---- footer ---- */
+  .foot {
+    position: absolute; left: 72px; right: 72px; bottom: 34px;
+    display: flex; justify-content: space-between; align-items: flex-end; gap: 24px;
+  }
+  .legend { display: flex; flex-wrap: wrap; gap: 8px 18px; max-width: 1300px; }
+  .legend span { font-size: 15px; color: var(--muted); display: flex; align-items: center; gap: 7px; }
+  .legend i { width: 11px; height: 11px; border-radius: 2px; display: block; }
+  .source { font-size: 14px; color: var(--faint); text-align: right; line-height: 1.4; flex: none; }
+
+  /* progress hairline across the bottom edge */
+  .prog { position: absolute; left: 0; bottom: 0; height: 3px; background: var(--navy); }
+
+  /* ---- player chrome (screen only; hidden while rendering video) ---- */
+  .player {
+    position: fixed; left: 50%; transform: translateX(-50%); bottom: 18px; z-index: 10;
+    display: flex; align-items: center; gap: 14px; padding: 10px 16px;
+    background: rgba(24,25,29,.92); border-radius: 999px; color: #fff;
+    font-size: 14px; box-shadow: 0 6px 24px rgba(0,0,0,.25);
+  }
+  body.render .player { display: none; }
+  .player button {
+    background: #fff; color: #18191d; border: 0; border-radius: 999px;
+    width: 34px; height: 34px; font-size: 15px; cursor: pointer; font-family: var(--sans);
+  }
+  .player input[type=range] { width: 320px; accent-color: #fff; cursor: pointer; }
+  .player .t { font-variant-numeric: tabular-nums; opacity: .8; min-width: 84px; }
+</style>
+
+<div id="fit"><div id="stage">
+  <div class="head">
+    <div class="kicker">Owner's Scorecard &middot; the index at the top</div>
+    <div class="title">What America's largest companies actually sold</div>
+  </div>
+  <div class="rule"></div>
+
+  <div class="rail">
+    <div class="year" id="year">1957</div>
+    <div class="note" id="note"></div>
+
+    <div class="stat">
+      <div class="stat-label">Largest company that year</div>
+      <div class="stat-value" id="leadName">—</div>
+      <div class="stat-sub" id="leadSub">—</div>
+    </div>
+
+    <div class="stat">
+      <div class="stat-label">Top ten as a share of the whole index</div>
+      <div class="stat-value" id="conc">—</div>
+      <div class="mix" id="mix"></div>
+      <div class="stat-sub" id="atoms">—</div>
+    </div>
+  </div>
+
+  <div class="board" id="board"></div>
+
+  <div class="foot">
+    <div class="legend" id="legend"></div>
+    <div class="source">
+      Year-end standing; 2026 is mid-year.<br />
+      Bar length is share of total index value — approximate before 1990.
+    </div>
+  </div>
+  <div class="prog" id="prog"></div>
+</div></div>
+
+<div class="player">
+  <button id="play" aria-label="Play or pause">&#9654;</button>
+  <input id="scrub" type="range" min="0" max="1000" value="0" />
+  <span class="t" id="clock">0.0s</span>
+  <button id="restart" aria-label="Restart" style="font-size:13px">&#8635;</button>
+</div>
+
+<script>
+const DATA = /*__DATA__*/;
+
+const HOLD = 1900;    // ms a year sits still
+const MORPH = 1300;   // ms to cross from one year to the next
+const TAIL = 2600;    // extra beat on the final frame
+const ROW_H = 70;
+const OFFSCREEN = 10.6;   // slot a company falls to when it drops out
+
+const frames = DATA.frames;
+const SEG = HOLD + MORPH;
+const DURATION = frames.length * SEG - MORPH + TAIL;
+
+const stage = document.getElementById('stage');
+const board = document.getElementById('board');
+
+/* ---------- one-time chrome ---------- */
+document.getElementById('legend').innerHTML = Object.entries(DATA.sectors)
+  .map(([k, s]) => `<span><i style="background:${s.color}"></i>${s.label}</span>`).join('');
+
+/* Rows are pooled and reused so the DOM stays stable across seeks — the
+   renderer needs frame N to depend only on t, never on what came before. */
+const pool = new Map();
+function rowFor(name) {
+  let r = pool.get(name);
+  if (r) return r;
+  r = document.createElement('div');
+  r.className = 'row';
+  r.innerHTML = '<div class="rank"></div><div class="bar"><b></b></div><div class="meta"></div>';
+  board.appendChild(r);
+  pool.set(name, r);
+  return r;
+}
+
+const easeInOut = p => p < .5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
+const lerp = (a, b, p) => a + (b - a) * p;
+
+function indexBy(frame) {
+  const m = new Map();
+  frame.companies.forEach((c, i) => m.set(c.name, { c, slot: i }));
+  return m;
+}
+
+function fmtCap(b) {
+  return b >= 1000 ? '$' + (b / 1000).toFixed(1) + ' trillion' : '$' + Math.round(b) + ' billion';
+}
+function fmtEmp(n) {
+  return n >= 1000 ? Math.round(n / 1000) + ',000' : String(n);
+}
+
+/* Market value carried per employee — the number that moves furthest. */
+function perEmployee(lead) {
+  const v = (lead.cap * 1e9) / lead.employees;
+  if (v >= 1e6) return '$' + (v / 1e6).toFixed(v >= 10e6 ? 0 : 1) + 'M';
+  if (v >= 1e3) return '$' + Math.round(v / 1e3) + 'k';
+  return '$' + Math.round(v);
+}
+
+function atomsShare(frame) {
+  const tot = frame.companies.reduce((s, c) => s + c.weight, 0);
+  const mk = frame.companies.filter(c => c.atoms).reduce((s, c) => s + c.weight, 0);
+  return { pct: mk / tot * 100, n: frame.companies.filter(c => c.atoms).length };
+}
+
+function mixHTML(frame) {
+  const tot = frame.companies.reduce((s, c) => s + c.weight, 0);
+  const by = new Map();
+  for (const c of frame.companies) by.set(c.sector, (by.get(c.sector) || 0) + c.weight);
+  return [...by.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .map(([k, w]) => `<i style="width:${w / tot * 100}%;background:${DATA.sectors[k].color}"></i>`)
+    .join('');
+}
+
+/* ---------- the draw ---------- */
+// Bars stop well short of the board's right edge: the weight and the line of
+// business sit after the bar, and the widest of those needs room to breathe.
+const MAX_W = 880;
+const SCALE = 7.8;      // the widest weight on the record, in percent
+
+function draw(t) {
+  t = Math.max(0, Math.min(DURATION, t));
+  let i = Math.min(frames.length - 1, Math.floor(t / SEG));
+  const within = t - i * SEG;
+  const morphing = within > HOLD && i < frames.length - 1;
+  const p = morphing ? easeInOut((within - HOLD) / MORPH) : 0;
+
+  const A = frames[i];
+  const B = morphing ? frames[i + 1] : A;
+  const ia = indexBy(A), ib = indexBy(B);
+
+  // Text panel snaps at the midpoint of the morph so it never reads as a blur.
+  const shown = p > .5 ? B : A;
+  document.getElementById('year').textContent = shown.year;
+  document.getElementById('note').textContent = shown.note;
+
+  const lead = shown.leader;
+  document.getElementById('leadName').innerHTML =
+    `${lead.name} <small>${fmtCap(lead.cap)}</small>`;
+  document.getElementById('leadSub').textContent =
+    `${fmtEmp(lead.employees)} employees — ${perEmployee(lead)} of market value per person on the payroll`;
+
+  const conc = lerp(A.top10Share, B.top10Share, p);
+  document.getElementById('conc').textContent = conc.toFixed(1) + '%';
+  document.getElementById('mix').innerHTML = mixHTML(shown);
+
+  const a = atomsShare(shown);
+  document.getElementById('atoms').textContent =
+    `${a.n} of the ten make a physical thing — ${Math.round(a.pct)}% of the top ten's value`;
+
+  document.getElementById('prog').style.width = (t / DURATION * 100) + '%';
+
+  // Every name appearing on either side of the morph gets drawn.
+  const names = new Set([...ia.keys(), ...ib.keys()]);
+  for (const [name, row] of pool) if (!names.has(name)) row.style.opacity = '0';
+
+  // Interpolate each name's weight first, then rank by the interpolated
+  // value. Slots stay a permutation, so two companies swapping places pass
+  // through each other in the ordering instead of landing on the same row.
+  // A name leaving the table shrinks toward zero and sinks; a name arriving
+  // grows from zero and rises.
+  const lanes = [];
+  for (const name of names) {
+    const ea = ia.get(name), eb = ib.get(name);
+    const weight = lerp(ea ? ea.c.weight : 0, eb ? eb.c.weight : 0, p);
+    lanes.push({
+      name, ea, eb, weight,
+      c: (eb && p > .5) || !ea ? eb.c : ea.c,
+      // Ties are common in the estimates; hold the listed order through them.
+      tie: lerp(ea ? ea.slot : OFFSCREEN, eb ? eb.slot : OFFSCREEN, p),
+    });
+  }
+  lanes.sort((x, y) => y.weight - x.weight || x.tie - y.tie);
+
+  lanes.forEach((lane, slot) => {
+    const { name, ea, eb, weight, c } = lane;
+    // Fade only across the outer half of the travel, so entries and exits
+    // are legible rather than popping.
+    let opacity = 1;
+    if (!ea) opacity = Math.min(1, p / .55);
+    if (!eb) opacity = Math.max(0, 1 - p / .55);
+    if (slot > 10) opacity = 0;
+
+    const row = rowFor(name);
+    const sector = DATA.sectors[c.sector];
+    const w = Math.max(4, weight / SCALE * MAX_W);
+
+    row.style.transform = `translateY(${slot * ROW_H}px)`;
+    row.style.opacity = String(opacity);
+
+    const rank = row.firstChild;
+    const bar = rank.nextSibling;
+    const meta = bar.nextSibling;
+
+    rank.textContent = slot < 10 ? String(slot + 1) : '';
+    bar.style.width = w + 'px';
+    bar.style.background = sector.color;
+
+    const label = bar.firstChild;
+    if (label.textContent !== name) label.textContent = name;
+    // Measured rather than estimated from character count: Fraunces is
+    // proportional, and a guess puts "JPMorgan Chase" on top of its own weight.
+    const labelW = label.getBoundingClientRect().width;
+    const fits = w > labelW + 34;
+    bar.className = fits ? 'bar' : 'bar outside';
+
+    meta.style.left = (62 + w + (fits ? 0 : labelW + 26) + 18) + 'px';
+    meta.innerHTML = `<span class="wt">${weight.toFixed(1)}%</span> <em>&middot;</em> ${c.does}`;
+  });
+}
+
+/* ---------- fit to viewport ---------- */
+function fit() {
+  if (document.body.classList.contains('render')) return;
+  const s = Math.min(window.innerWidth / 1920, (window.innerHeight - 70) / 1080);
+  stage.style.transform = `scale(${s})`;
+  document.getElementById('fit').style.height = (1080 * s) + 'px';
+  document.getElementById('fit').style.minHeight = '0';
+}
+window.addEventListener('resize', fit);
+fit();
+
+/* ---------- playback (screen only) ---------- */
+let t = 0, playing = false, last = 0;
+const scrub = document.getElementById('scrub');
+const clock = document.getElementById('clock');
+const playBtn = document.getElementById('play');
+
+function tick(now) {
+  if (playing) {
+    if (last) t = Math.min(DURATION, t + (now - last));
+    last = now;
+    if (t >= DURATION) { playing = false; playBtn.innerHTML = '&#9654;'; }
+    paint();
+  }
+  requestAnimationFrame(tick);
+}
+function paint() {
+  draw(t);
+  scrub.value = String(Math.round(t / DURATION * 1000));
+  clock.textContent = (t / 1000).toFixed(1) + 's / ' + (DURATION / 1000).toFixed(0) + 's';
+}
+playBtn.onclick = () => {
+  if (t >= DURATION) t = 0;
+  playing = !playing; last = 0;
+  playBtn.innerHTML = playing ? '&#10073;&#10073;' : '&#9654;';
+};
+document.getElementById('restart').onclick = () => { t = 0; paint(); };
+scrub.oninput = () => { t = scrub.value / 1000 * DURATION; playing = false; playBtn.innerHTML = '&#9654;'; paint(); };
+requestAnimationFrame(tick);
+
+/* ---------- renderer hooks ---------- */
+window.__duration = DURATION;
+window.__seek = ms => { playing = false; t = ms; draw(ms); };
+window.__renderMode = () => {
+  document.body.classList.add('render');
+  stage.style.transform = 'none';
+  document.getElementById('fit').style.height = '1080px';
+};
+paint();
+</script>

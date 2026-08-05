@@ -1,0 +1,311 @@
+{
+  "title": "What sits at the top of the S&P 500",
+  "subtitle": "The ten largest companies in the index, every five years since it began",
+  "convention": "Year-end standing. 1957 is the index's first year (it was expanded to 500 names in March 1957). The final frame is mid-2026.",
+  "methodology": {
+    "claim": "The ordered list of names in each frame is the sourced claim. Sector tags follow from what each company primarily sold in that year, not from a modern GICS label applied backwards.",
+    "weights": "Bar lengths are each name's estimated share of total index market value. Values carrying \"est\": true are reconstructions, not reported figures. Documented anchors: AT&T at roughly 6.5% of a $172B index in 1957; IBM and Exxon tied near 2.9% with GE at 2.3% in 1990; Nvidia 7.5%, Microsoft 6.7%, Apple 5.6%, Amazon 4.3%, Alphabet 4.0% in 2025.",
+    "top10Share": "Documented where cited (about 19% in 1990, about 23% at year-end 2000, about 32.5% in late 2025, above 37% in 2026). Other years are the sum of the estimated weights and should be read as approximate.",
+    "conflicts": "Sources disagree on 1990: one ordering puts Exxon, then GE, then IBM; a separate set of weights has IBM and Exxon tied near 2.9% with GE at 2.3%. The ordering is the better-attested claim, so the weights were fitted to it rather than the other way round.",
+    "employees": "Headcount is the total employees of the single largest company that year, global, approximate, drawn from the company's own reporting for that era.",
+    "atoms": "\"Makes a physical thing\" marks companies whose primary product is a good that is manufactured, grown, or pulled out of the ground. Retail and distribution are marked false: selling someone else's goods is not making them. Software, search, advertising, banking, insurance, and telephone service are false. Fabless chip designers are true, since the product shipped is silicon.",
+    "caveat": "Rankings for 1957 through 1985 are drawn from published financial history rather than a single machine-readable series. Treat the ordering as solid and the exact figures as approximate."
+  },
+  "sectors": {
+    "energy": { "label": "Energy", "color": "#3f6b4a" },
+    "materials": { "label": "Materials & chemicals", "color": "#7a6a3a" },
+    "industrial": { "label": "Industry & autos", "color": "#8b4a2b" },
+    "consumer": { "label": "Consumer & retail", "color": "#9a6a00" },
+    "health": { "label": "Health & pharma", "color": "#5b7f8f" },
+    "financial": { "label": "Finance", "color": "#5b616c" },
+    "telecom": { "label": "Telephone & media", "color": "#1b3b6f" },
+    "tech": { "label": "Technology", "color": "#8b1a1a" }
+  },
+  "frames": [
+    {
+      "year": 1957,
+      "note": "The index is expanded to 500 names. Total market value: $172 billion.",
+      "top10Share": 34.9,
+      "top10ShareEst": true,
+      "leader": { "name": "AT&T", "cap": 11.2, "employees": 600000, "employeesEst": true },
+      "companies": [
+        { "name": "AT&T", "sector": "telecom", "weight": 6.5, "atoms": false, "does": "telephone service" },
+        { "name": "General Motors", "sector": "industrial", "weight": 6.3, "est": true, "atoms": true, "does": "automobiles" },
+        { "name": "Standard Oil (New Jersey)", "sector": "energy", "weight": 6.1, "est": true, "atoms": true, "does": "oil" },
+        { "name": "DuPont", "sector": "materials", "weight": 4.7, "est": true, "atoms": true, "does": "chemicals" },
+        { "name": "General Electric", "sector": "industrial", "weight": 2.8, "est": true, "atoms": true, "does": "electrical equipment" },
+        { "name": "Union Carbide", "sector": "materials", "weight": 1.9, "est": true, "atoms": true, "does": "chemicals" },
+        { "name": "Texaco", "sector": "energy", "weight": 1.7, "est": true, "atoms": true, "does": "oil" },
+        { "name": "Sears, Roebuck", "sector": "consumer", "weight": 1.7, "est": true, "atoms": false, "does": "retail" },
+        { "name": "U.S. Steel", "sector": "materials", "weight": 1.6, "est": true, "atoms": true, "does": "steel" },
+        { "name": "Gulf Oil", "sector": "energy", "weight": 1.6, "est": true, "atoms": true, "does": "oil" }
+      ]
+    },
+    {
+      "year": 1962,
+      "note": "IBM enters the top ten. Everything above it still comes off a production line or out of a well.",
+      "top10Share": 34.0,
+      "top10ShareEst": true,
+      "leader": { "name": "AT&T", "cap": 14.5, "capEst": true, "employees": 700000, "employeesEst": true },
+      "companies": [
+        { "name": "AT&T", "sector": "telecom", "weight": 6.4, "est": true, "atoms": false, "does": "telephone service" },
+        { "name": "General Motors", "sector": "industrial", "weight": 5.7, "est": true, "atoms": true, "does": "automobiles" },
+        { "name": "Standard Oil (New Jersey)", "sector": "energy", "weight": 4.8, "est": true, "atoms": true, "does": "oil" },
+        { "name": "IBM", "sector": "tech", "weight": 3.3, "est": true, "atoms": true, "does": "mainframe computers" },
+        { "name": "DuPont", "sector": "materials", "weight": 3.3, "est": true, "atoms": true, "does": "chemicals" },
+        { "name": "General Electric", "sector": "industrial", "weight": 2.8, "est": true, "atoms": true, "does": "electrical equipment" },
+        { "name": "Texaco", "sector": "energy", "weight": 2.2, "est": true, "atoms": true, "does": "oil" },
+        { "name": "Sears, Roebuck", "sector": "consumer", "weight": 2.0, "est": true, "atoms": false, "does": "retail" },
+        { "name": "Gulf Oil", "sector": "energy", "weight": 1.8, "est": true, "atoms": true, "does": "oil" },
+        { "name": "Eastman Kodak", "sector": "consumer", "weight": 1.7, "est": true, "atoms": true, "does": "film & cameras" }
+      ]
+    },
+    {
+      "year": 1967,
+      "note": "IBM takes the top spot — the most valuable company in America, and it makes machines.",
+      "top10Share": 32.4,
+      "top10ShareEst": true,
+      "leader": { "name": "IBM", "cap": 24.0, "capEst": true, "employees": 230000, "employeesEst": true },
+      "companies": [
+        { "name": "IBM", "sector": "tech", "weight": 5.8, "est": true, "atoms": true, "does": "mainframe computers" },
+        { "name": "AT&T", "sector": "telecom", "weight": 5.3, "est": true, "atoms": false, "does": "telephone service" },
+        { "name": "General Motors", "sector": "industrial", "weight": 5.0, "est": true, "atoms": true, "does": "automobiles" },
+        { "name": "Standard Oil (New Jersey)", "sector": "energy", "weight": 4.1, "est": true, "atoms": true, "does": "oil" },
+        { "name": "Eastman Kodak", "sector": "consumer", "weight": 2.6, "est": true, "atoms": true, "does": "film & cameras" },
+        { "name": "General Electric", "sector": "industrial", "weight": 2.2, "est": true, "atoms": true, "does": "electrical equipment" },
+        { "name": "Texaco", "sector": "energy", "weight": 2.0, "est": true, "atoms": true, "does": "oil" },
+        { "name": "Sears, Roebuck", "sector": "consumer", "weight": 1.9, "est": true, "atoms": false, "does": "retail" },
+        { "name": "Xerox", "sector": "tech", "weight": 1.8, "est": true, "atoms": true, "does": "copiers" },
+        { "name": "DuPont", "sector": "materials", "weight": 1.7, "est": true, "atoms": true, "does": "chemicals" }
+      ]
+    },
+    {
+      "year": 1972,
+      "note": "The Nifty Fifty peak. Nine of the ten make something you can drop on your foot.",
+      "top10Share": 31.4,
+      "top10ShareEst": true,
+      "leader": { "name": "IBM", "cap": 46.0, "capEst": true, "employees": 262000, "employeesEst": true },
+      "companies": [
+        { "name": "IBM", "sector": "tech", "weight": 7.1, "est": true, "atoms": true, "does": "mainframe computers" },
+        { "name": "AT&T", "sector": "telecom", "weight": 4.5, "est": true, "atoms": false, "does": "telephone service" },
+        { "name": "Eastman Kodak", "sector": "consumer", "weight": 3.7, "est": true, "atoms": true, "does": "film & cameras" },
+        { "name": "General Motors", "sector": "industrial", "weight": 3.5, "est": true, "atoms": true, "does": "automobiles" },
+        { "name": "Exxon", "sector": "energy", "weight": 3.1, "est": true, "atoms": true, "does": "oil" },
+        { "name": "Sears, Roebuck", "sector": "consumer", "weight": 2.8, "est": true, "atoms": false, "does": "retail" },
+        { "name": "General Electric", "sector": "industrial", "weight": 2.0, "est": true, "atoms": true, "does": "electrical equipment" },
+        { "name": "Xerox", "sector": "tech", "weight": 1.9, "est": true, "atoms": true, "does": "copiers" },
+        { "name": "Texaco", "sector": "energy", "weight": 1.4, "est": true, "atoms": true, "does": "oil" },
+        { "name": "3M", "sector": "industrial", "weight": 1.4, "est": true, "atoms": true, "does": "industrial products" }
+      ]
+    },
+    {
+      "year": 1977,
+      "note": "Oil climbs the table through the inflation decade.",
+      "top10Share": 27.0,
+      "top10ShareEst": true,
+      "leader": { "name": "IBM", "cap": 32.0, "capEst": true, "employees": 310000, "employeesEst": true },
+      "companies": [
+        { "name": "IBM", "sector": "tech", "weight": 5.6, "est": true, "atoms": true, "does": "mainframe computers" },
+        { "name": "AT&T", "sector": "telecom", "weight": 5.2, "est": true, "atoms": false, "does": "telephone service" },
+        { "name": "Exxon", "sector": "energy", "weight": 4.5, "est": true, "atoms": true, "does": "oil" },
+        { "name": "General Motors", "sector": "industrial", "weight": 3.0, "est": true, "atoms": true, "does": "automobiles" },
+        { "name": "General Electric", "sector": "industrial", "weight": 1.9, "est": true, "atoms": true, "does": "electrical equipment" },
+        { "name": "Eastman Kodak", "sector": "consumer", "weight": 1.7, "est": true, "atoms": true, "does": "film & cameras" },
+        { "name": "Standard Oil (Indiana)", "sector": "energy", "weight": 1.4, "est": true, "atoms": true, "does": "oil" },
+        { "name": "Texaco", "sector": "energy", "weight": 1.3, "est": true, "atoms": true, "does": "oil" },
+        { "name": "Mobil", "sector": "energy", "weight": 1.2, "est": true, "atoms": true, "does": "oil" },
+        { "name": "Sears, Roebuck", "sector": "consumer", "weight": 1.2, "est": true, "atoms": false, "does": "retail" }
+      ]
+    },
+    {
+      "year": 1980,
+      "note": "Peak oil, in index terms: six of the ten largest companies in America pump crude.",
+      "top10Share": 27.5,
+      "top10ShareEst": true,
+      "leader": { "name": "IBM", "cap": 39.0, "capEst": true, "employees": 341000, "employeesEst": true },
+      "companies": [
+        { "name": "IBM", "sector": "tech", "weight": 4.4, "est": true, "atoms": true, "does": "mainframe computers" },
+        { "name": "AT&T", "sector": "telecom", "weight": 4.2, "est": true, "atoms": false, "does": "telephone service" },
+        { "name": "Exxon", "sector": "energy", "weight": 4.0, "est": true, "atoms": true, "does": "oil" },
+        { "name": "Standard Oil (Indiana)", "sector": "energy", "weight": 3.0, "est": true, "atoms": true, "does": "oil" },
+        { "name": "Schlumberger", "sector": "energy", "weight": 2.7, "est": true, "atoms": true, "does": "oilfield services" },
+        { "name": "Shell Oil", "sector": "energy", "weight": 2.4, "est": true, "atoms": true, "does": "oil" },
+        { "name": "Mobil", "sector": "energy", "weight": 2.0, "est": true, "atoms": true, "does": "oil" },
+        { "name": "Standard Oil (California)", "sector": "energy", "weight": 1.8, "est": true, "atoms": true, "does": "oil" },
+        { "name": "Atlantic Richfield", "sector": "energy", "weight": 1.6, "est": true, "atoms": true, "does": "oil" },
+        { "name": "General Electric", "sector": "industrial", "weight": 1.4, "est": true, "atoms": true, "does": "electrical equipment" }
+      ]
+    },
+    {
+      "year": 1985,
+      "note": "Oil recedes. Drugs and consumer brands start to climb.",
+      "top10Share": 21.0,
+      "top10ShareEst": true,
+      "leader": { "name": "IBM", "cap": 95.0, "capEst": true, "employees": 405000, "employeesEst": true },
+      "companies": [
+        { "name": "IBM", "sector": "tech", "weight": 4.6, "est": true, "atoms": true, "does": "computers" },
+        { "name": "Exxon", "sector": "energy", "weight": 2.7, "est": true, "atoms": true, "does": "oil" },
+        { "name": "General Electric", "sector": "industrial", "weight": 2.1, "est": true, "atoms": true, "does": "electrical equipment" },
+        { "name": "AT&T", "sector": "telecom", "weight": 2.0, "est": true, "atoms": false, "does": "telephone service" },
+        { "name": "General Motors", "sector": "industrial", "weight": 1.7, "est": true, "atoms": true, "does": "automobiles" },
+        { "name": "Amoco", "sector": "energy", "weight": 1.6, "est": true, "atoms": true, "does": "oil" },
+        { "name": "DuPont", "sector": "materials", "weight": 1.6, "est": true, "atoms": true, "does": "chemicals" },
+        { "name": "Royal Dutch Petroleum", "sector": "energy", "weight": 1.6, "est": true, "atoms": true, "does": "oil" },
+        { "name": "Chevron", "sector": "energy", "weight": 1.6, "est": true, "atoms": true, "does": "oil" },
+        { "name": "Sears, Roebuck", "sector": "consumer", "weight": 1.5, "est": true, "atoms": false, "does": "retail" }
+      ]
+    },
+    {
+      "year": 1990,
+      "note": "The most balanced top ten of the whole record — oil, industry, tobacco, drugs, chemicals, phones.",
+      "top10Share": 19.0,
+      "top10ShareSource": "Reported: the ten largest made up roughly 19% of the index in 1990.",
+      "leader": { "name": "Exxon", "cap": 63.0, "capEst": true, "employees": 104000, "employeesEst": true },
+      "companies": [
+        { "name": "Exxon", "sector": "energy", "weight": 2.9, "atoms": true, "does": "oil" },
+        { "name": "General Electric", "sector": "industrial", "weight": 2.6, "est": true, "atoms": true, "does": "industrial equipment" },
+        { "name": "IBM", "sector": "tech", "weight": 2.5, "est": true, "atoms": true, "does": "computers" },
+        { "name": "AT&T", "sector": "telecom", "weight": 2.0, "est": true, "atoms": false, "does": "telephone service" },
+        { "name": "Philip Morris", "sector": "consumer", "weight": 1.9, "est": true, "atoms": true, "does": "cigarettes & food" },
+        { "name": "Merck", "sector": "health", "weight": 1.7, "est": true, "atoms": true, "does": "pharmaceuticals" },
+        { "name": "Bristol-Myers Squibb", "sector": "health", "weight": 1.5, "est": true, "atoms": true, "does": "pharmaceuticals" },
+        { "name": "DuPont", "sector": "materials", "weight": 1.4, "est": true, "atoms": true, "does": "chemicals" },
+        { "name": "Amoco", "sector": "energy", "weight": 1.3, "est": true, "atoms": true, "does": "oil" },
+        { "name": "BellSouth", "sector": "telecom", "weight": 1.2, "est": true, "atoms": false, "does": "telephone service" }
+      ]
+    },
+    {
+      "year": 1995,
+      "note": "The last year before software takes the table.",
+      "top10Share": 17.5,
+      "top10ShareEst": true,
+      "leader": { "name": "General Electric", "cap": 120.0, "capEst": true, "employees": 222000, "employeesEst": true },
+      "companies": [
+        { "name": "General Electric", "sector": "industrial", "weight": 2.6, "est": true, "atoms": true, "does": "industrial equipment" },
+        { "name": "AT&T", "sector": "telecom", "weight": 2.1, "est": true, "atoms": false, "does": "telephone service" },
+        { "name": "Exxon", "sector": "energy", "weight": 2.1, "est": true, "atoms": true, "does": "oil" },
+        { "name": "Coca-Cola", "sector": "consumer", "weight": 1.9, "est": true, "atoms": true, "does": "soft drinks" },
+        { "name": "Merck", "sector": "health", "weight": 1.6, "est": true, "atoms": true, "does": "pharmaceuticals" },
+        { "name": "Philip Morris", "sector": "consumer", "weight": 1.6, "est": true, "atoms": true, "does": "cigarettes & food" },
+        { "name": "Royal Dutch Petroleum", "sector": "energy", "weight": 1.5, "est": true, "atoms": true, "does": "oil" },
+        { "name": "Procter & Gamble", "sector": "consumer", "weight": 1.4, "est": true, "atoms": true, "does": "household goods" },
+        { "name": "Johnson & Johnson", "sector": "health", "weight": 1.4, "est": true, "atoms": true, "does": "pharmaceuticals" },
+        { "name": "Microsoft", "sector": "tech", "weight": 1.3, "est": true, "atoms": false, "does": "software" }
+      ]
+    },
+    {
+      "year": 2000,
+      "note": "The dot-com top. Cisco and Intel still ship hardware; Microsoft ships a licence.",
+      "top10Share": 23.0,
+      "top10ShareSource": "Reported: the top ten accounted for roughly 23% of the index by the end of 2000.",
+      "leader": { "name": "General Electric", "cap": 475.0, "capEst": true, "employees": 313000, "employeesEst": true },
+      "companies": [
+        { "name": "General Electric", "sector": "industrial", "weight": 4.1, "est": true, "atoms": true, "does": "industrial equipment & finance" },
+        { "name": "Exxon Mobil", "sector": "energy", "weight": 2.6, "est": true, "atoms": true, "does": "oil" },
+        { "name": "Pfizer", "sector": "health", "weight": 2.5, "est": true, "atoms": true, "does": "pharmaceuticals" },
+        { "name": "Cisco Systems", "sector": "tech", "weight": 2.4, "est": true, "atoms": true, "does": "networking hardware" },
+        { "name": "Citigroup", "sector": "financial", "weight": 2.2, "est": true, "atoms": false, "does": "banking" },
+        { "name": "Wal-Mart", "sector": "consumer", "weight": 2.1, "est": true, "atoms": false, "does": "retail" },
+        { "name": "Microsoft", "sector": "tech", "weight": 2.1, "est": true, "atoms": false, "does": "software" },
+        { "name": "AIG", "sector": "financial", "weight": 1.8, "est": true, "atoms": false, "does": "insurance" },
+        { "name": "Merck", "sector": "health", "weight": 1.7, "est": true, "atoms": true, "does": "pharmaceuticals" },
+        { "name": "Intel", "sector": "tech", "weight": 1.5, "est": true, "atoms": true, "does": "semiconductors" }
+      ]
+    },
+    {
+      "year": 2005,
+      "note": "Oil back on top after the bubble clears. Half the table is a service.",
+      "top10Share": 19.9,
+      "top10ShareEst": true,
+      "leader": { "name": "Exxon Mobil", "cap": 340.0, "capEst": true, "employees": 84000, "employeesEst": true },
+      "companies": [
+        { "name": "Exxon Mobil", "sector": "energy", "weight": 3.3, "est": true, "atoms": true, "does": "oil" },
+        { "name": "General Electric", "sector": "industrial", "weight": 3.0, "est": true, "atoms": true, "does": "industrial equipment & finance" },
+        { "name": "Microsoft", "sector": "tech", "weight": 2.4, "est": true, "atoms": false, "does": "software" },
+        { "name": "Citigroup", "sector": "financial", "weight": 2.1, "est": true, "atoms": false, "does": "banking" },
+        { "name": "Procter & Gamble", "sector": "consumer", "weight": 1.6, "est": true, "atoms": true, "does": "household goods" },
+        { "name": "Wal-Mart", "sector": "consumer", "weight": 1.6, "est": true, "atoms": false, "does": "retail" },
+        { "name": "Bank of America", "sector": "financial", "weight": 1.6, "est": true, "atoms": false, "does": "banking" },
+        { "name": "Johnson & Johnson", "sector": "health", "weight": 1.6, "est": true, "atoms": true, "does": "pharmaceuticals" },
+        { "name": "Pfizer", "sector": "health", "weight": 1.4, "est": true, "atoms": true, "does": "pharmaceuticals" },
+        { "name": "Altria", "sector": "consumer", "weight": 1.3, "est": true, "atoms": true, "does": "cigarettes" }
+      ]
+    },
+    {
+      "year": 2010,
+      "note": "Apple arrives second. It is the last new entrant at the top that runs a factory floor's worth of physical output.",
+      "top10Share": 18.5,
+      "top10ShareEst": true,
+      "leader": { "name": "Exxon Mobil", "cap": 369.0, "capEst": true, "employees": 83600, "employeesEst": true },
+      "companies": [
+        { "name": "Exxon Mobil", "sector": "energy", "weight": 3.2, "est": true, "atoms": true, "does": "oil" },
+        { "name": "Apple", "sector": "tech", "weight": 2.6, "est": true, "atoms": true, "does": "phones & computers" },
+        { "name": "Microsoft", "sector": "tech", "weight": 1.9, "est": true, "atoms": false, "does": "software" },
+        { "name": "General Electric", "sector": "industrial", "weight": 1.8, "est": true, "atoms": true, "does": "industrial equipment & finance" },
+        { "name": "Chevron", "sector": "energy", "weight": 1.7, "est": true, "atoms": true, "does": "oil" },
+        { "name": "IBM", "sector": "tech", "weight": 1.6, "est": true, "atoms": false, "does": "IT services" },
+        { "name": "Procter & Gamble", "sector": "consumer", "weight": 1.5, "est": true, "atoms": true, "does": "household goods" },
+        { "name": "AT&T", "sector": "telecom", "weight": 1.4, "est": true, "atoms": false, "does": "telephone service" },
+        { "name": "Johnson & Johnson", "sector": "health", "weight": 1.4, "est": true, "atoms": true, "does": "pharmaceuticals" },
+        { "name": "JPMorgan Chase", "sector": "financial", "weight": 1.4, "est": true, "atoms": false, "does": "banking" }
+      ]
+    },
+    {
+      "year": 2015,
+      "note": "Four of the top five sell software, search, ads, or a storefront.",
+      "top10Share": 19.0,
+      "top10ShareEst": true,
+      "leader": { "name": "Apple", "cap": 587.0, "capEst": true, "employees": 110000, "employeesEst": true },
+      "companies": [
+        { "name": "Apple", "sector": "tech", "weight": 3.3, "est": true, "atoms": true, "does": "phones & computers" },
+        { "name": "Alphabet", "sector": "telecom", "weight": 2.5, "est": true, "atoms": false, "does": "search advertising" },
+        { "name": "Microsoft", "sector": "tech", "weight": 2.4, "est": true, "atoms": false, "does": "software" },
+        { "name": "Exxon Mobil", "sector": "energy", "weight": 1.8, "est": true, "atoms": true, "does": "oil" },
+        { "name": "General Electric", "sector": "industrial", "weight": 1.7, "est": true, "atoms": true, "does": "industrial equipment" },
+        { "name": "Johnson & Johnson", "sector": "health", "weight": 1.6, "est": true, "atoms": true, "does": "pharmaceuticals" },
+        { "name": "Amazon", "sector": "consumer", "weight": 1.5, "est": true, "atoms": false, "does": "retail & cloud" },
+        { "name": "Berkshire Hathaway", "sector": "financial", "weight": 1.5, "est": true, "atoms": false, "does": "insurance & holdings" },
+        { "name": "Wells Fargo", "sector": "financial", "weight": 1.4, "est": true, "atoms": false, "does": "banking" },
+        { "name": "Facebook", "sector": "telecom", "weight": 1.3, "est": true, "atoms": false, "does": "social advertising" }
+      ]
+    },
+    {
+      "year": 2020,
+      "note": "No oil. No chemicals. No steel. One carmaker, arriving on its first profitable year.",
+      "top10Share": 28.5,
+      "top10ShareEst": true,
+      "leader": { "name": "Apple", "cap": 2255.0, "employees": 147000 },
+      "companies": [
+        { "name": "Apple", "sector": "tech", "weight": 6.7, "est": true, "atoms": true, "does": "phones & computers" },
+        { "name": "Microsoft", "sector": "tech", "weight": 5.3, "est": true, "atoms": false, "does": "software & cloud" },
+        { "name": "Amazon", "sector": "consumer", "weight": 4.4, "est": true, "atoms": false, "does": "retail & cloud" },
+        { "name": "Alphabet", "sector": "telecom", "weight": 3.3, "est": true, "atoms": false, "does": "search advertising" },
+        { "name": "Facebook", "sector": "telecom", "weight": 2.1, "est": true, "atoms": false, "does": "social advertising" },
+        { "name": "Tesla", "sector": "industrial", "weight": 1.7, "est": true, "atoms": true, "does": "automobiles" },
+        { "name": "Berkshire Hathaway", "sector": "financial", "weight": 1.4, "est": true, "atoms": false, "does": "insurance & holdings" },
+        { "name": "Johnson & Johnson", "sector": "health", "weight": 1.3, "est": true, "atoms": true, "does": "pharmaceuticals" },
+        { "name": "JPMorgan Chase", "sector": "financial", "weight": 1.2, "est": true, "atoms": false, "does": "banking" },
+        { "name": "Visa", "sector": "financial", "weight": 1.1, "est": true, "atoms": false, "does": "payment tolls" }
+      ]
+    },
+    {
+      "year": 2026,
+      "note": "Mid-2026. The top ten is more than a third of the index — the tightest the record has been since the fifties.",
+      "top10Share": 37.0,
+      "top10ShareSource": "Reported: the top ten stands above 37% of index weight in 2026.",
+      "leader": { "name": "Nvidia", "cap": 4800.0, "capEst": true, "employees": 36000, "employeesEst": true },
+      "companies": [
+        { "name": "Nvidia", "sector": "tech", "weight": 7.5, "atoms": true, "does": "AI chips" },
+        { "name": "Microsoft", "sector": "tech", "weight": 6.7, "atoms": false, "does": "software & cloud" },
+        { "name": "Apple", "sector": "tech", "weight": 5.6, "atoms": true, "does": "phones & computers" },
+        { "name": "Amazon", "sector": "consumer", "weight": 4.3, "atoms": false, "does": "retail & cloud" },
+        { "name": "Alphabet", "sector": "telecom", "weight": 4.0, "atoms": false, "does": "search advertising" },
+        { "name": "Broadcom", "sector": "tech", "weight": 2.7, "est": true, "atoms": true, "does": "chips & networking" },
+        { "name": "Meta", "sector": "telecom", "weight": 2.3, "est": true, "atoms": false, "does": "social advertising" },
+        { "name": "Tesla", "sector": "industrial", "weight": 1.7, "est": true, "atoms": true, "does": "automobiles" },
+        { "name": "Berkshire Hathaway", "sector": "financial", "weight": 1.2, "est": true, "atoms": false, "does": "insurance & holdings" },
+        { "name": "JPMorgan Chase", "sector": "financial", "weight": 1.0, "est": true, "atoms": false, "does": "banking" }
+      ]
+    }
+  ]
+}

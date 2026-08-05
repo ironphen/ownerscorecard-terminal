@@ -33,3 +33,6 @@ pnpm-debug.log*
 .wrangler/
 .dev.vars
 ~$*
+
+# timelapse render output — regenerate with npm run timelapse:video
+build/
