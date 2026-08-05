@@ -4,7 +4,7 @@ import { fmtMoney, currencySymbol, roicValue, liquidAssets, topLineRevenue, debt
 import { returnOnEquity, returnOnTangibleEquity, returnOnAssets, efficiencyRatio, tangibleEquity } from "../lib/financials.mjs";
 import { splitFactorsByFy } from "../lib/capital.mjs";
 import { cashPayout, debtToAssets } from "../lib/reits.mjs";
-import { combinedRatio, lossRatio, expenseRatio } from "../lib/insurers.mjs";
+import { combinedRatio, lossRatio, expenseRatio, floatOf, insuranceFloat, costOfFloatAveraged } from "../lib/insurers.mjs";
 import { medicalLossRatio } from "../lib/managedCare.mjs";
 import Term from "./Term.astro";
 
@@ -195,7 +195,19 @@ const ROW = {
     },
   },
   debtAssets: { label: "Debt / assets", short: "Debt/assets", g: 3, get: (L) => { const d = debtToAssets(L); return d == null ? "—" : `${(d * 100).toFixed(0)}%`; } },
-  float: { label: "Float (reserves)", short: "Float", g: 3, get: (L) => money(L.lossReserves) },
+  // THE FLOAT RECORD (solvency-sight Build 6): the through-cycle view Buffett's letters print for
+  // Berkshire, computed per year on the desk's full arithmetic — never the old gross-reserves
+  // reading, which overstated every cedent. ONE BASIS PER ROW: the row resolves on the dominant
+  // basis (the latest year's), and a year that resolves on a DIFFERENT basis shows a dash rather
+  // than splicing pc and life dollars into one series. Where the full arithmetic never resolves,
+  // the labeled net/gross fallback series carries the row. Cells are filled lazily at row-build
+  // time (floatCellsByIdx), because the basis discipline needs the whole series before any cell.
+  float: { label: "Float", short: "Float", g: 3, get: (L, i) => (floatCellsByIdx ? floatCellsByIdx[i] : "—") },
+  // Cost of float per year, on the letters' denominator: this year's underwriting result over the
+  // two-year average of float, only where the PRIOR COLUMN is the consecutive fiscal year and
+  // resolves on the same basis — a cross-basis or gap-year average is two records dressed as one.
+  // Negative is favorable (paid to hold), so the row colors like reserve development.
+  costOfFloatRow: { label: "Cost of float (avg)", short: "Float cost", g: 2, kind: "dev", get: (L, i) => (cofCellsByIdx ? cofCellsByIdx[i] : "—") },
   dps: { label: "Dividends / share", short: "Div/sh", g: 4, get: (L) => perShare(L.dividendsPaid != null ? Math.abs(L.dividendsPaid) : null, L.sharesDiluted) },
   payoutNI: { label: "Dividend payout", short: "Payout", g: 3, get: (L) => marginStr(L.dividendsPaid != null ? Math.abs(L.dividendsPaid) : null, L.netIncome > 0 ? L.netIncome : null, 0) },
   payout: { label: "Dividend / operating cash", short: "Payout", g: 3, get: (L) => { const p = cashPayout(L); return p == null ? "—" : `${(p * 100).toFixed(0)}%`; } },
@@ -285,7 +297,7 @@ const SETS = {
   // The written-vs-earned pair, the combined ratio's two halves, and the honesty meter itself —
   // prior-year reserve development, signed as filed — joined the record 2026-07-31 (record-table
   // survey Build 2), with the capital actually returned in dollars.
-  insurer: [ROW.revenue, ROW.premiumsWritten, ROW.premiums, ROW.invInc, ROW.pretax, ROW.netIncome, ROW.taxRate, ROW.cashFromOps, ROW.ownerEarnings, ROW.lossRatio, ROW.expenseRatioRow, ROW.combined, ROW.reserveDev, ROW.roe, ROW.retainedToEquity, ROW.dividendsPaidAbs, ROW.buybacksAbs, ROW.cfInvesting, ROW.cfFinancing, ROW.fxEffect, ROW.deltaCash, ROW.investmentsTotal, ROW.float, ROW.totalAssets, ROW.totalLiabilitiesRow, ROW.redeemableRow, ROW.nciRow, ROW.equity, ROW.shares, ROW.eps, ROW.ownerEarningsPS, ROW.dps, ROW.bvps],
+  insurer: [ROW.revenue, ROW.premiumsWritten, ROW.premiums, ROW.invInc, ROW.pretax, ROW.netIncome, ROW.taxRate, ROW.cashFromOps, ROW.ownerEarnings, ROW.lossRatio, ROW.expenseRatioRow, ROW.combined, ROW.costOfFloatRow, ROW.reserveDev, ROW.roe, ROW.retainedToEquity, ROW.dividendsPaidAbs, ROW.buybacksAbs, ROW.cfInvesting, ROW.cfFinancing, ROW.fxEffect, ROW.deltaCash, ROW.investmentsTotal, ROW.float, ROW.totalAssets, ROW.totalLiabilitiesRow, ROW.redeemableRow, ROW.nciRow, ROW.equity, ROW.shares, ROW.eps, ROW.ownerEarningsPS, ROW.dps, ROW.bvps],
   // Life insurers: the spread-and-book-value story, no combined ratio (see insurers.mjs).
   lifeInsurer: [ROW.revenue, ROW.premiumsWritten, ROW.premiums, ROW.invInc, ROW.pretax, ROW.netIncome, ROW.taxRate, ROW.cashFromOps, ROW.ownerEarnings, ROW.roe, ROW.retainedToEquity, ROW.dividendsPaidAbs, ROW.buybacksAbs, ROW.cfInvesting, ROW.cfFinancing, ROW.fxEffect, ROW.deltaCash, ROW.investmentsTotal, ROW.float, ROW.totalAssets, ROW.totalLiabilitiesRow, ROW.redeemableRow, ROW.nciRow, ROW.equity, ROW.shares, ROW.eps, ROW.ownerEarningsPS, ROW.dps, ROW.bvps],
   fee: [ROW.revenue, ROW.opMargin, ROW.netMargin, ROW.pretax, ROW.netIncome, ROW.taxRate, ROW.ownerEarnings, ROW.cfInvesting, ROW.cfFinancing, ROW.fxEffect, ROW.deltaCash, ROW.roe, ROW.retainedToEquity, ROW.totalAssets, ROW.cash, ROW.totalLiabilitiesRow, ROW.redeemableRow, ROW.nciRow, ROW.equity, ROW.shares, ROW.revenuePS, ROW.eps, ROW.ownerEarningsPS, ROW.dps, ROW.bvps],
@@ -305,6 +317,44 @@ if (company.ttm?.lines) {
     ? new Date(company.ttm.asOf + "T00:00:00Z").toLocaleDateString("en-US", { month: "short", year: "numeric", timeZone: "UTC" })
     : null;
   cols.push({ label: "TTM", sub: asOf, lines: company.ttm.lines, ttm: true });
+}
+
+// THE FLOAT RECORD'S CELLS (solvency-sight Build 6), built once the columns exist because the
+// one-basis-per-row discipline needs the whole series before any cell renders. The dominant
+// basis is the LATEST resolved year's; a year resolving on the other basis dashes rather than
+// splicing pc and life dollars into one series. Cost of float joins only as the two-year
+// average (the letters' denominator) over consecutive same-basis years — a lone point-in-time
+// year has no place in a row of averages. TTM columns dash: the insurance instants are
+// fiscal-year facts.
+let floatCellsByIdx = null, cofCellsByIdx = null, floatRowLabel = null;
+if (financialKind(company) === "insurer") {
+  const fulls = cols.map((c) => (c.ttm ? null : floatOf(c.lines)));
+  const fbs = cols.map((c) => (c.ttm ? null : insuranceFloat(c.lines)));
+  // Candidate series, each single-basis: the full arithmetic on its dominant (latest-resolved)
+  // basis, and the reserves fallback on its. THE FULLER RECORD WINS — Hartford resolves the full
+  // arithmetic only in the two old years its recoverables were tagged, and a two-cell "full"
+  // series would have dropped below the row's minimum fill and cost the page its entire ten-year
+  // reserves record. Ties go to the full arithmetic.
+  const mk = (series, labelOf) => {
+    const resolved = series.filter(Boolean);
+    if (!resolved.length) return null;
+    const basis = resolved[resolved.length - 1].basis;
+    const cells = cols.map((c, i) => (series[i] && series[i].basis === basis ? money(series[i].value) : "—"));
+    return { basis, cells, label: labelOf(basis), n: cells.filter((x) => x !== "—").length };
+  };
+  const fullSeries = mk(fulls, (b) => (b === "pc" ? "Float (underwriting basis)" : "Float (life basis)"));
+  const fbSeries = mk(fbs, (b) => (b === "net" ? "Float (net reserves)" : "Float (gross reserves)"));
+  const pick = fullSeries && (!fbSeries || fullSeries.n >= fbSeries.n) ? fullSeries : fbSeries;
+  if (pick) { floatCellsByIdx = pick.cells; floatRowLabel = pick.label; }
+  // The cost row self-gates per year (full pc float, consecutive same-basis prior), independent
+  // of which float series the row above shows.
+  cofCellsByIdx = cols.map((c, i) => {
+    if (c.ttm || !fulls[i] || fulls[i].basis !== "pc") return "—";
+    const consecutive = i > 0 && !cols[i - 1].ttm && Number(cols[i].label) - Number(cols[i - 1].label) === 1;
+    const r = costOfFloatAveraged(c.lines, consecutive ? cols[i - 1].lines : null);
+    if (!r || !r.denomBasis.startsWith("two-year")) return "—";
+    return `${r.value < 0 ? "−" : "+"}${Math.abs(r.value * 100).toFixed(1)}%`;
+  });
 }
 const lastI = cols.length - 1;
 
@@ -377,7 +427,7 @@ const ROW_CONCEPT = {
   "Tangible book / share": "tangible-book",
   "Funds from operations": "ffo", "FFO / share": "ffo", "Dividend payout (FFO)": "ffo", "Debt / assets": "net-debt",
   "Combined ratio": "combined-ratio", "Loss ratio": "combined-ratio",
-  "Investment income": "insurance-float", "Float (reserves)": "insurance-float",
+  "Investment income": "insurance-float", "Float": "insurance-float", "Cost of float (avg)": "insurance-float",
   "Medical loss ratio": "medical-loss-ratio",
 };
 // Drop a row the data fills in too few years, then mark where each band (earnings → returns →
@@ -388,8 +438,11 @@ const ROW_CONCEPT = {
 // genuinely populated core stands out instead of being lost among sparse specialist rows.
 const minFill = cols.length >= 6 ? 3 : 2;
 const rows = chosen
-  .map((r) => ({ label: r.label, short: r.short || r.label, kind: r.kind || "plain", g: r.g || 1, concept: ROW_CONCEPT[r.label] || null, cells: cols.map((c) => r.get(c.lines)) }))
+  .map((r) => ({ label: r.label, short: r.short || r.label, kind: r.kind || "plain", g: r.g || 1, concept: ROW_CONCEPT[r.label] || null, cells: cols.map((c, i) => r.get(c.lines, i, cols)) }))
   .filter((r) => r.cells.filter((c) => c !== "—").length >= minFill);
+// The float row's label carries its basis (one basis per row, decided above once the whole
+// series was in hand) — the concept link was resolved on the static "Float" key before renaming.
+if (floatRowLabel) { const fr = rows.find((r) => r.label === "Float"); if (fr) fr.label = floatRowLabel; }
 rows.forEach((r, i) => { r.bandStart = i === 0 || r.g !== rows[i - 1].g; });
 // Band headers naming the statement each section reads from, so the record presents as one full
 // snapshot: the income statement, then the cash it generated and the returns, then the balance sheet.
