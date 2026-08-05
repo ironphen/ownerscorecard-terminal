@@ -39,7 +39,7 @@ new artifacts are the through-cycle records and the SVB same-card read. Wrongest
 
 ## BUILD ORDER
 
-**Build 1 — no wrong floats.** Fence Formula B to life-shaped books; a P&C-SIC row failing
+**Build 1 — no wrong floats. SHIPPED 75bccb9 (2026-08-05):** carve-out fail-closed (exits BRK-A/BRK-B/FAF/ITIC/STC), reserve-dominance fence + coherence belt (HIG/CINF to labeled fallbacks), net-preferring fallback with per-basis direction notes (22 rows, AIG 70.7→41.8B); controls PGR/TRV/CB/MET/PRU to the dollar; canaries on rendered pages. Stated-float weld = Build 1b, still owed. Original ruling: Fence Formula B to life-shaped books; a P&C-SIC row failing
 Formula A's deduction gates falls to the labeled reserves-only reading or WITHHOLDS — never a
 life-basis print. One-line coherence gate: a printed float may never be smaller than the same
 filer's gross loss reserves. Fail the conglomerate carve-out closed (no premiumsEarned anywhere
