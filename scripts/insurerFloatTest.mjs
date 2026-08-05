@@ -71,5 +71,38 @@ const METish = {
   t("the combined liability is the base where only it is filed", f && Math.abs(f.value - (41e9 + 111e9 - 28e9 - 2e9 - 1e9)) < 1, f?.value);
 }
 
+// THE RESERVE-DOMINANCE FENCE (solvency-sight survey, 2026-08-05). A P&C-shaped book whose
+// Formula-A deduction legs are missing must WITHHOLD, never fall through to a life-basis print:
+// Hartford showed "Float $4.8B" against $46.3B gross loss reserves, Cincinnati Financial $3.8B
+// against $11.5B, and Berkshire $17.9B against the ~$171B its own letter states. Wrong is worse
+// than missing, and these were wrong 3x-10x.
+{
+  // HIG-shaped: big gross reserves, recoverables unextracted (net underivable), tiny FPB.
+  const HIGish = { lossReserves: 46e9, futurePolicyBenefits: 0.44e9, policyholderDeposits: 0.6e9, unearnedPremiums: 8e9, dacBalance: 1e9 };
+  t("gross reserves exceeding the life base refuse the life formula (HIG-shaped)", floatOf(HIGish) === null, floatOf(HIGish));
+  // CINF-shaped: combined liability filed, gross reserves dwarf it.
+  const CINFish = { lossReserves: 11.4e9, fpbCombined: 3e9, policyholderDeposits: 0.8e9 };
+  t("gross reserves exceeding a combined-liability base refuse it too (CINF-shaped)", floatOf(CINFish) === null, floatOf(CINFish));
+  // A genuine life book with a small claims stack riding along still routes life.
+  const genuineLife = { lossReserves: 6e9, futurePolicyBenefits: 190e9, policyholderDeposits: 230e9, reinsuranceRecoverables: 13e9, dacBalance: 5e9, premiumsReceivable: 2e9 };
+  t("a genuine life book with a small claims stack still routes life", floatOf(genuineLife)?.basis === "life", floatOf(genuineLife));
+  // The coherence belt: a life-basis value below gross reserves is mechanically impossible.
+  const impossible = { lossReserves: 30e9, futurePolicyBenefits: 35e9, reinsuranceRecoverables: 20e9, dacBalance: 8e9, premiumsReceivable: 5e9 };
+  t("a life-basis float below the filer's own gross reserves withholds (coherence belt)", floatOf(impossible) === null, floatOf(impossible));
+}
+
+// The reserves-only fallback prefers NET and reports its basis, so the caller's note can state
+// the true error direction (net understates; gross on a reinsured book overstates — AIG's shown
+// fallback moves $70.7B→$41.8B under this rule).
+{
+  const { insuranceFloat } = await import("../src/lib/insurers.mjs");
+  const aigish = { lossReserves: 70.7e9, reinsuranceRecoverables: 28.9e9 };
+  const f = insuranceFloat(aigish);
+  t("the fallback derives net where recoverables exist", f?.basis === "net" && Math.abs(f.value - 41.8e9) < 0.1e9, f);
+  const grossOnly = { lossReserves: 10e9 };
+  t("gross-only fallback declares its basis", insuranceFloat(grossOnly)?.basis === "gross", insuranceFloat(grossOnly));
+  t("no reserves at all is null, not zero", insuranceFloat({}) === null);
+}
+
 if (failed) { console.error(`\n❌ insurerFloatTest: ${failed} failure(s).`); process.exit(1); }
 console.log("\n✅ insurerFloatTest passed.");

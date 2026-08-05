@@ -37,7 +37,18 @@ export function combinedRatio(L) {
   }
   return null;
 }
-export function insuranceFloat(L) { return L && L.lossReserves != null ? L.lossReserves : null; }
+// The reserves-only fallback reading, NET of reinsurance wherever a net leg exists (the money
+// recoverable from reinsurers is not float — it is the reinsurers' float). Returns the basis so
+// the caller's note can state the error direction honestly: a net-only basis understates true
+// float (unearned premiums excluded); a gross-only basis on a reinsured book OVERSTATES it, the
+// opposite claim from the one the old note made. Measured 2026-08-05: 22 fallback rows move
+// gross→net (AIG 70.7B→41.8B, CNA 26.6→20.6, JRVR −65%).
+export function insuranceFloat(L) {
+  if (!L) return null;
+  const net = L.lossReservesNet ?? (L.lossReserves != null && L.reinsuranceRecoverables != null ? L.lossReserves - L.reinsuranceRecoverables : null);
+  if (net != null) return { value: net, basis: "net" };
+  return L.lossReserves != null ? { value: L.lossReserves, basis: "gross" } : null;
+}
 export function floatToEquity(L) { return L && L.lossReserves != null && L.stockholdersEquity ? L.lossReserves / L.stockholdersEquity : null; }
 
 // The desk's float arithmetic (insurance Wave A, ratified 2026-07-21): Buffett's definition,
@@ -90,10 +101,22 @@ export function floatOf(L) {
   // claims slice nets twice), which is the direction doctrine tolerates.
   const base = fpb != null ? fpb + (L.lossReservesNet ?? 0) : combined;
   if (base == null) return null;
+  // THE RESERVE-DOMINANCE FENCE (solvency-sight survey, 2026-08-05): a book whose GROSS claims
+  // reserves exceed its life base is P&C-shaped, and reaching this line means Formula A could not
+  // run — its deduction legs are missing, not its nature. Falling through to a life-basis print
+  // here is how Hartford showed "Float $4.8B" against $46.3B of gross loss reserves and Cincinnati
+  // Financial $3.8B against $11.5B — wrong by 3x to 10x, silently. An underivable P&C float
+  // WITHHOLDS (the reserves-only fallback carries the page honestly); it never borrows the other
+  // formula. Measured: exactly CINF and HIG print wrong today; PGR/TRV/CB unchanged to the dollar.
+  if (L.lossReserves != null && L.lossReserves > base) return null;
   let value = base + (L.policyholderDeposits || 0) + (L.marketRiskBenefits || 0) + (L.unearnedPremiums || 0);
   if (L.reinsuranceRecoverables != null) value -= L.reinsuranceRecoverables; else notes.push("recoverables deduction unavailable");
   if (L.dacBalance != null) value -= L.dacBalance; else notes.push("DAC deduction unavailable");
   if (L.premiumsReceivable != null) value -= L.premiumsReceivable; else notes.push("receivables deduction unavailable");
+  // Coherence belt behind the fence above: float CONTAINS the claims reserves, so a life-basis
+  // figure smaller than the same filer's gross loss reserves is mechanically impossible — the
+  // claims stack was ignored, not netted. Withhold rather than print the impossible.
+  if (value > 0 && L.lossReserves != null && value < L.lossReserves) return null;
   return value > 0 ? { value, basis: "life", notes } : null;
 }
 
@@ -144,20 +167,27 @@ export function buildInsurerScorecard(company, subtype = "insurer") {
   // The float, on the desk's full arithmetic where the Wave A components extract (basis stated),
   // falling back to the old reserves-only reading with its honest caveat where they don't.
   const full = floatOf(L);
-  const fl = full?.value ?? insuranceFloat(L);
+  const fallback = full ? null : insuranceFloat(L);
+  const fl = full?.value ?? fallback?.value ?? null;
   const fe = fl != null && L.stockholdersEquity ? fl / L.stockholdersEquity : null;
+  // The fallback's note states the error DIRECTION its basis actually has: net-of-reinsurance
+  // understates (unearned premiums and funds held excluded); gross-of-reinsurance on a reinsured
+  // book overstates — the reinsurers' share of reserves is their float, not this company's. The
+  // old single note claimed "somewhat larger" for every fallback, wrong on cedents (Markel ~55%).
   const basisNote = full
     ? (full.notes.length ? ` Basis note: ${full.notes.join("; ")}.` : "")
-    : " Measured here from loss and claim reserves only; it excludes unearned premiums and funds held, so the true float is somewhat larger than shown.";
+    : fallback?.basis === "net"
+    ? " Measured here from net loss and claim reserves only; it excludes unearned premiums and funds held, so the true float is somewhat larger than shown."
+    : " Measured here from gross loss and claim reserves; amounts recoverable from reinsurers are not extracted for this filer, so a heavily reinsured book is overstated here — the reinsurers' share of these reserves is their float, not this company's.";
   const floatCheck = fl == null ? none("Float", "The float components weren't cleanly tagged, and a partial figure would mislead — withheld rather than approximated.", "insurance-float") : {
-    title: full ? "Float" : "Float (reserves)",
+    title: full ? "Float" : fallback.basis === "net" ? "Float (net reserves)" : "Float (gross reserves)",
     concept: "insurance-float",
     value: $(fl),
     formula: full
       ? (full.basis === "pc"
         ? `Net reserves + unearned premiums − prepaid reinsurance − receivables − DAC = ${$(fl)}`
         : `Policy benefits + deposits + guarantees − recoverables − DAC − receivables = ${$(fl)}`)
-      : `Loss and claim reserves ${$(fl)}${fe != null ? `, ${fe.toFixed(1)}× equity` : ""}`,
+      : `Loss and claim reserves${fallback.basis === "net" ? ", net of reinsurance" : ", gross of reinsurance"}: ${$(fl)}${fe != null ? `, ${fe.toFixed(1)}× equity` : ""}`,
     tone: "info", label: fe != null ? `${fe.toFixed(1)}× equity` : "policyholder money held",
     note: `Money held against future claims and invested in the meantime. Buffett's insight was that good underwriting makes this float cost less than nothing, a pool of other people's money the owners earn on.${basisNote} The larger it is against equity, the more that leverage works, for better or worse.`,
   };

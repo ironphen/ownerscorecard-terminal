@@ -247,6 +247,17 @@ export function financialProfile(company) {
     // capital allocator it is, off the insurer scorecard. (A real P&C insurer's premiums are most of
     // its revenue, so this catches only the conglomerate, not a lightly-levered underwriter.)
     if (L.premiumsEarned != null && L.revenue && L.premiumsEarned / L.revenue < 0.25) return { kind: null, subtype: null };
+    // FAIL CLOSED when premiums were never tagged at all. The share test above cannot fire with
+    // premiumsEarned null, and that hole is how Berkshire — the company the carve-out was written
+    // for — stayed ON the insurer scorecard and printed "Float $17.9B" against the ~$171B its own
+    // letter states: with no premium, reserve or unearned-premium tags in any of ten fiscal years,
+    // floatOf fell through to a life-basis formula on the one liability sliver that did extract.
+    // A filer whose premiums are untagged across its whole record cannot run ANY of the insurer
+    // arithmetic honestly; the generic scorecard is the truthful lens. Measured exits (2026-08-05):
+    // BRK-A/BRK-B, and the title carriers FAF/ITIC/STC, whose title-premium tags live outside the
+    // us-gaap concepts the extractor reads — for them every insurer check was already withholding.
+    const premiumsEver = L.premiumsEarned != null || (company?.history || []).some((h) => h?.lines?.premiumsEarned != null);
+    if (!premiumsEver && L.revenue) return { kind: null, subtype: null };
     return { kind: "insurer", subtype: "insurer" };
   }
   if (sic >= 6000 && sic <= 6299) {
