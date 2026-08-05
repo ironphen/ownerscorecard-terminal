@@ -104,5 +104,27 @@ const METish = {
   t("no reserves at all is null, not zero", insuranceFloat({}) === null);
 }
 
+// COST OF FLOAT ON THE LETTERS' DENOMINATOR (solvency-sight Build 5): the two-year average
+// wherever the prior consecutive year resolves on the same basis; the point-in-time figure only
+// as a labeled fallback. Measured: point-in-time understates growers by up to 1,078bp (Palomar).
+{
+  const { costOfFloatAveraged } = await import("../src/lib/insurers.mjs");
+  const grower = { ...CBish };                      // float ≈ 93B, uw profit ≈ 3B
+  const prior = { ...CBish, lossReservesNet: 40e9 }; // prior float ≈ 73B — a grower
+  const avg = costOfFloatAveraged(grower, prior);
+  const point = costOfFloatAveraged(grower, null);
+  t("the averaged form divides by the two-year average and says so",
+    avg?.denomBasis === "two-year average float" && Math.abs(avg.denom - ((93e9 + 73e9) / 2)) < 1e9, avg);
+  t("a grower's averaged cost is LARGER in magnitude than the point figure",
+    avg != null && point != null && Math.abs(avg.value) > Math.abs(point.value), { avg: avg?.value, point: point?.value });
+  t("no same-basis prior year → point-in-time, labeled as such",
+    point?.denomBasis.startsWith("year-end float"), point?.denomBasis);
+  const lifePrior = { futurePolicyBenefits: 190e9, policyholderDeposits: 230e9, reinsuranceRecoverables: 13e9, dacBalance: 5e9, premiumsReceivable: 2e9 };
+  const mixed = costOfFloatAveraged(grower, lifePrior);
+  t("a prior year on a DIFFERENT basis never averages (labeled point-in-time instead)",
+    mixed?.denomBasis.startsWith("year-end float"), mixed?.denomBasis);
+  t("a life book still has no cost of float at all", costOfFloatAveraged(METish, METish) === null);
+}
+
 if (failed) { console.error(`\n❌ insurerFloatTest: ${failed} failure(s).`); process.exit(1); }
 console.log("\n✅ insurerFloatTest passed.");

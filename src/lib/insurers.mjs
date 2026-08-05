@@ -136,6 +136,27 @@ export function costOfFloat(L) {
   return f?.basis === "pc" && uw != null && f.value > 0 ? -uw / f.value : null;
 }
 
+// Cost of float on the LETTERS' denominator (solvency-sight Build 5): Buffett's tables divide the
+// underwriting result by the two-year AVERAGE of float, not the year-end point — and the
+// difference is systematic, not noise: measured across 21 P&C issuers with consecutive same-basis
+// years, point-in-time understates the benefit magnitude for every GROWING float (Palomar by
+// 1,078bp, Progressive by 105bp) and overstates it for every shrinking one (Axis +29bp), because
+// this year's result was earned on money that arrived through the year. The averaged form is used
+// whenever the prior consecutive fiscal year resolves a float ON THE SAME BASIS; otherwise the
+// point-in-time figure stands, labeled as such. denomBasis names which denominator the figure
+// carries — a cost of float never prints without it.
+export function costOfFloatAveraged(L, priorL = null) {
+  const f = floatOf(L);
+  const uw = underwritingResult(L);
+  if (f?.basis !== "pc" || uw == null || !(f.value > 0)) return null;
+  const pf = priorL ? floatOf(priorL) : null;
+  if (pf?.basis === "pc" && pf.value > 0) {
+    const avg = (f.value + pf.value) / 2;
+    return { value: -uw / avg, denom: avg, denomBasis: "two-year average float" };
+  }
+  return { value: -uw / f.value, denom: f.value, denomBasis: "year-end float (no prior-year float on the same basis to average)" };
+}
+
 // The life insurer's published cost side, per the ratified spec: spread over crediting — what
 // the portfolio earned less what was credited to policyholders, over the float. (The LDTI
 // remeasurement line is extracted but not yet folded in: its sign polarity is not verified
@@ -325,7 +346,10 @@ export function buildInsurerScorecard(company, subtype = "insurer") {
   // Cost of float, the Buffett line itself: negative cost means the insurer was PAID to hold
   // other people's money. Computable only on the full float arithmetic with a banded
   // underwriting total; withheld otherwise.
-  const cof = costOfFloat(L);
+  // The letters' denominator: prior consecutive fiscal year's lines, for the two-year average.
+  const priorLines = (company?.history || []).find((h) => String(h?.fy) === String(Number(company?.fy) - 1))?.lines ?? null;
+  const cofA = costOfFloatAveraged(L, priorLines);
+  const cof = cofA?.value ?? null;
   // Same record fallback as the combined ratio, and both legs read from the SAME prior year —
   // a prior underwriting result over today's float would be two years dressed as one figure.
   // Measured: 5 of 80 P&C rows recover.
@@ -349,10 +373,10 @@ export function buildInsurerScorecard(company, subtype = "insurer") {
       title: "Cost of float",
       concept: "insurance-float",
       value: pc(cof, 1),
-      formula: `Underwriting ${cof <= 0 ? "profit" : "loss"} ${$(Math.abs(underwritingResult(L)))} ÷ float ${$(fl)}`,
+      formula: `Underwriting ${cof <= 0 ? "profit" : "loss"} ${$(Math.abs(underwritingResult(L)))} ÷ ${cofA.denomBasis} ${$(cofA.denom)}`,
       tone: cof <= 0 ? "good" : cof < 0.03 ? "ok" : "warn",
       label: cof <= 0 ? "Paid to hold the money" : "Pays for its float",
-      note: "Buffett's own yardstick: the underwriting result as the price of holding the float. At or below zero, policyholders are paying the company to invest their money — the gold standard. A modest positive cost can still beat borrowing; a chronic high cost means the float is expensive leverage.",
+      note: "Buffett's own yardstick: the underwriting result as the price of holding the float, divided the way his tables divide it — over the two-year average of float where the record carries both years, since the year's result was earned on money that arrived through the year. At or below zero, policyholders are paying the company to invest their money — the gold standard. A modest positive cost can still beat borrowing; a chronic high cost means the float is expensive leverage.",
     };
   return {
     sections: [
