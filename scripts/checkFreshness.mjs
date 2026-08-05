@@ -63,6 +63,25 @@ const dailyLeg = (file, maxDays, why) => {
 console.log("\nDaily legs (own calendar, independent of the freshest pool):");
 dailyLeg("wire.json", 2, "the filing wire commits every weekday; a longer gap means its workflow is failing or its commit step is blocked, and the site is serving a stale wire under a daily promise");
 
+// ---- per-pool legs, and the FLOOR the reader actually sees ----
+// The coarse freshest-pool test above cannot see one pool stalling while the others run — and the
+// site's "company pages as of" label reads the OLDEST of the four fundamentals pools, so a single
+// stalled pool IS the reader-visible date. That is how the label read July 18 on August 4 (the
+// discarded Aug-1 monthly run was only ever half-recovered; the ADR pool sat 17 days and every
+// check here stayed green). All four pools refresh weekly as of 2026-08-05, so each gets a 10-day
+// leg (one missed Monday tolerated, the second cannot hide), and the floor itself gets 14.
+console.log("\nPool legs (each weekly as of 2026-08-05):");
+const POOL_FILES = ["fundamentals.json", "fundamentals.adr.json", "fundamentals.jp.json", "fundamentals.eu.json"];
+for (const f of POOL_FILES) dailyLeg(f, 10, "this pool refreshes weekly; past 10 days its workflow has missed two Mondays and the floor label is dragging");
+const poolAges = POOL_FILES.map((f) => stamps.find((x) => x.f === f)).filter(Boolean).map((s) => ({ f: s.f, age: ageDays(s.asOf) }));
+if (poolAges.length === POOL_FILES.length) {
+  const floor = poolAges.reduce((a, b) => (b.age > a.age ? b : a));
+  console.log(`  ${"FLOOR (reader-visible)".padEnd(26)} ${floor.f} at ${floor.age}d`);
+  if (floor.age > 14) problems.push(`the reader-visible floor ("company pages as of") is ${floor.age} days old via ${floor.f} — the site is dating itself stale on every page`);
+} else {
+  problems.push("not all four fundamentals pools carry an as-of stamp — the floor label cannot be trusted");
+}
+
 // ---- the monthly leg: the qualitative layer, read per ENTRY rather than per file ----
 // The stamp at the top of language.json moves whenever ANY run writes it, including a run of a
 // dozen tickers, so it cannot tell a full heal from a touch. What matters is the OLDEST entry:

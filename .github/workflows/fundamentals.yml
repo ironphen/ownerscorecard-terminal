@@ -155,8 +155,15 @@ jobs:
       # monthly cron and on demand; reads universe.adr.json, which the rebuild step above writes (pair
       # fetch_adr with rebuild_universe=write to bootstrap). Non-fatal: a separate pool never blocks
       # the US refresh.
+      # Weekly as of 2026-08-05, not just monthly: the site's floor stamp — "company pages as of",
+      # on every page — reads the OLDEST of the four fundamentals pools, so any monthly pool drags
+      # the reader-visible date toward a month old. The owner spotted the label reading July 18 on
+      # August 4 (the discarded Aug-1 monthly run was never re-dispatched; only its language layer
+      # had been recovered by hand). ADR filings are annual, but the stamp is a promise about our
+      # refresh, not about the filers' cadence. Segments and ratios stay monthly — they change at
+      # filing speed; this step carries the pool's asOf.
       - run: npm run fetch:fundamentals:adr
-        if: ${{ (github.event.inputs.fetch_adr == 'true' || github.event.schedule == '0 8 1 * *') }}
+        if: ${{ (github.event.inputs.fetch_adr == 'true' || github.event.schedule == '0 8 1 * *' || github.event.schedule == '0 7 * * 1') }}
         continue-on-error: true
         env:
           SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT }}

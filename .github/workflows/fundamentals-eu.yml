@@ -22,7 +22,10 @@ on:
       - "src/data/universe.eu.json"
       - ".github/workflows/fundamentals-eu.yml"
   schedule:
-    - cron: "0 9 1 * *" # 1st of the month 09:00 UTC, after the US/ADR monthly rebuild
+    # Weekly as of 2026-08-05 (was monthly): the site-wide "company pages as of" floor stamp reads
+    # the oldest of the four pools, so a monthly pool drags the reader-visible date toward a month
+    # old even when everything else is fresh. ESEF filings are annual; the stamp is about us.
+    - cron: "0 9 * * 1" # Mondays 09:00 UTC, after the US and JP refreshes
 
 permissions:
   contents: write
