@@ -274,6 +274,15 @@ export function banksLines(facts, fyEnds = null) {
   {
     const { series: htmCost, warns: hw } = stitchGenerations([
       instantByYear(facts, "DebtSecuritiesHeldToMaturityExcludingAccruedInterestBeforeAllowanceForCreditLoss", fyEnds),
+      // The CECL-era variant the stitch was missing — and the reason 8 of the 20 largest US
+      // banks were SILENT on HTM marks while carrying a fair value: fair-only rows climbed
+      // 11→43 across FY2019-24 as filers migrated to this tag. Verified on EDGAR companyfacts
+      // before shipping: USB files it at $76.170B (2025-12-31) against pool fair $67.079B — a
+      // $9.1B unrecognized loss tying the filer's own AccumulatedUnrecognizedHoldingLoss tag to
+      // the dollar ($9.190B less $99M gains); C at $189.831B against fair $179.520B ($10.3B).
+      // Ordered after the BeforeAllowance variant: where both filed, the allowance is ~0 and the
+      // two tie within rounding (the identity gate below still adjudicates every year).
+      instantByYear(facts, "DebtSecuritiesHeldToMaturityExcludingAccruedInterestAfterAllowanceForCreditLoss", fyEnds),
       instantByYear(facts, "DebtSecuritiesHeldToMaturityAmortizedCostAfterAllowanceForCreditLoss", fyEnds),
       instantByYear(facts, "HeldToMaturitySecurities", fyEnds),
     ], { label: "htmAmortizedCost" });

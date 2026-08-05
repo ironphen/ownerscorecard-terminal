@@ -22,8 +22,18 @@ const facts = (tags) => ({ facts: { "us-gaap": tags } });
 {
   const agree = stitchGenerations([{ 2022: 100, 2023: 110 }, { 2019: 80, 2020: 90, 2022: 100 }], { label: "x", absFloor: 0 });
   t("agreeing generations stitch (older fills the early years)", agree.series[2019] === 80 && agree.series[2023] === 110 && agree.warns.length === 0, agree);
-  const clash = stitchGenerations([{ 2022: 100, 2023: 110 }, { 2019: 80, 2022: 250 }], { label: "x", absFloor: 0 });
-  t("a majority-disagreeing predecessor is dropped whole, with a warning", clash.series[2019] === undefined && clash.warns.length === 1, clash);
+  // Drop-whole demands SYSTEMATIC disagreement: at least two contested years AND a majority of
+  // the overlap. A one-year overlap can never be systematic — PNC's HTM cost proved it: its only
+  // overlap year (2021, a tiny pre-transfer book) differed by an allowance, 1-of-1 read as 100%,
+  // and the drop discarded four clean later years including the $70.1B FY2025 value.
+  const clash = stitchGenerations([{ 2021: 100, 2022: 100, 2023: 110 }, { 2019: 80, 2021: 200, 2022: 250 }], { label: "x", absFloor: 0 });
+  t("a systematically-disagreeing predecessor (two contested overlap years) is dropped whole",
+    clash.series[2019] === undefined && clash.warns.length === 1, clash);
+  // The PNC pin: a SINGLE contested overlap year withholds that year and keeps the rest.
+  const pnc = stitchGenerations([{ 2020: 1605, 2021: 1522 }, { 2021: 1426, 2022: 95175, 2023: 90784, 2025: 70105 }], { label: "htm", absFloor: 0 });
+  t("a single contested overlap year withholds the year, never the generation (PNC)",
+    pnc.series[2020] === 1605 && pnc.series[2021] === null && pnc.series[2025] === 70105 &&
+    pnc.warns.some((w) => w.includes("2021")), pnc);
   // The contested-year shape (the cross-tag CECL backfill): the generations agree except at one
   // old year the newer tag restated. Three scopes can contest such a year (BAC's 2019 allowance:
   // 9.416B loans-only, 10.229B with the off-BS reserve, 12.358B day-one backfill) — the year is

@@ -97,7 +97,13 @@ export function stitchGenerations(gens, { tol = 0.01, absFloor = 2e6, label = ""
       const a = merged[fy], b = g[fy];
       return Math.abs(a - b) > Math.max(Math.abs(a) * tol, absFloor);
     });
-    if (overlap.length && disagreeing.length / overlap.length > 0.5) {
+    // Dropping a generation WHOLE requires systematic disagreement — at least two contested
+    // years, not a majority of one. PNC's HTM cost proved the flaw: its only overlap year is
+    // 2021, when the book was a tiny pre-transfer $1.5B and the tags differ by a $96M allowance;
+    // 1-of-1 read as 100% and the drop discarded four clean later years including the $70.1B
+    // FY2025 value. A single contested year takes the isolated-conflict path below — that year
+    // withholds, the generation's other years fill.
+    if (overlap.length && disagreeing.length >= 2 && disagreeing.length / overlap.length > 0.5) {
       warns.push(`${label}: predecessor tag disagrees in overlap — older generation dropped`);
       continue;
     }
