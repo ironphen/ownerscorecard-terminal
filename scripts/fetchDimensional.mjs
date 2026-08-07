@@ -162,6 +162,45 @@ export const TARGETS = [
     ],
   },
   {
+    // Berkshire's insurance stack exists ONLY dimensioned (solvency-sight Build 7 keyhole,
+    // probed 2026-08-05): no premiums, reserves or unearned-premium fact lands undimensioned in
+    // any of ten fiscal years, which is how the float company's page printed "Float $17.9B"
+    // against the ~$176B its own letter states. The balance-sheet column member is
+    // brka:InsuranceAndOtherMember (Berkshire's two-column presentation), and the claims
+    // liability carries a TRIPLE cross-context tie — the same $120,713M is filed under the
+    // insurance-and-other column, the P&C-ex-retroactive product member, and the insurance-group
+    // segment member — stronger than the Wells Fargo double identity this registry's ceremony is
+    // named for. Premiums carry an exact member identity: P&C $83,633M + life/health $5,269M =
+    // $88,902M to the filed dollar. The retroactive-reinsurance liability ($31,048M) lives on
+    // CededCreditRiskAxis and is deliberately NOT folded into lossReserves: it is a separate
+    // contract liability, and Buffett's stated float (which includes it) stays the page's float
+    // figure via the Build-1b weld — this entry restores the RECORD's component lines, not a
+    // computed float. Routing consequence, verified before shipping: with premiums restored,
+    // Berkshire's premium share is ~24% of revenue, so the conglomerate carve-out fires on its
+    // own designed test instead of the fail-closed path — Berkshire stays off the insurer
+    // scorecard because it IS a conglomerate, not because its tags are dark.
+    ticker: "BRK-A", cik: "0001067983", filings: 4,
+    lines: [
+      { line: "lossReserves", kind: "instant", tag: "us-gaap:LiabilityForClaimsAndClaimsAdjustmentExpense",
+        dims: { "srt:ProductOrServiceAxis": "brka:InsuranceAndOtherMember" } },
+      { line: "unearnedPremiums", kind: "instant", tag: "us-gaap:UnearnedPremiums",
+        dims: { "srt:ProductOrServiceAxis": "brka:InsuranceAndOtherMember" } },
+      { line: "premiumsEarned", kind: "flow", tag: "us-gaap:PremiumsEarnedNet",
+        dims: { "srt:ProductOrServiceAxis": "brka:InsuranceAndOtherMember" } },
+    ],
+    gateInputs: [
+      { name: "claimsPcExRetro", kind: "instant", tag: "us-gaap:LiabilityForClaimsAndClaimsAdjustmentExpense",
+        dims: { "srt:ProductOrServiceAxis": "brka:PropertyAndCasualtyInsuranceAndReinsuranceExcludingRetroactiveReinsuranceMember" } },
+      { name: "claimsSegment", kind: "instant", tag: "us-gaap:LiabilityForClaimsAndClaimsAdjustmentExpense",
+        dims: { "us-gaap:StatementBusinessSegmentsAxis": "brka:BerkshireHathawayInsuranceGroupMember" } },
+      { name: "premPc", kind: "flow", tag: "us-gaap:PremiumsEarnedNet",
+        dims: { "srt:ProductOrServiceAxis": "us-gaap:PropertyLiabilityAndCasualtyInsuranceSegmentMember" } },
+      { name: "premLife", kind: "flow", tag: "us-gaap:PremiumsEarnedNet",
+        dims: { "srt:ProductOrServiceAxis": "brka:LifeAndHealthInsuranceMember" } },
+    ],
+    gate: "brkInsuranceTies",
+  },
+  {
     ticker: "WFC", cik: "0000072971", filings: 5,
     lines: [
       { line: "netChargeOffs", kind: "flow",
@@ -584,6 +623,35 @@ const GATES = {
       if (Math.abs(cy + dev[fy] - total) > tol) { dev[fy] = null; W(`${who} development ${fy}: fails CY + PY = total — withheld`); }
     }
   },
+  // Berkshire's ties (Build 7): the claims liability must agree across THREE independent
+  // contexts (balance-sheet column, P&C-ex-retro product member, insurance-group segment member)
+  // or the year withholds — and unearned premiums, which share the balance-sheet column and have
+  // no second context of their own, withhold with it. Premiums must reconstruct from their two
+  // segment members to the filed dollar. A re-tagged filing breaks a tie and produces blanks,
+  // never a wrong number — the self-retiring contract every keyhole carries.
+  brkInsuranceTies(lines, gates, W, who) {
+    const lr = lines.lossReserves;
+    if (lr) for (const fy of Object.keys(lr)) {
+      if (lr[fy] == null) continue;
+      const a = gates.claimsPcExRetro?.[fy], b = gates.claimsSegment?.[fy];
+      const tol = Math.max(Math.abs(lr[fy]) * 0.001, 1e6);
+      if (a == null || b == null || Math.abs(lr[fy] - a) > tol || Math.abs(lr[fy] - b) > tol) {
+        lr[fy] = null;
+        if (lines.unearnedPremiums) lines.unearnedPremiums[fy] = null;
+        W(`${who} lossReserves ${fy}: the triple cross-context tie fails — year withheld (unearned premiums with it)`);
+      }
+    }
+    const pe = lines.premiumsEarned;
+    if (pe) for (const fy of Object.keys(pe)) {
+      if (pe[fy] == null) continue;
+      const p = gates.premPc?.[fy], l = gates.premLife?.[fy];
+      const tol = Math.max(Math.abs(pe[fy]) * 0.005, 5e6);
+      if (p == null || l == null || Math.abs(p + l - pe[fy]) > tol) {
+        pe[fy] = null;
+        W(`${who} premiumsEarned ${fy}: P&C + life members do not reconstruct the total — withheld`);
+      }
+    }
+  },
   // The Wells Fargo double identity: gross − recoveries = net, AND the segment members of the
   // same extension tag sum to its total. Both must hold or the year is withheld.
   wfcDoubleIdentity(lines, gates, W, who) {
@@ -766,6 +834,14 @@ async function main() {
   // withholds must be able to take a figure off the record as well as keep one on it.
   const companies = only.length ? { ...prior, ...result } : result;
   for (const t of plan) if (!result[t.ticker]) delete companies[t.ticker];
+  // Share-class mirrors: one registrant, one document read, two pool rows. The mirror is applied
+  // at write time so the registry never fetches the same 10MB filing twice, and it follows the
+  // source ticker wherever the merge carries it (a run that drops BRK-A drops BRK-B with it).
+  const MIRRORS = { "BRK-B": "BRK-A" };
+  for (const [alias, src] of Object.entries(MIRRORS)) {
+    if (companies[src]) companies[alias] = companies[src];
+    else delete companies[alias];
+  }
   const out = { asOf: new Date().toISOString().slice(0, 10), source: "SEC inline-XBRL 10-K instances: named dimensional targets, mapped and value-verified before entry (docs desk surveys; run wf_402f292f)", companies };
   const tmp = outPath + ".tmp";
   fs.writeFileSync(tmp, compactJson(out));

@@ -171,5 +171,25 @@ const CAPEX_DOC = `
   t("no capex component reaches for a multi-axis context", badDims.length === 0, badDims);
 }
 
+// The Berkshire keyhole (solvency-sight Build 7): registry shape + the triple-tie gate's
+// refuse-on-any-miss contract, pinned so a registry edit cannot silently weaken either.
+{
+  const brk = TARGETS.find((x) => x.ticker === "BRK-A");
+  t("the BRK entry exists with the three component lines", !!brk && brk.lines.map((l) => l.line).sort().join(",") === "lossReserves,premiumsEarned,unearnedPremiums", brk?.lines?.map((l) => l.line));
+  t("every BRK line reads the insurance-and-other balance-sheet column",
+    !!brk && brk.lines.every((l) => l.dims["srt:ProductOrServiceAxis"] === "brka:InsuranceAndOtherMember"));
+  t("the gate carries both premium members and both claims cross-contexts",
+    !!brk && ["claimsPcExRetro", "claimsSegment", "premPc", "premLife"].every((n) => brk.gateInputs.some((g) => g.name === n)));
+  t("BRK uses the brkInsuranceTies gate", brk?.gate === "brkInsuranceTies");
+  // The live payload the run produced honors the gate: FY2025 passed all ties at the probed
+  // dollars; FY2023's claims failed the triple tie and BOTH balance-sheet lines withheld.
+  const dim = JSON.parse((await import("node:fs")).readFileSync("src/data/dimensional.json", "utf8")).companies;
+  t("FY2025 claims land at the probed $120,713M with the tie held", dim["BRK-A"]?.lossReserves?.["2025"] === 120713000000, dim["BRK-A"]?.lossReserves);
+  t("premiums pass the member identity across six years", Object.keys(dim["BRK-A"]?.premiumsEarned || {}).length >= 6);
+  t("the failed 2023 tie withheld claims AND unearned premiums together",
+    dim["BRK-A"]?.lossReserves?.["2023"] == null && dim["BRK-A"]?.unearnedPremiums?.["2023"] == null);
+  t("BRK-B mirrors BRK-A at write time", JSON.stringify(dim["BRK-B"]) === JSON.stringify(dim["BRK-A"]));
+}
+
 if (failed) { console.error(`\n❌ dimensionalTest: ${failed} failure(s).`); process.exit(1); }
 console.log("\n✅ dimensionalTest passed.");
