@@ -282,5 +282,41 @@ for (const [tk, want] of [["D", 12653000000], ["ED", 4764000000], ["HTO", 519753
       && ((c.history || []).find((h) => h.fy === c.fy)?.lines?.capex ?? null) !== c.ttm.lines.capex));
 }
 
+// THE INSTANT TIE GATE (2026-08-06, the Kroger lesson — next-frontier census finding). The TTM
+// and quarterly balance pickers took the newest fact end across a tag ladder with no tie to the
+// node's own balance date. Kroger last tagged InventoryNet in fiscal 2010, so its pages rendered
+// a fifteen-year-old $5,256M as the 2026-05-23 inventory, overstating the quick ratio ~29%
+// (0.50 vs 0.39). The fetch now ties every instant to the node date and withholds the rest.
+{
+  // The exact relic dollar must never return to either node: it can only reappear if the tie
+  // gate is removed, since KR stopped filing the tag the ladder reads sixteen years ago.
+  const kr = byT.get("KR");
+  if (kr) {
+    t("KR TTM inventory is never the 2010 relic $5,256M (tie gate)", kr.ttm?.lines?.inventory !== 5256000000);
+    t("KR quarterly inventory is never the 2010 relic $5,256M (tie gate)", kr.quarterly?.balance?.inventory !== 5256000000);
+  }
+  // Roper's capex line was retagged to OtherProductiveAssets at FY2019 (identical dollars in the
+  // 2017-18 overlap years prove a rename); without the named-filer ladder the OwnerEarnings
+  // bridge featured FY2016-18 as current, eight years stale. The pin holds the healed series.
+  const rop = byT.get("ROP");
+  if (rop) {
+    const ropFy25 = (rop.history || []).find((h) => h.fy === 2025);
+    t("ROP FY2025 capex reads the retagged line ($47.4M), not a pre-2019 relic",
+      ropFy25?.lines?.capex === 47400000);
+  }
+  // Structural legs, pool-wide and permanent: no TTM or quarterly node may sit OLDER than the
+  // annual record beside it (the stranded-anchor drop rule; 14-day tolerance for 52/53-week
+  // calendars). These are the only per-node dates the data file carries, so they are the
+  // post-hoc guard against a stale anchor ever being stamped as "current" again.
+  const staleNodes = [];
+  for (const c of us) {
+    if (!c.periodEnd) continue;
+    const floor = new Date(c.periodEnd).getTime() - 14 * 86400000;
+    if (c.ttm?.asOf && new Date(c.ttm.asOf).getTime() < floor) staleNodes.push(`${c.ticker} ttm@${c.ttm.asOf}`);
+    if (c.quarterly?.asOf && new Date(c.quarterly.asOf).getTime() < floor) staleNodes.push(`${c.ticker} q@${c.quarterly.asOf}`);
+  }
+  t(`no TTM or quarterly node predates its own annual record (${staleNodes.length}: ${staleNodes.slice(0, 5).join(", ")})`, staleNodes.length === 0);
+}
+
 if (failed) { console.error(`\n❌ correctnessGatesTest: ${failed} failure(s).`); process.exit(1); }
 console.log("\n✅ correctnessGatesTest passed.");

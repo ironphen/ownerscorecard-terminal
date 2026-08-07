@@ -1334,6 +1334,40 @@ function latestObservation(facts, tags, unit = "USD", instant = false) {
   return best;
 }
 
+// THE INSTANT TIE GATE (2026-08-06, the Kroger lesson): latestObservation takes the newest fact
+// end across a tag ladder, which is only "current" while the filer still tags the concept.
+// Kroger last tagged InventoryNet in fiscal 2010 — the ladder's newest fact was a fifteen-year-old
+// $5,256M, and the TTM and quarterly nodes stamped it into a 2026-05-23 balance sheet, overstating
+// the rendered quick ratio by ~29%. A balance-sheet instant either sits on the node's own balance
+// date or it belongs to a different balance sheet. This picker accepts a fact only at anchorEnd
+// (newest filing wins among duplicates; ladder order breaks a same-filing tie).
+//
+// BOUNDED, not absolute (measured on a 287-name sample before shipping): many filers tag a line
+// ONLY in the 10-K — operating-lease splits, goodwill, AbbVie's whole long-term-debt ladder — so
+// a strict single-date gate would null them and MANUFACTURE wrongness downstream (a nulled
+// totalDebt beside fresh cash reads as net cash on the valuation surface; nulled leases understate
+// debtPlusLeases). The caller therefore passes the annual record's balance date as fallbackEnd:
+// the node's own date wins, the FY balance date — the vintage the annual lines already present
+// honestly — is accepted behind it, and anything older than BOTH is withheld as the relic it is.
+// Per-line vintage labeling is the schema work already noted at the TTM stitch guard.
+function tiedInstant(facts, tags, unit, anchorEnd, fallbackEnd = null) {
+  for (const end of fallbackEnd && fallbackEnd !== anchorEnd ? [anchorEnd, fallbackEnd] : [anchorEnd]) {
+    if (!end) continue;
+    let best = null;
+    for (const tag of tags) {
+      const units = facts?.facts?.["us-gaap"]?.[tag]?.units?.[unit];
+      if (!units) continue;
+      for (const u of units) {
+        if (!u.form || !!u.start || u.end !== end) continue;
+        if (!(u.form.startsWith("10-K") || u.form.startsWith("10-Q"))) continue;
+        if (!best || (u.filed || "") > best.filed) best = { val: u.val, end: u.end, filed: u.filed || "", form: u.form };
+      }
+    }
+    if (best) return best;
+  }
+  return null;
+}
+
 // THE TTM PAYABLES PAIR-GUARD (UX survey item 5, the reg-pair pattern): many filers tag the pure
 // trade-payables concept on the annual balance sheet but only the COMBINED payables-and-accrued
 // concept in their 10-Qs. The old ladder walked both, so the trailing cell silently switched
@@ -1341,10 +1375,14 @@ function latestObservation(facts, tags, unit = "USD", instant = false) {
 // not the business. The guard: the pure concept stands when the latest quarter carries it; a
 // combined-only quarter is decomposed through the filer's own latest year where BOTH concepts
 // were tagged (the FY relationship); with no such year, the cell is withheld — a dash beats a
-// figure whose basis jumped.
-function ttmPayables(facts) {
-  const pure = latestObservation(facts, ["AccountsPayableCurrent", "AccountsPayableTradeCurrent"], "USD", true);
-  const comb = latestObservation(facts, ["AccountsPayableAndAccruedLiabilitiesCurrent"], "USD", true);
+// figure whose basis jumped. Both picks sit on the TTM node's own balance date, or the FY balance
+// date behind it (bounded tie gate above): a pure-concept fact from an OLDER balance sheet must
+// not outrank the combined fact the current quarter actually filed, and a relic combined fact
+// must not anchor the decomposition at all. The pure pick keeps priority only at the same-or-
+// fresher date than the combined one — the original pair-guard rule, now date-honest.
+function ttmPayables(facts, anchorEnd, fallbackEnd = null) {
+  const pure = tiedInstant(facts, ["AccountsPayableCurrent", "AccountsPayableTradeCurrent"], "USD", anchorEnd, fallbackEnd);
+  const comb = tiedInstant(facts, ["AccountsPayableAndAccruedLiabilitiesCurrent"], "USD", anchorEnd, fallbackEnd);
   if (pure && (!comb || pure.end >= comb.end)) return pure.val;
   if (!comb) return null;
   const pureM = instantMap(facts, ["AccountsPayableCurrent", "AccountsPayableTradeCurrent"]);
@@ -1721,7 +1759,7 @@ async function main() {
     const componentDebt = ltd || cur ? (ltd?.val || 0) + (cur?.val || 0) : null;
     const aggInstantVals = CONCEPTS.debtTotal.map((t) => pickInstant(facts, [t], "USD", fyEnds)?.val ?? null);
     const aggSeriesByTag = CONCEPTS.debtTotal.map((t) => collectInstant(facts, [t], "USD", fyEnds));
-    const aggTTMVals = CONCEPTS.debtTotal.map((t) => latestObservation(facts, [t], "USD", true)?.val ?? null);
+    // (TTM aggregate-debt picks moved into the TTM block itself, tied to its balance date.)
     const aggYear = (fy) => maxOf(...aggSeriesByTag.map((s) => s[fy] ?? null));
     // Secured + unsecured: many REITs split borrowings into these two buckets and tag no
     // combined total. They are mutually exclusive, so their sum is a valid total estimate
@@ -2005,7 +2043,18 @@ async function main() {
     // purchases 3,453 = 11,906 against a net investing outflow of 11,939 — two separate real
     // lines, and only the first is the company building its own plant. The second stays visible on
     // the Investing cash flow row rather than being folded into capital spending.
-    const CAPEX_CONCEPT = { AEP: ["PaymentsForConstructionInProcess"] };
+    const CAPEX_CONCEPT = {
+      AEP: ["PaymentsForConstructionInProcess"],
+      // Roper retagged its one capex line — "Capital expenditures" — from ProductiveAssets to
+      // OtherProductiveAssets at FY2019: the two overlap in 2017-18 with IDENTICAL dollars
+      // ($48.8M/$49.1M), a rename and not parts, so the pair merges into one continuous series
+      // (per-year priority above; the earlier tag owns the overlap). Without the second tag the
+      // OwnerEarnings bridge sat EIGHT YEARS stale, featuring FY2016-18 as current (next-frontier
+      // census, 2026-08-06). Global promotion refused, per the Con Edison lesson above: a filer
+      // tagging BOTH PP&E capex and OtherProductiveAssets means parts, and only a named filer
+      // whose overlap is proven identical earns the merged ladder.
+      ROP: ["PaymentsToAcquireProductiveAssets", "PaymentsToAcquireOtherProductiveAssets"],
+    };
     const capexBy = annualByYear(facts, CAPEX_CONCEPT[ticker.toUpperCase()] || CONCEPTS.capex);
     // A PART OF THE LINE, WEARING THE WHOLE LINE'S TAG. New Jersey Resources prints its capital
     // spending as separate rows — "Utility plant", "Solar equipment", "Storage and transportation
@@ -2418,8 +2467,22 @@ async function main() {
       console.warn(`  ! ${ticker}: TTM stitch ends ${ttmRev.asOf}, older than the FY end ${anchor.end} — a stranded tag; dropping the TTM block (the FY lines stand)`);
       ttmRev = null;
     }
-    const ttmLtd = latestObservation(facts, CONCEPTS.longTermDebt, "USD", true)?.val;
-    const ttmCurDebt = latestObservation(facts, CONCEPTS.currentDebt, "USD", true)?.val;
+    // Balance-sheet instants inside the TTM node tie to the node's own date (tiedInstant above):
+    // a fact from any other balance sheet is withheld, and the warn names each stale value the
+    // old picker would have shipped — after the first full heal the log doubles as the
+    // tag-migration tripwire (a filer abandoning a concept surfaces here, not on the page).
+    const tiedTtm = (line, tags, unit = "USD") => {
+      if (!ttmRev) return null;
+      const tied = tiedInstant(facts, tags, unit, ttmRev.asOf, anchor?.end ?? null);
+      if (!tied) {
+        const untied = latestObservation(facts, tags, unit, true);
+        if (untied) console.warn(`  ! ${ticker}: TTM ${line} withheld — newest fact ends ${untied.end}, older than both the ${ttmRev.asOf} balance date and the FY end (stale-instant tie gate)`);
+      }
+      return tied?.val ?? null;
+    };
+    const ttmLtd = tiedTtm("longTermDebt", CONCEPTS.longTermDebt);
+    const ttmCurDebt = tiedTtm("currentDebt", CONCEPTS.currentDebt);
+    const aggTTMVals = ttmRev ? CONCEPTS.debtTotal.map((t) => tiedInstant(facts, [t], "USD", ttmRev.asOf, anchor?.end ?? null)?.val ?? null) : [];
     const ttm = ttmRev
       ? {
           asOf: ttmRev.asOf,
@@ -2467,15 +2530,15 @@ async function main() {
             acquisitionSpend: tf(CONCEPTS.acquisitionSpend),
             goodwillImpairment: tf(CONCEPTS.goodwillImpairment),
             assetImpairment: tf(CONCEPTS.assetImpairment),
-            stockholdersEquity: latestObservation(facts, CONCEPTS.stockholdersEquity, "USD", true)?.val ?? null,
-            cashAndEquivalents: latestObservation(facts, CONCEPTS.cashAndEquivalents, "USD", true)?.val ?? null,
-            shortTermInvestments: latestObservation(facts, CONCEPTS.shortTermInvestments, "USD", true)?.val ?? null,
-            longTermMarketable: latestObservation(facts, CONCEPTS.longTermMarketable, "USD", true)?.val ?? null,
-            receivables: latestObservation(facts, CONCEPTS.receivables, "USD", true)?.val ?? null,
-            inventory: latestObservation(facts, CONCEPTS.inventory, "USD", true)?.val ?? null,
-            accountsPayable: ttmPayables(facts),
-            currentAssets: latestObservation(facts, CONCEPTS.currentAssets, "USD", true)?.val ?? null,
-            currentLiabilities: latestObservation(facts, CONCEPTS.currentLiabilities, "USD", true)?.val ?? null,
+            stockholdersEquity: tiedTtm("stockholdersEquity", CONCEPTS.stockholdersEquity),
+            cashAndEquivalents: tiedTtm("cashAndEquivalents", CONCEPTS.cashAndEquivalents),
+            shortTermInvestments: tiedTtm("shortTermInvestments", CONCEPTS.shortTermInvestments),
+            longTermMarketable: tiedTtm("longTermMarketable", CONCEPTS.longTermMarketable),
+            receivables: tiedTtm("receivables", CONCEPTS.receivables),
+            inventory: tiedTtm("inventory", CONCEPTS.inventory),
+            accountsPayable: ttmPayables(facts, ttmRev.asOf, anchor?.end ?? null),
+            currentAssets: tiedTtm("currentAssets", CONCEPTS.currentAssets),
+            currentLiabilities: tiedTtm("currentLiabilities", CONCEPTS.currentLiabilities),
             currentDebt: ttmCurDebt ?? null,
             totalDebt: maxOf(ttmLtd != null || ttmCurDebt != null ? (ttmLtd || 0) + (ttmCurDebt || 0) : null, ...aggTTMVals),
             sharesDiluted: fixShareScale(freshestShare(latestObservation(facts, CONCEPTS.sharesDiluted, "shares", false), pickInstant(facts, CONCEPTS.sharesOutstanding, "shares", fyEnds)), shareRef),
@@ -2483,19 +2546,19 @@ async function main() {
             noninterestIncome: tf(CONCEPTS.noninterestIncome),
             noninterestExpense: tf(CONCEPTS.noninterestExpense),
             provisionForCreditLosses: tf(CONCEPTS.provisionForCreditLosses),
-            totalAssets: latestObservation(facts, CONCEPTS.totalAssets, "USD", true)?.val ?? null,
-            investmentsTotal: latestObservation(facts, CONCEPTS.investments, "USD", true)?.val ?? null,
-            deposits: latestObservation(facts, CONCEPTS.deposits, "USD", true)?.val ?? null,
-            goodwill: latestObservation(facts, CONCEPTS.goodwill, "USD", true)?.val ?? null,
-            intangibleAssets: latestObservation(facts, CONCEPTS.intangibleAssets, "USD", true)?.val ?? null,
+            totalAssets: tiedTtm("totalAssets", CONCEPTS.totalAssets),
+            investmentsTotal: tiedTtm("investmentsTotal", CONCEPTS.investments),
+            deposits: tiedTtm("deposits", CONCEPTS.deposits),
+            goodwill: tiedTtm("goodwill", CONCEPTS.goodwill),
+            intangibleAssets: tiedTtm("intangibleAssets", CONCEPTS.intangibleAssets),
             gainOnSaleRealEstate: tf(CONCEPTS.gainOnSaleRealEstate),
-            realEstateGross: latestObservation(facts, CONCEPTS.realEstateGross, "USD", true)?.val ?? null,
+            realEstateGross: tiedTtm("realEstateGross", CONCEPTS.realEstateGross),
             premiumsEarned: tf(CONCEPTS.premiumsEarned),
             claimsIncurred: tf(CONCEPTS.claimsIncurred),
             underwritingExpense: tf(CONCEPTS.underwritingExpense),
             lossesAndExpenses: tf(CONCEPTS.lossesAndExpenses),
             investmentIncome: tf(CONCEPTS.investmentIncome),
-            lossReserves: latestObservation(facts, CONCEPTS.lossReserves, "USD", true)?.val ?? null,
+            lossReserves: tiedTtm("lossReserves", CONCEPTS.lossReserves),
           },
         }
       : null;
@@ -2505,33 +2568,50 @@ async function main() {
     // float, leases as true debt, total liabilities for net-net), the recent-quarter series for the
     // liquidity trend and earnings momentum, and provenance so we always know how fresh "current" is.
     // Stored raw; every ratio (current, quick, cash, NCAV, runway, momentum) is derived in page code.
-    const lq = latestObservation(facts, CONCEPTS.currentAssets, "USD", true)
-      || latestObservation(facts, CONCEPTS.totalAssets, "USD", true);
-    const instq = (tags) => latestObservation(facts, tags, "USD", true)?.val ?? null;
+    // The node anchors on the NEWER of the two anchor concepts — a filer that dropped classified
+    // presentation years ago (utilities moving to unclassified balance sheets) must not anchor
+    // "current" on its last classified date while totalAssets runs fresh. A node older than the
+    // annual record is a stranded anchor: dropped whole, like the TTM stitch above. Every line
+    // then ties to the anchor date (tiedInstant) — the mixed-vintage balance sheet under a single
+    // asOf is the same dishonesty the TTM tie gate kills, one node over.
+    const lqCand = [latestObservation(facts, CONCEPTS.currentAssets, "USD", true), latestObservation(facts, CONCEPTS.totalAssets, "USD", true)].filter(Boolean);
+    let lq = lqCand.sort((a, b) => new Date(b.end) - new Date(a.end))[0] || null;
+    if (lq && anchor?.end && new Date(lq.end).getTime() < new Date(anchor.end).getTime() - 14 * 86400000) {
+      console.warn(`  ! ${ticker}: freshest balance sheet ends ${lq.end}, older than the FY end ${anchor.end} — a stranded anchor; dropping the quarterly node (the FY lines stand)`);
+      lq = null;
+    }
+    const instq = (line, tags) => {
+      const tied = tiedInstant(facts, tags, "USD", lq.end, anchor?.end ?? null);
+      if (!tied) {
+        const untied = latestObservation(facts, tags, "USD", true);
+        if (untied) console.warn(`  ! ${ticker}: quarterly ${line} withheld — newest fact ends ${untied.end}, older than both the ${lq.end} balance date and the FY end (stale-instant tie gate)`);
+      }
+      return tied?.val ?? null;
+    };
     const quarterly = lq
       ? {
           asOf: lq.end,
           form: lq.form && lq.form.startsWith("10-K") ? "10-K" : "10-Q",
           balance: {
-            cash: instq(CONCEPTS.cashAndEquivalents),
-            shortTermInvestments: instq(CONCEPTS.shortTermInvestments),
-            receivables: instq(CONCEPTS.receivables),
-            inventory: instq(CONCEPTS.inventory),
-            currentAssets: instq(CONCEPTS.currentAssets),
-            accountsPayable: instq(CONCEPTS.accountsPayable),
-            currentDebt: instq(CONCEPTS.currentDebt),
-            deferredRevenueCurrent: instq(CONCEPTS.deferredRevenueCurrent),
-            operatingLeaseCurrent: instq(CONCEPTS.operatingLeaseCurrent),
-            currentLiabilities: instq(CONCEPTS.currentLiabilities),
-            longTermDebt: instq(CONCEPTS.longTermDebt),
-            deferredRevenueNoncurrent: instq(CONCEPTS.deferredRevenueNoncurrent),
-            operatingLeaseNoncurrent: instq(CONCEPTS.operatingLeaseNoncurrent),
-            totalLiabilities: instq(CONCEPTS.totalLiabilities),
-            totalAssets: instq(CONCEPTS.totalAssets),
-            investmentsTotal: instq(CONCEPTS.investments),
-            stockholdersEquity: instq(CONCEPTS.stockholdersEquity),
-            goodwill: instq(CONCEPTS.goodwill),
-            intangibleAssets: instq(CONCEPTS.intangibleAssets),
+            cash: instq("cash", CONCEPTS.cashAndEquivalents),
+            shortTermInvestments: instq("shortTermInvestments", CONCEPTS.shortTermInvestments),
+            receivables: instq("receivables", CONCEPTS.receivables),
+            inventory: instq("inventory", CONCEPTS.inventory),
+            currentAssets: instq("currentAssets", CONCEPTS.currentAssets),
+            accountsPayable: instq("accountsPayable", CONCEPTS.accountsPayable),
+            currentDebt: instq("currentDebt", CONCEPTS.currentDebt),
+            deferredRevenueCurrent: instq("deferredRevenueCurrent", CONCEPTS.deferredRevenueCurrent),
+            operatingLeaseCurrent: instq("operatingLeaseCurrent", CONCEPTS.operatingLeaseCurrent),
+            currentLiabilities: instq("currentLiabilities", CONCEPTS.currentLiabilities),
+            longTermDebt: instq("longTermDebt", CONCEPTS.longTermDebt),
+            deferredRevenueNoncurrent: instq("deferredRevenueNoncurrent", CONCEPTS.deferredRevenueNoncurrent),
+            operatingLeaseNoncurrent: instq("operatingLeaseNoncurrent", CONCEPTS.operatingLeaseNoncurrent),
+            totalLiabilities: instq("totalLiabilities", CONCEPTS.totalLiabilities),
+            totalAssets: instq("totalAssets", CONCEPTS.totalAssets),
+            investmentsTotal: instq("investmentsTotal", CONCEPTS.investments),
+            stockholdersEquity: instq("stockholdersEquity", CONCEPTS.stockholdersEquity),
+            goodwill: instq("goodwill", CONCEPTS.goodwill),
+            intangibleAssets: instq("intangibleAssets", CONCEPTS.intangibleAssets),
             sharesOutstanding: fixShareScale(pickInstant(facts, CONCEPTS.sharesOutstanding, "shares", fyEnds)?.val ?? null, shareRef),
           },
           series: quarterSeries(facts, revTags, 8, isReitCo || isInsurerCo || isLessorCo || isBrokerCo),
