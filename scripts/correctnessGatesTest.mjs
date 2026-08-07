@@ -326,8 +326,8 @@ for (const [tk, want] of [["D", 12653000000], ["ED", 4764000000], ["HTO", 519753
     const am = Object.fromEntries((dhr.history || []).filter((h) => h.lines?.intangibleAmortization != null).map((h) => [h.fy, h.lines.intangibleAmortization]));
     t("DHR amortization series FY2021-25 ties the filings ($1,388/1,434/1,491/1,631/1,697M)",
       am[2021] === 1388000000 && am[2022] === 1434000000 && am[2023] === 1491000000 && am[2024] === 1631000000 && am[2025] === 1697000000);
-    t("DHR depTags shows the seam: FY2023 bundled, FY2024 component",
-      dhr.depTags?.["2023"] === "DepreciationDepletionAndAmortization" && dhr.depTags?.["2024"] === "Depreciation");
+    t("DHR depTags shows the seam healed: FY2023 bundled as filed, FY2024 the parts-sum composite",
+      dhr.depTags?.["2023"] === "DepreciationDepletionAndAmortization" && dhr.depTags?.["2024"] === "Depreciation+AmortizationOfIntangibleAssets");
   }
   if (avgo?.history?.length && (avgo.lines?.intangibleAmortization != null)) {
     const am = new Map((avgo.history || []).map((h) => [h.fy, h.lines?.intangibleAmortization]));
@@ -337,6 +337,42 @@ for (const [tk, want] of [["D", 12653000000], ["ED", 4764000000], ["HTO", 519753
   }
   if (msft?.depTags) t("MSFT's uniform component record compresses to depTags {all: Depreciation}",
     msft.depTags.all === "Depreciation");
+
+  // OE-BRIDGE BUILD 3 (the seam gate): depreciation tag families never mix per-year. DHR's
+  // bundled DDA died with FY2023 and the old ladder's 3x collapse INVERTED the rendered
+  // owner-earnings direction; the gate serves parts-sum continuity where the filer's own
+  // identity ties (9/9 years to the dollar), withholds post-seam years where it refutes the
+  // sum (Fiserv's bundle carries ~$200M of software amortization beyond dep+amort), and never
+  // re-bases a bundled record to the smaller component line (the owner's ruling).
+  {
+    const { ownerEarningsBridgeFor } = await import("../src/lib/fundamentals.mjs");
+    if (dhr) {
+      const d = (fy) => dhr.history?.find((h) => h.fy === fy);
+      t("DHR parts-sum continuity: FY2024 $2,352M / FY2025 $2,447M on the bundled basis",
+        d(2024)?.lines?.depreciation === 2352000000 && d(2025)?.lines?.depreciation === 2447000000);
+      const b23 = d(2023) && ownerEarningsBridgeFor(d(2023).lines, 2023, dhr);
+      const b24 = d(2024) && ownerEarningsBridgeFor(d(2024).lines, 2024, dhr);
+      t("DHR maintenance flip killed: FY2024 maint is full capex, not the seam's dep",
+        b24 && b24.maintCapex === b24.capex);
+      t("DHR owner-earnings direction FY2023→FY2024 reads DOWN (the seam said up — that WAS the artifact)",
+        b23 && b24 && b24.ownerEarnings < b23.ownerEarnings);
+    }
+    const tmo = byT.get("TMO");
+    if (tmo?.depParts) t("TMO FY2019 restored to the bundled basis ($2,277M, continuous with FY2018's $2,267M)",
+      tmo.history?.find((h) => h.fy === 2019)?.lines?.depreciation === 2277000000);
+    const fi = byT.get("FI");
+    if (fi?.depWithheld?.length) {
+      const y24 = fi.history?.find((h) => h.fy === 2024);
+      t("FI post-seam years are withheld with the flag, never served on the component basis",
+        y24?.lines?.depreciation == null && y24?.lines?.depWithheld === true);
+      const bfi = y24 && ownerEarningsBridgeFor(y24.lines, 2024, fi);
+      t("FI withheld year falls through to full-capex maintenance — the backfill never guesses a gated year",
+        bfi && bfi.maintCapex === bfi.capex && bfi.depreciation == null);
+    }
+    const amzn = byT.get("AMZN");
+    if (amzn?.lines?.depreciation != null) t("AMZN stays on its full bundled line (~$65.8B) — no silent re-basing, ever",
+      amzn.lines.depreciation >= 60000000000);
+  }
 
   // Structural legs, pool-wide and permanent: no TTM or quarterly node may sit OLDER than the
   // annual record beside it (the stranded-anchor drop rule; 14-day tolerance for 52/53-week

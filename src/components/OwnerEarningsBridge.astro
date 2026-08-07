@@ -33,6 +33,11 @@ const cols = rendered.slice().reverse();                // newest first, so the 
 const anyGrowth = rendered.some((y) => y.growthCapex > 0);
 const anyDep = rendered.some((y) => y.depreciation != null);
 const anySbc = rendered.some((y) => y.stockBasedComp != null);
+// A seam-gated year (Build 3): the extraction withheld a cross-family depreciation value it
+// could not reconcile. The cell shows a dash like any missing figure, but the withhold is
+// STATED below — silence would let the residual row absorb the add-back unexplained, which is
+// the exact relabeling the gate exists to kill.
+const anyDepWithheld = rendered.some((y) => y.depWithheld);
 const hasGrowth = !!b && b.growthCapex > 0;             // the featured (newest rendered) year
 
 // Each row reads one bridge figure across every year column. `kind` drives both the arithmetic sign
@@ -179,6 +184,7 @@ if (b) {
     ) : null}
 
     <p class="foot">Maintenance capex is estimated as depreciation where a growing business invests above it; free cash flow is the figure the scorecard's free-cash margin reads.</p>
+    {anyDepWithheld ? <p class="foot">In dashed depreciation years the filer's own depreciation concepts changed scope and do not reconcile with the adjacent years; the add-back is withheld rather than guessed, and its amount remains inside "Working capital &amp; other."</p> : null}
   </section>
 ) : null}
 

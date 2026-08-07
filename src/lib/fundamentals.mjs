@@ -580,7 +580,11 @@ export function maintenanceCapexFor(L, company) {
   // (Google's series climbing 17%→36% across the 2021 boundary). Backfill the missing year from the
   // company's own typical depreciation-to-revenue ratio so the estimate stays continuous; the reported
   // depreciation figures shown elsewhere are untouched.
-  if ((dep == null || dep <= 0) && L.revenue) {
+  // A seam-gated year (L.depWithheld, oe-bridge survey Build 3) is a deliberate withhold, not a
+  // tag gap: the extraction refused to serve a cross-family value it could not reconcile, and
+  // backfilling it from a ratio would guess exactly what was withheld. The estimate falls through
+  // to full capex — the conservative reading — and only true tag gaps keep the backfill.
+  if ((dep == null || dep <= 0) && L.revenue && L.depWithheld !== true) {
     const t = typicalDepToRev(company);
     if (t != null) dep = t * L.revenue;
   }
@@ -672,6 +676,9 @@ export function ownerEarningsBridgeFor(L, fy, company) {
     revenue: L.revenue ?? null,
     netIncome: ni,
     depreciation: dep,
+    // Carried through so the bridge can STATE a seam-gated year rather than let the residual
+    // silently absorb it — a silent null here reproduces the relabeling the gate exists to kill.
+    depWithheld: L.depWithheld === true,
     stockBasedComp: sbc,
     other,
     cashFromOps: cfo,

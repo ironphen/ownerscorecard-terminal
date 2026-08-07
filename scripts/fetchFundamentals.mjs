@@ -2067,30 +2067,90 @@ async function main() {
     };
     const capexBy = annualByYear(facts, CAPEX_CONCEPT[ticker.toUpperCase()] || CONCEPTS.capex);
 
-    // BUILD 1 of docs/oe-bridge-survey.md — THE SCALE ARBITRATION (the Coherent lesson,
-    // 2026-08-07): Coherent files DepreciationAndAmortization at exactly 1000x (FY2023
-    // 681,687M against its OWN component tags 267.6M + 414.1M = 681.7M), and the bridge
-    // rendered a +$681.7B add-back on a ~$5B-revenue filer. Conviction comes ONLY from the
-    // filer's own arithmetic: where both component tags exist for a year and the bundled
-    // figure equals one thousand times their sum (1% / $2M tolerance — companyfacts carries
-    // no decimals field to test declared precision against), the year serves the
-    // parts-consistent value. No unit guessing, no magnitude heuristics against revenue:
-    // a filer without component tags to convict its bundle is left exactly as filed.
-    const depBy = annualByYear(facts, CONCEPTS.depreciation);
+    // BUILDS 1 + 3 of docs/oe-bridge-survey.md — the depreciation series, from partitioned tag
+    // FAMILIES with the filer's own identity as the only bridge between them.
+    //
+    // The old 7-rung ladder merged per-year first-tag-wins across scopes: when Danaher's bundled
+    // DDA died with the FY2023 10-K (2,166M), rung-7 Depreciation (721M) filled FY2024+ and a 3x
+    // collapse rendered as real — flipping the maintenance split and INVERTING the rendered
+    // owner-earnings direction, while dep + amort = DDA tied to the dollar in all nine overlap
+    // years. The families never mix per-year again:
+    //   BUNDLED   = the whole D&A add-back (DDA and its synonyms)
+    //   COMPONENT = property depreciation alone (plus the COGS-scoped D&A sliver, a bundled NAME
+    //               wearing component scope — reassigned out of the bundled family deliberately)
+    // Where both families exist, the filer's own identity (bundled = Depreciation + amortization,
+    // 1% / $2M tolerance, >= 2 testable years, zero failures) decides:
+    //   RECONCILED   -> the bundled basis runs continuously: bundled years as filed, and where
+    //                   the bundle died, the SUM of the two as-filed parts (an addition, never a
+    //                   cross-precision subtraction) — DHR FY2024 becomes 721 + 1,631 = 2,352,
+    //                   restoring continuity and the true OE direction. Parts kept in depParts.
+    //   UNRECONCILED -> the family owning the latest year IS the series; the other family's
+    //                   years are WITHHELD (depWithheld, and the year's lines carry the flag so
+    //                   the maintenance backfill downstream never guesses a gated year).
+    // BUILD 1 rides on the bundled family first: a bundle at exactly 1000x its own parts
+    // (Coherent FY2023: 681,687M vs 267.6M + 414.1M = 681.7M) is convicted by the filer's own
+    // arithmetic and serves the parts sum. No unit guessing, no magnitude heuristics.
+    const DEP_BUNDLED = ["DepreciationDepletionAndAmortization", "DepreciationAmortizationAndAccretionNet", "DepreciationAndAmortization", "DepreciationAmortizationAndOther", "DepreciationDepletionAndAmortizationNonproduction"];
+    const DEP_COMPONENT = ["Depreciation", "CostOfGoodsAndServicesSoldDepreciationAndAmortization"];
+    const bundledBy = annualByYear(facts, DEP_BUNDLED);
+    const compFamBy = annualByYear(facts, DEP_COMPONENT);
+    const pureDepBy = annualByYear(facts, ["Depreciation"]);
+    const amortBy = annualByYear(facts, CONCEPTS.intangibleAmortization);
+    for (const fy in bundledBy) {
+      const d = pureDepBy[fy]?.val, a = amortBy[fy]?.val;
+      if (d == null || a == null) continue;
+      const parts = d + a;
+      if (parts <= 0) continue;
+      if (bundledBy[fy].val > parts * 900 && Math.abs(bundledBy[fy].val / 1000 - parts) <= Math.max(parts * 0.01, 2e6)) {
+        console.warn(`  ! ${ticker}: D&A FY${fy} filed at 1000x — ${bundledBy[fy].val} vs its own parts ${d}+${a}=${parts}; serving the parts sum (scale arbitration, oe-bridge build 1)`);
+        bundledBy[fy] = { ...bundledBy[fy], val: parts };
+      }
+    }
+    const depTol = (x) => Math.max(Math.abs(x) * 0.01, 2e6);
+    let depBy = {}, depWithheld = [], depParts = {}, depOwner;
     {
-      const dBy = annualByYear(facts, ["Depreciation"]);
-      const aBy = annualByYear(facts, ["AmortizationOfIntangibleAssets"]);
-      for (const fy in depBy) {
-        const d = dBy[fy]?.val, a = aBy[fy]?.val;
-        if (d == null || a == null) continue;
-        const parts = d + a;
-        if (parts <= 0) continue;
-        if (depBy[fy].val > parts * 900 && Math.abs(depBy[fy].val / 1000 - parts) <= Math.max(parts * 0.01, 2e6)) {
-          console.warn(`  ! ${ticker}: D&A FY${fy} filed at 1000x — ${depBy[fy].val} vs its own parts ${d}+${a}=${parts}; serving the parts sum (scale arbitration, oe-bridge build 1)`);
-          depBy[fy] = { ...depBy[fy], val: parts };
+      const bYears = Object.keys(bundledBy), cYears = Object.keys(compFamBy);
+      if (!bYears.length || !cYears.length) {
+        depBy = bYears.length ? bundledBy : compFamBy;
+        depOwner = bYears.length ? "bundled" : "component";
+      } else {
+        const tested = bYears.filter((fy) => pureDepBy[fy]?.val != null && amortBy[fy]?.val != null);
+        const failures = tested.filter((fy) => Math.abs(bundledBy[fy].val - (pureDepBy[fy].val + amortBy[fy].val)) > depTol(bundledBy[fy].val));
+        if (tested.length >= 2 && failures.length === 0) {
+          depOwner = "reconciled";
+          for (const fy of bYears) depBy[fy] = bundledBy[fy];
+          for (const fy in pureDepBy) {
+            if (depBy[fy] || amortBy[fy]?.val == null) continue;
+            depBy[fy] = { ...pureDepBy[fy], val: pureDepBy[fy].val + amortBy[fy].val, tag: "Depreciation+AmortizationOfIntangibleAssets" };
+          }
+          for (const fy in pureDepBy) if (amortBy[fy]?.val != null) depParts[fy] = [pureDepBy[fy].val, amortBy[fy].val];
+        } else {
+          // UNRECONCILED. Three shapes, measured on the sample before this shipped:
+          //  - bundled owns the latest year (ELV, MRSH): the whole line stands as filed and the
+          //    other family's uncovered years are withheld.
+          //  - the bundle is a DEAD RELIC (AMD: bundled ended FY2019, record runs to FY2025 —
+          //    four-plus years past the comparative re-presentation window): the component
+          //    dialect IS the filer's living presentation (the MSFT shape), and it owns the
+          //    series; relic bundled years beyond its coverage are withheld.
+          //  - a LIVE SEAM that fails the identity (Fiserv: ~$200M of software amortization
+          //    lives inside its bundle every year, so dep + amort would UNDER-STATE the line;
+          //    Regal Rexnord: the bundle's last original vintage against re-presented parts):
+          //    the bundled years stand as filed and the post-seam years are WITHHELD — never
+          //    served on the smaller component basis (a silent re-basing the owner's ruling
+          //    forbids) and never reconstructed by a sum the filer's own identity refutes.
+          const latest = (by) => Math.max(...Object.keys(by).map(Number));
+          const latestB = latest(bundledBy), latestC = latest(compFamBy);
+          const reason = failures.length ? `${failures.length} identity failure(s)` : "fewer than 2 testable years";
+          const liveSeam = latestB < latestC && latestC - latestB < 4;
+          const bundledServes = latestB >= latestC || liveSeam;
+          depOwner = bundledServes ? "bundled" : "component";
+          depBy = { ...(bundledServes ? bundledBy : compFamBy) };
+          depWithheld = Object.keys(bundledServes ? compFamBy : bundledBy).filter((fy) => !depBy[fy]).map(Number).sort((a, b) => a - b);
+          if (depWithheld.length) console.warn(`  ! ${ticker}: depreciation families do not reconcile (${reason}) — ${liveSeam ? `live seam: bundled years stand as filed, ${depWithheld.length} post-seam year(s) withheld rather than re-based` : `the ${depOwner} family owns the record, ${depWithheld.length} cross-family year(s) withheld`} (seam gate, oe-bridge build 3)`);
         }
       }
     }
+    const depWithheldSet = new Set(depWithheld.map(String));
     // A PART OF THE LINE, WEARING THE WHOLE LINE'S TAG. New Jersey Resources prints its capital
     // spending as separate rows — "Utility plant", "Solar equipment", "Storage and transportation
     // and other" — and in its older filings tagged ONLY the utility-plant row with the standard
@@ -2458,6 +2518,9 @@ async function main() {
           capex: ha.capex[fy] ?? null,
           costOfRevenue: ha.costOfRevenue[fy] ?? null,
           depreciation: ha.depreciation[fy] ?? null,
+          // A seam-gated year is a deliberate withhold, not a tag gap: the flag stops the
+          // maintenance backfill downstream from guessing what the gate refused to serve.
+          ...(depWithheldSet.has(String(fy)) ? { depWithheld: true } : {}),
           intangibleAmortization: ha.intangibleAmortization[fy] ?? null,
           dividendsPaid: ha.dividendsPaid[fy] ?? null,
           buybacks: ha.buybacks[fy] ?? null,
@@ -2550,7 +2613,22 @@ async function main() {
               return e.val;
             })(),
             costOfRevenue: tf(CONCEPTS.costOfRevenue),
-            depreciation: tf(CONCEPTS.depreciation),
+            // The seam gate, identically, in the trailing reader (Build 3): the TTM stitches only
+            // the family that owns the annual record, so lines and ttm can never disagree across
+            // a seam. A dead bundled tag's stale stitch is rejected against the block's own date;
+            // a reconciled record whose bundle died stitches the SUM of the two parts, and only
+            // when both resolve on the same period end.
+            depreciation: (() => {
+              const fresh = (e) => (e && (!ttmRev?.asOf || new Date(e.asOf).getTime() >= new Date(ttmRev.asOf).getTime() - 14 * 86400000)) ? e : null;
+              if (depOwner === "component") return fresh(ttmFlow(facts, DEP_COMPONENT))?.val ?? null;
+              const b = fresh(ttmFlow(facts, DEP_BUNDLED));
+              if (b) return b.val;
+              if (depOwner === "reconciled") {
+                const d = fresh(ttmFlow(facts, ["Depreciation"])), a = fresh(ttmFlow(facts, CONCEPTS.intangibleAmortization));
+                if (d && a && d.asOf === a.asOf) return d.val + a.val;
+              }
+              return null;
+            })(),
             intangibleAmortization: tf(CONCEPTS.intangibleAmortization),
             stockBasedComp: tf(CONCEPTS.stockBasedComp),
             // Dividends ride the same trailing basis as netIncome, so any surface splitting
@@ -2685,6 +2763,12 @@ async function main() {
         if (!uniq.size) return {};
         return { depTags: uniq.size === 1 ? { all: [...uniq][0] } : tags };
       })()),
+      // The seam gate's record (Build 3): which years were withheld as unreconcilable
+      // cross-family values, and — on reconciled records — the two as-filed parts per year
+      // (depParts[fy] = [Depreciation, AmortizationOfIntangibleAssets]), the raw material the
+      // two-row bridge splits on, only ever in years the filer's own identity ties.
+      ...(depWithheld.length ? { depWithheld } : {}),
+      ...(Object.keys(depParts).length ? { depParts } : {}),
       // When this record was last EXTRACTED, which is not the same as the file's asOf: a partial
       // run rewrites the whole file while touching only its cohort, and without a per-record stamp
       // a decade-old extraction is indistinguishable from this morning's. The stamp is what turns

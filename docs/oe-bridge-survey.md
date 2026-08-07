@@ -103,13 +103,26 @@ insurance DAC. Pins: DHR amort series; AVGO 9,272M stored with FY2020-22 ABSENT 
 BUNDLED family (rungs 1-5, minus CoGS-D&A which is component-scoped) vs COMPONENT family
 (Depreciation). Within family first-present-per-year; across families NEVER per-year fill.
 Where families coexist and amort is tagged: ≥2 coexisting years with the identity tying →
-RECONCILED (store per-year parts); else the family owning the latest year IS the series and
-the other family's years are withheld with a stated withhold on the bridge — never a silent
-null the residual absorbs. Identical gate in the ttm reader or lines/ttm disagree across
-the seam. typicalDepToRev backfill becomes family-scoped and must distinguish tag-gap from
-gated (the :583 branch defeats withhold-never-guess today). Pins: DHR dep 750/721/675/698/674
-+ identity 9/9 + maint FY2024 = full capex 1,392 (flip killed) + OE-trend direction reads
-DOWN; RRX 511.8M continuity; FISV 589+2,300=2,889.
+RECONCILED (store per-year parts); else the record resolves three ways (AMENDED at
+build time, 2026-08-07, on probe evidence that refuted two of the synthesis's pins — see
+below): bundled-owns-latest → bundled as filed, other years withheld; DEAD-RELIC bundle
+(ended ≥4y before the record's latest year, past the comparative window — AMD's 2016-19
+relic against a living component dialect) → the component family IS the filer's living
+presentation and owns the series; LIVE SEAM that fails the identity → bundled years stand
+as filed and post-seam years are WITHHELD, never served on the smaller component basis (a
+silent re-basing the owner's ruling forbids) and never reconstructed by a sum the filer's
+own identity refutes. Withholds are stated on the bridge — never a silent null the residual
+absorbs. Identical gate in the ttm reader. typicalDepToRev backfill skips gated years (the
+per-year lines flag). Pins: DHR FY2024=2,352/FY2025=2,447 parts-sum continuity + maint
+FY2024 = full capex (flip killed) + OE direction reads DOWN; TMO FY2019+ restored to
+bundled basis (2,277 continuous with 2,267); COHR arbitration values unchanged.
+SYNTHESIS PINS REFUTED BY PROBE: "FISV 589+2,300=2,889" — Fiserv's bundle exceeds
+dep+amort by ~$200M EVERY year (software amortization inside the bundle); the parts-sum
+would under-state the line, so FI's post-seam years withhold instead. "RRX 511.8M
+continuity" — RRX FY2022 fails the identity as a VINTAGE ARTIFACT (original-filing bundle
+170.6 vs re-presented parts 307.4; the bundle died and was never re-presented), so RRX
+withholds post-seam. NAMED RESIDUAL: same-accession identity testing (annualByYear entries
+carry accn) could recover RRX-class records; a future refinement, not this build.
 
 **BUILD 4 — Two-row bridge by class, label truth, chip basis label (zero OE change).**
 Class A (both parts, no bundled tag ever — AVGO, ABBV, MSFT, GOOGL, IBM, AMD, ADI, GILD;
