@@ -2056,6 +2056,31 @@ async function main() {
       ROP: ["PaymentsToAcquireProductiveAssets", "PaymentsToAcquireOtherProductiveAssets"],
     };
     const capexBy = annualByYear(facts, CAPEX_CONCEPT[ticker.toUpperCase()] || CONCEPTS.capex);
+
+    // BUILD 1 of docs/oe-bridge-survey.md — THE SCALE ARBITRATION (the Coherent lesson,
+    // 2026-08-07): Coherent files DepreciationAndAmortization at exactly 1000x (FY2023
+    // 681,687M against its OWN component tags 267.6M + 414.1M = 681.7M), and the bridge
+    // rendered a +$681.7B add-back on a ~$5B-revenue filer. Conviction comes ONLY from the
+    // filer's own arithmetic: where both component tags exist for a year and the bundled
+    // figure equals one thousand times their sum (1% / $2M tolerance — companyfacts carries
+    // no decimals field to test declared precision against), the year serves the
+    // parts-consistent value. No unit guessing, no magnitude heuristics against revenue:
+    // a filer without component tags to convict its bundle is left exactly as filed.
+    const depBy = annualByYear(facts, CONCEPTS.depreciation);
+    {
+      const dBy = annualByYear(facts, ["Depreciation"]);
+      const aBy = annualByYear(facts, ["AmortizationOfIntangibleAssets"]);
+      for (const fy in depBy) {
+        const d = dBy[fy]?.val, a = aBy[fy]?.val;
+        if (d == null || a == null) continue;
+        const parts = d + a;
+        if (parts <= 0) continue;
+        if (depBy[fy].val > parts * 900 && Math.abs(depBy[fy].val / 1000 - parts) <= Math.max(parts * 0.01, 2e6)) {
+          console.warn(`  ! ${ticker}: D&A FY${fy} filed at 1000x — ${depBy[fy].val} vs its own parts ${d}+${a}=${parts}; serving the parts sum (scale arbitration, oe-bridge build 1)`);
+          depBy[fy] = { ...depBy[fy], val: parts };
+        }
+      }
+    }
     // A PART OF THE LINE, WEARING THE WHOLE LINE'S TAG. New Jersey Resources prints its capital
     // spending as separate rows — "Utility plant", "Solar equipment", "Storage and transportation
     // and other" — and in its older filings tagged ONLY the utility-plant row with the standard
@@ -2206,7 +2231,7 @@ async function main() {
       cashWalk: cashWalkByYear(facts),
       capex: valuesByYear(capexBy),
       costOfRevenue: valuesByYear(corByYear(facts)),
-      depreciation: collectAnnual(facts, CONCEPTS.depreciation),
+      depreciation: valuesByYear(depBy),
       dividendsPaid: valuesByYear(dividendsBy),
       buybacks: collectAnnual(facts, CONCEPTS.buybacks),
       repurchasedShares: collectAnnual(facts, CONCEPTS.repurchasedShares, "shares"),
@@ -2687,7 +2712,14 @@ async function main() {
         cfFinancing: anchor?.fy != null ? (ha.cashWalk[anchor.fy]?.cff ?? null) : null,
         fxEffect: anchor?.fy != null ? (ha.cashWalk[anchor.fy]?.fx ?? null) : null,
         deltaCash: anchor?.fy != null ? (ha.cashWalk[anchor.fy]?.delta ?? null) : null,
-        depreciation: pick(CONCEPTS.depreciation),
+        // Reads the arbitrated series (scale arbitration above), with pick()'s own
+        // anchor-year staleness guard replicated — the two must never disagree.
+        depreciation: (() => {
+          const e = latestEntry(depBy);
+          if (!e) return null;
+          if (anchor?.fy != null && e.fy != null && e.fy < anchor.fy) return null;
+          return e.val ?? null;
+        })(),
         // The chain's own current figure stands wherever it exists; only where it is absent or
         // stranded does the record's filled series (the corroborated fill and the keyhole above)
         // supply the anchor year. Written this way round so no filer whose chain already reads a
