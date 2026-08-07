@@ -304,6 +304,18 @@ for (const [tk, want] of [["D", 12653000000], ["ED", 4764000000], ["HTO", 519753
     t("ROP FY2025 capex reads the retagged line ($47.4M), not a pre-2019 relic",
       ropFy25?.lines?.capex === 47400000);
   }
+  // Coherent files DepreciationAndAmortization at exactly 1000x, and the bridge rendered a
+  // +$681.7B add-back on a ~$5B-revenue filer until the scale arbitration (oe-bridge survey
+  // Build 1) convicted the bundle with the filer's own component tags: 267.6M + 414.1M =
+  // 681.7M, one-thousandth of the filed figure, to the dollar. The pins hold the healed
+  // series and stand guard against any refetch reverting to the raw bundle.
+  const cohr = byT.get("COHR");
+  if (cohr) {
+    const dep = Object.fromEntries((cohr.history || []).filter((h) => h.lines?.depreciation != null).map((h) => [h.fy, h.lines.depreciation]));
+    t("COHR FY2023 D&A is the parts sum $681.7M, never the 1000x bundle", dep[2023] === 681687000);
+    t("COHR FY2024 D&A is the parts sum $559.8M, never the 1000x bundle", dep[2024] === 559761000);
+    t("COHR FY2025 D&A unchanged by the arbitration ($553.6M as filed)", dep[2025] === 553598000);
+  }
   // Structural legs, pool-wide and permanent: no TTM or quarterly node may sit OLDER than the
   // annual record beside it (the stranded-anchor drop rule; 14-day tolerance for 52/53-week
   // calendars). These are the only per-node dates the data file carries, so they are the
