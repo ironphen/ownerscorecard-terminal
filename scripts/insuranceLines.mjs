@@ -271,9 +271,18 @@ export function insuranceLines(facts, fyEnds = null) {
   // --- float deductions ---
   {
     const pr = instantTagByYear(facts, "PremiumsReceivableAtCarryingValue", fyEnds);
-    if (pr) {
-      for (const fy of Object.keys(pr)) if (pr[fy] < 0) { pr[fy] = null; W(`premiumsReceivable ${fy}: negative — nulled`); }
-      instants.premiumsReceivable = pr;
+    // The broad fallback (solvency-sight Build 7, verified on EDGAR per filer before shipping):
+    // AIG ($10.44B), Markel, W.R. Berkley and Old Republic file PremiumsAndOtherReceivablesNet —
+    // premiums receivable PLUS other receivables, one line. As the float's deduction leg it
+    // over-deducts, so the computed float UNDERSTATES — the conservative direction, and it is
+    // flagged so the display layer names it. Never mixed with the pure tag: the pure tag wins
+    // outright wherever it exists.
+    const broad = instantTagByYear(facts, "PremiumsAndOtherReceivablesNet", fyEnds);
+    const chosen = pr ?? broad;
+    if (chosen) {
+      for (const fy of Object.keys(chosen)) if (chosen[fy] < 0) { chosen[fy] = null; W(`premiumsReceivable ${fy}: negative — nulled`); }
+      instants.premiumsReceivable = chosen;
+      if (!pr && broad) flags.receivableIncludesOther = true;
     }
   }
   {
@@ -374,13 +383,13 @@ export function insuranceLines(facts, fyEnds = null) {
     if (mrb) instants.marketRiskBenefits = mrb;
   }
 
-  // --- the expense-ratio honesty flag (spec F3): the component build is whole only where the
-  // filer tags the other-underwriting-expense line; elsewhere the pipeline's underwritingExpense
-  // silently degrades to DAC amortization alone, and the display layer must know.
-  {
-    const oue = flowByYear(facts, "OtherUnderwritingExpense");
-    if (oue) flows.otherUnderwritingExpense = oue;
-  }
+  // --- the expense-ratio honesty flag (spec F3), as a FLAG, not a line. It shipped as a dollar
+  // series and duplicated lines.underwritingExpense byte-for-byte in 225 of 225 occurrences
+  // pool-wide (solvency-sight Build 7 measurement), because the generic fundamentals mapping
+  // reads the SAME OtherUnderwritingExpense tag first — two names for one number is how a future
+  // formula double-counts. The signal spec F3 wanted survives as the boolean it always was:
+  // whole component build where the filer tags the line, degraded-to-DAC-amortization where not.
+  if (flowByYear(facts, "OtherUnderwritingExpense")) flags.expenseRatioWhole = true;
 
   if (warns.length) flags.warns = [...new Set(warns)];
   return { flows, instants, flags };
@@ -418,5 +427,5 @@ export const INSURANCE_LINE_NAMES = [
   "fpbCombined", "policyholderDeposits", "separateAccountsLiability", "premiumsReceivable",
   "dacBalance", "prepaidReinsurance", "reinsuranceRecoverables", "reinsuranceRecoverablesAllowance",
   "premiumsWrittenNet", "cededPremiumsWritten", "cededPremiumsEarned", "interestCredited",
-  "fpbRemeasurement", "otherUnderwritingExpense", "marketRiskBenefits", "ibnrAmount",
+  "fpbRemeasurement", "marketRiskBenefits", "ibnrAmount",
 ];

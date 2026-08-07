@@ -2676,7 +2676,7 @@ async function main() {
       },
       // The desks' per-filer flags (DAC-includes-VOBA impurity, demand-vs-NIB labeling, gate
       // warnings) travel with the record so the display layer can label what extraction decided.
-      ...(ins && (ins.flags.dacIncludesVoba || ins.flags.warns?.length) ? { insuranceFlags: ins.flags } : {}),
+      ...(ins && (ins.flags.dacIncludesVoba || ins.flags.receivableIncludesOther || ins.flags.expenseRatioWhole || ins.flags.warns?.length) ? { insuranceFlags: ins.flags } : {}),
       ...(bank && Object.keys(bank.flags).length ? { bankFlags: bank.flags } : {}),
       // The lease-maturity ladder (operating + finance), from the clean ASC 842 XBRL buckets. Each ladder
       // is reconciled (buckets sum to the undiscounted total; total less imputed interest = the discounted

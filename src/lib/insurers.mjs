@@ -195,8 +195,14 @@ export function buildInsurerScorecard(company, subtype = "insurer") {
   // understates (unearned premiums and funds held excluded); gross-of-reinsurance on a reinsured
   // book overstates — the reinsurers' share of reserves is their float, not this company's. The
   // old single note claimed "somewhat larger" for every fallback, wrong on cedents (Markel ~55%).
+  // Component impurity flags travel from extraction (insuranceLines) on the company record; the
+  // broad-receivable case over-deducts, so the float shown is slightly UNDERSTATED — named, since
+  // an unnamed conservative bias is still a bias.
+  const flagNotes = [];
+  if (company?.insuranceFlags?.receivableIncludesOther) flagNotes.push("the receivables deduction includes non-premium receivables (the filer files one combined line), so the float shown is slightly understated");
+  if (company?.insuranceFlags?.dacIncludesVoba) flagNotes.push("the DAC deduction includes value of business acquired");
   const basisNote = full
-    ? (full.notes.length ? ` Basis note: ${full.notes.join("; ")}.` : "")
+    ? ((full.notes.length || flagNotes.length) ? ` Basis note: ${[...full.notes, ...flagNotes].join("; ")}.` : "")
     : fallback?.basis === "net"
     ? " Measured here from net loss and claim reserves only; it excludes unearned premiums and funds held, so the true float is somewhat larger than shown."
     : " Measured here from gross loss and claim reserves; amounts recoverable from reinsurers are not extracted for this filer, so a heavily reinsured book is overstated here — the reinsurers' share of these reserves is their float, not this company's.";
