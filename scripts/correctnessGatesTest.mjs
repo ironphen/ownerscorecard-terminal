@@ -316,6 +316,28 @@ for (const [tk, want] of [["D", 12653000000], ["ED", 4764000000], ["HTO", 519753
     t("COHR FY2024 D&A is the parts sum $559.8M, never the 1000x bundle", dep[2024] === 559761000);
     t("COHR FY2025 D&A unchanged by the arbitration ($553.6M as filed)", dep[2025] === 553598000);
   }
+  // OE-BRIDGE BUILD 2 (docs/oe-bridge-survey.md): the intangibleAmortization line and per-year
+  // depreciation provenance, both value-neutral by construction (measured: zero depreciation
+  // value changes across the 30-name sample). The pins hold the flagship series and the two
+  // absence disciplines: a tag hole stores ABSENT (never zero), and a mixed-tag record carries
+  // its per-year map so the DHR seam is visible in data.
+  const dhr = byT.get("DHR"), avgo = byT.get("AVGO"), msft = byT.get("MSFT");
+  if (dhr?.lines?.intangibleAmortization != null) {
+    const am = Object.fromEntries((dhr.history || []).filter((h) => h.lines?.intangibleAmortization != null).map((h) => [h.fy, h.lines.intangibleAmortization]));
+    t("DHR amortization series FY2021-25 ties the filings ($1,388/1,434/1,491/1,631/1,697M)",
+      am[2021] === 1388000000 && am[2022] === 1434000000 && am[2023] === 1491000000 && am[2024] === 1631000000 && am[2025] === 1697000000);
+    t("DHR depTags shows the seam: FY2023 bundled, FY2024 component",
+      dhr.depTags?.["2023"] === "DepreciationDepletionAndAmortization" && dhr.depTags?.["2024"] === "Depreciation");
+  }
+  if (avgo?.history?.length && (avgo.lines?.intangibleAmortization != null)) {
+    const am = new Map((avgo.history || []).map((h) => [h.fy, h.lines?.intangibleAmortization]));
+    t("AVGO FY2024 amortization is the latest-filed $9,267M", am.get(2024) === 9267000000);
+    t("AVGO FY2020-22 amortization holes store ABSENT, never zero",
+      [2020, 2021, 2022].every((fy) => am.get(fy) == null && am.get(fy) !== 0));
+  }
+  if (msft?.depTags) t("MSFT's uniform component record compresses to depTags {all: Depreciation}",
+    msft.depTags.all === "Depreciation");
+
   // Structural legs, pool-wide and permanent: no TTM or quarterly node may sit OLDER than the
   // annual record beside it (the stranded-anchor drop rule; 14-day tolerance for 52/53-week
   // calendars). These are the only per-node dates the data file carries, so they are the

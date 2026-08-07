@@ -129,6 +129,13 @@ const CONCEPTS = {
   // figure, and property-and-equipment depreciation is the right match for capex, which buys
   // exactly that.
   depreciation: ["DepreciationDepletionAndAmortization", "DepreciationAmortizationAndAccretionNet", "DepreciationAndAmortization", "DepreciationAmortizationAndOther", "DepreciationDepletionAndAmortizationNonproduction", "CostOfGoodsAndServicesSoldDepreciationAndAmortization", "Depreciation"],
+  // Amortization of acquired intangibles, as its own line (oe-bridge survey Build 2). ONE tag,
+  // deliberately no synonyms: CapitalizedContractCostAmortization is the software desk's
+  // contract-cost animal and DeferredPolicyAcquisitionCostAmortizationExpense is insurance DAC —
+  // folding either in would rebuild the scope-mixing this survey exists to kill. 1,875 pool
+  // filers tag it; a filer without it stores nothing (AVGO's FY2020-22 hole stays ABSENT,
+  // never zero — the page states the absence).
+  intangibleAmortization: ["AmortizationOfIntangibleAssets"],
   // Capex is the cash spent on the property and equipment the business runs on. The standard tag
   // covers most filers, but whole industries tag it their own way and otherwise read null (owner
   // earnings then can't net out reinvestment): oil & gas as oil-and-gas property, utilities as
@@ -521,7 +528,10 @@ function annualByYear(facts, tags, unit = "USD", pickMax = false, conflictTakesL
       if (dur < 350 || dur > 380) continue;
       const fy = fyOfEnd(u.end);
       if (!perTag[fy] || (u.filed || "") > (perTag[fy].filed || ""))
-        perTag[fy] = { val: u.val, end: u.end, filed: u.filed || "", accn: u.accn, form: u.form };
+        // `tag` is provenance (oe-bridge survey Build 2): which concept won the year. Value-
+        // neutral — valuesByYear/latestEntry never read it — but every seam gate downstream
+        // is undecidable without it (the DHR lesson: a 3x collapse that was a tag switch).
+        perTag[fy] = { val: u.val, end: u.end, filed: u.filed || "", accn: u.accn, form: u.form, tag };
     }
     for (const fy in perTag) {
       if (!(fy in out)) { out[fy] = perTag[fy]; continue; }
@@ -2232,6 +2242,7 @@ async function main() {
       capex: valuesByYear(capexBy),
       costOfRevenue: valuesByYear(corByYear(facts)),
       depreciation: valuesByYear(depBy),
+      intangibleAmortization: collectAnnual(facts, CONCEPTS.intangibleAmortization),
       dividendsPaid: valuesByYear(dividendsBy),
       buybacks: collectAnnual(facts, CONCEPTS.buybacks),
       repurchasedShares: collectAnnual(facts, CONCEPTS.repurchasedShares, "shares"),
@@ -2447,6 +2458,7 @@ async function main() {
           capex: ha.capex[fy] ?? null,
           costOfRevenue: ha.costOfRevenue[fy] ?? null,
           depreciation: ha.depreciation[fy] ?? null,
+          intangibleAmortization: ha.intangibleAmortization[fy] ?? null,
           dividendsPaid: ha.dividendsPaid[fy] ?? null,
           buybacks: ha.buybacks[fy] ?? null,
           repurchasedShares: ha.repurchasedShares[fy] ?? null,
@@ -2539,6 +2551,7 @@ async function main() {
             })(),
             costOfRevenue: tf(CONCEPTS.costOfRevenue),
             depreciation: tf(CONCEPTS.depreciation),
+            intangibleAmortization: tf(CONCEPTS.intangibleAmortization),
             stockBasedComp: tf(CONCEPTS.stockBasedComp),
             // Dividends ride the same trailing basis as netIncome, so any surface splitting
             // profit into paid-out and retained never mixes a TTM numerator with an FY
@@ -2662,6 +2675,16 @@ async function main() {
       ...(anchor?.fy != null && eqGate.basis[anchor.fy] === "inclNci" ? { equityBasis: "inclNci" } : {}),
       // A partnership's book is partners' capital; the record's equity row must say so.
       ...(anchor?.fy != null && eqGate.partnersYears?.has(String(anchor.fy)) ? { equityLabel: "Partners' capital" } : {}),
+      // Per-year depreciation provenance (oe-bridge survey Build 2): which concept won each
+      // year of the D&A series. Uniform records compress to {all: tag}; mixed records carry
+      // the per-year map — the raw material for the seam gate and the two-row bridge, and the
+      // reader's proof of which basis a year is on. Value-neutral: nothing reads it yet.
+      ...((() => {
+        const tags = {}, uniq = new Set();
+        for (const fy in depBy) if (depBy[fy].tag) { tags[fy] = depBy[fy].tag; uniq.add(depBy[fy].tag); }
+        if (!uniq.size) return {};
+        return { depTags: uniq.size === 1 ? { all: [...uniq][0] } : tags };
+      })()),
       // When this record was last EXTRACTED, which is not the same as the file's asOf: a partial
       // run rewrites the whole file while touching only its cohort, and without a per-record stamp
       // a decade-old extraction is indistinguishable from this morning's. The stamp is what turns
@@ -2720,6 +2743,7 @@ async function main() {
           if (anchor?.fy != null && e.fy != null && e.fy < anchor.fy) return null;
           return e.val ?? null;
         })(),
+        intangibleAmortization: pick(CONCEPTS.intangibleAmortization),
         // The chain's own current figure stands wherever it exists; only where it is absent or
         // stranded does the record's filled series (the corroborated fill and the keyhole above)
         // supply the anchor year. Written this way round so no filer whose chain already reads a
