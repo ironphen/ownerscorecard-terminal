@@ -1191,7 +1191,7 @@
     },
     {
       "ticker": "ATHS",
-      "name": "Athene Holding Ltd",
+      "name": "Athene Holding Ltd.",
       "form": "8-K",
       "date": "2026-08-05",
       "label": "Reported results",
@@ -4689,6 +4689,33 @@
         "driver": null,
         "driverLine": null,
         "check": null
+      }
+    },
+    {
+      "ticker": "FDXF",
+      "name": "FedEx Freight Holding Company Inc.",
+      "form": "10-K",
+      "date": "2026-08-05",
+      "label": "Annual report",
+      "grave": false,
+      "accn": "0001628280-26-053359",
+      "url": "https://www.sec.gov/Archives/edgar/data/2082247/000162828026053359/fdxf-20260531.htm",
+      "performance": {
+        "period": "2026-05-31",
+        "basis": "fy",
+        "rev": {
+          "yoy": -1.1,
+          "cur": 8795000000,
+          "prior": 8892000000
+        },
+        "oi": {
+          "yoy": -61.5,
+          "cur": 540000000,
+          "prior": 1404000000
+        },
+        "driver": "Operating Income Operating income decreased 62% in 2026 primarily due to higher costs related to the Spin-Off, including higher salaries and employee benefits expense, outside service contracts and professional fees, as well as reduced demand.",
+        "driverLine": "operatingIncome",
+        "check": "pct"
       }
     },
     {
@@ -9426,7 +9453,7 @@
     },
     {
       "ticker": "PFH",
-      "name": "Prudential Financial Inc",
+      "name": "Prudential Financial, Inc.",
       "form": "10-Q",
       "date": "2026-08-05",
       "label": "Quarterly report",
@@ -9749,7 +9776,7 @@
     },
     {
       "ticker": "PRH",
-      "name": "Prudential Financial Inc",
+      "name": "Prudential Financial, Inc.",
       "form": "10-Q",
       "date": "2026-08-05",
       "label": "Quarterly report",
@@ -9852,7 +9879,7 @@
     },
     {
       "ticker": "PRS",
-      "name": "Prudential Financial Inc",
+      "name": "Prudential Financial, Inc.",
       "form": "10-Q",
       "date": "2026-08-05",
       "label": "Quarterly report",
