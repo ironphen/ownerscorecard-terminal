@@ -150,14 +150,16 @@ Ships only with the full 2,522-filer measurement pinned in the commit.
   a different animal (reits.mjs untouched; TenYear REIT shelf stays as-filed).
 - NFLX/content cohort excluded (standalone ruling above).
 
-## Owner questions (open; Builds 1-5 proceed under standing grants)
+## Owner rulings (2026-08-07, both questions closed)
 
-1. **Ratify or refuse Build 6.** Both endpoints are canon-defensible: stopping at Build 4
-   (presentation truth, zero OE change) vs charging only real wear (monotonically
-   OE-increasing for acquirers, measured max +13.2%). The direction of error the site
-   prefers to live with is an owner call; the pinned measurement will be on the table.
-2. **Class-A gap-year rendering:** dashes with stated absence (more truth, visibly
-   discontinuous row) vs withholding the whole amort row on incomplete records.
+1. **Build 6 REFUSED — the program stops at Build 4/5 (presentation truth, zero OE
+   change).** Ryan, verbatim: "i think we stop at build 4, per buffets 'every dime of
+   depreciation is a real cost'." The wear stand-in is never re-based; owner earnings
+   keeps charging the bundled line as filed. The Build 6 section above stands as the
+   record of what was measured and refused — do not re-pitch. (Build 5, the acquisitions-
+   panel sentence, was not questioned and proceeds: it changes no OE dollar.)
+2. **Class-A gap years render as dashes with a stated absence** — the whole amort row is
+   NOT withheld on incomplete records. Ryan: "dont withold whole row its fine."
 
 ## Thin claims (re-probe before relying)
 
