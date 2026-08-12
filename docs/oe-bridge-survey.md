@@ -1,5 +1,12 @@
 # The Owner-Earnings Bridge Survey — acquired-intangible amortization, the seam, and the wear basis
 
+PROGRAM COMPLETE (2026-08-11): Build 1 SHIPPED 158dd15+98ee450 (COHR scale arbitration), Build 2
+SHIPPED 0437e0d (intangibleAmortization line + depTags provenance), Build 3 SHIPPED ee18ff4
+(seam gate; FISV/RRX synthesis pins refuted and amended below), Build 4 SHIPPED 3877f4f
+(two-row bridge, walk-closure suite, label truth on bridge/TenYear/chip, verified by a
+six-agent adversarial pass on rendered HTML), Build 5 SHIPPED b23f197 (full-history cumAcq +
+the amortization sentence). Build 6 REFUSED by owner ruling. Content = standalone future lane.
+
 Ruling record, 2026-08-07. Nine-agent survey (8 lanes + synthesis, ~1.0M tokens of probes;
 full evidence in the workflow output, journal at
 `subagents/workflows/wf_0fe97578-517/journal.jsonl`). Successor program to solvency-sight;
