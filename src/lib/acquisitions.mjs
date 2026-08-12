@@ -22,9 +22,17 @@ export function acquisitionRecord(company) {
   const equity = L.stockholdersEquity ?? null;
   const gwPlusInt = goodwill + (intangibles || 0);
 
-  // Cumulative flows across the record: cash spent acquiring, capital spent building, goodwill written off.
-  const cumAcq = H.reduce((a, h) => a + Math.abs(h.lines.acquisitionSpend || 0), 0);
+  // Cumulative flows across the WINDOWED record: cash spent acquiring, capital spent building,
+  // goodwill written off. The windowed sum keeps two jobs after Build 5: the materiality gate
+  // (whose membership must never move with a display change) and the written-down share (whose
+  // numerator is also windowed — the two legs of a ratio must share one window).
+  const cumAcqWindow = H.reduce((a, h) => a + Math.abs(h.lines.acquisitionSpend || 0), 0);
   const cumCapex = H.reduce((a, h) => a + Math.abs(h.lines.capex || 0), 0);
+  // The DISPLAYED cash figure reads the full concept history where the extraction stored it
+  // (acqFlows, oe-bridge survey Build 5): Danaher's ten-year window undersells its record by
+  // half. Signed at extraction (ADI's negative all-stock year subtracts, never inflates).
+  const af = company?.acqFlows || null;
+  const cumAcq = af?.cumAcq ?? cumAcqWindow;
   const impByYear = H
     .filter((h) => Math.abs(h.lines.goodwillImpairment || 0) > 0)
     .map((h) => ({ fy: h.fy, amt: Math.abs(h.lines.goodwillImpairment) }));
@@ -43,8 +51,19 @@ export function acquisitionRecord(company) {
   const material =
     gwIntPctAssets >= 0.20 ||
     (cumImp > 0 && (!equityPositive || cumImp >= equity * 0.05)) ||
-    (cumAcq >= assets * 0.15);
+    (cumAcqWindow >= assets * 0.15);
   if (!material) return null;
+
+  // The amortization sentence's facts (Build 5): the cumulative amortization of acquired
+  // intangibles beside the cash spent, each with its own stated coverage — NEVER divided into
+  // each other. The consideration caveat fires when the balance sheet's goodwill dwarfs the
+  // cash ever paid through the cash-flow statement: stock consideration (AMD's all-stock
+  // Xilinx — $24.8B of goodwill against ~$0.3B of cash ever paid) never passes through that
+  // line, and the reader must know the cash figure is not the whole price.
+  const amort = af?.cumAmort != null && af.cumAmort > 0
+    ? { cum: af.cumAmort, fromFy: af.amortFromFy, years: af.amortYears, gaps: af.amortGaps }
+    : null;
+  const considerationCaveat = goodwill > 0 && cumAcq < goodwill * 0.4;
 
   return {
     goodwill,
@@ -57,10 +76,14 @@ export function acquisitionRecord(company) {
     gwVsEquity,
     exceedsEquity,
     cumAcq,
+    acqFrom: af?.fromFy ?? null,   // first tagged year of the full history (null = windowed sum)
+    acqYears: af?.years ?? H.length,
+    amort,
+    considerationCaveat,
     cumCapex,
     cumImp,
     impByYear,            // [{fy, amt}] — the years a write-down was taken
     span: H.length,
-    writtenDownShare: cumAcq > 0 ? cumImp / cumAcq : null, // a rough "of the cash put into deals, how much conceded"
+    writtenDownShare: cumAcqWindow > 0 ? cumImp / cumAcqWindow : null, // both legs windowed — a ratio never mixes windows
   };
 }

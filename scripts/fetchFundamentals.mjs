@@ -2151,6 +2151,28 @@ async function main() {
       }
     }
     const depWithheldSet = new Set(depWithheld.map(String));
+
+    // BUILD 5 (docs/oe-bridge-survey.md): the acquisitions panel needs the FULL concept
+    // history — the ten-year window undersells a serial acquirer's record by half (Danaher:
+    // ~$46B windowed against ~$79B since the concept's first tagged year). Summed SIGNED,
+    // never by magnitude: ADI's 2021 Maxim line is NEGATIVE (an all-stock deal where cash
+    // acquired exceeded cash paid) and taking its absolute value would inflate the record.
+    // The amortization aggregate travels with its coverage — first year, tagged count, and
+    // holes — so the sentence downstream states its window or its gaps, never implying more.
+    const acqAllBy = annualByYear(facts, CONCEPTS.acquisitionSpend);
+    const acqFys = Object.keys(acqAllBy).map(Number).sort((a, b) => a - b);
+    const amortFys = Object.keys(amortBy).map(Number).sort((a, b) => a - b);
+    const acqFlows = acqFys.length ? {
+      cumAcq: acqFys.reduce((s, fy) => s + acqAllBy[fy].val, 0),
+      fromFy: acqFys[0],
+      years: acqFys.length,
+      ...(amortFys.length ? {
+        cumAmort: amortFys.reduce((s, fy) => s + amortBy[fy].val, 0),
+        amortFromFy: amortFys[0],
+        amortYears: amortFys.length,
+        amortGaps: amortFys[amortFys.length - 1] - amortFys[0] + 1 - amortFys.length,
+      } : {}),
+    } : null;
     // A PART OF THE LINE, WEARING THE WHOLE LINE'S TAG. New Jersey Resources prints its capital
     // spending as separate rows — "Utility plant", "Solar equipment", "Storage and transportation
     // and other" — and in its older filings tagged ONLY the utility-plant row with the standard
@@ -2769,6 +2791,7 @@ async function main() {
       // two-row bridge splits on, only ever in years the filer's own identity ties.
       ...(depWithheld.length ? { depWithheld } : {}),
       ...(Object.keys(depParts).length ? { depParts } : {}),
+      ...(acqFlows ? { acqFlows } : {}),
       // When this record was last EXTRACTED, which is not the same as the file's asOf: a partial
       // run rewrites the whole file while touching only its cohort, and without a per-record stamp
       // a decade-old extraction is indistinguishable from this morning's. The stamp is what turns

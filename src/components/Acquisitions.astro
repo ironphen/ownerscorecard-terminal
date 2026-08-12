@@ -52,7 +52,7 @@ const shareClause =
       <div class="rd">
         <span class="rlab">Cash spent acquiring</span>
         <span class="rval">{$(a.cumAcq)}</span>
-        <span class="rnote">over {a.span} years buying other businesses{a.cumCapex > 0 ? `, against ${$(a.cumCapex)} of capital spent building` : ""}</span>
+        <span class="rnote">over {a.acqYears} years{a.acqFrom ? ` since fiscal ${a.acqFrom}` : ""} buying other businesses{a.cumCapex > 0 ? `, against ${$(a.cumCapex)} of capital spent building over the ${a.span}-year record` : ""}</span>
       </div>
     </div>
 
@@ -71,9 +71,17 @@ const shareClause =
       )}
     </div>
 
+    {a.amort ? (
+      <p class="intro">
+        Beside that spending sits {$(a.amort.cum)} of cumulative amortization of acquired intangibles
+        charged against earnings since fiscal {a.amort.fromFy}{a.amort.gaps > 0 ? ` (tagged in ${a.amort.years} of those years; ${a.amort.gaps} ${a.amort.gaps > 1 ? "years" : "year"} untagged)` : ""} —
+        the purchase price of past deals, expensed over time.{a.considerationCaveat ? ` The cash figure above counts only cash consideration: goodwill of ${$(a.goodwill)} against it says much of the buying was paid for in stock, which never passes through the cash-flow statement.` : ""}
+      </p>
+    ) : null}
+
     <p class="foot">
-      Goodwill, acquired intangibles and equity from the latest balance sheet; acquisition spend and
-      write-downs summed across the {a.span}-year record, from the company's own filings.
+      Goodwill, acquired intangibles and equity from the latest balance sheet; acquisition spend{a.amort ? " and amortization" : ""} summed
+      across the company's full tagged history, write-downs across the {a.span}-year record, from the company's own filings.
     </p>
   </section>
 ) : null}

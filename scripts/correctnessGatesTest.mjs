@@ -414,6 +414,33 @@ for (const [tk, want] of [["D", 12653000000], ["ED", 4764000000], ["HTO", 519753
     }
   }
 
+  // OE-BRIDGE BUILD 5 (the acquisitions record, full history): cumAcq reads the whole tagged
+  // concept history (Danaher $79.2B since FY2007, not the window's half), summed SIGNED so
+  // ADI's negative all-stock year subtracts; the amortization aggregate carries its coverage
+  // (AVGO's FY2020-22 hole = 3 stated gaps); the consideration caveat fires where goodwill
+  // dwarfs cash ever paid (AMD: $281M cash against $24.8B of goodwill — Xilinx was stock);
+  // and the materiality gate stays on the WINDOWED sum so display never moves membership.
+  {
+    const { acquisitionRecord } = await import("../src/lib/acquisitions.mjs");
+    const dhrA = byT.get("DHR");
+    if (dhrA?.acqFlows) t("DHR cumAcq reads the full history: $79,202,181,000 since FY2007 over 19 years",
+      dhrA.acqFlows.cumAcq === 79202181000 && dhrA.acqFlows.fromFy === 2007 && dhrA.acqFlows.years === 19);
+    const amd = byT.get("AMD");
+    if (amd?.acqFlows) {
+      t("AMD's cash figure stays honest ($281M) and the consideration caveat fires",
+        amd.acqFlows.cumAcq === 281000000 && acquisitionRecord(amd)?.considerationCaveat === true);
+    }
+    const adi = byT.get("ADI");
+    if (adi?.acqFlows) t("ADI's cumAcq is the SIGNED sum ($9,389M — the negative Maxim year subtracts, never inflates)",
+      adi.acqFlows.cumAcq === 9389088000);
+    const avgoA = byT.get("AVGO");
+    if (avgoA?.acqFlows?.cumAmort != null) t("AVGO's amortization aggregate states its 3-year hole",
+      avgoA.acqFlows.amortGaps === 3 && avgoA.acqFlows.cumAmort === 36307000000);
+    const ko = byT.get("KO");
+    if (ko) t("KO stays outside the acquisitions panel — display change never moves gate membership",
+      acquisitionRecord(ko) === null);
+  }
+
   // Structural legs, pool-wide and permanent: no TTM or quarterly node may sit OLDER than the
   // annual record beside it (the stranded-anchor drop rule; 14-day tolerance for 52/53-week
   // calendars). These are the only per-node dates the data file carries, so they are the
