@@ -425,9 +425,15 @@ export function capexVsDepreciation(c) {
   if (capex == null || dep == null || dep === 0) return null;
   const ratio = capex / dep;
   const label = ratio < 0.8 ? "Harvesting" : ratio <= 1.2 ? "Maintaining" : "Expanding";
+  // The denominator names its basis (Build 4): a filer on the bundled line divides by D&A as
+  // filed — amortization of acquired intangibles included — while a component-dialect filer
+  // divides by property depreciation alone. The ratio means different things on the two bases,
+  // and the label is how the reader knows which one this is.
+  const tag = c?.depTags?.all ?? c?.depTags?.[String(c?.fy)] ?? null;
+  const basis = tag != null && ["Depreciation", "CostOfGoodsAndServicesSoldDepreciationAndAmortization"].includes(tag) ? "property depreciation" : tag != null ? "depreciation & amortization as filed" : "depreciation";
   return {
     value: fmtX(ratio, 2),
-    formula: `Capex ${$(capex)} ÷ depreciation ${$(dep)}`,
+    formula: `Capex ${$(capex)} ÷ ${basis} ${$(dep)}`,
     tone: "info",
     label,
     note: "Descriptive, not a grade. Above ~1× means investing faster than assets wear out (growth, or, sustained for years, today's earnings carrying less depreciation than tomorrow's will). Below means spending less than it's wearing out (efficiency, or a melting asset base). The ratio won't tell you which; the filings will.",
@@ -691,7 +697,8 @@ export function ownerEarningsBridgeFor(L, fy, company) {
 }
 
 export function ownerEarningsBridge(c) {
-  return ownerEarningsBridgeFor(c?.lines || {}, c?.fy ?? null, c);
+  const r = ownerEarningsBridgeFor(c?.lines || {}, c?.fy ?? null, c);
+  return r ? applyDepSplit([r], c)[0] : null;
 }
 
 // The bridge across the last `maxCols` fiscal years (returned oldest→newest), so an owner reads the
@@ -700,10 +707,68 @@ export function ownerEarningsBridge(c) {
 // drop out. `company.history` already includes the latest annual as its final entry.
 export function ownerEarningsBridgeSeries(c, maxCols = 5) {
   const hist = Array.isArray(c?.history) ? c.history : [];
-  return hist
+  const rows = hist
     .map((h) => ownerEarningsBridgeFor(h?.lines || {}, h?.fy ?? null, c))
     .filter(Boolean)
     .slice(-maxCols);
+  return applyDepSplit(rows, c);
+}
+
+// BUILD 4 (docs/oe-bridge-survey.md): the two-row add-back. Where the record separates property
+// depreciation from amortization of acquired intangibles — because the filer itself never bundled
+// them (the Microsoft/Broadcom dialect) or because the seam gate's reconciliation stored the two
+// as-filed parts — the bridge shows two rows, each under the filer's own concept, and Broadcom's
+// $9.3B stops hiding inside "Working capital & other." Presentation only: owner earnings,
+// maintenance, and free cash flow read exactly what they read before. The mode is decided over
+// the whole rendered window, uniformly — a table whose rows change meaning column to column is
+// not a presentation, it's a trap — and financial sets (banks, insurers, REITs — where bundled
+// real-estate D&A is the disputed charge itself) never split, per the survey's standing refusal.
+const DEP_COMPONENT_TAGS = new Set(["Depreciation", "CostOfGoodsAndServicesSoldDepreciationAndAmortization"]);
+export function depSplitMode(c, fys) {
+  if (!fys?.length || financialKind(c)) return "bundled";
+  const parts = c?.depParts;
+  const servedDep = (fy) => (c?.history || []).find((x) => x.fy === fy)?.lines?.depreciation ?? null;
+  // Parts mode demands a DOLLAR-exact tie in every rendered year, stricter than the seam
+  // gate's 1%/$2M reconciliation: two rows that sum a few hundred thousand away from the
+  // served line would break the to-the-dollar walk (Coherent's FY2022 ties at tolerance,
+  // not exactly — it renders bundled). The walk-closure test is the enforcement.
+  if (parts && fys.every((fy) => {
+    const p = parts[fy], d = servedDep(fy);
+    return Array.isArray(p) && d != null && Math.abs(p[0] + p[1] - d) <= 2;
+  })) return "parts";
+  const tags = c?.depTags;
+  if (!tags) return "bundled";
+  const tagOf = (fy) => tags.all ?? tags[String(fy)];
+  const amortOf = (fy) => {
+    const h = (c?.history || []).find((x) => x.fy === fy);
+    return h?.lines?.intangibleAmortization ?? (fy === c?.fy ? c?.lines?.intangibleAmortization ?? null : null);
+  };
+  if (fys.every((fy) => tagOf(fy) == null || DEP_COMPONENT_TAGS.has(tagOf(fy))) && fys.some((fy) => amortOf(fy) != null)) return "dialect";
+  return "bundled";
+}
+function applyDepSplit(rows, c) {
+  const mode = depSplitMode(c, rows.map((r) => r.fy));
+  if (mode === "bundled") return rows;
+  for (const r of rows) {
+    r.depSplit = mode;
+    if (mode === "parts") {
+      // The two as-filed parts SUM to the served line (the seam gate stored them only where the
+      // filer's identity ties), so the residual is untouched by construction.
+      const p = c.depParts[r.fy];
+      r.depRow = p[0];
+      r.amortRow = p[1];
+    } else {
+      const h = (c?.history || []).find((x) => x.fy === r.fy);
+      const am = h?.lines?.intangibleAmortization ?? (r.fy === c?.fy ? c?.lines?.intangibleAmortization ?? null : null);
+      r.depRow = r.depreciation;
+      r.amortRow = am;
+      // The amortization leaves the residual only when it is shown; a gap year keeps it there
+      // and says so (dashes with a stated absence — the owner's ruling).
+      if (am != null) r.other -= am;
+      else r.amortGap = true;
+    }
+  }
+  return rows;
 }
 
 // Capital allocation: of the Owner Earnings, how much was returned, and was it real?

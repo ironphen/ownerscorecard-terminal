@@ -374,6 +374,46 @@ for (const [tk, want] of [["D", 12653000000], ["ED", 4764000000], ["HTO", 519753
       amzn.lines.depreciation >= 60000000000);
   }
 
+  // OE-BRIDGE BUILD 4 (the two-row bridge): WALK CLOSURE, the test the survey found missing.
+  // For every rendered year, the rows shown must sum to cash from operations to the dollar —
+  // net income + depreciation row + amortization row + stock comp + residual = CFO — and owner
+  // earnings must equal CFO minus maintenance, on split and bundled filers both. The split is
+  // presentation only: any variant that moves an owner-earnings dollar fails here.
+  {
+    const { ownerEarningsBridgeSeries } = await import("../src/lib/fundamentals.mjs");
+    let walkFails = [];
+    for (const tk of ["DHR", "AVGO", "MSFT", "GOOGL", "GILD", "ABBV", "COHR", "KO", "AMZN", "FI", "CAT", "JNJ"]) {
+      const c = byT.get(tk); if (!c) continue;
+      for (const y of ownerEarningsBridgeSeries(c, 5)) {
+        const depSum = y.depSplit ? (y.depRow ?? 0) + (y.amortRow ?? 0) : (y.depreciation ?? 0);
+        if (Math.abs(y.netIncome + depSum + (y.stockBasedComp ?? 0) + y.other - y.cashFromOps) > 2) walkFails.push(`${tk} FY${y.fy} walk`);
+        if (Math.abs(y.cashFromOps - y.maintCapex - y.ownerEarnings) > 2) walkFails.push(`${tk} FY${y.fy} OE`);
+      }
+    }
+    t(`walk closure holds on every rendered year, split and bundled (${walkFails.slice(0, 4).join(", ")})`, walkFails.length === 0);
+    const avgo = byT.get("AVGO");
+    if (avgo) {
+      const rows = ownerEarningsBridgeSeries(avgo, 5);
+      const y24 = rows.find((y) => y.fy === 2024), y22 = rows.find((y) => y.fy === 2022);
+      t("AVGO renders the dialect split: FY2024 amortization row $9,267M beside property depreciation",
+        y24?.depSplit === "dialect" && y24.amortRow === 9267000000 && y24.depRow != null && y24.depRow < 1000000000);
+      t("AVGO's FY2022 amortization gap renders as a stated absence, never zero",
+        !y22 || (y22.amortRow == null && y22.amortGap === true));
+    }
+    const dhrC = byT.get("DHR");
+    if (dhrC?.depParts) {
+      const rows = ownerEarningsBridgeSeries(dhrC, 5);
+      t("DHR renders the parts split, and the two rows sum to the served line in every year",
+        rows.length > 0 && rows.every((y) => y.depSplit === "parts" && Math.abs((y.depRow + y.amortRow) - y.depreciation) < 2));
+    }
+    // Financial sets never split — bundled real-estate D&A is the disputed charge itself.
+    for (const tk of ["O", "PLD", "JPM", "CB"]) {
+      const c = byT.get(tk); if (!c) continue;
+      const rows = ownerEarningsBridgeSeries(c, 5);
+      t(`${tk} (financial set) never renders a split bridge`, rows.every((y) => !y.depSplit));
+    }
+  }
+
   // Structural legs, pool-wide and permanent: no TTM or quarterly node may sit OLDER than the
   // annual record beside it (the stranded-anchor drop rule; 14-day tolerance for 52/53-week
   // calendars). These are the only per-node dates the data file carries, so they are the

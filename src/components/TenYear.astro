@@ -443,6 +443,19 @@ const rows = chosen
 // The float row's label carries its basis (one basis per row, decided above once the whole
 // series was in hand) — the concept link was resolved on the static "Float" key before renaming.
 if (floatRowLabel) { const fr = rows.find((r) => r.label === "Float"); if (fr) fr.label = floatRowLabel; }
+// The depreciation row's label follows the record's own tag provenance (oe-bridge Build 4, the
+// label-truth rule): a bundled series is "Depreciation & amortization", a pure-Depreciation
+// series keeps the plain name. Values untouched; only the caption stops lying. Same
+// rename-after-concept-resolution pattern as the float row above.
+{
+  const dr = rows.find((r) => r.label === "Depreciation");
+  const tags = company?.depTags;
+  if (dr && tags) {
+    const tagOf = (c) => tags.all ?? tags[c.label];
+    const pureComponent = cols.every((c) => tagOf(c) === "Depreciation" || tagOf(c) == null);
+    if (!pureComponent) { dr.label = "Depreciation & amortization"; dr.short = "D&A"; }
+  }
+}
 rows.forEach((r, i) => { r.bandStart = i === 0 || r.g !== rows[i - 1].g; });
 // Band headers naming the statement each section reads from, so the record presents as one full
 // snapshot: the income statement, then the cash it generated and the returns, then the balance sheet.

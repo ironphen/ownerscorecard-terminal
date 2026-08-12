@@ -31,7 +31,19 @@ const rendered = series.length ? series : single ? [single] : [];
 const b = rendered.length ? rendered[rendered.length - 1] : null;
 const cols = rendered.slice().reverse();                // newest first, so the featured year leads
 const anyGrowth = rendered.some((y) => y.growthCapex > 0);
-const anyDep = rendered.some((y) => y.depreciation != null);
+// The two-row add-back (Build 4): where the record separates property depreciation from
+// amortization of acquired intangibles, each renders under the filer's own concept and the
+// residual stops hiding the second. depSplit is set uniformly across the window by the lib.
+const depSplitOn = rendered.some((y) => y.depSplit);
+const depOf = (y) => (y.depSplit ? y.depRow : y.depreciation);
+// Label truth for the UNSPLIT row too: a filer that tags only plain Depreciation (Alphabet —
+// no intangible-amortization line ever filed) must not have its property-only figure captioned
+// "Depreciation & amortization" while the chip on the same page calls it property depreciation.
+const pureComponent = !depSplitOn && company?.depTags && rendered.length > 0 &&
+  rendered.every((y) => (company.depTags.all ?? company.depTags[String(y.fy)]) === "Depreciation");
+const anyDep = rendered.some((y) => depOf(y) != null);
+const anyAmortRow = depSplitOn && rendered.some((y) => y.amortRow != null);
+const anyAmortGap = rendered.some((y) => y.amortGap);
 const anySbc = rendered.some((y) => y.stockBasedComp != null);
 // A seam-gated year (Build 3): the extraction withheld a cross-family depreciation value it
 // could not reconcile. The cell shows a dash like any missing figure, but the withhold is
@@ -44,7 +56,8 @@ const hasGrowth = !!b && b.growthCapex > 0;             // the featured (newest 
 // (add/sub get a +/−) and the banded styling (start / subtotal / total / ratio).
 const rows = [
   { k: "ni", label: "Reported net income", kind: "start", get: (y) => y.netIncome },
-  anyDep ? { k: "dep", label: "Depreciation & amortization", kind: "add", hint: "non-cash charge added back", get: (y) => y.depreciation } : null,
+  anyDep ? { k: "dep", label: depSplitOn || pureComponent ? "Depreciation" : "Depreciation & amortization", kind: "add", hint: "non-cash charge added back", get: depOf } : null,
+  anyAmortRow ? { k: "amort", label: "Amortization of intangible assets", kind: "add", hint: "non-cash charge added back; the purchase price of past acquisitions, expensed over time", get: (y) => y.amortRow } : null,
   anySbc ? { k: "sbc", label: "Stock-based compensation", kind: "add", flag: true, hint: "non-cash, but a real cost", get: (y) => y.stockBasedComp } : null,
   { k: "oth", label: "Working capital & other", kind: "add", hint: "timing of cash in and out, other non-cash items", get: (y) => y.other },
   { k: "cfo", label: "Cash from operations", kind: "subtotal", get: (y) => y.cashFromOps },
@@ -185,6 +198,7 @@ if (b) {
 
     <p class="foot">Maintenance capex is estimated as depreciation where a growing business invests above it; free cash flow is the figure the scorecard's free-cash margin reads.</p>
     {anyDepWithheld ? <p class="foot">In dashed depreciation years the filer's own depreciation concepts changed scope and do not reconcile with the adjacent years; the add-back is withheld rather than guessed, and its amount remains inside "Working capital &amp; other."</p> : null}
+    {anyAmortGap ? <p class="foot">Dashed amortization years: the filer did not tag the intangible-amortization line that year, so that year's charge remains inside "Working capital &amp; other."</p> : null}
   </section>
 ) : null}
 
