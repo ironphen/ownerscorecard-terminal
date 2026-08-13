@@ -91,8 +91,19 @@ jobs:
         env:
           UNIVERSE_DRYRUN: ${{ github.event.inputs.rebuild_universe == 'dryrun' && '1' || '' }}
           SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT }}
-      - run: npm run fetch:fundamentals
+      # The retry the comment below always promised, now actually on THIS step (2026-08-13: the
+      # wire's evening runs died twice to the undici teardown before anyone noticed the loop only
+      # ever guarded fetch:filings). The fetch rebuilds from scratch and carries the prior file,
+      # so a fresh attempt is safe; three failures still fail the job so the alarm fires.
+      - name: Run fetch:fundamentals
         if: ${{ github.event.inputs.segments_only != 'true' && github.event.inputs.filings_only != 'true' && github.event.inputs.drivers_only != 'true' && github.event.inputs.rebuild_universe != 'dryrun' }}
+        run: |
+          for i in 1 2 3; do
+            npm run fetch:fundamentals && exit 0
+            echo "fetch:fundamentals attempt $i crashed (the transient undici teardown is the known class); retrying…"
+            sleep 10
+          done
+          exit 1
         env:
           SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT }}
           DEBT_DEBUG: ${{ github.event.inputs.debug }}

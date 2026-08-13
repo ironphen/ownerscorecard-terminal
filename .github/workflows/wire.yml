@@ -29,7 +29,18 @@ jobs:
       # The delta baseline for auditIntegrity's cross-refresh check (top-line swings, currency flips).
       - name: Snapshot prior data
         run: mkdir -p "$RUNNER_TEMP/prior" && cp src/data/*.json "$RUNNER_TEMP/prior/"
-      - run: npm run fetch:wire
+      # Retried on the transient undici teardown (assert(!this.paused) from a TLS socket dying
+      # mid-parse — an event-loop error no per-company try/catch can reach; it killed the
+      # 2026-08-10 and 2026-08-12 evening runs ~30 minutes in and discarded the night's work).
+      # The fetch rebuilds wire.json from scratch each run, so a fresh attempt is safe.
+      - name: Fetch the wire
+        run: |
+          for i in 1 2 3; do
+            npm run fetch:wire && exit 0
+            echo "fetch:wire attempt $i crashed (the transient undici teardown is the known class); retrying…"
+            sleep 10
+          done
+          exit 1
         env:
           SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT }}
       # The 10-year Treasury yield, the risk-free anchor the valuation's Graham bond test prefills.
@@ -50,9 +61,18 @@ jobs:
           tickers=$(node -e "const w=require('./src/data/wire.json');const cut=new Date(Date.now()-2*86400000).toISOString().slice(0,10);console.log([...new Set((w.items||[]).filter((i)=>(i.form==='10-K'||i.form==='10-Q')&&i.date>=cut).map((i)=>String(i.ticker).toUpperCase()))].join(','))")
           echo "tickers=$tickers" >> "$GITHUB_OUTPUT"
           echo "Periodic filers in the 2-day window: ${tickers:-none}"
+      # Same retry armor as the wire fetch above: this is the run's heaviest leg (every filer in
+      # the 2-day window, each with a filing-instance merge), so it has the most socket exposure —
+      # both August failures died here. ONLY_FUND merges over the last good file; retry is safe.
       - name: Refresh fundamentals for the filers
         if: steps.filers.outputs.tickers != ''
-        run: npm run fetch:fundamentals
+        run: |
+          for i in 1 2 3; do
+            npm run fetch:fundamentals && exit 0
+            echo "fundamentals attempt $i crashed (the transient undici teardown is the known class); retrying…"
+            sleep 10
+          done
+          exit 1
         env:
           ONLY_FUND: ${{ steps.filers.outputs.tickers }}
           SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT }}
