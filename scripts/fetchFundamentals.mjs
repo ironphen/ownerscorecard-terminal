@@ -1445,19 +1445,46 @@ function instantMap(facts, tags, unit = "USD") {
 // exception: whichever tag carries the LARGER value for the quarter is the real top line (Simon
 // books the complete total under "Revenues" while a pure-rent trust's whole top line is the lease
 // concept; first-rung-wins would serve the component).
-function quarterFlowMap(facts, tags, unit = "USD", pickMax = false) {
+function quarterFlowMap(facts, tags, unit = "USD", pickMax = false, nonNegative = false) {
   const out = {};
   for (const tag of tags) {
     const units = facts?.facts?.["us-gaap"]?.[tag]?.units?.[unit];
     if (!units) continue;
-    const perTag = {};
+    const perTag = {}, fyFlows = {}, ytdFlows = [];
     for (const u of units) {
       if (!u.form || !u.start || !u.end) continue;
       if (!(u.form.startsWith("10-K") || u.form.startsWith("10-Q"))) continue;
       const dur = days(u.start, u.end);
-      if (dur < 80 || dur > 100) continue; // a single quarter, not a YTD or annual span
       const f = u.filed || "";
-      if (!perTag[u.end] || f > perTag[u.end].filed) perTag[u.end] = { val: u.val, filed: f };
+      if (dur >= 80 && dur <= 100) { // a single quarter, not a YTD or annual span
+        if (!perTag[u.end] || f > perTag[u.end].filed) perTag[u.end] = { val: u.val, filed: f };
+      } else if (dur >= 350 && dur <= 380) { // the fiscal year, keyed by start|end, latest filing wins
+        const k = u.start + "|" + u.end;
+        if (!fyFlows[k] || f > fyFlows[k].filed) fyFlows[k] = { start: u.start, end: u.end, val: u.val, filed: f };
+      } else if (dur >= 250 && dur <= 290) { // the nine-month YTD (52/53-week tolerant)
+        ytdFlows.push({ start: u.start, end: u.end, val: u.val, filed: f });
+      }
+    }
+    // THE FISCAL FOURTH QUARTER, derived (the Fabrinet gap, 2026-08-19): no filer files a Q4
+    // 10-Q — the 10-K reports the year, and the fourth quarter exists only as the filer's own
+    // subtraction, FY minus the nine-month YTD, exactly the arithmetic its own Q4 press release
+    // performs and the same class the TTM stitch already runs (prior FY + YTD − prior YTD).
+    // Gates: SAME tag, SAME fiscal start date, latest filing wins on each leg, the remainder's
+    // own span must be a quarter (80-100 days), a filer that states a true Q4 flow keeps its own
+    // figure untouched, and the derived value may never exceed the year it came from (the COHR
+    // scale-error class); for revenue (nonNegative) a negative derivation is withheld — a
+    // re-baselined year must not dump its whole restatement into one quarter.
+    for (const k in fyFlows) {
+      const fy = fyFlows[k];
+      if (perTag[fy.end]) continue;
+      const ytd = ytdFlows
+        .filter((y) => y.start === fy.start && days(y.end, fy.end) >= 80 && days(y.end, fy.end) <= 100)
+        .sort((a, b) => (a.filed < b.filed ? 1 : -1))[0];
+      if (!ytd) continue;
+      const q4 = fy.val - ytd.val;
+      if (Math.abs(q4) > Math.abs(fy.val)) continue;
+      if (nonNegative && q4 < 0) continue;
+      perTag[fy.end] = { val: q4, filed: fy.filed > ytd.filed ? fy.filed : ytd.filed };
     }
     for (const end in perTag) {
       if (!(end in out)) { out[end] = perTag[end].val; continue; }
@@ -1475,7 +1502,7 @@ function quarterSeries(facts, revTags, n = 8, pickMaxRev = false) {
   const cash = instantMap(facts, CONCEPTS.cashAndEquivalents);
   // pickMaxRev = the same cohorts whose ANNUAL revenue reads pick-max (REIT/insurer/lessor/
   // broker): whichever tag carries the larger quarter is the real top line.
-  const rev = quarterFlowMap(facts, revTags, "USD", pickMaxRev);
+  const rev = quarterFlowMap(facts, revTags, "USD", pickMaxRev, true); // revenue: a negative derived Q4 is withheld
   const ni = quarterFlowMap(facts, CONCEPTS.netIncome);
   const oi = quarterFlowMap(facts, CONCEPTS.operatingIncome);
   const ends = [...new Set([...Object.keys(ca), ...Object.keys(rev)])].sort();

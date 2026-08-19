@@ -56,6 +56,31 @@ const qf = quarterFlowMap(facts, ["Revenues"]);
 check("quarterFlowMap: keeps Q1+Q2+year-ago, drops H1-YTD and annual",
   qf["2025-03-31"] === 28 && qf["2025-06-30"] === 30 && qf["2024-06-30"] === 27 && !("end" in qf) && Object.keys(qf).length === 3, qf);
 
+// THE DERIVED FISCAL Q4 (the Fabrinet gap): a 10-K reports the year, not a fourth quarter, so
+// Q4 exists only as the filer's own subtraction — FY minus the nine-month YTD, same tag, same
+// fiscal start. A filer that states a true Q4 flow keeps its own figure; a negative derived
+// revenue is withheld (nonNegative); a derivation larger than its own year is refused.
+{
+  const f4 = { facts: { "us-gaap": { Revenues: { units: { USD: [
+    { val: 100, start: "2025-07-01", end: "2026-06-30", form: "10-K", filed: "2026-08-15" },  // FY
+    { val: 72, start: "2025-07-01", end: "2026-03-31", form: "10-Q", filed: "2026-05-01" },   // 9-mo YTD
+    { val: 25, start: "2026-01-01", end: "2026-03-31", form: "10-Q", filed: "2026-05-01" },   // Q3 (true 3-mo)
+  ] } } } } };
+  const q4 = quarterFlowMap(f4, ["Revenues"]);
+  check("quarterFlowMap: fiscal Q4 derived as FY − YTD9 (100 − 72 = 28) at the FY end date",
+    q4["2026-06-30"] === 28 && q4["2026-03-31"] === 25, q4);
+  // A filed true Q4 wins over the derivation (never overwrite the filer's own figure).
+  const f4b = JSON.parse(JSON.stringify(f4));
+  f4b.facts["us-gaap"].Revenues.units.USD.push({ val: 27, start: "2026-04-01", end: "2026-06-30", form: "10-K", filed: "2026-08-15" });
+  const q4b = quarterFlowMap(f4b, ["Revenues"]);
+  check("quarterFlowMap: a filed Q4 flow beats the derivation", q4b["2026-06-30"] === 27, q4b);
+  // A negative derived revenue (re-baselined year) is withheld under nonNegative.
+  const f4c = JSON.parse(JSON.stringify(f4));
+  f4c.facts["us-gaap"].Revenues.units.USD.find((u) => u.val === 72).val = 110;
+  const q4c = quarterFlowMap(f4c, ["Revenues"], "USD", false, true);
+  check("quarterFlowMap: negative derived Q4 revenue is withheld, never served", !("2026-06-30" in q4c), q4c);
+}
+
 // quarterSeries merges instants + quarterly flows on the period end, sorted ascending.
 const qs = quarterSeries(facts, ["Revenues"]);
 const last = qs[qs.length - 1];

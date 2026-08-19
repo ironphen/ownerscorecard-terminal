@@ -441,6 +441,17 @@ for (const [tk, want] of [["D", 12653000000], ["ED", 4764000000], ["HTO", 519753
       acquisitionRecord(ko) === null);
   }
 
+  // THE DERIVED FISCAL Q4 (the Fabrinet gap, 2026-08-19): a 10-K arriving on the wire now
+  // produces its fourth quarter in the series — FY minus the nine-month YTD, the filer's own
+  // arithmetic, hand-verified against EDGAR to the dollar ($4,641,097,000 − $3,325,309,000).
+  // The pin holds the whole path: extraction, series, and the Latest-quarter read upstream.
+  const fn = byT.get("FN");
+  if (fn?.quarterly?.series?.length) {
+    const lastQ = [...fn.quarterly.series].reverse().find((e) => e.revenue != null);
+    t("FN's latest usable quarter is the 10-K's fiscal Q4 (2026-06-26, $1,315,788,000 revenue)",
+      lastQ?.end === "2026-06-26" && lastQ.revenue === 1315788000 && lastQ.netIncome === 139260000);
+  }
+
   // Structural legs, pool-wide and permanent: no TTM or quarterly node may sit OLDER than the
   // annual record beside it (the stranded-anchor drop rule; 14-day tolerance for 52/53-week
   // calendars). These are the only per-node dates the data file carries, so they are the
