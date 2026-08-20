@@ -67,9 +67,21 @@ on:
 permissions:
   contents: write
 
+# One run of THIS workflow at a time (a dispatch overlapping its own cron). Deliberately NOT a
+# group shared across the data workflows: GitHub keeps a single pending slot per group and
+# silently CANCELS the older pending run when a third queues, which would drop a whole weekly
+# refresh with no email. Cross-workflow push races stay with the rebase-retry push loop.
+concurrency:
+  group: fundamentals
+  cancel-in-progress: false
+
 jobs:
   refresh:
     runs-on: ubuntu-latest
+    # The 2026-08-01 monthly run took 3h24m, and the retry loops can legitimately stretch a bad
+    # night further; six hours is the platform ceiling anyway — declare it so the intent is
+    # explicit and the cancelled-run artifact gate below stays honest.
+    timeout-minutes: 360
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -85,9 +97,18 @@ jobs:
       # on the schedule, and on demand. dryrun fetches and reports only (the fetch step below is
       # skipped); write/monthly overwrites universe.json, which the fetch then reads. A failed or
       # implausible fetch leaves the existing universe untouched, so it can never corrupt the input.
+      # Retried like the fetch legs below: this is the monthly run's FIRST fetching step, so a
+      # single socket teardown here used to kill the whole refresh before anything ran. The rebuild
+      # reads and carries the prior universe, so a fresh attempt is safe.
       - name: Rebuild universe
         if: ${{ github.event.inputs.rebuild_universe == 'dryrun' || github.event.inputs.rebuild_universe == 'write' || github.event.schedule == '0 8 1 * *' }}
-        run: node scripts/buildUniverse.mjs
+        run: |
+          for i in 1 2 3; do
+            node scripts/buildUniverse.mjs && exit 0
+            echo "buildUniverse attempt $i failed; retrying…"
+            sleep 10
+          done
+          exit 1
         env:
           UNIVERSE_DRYRUN: ${{ github.event.inputs.rebuild_universe == 'dryrun' && '1' || '' }}
           SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT }}
@@ -266,20 +287,6 @@ jobs:
       - name: Test against the fresh data
         if: ${{ github.event.inputs.debug == '' }}
         run: npm test
-      # The gate above is correct — data that breaks the product must not land — but a red test
-      # also DESTROYS the refresh, and the refresh is hours of SEC fetching. On 2026-08-01 the
-      # monthly pass computed the whole pool in 3h24m, passed every audit, failed one test pinned
-      # to live data, and skipped the commit; the work was gone and the qualitative layer stayed
-      # frozen for weeks. Keep the computed data as an artifact whenever the run fails, so the fix
-      # is "download and commit" rather than "recompute overnight and hope".
-      - name: Preserve the computed data when the run fails
-        if: ${{ failure() }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: data-refresh-${{ github.run_id }}
-          path: src/data/*.json
-          retention-days: 14
-          if-no-files-found: warn
       - name: Commit if changed
         if: ${{ github.event.inputs.debug == '' }}
         run: |
@@ -311,3 +318,21 @@ jobs:
           else
             echo "No change."
           fi
+      # The test gate above is correct — data that breaks the product must not land — but a red
+      # test also DESTROYS the refresh, and the refresh is hours of SEC fetching. On 2026-08-01
+      # the monthly pass computed the whole pool in 3h24m, passed every audit, failed one test
+      # pinned to live data, and skipped the commit; the work was gone and the qualitative layer
+      # stayed frozen for weeks. Keep the computed data as an artifact whenever the run fails, so
+      # the fix is "download and commit" rather than "recompute overnight and hope". Placed AFTER
+      # the commit step (an if-gated step fires on any earlier failure regardless of position, and
+      # only this position also catches a push that exhausts its five retries); cancelled() covers
+      # the job-timeout kill; the attempt suffix keeps a re-run's upload from colliding with the
+      # immutable first-attempt artifact; ** also reaches nested data directories.
+      - name: Preserve the computed data when the run fails
+        if: ${{ failure() || cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: data-refresh-${{ github.run_id }}-${{ github.run_attempt }}
+          path: src/data/**/*.json
+          retention-days: 14
+          if-no-files-found: warn

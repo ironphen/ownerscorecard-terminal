@@ -30,9 +30,18 @@ on:
 permissions:
   contents: write
 
+# One run of THIS workflow at a time (a dispatch overlapping its own cron). Deliberately NOT a
+# group shared across the data workflows: GitHub keeps a single pending slot per group and
+# silently CANCELS the older pending run when a third queues, which would drop a whole weekly
+# refresh with no email. Cross-workflow push races stay with the rebase-retry push loop.
+concurrency:
+  group: fundamentals-eu
+  cancel-in-progress: false
+
 jobs:
   refresh:
     runs-on: ubuntu-latest
+    timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -54,7 +63,11 @@ jobs:
             echo "fetch:fundamentals:eu attempt $i failed; retrying…"
             sleep 10
           done
-          echo "fetch:fundamentals:eu failed after 3 attempts; the prior good file carries over."
+          # Fail RED, not green: nothing is lost — the prior file only carries over because nothing
+          # new was committed — but a green fall-through let the EU pool stop refreshing for weeks
+          # with every run green and no alarm anywhere. Red emails the owner.
+          echo "::error::fetch:fundamentals:eu failed after 3 attempts; the prior good file carries over uncommitted"
+          exit 1
         env:
           SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT }}
           ONLY_EU: ${{ github.event.inputs.tickers }}

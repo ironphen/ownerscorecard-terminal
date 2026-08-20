@@ -28,6 +28,9 @@
 import fs from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
+// Pinned fetch, not the global: newer node builds bundle an undici (6.26+) whose socket teardown
+// asserts the process to death mid-parse (nodejs/undici#5360). See fetchWire.mjs for the full story.
+import { fetch } from "undici";
 import { compactJson } from "../src/lib/dataFile.mjs";
 // The shared machinery — HTML→blocks, the MD&A span, the sentence splitter, and the four gates —
 // lives in src/lib/drivers.mjs so the wire's performance line proves its clauses against the
@@ -51,9 +54,11 @@ async function fetchText(url) {
   for (let a = 1; a <= 4; a++) {
     try {
       const res = await fetch(url, { headers: HEADERS, signal: AbortSignal.timeout(60_000) });
-      if (res.status === 429) { await sleep(1000 * a); continue; }
-      if (res.status === 404) return null;
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      // An abandoned body leaves undici's parser paused on a live socket — the exact state whose
+      // teardown crashes the process — so every early exit discharges it first.
+      if (res.status === 429) { await res.body?.cancel().catch(() => {}); await sleep(1000 * a); continue; }
+      if (res.status === 404) { await res.body?.cancel().catch(() => {}); return null; }
+      if (!res.ok) { await res.body?.cancel().catch(() => {}); throw new Error(`HTTP ${res.status}`); }
       return await res.text();
     } catch (e) { if (a === 4) throw e; await sleep(500 * a); }
   }

@@ -16,6 +16,9 @@
 import fs from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
+// Pinned fetch, not the global: newer node builds bundle an undici (6.26+) whose socket teardown
+// asserts the process to death mid-parse (nodejs/undici#5360). See fetchWire.mjs for the full story.
+import { fetch } from "undici";
 import { unzip, decodeCsv } from "./fetchEdinetFundamentals.mjs";
 
 const API = "https://api.edinet-fsa.go.jp/api/v2";
@@ -28,8 +31,10 @@ async function getBuffer(url) {
   for (let a = 1; a <= 4; a++) {
     try {
       const res = await fetch(url, { signal: AbortSignal.timeout(60_000) });
-      if (res.status === 429) { await sleep(1000 * a); continue; }
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      // An abandoned body leaves undici's parser paused on a live socket — the exact state whose
+      // teardown crashes the process — so every early exit discharges it first.
+      if (res.status === 429) { await res.body?.cancel().catch(() => {}); await sleep(1000 * a); continue; }
+      if (!res.ok) { await res.body?.cancel().catch(() => {}); throw new Error(`HTTP ${res.status}`); }
       return Buffer.from(await res.arrayBuffer());
     } catch (err) { if (a === 4) throw err; await sleep(500 * a); }
   }

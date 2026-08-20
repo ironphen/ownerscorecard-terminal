@@ -17,6 +17,10 @@
 // other follows its current form). Fail-soft throughout: any miss returns route null and the caller
 // falls back to the screener country — never worse than the behaviour before this layer existed.
 
+// Pinned fetch, not the global: newer node builds bundle an undici (6.26+) whose socket teardown
+// asserts the process to death mid-parse (nodejs/undici#5360). See fetchWire.mjs for the full story.
+import { fetch } from "undici";
+
 const SEC_UA = process.env.SEC_USER_AGENT || "OwnerScorecard research hello@ownerscorecard.com";
 
 // EDGAR encodes incorporation locations as 2-char state/country codes. The submissions payload also
@@ -85,7 +89,9 @@ export async function probeRoute(cik, fetchImpl = fetch) {
       headers: { "User-Agent": SEC_UA },
       signal: AbortSignal.timeout(30_000),
     });
-    if (!res.ok) return { route: null, form: null, date: null, country: null };
+    // An abandoned body leaves undici's parser paused on a live socket — the exact state whose
+    // teardown crashes the process — so every early exit discharges it first.
+    if (!res.ok) { await res.body?.cancel().catch(() => {}); return { route: null, form: null, date: null, country: null }; }
     return routeFromSubmissions(await res.json());
   } catch {
     return { route: null, form: null, date: null, country: null };

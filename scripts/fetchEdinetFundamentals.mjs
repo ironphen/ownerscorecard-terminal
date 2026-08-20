@@ -24,6 +24,9 @@ import { compactJson } from "../src/lib/dataFile.mjs";
 import path from "node:path";
 import zlib from "node:zlib";
 import { fileURLToPath, pathToFileURL } from "node:url";
+// Pinned fetch, not the global: newer node builds bundle an undici (6.26+) whose socket teardown
+// asserts the process to death mid-parse (nodejs/undici#5360). See fetchWire.mjs for the full story.
+import { fetch } from "undici";
 import { passesQualityFloor } from "../src/lib/fundamentals.mjs";
 
 const API = "https://api.edinet-fsa.go.jp/api/v2";
@@ -338,8 +341,10 @@ async function getJSON(url) {
   for (let attempt = 1; attempt <= 4; attempt++) {
     try {
       const res = await fetch(url, { headers: { "User-Agent": UA }, signal: AbortSignal.timeout(60_000) }); // 60s timeout: no hung EDINET request freezes the run
-      if (res.status === 429) { await sleep(1000 * attempt); continue; }
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      // An abandoned body leaves undici's parser paused on a live socket — the exact state whose
+      // teardown crashes the process — so every early exit discharges it first.
+      if (res.status === 429) { await res.body?.cancel().catch(() => {}); await sleep(1000 * attempt); continue; }
+      if (!res.ok) { await res.body?.cancel().catch(() => {}); throw new Error(`HTTP ${res.status}`); }
       return await res.json();
     } catch (err) {
       if (attempt === 4) throw err;
@@ -351,8 +356,8 @@ async function getBuffer(url) {
   for (let attempt = 1; attempt <= 4; attempt++) {
     try {
       const res = await fetch(url, { headers: { "User-Agent": UA }, signal: AbortSignal.timeout(60_000) }); // 60s timeout: no hung EDINET request freezes the run
-      if (res.status === 429) { await sleep(1000 * attempt); continue; }
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (res.status === 429) { await res.body?.cancel().catch(() => {}); await sleep(1000 * attempt); continue; }
+      if (!res.ok) { await res.body?.cancel().catch(() => {}); throw new Error(`HTTP ${res.status}`); }
       return Buffer.from(await res.arrayBuffer());
     } catch (err) {
       if (attempt === 4) throw err;

@@ -23,6 +23,9 @@ import { compactJson } from "../src/lib/dataFile.mjs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { parseContexts, buildRecord, buildLabels } from "./fetchSegments.mjs";
+// Pinned fetch, not the global: newer node builds bundle an undici (6.26+) whose socket teardown
+// asserts the process to death mid-parse (nodejs/undici#5360). See fetchWire.mjs for the full story.
+import { fetch } from "undici";
 
 const UA = process.env.SEC_USER_AGENT || "Owner Scorecard research (ryanreinsant@gmail.com)";
 const HEADERS = { "User-Agent": UA, "Accept-Encoding": "gzip, deflate" };
@@ -36,9 +39,11 @@ async function getJSON(url) {
   for (let a = 1; a <= 4; a++) {
     try {
       const res = await fetch(url, { headers: HEADERS, signal: AbortSignal.timeout(60_000) });
-      if (res.status === 404) return null;
-      if (res.status === 429) { await sleep(1000 * a); continue; }
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      // An abandoned body leaves undici's parser paused on a live socket — the exact state whose
+      // teardown crashes the process — so every early exit discharges it first.
+      if (res.status === 404) { await res.body?.cancel().catch(() => {}); return null; }
+      if (res.status === 429) { await res.body?.cancel().catch(() => {}); await sleep(1000 * a); continue; }
+      if (!res.ok) { await res.body?.cancel().catch(() => {}); throw new Error(`HTTP ${res.status}`); }
       return await res.json();
     } catch (err) { if (a === 4) throw err; await sleep(500 * a); }
   }
@@ -47,9 +52,9 @@ async function getText(url) {
   for (let a = 1; a <= 4; a++) {
     try {
       const res = await fetch(url, { headers: HEADERS, signal: AbortSignal.timeout(60_000) });
-      if (res.status === 404) return null;
-      if (res.status === 429) { await sleep(1000 * a); continue; }
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (res.status === 404) { await res.body?.cancel().catch(() => {}); return null; }
+      if (res.status === 429) { await res.body?.cancel().catch(() => {}); await sleep(1000 * a); continue; }
+      if (!res.ok) { await res.body?.cancel().catch(() => {}); throw new Error(`HTTP ${res.status}`); }
       return await res.text();
     } catch (err) { if (a === 4) throw err; await sleep(500 * a); }
   }

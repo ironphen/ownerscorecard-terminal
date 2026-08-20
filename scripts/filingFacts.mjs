@@ -20,12 +20,19 @@
 // skipped); us-gaap and dei numeric facts in USD, shares or pure units. Anything outside that
 // shape is refused, never guessed at.
 
+// Pinned fetch, not the global: newer node builds bundle an undici (6.26+) whose socket teardown
+// asserts the process to death mid-parse (nodejs/undici#5360). npm undici ≥8.6.0 drains the
+// paused parser instead of asserting. See fetchWire.mjs for the full story.
+import { fetch } from "undici";
+
 async function getText(url, headers) {
   for (let attempt = 1; attempt <= 3; attempt++) {
     try {
       const res = await fetch(url, { headers, signal: AbortSignal.timeout(60_000) });
-      if (res.status === 429) { await new Promise((r) => setTimeout(r, 1000 * attempt)); continue; }
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      // An abandoned body leaves undici's parser paused on a live socket — the exact state whose
+      // teardown crashes the process — so every early exit discharges it first.
+      if (res.status === 429) { await res.body?.cancel().catch(() => {}); await new Promise((r) => setTimeout(r, 1000 * attempt)); continue; }
+      if (!res.ok) { await res.body?.cancel().catch(() => {}); throw new Error(`HTTP ${res.status}`); }
       return await res.text();
     } catch (err) {
       if (attempt === 3) throw err;

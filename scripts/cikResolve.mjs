@@ -13,6 +13,10 @@
 // Live lookups cache per process, so a full refresh makes only a handful of extra requests (one per
 // name the static files lack); the overwhelming majority resolve from the static map with no network.
 
+// Pinned fetch, not the global: newer node builds bundle an undici (6.26+) whose socket teardown
+// asserts the process to death mid-parse (nodejs/undici#5360). See fetchWire.mjs for the full story.
+import { fetch } from "undici";
+
 const SEC_UA = process.env.SEC_USER_AGENT || "OwnerScorecard research hello@ownerscorecard.com";
 
 // Tickers SEC's own map resolves to the WRONG entity, verified case by case against companyfacts:
@@ -47,14 +51,18 @@ export async function resolveCikLive(ticker) {
   if (liveCache.has(T)) return liveCache.get(T);
   let cik = null;
   try {
+    // 30s timeout (this was the one wire-path fetch with none — a hung lookup froze the run) and a
+    // body discharge on the miss path, so an abandoned response can't park a paused parser on the socket.
     const res = await fetch(
       `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&ticker=${encodeURIComponent(T)}&type=10-K&count=1&output=atom`,
-      { headers: { "User-Agent": SEC_UA } },
+      { headers: { "User-Agent": SEC_UA }, signal: AbortSignal.timeout(30_000) },
     );
     if (res.ok) {
       const xml = await res.text();
       const m = xml.match(/CIK=(\d+)/i) || xml.match(/<cik>(\d+)<\/cik>/i);
       if (m) cik = m[1].padStart(10, "0");
+    } else {
+      await res.body?.cancel().catch(() => {});
     }
   } catch {
     /* leave null — caller skips exactly as it did before this fallback existed */

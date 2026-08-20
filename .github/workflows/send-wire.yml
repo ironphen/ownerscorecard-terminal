@@ -17,11 +17,15 @@ on:
 jobs:
   send:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      # sendWire.mjs imports the pinned undici fetch (see fetchWire.mjs), so the mailer needs its
+      # node_modules like every other script job.
+      - run: npm ci
       - name: Send the wire
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}

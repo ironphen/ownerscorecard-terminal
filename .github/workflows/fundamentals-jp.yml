@@ -40,9 +40,19 @@ on:
 permissions:
   contents: write
 
+# One run of THIS workflow at a time (a dispatch overlapping its own cron). Deliberately NOT a
+# group shared across the data workflows: GitHub keeps a single pending slot per group and
+# silently CANCELS the older pending run when a third queues, which would drop a whole weekly
+# refresh with no email. Cross-workflow push races stay with the rebase-retry push loop.
+concurrency:
+  group: fundamentals-jp
+  cancel-in-progress: false
+
 jobs:
   refresh:
     runs-on: ubuntu-latest
+    # The tripled fetch leg alone can legitimately run past two hours on a bad night.
+    timeout-minutes: 180
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -63,9 +73,17 @@ jobs:
           EDINET_API_KEY: ${{ secrets.EDINET_API_KEY }}
           ONLY_JP: ${{ github.event.inputs.tickers }}
           SEG_RAW: ${{ github.event.inputs.debug }} # non-empty → dump raw dimensional contexts for the tickers
+      # The same retry armor as wire.yml's fetch legs: the fetch rebuilds over the prior good file,
+      # so a fresh attempt is safe, and without the loop one socket teardown kills the weekly run.
       - name: Fetch Japanese fundamentals
         if: ${{ github.event.inputs.probe_segments != 'true' && github.event.inputs.fetch_segments != 'true' }}
-        run: npm run fetch:fundamentals:jp
+        run: |
+          for i in 1 2 3; do
+            npm run fetch:fundamentals:jp && exit 0
+            echo "fetch:fundamentals:jp attempt $i failed; retrying…"
+            sleep 10
+          done
+          exit 1
         env:
           EDINET_API_KEY: ${{ secrets.EDINET_API_KEY }}
           EDINET_DEBUG: ${{ github.event.inputs.debug }}

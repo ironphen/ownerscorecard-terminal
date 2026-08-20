@@ -23,6 +23,9 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { buildCikMap, resolveCikLive, CIK_OVERRIDE } from "./cikResolve.mjs";
 import { probeRoute } from "./formType.mjs";
+// Pinned fetch, not the global: newer node builds bundle an undici (6.26+) whose socket teardown
+// asserts the process to death mid-parse (nodejs/undici#5360). See fetchWire.mjs for the full story.
+import { fetch } from "undici";
 
 const dataDir = path.join(process.cwd(), "src", "data");
 const universePath = path.join(dataDir, "universe.json");
@@ -86,8 +89,10 @@ async function fetchJson(url) {
         },
         signal: AbortSignal.timeout(60_000), // 60s timeout so a hung screener can't freeze the run
       });
-      if (res.status === 429) { await new Promise((r) => setTimeout(r, 1000 * a)); continue; } // back off on throttle, then retry
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      // An abandoned body leaves undici's parser paused on a live socket — the exact state whose
+      // teardown crashes the process — so every early exit discharges it first.
+      if (res.status === 429) { await res.body?.cancel().catch(() => {}); await new Promise((r) => setTimeout(r, 1000 * a)); continue; } // back off on throttle, then retry
+      if (!res.ok) { await res.body?.cancel().catch(() => {}); throw new Error(`HTTP ${res.status}`); }
       return await res.json();
     } catch (err) {
       if (a === 4) throw err;
@@ -169,8 +174,8 @@ async function fetchSecJson(url) {
   for (let a = 1; a <= 3; a++) {
     try {
       const res = await fetch(url, { headers: { "User-Agent": SEC_UA }, signal: AbortSignal.timeout(30_000) });
-      if (res.status === 429) { await sleep(800 * a); continue; }
-      if (!res.ok) return null;
+      if (res.status === 429) { await res.body?.cancel().catch(() => {}); await sleep(800 * a); continue; }
+      if (!res.ok) { await res.body?.cancel().catch(() => {}); return null; }
       return await res.json();
     } catch { await sleep(400 * a); }
   }
