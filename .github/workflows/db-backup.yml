@@ -12,6 +12,7 @@ on:
 jobs:
   dump:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     env:
       SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
     steps:

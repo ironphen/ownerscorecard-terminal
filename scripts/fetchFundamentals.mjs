@@ -15,6 +15,11 @@
 import fs from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
+// Pinned fetch, not the global: newer node builds bundle an undici (6.26+) whose socket teardown
+// asserts the process to death mid-parse (nodejs/undici#5360) — the crash class that killed the
+// August 10/12 evening wire runs in this script's per-filer leg. npm undici ≥8.6.0 drains the
+// paused parser instead of asserting. See fetchWire.mjs for the full story.
+import { fetch } from "undici";
 import { passesQualityFloor } from "../src/lib/fundamentals.mjs";
 import { normalizeShareScale, majorityShareRef } from "../src/lib/shareScale.mjs";
 import { reconcileLeaseLadder } from "../src/lib/leases.mjs";
@@ -93,11 +98,14 @@ async function getJSON(url) {
       // A 60s per-attempt timeout so a hung server can't freeze a scheduled run indefinitely; an
       // abort throws, which the retry loop treats like any transient failure.
       const res = await fetch(url, { headers: HEADERS, signal: AbortSignal.timeout(60_000) });
+      // An abandoned body leaves undici's parser paused on a live socket — the exact state whose
+      // teardown crashes the process — so every early exit discharges it first.
       if (res.status === 429) {
+        await res.body?.cancel().catch(() => {});
         await sleep(1000 * attempt);
         continue;
       }
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) { await res.body?.cancel().catch(() => {}); throw new Error(`HTTP ${res.status}`); }
       return await res.json();
     } catch (err) {
       if (attempt === 4) throw err;
@@ -1074,8 +1082,8 @@ async function getText(url) {
   for (let attempt = 1; attempt <= 4; attempt++) {
     try {
       const res = await fetch(url, { headers: HEADERS, signal: AbortSignal.timeout(60_000) });
-      if (res.status === 429) { await sleep(1000 * attempt); continue; }
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (res.status === 429) { await res.body?.cancel().catch(() => {}); await sleep(1000 * attempt); continue; }
+      if (!res.ok) { await res.body?.cancel().catch(() => {}); throw new Error(`HTTP ${res.status}`); }
       return await res.text();
     } catch (err) {
       if (attempt === 4) throw err;
@@ -3087,7 +3095,30 @@ async function main() {
 export { instantMap, quarterFlowMap, quarterSeries, latestObservation, annualByYear, deriveOpInc, revenueTagsFor, CONCEPTS, fyOfEnd, sgaSeries, thinCor, corByYear, applyIncomeStatementIdentity, IDENTITY_FROZEN };
 
 if (import.meta.url === pathToFileURL(process.argv[1] || "").href) {
-  main().catch((err) => {
+  // Last-resort armor for the socket-teardown assert: it surfaces on the TLS socket, not the fetch
+  // promise, so no try/catch above can see it. With fetch pinned to undici ≥8.6.0 it should never
+  // fire; if dependency drift reintroduces it, swallowing exactly that assertion costs one 60s
+  // request timeout instead of the whole run (this leg is where both August wire crashes died).
+  process.on("uncaughtException", (e) => {
+    if (e && e.code === "ERR_ASSERTION" && /undici|this\.paused/.test(`${e.stack || e.message || ""}`)) {
+      console.warn("  · recovered from an undici socket teardown (the paused-parser assert)");
+      return;
+    }
+    throw e;
+  });
+  // A swallowed teardown can orphan its in-flight request; if that promise never settles, the
+  // event loop can drain mid-run (AbortSignal.timeout's timer is unref'd) and node would exit 0
+  // with the refresh unwritten — a green run carrying stale data. Convict any code-0 exit that
+  // main() never reached.
+  let finished = false;
+  process.on("exit", (code) => {
+    if (!finished && code === 0) {
+      console.error("❌ the event loop drained before the refresh finished (orphaned socket after a swallowed teardown)");
+      process.exitCode = 1;
+    }
+  });
+  main().then(() => { finished = true; }).catch((err) => {
+    finished = true;
     console.error(`\n❌ ${err.message}\n`);
     process.exit(1);
   });

@@ -130,5 +130,39 @@ console.log("\npickConsolidated — a segment-scoped subject never anchors a con
   eq(pickConsolidated(causeSents, { fy: FY, changes: CHANGES }).length, 1, "segment named after the verb is a cause and ships");
 }
 
+// ---- the performance cache seeds from the wire-days archive, not wire.json alone ----
+// The 2026-08-20 outage's second face: wire.json holds only the 7 most recent filing days, so a
+// cache seeded from it alone re-analysed every 10-K/10-Q filed 8–45 days ago on every run — the
+// same multi-MB document fetches, twice a day, results discarded — and made a crash mid-analysis
+// deterministic across retries. The archive is the durable record, so it seeds first; wire.json
+// seeds second and WINS, because the archive write is fail-soft and can run one refresh stale.
+{
+  const { seedPerformanceCache } = await import("./fetchWire.mjs");
+  const os = await import("node:os");
+  const fs = await import("node:fs");
+  const path = await import("node:path");
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "wire-cache-"));
+  const daysDir = path.join(tmp, "wire-days");
+  fs.mkdirSync(daysDir);
+  const day = (date, items) => fs.writeFileSync(path.join(daysDir, `${date}.json`), JSON.stringify({ date, items }));
+  const PERF = { period: "2026-06-30", basis: "quarter", rev: { yoy: 20.4 } };
+  day("2026-07-28", [{ ticker: "RMBS", form: "10-Q", date: "2026-07-28", accn: "A-FROZEN", performance: PERF }]);
+  day("2026-07-01", [{ ticker: "OLD", form: "10-Q", date: "2026-07-01", accn: "A-TOO-OLD", performance: PERF }]);
+  day("2026-08-11", [{ ticker: "DUP", form: "10-Q", date: "2026-08-11", accn: "A-DUP", performance: { stale: true } }]);
+  fs.writeFileSync(path.join(daysDir, "2026-08-12.json"), "not json {"); // one bad file must not void the cache
+  fs.writeFileSync(path.join(tmp, "wire.json"), JSON.stringify({ items: [
+    { ticker: "DUP", form: "10-Q", date: "2026-08-11", accn: "A-DUP", performance: { fresh: true } },
+    { ticker: "NUL", form: "10-Q", date: "2026-08-13", accn: "A-NULL", performance: null },
+  ] }));
+  const cache = seedPerformanceCache(tmp, "2026-07-06");
+  eq(cache["A-FROZEN"], PERF, "a frozen out-of-window day file seeds its computed performance");
+  eq("A-TOO-OLD" in cache, false, "day files older than the recency cutoff are not read");
+  eq(cache["A-DUP"], { fresh: true }, "wire.json wins over the archive for the same accession");
+  eq(cache["A-NULL"], null, "a null performance seeds as null (the retry gate still owns it)");
+  const bare = fs.mkdtempSync(path.join(os.tmpdir(), "wire-cache-bare-"));
+  fs.writeFileSync(path.join(bare, "wire.json"), JSON.stringify({ items: [{ accn: "A-ONLY", performance: PERF }] }));
+  eq(seedPerformanceCache(bare, "2026-07-06")["A-ONLY"], PERF, "no archive directory yet -> wire.json alone, the old behavior");
+}
+
 if (fails) { console.error(`\n❌ wirePerfTest: ${fails} failure(s)`); process.exit(1); }
 console.log("\n✅ wirePerfTest passed");

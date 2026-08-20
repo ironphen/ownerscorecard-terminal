@@ -10,6 +10,12 @@
 import fs from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
+// Pinned fetch, NOT the global: the runner's floating node-version:22 advanced to a build whose
+// bundled undici (6.26+) tears the whole process down with an uncatchable assert(!this.paused)
+// when a server closes a socket mid-parse under backpressure — the crash that killed all three
+// attempts of the 2026-08-20 wire run on the same 3.4MB filing document (nodejs/undici#5360).
+// npm undici ≥8.6.0 drains the paused parser instead of asserting; no LTS node bundles that yet.
+import { fetch } from "undici";
 import { fetchText } from "./fetchFilings.mjs";
 import { toBlocks, mdnaText, splitSentences, pickConsolidated } from "../src/lib/drivers.mjs";
 import { freshFilingMerge } from "./filingFacts.mjs";
@@ -27,8 +33,10 @@ async function getJSON(url) {
     try {
       // 60s per-attempt timeout so a hung server can't freeze the run; an abort retries like any failure.
       const res = await fetch(url, { headers: HEADERS, signal: AbortSignal.timeout(60_000) });
-      if (res.status === 429) { await sleep(1000 * a); continue; }
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      // An abandoned body leaves undici's parser paused on a live socket — the exact state whose
+      // teardown crashes the process — so every early exit discharges it first.
+      if (res.status === 429) { await res.body?.cancel().catch(() => {}); await sleep(1000 * a); continue; }
+      if (!res.ok) { await res.body?.cancel().catch(() => {}); throw new Error(`HTTP ${res.status}`); }
       return await res.json();
     } catch (e) { if (a === 4) throw e; await sleep(500 * a); }
   }
@@ -221,18 +229,39 @@ async function performanceFor(c, r, i, sub) {
   } catch { return null; }
 }
 
+// The performance cache (keyed by accession) so each new filing is analysed once, not re-fetched
+// on every daily run. Seeded from TWO sources, archive first: wire.json holds only the 7 most
+// recent filing days, so seeding from it alone (the pre-2026-08-20 behavior) silently re-analysed
+// every 10-K/10-Q filed 8–45 days ago — companyfacts + instance merge + a multi-MB document fetch,
+// ~2,300 filings at the August earnings peak — twice a day, and discarded every result: the
+// archive's frozen day files are never rewritten. That waste is also what made the 2026-08-20
+// crash deterministic: the same 3.4MB Rambus document was re-fetched at the same point on every
+// attempt of every run. The wire-days archive already holds each item's computed performance, so
+// it is the natural checkpoint; wire.json seeds SECOND and wins, because the archive write is
+// fail-soft and can legitimately run one refresh stale.
+function seedPerformanceCache(dataDir, sinceDate) {
+  const cache = {};
+  const seed = (items) => { for (const it of items || []) if (it.accn) cache[it.accn] = it.performance ?? null; };
+  try {
+    const daysDir = path.join(dataDir, "wire-days");
+    for (const f of fs.readdirSync(daysDir).sort()) {
+      if (!/^\d{4}-\d{2}-\d{2}\.json$/.test(f) || f.slice(0, 10) < sinceDate) continue;
+      try { seed(JSON.parse(fs.readFileSync(path.join(daysDir, f), "utf8")).items); } catch { /* one bad day file must not void the cache */ }
+    }
+  } catch { /* no archive yet — wire.json alone, the old behavior */ }
+  try { seed(JSON.parse(fs.readFileSync(path.join(dataDir, "wire.json"), "utf8")).items); } catch {}
+  return cache;
+}
+
 async function main() {
   const cutoff = new Date(Date.now() - DAYS * 86400000).toISOString().slice(0, 10);
   const recentCutoff = new Date(Date.now() - RECENT_DAYS * 86400000).toISOString().slice(0, 10);
   const retryCutoff = new Date(Date.now() - RETRY_DAYS * 86400000).toISOString().slice(0, 10);
   const wirePath = path.join(dataDir, "wire.json");
 
-  // Reuse already-computed performance (keyed by accession) so each new filing is analysed
-  // once, not re-fetched on every daily run. A cached null stays a miss while the item is
-  // fresh (see the retry gate below): companyfacts can lag a filing by hours, and the first
-  // morning's miss must not freeze into a permanent blank.
-  const cache = {};
-  try { for (const it of (JSON.parse(fs.readFileSync(wirePath, "utf8")).items || [])) if (it.accn) cache[it.accn] = it.performance ?? null; } catch {}
+  // A cached null stays a miss while the item is fresh (see the retry gate below): companyfacts
+  // can lag a filing by hours, and the first morning's miss must not freeze into a permanent blank.
+  const cache = seedPerformanceCache(dataDir, recentCutoff);
 
   const items = [];
   let attempted = 0, failed = 0;
@@ -337,8 +366,32 @@ async function main() {
   }
 }
 
-export { label8K, ITEM_8K, performanceFor };
+export { label8K, ITEM_8K, performanceFor, seedPerformanceCache };
 
 if (import.meta.url === pathToFileURL(process.argv[1] || "").href) {
-  main().catch((e) => { console.error(`❌ ${e.message}`); process.exit(1); });
+  // Last-resort armor for the socket-teardown assert (the crash class the wire.yml retry loop was
+  // built for): it surfaces on the TLS socket, not the fetch promise, so no try/catch above can see
+  // it. With fetch pinned to undici ≥8.6.0 it should never fire again; if dependency drift ever
+  // reintroduces it, swallowing exactly that assertion costs one 60s request timeout (the orphaned
+  // request aborts and its retry loop re-fetches) instead of the whole run. Same pattern as
+  // fetchEuFundamentals.mjs, which carried this guard alone while both August wire runs died.
+  process.on("uncaughtException", (e) => {
+    if (e && e.code === "ERR_ASSERTION" && /undici|this\.paused/.test(`${e.stack || e.message || ""}`)) {
+      console.warn("  · recovered from an undici socket teardown (the paused-parser assert)");
+      return;
+    }
+    throw e;
+  });
+  // A swallowed teardown can orphan its in-flight request; if that promise never settles, the
+  // event loop can drain mid-run (AbortSignal.timeout's timer is unref'd) and node would exit 0
+  // with the wire unwritten — a green run serving yesterday's file, the failure class this whole
+  // workflow refuses. Convict any code-0 exit that main() never reached.
+  let finished = false;
+  process.on("exit", (code) => {
+    if (!finished && code === 0) {
+      console.error("❌ the event loop drained before the wire finished (orphaned socket after a swallowed teardown)");
+      process.exitCode = 1;
+    }
+  });
+  main().then(() => { finished = true; }).catch((e) => { finished = true; console.error(`❌ ${e.message}`); process.exit(1); });
 }

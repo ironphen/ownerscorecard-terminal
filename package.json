@@ -45,7 +45,8 @@
     "@supabase/supabase-js": "^2.110.0",
     "astro": "^6.4.6",
     "react": "^19.2.7",
-    "react-dom": "^19.2.7"
+    "react-dom": "^19.2.7",
+    "undici": "^8.10.0"
   },
   "devDependencies": {
     "@resvg/resvg-js": "^2.6.2",
@@ -54,6 +55,6 @@
     "xlsx": "^0.18.5"
   },
   "engines": {
-    "node": ">=22.12.0"
+    "node": ">=22.19.0"
   }
 }

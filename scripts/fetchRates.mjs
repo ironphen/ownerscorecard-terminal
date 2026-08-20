@@ -12,13 +12,18 @@
 
 import fs from "node:fs";
 import path from "node:path";
+// Pinned fetch, not the global: newer node builds bundle an undici (6.26+) whose socket teardown
+// asserts the process to death mid-parse (nodejs/undici#5360) — an event-loop crash the fail-soft
+// main().catch below can never see. See fetchWire.mjs for the full story.
+import { fetch } from "undici";
 
 const OUT = path.join(process.cwd(), "src", "data", "rates.json");
 const UA = process.env.SEC_USER_AGENT || "ownerscorecard rates fetch (contact: github.com/ironphen)";
 
 async function get(url) {
   const res = await fetch(url, { headers: { "user-agent": UA }, signal: AbortSignal.timeout(30_000) });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  // Discharge an abandoned body: an unread response parks undici's parser paused on the socket.
+  if (!res.ok) { await res.body?.cancel().catch(() => {}); throw new Error(`HTTP ${res.status}`); }
   return res.text();
 }
 
@@ -74,7 +79,7 @@ async function fetchJgb() {
 // stock quote. Stored as USD per one unit of each currency the ADR and Japan pools file in.
 async function fetchFx() {
   const res = await fetch("https://open.er-api.com/v6/latest/USD", { headers: { "user-agent": UA }, signal: AbortSignal.timeout(30_000) });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  if (!res.ok) { await res.body?.cancel().catch(() => {}); throw new Error(`HTTP ${res.status}`); }
   const data = await res.json();
   if (data?.result !== "success" || !data.rates) throw new Error("unexpected FX payload");
   // The set we actually need: every filing currency in the ADR pool, plus JPY for the Japan pool.

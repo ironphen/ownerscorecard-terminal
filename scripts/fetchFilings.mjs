@@ -18,6 +18,11 @@
 import fs from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
+// Pinned fetch, not the global: newer node builds bundle an undici (6.26+) whose socket teardown
+// asserts the process to death mid-parse (nodejs/undici#5360) — it killed the 2026-08-20 wire run
+// three attempts running, inside THIS module's fetchText on a 3.4MB filing document. npm undici
+// ≥8.6.0 drains the paused parser instead of asserting. See fetchWire.mjs for the full story.
+import { fetch } from "undici";
 import { extractDebtMaturity } from "./debtMaturity.mjs";
 import { compactJson } from "../src/lib/dataFile.mjs";
 // Build 4 of the qualitative survey (2026-07-31): the reserve-development lane welds the one
@@ -47,8 +52,10 @@ async function fetchText(url) {
     try {
       // 60s per-attempt timeout so a hung server can't freeze the run; an abort retries like any failure.
       const res = await fetch(url, { headers: HEADERS, signal: AbortSignal.timeout(60_000) });
-      if (res.status === 429) { await sleep(1000 * a); continue; }
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      // An abandoned body leaves undici's parser paused on a live socket — the exact state whose
+      // teardown crashes the process — so every early exit discharges it first.
+      if (res.status === 429) { await res.body?.cancel().catch(() => {}); await sleep(1000 * a); continue; }
+      if (!res.ok) { await res.body?.cancel().catch(() => {}); throw new Error(`HTTP ${res.status}`); }
       return await res.text();
     } catch (e) { if (a === 4) throw e; await sleep(600 * a); }
   }

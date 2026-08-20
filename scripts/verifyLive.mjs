@@ -22,6 +22,10 @@
 // side is allowed to sit one day behind the committed side. Two days behind is a stopped
 // pipeline, and that is what this exits non-zero for.
 import { readFileSync, readdirSync } from "node:fs";
+// Deliberately the GLOBAL fetch, unlike the SEC fetch scripts (which pin npm undici — see
+// fetchWire.mjs): uptime.yml runs this file with no npm ci, so a bare "undici" import can never
+// resolve there. The one small same-origin GET below is not the multi-MB-under-backpressure
+// profile the teardown bug (nodejs/undici#5360) needs, and a crash here reds a probe, not data.
 
 const ORIGIN = (process.env.LIVE_ORIGIN || "https://ownerscorecard-terminal.ryanreinsant.workers.dev").replace(/\/$/, "");
 const GRACE_DAYS = Number(process.env.LIVE_GRACE_DAYS || 1);
@@ -35,7 +39,9 @@ const days = (a, b) => Math.round((Date.parse(b + "T00:00:00Z") - Date.parse(a +
 
 async function page(path) {
   const res = await fetch(`${ORIGIN}${path}`, { headers: { "User-Agent": UA }, redirect: "follow", signal: AbortSignal.timeout(30_000) });
-  if (!res.ok) throw new Error(`${path} returned ${res.status}`);
+  // An abandoned body leaves undici's parser paused on a live socket — the exact state whose
+  // teardown crashes the process — so every early exit discharges it first.
+  if (!res.ok) { await res.body?.cancel().catch(() => {}); throw new Error(`${path} returned ${res.status}`); }
   const html = await res.text();
   // A response that arrives but carries nothing is the failure mode that fooled us once already:
   // treat a near-empty body as a hard failure rather than letting an absent stamp read as stale.

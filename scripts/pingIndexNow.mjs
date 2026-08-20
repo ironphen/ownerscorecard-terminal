@@ -17,6 +17,10 @@
 // contains --wait-text (a fresh-deploy check: e.g. today's date in /wire-lite.json) before
 // submitting, so the engines never crawl a pre-deploy page. Bare hostnames are never submitted.
 
+// Pinned fetch, not the global: newer node builds bundle an undici (6.26+) whose socket teardown
+// asserts the process to death mid-parse (nodejs/undici#5360). See fetchWire.mjs for the full story.
+import { fetch } from "undici";
+
 const KEY = "e7cd0f0ed2ac86316a7ebe33de3fde94";
 const HOST = "ownerscorecard.com";
 const ORIGIN = `https://${HOST}`;
@@ -27,7 +31,7 @@ const done = (msg) => { if (msg) console.log(`pingIndexNow: ${msg}`); process.ex
 async function poll(url, text, { tries = 10, gapMs = 30000 } = {}) {
   for (let i = 1; i <= tries; i++) {
     try {
-      const res = await fetch(url, { headers: { "cache-control": "no-cache" } });
+      const res = await fetch(url, { headers: { "cache-control": "no-cache" }, signal: AbortSignal.timeout(30_000) });
       const body = await res.text();
       if (res.ok && (!text || body.includes(text))) { console.log(`pingIndexNow: deploy live (${url} contains "${text}") on attempt ${i}`); return true; }
       console.log(`pingIndexNow: not live yet (attempt ${i}/${tries})`);
@@ -78,10 +82,12 @@ async function main() {
       method: "POST",
       headers: { "Content-Type": "application/json; charset=utf-8" },
       body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(30_000),
     });
     // 200 and 202 are both success; 4xx means a key/format problem worth seeing in the log.
     console.log(`pingIndexNow: submitted ${urls.length} URL(s) → HTTP ${res.status} ${res.statusText}`);
     if (res.status >= 400) console.log(`pingIndexNow: response body: ${(await res.text()).slice(0, 500)}`);
+    else await res.body?.cancel().catch(() => {}); // discharge the unread success body
   } catch (e) {
     console.log(`pingIndexNow: submission failed (non-fatal): ${e.message}`);
   }

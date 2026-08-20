@@ -17,9 +17,24 @@ on:
 permissions:
   contents: write
 
+# One run of THIS workflow at a time: a manual dispatch overlapping a scheduled run would have
+# both writing wire.json and racing the push. Deliberately NOT a group shared with the
+# fundamentals workflows — GitHub keeps a single pending slot per group and silently CANCELS the
+# older pending run when a third queues (a Monday stack of fundamentals + JP + EU + wire would
+# drop one whole refresh with no email); cross-workflow push races stay with the rebase-retry
+# loop below, which resolves them.
+concurrency:
+  group: wire
+  cancel-in-progress: false
+
 jobs:
   wire:
     runs-on: ubuntu-latest
+    # A normal run is ~40 minutes; the worst legitimate case — two ~30-minute crashed attempts
+    # plus a full pass on the wire leg, then the tripled filers leg — approaches three hours.
+    # Past that something is hung, and the 6h GitHub default would only delay the failure email —
+    # the pipeline's alarm — while the site serves a stale wire.
+    timeout-minutes: 180
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -45,8 +60,12 @@ jobs:
           SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT }}
       # The 10-year Treasury yield, the risk-free anchor the valuation's Graham bond test prefills.
       # Public-domain government data (FRED/Treasury), fetched here so the default stays current; it
-      # fails soft, so a yield-fetch hiccup never blocks the wire commit.
+      # fails soft, so a yield-fetch hiccup never blocks the wire commit. continue-on-error makes the
+      # step match that design: the script already exits 0 on any fetch failure, so the only thing
+      # that can red this step is a process-level crash (the undici teardown class) — which must not
+      # discard the wire fetch that already succeeded above.
       - run: npm run fetch:rates
+        continue-on-error: true
         env:
           SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT }}
       # Per-filing refresh: the companies that filed a 10-K/10-Q get their fundamentals
@@ -118,6 +137,23 @@ jobs:
           else
             echo "No change."
           fi
+      # The 2026-08-01 lesson fundamentals.yml codified and this workflow never inherited: a
+      # failure after the hour-plus fetch legs must not destroy the computed data — the artifact
+      # keeps the fix at "download and commit" rather than "recompute overnight". Placed AFTER the
+      # commit step: an if-gated step fires on any EARLIER step's failure regardless of position,
+      # and only this position also catches a push that exhausts its five retries. cancelled()
+      # covers the job-timeout kill (a timed-out job is cancelled, not failed, and a bare
+      # failure() gate would skip exactly the hung run the timeout exists for). The attempt suffix
+      # keeps a re-run's upload from colliding with the immutable first-attempt artifact, and **
+      # reaches the wire-days archive the commit stages.
+      - name: Preserve the computed data when the run fails
+        if: ${{ failure() || cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: wire-refresh-${{ github.run_id }}-${{ github.run_attempt }}
+          path: src/data/**/*.json
+          retention-days: 14
+          if-no-files-found: warn
       # Machine-to-machine only (doctrine-blessed): tell IndexNow which pages changed so Bing and
       # its peers crawl the fresh wire and the day's lit-up records within minutes, not on the next
       # passive recrawl. Fires only on a real push, waits for the deploy to be live (today's date

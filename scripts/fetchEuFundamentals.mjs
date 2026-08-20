@@ -23,6 +23,9 @@
 import fs from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
+// Pinned fetch, not the global: newer node builds bundle an undici (6.26+) whose socket teardown
+// asserts the process to death mid-parse (nodejs/undici#5360). See fetchWire.mjs for the full story.
+import { fetch } from "undici";
 import { compactJson } from "../src/lib/dataFile.mjs";
 import { financialKind } from "../src/lib/archetype.mjs";
 
@@ -194,8 +197,10 @@ async function getJSON(url, accept) {
   for (let a = 1; a <= 4; a++) {
     try {
       const r = await fetch(url, { headers: accept === "api" ? AJ : UA, signal: AbortSignal.timeout(20_000) });
-      if (r.status === 429) { await sleep(1000 * a); continue; }
-      if (!r.ok) return null;
+      // An abandoned body leaves undici's parser paused on a live socket — the exact state whose
+      // teardown crashes the process — so every early exit discharges it first.
+      if (r.status === 429) { await r.body?.cancel().catch(() => {}); await sleep(1000 * a); continue; }
+      if (!r.ok) { await r.body?.cancel().catch(() => {}); return null; }
       return await r.json();
     } catch { await sleep(400 * a); }
   }
