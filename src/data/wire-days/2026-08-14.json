@@ -1,6 +1,6 @@
 {
   "date": "2026-08-14",
-  "asOf": "2026-08-21",
+  "asOf": "2026-08-24",
   "source": "SEC EDGAR, recent filings",
   "items": [
     {
@@ -400,29 +400,6 @@
       "accn": "0000950157-26-000891",
       "url": "https://www.sec.gov/Archives/edgar/data/1632127/000095015726000891/form8-k.htm",
       "performance": null
-    },
-    {
-      "ticker": "CBC",
-      "name": "Central Bancompany Inc.",
-      "form": "10-Q",
-      "date": "2026-08-14",
-      "label": "Quarterly report",
-      "grave": false,
-      "accn": "0001628280-26-057081",
-      "url": "https://www.sec.gov/Archives/edgar/data/2065601/000162828026057081/cbci-20260630.htm",
-      "performance": {
-        "period": "2026-06-30",
-        "basis": "quarter",
-        "rev": null,
-        "oi": {
-          "yoy": 15.5,
-          "cur": 195090000,
-          "prior": 168982000
-        },
-        "driver": null,
-        "driverLine": null,
-        "check": null
-      }
     },
     {
       "ticker": "CBNK",
@@ -1479,6 +1456,29 @@
       "accn": "0001104659-26-097090",
       "url": "https://www.sec.gov/Archives/edgar/data/898173/000110465926097090/tm2622552d5_8k.htm",
       "performance": null
+    },
+    {
+      "ticker": "PARA",
+      "name": "Banzai International, Inc.",
+      "form": "10-Q",
+      "date": "2026-08-14",
+      "label": "Quarterly report",
+      "grave": false,
+      "accn": "0001193125-26-352362",
+      "url": "https://www.sec.gov/Archives/edgar/data/1826011/000119312526352362/para-20260630.htm",
+      "performance": {
+        "period": "2026-06-30",
+        "basis": "quarter",
+        "rev": {
+          "yoy": -27.3,
+          "cur": 2273000,
+          "prior": 3127000
+        },
+        "oi": null,
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
     },
     {
       "ticker": "PBH",

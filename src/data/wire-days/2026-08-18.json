@@ -1,6 +1,6 @@
 {
   "date": "2026-08-18",
-  "asOf": "2026-08-21",
+  "asOf": "2026-08-24",
   "source": "SEC EDGAR, recent filings",
   "items": [
     {
@@ -392,6 +392,29 @@
       "accn": "0001437749-26-028388",
       "url": "https://www.sec.gov/Archives/edgar/data/1005731/000143774926028388/idt20260814_8k.htm",
       "performance": null
+    },
+    {
+      "ticker": "INFQ",
+      "name": "Infleqtion Inc.",
+      "form": "10-Q",
+      "date": "2026-08-18",
+      "label": "Quarterly report",
+      "grave": false,
+      "accn": "0001628280-26-057508",
+      "url": "https://www.sec.gov/Archives/edgar/data/2007825/000162828026057508/infq-20260630.htm",
+      "performance": {
+        "period": "2026-06-30",
+        "basis": "quarter",
+        "rev": {
+          "yoy": 156.5,
+          "cur": 13538000,
+          "prior": 5277000
+        },
+        "oi": null,
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
     },
     {
       "ticker": "JCAP",
