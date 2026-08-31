@@ -1,6 +1,6 @@
 {
   "date": "2026-08-26",
-  "asOf": "2026-08-29",
+  "asOf": "2026-08-31",
   "source": "SEC EDGAR, recent filings",
   "items": [
     {
@@ -712,6 +712,33 @@
       "performance": null
     },
     {
+      "ticker": "QNST",
+      "name": "QuinStreet Inc.",
+      "form": "10-K",
+      "date": "2026-08-26",
+      "label": "Annual report",
+      "grave": false,
+      "accn": "0001193125-26-367160",
+      "url": "https://www.sec.gov/Archives/edgar/data/1117297/000119312526367160/qnst-20260630.htm",
+      "performance": {
+        "period": "2026-06-30",
+        "basis": "fy",
+        "rev": {
+          "yoy": 18.3,
+          "cur": 1293712000,
+          "prior": 1093711000
+        },
+        "oi": {
+          "yoy": 472,
+          "cur": 35426000,
+          "prior": 6193000
+        },
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
+    },
+    {
       "ticker": "RUM",
       "name": "Rumble Inc.",
       "form": "8-K",
@@ -824,7 +851,19 @@
       "grave": false,
       "accn": "0000088941-26-000034",
       "url": "https://www.sec.gov/Archives/edgar/data/88941/000008894126000034/smtc-20260726.htm",
-      "performance": null
+      "performance": {
+        "period": "2026-07-26",
+        "basis": "quarter",
+        "rev": {
+          "yoy": 32.7,
+          "cur": 341871000,
+          "prior": 257589000
+        },
+        "oi": null,
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
     },
     {
       "ticker": "SNPS",
