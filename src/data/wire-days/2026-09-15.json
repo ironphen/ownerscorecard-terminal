@@ -1,6 +1,6 @@
 {
   "date": "2026-09-15",
-  "asOf": "2026-09-19",
+  "asOf": "2026-09-21",
   "source": "SEC EDGAR, recent filings",
   "items": [
     {
@@ -463,6 +463,44 @@
       "grave": false,
       "accn": "0000866374-26-000036",
       "url": "https://www.sec.gov/Archives/edgar/data/866374/000086637426000036/flex-20260911.htm",
+      "performance": null
+    },
+    {
+      "ticker": "FPS",
+      "name": "Forgent Power Solutions Inc.",
+      "form": "10-K",
+      "date": "2026-09-15",
+      "label": "Annual report",
+      "grave": false,
+      "accn": "0002080126-26-000035",
+      "url": "https://www.sec.gov/Archives/edgar/data/2080126/000208012626000035/fps-20260630.htm",
+      "performance": {
+        "period": "2026-06-30",
+        "basis": "fy",
+        "rev": {
+          "yoy": 88.5,
+          "cur": 1420059000,
+          "prior": 753188000
+        },
+        "oi": {
+          "yoy": 152.6,
+          "cur": 182489000,
+          "prior": 72237000
+        },
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
+    },
+    {
+      "ticker": "FPS",
+      "name": "Forgent Power Solutions Inc.",
+      "form": "8-K",
+      "date": "2026-09-15",
+      "label": "Reported results",
+      "grave": false,
+      "accn": "0002080126-26-000034",
+      "url": "https://www.sec.gov/Archives/edgar/data/2080126/000208012626000034/fps-20260915.htm",
       "performance": null
     },
     {
