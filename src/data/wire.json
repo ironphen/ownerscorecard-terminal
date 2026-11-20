@@ -1,7 +1,18 @@
 {
-  "asOf": "2026-11-19",
+  "asOf": "2026-11-20",
   "source": "SEC EDGAR, recent filings",
   "items": [
+    {
+      "ticker": "ADP",
+      "name": "Automatic Data Processing Inc.",
+      "form": "8-K",
+      "date": "2026-11-19",
+      "label": "Other event",
+      "grave": false,
+      "accn": "0000950142-26-003130",
+      "url": "https://www.sec.gov/Archives/edgar/data/8670/000095014226003130/eh260857214_8k.htm",
+      "performance": null
+    },
     {
       "ticker": "ALL",
       "name": "Allstate Corp.",
@@ -11,6 +22,28 @@
       "grave": false,
       "accn": "0000899051-26-000162",
       "url": "https://www.sec.gov/Archives/edgar/data/899051/000089905126000162/all-20261119.htm",
+      "performance": null
+    },
+    {
+      "ticker": "AMAL",
+      "name": "Amalgamated Financial Corp.",
+      "form": "8-K",
+      "date": "2026-11-19",
+      "label": "Executive or board change",
+      "grave": false,
+      "accn": "0001823608-26-000219",
+      "url": "https://www.sec.gov/Archives/edgar/data/1823608/000182360826000219/amal-20261119.htm",
+      "performance": null
+    },
+    {
+      "ticker": "AOSL",
+      "name": "Alpha and Omega Semiconductor Limited",
+      "form": "8-K",
+      "date": "2026-11-19",
+      "label": "Shareholder vote",
+      "grave": false,
+      "accn": "0001628280-26-075064",
+      "url": "https://www.sec.gov/Archives/edgar/data/1387467/000162828026075064/aosl-20261117.htm",
       "performance": null
     },
     {
@@ -37,6 +70,62 @@
       }
     },
     {
+      "ticker": "ARDT",
+      "name": "Ardent Health Inc.",
+      "form": "8-K",
+      "date": "2026-11-19",
+      "label": "Other event",
+      "grave": false,
+      "accn": "0001104659-26-130121",
+      "url": "https://www.sec.gov/Archives/edgar/data/1756655/000110465926130121/tm2630257d1_8k.htm",
+      "performance": null
+    },
+    {
+      "ticker": "AZTA",
+      "name": "Azenta Inc.",
+      "form": "10-K",
+      "date": "2026-11-19",
+      "label": "Annual report",
+      "grave": false,
+      "accn": "0001628280-26-075072",
+      "url": "https://www.sec.gov/Archives/edgar/data/933974/000162828026075072/azta-20260930.htm",
+      "performance": {
+        "period": "2026-09-30",
+        "basis": "fy",
+        "rev": {
+          "yoy": 4.7,
+          "cur": 621703000,
+          "prior": 593821000
+        },
+        "oi": null,
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
+    },
+    {
+      "ticker": "BANF",
+      "name": "BancFirst Corporation",
+      "form": "8-K",
+      "date": "2026-11-19",
+      "label": "Reg FD disclosure",
+      "grave": false,
+      "accn": "0001193125-26-468432",
+      "url": "https://www.sec.gov/Archives/edgar/data/760498/000119312526468432/banf-20261119.htm",
+      "performance": null
+    },
+    {
+      "ticker": "BANFP",
+      "name": "Bancfirst Corporation",
+      "form": "8-K",
+      "date": "2026-11-19",
+      "label": "Reg FD disclosure",
+      "grave": false,
+      "accn": "0001193125-26-468432",
+      "url": "https://www.sec.gov/Archives/edgar/data/760498/000119312526468432/banf-20261119.htm",
+      "performance": null
+    },
+    {
       "ticker": "BAX",
       "name": "Baxter International Inc.",
       "form": "8-K",
@@ -48,6 +137,44 @@
       "performance": null
     },
     {
+      "ticker": "BBT",
+      "name": "Beacon Financial Corporation",
+      "form": "8-K",
+      "date": "2026-11-19",
+      "label": "Executive or board change",
+      "grave": false,
+      "accn": "0001171843-26-007604",
+      "url": "https://www.sec.gov/Archives/edgar/data/1108134/000117184326007604/f8k_111926.htm",
+      "performance": null
+    },
+    {
+      "ticker": "BBWI",
+      "name": "Bath & Body Works",
+      "form": "10-Q",
+      "date": "2026-11-19",
+      "label": "Quarterly report",
+      "grave": false,
+      "accn": "0000701985-26-000033",
+      "url": "https://www.sec.gov/Archives/edgar/data/701985/000070198526000033/bbwi-20261031.htm",
+      "performance": {
+        "period": "2026-10-31",
+        "basis": "quarter",
+        "rev": {
+          "yoy": -1.1,
+          "cur": 1577000000,
+          "prior": 1594000000
+        },
+        "oi": {
+          "yoy": -32.9,
+          "cur": 108000000,
+          "prior": 161000000
+        },
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
+    },
+    {
       "ticker": "BBWI",
       "name": "Bath & Body Works",
       "form": "8-K",
@@ -56,6 +183,83 @@
       "grave": false,
       "accn": "0000701985-26-000031",
       "url": "https://www.sec.gov/Archives/edgar/data/701985/000070198526000031/bbwi-20261119.htm",
+      "performance": null
+    },
+    {
+      "ticker": "BCML",
+      "name": "BayCom Corp",
+      "form": "8-K",
+      "date": "2026-11-19",
+      "label": "Other event",
+      "grave": false,
+      "accn": "0001730984-26-000089",
+      "url": "https://www.sec.gov/Archives/edgar/data/1730984/000173098426000089/bcml-20261119x8k.htm",
+      "performance": null
+    },
+    {
+      "ticker": "BKU",
+      "name": "BankUnited",
+      "form": "8-K",
+      "date": "2026-11-19",
+      "label": "Other event",
+      "grave": false,
+      "accn": "0001504008-26-000094",
+      "url": "https://www.sec.gov/Archives/edgar/data/1504008/000150400826000094/bku-20261118.htm",
+      "performance": null
+    },
+    {
+      "ticker": "BNL",
+      "name": "Broadstone Net Lease Inc.",
+      "form": "8-K",
+      "date": "2026-11-19",
+      "label": "Reg FD disclosure",
+      "grave": false,
+      "accn": "0001424182-26-000084",
+      "url": "https://www.sec.gov/Archives/edgar/data/1424182/000142418226000084/bnl-20261119.htm",
+      "performance": null
+    },
+    {
+      "ticker": "BRBR",
+      "name": "BellRing Brands Inc. Common Stock",
+      "form": "8-K",
+      "date": "2026-11-19",
+      "label": "Other event",
+      "grave": false,
+      "accn": "0001628280-26-075091",
+      "url": "https://www.sec.gov/Archives/edgar/data/1772016/000162828026075091/brbr-20261119.htm",
+      "performance": null
+    },
+    {
+      "ticker": "BRK-A",
+      "name": "Berkshire Hathaway Inc.",
+      "form": "8-K",
+      "date": "2026-11-19",
+      "label": "Other event",
+      "grave": false,
+      "accn": "0001193125-26-468549",
+      "url": "https://www.sec.gov/Archives/edgar/data/1067983/000119312526468549/d197844d8k.htm",
+      "performance": null
+    },
+    {
+      "ticker": "BRK-B",
+      "name": "Berkshire Hathaway Inc.",
+      "form": "8-K",
+      "date": "2026-11-19",
+      "label": "Other event",
+      "grave": false,
+      "accn": "0001193125-26-468549",
+      "url": "https://www.sec.gov/Archives/edgar/data/1067983/000119312526468549/d197844d8k.htm",
+      "performance": null
+    },
+    {
+      "ticker": "CAL",
+      "name": "Caleres",
+      "form": "8-K",
+      "date": "2026-11-19",
+      "label": "Reported results",
+      "grave": false,
+      "accn": "0001104659-26-130237",
+      "url": "https://www.sec.gov/Archives/edgar/data/14707/000110465926130237/cal-20261119x8k.htm",
       "performance": null
     },
     {
@@ -81,6 +285,17 @@
       "performance": null
     },
     {
+      "ticker": "CLX",
+      "name": "Clorox Co.",
+      "form": "8-K",
+      "date": "2026-11-19",
+      "label": "Shareholder vote",
+      "grave": false,
+      "accn": "0001206774-26-000606",
+      "url": "https://www.sec.gov/Archives/edgar/data/21076/000120677426000606/clx4717351-8k.htm",
+      "performance": null
+    },
+    {
       "ticker": "COHR",
       "name": "Coherent Corp.",
       "form": "8-K",
@@ -103,6 +318,28 @@
       "performance": null
     },
     {
+      "ticker": "CRI",
+      "name": "Carter's",
+      "form": "8-K",
+      "date": "2026-11-19",
+      "label": "Reg FD disclosure",
+      "grave": false,
+      "accn": "0001060822-26-000129",
+      "url": "https://www.sec.gov/Archives/edgar/data/1060822/000106082226000129/cri-20261119.htm",
+      "performance": null
+    },
+    {
+      "ticker": "CVBF",
+      "name": "CVB Financial Corporation",
+      "form": "8-K",
+      "date": "2026-11-19",
+      "label": "Executive or board change",
+      "grave": false,
+      "accn": "0001193125-26-468781",
+      "url": "https://www.sec.gov/Archives/edgar/data/354647/000119312526468781/cvbf-20261118.htm",
+      "performance": null
+    },
+    {
       "ticker": "DINO",
       "name": "HF Sinclair",
       "form": "8-K",
@@ -114,6 +351,149 @@
       "performance": null
     },
     {
+      "ticker": "DUK",
+      "name": "Duke Energy Corp",
+      "form": "8-K",
+      "date": "2026-11-19",
+      "label": "Other event",
+      "grave": false,
+      "accn": "0001104659-26-130154",
+      "url": "https://www.sec.gov/Archives/edgar/data/1326160/000110465926130154/tm2630241d1_8k.htm",
+      "performance": null
+    },
+    {
+      "ticker": "DUKB",
+      "name": "Duke Energy Corp",
+      "form": "8-K",
+      "date": "2026-11-19",
+      "label": "Other event",
+      "grave": false,
+      "accn": "0001104659-26-130154",
+      "url": "https://www.sec.gov/Archives/edgar/data/1326160/000110465926130154/tm2630241d1_8k.htm",
+      "performance": null
+    },
+    {
+      "ticker": "EQBK",
+      "name": "Equity Bancshares Inc.",
+      "form": "8-K",
+      "date": "2026-11-19",
+      "label": "Other event",
+      "grave": false,
+      "accn": "0001193125-26-468835",
+      "url": "https://www.sec.gov/Archives/edgar/data/1227500/000119312526468835/eqbk-20261119.htm",
+      "performance": null
+    },
+    {
+      "ticker": "ESE",
+      "name": "ESCO Technologies Inc.",
+      "form": "8-K",
+      "date": "2026-11-19",
+      "label": "Reported results",
+      "grave": false,
+      "accn": "0001104659-26-130152",
+      "url": "https://www.sec.gov/Archives/edgar/data/866706/000110465926130152/tm2629609d1_8k.htm",
+      "performance": null
+    },
+    {
+      "ticker": "ESTC",
+      "name": "Elastic",
+      "form": "8-K",
+      "date": "2026-11-19",
+      "label": "Reported results",
+      "grave": false,
+      "accn": "0001707753-26-000067",
+      "url": "https://www.sec.gov/Archives/edgar/data/1707753/000170775326000067/estc-20261117.htm",
+      "performance": null
+    },
+    {
+      "ticker": "EW",
+      "name": "Edwards Lifesciences Corporation",
+      "form": "8-K",
+      "date": "2026-11-19",
+      "label": "Entered a material agreement",
+      "grave": false,
+      "accn": "0001099800-26-000057",
+      "url": "https://www.sec.gov/Archives/edgar/data/1099800/000109980026000057/ew-20261119.htm",
+      "performance": null
+    },
+    {
+      "ticker": "EYPT",
+      "name": "EyePoint Inc.",
+      "form": "8-K",
+      "date": "2026-11-19",
+      "label": "Other event",
+      "grave": false,
+      "accn": "0001193125-26-468558",
+      "url": "https://www.sec.gov/Archives/edgar/data/1314102/000119312526468558/eypt-20261117.htm",
+      "performance": null
+    },
+    {
+      "ticker": "FCNCA",
+      "name": "First Citizens BancShares Inc.",
+      "form": "8-K",
+      "date": "2026-11-19",
+      "label": "Other event",
+      "grave": false,
+      "accn": "0001193125-26-468714",
+      "url": "https://www.sec.gov/Archives/edgar/data/798941/000119312526468714/d16322d8k.htm",
+      "performance": null
+    },
+    {
+      "ticker": "FISI",
+      "name": "Financial Institutions Inc.",
+      "form": "8-K",
+      "date": "2026-11-19",
+      "label": "Reg FD disclosure",
+      "grave": false,
+      "accn": "0001193125-26-468610",
+      "url": "https://www.sec.gov/Archives/edgar/data/862831/000119312526468610/fisi-20261118.htm",
+      "performance": null
+    },
+    {
+      "ticker": "FWDI",
+      "name": "Forward Industries Inc.",
+      "form": "8-K",
+      "date": "2026-11-19",
+      "label": "Entered a material agreement",
+      "grave": false,
+      "accn": "0001683168-26-008965",
+      "url": "https://www.sec.gov/Archives/edgar/data/38264/000168316826008965/forward_8k.htm",
+      "performance": null
+    },
+    {
+      "ticker": "FWRD",
+      "name": "Forward Air Corporation",
+      "form": "8-K",
+      "date": "2026-11-19",
+      "label": "Executive or board change",
+      "grave": false,
+      "accn": "0001628280-26-075059",
+      "url": "https://www.sec.gov/Archives/edgar/data/912728/000162828026075059/fwrd-20261117.htm",
+      "performance": null
+    },
+    {
+      "ticker": "GAP",
+      "name": "Gap Inc. (The)",
+      "form": "8-K",
+      "date": "2026-11-19",
+      "label": "Reported results",
+      "grave": false,
+      "accn": "0001628280-26-075088",
+      "url": "https://www.sec.gov/Archives/edgar/data/39911/000162828026075088/gps-20261119.htm",
+      "performance": null
+    },
+    {
+      "ticker": "GEO",
+      "name": "Geo Group Inc (The) REIT",
+      "form": "8-K",
+      "date": "2026-11-19",
+      "label": "Entered a material agreement",
+      "grave": false,
+      "accn": "0001193125-26-468605",
+      "url": "https://www.sec.gov/Archives/edgar/data/923796/000119312526468605/d167150d8k.htm",
+      "performance": null
+    },
+    {
       "ticker": "GEVO",
       "name": "Gevo Inc.",
       "form": "8-K",
@@ -122,6 +502,17 @@
       "grave": false,
       "accn": "0001628280-26-074966",
       "url": "https://www.sec.gov/Archives/edgar/data/1392380/000162828026074966/gevo-20261119.htm",
+      "performance": null
+    },
+    {
+      "ticker": "GRNT",
+      "name": "Granite Ridge Resources Inc.",
+      "form": "8-K",
+      "date": "2026-11-19",
+      "label": "Other event",
+      "grave": false,
+      "accn": "0001928446-26-000070",
+      "url": "https://www.sec.gov/Archives/edgar/data/1928446/000192844626000070/grnt-20261119.htm",
       "performance": null
     },
     {
@@ -147,6 +538,55 @@
       "performance": null
     },
     {
+      "ticker": "GWW",
+      "name": "W.W. Grainger Inc.",
+      "form": "8-K",
+      "date": "2026-11-19",
+      "label": "Other event",
+      "grave": false,
+      "accn": "0001104659-26-130126",
+      "url": "https://www.sec.gov/Archives/edgar/data/277135/000110465926130126/tm2630131d1_8k.htm",
+      "performance": null
+    },
+    {
+      "ticker": "HNRG",
+      "name": "Hallador Energy Company",
+      "form": "8-K",
+      "date": "2026-11-19",
+      "label": "Other event",
+      "grave": false,
+      "accn": "0001628280-26-075099",
+      "url": "https://www.sec.gov/Archives/edgar/data/788965/000162828026075099/hnrg-20261118.htm",
+      "performance": null
+    },
+    {
+      "ticker": "HP",
+      "name": "Helmerich & Payne",
+      "form": "10-K",
+      "date": "2026-11-19",
+      "label": "Annual report",
+      "grave": false,
+      "accn": "0000046765-26-000064",
+      "url": "https://www.sec.gov/Archives/edgar/data/46765/000004676526000064/hp-20260930.htm",
+      "performance": {
+        "period": "2026-09-30",
+        "basis": "fy",
+        "rev": {
+          "yoy": 7.3,
+          "cur": 3945392000,
+          "prior": 3678660000
+        },
+        "oi": {
+          "yoy": -13325.6,
+          "cur": -438826000,
+          "prior": 3318000
+        },
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
+    },
+    {
       "ticker": "HY",
       "name": "Hyster-Yale Inc.",
       "form": "8-K",
@@ -155,6 +595,17 @@
       "grave": false,
       "accn": "0001173514-26-000259",
       "url": "https://www.sec.gov/Archives/edgar/data/1173514/000117351426000259/hy-20261118.htm",
+      "performance": null
+    },
+    {
+      "ticker": "IBM",
+      "name": "International Business Machines Corporation",
+      "form": "8-K",
+      "date": "2026-11-19",
+      "label": "Current report",
+      "grave": false,
+      "accn": "0001104659-26-130189",
+      "url": "https://www.sec.gov/Archives/edgar/data/51143/000110465926130189/tm2630132d1_8k.htm",
       "performance": null
     },
     {
@@ -169,6 +620,66 @@
       "performance": null
     },
     {
+      "ticker": "INTU",
+      "name": "Intuit Inc.",
+      "form": "8-K",
+      "date": "2026-11-19",
+      "label": "Entered a material agreement",
+      "grave": false,
+      "accn": "0001193125-26-468834",
+      "url": "https://www.sec.gov/Archives/edgar/data/896878/000119312526468834/d182669d8k.htm",
+      "performance": null
+    },
+    {
+      "ticker": "INTU",
+      "name": "Intuit Inc.",
+      "form": "8-K",
+      "date": "2026-11-19",
+      "label": "Other event",
+      "grave": false,
+      "accn": "0000896878-26-000047",
+      "url": "https://www.sec.gov/Archives/edgar/data/896878/000089687826000047/intu-20261119.htm",
+      "performance": null
+    },
+    {
+      "ticker": "INTU",
+      "name": "Intuit Inc.",
+      "form": "10-Q",
+      "date": "2026-11-19",
+      "label": "Quarterly report",
+      "grave": false,
+      "accn": "0000896878-26-000045",
+      "url": "https://www.sec.gov/Archives/edgar/data/896878/000089687826000045/intu-20261031.htm",
+      "performance": {
+        "period": "2026-10-31",
+        "basis": "quarter",
+        "rev": {
+          "yoy": 12.1,
+          "cur": 4354000000,
+          "prior": 3885000000
+        },
+        "oi": {
+          "yoy": 62.5,
+          "cur": 868000000,
+          "prior": 534000000
+        },
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
+    },
+    {
+      "ticker": "INTU",
+      "name": "Intuit Inc.",
+      "form": "8-K",
+      "date": "2026-11-19",
+      "label": "Reported results",
+      "grave": false,
+      "accn": "0000896878-26-000043",
+      "url": "https://www.sec.gov/Archives/edgar/data/896878/000089687826000043/intu-20261119.htm",
+      "performance": null
+    },
+    {
       "ticker": "IT",
       "name": "Gartner Inc.",
       "form": "8-K",
@@ -177,6 +688,28 @@
       "grave": false,
       "accn": "0001193125-26-467771",
       "url": "https://www.sec.gov/Archives/edgar/data/749251/000119312526467771/d188671d8k.htm",
+      "performance": null
+    },
+    {
+      "ticker": "KBR",
+      "name": "Kbr, Inc.",
+      "form": "8-K",
+      "date": "2026-11-19",
+      "label": "Executive or board change",
+      "grave": false,
+      "accn": "0001357615-26-000210",
+      "url": "https://www.sec.gov/Archives/edgar/data/1357615/000135761526000210/kbr-20261117.htm",
+      "performance": null
+    },
+    {
+      "ticker": "KEYS",
+      "name": "Keysight Technologies Inc.",
+      "form": "8-K",
+      "date": "2026-11-19",
+      "label": "Reported results",
+      "grave": false,
+      "accn": "0001601046-26-000040",
+      "url": "https://www.sec.gov/Archives/edgar/data/1601046/000160104626000040/keys-20261119.htm",
       "performance": null
     },
     {
@@ -201,6 +734,28 @@
         "driverLine": null,
         "check": null
       }
+    },
+    {
+      "ticker": "LAB",
+      "name": "Standard BioTools Inc.",
+      "form": "8-K",
+      "date": "2026-11-19",
+      "label": "Executive or board change",
+      "grave": false,
+      "accn": "0001140361-26-044934",
+      "url": "https://www.sec.gov/Archives/edgar/data/1162194/000114036126044934/ef20085888_8k.htm",
+      "performance": null
+    },
+    {
+      "ticker": "LKQ",
+      "name": "LKQ Corporation",
+      "form": "8-K",
+      "date": "2026-11-19",
+      "label": "Executive or board change",
+      "grave": false,
+      "accn": "0001065696-26-000063",
+      "url": "https://www.sec.gov/Archives/edgar/data/1065696/000106569626000063/lkq-20261118.htm",
+      "performance": null
     },
     {
       "ticker": "LQDT",
@@ -263,6 +818,88 @@
       "performance": null
     },
     {
+      "ticker": "MBIN",
+      "name": "Merchants Bancorp",
+      "form": "8-K",
+      "date": "2026-11-19",
+      "label": "Other event",
+      "grave": false,
+      "accn": "0001104659-26-130133",
+      "url": "https://www.sec.gov/Archives/edgar/data/1629019/000110465926130133/tm2630237d1_8k.htm",
+      "performance": null
+    },
+    {
+      "ticker": "MBINL",
+      "name": "Merchants Bancorp",
+      "form": "8-K",
+      "date": "2026-11-19",
+      "label": "Other event",
+      "grave": false,
+      "accn": "0001104659-26-130133",
+      "url": "https://www.sec.gov/Archives/edgar/data/1629019/000110465926130133/tm2630237d1_8k.htm",
+      "performance": null
+    },
+    {
+      "ticker": "MBINM",
+      "name": "Merchants Bancorp",
+      "form": "8-K",
+      "date": "2026-11-19",
+      "label": "Other event",
+      "grave": false,
+      "accn": "0001104659-26-130133",
+      "url": "https://www.sec.gov/Archives/edgar/data/1629019/000110465926130133/tm2630237d1_8k.htm",
+      "performance": null
+    },
+    {
+      "ticker": "MBINN",
+      "name": "Merchants Bancorp",
+      "form": "8-K",
+      "date": "2026-11-19",
+      "label": "Other event",
+      "grave": false,
+      "accn": "0001104659-26-130133",
+      "url": "https://www.sec.gov/Archives/edgar/data/1629019/000110465926130133/tm2630237d1_8k.htm",
+      "performance": null
+    },
+    {
+      "ticker": "MCB",
+      "name": "Metropolitan Bank Holding Corp.",
+      "form": "8-K",
+      "date": "2026-11-19",
+      "label": "Executive or board change",
+      "grave": false,
+      "accn": "0001104659-26-130188",
+      "url": "https://www.sec.gov/Archives/edgar/data/1476034/000110465926130188/tm2630192d1_8k.htm",
+      "performance": null
+    },
+    {
+      "ticker": "MMS",
+      "name": "Maximus",
+      "form": "10-K",
+      "date": "2026-11-19",
+      "label": "Annual report",
+      "grave": false,
+      "accn": "0001032220-26-000056",
+      "url": "https://www.sec.gov/Archives/edgar/data/1032220/000103222026000056/mms-20260930.htm",
+      "performance": {
+        "period": "2026-09-30",
+        "basis": "fy",
+        "rev": {
+          "yoy": -3.7,
+          "cur": 5230792000,
+          "prior": 5431276000
+        },
+        "oi": {
+          "yoy": 16.1,
+          "cur": 613541000,
+          "prior": 528289000
+        },
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
+    },
+    {
       "ticker": "MMS",
       "name": "Maximus",
       "form": "8-K",
@@ -282,6 +919,132 @@
       "grave": false,
       "accn": "0001032220-26-000048",
       "url": "https://www.sec.gov/Archives/edgar/data/1032220/000103222026000048/mms-20261119.htm",
+      "performance": null
+    },
+    {
+      "ticker": "MNR",
+      "name": "Mach Natural Resources LP Common",
+      "form": "8-K",
+      "date": "2026-11-19",
+      "label": "Entered a material agreement",
+      "grave": false,
+      "accn": "0001213900-26-122245",
+      "url": "https://www.sec.gov/Archives/edgar/data/1980088/000121390026122245/ea0312897-8k_mach.htm",
+      "performance": null
+    },
+    {
+      "ticker": "MSBI",
+      "name": "Midland States Bancorp Inc.",
+      "form": "8-K",
+      "date": "2026-11-19",
+      "label": "Other event",
+      "grave": false,
+      "accn": "0001104659-26-130130",
+      "url": "https://www.sec.gov/Archives/edgar/data/1466026/000110465926130130/tm2630292d1_8k.htm",
+      "performance": null
+    },
+    {
+      "ticker": "MSBIP",
+      "name": "Midland States Bancorp Inc.",
+      "form": "8-K",
+      "date": "2026-11-19",
+      "label": "Other event",
+      "grave": false,
+      "accn": "0001104659-26-130130",
+      "url": "https://www.sec.gov/Archives/edgar/data/1466026/000110465926130130/tm2630292d1_8k.htm",
+      "performance": null
+    },
+    {
+      "ticker": "NBHC",
+      "name": "National Bank Holdings Corporation",
+      "form": "8-K",
+      "date": "2026-11-19",
+      "label": "Executive or board change",
+      "grave": false,
+      "accn": "0001104659-26-130142",
+      "url": "https://www.sec.gov/Archives/edgar/data/1475841/000110465926130142/nbhc-20261119x8k.htm",
+      "performance": null
+    },
+    {
+      "ticker": "NBR",
+      "name": "Nabors Industries",
+      "form": "8-K",
+      "date": "2026-11-19",
+      "label": "Entered a material agreement",
+      "grave": false,
+      "accn": "0001104659-26-130175",
+      "url": "https://www.sec.gov/Archives/edgar/data/1163739/000110465926130175/tm2630164d1_8k.htm",
+      "performance": null
+    },
+    {
+      "ticker": "NGVC",
+      "name": "Natural Grocers by Vitamin Cottage Inc.",
+      "form": "8-K",
+      "date": "2026-11-19",
+      "label": "Reported results",
+      "grave": false,
+      "accn": "0001437749-26-037715",
+      "url": "https://www.sec.gov/Archives/edgar/data/1547459/000143774926037715/ngvc20261118_8k.htm",
+      "performance": null
+    },
+    {
+      "ticker": "NIQ",
+      "name": "NIQ Global Intelligence plc",
+      "form": "8-K",
+      "date": "2026-11-19",
+      "label": "Executive or board change",
+      "grave": false,
+      "accn": "0002054696-26-000033",
+      "url": "https://www.sec.gov/Archives/edgar/data/2054696/000205469626000033/niq-20261118.htm",
+      "performance": null
+    },
+    {
+      "ticker": "NJR",
+      "name": "New Jersey Resources",
+      "form": "10-K",
+      "date": "2026-11-19",
+      "label": "Annual report",
+      "grave": false,
+      "accn": "0000356309-26-000040",
+      "url": "https://www.sec.gov/Archives/edgar/data/356309/000035630926000040/njr-20260930.htm",
+      "performance": {
+        "period": "2026-09-30",
+        "basis": "fy",
+        "rev": {
+          "yoy": 11.4,
+          "cur": 2267800000,
+          "prior": 2036412000
+        },
+        "oi": {
+          "yoy": 9.9,
+          "cur": 559357000,
+          "prior": 508867000
+        },
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
+    },
+    {
+      "ticker": "NKE",
+      "name": "Nike Inc.",
+      "form": "8-K",
+      "date": "2026-11-19",
+      "label": "Executive or board change",
+      "grave": false,
+      "accn": "0000320187-26-000211",
+      "url": "https://www.sec.gov/Archives/edgar/data/320187/000032018726000211/nke-20261113.htm",
+      "performance": null
+    },
+    {
+      "ticker": "NSIT",
+      "name": "Insight Enterprises",
+      "form": "8-K",
+      "date": "2026-11-19",
+      "label": "Entered a material agreement",
+      "grave": false,
+      "accn": "0000932696-26-000089",
+      "url": "https://www.sec.gov/Archives/edgar/data/932696/000093269626000089/nsit-20261119.htm",
       "performance": null
     },
     {
@@ -326,6 +1089,17 @@
       "grave": false,
       "accn": "0001493152-26-053154",
       "url": "https://www.sec.gov/Archives/edgar/data/873860/000149315226053154/form8-k.htm",
+      "performance": null
+    },
+    {
+      "ticker": "ORMP",
+      "name": "Oramed Pharmaceuticals Inc.",
+      "form": "8-K",
+      "date": "2026-11-19",
+      "label": "Other event",
+      "grave": false,
+      "accn": "0001213900-26-122239",
+      "url": "https://www.sec.gov/Archives/edgar/data/1176309/000121390026122239/ea0312873-8k_oramed.htm",
       "performance": null
     },
     {
@@ -378,6 +1152,44 @@
       "performance": null
     },
     {
+      "ticker": "PLXS",
+      "name": "Plexus Corp.",
+      "form": "8-K",
+      "date": "2026-11-19",
+      "label": "Executive or board change",
+      "grave": false,
+      "accn": "0000785786-26-000068",
+      "url": "https://www.sec.gov/Archives/edgar/data/785786/000078578626000068/plxs-20261118.htm",
+      "performance": null
+    },
+    {
+      "ticker": "PLXS",
+      "name": "Plexus Corp.",
+      "form": "10-K",
+      "date": "2026-11-19",
+      "label": "Annual report",
+      "grave": false,
+      "accn": "0000785786-26-000067",
+      "url": "https://www.sec.gov/Archives/edgar/data/785786/000078578626000067/plxs-20261003.htm",
+      "performance": {
+        "period": "2026-10-03",
+        "basis": "fy",
+        "rev": {
+          "yoy": 23.1,
+          "cur": 4964957000,
+          "prior": 4032966000
+        },
+        "oi": {
+          "yoy": 30.4,
+          "cur": 263837000,
+          "prior": 202371000
+        },
+        "driver": "Net sales for fiscal 2026 in the Aerospace/Defense sector increased $158.3 million, or 23.0%, as compared to fiscal 2025. The increase in net sales was driven by overall net increased customer end-market demand, an increase of $44.9 million due to production ramps of new products for existing customers and an increase of $31.1 million due to production ramps for new customers.",
+        "driverLine": "revenue",
+        "check": "pct"
+      }
+    },
+    {
       "ticker": "POR",
       "name": "Portland General Electric",
       "form": "8-K",
@@ -386,6 +1198,77 @@
       "grave": false,
       "accn": "0001193125-26-467305",
       "url": "https://www.sec.gov/Archives/edgar/data/784977/000119312526467305/por-20261116.htm",
+      "performance": null
+    },
+    {
+      "ticker": "POST",
+      "name": "Post Holdings",
+      "form": "10-K",
+      "date": "2026-11-19",
+      "label": "Annual report",
+      "grave": false,
+      "accn": "0001530950-26-000101",
+      "url": "https://www.sec.gov/Archives/edgar/data/1530950/000153095026000101/post-20260930.htm",
+      "performance": {
+        "period": "2026-09-30",
+        "basis": "fy",
+        "rev": {
+          "yoy": -0.5,
+          "cur": 8120000000,
+          "prior": 8158100000
+        },
+        "oi": {
+          "yoy": 5,
+          "cur": 837600000,
+          "prior": 797700000
+        },
+        "driver": "Net Sales Net sales decreased $38.1 million, or less than 1%, during the year ended September 30, 2026, when compared to the prior year, driven by lower net sales within our Refrigerated Retail and Foodservice segments, partially offset by higher net sales within our Post Consumer Brands and Weetabix segments.",
+        "driverLine": "revenue",
+        "check": "pct"
+      }
+    },
+    {
+      "ticker": "POST",
+      "name": "Post Holdings",
+      "form": "8-K",
+      "date": "2026-11-19",
+      "label": "Reported results",
+      "grave": false,
+      "accn": "0001530950-26-000100",
+      "url": "https://www.sec.gov/Archives/edgar/data/1530950/000153095026000100/post-20261117.htm",
+      "performance": null
+    },
+    {
+      "ticker": "PSIX",
+      "name": "Power Solutions International Inc.",
+      "form": "8-K",
+      "date": "2026-11-19",
+      "label": "Executive or board change",
+      "grave": false,
+      "accn": "0001193125-26-468525",
+      "url": "https://www.sec.gov/Archives/edgar/data/1137091/000119312526468525/d163385d8k.htm",
+      "performance": null
+    },
+    {
+      "ticker": "RMD",
+      "name": "ResMed Inc.",
+      "form": "8-K",
+      "date": "2026-11-19",
+      "label": "Executive or board change",
+      "grave": false,
+      "accn": "0001193125-26-468603",
+      "url": "https://www.sec.gov/Archives/edgar/data/943819/000119312526468603/d44582d8k.htm",
+      "performance": null
+    },
+    {
+      "ticker": "RNR",
+      "name": "RenaissanceRe",
+      "form": "8-K",
+      "date": "2026-11-19",
+      "label": "Entered a material agreement",
+      "grave": false,
+      "accn": "0001140361-26-044928",
+      "url": "https://www.sec.gov/Archives/edgar/data/913144/000114036126044928/ef20085974_8k.htm",
       "performance": null
     },
     {
@@ -400,6 +1283,61 @@
       "performance": null
     },
     {
+      "ticker": "ROST",
+      "name": "Ross Stores Inc.",
+      "form": "8-K",
+      "date": "2026-11-19",
+      "label": "Reported results",
+      "grave": false,
+      "accn": "0000745732-26-000047",
+      "url": "https://www.sec.gov/Archives/edgar/data/745732/000074573226000047/rost-20261119.htm",
+      "performance": null
+    },
+    {
+      "ticker": "RRBI",
+      "name": "Red River Bancshares Inc.",
+      "form": "8-K",
+      "date": "2026-11-19",
+      "label": "Other event",
+      "grave": false,
+      "accn": "0001071236-26-000073",
+      "url": "https://www.sec.gov/Archives/edgar/data/1071236/000107123626000073/rrbi-20261119.htm",
+      "performance": null
+    },
+    {
+      "ticker": "SAM",
+      "name": "Boston Beer",
+      "form": "8-K",
+      "date": "2026-11-19",
+      "label": "Executive or board change",
+      "grave": false,
+      "accn": "0001193125-26-468550",
+      "url": "https://www.sec.gov/Archives/edgar/data/949870/000119312526468550/sam-20261116.htm",
+      "performance": null
+    },
+    {
+      "ticker": "SF",
+      "name": "Stifel Financial",
+      "form": "8-K",
+      "date": "2026-11-19",
+      "label": "Reg FD disclosure",
+      "grave": false,
+      "accn": "0001193125-26-468604",
+      "url": "https://www.sec.gov/Archives/edgar/data/720672/000119312526468604/d143946d8k.htm",
+      "performance": null
+    },
+    {
+      "ticker": "SFB",
+      "name": "Stifel Financial Corp",
+      "form": "8-K",
+      "date": "2026-11-19",
+      "label": "Reg FD disclosure",
+      "grave": false,
+      "accn": "0001193125-26-468604",
+      "url": "https://www.sec.gov/Archives/edgar/data/720672/000119312526468604/d143946d8k.htm",
+      "performance": null
+    },
+    {
       "ticker": "SHO",
       "name": "Sunstone Hotel Investors, Inc.",
       "form": "8-K",
@@ -408,6 +1346,17 @@
       "grave": false,
       "accn": "0001295810-26-000009",
       "url": "https://www.sec.gov/Archives/edgar/data/1295810/000129581026000009/sho-20261118.htm",
+      "performance": null
+    },
+    {
+      "ticker": "SNDK",
+      "name": "Sandisk Corporation",
+      "form": "8-K",
+      "date": "2026-11-19",
+      "label": "Amended charter or bylaws",
+      "grave": false,
+      "accn": "0001628280-26-075127",
+      "url": "https://www.sec.gov/Archives/edgar/data/2023554/000162828026075127/sndk-20261119.htm",
       "performance": null
     },
     {
@@ -420,6 +1369,44 @@
       "accn": "0001213900-26-122026",
       "url": "https://www.sec.gov/Archives/edgar/data/1676163/000121390026122026/ea0312833-8k_ssinnovations.htm",
       "performance": null
+    },
+    {
+      "ticker": "TFSL",
+      "name": "TFS Financial Corporation",
+      "form": "8-K",
+      "date": "2026-11-19",
+      "label": "Other event",
+      "grave": false,
+      "accn": "0001381668-26-000047",
+      "url": "https://www.sec.gov/Archives/edgar/data/1381668/000138166826000047/tfsl-20261119.htm",
+      "performance": null
+    },
+    {
+      "ticker": "UGI",
+      "name": "UGI Corporation",
+      "form": "10-K",
+      "date": "2026-11-19",
+      "label": "Annual report",
+      "grave": false,
+      "accn": "0000884614-26-000070",
+      "url": "https://www.sec.gov/Archives/edgar/data/884614/000088461426000070/ugi-20260930.htm",
+      "performance": {
+        "period": "2026-09-30",
+        "basis": "fy",
+        "rev": {
+          "yoy": -0.4,
+          "cur": 7256000000,
+          "prior": 7287000000
+        },
+        "oi": {
+          "yoy": 12,
+          "cur": 1240000000,
+          "prior": 1107000000
+        },
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
     },
     {
       "ticker": "UGI",
@@ -444,6 +1431,55 @@
       "performance": null
     },
     {
+      "ticker": "UNTY",
+      "name": "Unity Bancorp Inc.",
+      "form": "8-K",
+      "date": "2026-11-19",
+      "label": "Other event",
+      "grave": false,
+      "accn": "0001193125-26-468515",
+      "url": "https://www.sec.gov/Archives/edgar/data/920427/000119312526468515/unty-20261119.htm",
+      "performance": null
+    },
+    {
+      "ticker": "VSTM",
+      "name": "Verastem Inc.",
+      "form": "8-K",
+      "date": "2026-11-19",
+      "label": "Executive or board change",
+      "grave": false,
+      "accn": "0001104659-26-130192",
+      "url": "https://www.sec.gov/Archives/edgar/data/1526119/000110465926130192/tm2630284d1_8k.htm",
+      "performance": null
+    },
+    {
+      "ticker": "VVV",
+      "name": "Valvoline Inc.",
+      "form": "10-K",
+      "date": "2026-11-19",
+      "label": "Annual report",
+      "grave": false,
+      "accn": "0001674910-26-000083",
+      "url": "https://www.sec.gov/Archives/edgar/data/1674910/000167491026000083/vvv-20260930.htm",
+      "performance": {
+        "period": "2026-09-30",
+        "basis": "fy",
+        "rev": {
+          "yoy": 20.7,
+          "cur": 2064300000,
+          "prior": 1710300000
+        },
+        "oi": {
+          "yoy": -26,
+          "cur": 288500000,
+          "prior": 389900000
+        },
+        "driver": null,
+        "driverLine": null,
+        "check": null
+      }
+    },
+    {
       "ticker": "VVV",
       "name": "Valvoline Inc.",
       "form": "8-K",
@@ -452,6 +1488,17 @@
       "grave": false,
       "accn": "0001674910-26-000080",
       "url": "https://www.sec.gov/Archives/edgar/data/1674910/000167491026000080/vvv-20261119.htm",
+      "performance": null
+    },
+    {
+      "ticker": "WERN",
+      "name": "Werner Enterprises",
+      "form": "8-K",
+      "date": "2026-11-19",
+      "label": "Reg FD disclosure",
+      "grave": false,
+      "accn": "0000793074-26-000174",
+      "url": "https://www.sec.gov/Archives/edgar/data/793074/000079307426000174/wern-20261119.htm",
       "performance": null
     },
     {
@@ -9541,1221 +10588,6 @@
       "grave": false,
       "accn": "0001193125-26-457059",
       "url": "https://www.sec.gov/Archives/edgar/data/1500881/000119312526457059/d164787d8k.htm",
-      "performance": null
-    },
-    {
-      "ticker": "EXPD",
-      "name": "Expeditors International of Washington, Inc.",
-      "form": "8-K",
-      "date": "2026-11-12",
-      "label": "Reported results",
-      "grave": false,
-      "accn": "0001193125-26-457594",
-      "url": "https://www.sec.gov/Archives/edgar/data/746515/000119312526457594/expd-20261111.htm",
-      "performance": null
-    },
-    {
-      "ticker": "EYE",
-      "name": "National Vision Holdings Inc.",
-      "form": "10-Q",
-      "date": "2026-11-12",
-      "label": "Quarterly report",
-      "grave": false,
-      "accn": "0001710155-26-000008",
-      "url": "https://www.sec.gov/Archives/edgar/data/1710155/000171015526000008/eye-20261003.htm",
-      "performance": {
-        "period": "2026-10-03",
-        "basis": "quarter",
-        "rev": {
-          "yoy": 4.8,
-          "cur": 510533000,
-          "prior": 487330000
-        },
-        "oi": {
-          "yoy": 222.6,
-          "cur": 30992000,
-          "prior": 9608000
-        },
-        "driver": null,
-        "driverLine": null,
-        "check": null
-      }
-    },
-    {
-      "ticker": "EYE",
-      "name": "National Vision Holdings Inc.",
-      "form": "8-K",
-      "date": "2026-11-12",
-      "label": "Reported results",
-      "grave": false,
-      "accn": "0001710155-26-000006",
-      "url": "https://www.sec.gov/Archives/edgar/data/1710155/000171015526000006/eye-20261112.htm",
-      "performance": null
-    },
-    {
-      "ticker": "EYPT",
-      "name": "EyePoint Inc.",
-      "form": "10-Q",
-      "date": "2026-11-12",
-      "label": "Quarterly report",
-      "grave": false,
-      "accn": "0001193125-26-458319",
-      "url": "https://www.sec.gov/Archives/edgar/data/1314102/000119312526458319/eypt-20260930.htm",
-      "performance": {
-        "period": "2026-09-30",
-        "basis": "quarter",
-        "rev": {
-          "yoy": -21.7,
-          "cur": 756000,
-          "prior": 966000
-        },
-        "oi": null,
-        "driver": null,
-        "driverLine": null,
-        "check": null
-      }
-    },
-    {
-      "ticker": "EYPT",
-      "name": "EyePoint Inc.",
-      "form": "8-K",
-      "date": "2026-11-12",
-      "label": "Reported results",
-      "grave": false,
-      "accn": "0001193125-26-456889",
-      "url": "https://www.sec.gov/Archives/edgar/data/1314102/000119312526456889/eypt-20261112.htm",
-      "performance": null
-    },
-    {
-      "ticker": "EZPW",
-      "name": "EZCORP Inc. Class A Non Voting",
-      "form": "10-K",
-      "date": "2026-11-12",
-      "label": "Annual report",
-      "grave": false,
-      "accn": "0000876523-26-000076",
-      "url": "https://www.sec.gov/Archives/edgar/data/876523/000087652326000076/ezpw-20260930.htm",
-      "performance": {
-        "period": "2026-09-30",
-        "basis": "fy",
-        "rev": {
-          "yoy": 33,
-          "cur": 1694710000,
-          "prior": 1274280000
-        },
-        "oi": {
-          "yoy": 60.7,
-          "cur": 239647000,
-          "prior": 149169000
-        },
-        "driver": "Total revenues increased $420.4 million (33%) and gross profit increased 32%, reflecting improved PSC revenue, merchandise sales and jewelry scrap gross profit.",
-        "driverLine": "revenue",
-        "check": "pct"
-      }
-    },
-    {
-      "ticker": "EZPW",
-      "name": "EZCORP Inc. Class A Non Voting",
-      "form": "8-K",
-      "date": "2026-11-12",
-      "label": "Reported results",
-      "grave": false,
-      "accn": "0000876523-26-000074",
-      "url": "https://www.sec.gov/Archives/edgar/data/876523/000087652326000074/ezpw-20261111.htm",
-      "performance": null
-    },
-    {
-      "ticker": "FA",
-      "name": "First Advantage Corporation",
-      "form": "8-K",
-      "date": "2026-11-12",
-      "label": "Other event",
-      "grave": false,
-      "accn": "0001193125-26-458449",
-      "url": "https://www.sec.gov/Archives/edgar/data/1210677/000119312526458449/d492172d8k.htm",
-      "performance": null
-    },
-    {
-      "ticker": "FBYD",
-      "name": "Falcon's Beyond Global Inc.",
-      "form": "8-K",
-      "date": "2026-11-12",
-      "label": "Reported results",
-      "grave": false,
-      "accn": "0001193125-26-456965",
-      "url": "https://www.sec.gov/Archives/edgar/data/1937987/000119312526456965/fbyd-20261112.htm",
-      "performance": null
-    },
-    {
-      "ticker": "FBYD",
-      "name": "Falcon's Beyond Global Inc.",
-      "form": "10-Q",
-      "date": "2026-11-12",
-      "label": "Quarterly report",
-      "grave": false,
-      "accn": "0001193125-26-456950",
-      "url": "https://www.sec.gov/Archives/edgar/data/1937987/000119312526456950/fbyd-20260930.htm",
-      "performance": {
-        "period": "2026-09-30",
-        "basis": "quarter",
-        "rev": {
-          "yoy": 79.8,
-          "cur": 7289000,
-          "prior": 4054000
-        },
-        "oi": null,
-        "driver": null,
-        "driverLine": null,
-        "check": null
-      }
-    },
-    {
-      "ticker": "FDMT",
-      "name": "4D Molecular Therapeutics Inc.",
-      "form": "10-Q",
-      "date": "2026-11-12",
-      "label": "Quarterly report",
-      "grave": false,
-      "accn": "0001193125-26-458477",
-      "url": "https://www.sec.gov/Archives/edgar/data/1650648/000119312526458477/fdmt-20260930.htm",
-      "performance": {
-        "period": "2026-09-30",
-        "basis": "quarter",
-        "rev": {
-          "yoy": 4505.6,
-          "cur": 4145000,
-          "prior": 90000
-        },
-        "oi": null,
-        "driver": null,
-        "driverLine": null,
-        "check": null
-      }
-    },
-    {
-      "ticker": "FDMT",
-      "name": "4D Molecular Therapeutics Inc.",
-      "form": "8-K",
-      "date": "2026-11-12",
-      "label": "Reported results",
-      "grave": false,
-      "accn": "0001193125-26-458394",
-      "url": "https://www.sec.gov/Archives/edgar/data/1650648/000119312526458394/fdmt-20261112.htm",
-      "performance": null
-    },
-    {
-      "ticker": "FENC",
-      "name": "Fennec Pharmaceuticals Inc.",
-      "form": "10-Q",
-      "date": "2026-11-12",
-      "label": "Quarterly report",
-      "grave": false,
-      "accn": "0001104659-26-126203",
-      "url": "https://www.sec.gov/Archives/edgar/data/1211583/000110465926126203/fencf-20260930x10q.htm",
-      "performance": {
-        "period": "2026-09-30",
-        "basis": "quarter",
-        "rev": {
-          "yoy": 57.3,
-          "cur": 19608000,
-          "prior": 12462000
-        },
-        "oi": null,
-        "driver": null,
-        "driverLine": null,
-        "check": null
-      }
-    },
-    {
-      "ticker": "FIGR",
-      "name": "Figure Technology Solutions Inc.",
-      "form": "8-K",
-      "date": "2026-11-12",
-      "label": "Entered a material agreement",
-      "grave": false,
-      "accn": "0001628280-26-073077",
-      "url": "https://www.sec.gov/Archives/edgar/data/2064124/000162828026073077/figr-20261110.htm",
-      "performance": null
-    },
-    {
-      "ticker": "FLO",
-      "name": "Flowers Foods",
-      "form": "8-K",
-      "date": "2026-11-12",
-      "label": "Reported results",
-      "grave": false,
-      "accn": "0001193125-26-458445",
-      "url": "https://www.sec.gov/Archives/edgar/data/1128928/000119312526458445/flo-20261112.htm",
-      "performance": null
-    },
-    {
-      "ticker": "FLO",
-      "name": "Flowers Foods",
-      "form": "10-Q",
-      "date": "2026-11-12",
-      "label": "Quarterly report",
-      "grave": false,
-      "accn": "0001193125-26-458381",
-      "url": "https://www.sec.gov/Archives/edgar/data/1128928/000119312526458381/flo-20261010.htm",
-      "performance": {
-        "period": "2026-10-10",
-        "basis": "quarter",
-        "rev": {
-          "yoy": -4.7,
-          "cur": 1169057000,
-          "prior": 1226554000
-        },
-        "oi": {
-          "yoy": -51.5,
-          "cur": 32238000,
-          "prior": 66516000
-        },
-        "driver": "Sales in the Other sales category decreased 4.0% on volume declines of 4.9%, partially offset by favorable price/mix of 0.9%.",
-        "driverLine": "revenue",
-        "check": "pct"
-      }
-    },
-    {
-      "ticker": "FPS",
-      "name": "Forgent Power Solutions Inc.",
-      "form": "10-Q",
-      "date": "2026-11-12",
-      "label": "Quarterly report",
-      "grave": false,
-      "accn": "0002080126-26-000046",
-      "url": "https://www.sec.gov/Archives/edgar/data/2080126/000208012626000046/fps-20260930.htm",
-      "performance": {
-        "period": "2026-09-30",
-        "basis": "quarter",
-        "rev": {
-          "yoy": 68.9,
-          "cur": 478566000,
-          "prior": 283274000
-        },
-        "oi": {
-          "yoy": 154.1,
-          "cur": 79182000,
-          "prior": 31163000
-        },
-        "driver": null,
-        "driverLine": null,
-        "check": null
-      }
-    },
-    {
-      "ticker": "FPS",
-      "name": "Forgent Power Solutions Inc.",
-      "form": "8-K",
-      "date": "2026-11-12",
-      "label": "Reported results",
-      "grave": false,
-      "accn": "0002080126-26-000045",
-      "url": "https://www.sec.gov/Archives/edgar/data/2080126/000208012626000045/fps-20261112.htm",
-      "performance": null
-    },
-    {
-      "ticker": "FTDR",
-      "name": "Frontdoor Inc.",
-      "form": "8-K",
-      "date": "2026-11-12",
-      "label": "Executive or board change",
-      "grave": false,
-      "accn": "0001727263-26-000024",
-      "url": "https://www.sec.gov/Archives/edgar/data/1727263/000172726326000024/ftdr-20261110.htm",
-      "performance": null
-    },
-    {
-      "ticker": "FWRG",
-      "name": "First Watch Restaurant Group Inc.",
-      "form": "8-K",
-      "date": "2026-11-12",
-      "label": "Reg FD disclosure",
-      "grave": false,
-      "accn": "0001789940-26-000104",
-      "url": "https://www.sec.gov/Archives/edgar/data/1789940/000178994026000104/fwrg-20261109.htm",
-      "performance": null
-    },
-    {
-      "ticker": "G",
-      "name": "Genpact",
-      "form": "8-K",
-      "date": "2026-11-12",
-      "label": "Shareholder vote",
-      "grave": false,
-      "accn": "0001398659-26-000021",
-      "url": "https://www.sec.gov/Archives/edgar/data/1398659/000139865926000021/g-20261110.htm",
-      "performance": null
-    },
-    {
-      "ticker": "GBCI",
-      "name": "Glacier Bancorp",
-      "form": "8-K",
-      "date": "2026-11-12",
-      "label": "Other event",
-      "grave": false,
-      "accn": "0000868671-26-000084",
-      "url": "https://www.sec.gov/Archives/edgar/data/868671/000086867126000084/gbci-20261111.htm",
-      "performance": null
-    },
-    {
-      "ticker": "GEMI",
-      "name": "Gemini Space Station Inc.",
-      "form": "8-K",
-      "date": "2026-11-12",
-      "label": "Reported results",
-      "grave": false,
-      "accn": "0002055592-26-000072",
-      "url": "https://www.sec.gov/Archives/edgar/data/2055592/000205559226000072/gemi-20261112.htm",
-      "performance": null
-    },
-    {
-      "ticker": "GLIBA",
-      "name": "Liberty Capital Corp/nv",
-      "form": "8-K",
-      "date": "2026-11-12",
-      "label": "Entered a material agreement",
-      "grave": false,
-      "accn": "0001104659-26-125416",
-      "url": "https://www.sec.gov/Archives/edgar/data/2057463/000110465926125416/tm2629388d1_8k.htm",
-      "performance": null
-    },
-    {
-      "ticker": "GLIBK",
-      "name": "Liberty Capital Corp/nv",
-      "form": "8-K",
-      "date": "2026-11-12",
-      "label": "Entered a material agreement",
-      "grave": false,
-      "accn": "0001104659-26-125416",
-      "url": "https://www.sec.gov/Archives/edgar/data/2057463/000110465926125416/tm2629388d1_8k.htm",
-      "performance": null
-    },
-    {
-      "ticker": "GRNQ",
-      "name": "Greenpro Capital Corp.",
-      "form": "10-Q",
-      "date": "2026-11-12",
-      "label": "Quarterly report",
-      "grave": false,
-      "accn": "0001493152-26-051123",
-      "url": "https://www.sec.gov/Archives/edgar/data/1597846/000149315226051123/form10-q.htm",
-      "performance": {
-        "period": "2026-09-30",
-        "basis": "quarter",
-        "rev": {
-          "yoy": 510.1,
-          "cur": 733325,
-          "prior": 120193
-        },
-        "oi": null,
-        "driver": null,
-        "driverLine": null,
-        "check": null
-      }
-    },
-    {
-      "ticker": "H",
-      "name": "Hyatt Hotels Corporation",
-      "form": "8-K",
-      "date": "2026-11-12",
-      "label": "Entered a material agreement",
-      "grave": false,
-      "accn": "0001104659-26-126220",
-      "url": "https://www.sec.gov/Archives/edgar/data/1468174/000110465926126220/tm2628589d4_8k.htm",
-      "performance": null
-    },
-    {
-      "ticker": "HGTY",
-      "name": "Hagerty Inc.",
-      "form": "8-K",
-      "date": "2026-11-12",
-      "label": "Entered a material agreement",
-      "grave": false,
-      "accn": "0001193125-26-458570",
-      "url": "https://www.sec.gov/Archives/edgar/data/1840776/000119312526458570/d151794d8k.htm",
-      "performance": null
-    },
-    {
-      "ticker": "HST",
-      "name": "Host Hotels & Resorts Inc.",
-      "form": "8-K",
-      "date": "2026-11-12",
-      "label": "Entered a material agreement",
-      "grave": false,
-      "accn": "0001628280-26-073508",
-      "url": "https://www.sec.gov/Archives/edgar/data/1070750/000162828026073508/hst-20261112.htm",
-      "performance": null
-    },
-    {
-      "ticker": "HTFL",
-      "name": "Heartflow Inc.",
-      "form": "10-Q",
-      "date": "2026-11-12",
-      "label": "Quarterly report",
-      "grave": false,
-      "accn": "0001464521-26-000173",
-      "url": "https://www.sec.gov/Archives/edgar/data/1464521/000146452126000173/htfl-20260930x10q.htm",
-      "performance": {
-        "period": "2026-09-30",
-        "basis": "quarter",
-        "rev": {
-          "yoy": 57.4,
-          "cur": 72857000,
-          "prior": 46276000
-        },
-        "oi": null,
-        "driver": "Revenue Revenue increased $26.6 million, or 57%, to $72.9 million during the three months ended September 30, 2026, compared to $46.3 million during the three months ended September 30, 2025. The increase in revenue was primarily attributable to a 89% increase in revenue case volume, partially offset by a reduction in average sales price due to a higher percentage of revenue cases generated from clinic and office-based accounts and an increase in volume rebates.",
-        "driverLine": "revenue",
-        "check": "pct"
-      }
-    },
-    {
-      "ticker": "HTFL",
-      "name": "Heartflow Inc.",
-      "form": "8-K",
-      "date": "2026-11-12",
-      "label": "Reported results",
-      "grave": false,
-      "accn": "0001464521-26-000171",
-      "url": "https://www.sec.gov/Archives/edgar/data/1464521/000146452126000171/htfl-20261112x8k.htm",
-      "performance": null
-    },
-    {
-      "ticker": "HUBS",
-      "name": "HubSpot Inc.",
-      "form": "8-K",
-      "date": "2026-11-12",
-      "label": "Executive or board change",
-      "grave": false,
-      "accn": "0001193125-26-457055",
-      "url": "https://www.sec.gov/Archives/edgar/data/1404655/000119312526457055/d77303d8k.htm",
-      "performance": null
-    },
-    {
-      "ticker": "HWC",
-      "name": "Hancock Whitney",
-      "form": "8-K",
-      "date": "2026-11-12",
-      "label": "Reg FD disclosure",
-      "grave": false,
-      "accn": "0001193125-26-457037",
-      "url": "https://www.sec.gov/Archives/edgar/data/750577/000119312526457037/hwc-20261112.htm",
-      "performance": null
-    },
-    {
-      "ticker": "HWCPZ",
-      "name": "Hancock Whitney Corporation",
-      "form": "8-K",
-      "date": "2026-11-12",
-      "label": "Reg FD disclosure",
-      "grave": false,
-      "accn": "0001193125-26-457037",
-      "url": "https://www.sec.gov/Archives/edgar/data/750577/000119312526457037/hwc-20261112.htm",
-      "performance": null
-    },
-    {
-      "ticker": "HZO",
-      "name": "MarineMax Inc.  (FL)",
-      "form": "8-K",
-      "date": "2026-11-12",
-      "label": "Shareholder vote",
-      "grave": false,
-      "accn": "0001193125-26-456673",
-      "url": "https://www.sec.gov/Archives/edgar/data/1057060/000119312526456673/d138095d8k.htm",
-      "performance": null
-    },
-    {
-      "ticker": "IBP",
-      "name": "Installed Building Products",
-      "form": "8-K",
-      "date": "2026-11-12",
-      "label": "Entered a material agreement",
-      "grave": false,
-      "accn": "0001628280-26-073103",
-      "url": "https://www.sec.gov/Archives/edgar/data/1580905/000162828026073103/ibp-20261112.htm",
-      "performance": null
-    },
-    {
-      "ticker": "IMXI",
-      "name": "International Money Express Inc.",
-      "form": "8-K",
-      "date": "2026-11-12",
-      "label": "Ended a material agreement",
-      "grave": false,
-      "accn": "0001140361-26-043232",
-      "url": "https://www.sec.gov/Archives/edgar/data/1683695/000114036126043232/ef20085433_8k.htm",
-      "performance": null
-    },
-    {
-      "ticker": "INV",
-      "name": "Innventure Inc.",
-      "form": "10-Q",
-      "date": "2026-11-12",
-      "label": "Quarterly report",
-      "grave": false,
-      "accn": "0002001557-26-000207",
-      "url": "https://www.sec.gov/Archives/edgar/data/2001557/000200155726000207/innv-20260930.htm",
-      "performance": {
-        "period": "2026-09-30",
-        "basis": "quarter",
-        "rev": {
-          "yoy": 177.3,
-          "cur": 1481000,
-          "prior": 534000
-        },
-        "oi": null,
-        "driver": "Sales and marketing Sales and marketing expense was $7.9 million and $6.8 million for the nine months ended September 30, 2026 and 2025, respectively, an increase of $1.0 million, or 15.3%. The increase is due to increased marketing-related events and expenses primarily associated with the commercialization of the Technology segment, and employee expenses, partially offset by a decrease in marketing related professional fees.",
-        "driverLine": "revenue",
-        "check": "dollar"
-      }
-    },
-    {
-      "ticker": "INV",
-      "name": "Innventure Inc.",
-      "form": "8-K",
-      "date": "2026-11-12",
-      "label": "Reported results",
-      "grave": false,
-      "accn": "0002001557-26-000205",
-      "url": "https://www.sec.gov/Archives/edgar/data/2001557/000200155726000205/innv-20261112.htm",
-      "performance": null
-    },
-    {
-      "ticker": "INVH",
-      "name": "Invitation Homes Inc.",
-      "form": "8-K",
-      "date": "2026-11-12",
-      "label": "Executive or board change",
-      "grave": false,
-      "accn": "0001193125-26-456656",
-      "url": "https://www.sec.gov/Archives/edgar/data/1687229/000119312526456656/d464876d8k.htm",
-      "performance": null
-    },
-    {
-      "ticker": "IPSC",
-      "name": "Century Therapeutics Inc.",
-      "form": "8-K",
-      "date": "2026-11-12",
-      "label": "Reported results",
-      "grave": false,
-      "accn": "0001104659-26-125830",
-      "url": "https://www.sec.gov/Archives/edgar/data/1850119/000110465926125830/tm2629581d1_8k.htm",
-      "performance": null
-    },
-    {
-      "ticker": "IPSC",
-      "name": "Century Therapeutics Inc.",
-      "form": "10-Q",
-      "date": "2026-11-12",
-      "label": "Quarterly report",
-      "grave": false,
-      "accn": "0001104659-26-125813",
-      "url": "https://www.sec.gov/Archives/edgar/data/1850119/000110465926125813/ipsc-20260930x10q.htm",
-      "performance": {
-        "period": "2026-09-30",
-        "basis": "ytd",
-        "rev": null,
-        "oi": {
-          "yoy": -2625.6,
-          "cur": -85417000,
-          "prior": 3382000
-        },
-        "driver": null,
-        "driverLine": null,
-        "check": null
-      }
-    },
-    {
-      "ticker": "IRTC",
-      "name": "iRhythm Technologies",
-      "form": "8-K",
-      "date": "2026-11-12",
-      "label": "Reg FD disclosure",
-      "grave": false,
-      "accn": "0001104659-26-125580",
-      "url": "https://www.sec.gov/Archives/edgar/data/1388658/000110465926125580/tm2629543d1_8k.htm",
-      "performance": null
-    },
-    {
-      "ticker": "JBSS",
-      "name": "John B. Sanfilippo & Son Inc.",
-      "form": "8-K",
-      "date": "2026-11-12",
-      "label": "Other event",
-      "grave": false,
-      "accn": "0001193125-26-458301",
-      "url": "https://www.sec.gov/Archives/edgar/data/880117/000119312526458301/jbss-20261112.htm",
-      "performance": null
-    },
-    {
-      "ticker": "JCAP",
-      "name": "Jefferson Capital Inc.",
-      "form": "10-Q",
-      "date": "2026-11-12",
-      "label": "Quarterly report",
-      "grave": false,
-      "accn": "0001104659-26-126267",
-      "url": "https://www.sec.gov/Archives/edgar/data/2046042/000110465926126267/jcap-20260930x10q.htm",
-      "performance": {
-        "period": "2026-09-30",
-        "basis": "quarter",
-        "rev": {
-          "yoy": 23,
-          "cur": 185514000,
-          "prior": 150842000
-        },
-        "oi": {
-          "yoy": 23.5,
-          "cur": 86514000,
-          "prior": 70036000
-        },
-        "driver": null,
-        "driverLine": null,
-        "check": null
-      }
-    },
-    {
-      "ticker": "JCAP",
-      "name": "Jefferson Capital Inc.",
-      "form": "8-K",
-      "date": "2026-11-12",
-      "label": "Reported results",
-      "grave": false,
-      "accn": "0001104659-26-126213",
-      "url": "https://www.sec.gov/Archives/edgar/data/2046042/000110465926126213/jcap-20261112x8k.htm",
-      "performance": null
-    },
-    {
-      "ticker": "JCI",
-      "name": "Johnson Controls International PLC",
-      "form": "10-K",
-      "date": "2026-11-12",
-      "label": "Annual report",
-      "grave": false,
-      "accn": "0000833444-26-000108",
-      "url": "https://www.sec.gov/Archives/edgar/data/833444/000083344426000108/jci-20260930.htm",
-      "performance": {
-        "period": "2026-09-30",
-        "basis": "fy",
-        "rev": {
-          "yoy": 8.8,
-          "cur": 25666000000,
-          "prior": 23596000000
-        },
-        "oi": {
-          "yoy": -4,
-          "cur": 3612000000,
-          "prior": 3763000000
-        },
-        "driver": null,
-        "driverLine": null,
-        "check": null
-      }
-    },
-    {
-      "ticker": "KBR",
-      "name": "Kbr, Inc.",
-      "form": "8-K",
-      "date": "2026-11-12",
-      "label": "Reg FD disclosure",
-      "grave": false,
-      "accn": "0001357615-26-000207",
-      "url": "https://www.sec.gov/Archives/edgar/data/1357615/000135761526000207/kbr-20261112.htm",
-      "performance": null
-    },
-    {
-      "ticker": "KBR",
-      "name": "Kbr, Inc.",
-      "form": "8-K",
-      "date": "2026-11-12",
-      "label": "Reg FD disclosure",
-      "grave": false,
-      "accn": "0001357615-26-000205",
-      "url": "https://www.sec.gov/Archives/edgar/data/1357615/000135761526000205/kbr-20261111.htm",
-      "performance": null
-    },
-    {
-      "ticker": "KHC",
-      "name": "The Kraft Heinz Company",
-      "form": "8-K",
-      "date": "2026-11-12",
-      "label": "Reg FD disclosure",
-      "grave": false,
-      "accn": "0001637459-26-000084",
-      "url": "https://www.sec.gov/Archives/edgar/data/1637459/000163745926000084/khc-20261112.htm",
-      "performance": null
-    },
-    {
-      "ticker": "KLC",
-      "name": "KinderCare Learning Companies Inc.",
-      "form": "10-Q",
-      "date": "2026-11-12",
-      "label": "Quarterly report",
-      "grave": false,
-      "accn": "0001193125-26-458658",
-      "url": "https://www.sec.gov/Archives/edgar/data/1873529/000119312526458658/klc-20261003.htm",
-      "performance": {
-        "period": "2026-10-03",
-        "basis": "quarter",
-        "rev": {
-          "yoy": -1.7,
-          "cur": 665336000,
-          "prior": 676830000
-        },
-        "oi": {
-          "yoy": -387,
-          "cur": -75549000,
-          "prior": 26320000
-        },
-        "driver": null,
-        "driverLine": null,
-        "check": null
-      }
-    },
-    {
-      "ticker": "KLC",
-      "name": "KinderCare Learning Companies Inc.",
-      "form": "8-K",
-      "date": "2026-11-12",
-      "label": "Reported results",
-      "grave": false,
-      "accn": "0001193125-26-458438",
-      "url": "https://www.sec.gov/Archives/edgar/data/1873529/000119312526458438/klc-20261112.htm",
-      "performance": null
-    },
-    {
-      "ticker": "KTB",
-      "name": "Kontoor Brands Inc. Common Stock",
-      "form": "8-K",
-      "date": "2026-11-12",
-      "label": "Other event",
-      "grave": false,
-      "accn": "0001760965-26-000084",
-      "url": "https://www.sec.gov/Archives/edgar/data/1760965/000176096526000084/ktb-20261111.htm",
-      "performance": null
-    },
-    {
-      "ticker": "LANC",
-      "name": "Lancaster Colony",
-      "form": "8-K",
-      "date": "2026-11-12",
-      "label": "Shareholder vote",
-      "grave": false,
-      "accn": "0000057515-26-000032",
-      "url": "https://www.sec.gov/Archives/edgar/data/57515/000005751526000032/mzti-20261111.htm",
-      "performance": null
-    },
-    {
-      "ticker": "LCII",
-      "name": "LCI Industries",
-      "form": "8-K",
-      "date": "2026-11-12",
-      "label": "Other event",
-      "grave": false,
-      "accn": "0000763744-26-000123",
-      "url": "https://www.sec.gov/Archives/edgar/data/763744/000076374426000123/lcii-20261112.htm",
-      "performance": null
-    },
-    {
-      "ticker": "LEU",
-      "name": "Centrus Energy Corp.",
-      "form": "8-K",
-      "date": "2026-11-12",
-      "label": "Other event",
-      "grave": false,
-      "accn": "0001628280-26-073175",
-      "url": "https://www.sec.gov/Archives/edgar/data/1065059/000162828026073175/leu-20261112.htm",
-      "performance": null
-    },
-    {
-      "ticker": "LFMDP",
-      "name": "Lifemd, Inc.",
-      "form": "10-Q",
-      "date": "2026-11-12",
-      "label": "Quarterly report",
-      "grave": false,
-      "accn": "0001493152-26-051463",
-      "url": "https://www.sec.gov/Archives/edgar/data/948320/000149315226051463/form10-q.htm",
-      "performance": {
-        "period": "2026-09-30",
-        "basis": "quarter",
-        "rev": {
-          "yoy": -6.5,
-          "cur": 44625086,
-          "prior": 47727942
-        },
-        "oi": null,
-        "driver": null,
-        "driverLine": null,
-        "check": null
-      }
-    },
-    {
-      "ticker": "LFMDP",
-      "name": "Lifemd, Inc.",
-      "form": "8-K",
-      "date": "2026-11-12",
-      "label": "Entered a material agreement",
-      "grave": false,
-      "accn": "0001493152-26-051397",
-      "url": "https://www.sec.gov/Archives/edgar/data/948320/000149315226051397/form8-k.htm",
-      "performance": null
-    },
-    {
-      "ticker": "LFST",
-      "name": "LifeStance Health Group Inc.",
-      "form": "8-K",
-      "date": "2026-11-12",
-      "label": "Other event",
-      "grave": false,
-      "accn": "0001193125-26-458585",
-      "url": "https://www.sec.gov/Archives/edgar/data/1845257/000119312526458585/d48663d8k.htm",
-      "performance": null
-    },
-    {
-      "ticker": "LGN",
-      "name": "Legence Corp.",
-      "form": "10-Q",
-      "date": "2026-11-12",
-      "label": "Quarterly report",
-      "grave": false,
-      "accn": "0002052568-26-000036",
-      "url": "https://www.sec.gov/Archives/edgar/data/2052568/000205256826000036/lgn-20260930.htm",
-      "performance": {
-        "period": "2026-09-30",
-        "basis": "quarter",
-        "rev": {
-          "yoy": 85.1,
-          "cur": 1310668000,
-          "prior": 708006000
-        },
-        "oi": {
-          "yoy": 349.3,
-          "cur": 167126000,
-          "prior": 37197000
-        },
-        "driver": null,
-        "driverLine": null,
-        "check": null
-      }
-    },
-    {
-      "ticker": "LGN",
-      "name": "Legence Corp.",
-      "form": "8-K",
-      "date": "2026-11-12",
-      "label": "Reported results",
-      "grave": false,
-      "accn": "0001193125-26-456940",
-      "url": "https://www.sec.gov/Archives/edgar/data/2052568/000119312526456940/d134924d8k.htm",
-      "performance": null
-    },
-    {
-      "ticker": "LIN",
-      "name": "Linde plc",
-      "form": "8-K",
-      "date": "2026-11-12",
-      "label": "Other event",
-      "grave": false,
-      "accn": "0001193125-26-458288",
-      "url": "https://www.sec.gov/Archives/edgar/data/1707925/000119312526458288/d147693d8k.htm",
-      "performance": null
-    },
-    {
-      "ticker": "LOB",
-      "name": "Live Oak Bancshares Inc.",
-      "form": "8-K",
-      "date": "2026-11-12",
-      "label": "Changed shareholder rights",
-      "grave": false,
-      "accn": "0001462120-26-000081",
-      "url": "https://www.sec.gov/Archives/edgar/data/1462120/000146212026000081/lob-20261109.htm",
-      "performance": null
-    },
-    {
-      "ticker": "LUNR",
-      "name": "Intuitive Machines Inc.",
-      "form": "8-K",
-      "date": "2026-11-12",
-      "label": "Reported results",
-      "grave": false,
-      "accn": "0001628280-26-073106",
-      "url": "https://www.sec.gov/Archives/edgar/data/1844452/000162828026073106/lunr-20261112.htm",
-      "performance": null
-    },
-    {
-      "ticker": "LW",
-      "name": "Lamb Weston",
-      "form": "8-K",
-      "date": "2026-11-12",
-      "label": "Other event",
-      "grave": false,
-      "accn": "0001679273-26-000056",
-      "url": "https://www.sec.gov/Archives/edgar/data/1679273/000167927326000056/lw-20261111.htm",
-      "performance": null
-    },
-    {
-      "ticker": "LWAY",
-      "name": "Lifeway Foods Inc.",
-      "form": "8-K",
-      "date": "2026-11-12",
-      "label": "Reported results",
-      "grave": false,
-      "accn": "0001683168-26-008612",
-      "url": "https://www.sec.gov/Archives/edgar/data/814586/000168316826008612/lifeway_8k.htm",
-      "performance": null
-    },
-    {
-      "ticker": "LWAY",
-      "name": "Lifeway Foods Inc.",
-      "form": "10-Q",
-      "date": "2026-11-12",
-      "label": "Quarterly report",
-      "grave": false,
-      "accn": "0001683168-26-008609",
-      "url": "https://www.sec.gov/Archives/edgar/data/814586/000168316826008609/lifeway_i10q-093026.htm",
-      "performance": {
-        "period": "2026-09-30",
-        "basis": "quarter",
-        "rev": {
-          "yoy": 18.6,
-          "cur": 67797000,
-          "prior": 57143000
-        },
-        "oi": {
-          "yoy": -78.5,
-          "cur": 1085000,
-          "prior": 5040000
-        },
-        "driver": null,
-        "driverLine": null,
-        "check": null
-      }
-    },
-    {
-      "ticker": "MAA",
-      "name": "Mid-America Apartment Communities Inc.",
-      "form": "8-K",
-      "date": "2026-11-12",
-      "label": "Other event",
-      "grave": false,
-      "accn": "0001193125-26-458436",
-      "url": "https://www.sec.gov/Archives/edgar/data/912595/000119312526458436/maa-20261112.htm",
-      "performance": null
-    },
-    {
-      "ticker": "MAX",
-      "name": "MediaAlpha Inc.",
-      "form": "8-K",
-      "date": "2026-11-12",
-      "label": "Entered a material agreement",
-      "grave": false,
-      "accn": "0001818383-26-000274",
-      "url": "https://www.sec.gov/Archives/edgar/data/1818383/000181838326000274/max-20261111.htm",
-      "performance": null
-    },
-    {
-      "ticker": "META",
-      "name": "Meta Platforms Inc.",
-      "form": "8-K",
-      "date": "2026-11-12",
-      "label": "Other event",
-      "grave": false,
-      "accn": "0001193125-26-458525",
-      "url": "https://www.sec.gov/Archives/edgar/data/1326801/000119312526458525/d177728d8k.htm",
-      "performance": null
-    },
-    {
-      "ticker": "MGTX",
-      "name": "MeiraGTx Holdings plc",
-      "form": "10-Q",
-      "date": "2026-11-12",
-      "label": "Quarterly report",
-      "grave": false,
-      "accn": "0001104659-26-125914",
-      "url": "https://www.sec.gov/Archives/edgar/data/1735438/000110465926125914/mgtx-20260930x10q.htm",
-      "performance": {
-        "period": "2026-09-30",
-        "basis": "quarter",
-        "rev": {
-          "yoy": 1074.1,
-          "cur": 4814000,
-          "prior": 410000
-        },
-        "oi": null,
-        "driver": null,
-        "driverLine": null,
-        "check": null
-      }
-    },
-    {
-      "ticker": "MGTX",
-      "name": "MeiraGTx Holdings plc",
-      "form": "8-K",
-      "date": "2026-11-12",
-      "label": "Reported results",
-      "grave": false,
-      "accn": "0001104659-26-125910",
-      "url": "https://www.sec.gov/Archives/edgar/data/1735438/000110465926125910/mgtx-20261112x8k.htm",
-      "performance": null
-    },
-    {
-      "ticker": "MIDD",
-      "name": "Middleby",
-      "form": "10-Q",
-      "date": "2026-11-12",
-      "label": "Quarterly report",
-      "grave": false,
-      "accn": "0000769520-26-000059",
-      "url": "https://www.sec.gov/Archives/edgar/data/769520/000076952026000059/midd-20261003.htm",
-      "performance": {
-        "period": "2026-10-03",
-        "basis": "quarter",
-        "rev": {
-          "yoy": 7.7,
-          "cur": 652575000,
-          "prior": 606001000
-        },
-        "oi": {
-          "yoy": -20.2,
-          "cur": 98726000,
-          "prior": 123791000
-        },
-        "driver": null,
-        "driverLine": null,
-        "check": null
-      }
-    },
-    {
-      "ticker": "MOVE",
-      "name": "Corvex Inc.",
-      "form": "10-Q",
-      "date": "2026-11-12",
-      "label": "Quarterly report",
-      "grave": false,
-      "accn": "0001213900-26-118794",
-      "url": "https://www.sec.gov/Archives/edgar/data/1734750/000121390026118794/ea0309925-10q_corvex.htm",
-      "performance": {
-        "period": "2026-09-30",
-        "basis": "quarter",
-        "rev": {
-          "yoy": 6127.5,
-          "cur": 4982000,
-          "prior": 80000
-        },
-        "oi": null,
-        "driver": null,
-        "driverLine": null,
-        "check": null
-      }
-    },
-    {
-      "ticker": "MOVE",
-      "name": "Corvex Inc.",
-      "form": "8-K",
-      "date": "2026-11-12",
-      "label": "Reported results",
-      "grave": false,
-      "accn": "0001213900-26-118464",
-      "url": "https://www.sec.gov/Archives/edgar/data/1734750/000121390026118464/ea031185403-8k_corvex.htm",
-      "performance": null
-    },
-    {
-      "ticker": "MPTI",
-      "name": "M-tron Industries Inc.",
-      "form": "10-Q",
-      "date": "2026-11-12",
-      "label": "Quarterly report",
-      "grave": false,
-      "accn": "0001437749-26-036399",
-      "url": "https://www.sec.gov/Archives/edgar/data/1902314/000143774926036399/mpti20260930_10q.htm",
-      "performance": {
-        "period": "2026-09-30",
-        "basis": "quarter",
-        "rev": {
-          "yoy": 11.1,
-          "cur": 15741000,
-          "prior": 14170000
-        },
-        "oi": {
-          "yoy": -4.3,
-          "cur": 2441000,
-          "prior": 2550000
-        },
-        "driver": null,
-        "driverLine": null,
-        "check": null
-      }
-    },
-    {
-      "ticker": "MPTI",
-      "name": "M-tron Industries Inc.",
-      "form": "8-K",
-      "date": "2026-11-12",
-      "label": "Reported results",
-      "grave": false,
-      "accn": "0001437749-26-036398",
-      "url": "https://www.sec.gov/Archives/edgar/data/1902314/000143774926036398/mpti20260814_8k.htm",
-      "performance": null
-    },
-    {
-      "ticker": "MRVL",
-      "name": "Marvell Technology Inc.",
-      "form": "8-K",
-      "date": "2026-11-12",
-      "label": "Executive or board change",
-      "grave": false,
-      "accn": "0001835632-26-000026",
-      "url": "https://www.sec.gov/Archives/edgar/data/1835632/000183563226000026/mrvl-20261111.htm",
-      "performance": null
-    },
-    {
-      "ticker": "MTSI",
-      "name": "MACOM Technology Solutions Holdings Inc.",
-      "form": "10-K",
-      "date": "2026-11-12",
-      "label": "Annual report",
-      "grave": false,
-      "accn": "0001493594-26-000044",
-      "url": "https://www.sec.gov/Archives/edgar/data/1493594/000149359426000044/mtsi-20261002.htm",
-      "performance": {
-        "period": "2026-10-02",
-        "basis": "fy",
-        "rev": {
-          "yoy": 37.3,
-          "cur": 1327623000,
-          "prior": 967258000
-        },
-        "oi": {
-          "yoy": 135.6,
-          "cur": 305467000,
-          "prior": 129652000
-        },
-        "driver": null,
-        "driverLine": null,
-        "check": null
-      }
-    },
-    {
-      "ticker": "MUR",
-      "name": "Murphy Oil",
-      "form": "8-K",
-      "date": "2026-11-12",
-      "label": "Reg FD disclosure",
-      "grave": false,
-      "accn": "0001628280-26-073050",
-      "url": "https://www.sec.gov/Archives/edgar/data/717423/000162828026073050/mur-20261109.htm",
-      "performance": null
-    },
-    {
-      "ticker": "MZTI",
-      "name": "Marzetti Co.",
-      "form": "8-K",
-      "date": "2026-11-12",
-      "label": "Shareholder vote",
-      "grave": false,
-      "accn": "0000057515-26-000032",
-      "url": "https://www.sec.gov/Archives/edgar/data/57515/000005751526000032/mzti-20261111.htm",
       "performance": null
     }
   ]
